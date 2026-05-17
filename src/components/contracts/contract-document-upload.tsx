@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { FileText, ImageIcon, Loader2, Plus, Trash2, Upload } from "lucide-react";
 import {
   contractDocumentLabel,
+  contractDocumentViewUrl,
   CONTRACT_DOCUMENT_ACCEPT,
   isPdfUrl,
   uploadContractDocument,
@@ -112,6 +113,7 @@ export function ContractDocumentUpload({
         <ul className="space-y-2">
           {urls.map((url, index) => {
             const pdf = isPdfUrl(url);
+            const viewUrl = contractDocumentViewUrl(url);
             const Icon = pdf ? FileText : ImageIcon;
             return (
               <li
@@ -122,7 +124,7 @@ export function ContractDocumentUpload({
                   {!pdf ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={url}
+                      src={viewUrl}
                       alt=""
                       className="size-full object-cover"
                     />
@@ -135,7 +137,7 @@ export function ContractDocumentUpload({
                     {contractDocumentLabel(url)}
                   </p>
                   <a
-                    href={url}
+                    href={viewUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-accent hover:underline"

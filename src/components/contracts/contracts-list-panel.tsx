@@ -36,6 +36,7 @@ import type {
 } from "@/types/contract";
 import {
   contractDocumentLabel,
+  contractDocumentViewUrl,
   isPdfUrl,
 } from "@/lib/contract-documents";
 import { cn } from "@/lib/utils";
@@ -355,7 +356,7 @@ export function ContractsListPanel({
                                 {contract.photoUrls.map((url) => (
                                   <li key={url}>
                                     <a
-                                      href={url}
+                                      href={contractDocumentViewUrl(url)}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="inline-flex max-w-[200px] items-center gap-1 truncate text-xs text-accent hover:underline"

@@ -1,4 +1,7 @@
+import { blobViewUrl } from "@/lib/blob-storage";
 import type { ContractKind } from "@/types/contract";
+
+export { blobViewUrl as contractDocumentViewUrl };
 
 export const CONTRACT_DOCUMENT_ACCEPT =
   "application/pdf,image/jpeg,image/png,image/webp,image/gif";
