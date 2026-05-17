@@ -6,6 +6,12 @@ const SESSION_COOKIE = getSessionCookieName();
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Proxy rewrites /api/* al backend; no debe exigir cookie de sesión del panel.
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   const hasSession = Boolean(request.cookies.get(SESSION_COOKIE)?.value);
 
   if (pathname.startsWith("/login")) {
@@ -26,6 +32,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!api/|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

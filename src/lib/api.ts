@@ -66,13 +66,35 @@ export async function apiFetch<T>(
 }
 
 async function readErrorMessage(response: Response): Promise<string> {
+  const contentType = response.headers.get("content-type") ?? "";
   try {
-    const data = (await response.json()) as {
-      message?: string;
-      error?: string;
-    };
-    return data.message ?? data.error ?? response.statusText;
+    if (contentType.includes("application/json")) {
+      const data = (await response.json()) as {
+        message?: string;
+        error?: string;
+      };
+      return (
+        data.message ??
+        data.error ??
+        response.statusText ||
+        `Error del servidor (${response.status})`
+      );
+    }
+    const text = (await response.text()).trim();
+    if (text && text.length < 200 && !text.startsWith("<")) {
+      return text;
+    }
   } catch {
-    return response.statusText || "Error en la petición";
+    /* cuerpo no legible */
   }
+  if (response.status === 401) {
+    return "Usuario o contraseña incorrectos";
+  }
+  if (response.status === 403) {
+    return "No tienes permiso para realizar esta acción";
+  }
+  if (response.status >= 500) {
+    return `Error del servidor (${response.status}). Inténtalo más tarde.`;
+  }
+  return response.statusText || `Error en la petición (${response.status})`;
 }
