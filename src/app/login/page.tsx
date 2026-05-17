@@ -3,6 +3,7 @@
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
+import { LoginAnimatedBackdrop } from "@/components/auth/login-animated-backdrop";
 import { BrandLogo } from "@/components/brand/logo";
 import { getLoginErrorMessage, useAuth } from "@/context/auth-provider";
 import { getSafeRedirectPath } from "@/lib/safe-redirect";
@@ -52,18 +53,21 @@ function LoginForm() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <div className="hidden flex-1 flex-col justify-between bg-sidebar p-10 text-sidebar-foreground lg:flex">
-        <BrandLogo variant="full" onDark href={null} priority />
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
+      <div className="relative hidden flex-1 flex-col justify-between overflow-hidden p-10 text-sidebar-foreground lg:flex">
+        <LoginAnimatedBackdrop />
+        <div className="relative z-10">
+          <BrandLogo variant="full" onDark href={null} priority />
+        </div>
+        <div className="relative z-10 max-w-md">
+          <h1 className="text-3xl font-semibold tracking-tight text-sidebar-foreground drop-shadow-sm">
             Gestiona tu operación desde un solo lugar
           </h1>
-          <p className="mt-4 max-w-md text-sidebar-muted">
+          <p className="mt-4 text-sidebar-muted">
             Accede con tus credenciales corporativas. El token JWT se envía en
             cada petición protegida mediante Authorization Bearer.
           </p>
         </div>
-        <p className="text-sm text-sidebar-muted">
+        <p className="relative z-10 text-sm text-sidebar-muted/90">
           API: {process.env.NEXT_PUBLIC_API_URL ?? "no configurada"}
         </p>
       </div>

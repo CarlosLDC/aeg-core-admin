@@ -54,3 +54,100 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
+
+/* Login — panel izquierdo con animación suave */
+.login-panel-base {
+  background: linear-gradient(
+    145deg,
+    #020617 0%,
+    #0a1628 38%,
+    #0c1e3d 68%,
+    #071018 100%
+  );
+  background-size: 200% 200%;
+  animation: login-gradient-shift 18s ease-in-out infinite;
+}
+
+.login-panel-grid {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 85% 75% at 50% 45%, black 20%, transparent 72%);
+}
+
+.login-orb {
+  filter: blur(72px);
+  opacity: 0.45;
+  will-change: transform;
+}
+
+.login-orb-a {
+  background: radial-gradient(circle, rgba(0, 51, 255, 0.55) 0%, transparent 68%);
+  animation: login-float-a 22s ease-in-out infinite;
+}
+
+.login-orb-b {
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.4) 0%, transparent 70%);
+  animation: login-float-b 26s ease-in-out infinite;
+}
+
+.login-orb-c {
+  background: radial-gradient(circle, rgba(30, 64, 175, 0.35) 0%, transparent 72%);
+  animation: login-float-c 20s ease-in-out infinite;
+}
+
+.login-panel-vignette {
+  background: radial-gradient(
+    ellipse 90% 80% at 50% 50%,
+    transparent 35%,
+    rgba(2, 6, 23, 0.55) 100%
+  );
+}
+
+@keyframes login-gradient-shift {
+  0%,
+  100% {
+    background-position: 0% 40%;
+  }
+  50% {
+    background-position: 100% 60%;
+  }
+}
+
+@keyframes login-float-a {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(12%, 8%) scale(1.08);
+  }
+}
+
+@keyframes login-float-b {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-10%, -6%) scale(1.05);
+  }
+}
+
+@keyframes login-float-c {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(6%, -10%) scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-panel-base,
+  .login-orb {
+    animation: none;
+  }
+}
