@@ -1,0 +1,201 @@
+"use client";
+
+import { FormEvent, Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { AlertCircle, Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
+import { BrandLogo } from "@/components/brand/logo";
+import { getLoginErrorMessage, useAuth } from "@/context/auth-provider";
+import { getSafeRedirectPath } from "@/lib/safe-redirect";
+import { cn } from "@/lib/utils";
+
+function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user, isLoading, login } = useAuth();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const redirectTo = getSafeRedirectPath(searchParams.get("redirect"));
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.replace(redirectTo);
+    }
+  }, [isLoading, user, router, redirectTo]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      await login({ username: username.trim(), password }, remember);
+      router.replace(redirectTo);
+    } catch (err) {
+      setError(getLoginErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (isLoading || user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="size-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen bg-background">
+      <div className="hidden flex-1 flex-col justify-between bg-sidebar p-10 text-sidebar-foreground lg:flex">
+        <BrandLogo variant="full" onDark href={null} priority />
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Gestiona tu operación desde un solo lugar
+          </h1>
+          <p className="mt-4 max-w-md text-sidebar-muted">
+            Accede con tus credenciales corporativas. El token JWT se envía en
+            cada petición protegida mediante Authorization Bearer.
+          </p>
+        </div>
+        <p className="text-sm text-sidebar-muted">
+          API: {process.env.NEXT_PUBLIC_API_URL ?? "no configurada"}
+        </p>
+      </div>
+
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          <div className="mb-8 flex flex-col items-center lg:hidden">
+            <BrandLogo variant="full" href={null} className="h-12" />
+            <h2 className="mt-4 text-center text-2xl font-semibold tracking-tight">
+              Iniciar sesión
+            </h2>
+          </div>
+
+          <div className="hidden lg:block">
+            <h2 className="text-2xl font-semibold tracking-tight">
+              Iniciar sesión
+            </h2>
+            <p className="mt-2 text-sm text-muted">
+              Introduce tu usuario y contraseña
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            {error && (
+              <div
+                role="alert"
+                className="flex items-start gap-3 rounded-lg border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300"
+              >
+                <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">Usuario</span>
+              <div className="relative">
+                <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
+                <input
+                  type="text"
+                  name="username"
+                  autoComplete="username"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-card py-2.5 pl-10 pr-4 text-sm outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-ring/20"
+                  placeholder="tu.usuario@empresa.com"
+                />
+              </div>
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">
+                Contraseña
+              </span>
+              <div className="relative">
+                <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-card py-2.5 pl-10 pr-11 text-sm outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-ring/20"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
+                  aria-label={
+                    showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                  }
+                  aria-pressed={showPassword}
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                </button>
+              </div>
+            </label>
+
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                className="size-4 rounded border-border accent-accent"
+              />
+              <span className="text-muted">Recordar sesión en este equipo</span>
+            </label>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className={cn(
+                "flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground transition-opacity",
+                submitting && "cursor-not-allowed opacity-70",
+              )}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Entrando...
+                </>
+              ) : (
+                "Entrar"
+              )}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-xs text-muted">
+            Autenticación stateless con JWT · Sin cookies de sesión
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <Loader2 className="size-8 animate-spin text-accent" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
+  );
+}

@@ -1,0 +1,360 @@
+import { contractStatus } from "@/lib/contract-form";
+import { PRINTER_STATUS_LABELS } from "@/lib/printer-form";
+import { fetchBranches } from "@/lib/branches-api";
+import { fetchClients } from "@/lib/clients-api";
+import { fetchCompanies } from "@/lib/companies-api";
+import { fetchDistributorContracts } from "@/lib/distributor-contracts-api";
+import { fetchDistributors } from "@/lib/distributors-api";
+import { fetchEmployees } from "@/lib/employees-api";
+import { fetchPrinters } from "@/lib/printers-api";
+import { fetchServiceCenterContracts } from "@/lib/service-center-contracts-api";
+import { fetchServiceCenters } from "@/lib/service-centers-api";
+import { fetchUsers } from "@/lib/users-api";
+import type { CompanyScope } from "@/lib/company-scope";
+import {
+  branchIdsFromScope,
+  filterByBranchScope,
+  filterEmployeesInScope,
+  filterPrintersForUser,
+} from "@/lib/scope-filters";
+import type { BranchResponse } from "@/types/branch";
+import type { EmployeeResponse } from "@/types/employee";
+import type { PrinterResponse, PrinterStatus } from "@/types/printer";
+import type { Role } from "@/types/user";
+
+export { filterPrintersForUser } from "@/lib/scope-filters";
+
+export type DashboardStat = {
+  title: string;
+  value: string;
+  hint?: string;
+};
+
+export type DashboardActivity = {
+  id: string;
+  label: string;
+  time: string;
+  sortKey: number;
+};
+
+export type PrinterStatusCount = {
+  status: PrinterStatus;
+  label: string;
+  count: number;
+};
+
+export type MonthlyCount = {
+  key: string;
+  label: string;
+  count: number;
+};
+
+export type DashboardSnapshot = {
+  stats: DashboardStat[];
+  printers: PrinterResponse[];
+  printerStatusCounts: PrinterStatusCount[];
+  monthlyPrinterRegistrations: MonthlyCount[];
+  recentPrinters: PrinterResponse[];
+  activity: DashboardActivity[];
+  loadWarnings: string[];
+};
+
+async function settled<T>(
+  promise: Promise<T>,
+): Promise<{ ok: true; value: T } | { ok: false; error: unknown }> {
+  try {
+    return { ok: true, value: await promise };
+  } catch (error) {
+    return { ok: false, error };
+  }
+}
+
+export function countPrintersByStatus(
+  printers: PrinterResponse[],
+): PrinterStatusCount[] {
+  const counts = new Map<PrinterStatus, number>();
+  for (const printer of printers) {
+    counts.set(printer.status, (counts.get(printer.status) ?? 0) + 1);
+  }
+  return (["laboratorio", "activo", "inactivo"] as const).map((status) => ({
+    status,
+    label: PRINTER_STATUS_LABELS[status],
+    count: counts.get(status) ?? 0,
+  }));
+}
+
+export function printersByMonth(
+  printers: PrinterResponse[],
+  months = 6,
+): MonthlyCount[] {
+  const now = new Date();
+  const buckets: MonthlyCount[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const label = d.toLocaleDateString("es", { month: "short" });
+    buckets.push({ key, label, count: 0 });
+  }
+  const bucketMap = new Map(buckets.map((b) => [b.key, b]));
+  for (const printer of printers) {
+    const created = new Date(printer.createdAt);
+    if (Number.isNaN(created.getTime())) continue;
+    const key = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, "0")}`;
+    const bucket = bucketMap.get(key);
+    if (bucket) bucket.count += 1;
+  }
+  return buckets;
+}
+
+export function formatRelativeTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  const diffMs = Date.now() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60_000);
+  if (diffMin < 1) return "Hace un momento";
+  if (diffMin < 60) return `Hace ${diffMin} min`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `Hace ${diffHours} h`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `Hace ${diffDays} d`;
+  return date.toLocaleDateString("es", { dateStyle: "medium" });
+}
+
+function buildActivity(
+  printers: PrinterResponse[],
+  employees: EmployeeResponse[],
+  branches: BranchResponse[],
+): DashboardActivity[] {
+  const items: DashboardActivity[] = [
+    ...printers.map((p) => ({
+      id: `printer-${p.id}`,
+      label: `Impresora ${p.fiscalSerial} registrada`,
+      time: formatRelativeTime(p.createdAt),
+      sortKey: new Date(p.createdAt).getTime() || 0,
+    })),
+    ...employees.map((e) => ({
+      id: `employee-${e.id}`,
+      label: `Empleado ${e.name} añadido`,
+      time: formatRelativeTime(e.createdAt),
+      sortKey: new Date(e.createdAt).getTime() || 0,
+    })),
+    ...branches.map((b) => ({
+      id: `branch-${b.id}`,
+      label: `Sucursal #${b.id} en ${b.city || "sin ciudad"}`,
+      time: formatRelativeTime(b.createdAt),
+      sortKey: new Date(b.createdAt).getTime() || 0,
+    })),
+  ];
+  return items
+    .filter((item) => item.sortKey > 0)
+    .sort((a, b) => b.sortKey - a.sortKey)
+    .slice(0, 8);
+}
+
+function buildStats(
+  role: Role,
+  counts: {
+    companies: number;
+    branches: number;
+    clients: number;
+    distributors: number;
+    serviceCenters: number;
+    employees: number;
+    printers: PrinterResponse[];
+    users: number | null;
+    activeContracts: number | null;
+  },
+): DashboardStat[] {
+  const activePrinters = counts.printers.filter((p) => p.status === "activo").length;
+  const paidPrinters = counts.printers.filter((p) => p.paid).length;
+
+  switch (role) {
+    case "ADMIN":
+      return [
+        { title: "Empresas", value: String(counts.companies) },
+        { title: "Sucursales", value: String(counts.branches) },
+        {
+          title: "Impresoras",
+          value: String(counts.printers.length),
+          hint: `${activePrinters} activas · ${paidPrinters} pagadas`,
+        },
+        {
+          title: "Empleados",
+          value: String(counts.employees),
+          hint: [
+            counts.users != null ? `${counts.users} usuarios` : null,
+            counts.activeContracts != null
+              ? `${counts.activeContracts} contratos vigentes`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(" · ") || undefined,
+        },
+      ];
+    case "DISTRIBUTOR":
+      return [
+        {
+          title: "Impresoras",
+          value: String(counts.printers.length),
+          hint: `${activePrinters} activas`,
+        },
+        { title: "Clientes", value: String(counts.clients) },
+        { title: "Sucursales", value: String(counts.branches) },
+        { title: "Empleados", value: String(counts.employees) },
+      ];
+    case "TECHNICIAN":
+      return [
+        {
+          title: "Impresoras",
+          value: String(counts.printers.length),
+          hint: `${activePrinters} activas · ${counts.printers.filter((p) => p.status === "laboratorio").length} en laboratorio`,
+        },
+        { title: "Empleados", value: String(counts.employees) },
+        { title: "Sucursales", value: String(counts.branches) },
+        {
+          title: "Distribuidores",
+          value: String(counts.distributors),
+          hint: `${counts.serviceCenters} centros de servicio`,
+        },
+      ];
+    case "SERVICE_CENTER":
+    default:
+      return [
+        { title: "Empresas", value: String(counts.companies) },
+        { title: "Sucursales", value: String(counts.branches) },
+        { title: "Empleados", value: String(counts.employees) },
+        {
+          title: "Centros de servicio",
+          value: String(counts.serviceCenters),
+          hint: `${counts.clients} clientes en red`,
+        },
+      ];
+  }
+}
+
+export async function loadDashboardSnapshot(options: {
+  role: Role;
+  scope: CompanyScope | null;
+  distributorId: number | null;
+  userBranchId: number | null;
+}): Promise<DashboardSnapshot> {
+  const { role, scope, distributorId, userBranchId } = options;
+  const loadWarnings: string[] = [];
+
+  const [
+    companiesP,
+    branchesP,
+    clientsP,
+    distributorsP,
+    serviceCentersP,
+    employeesP,
+    printersP,
+    usersP,
+    contractsP,
+  ] = await Promise.all([
+    settled(scope ? Promise.resolve(scope.companies) : fetchCompanies()),
+    settled(scope ? Promise.resolve(scope.branches) : fetchBranches()),
+    settled(fetchClients()),
+    settled(fetchDistributors()),
+    settled(fetchServiceCenters()),
+    settled(fetchEmployees()),
+    role === "ADMIN" || role === "DISTRIBUTOR" || role === "TECHNICIAN"
+      ? settled(fetchPrinters())
+      : Promise.resolve(null),
+    role === "ADMIN" ? settled(fetchUsers()) : Promise.resolve(null),
+    role === "ADMIN"
+      ? settled(
+          Promise.all([
+            fetchDistributorContracts(),
+            fetchServiceCenterContracts(),
+          ]),
+        )
+      : Promise.resolve(null),
+  ]);
+
+  const companies = companiesP.ok ? companiesP.value : [];
+  const branches = branchesP.ok ? branchesP.value : [];
+  const clients = clientsP.ok ? clientsP.value : [];
+  const distributors = distributorsP.ok ? distributorsP.value : [];
+  const serviceCenters = serviceCentersP.ok ? serviceCentersP.value : [];
+  const employeesRaw = employeesP.ok ? employeesP.value : [];
+
+  if (!companiesP.ok) loadWarnings.push("No se pudieron cargar las empresas.");
+  if (!branchesP.ok) loadWarnings.push("No se pudieron cargar las sucursales.");
+  if (!employeesP.ok) loadWarnings.push("No se pudieron cargar los empleados.");
+  if (printersP && !printersP.ok) {
+    loadWarnings.push("No se pudieron cargar las impresoras.");
+  }
+
+  const branchIds = branchIdsFromScope(scope, branches);
+  const scopedBranches =
+    branchIds.size > 0
+      ? branches.filter((b) => branchIds.has(b.id))
+      : branches;
+  const scopedClients = filterByBranchScope(clients, branchIds, role);
+  const scopedDistributors = filterByBranchScope(
+    distributors,
+    branchIds,
+    role,
+  );
+  const scopedServiceCenters = filterByBranchScope(
+    serviceCenters,
+    branchIds,
+    role,
+  );
+  const employees = filterEmployeesInScope(
+    employeesRaw,
+    branchIds,
+    role,
+    userBranchId,
+  );
+
+  let printers: PrinterResponse[] = [];
+  if (printersP?.ok) {
+    printers = filterPrintersForUser(printersP.value, role, distributorId);
+  }
+
+  let users: number | null = null;
+  if (usersP?.ok) {
+    users = usersP.value.filter((u) => u.enabled).length;
+  }
+
+  let activeContracts: number | null = null;
+  if (contractsP?.ok) {
+    const [distributorContracts, serviceCenterContracts] = contractsP.value;
+    activeContracts = [
+      ...distributorContracts,
+      ...serviceCenterContracts,
+    ].filter((c) => contractStatus(c.startDate, c.endDate) === "active").length;
+  }
+
+  const stats = buildStats(role, {
+    companies: companies.length,
+    branches: scopedBranches.length,
+    clients: scopedClients.length,
+    distributors: scopedDistributors.length,
+    serviceCenters: scopedServiceCenters.length,
+    employees: employees.length,
+    printers,
+    users,
+    activeContracts,
+  });
+
+  const printerStatusCounts = countPrintersByStatus(printers);
+  const monthlyPrinterRegistrations = printersByMonth(printers);
+  const recentPrinters = [...printers]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt, "es"))
+    .slice(0, 6);
+
+  const activity = buildActivity(printers, employees, scopedBranches);
+
+  return {
+    stats: stats.slice(0, 4),
+    printers,
+    printerStatusCounts,
+    monthlyPrinterRegistrations,
+    recentPrinters,
+    activity,
+    loadWarnings,
+  };
+}

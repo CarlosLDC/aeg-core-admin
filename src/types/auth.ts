@@ -1,0 +1,29 @@
+export type LoginRequest = {
+  username: string;
+  password: string;
+};
+
+export type AuthResponse = {
+  token: string;
+};
+
+export type JwtPayload = {
+  sub?: string;
+  exp?: number;
+  iat?: number;
+  role?: string;
+  branchId?: number;
+  distributorId?: number;
+  authorities?: string[];
+  roles?: string[];
+};
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}

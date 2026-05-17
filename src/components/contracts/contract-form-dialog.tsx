@@ -1,0 +1,221 @@
+"use client";
+
+import { FormEvent, useEffect, useState } from "react";
+import { Loader2, X } from "lucide-react";
+import { photoUrlsToText, type ContractFormValues } from "@/lib/contract-form";
+import type { ContractKind } from "@/types/contract";
+import type {
+  DistributorContractResponse,
+  ServiceCenterContractResponse,
+} from "@/types/contract";
+import { cn } from "@/lib/utils";
+
+type PartyOption = { id: number; label: string };
+
+type ContractFormDialogProps = {
+  kind: ContractKind;
+  mode: "create" | "edit";
+  contract?: DistributorContractResponse | ServiceCenterContractResponse;
+  partyOptions: PartyOption[];
+  catalogLoading: boolean;
+  open: boolean;
+  saving: boolean;
+  error: string | null;
+  onClose: () => void;
+  onSubmit: (values: ContractFormValues) => void;
+};
+
+const emptyForm: ContractFormValues = {
+  partyId: "",
+  startDate: "",
+  endDate: "",
+  photoUrlsText: "",
+};
+
+function partyIdFromContract(
+  kind: ContractKind,
+  contract: DistributorContractResponse | ServiceCenterContractResponse,
+): string {
+  if (kind === "distributor") {
+    return String((contract as DistributorContractResponse).distributorId);
+  }
+  return String((contract as ServiceCenterContractResponse).serviceCenterId);
+}
+
+export function ContractFormDialog({
+  kind,
+  mode,
+  contract,
+  partyOptions,
+  catalogLoading,
+  open,
+  saving,
+  error,
+  onClose,
+  onSubmit,
+}: ContractFormDialogProps) {
+  const [form, setForm] = useState<ContractFormValues>(emptyForm);
+
+  const partyLabel =
+    kind === "distributor" ? "Distribuidora" : "Centro de servicio";
+
+  useEffect(() => {
+    if (!open) return;
+    if (mode === "edit" && contract) {
+      setForm({
+        partyId: partyIdFromContract(kind, contract),
+        startDate: contract.startDate.slice(0, 10),
+        endDate: contract.endDate.slice(0, 10),
+        photoUrlsText: photoUrlsToText(contract.photoUrls),
+      });
+    } else {
+      setForm(emptyForm);
+    }
+  }, [open, mode, contract, kind]);
+
+  if (!open) return null;
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    onSubmit(form);
+  }
+
+  const inputClass =
+    "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/50"
+        aria-label="Cerrar"
+        onClick={onClose}
+      />
+      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-card-foreground">
+              {mode === "create" ? "Nuevo contrato" : "Editar contrato"}
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              Contrato de {partyLabel.toLowerCase()}: vigencia y URLs de fotos.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-muted hover:bg-foreground/5"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
+        {error && (
+          <p
+            role="alert"
+            className="mb-4 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
+          >
+            {error}
+          </p>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium">{partyLabel}</span>
+            <select
+              required
+              value={form.partyId}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, partyId: e.target.value }))
+              }
+              disabled={catalogLoading || partyOptions.length === 0}
+              className={inputClass}
+            >
+              <option value="">
+                {catalogLoading
+                  ? "Cargando…"
+                  : partyOptions.length === 0
+                    ? "No hay registros disponibles"
+                    : "Seleccionar…"}
+              </option>
+              {partyOptions.map((opt) => (
+                <option key={opt.id} value={String(opt.id)}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">Inicio</span>
+              <input
+                type="date"
+                required
+                value={form.startDate}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, startDate: e.target.value }))
+                }
+                className={inputClass}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">Fin</span>
+              <input
+                type="date"
+                required
+                value={form.endDate}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, endDate: e.target.value }))
+                }
+                className={inputClass}
+              />
+            </label>
+          </div>
+
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium">
+              URLs de fotos
+            </span>
+            <textarea
+              required
+              rows={4}
+              value={form.photoUrlsText}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, photoUrlsText: e.target.value }))
+              }
+              placeholder="https://ejemplo.com/contrato-1.jpg&#10;https://ejemplo.com/contrato-2.jpg"
+              className={cn(inputClass, "resize-y font-mono text-xs")}
+            />
+            <p className="mt-1 text-xs text-muted">Una URL por línea.</p>
+          </label>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={saving || catalogLoading}
+              className={cn(
+                "flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
+                (saving || catalogLoading) && "cursor-not-allowed opacity-70",
+              )}
+            >
+              {saving && <Loader2 className="size-4 animate-spin" />}
+              {mode === "create" ? "Crear" : "Guardar"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
