@@ -34,6 +34,10 @@ import type {
   DistributorContractResponse,
   ServiceCenterContractResponse,
 } from "@/types/contract";
+import {
+  contractDocumentLabel,
+  isPdfUrl,
+} from "@/lib/contract-documents";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 
@@ -315,7 +319,7 @@ export function ContractsListPanel({
                         <th className="px-5 py-3 font-medium">{partyColumn}</th>
                         <th className="px-5 py-3 font-medium">Vigencia</th>
                         <th className="px-5 py-3 font-medium">Estado</th>
-                        <th className="px-5 py-3 font-medium">Fotos</th>
+                        <th className="px-5 py-3 font-medium">Documentos</th>
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -344,19 +348,26 @@ export function ContractsListPanel({
                             />
                           </td>
                           <td className="px-5 py-3.5">
-                            <span className="text-muted">
-                              {contract.photoUrls?.length ?? 0}
-                            </span>
-                            {(contract.photoUrls?.length ?? 0) > 0 && (
-                              <a
-                                href={contract.photoUrls[0]}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="ml-2 inline-flex items-center gap-0.5 text-xs text-accent hover:underline"
-                              >
-                                Ver
-                                <ExternalLink className="size-3" />
-                              </a>
+                            {(contract.photoUrls?.length ?? 0) === 0 ? (
+                              <span className="text-muted">—</span>
+                            ) : (
+                              <ul className="space-y-1">
+                                {contract.photoUrls.map((url) => (
+                                  <li key={url}>
+                                    <a
+                                      href={url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex max-w-[200px] items-center gap-1 truncate text-xs text-accent hover:underline"
+                                      title={contractDocumentLabel(url)}
+                                    >
+                                      {isPdfUrl(url) ? "PDF" : "Imagen"}:{" "}
+                                      {contractDocumentLabel(url)}
+                                      <ExternalLink className="size-3 shrink-0" />
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
                             )}
                           </td>
                           <td className="px-5 py-3.5">

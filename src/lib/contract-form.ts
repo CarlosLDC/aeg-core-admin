@@ -4,7 +4,8 @@ export type ContractFormValues = {
   partyId: string;
   startDate: string;
   endDate: string;
-  photoUrlsText: string;
+  /** URLs públicas en Vercel Blob (PDF o imágenes). */
+  photoUrls: string[];
 };
 
 export function parsePhotoUrls(text: string): string[] {
@@ -74,9 +75,8 @@ export function validateContractForm(
     return "La fecha de fin debe ser posterior o igual a la de inicio.";
   }
 
-  const photoUrls = parsePhotoUrls(values.photoUrlsText);
-  if (photoUrls.length === 0) {
-    return "Indica al menos una URL de foto del contrato.";
+  if (values.photoUrls.length === 0) {
+    return "Sube al menos un documento del contrato (PDF o imagen).";
   }
 
   return null;
@@ -89,7 +89,7 @@ export function toDistributorContractBody(values: ContractFormValues) {
     distributorId: Number(values.partyId),
     startDate: values.startDate,
     endDate: values.endDate,
-    photoUrls: parsePhotoUrls(values.photoUrlsText),
+    photoUrls: values.photoUrls,
   };
 }
 
@@ -100,6 +100,6 @@ export function toServiceCenterContractBody(values: ContractFormValues) {
     serviceCenterId: Number(values.partyId),
     startDate: values.startDate,
     endDate: values.endDate,
-    photoUrls: parsePhotoUrls(values.photoUrlsText),
+    photoUrls: values.photoUrls,
   };
 }

@@ -2,7 +2,8 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { Loader2, X } from "lucide-react";
-import { photoUrlsToText, type ContractFormValues } from "@/lib/contract-form";
+import { ContractDocumentUpload } from "@/components/contracts/contract-document-upload";
+import { type ContractFormValues } from "@/lib/contract-form";
 import type { ContractKind } from "@/types/contract";
 import type {
   DistributorContractResponse,
@@ -29,7 +30,7 @@ const emptyForm: ContractFormValues = {
   partyId: "",
   startDate: "",
   endDate: "",
-  photoUrlsText: "",
+  photoUrls: [],
 };
 
 function partyIdFromContract(
@@ -66,7 +67,7 @@ export function ContractFormDialog({
         partyId: partyIdFromContract(kind, contract),
         startDate: contract.startDate.slice(0, 10),
         endDate: contract.endDate.slice(0, 10),
-        photoUrlsText: photoUrlsToText(contract.photoUrls),
+        photoUrls: [...(contract.photoUrls ?? [])],
       });
     } else {
       setForm(emptyForm);
@@ -102,7 +103,8 @@ export function ContractFormDialog({
               {mode === "create" ? "Nuevo contrato" : "Editar contrato"}
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Contrato de {partyLabel.toLowerCase()}: vigencia y URLs de fotos.
+              Contrato de {partyLabel.toLowerCase()}: vigencia y documentos
+              adjuntos.
             </p>
           </div>
           <button
@@ -177,22 +179,15 @@ export function ContractFormDialog({
             </label>
           </div>
 
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              URLs de fotos
-            </span>
-            <textarea
-              required
-              rows={4}
-              value={form.photoUrlsText}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, photoUrlsText: e.target.value }))
-              }
-              placeholder="https://ejemplo.com/contrato-1.jpg&#10;https://ejemplo.com/contrato-2.jpg"
-              className={cn(inputClass, "resize-y font-mono text-xs")}
+          <div>
+            <span className="mb-1.5 block text-sm font-medium">Documentos</span>
+            <ContractDocumentUpload
+              kind={kind}
+              urls={form.photoUrls}
+              onChange={(photoUrls) => setForm((f) => ({ ...f, photoUrls }))}
+              disabled={saving || catalogLoading}
             />
-            <p className="mt-1 text-xs text-muted">Una URL por línea.</p>
-          </label>
+          </div>
 
           <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
             <button
@@ -204,10 +199,11 @@ export function ContractFormDialog({
             </button>
             <button
               type="submit"
-              disabled={saving || catalogLoading}
+              disabled={saving || catalogLoading || form.photoUrls.length === 0}
               className={cn(
                 "flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
-                (saving || catalogLoading) && "cursor-not-allowed opacity-70",
+                (saving || catalogLoading || form.photoUrls.length === 0) &&
+                  "cursor-not-allowed opacity-70",
               )}
             >
               {saving && <Loader2 className="size-4 animate-spin" />}
