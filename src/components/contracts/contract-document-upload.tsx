@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { FileText, ImageIcon, Loader2, Plus, Trash2, Upload } from "lucide-react";
+import { FileText, ImageIcon, Loader2, Trash2, Upload } from "lucide-react";
 import {
   contractDocumentLabel,
   contractDocumentViewUrl,
@@ -55,61 +55,82 @@ export function ContractDocumentUpload({
     onChange(urls.filter((_, i) => i !== index));
   }
 
+  function openFilePicker() {
+    if (disabled || uploading) return;
+    inputRef.current?.click();
+  }
+
+  const hasFiles = urls.length > 0;
+
   return (
     <div className="space-y-3">
+      <input
+        ref={inputRef}
+        type="file"
+        accept={CONTRACT_DOCUMENT_ACCEPT}
+        multiple
+        className="sr-only"
+        disabled={disabled || uploading}
+        onChange={(e) => void handleFiles(e.target.files)}
+      />
+
       <div
+        role="group"
+        aria-label="Subir documentos del contrato"
         className={cn(
-          "rounded-lg border border-dashed border-border bg-foreground/[0.02] p-4",
+          "rounded-xl border border-dashed border-border bg-foreground/[0.02] px-4 py-5",
           disabled && "opacity-60",
         )}
       >
-        <input
-          ref={inputRef}
-          type="file"
-          accept={CONTRACT_DOCUMENT_ACCEPT}
-          multiple
-          className="sr-only"
+        <button
+          type="button"
           disabled={disabled || uploading}
-          onChange={(e) => void handleFiles(e.target.files)}
-        />
-        <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:text-left">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-            <Upload className="size-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-card-foreground">
-              Subir PDF o imágenes del contrato
-            </p>
-            <p className="text-xs text-muted">
-              Máximo 10 MB por archivo. Se guardan en Vercel Blob.
-            </p>
-          </div>
-          <button
-            type="button"
-            disabled={disabled || uploading}
-            onClick={() => inputRef.current?.click()}
-            className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          onClick={openFilePicker}
+          className="group flex w-full flex-col items-center gap-3 rounded-lg px-1 py-0.5 text-center transition-colors enabled:hover:bg-foreground/[0.02] disabled:cursor-not-allowed"
+        >
+          <div className="flex size-11 items-center justify-center rounded-full bg-accent/10 text-accent">
             {uploading ? (
-              <Loader2 className="size-4 animate-spin" />
+              <Loader2 className="size-5 animate-spin" aria-hidden />
             ) : (
-              <Plus className="size-4" />
+              <Upload className="size-5" aria-hidden />
             )}
-            {uploading ? "Subiendo…" : "Elegir archivos"}
-          </button>
-        </div>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-card-foreground">
+              {uploading ? "Subiendo archivos…" : "Añadir documentos"}
+            </p>
+            <p className="text-xs leading-relaxed text-muted">
+              PDF o imágenes (JPG, PNG, WebP, GIF)
+              <span className="mx-1 text-border">·</span>
+              máx. 10 MB
+            </p>
+            {!hasFiles && !uploading && (
+              <p className="pt-0.5 text-xs text-muted/90">
+                Se requiere al menos un archivo.
+              </p>
+            )}
+          </div>
+          <span
+            className={cn(
+              "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm font-medium text-foreground",
+              !disabled && !uploading && "group-hover:border-accent/30",
+            )}
+          >
+            {uploading ? "Espera un momento…" : "Elegir archivos"}
+          </span>
+        </button>
       </div>
 
       {uploadError && (
         <p
           role="alert"
-          className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
+          className="rounded-lg border border-amber-200/70 bg-amber-500/8 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/25 dark:text-amber-100"
         >
           {uploadError}
         </p>
       )}
 
-      {urls.length > 0 ? (
+      {hasFiles && (
         <ul className="space-y-2">
           {urls.map((url, index) => {
             const pdf = isPdfUrl(url);
@@ -118,9 +139,9 @@ export function ContractDocumentUpload({
             return (
               <li
                 key={`${url}-${index}`}
-                className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2"
+                className="flex items-start gap-2.5 rounded-lg border border-border bg-background p-2.5"
               >
-                <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-foreground/5">
+                <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-foreground/5">
                   {!pdf ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -129,10 +150,10 @@ export function ContractDocumentUpload({
                       className="size-full object-cover"
                     />
                   ) : (
-                    <Icon className="size-4 text-muted" />
+                    <Icon className="size-4 text-muted" aria-hidden />
                   )}
                 </div>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 pt-0.5">
                   <p className="truncate text-sm font-medium text-card-foreground">
                     {contractDocumentLabel(url)}
                   </p>
@@ -140,7 +161,7 @@ export function ContractDocumentUpload({
                     href={viewUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-accent hover:underline"
+                    className="mt-0.5 inline-block text-xs text-accent hover:underline"
                   >
                     Ver archivo
                   </a>
@@ -149,7 +170,7 @@ export function ContractDocumentUpload({
                   type="button"
                   disabled={disabled || uploading}
                   onClick={() => removeUrl(index)}
-                  className="shrink-0 rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
+                  className="shrink-0 rounded-lg p-1.5 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
                   aria-label="Quitar archivo"
                 >
                   <Trash2 className="size-4" />
@@ -158,10 +179,6 @@ export function ContractDocumentUpload({
             );
           })}
         </ul>
-      ) : (
-        <p className="text-xs text-muted">
-          Añade al menos un documento del contrato (PDF o imagen).
-        </p>
       )}
     </div>
   );

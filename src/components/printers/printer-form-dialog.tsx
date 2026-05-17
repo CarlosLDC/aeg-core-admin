@@ -1,7 +1,12 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
+import { BooleanToggle } from "@/components/ui/boolean-toggle";
+import {
+  SearchableSelect,
+  type SearchableSelectOption,
+} from "@/components/ui/searchable-select";
 import {
   DEVICE_TYPE_LABELS,
   emptyPrinterForm,
@@ -11,10 +16,17 @@ import {
 } from "@/lib/printer-form";
 import type { PrinterResponse } from "@/types/printer";
 import { DEVICE_TYPES, PRINTER_STATUSES } from "@/types/printer";
-import type { SoftwareResponse } from "@/types/software";
 import { cn } from "@/lib/utils";
 
 export type SelectOption = { id: number; label: string };
+
+function toSearchableOptions(options: SelectOption[]): SearchableSelectOption[] {
+  return options.map((opt) => ({
+    value: String(opt.id),
+    label: opt.label,
+    searchText: String(opt.id),
+  }));
+}
 
 type PrinterFormDialogProps = {
   mode: "create" | "edit";
@@ -88,6 +100,19 @@ export function PrinterFormDialog({
     "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
   const disabled = saving || modelsLoading || catalogLoading;
   const modelSelectDisabled = disabled || modelOptions.length === 0;
+
+  const distributorSearchOptions = useMemo(
+    () => toSearchableOptions(distributorOptions),
+    [distributorOptions],
+  );
+  const clientSearchOptions = useMemo(
+    () => toSearchableOptions(clientOptions),
+    [clientOptions],
+  );
+  const softwareSearchOptions = useMemo(
+    () => toSearchableOptions(softwareOptions),
+    [softwareOptions],
+  );
 
   return (
     <div
@@ -259,79 +284,64 @@ export function PrinterFormDialog({
                 className={inputClass}
               />
             </label>
-            <label className="flex items-end gap-2 pb-2">
-              <input
-                type="checkbox"
-                checked={form.paid}
+            <div className="block">
+              <span className="mb-1.5 block text-sm font-medium">
+                Estado de pago
+              </span>
+              <BooleanToggle
+                value={form.paid}
+                onChange={(paid) => setForm((f) => ({ ...f, paid }))}
                 disabled={disabled}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, paid: e.target.checked }))
-                }
-                className="size-4 rounded border-border"
+                falseLabel="Pendiente"
+                trueLabel="Pagada"
+                ariaLabel="Estado de pago de la impresora"
               />
-              <span className="text-sm font-medium">Pagada</span>
-            </label>
+            </div>
           </div>
 
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              Distribuidor
-            </span>
-            <select
+          <div className="block">
+            <span className="mb-1.5 block text-sm font-medium">Distribuidor</span>
+            <SearchableSelect
               value={form.distributorId}
+              onChange={(distributorId) =>
+                setForm((f) => ({ ...f, distributorId }))
+              }
+              options={distributorSearchOptions}
               disabled={disabled || lockDistributor}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, distributorId: e.target.value }))
-              }
-              className={inputClass}
-            >
-              <option value="">Sin asignar</option>
-              {distributorOptions.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              loading={catalogLoading}
+              emptyLabel="Sin asignar"
+              searchPlaceholder="Buscar distribuidor…"
+            />
+          </div>
 
-          <label className="block">
+          <div className="block">
             <span className="mb-1.5 block text-sm font-medium">Cliente</span>
-            <select
+            <SearchableSelect
               value={form.clientId}
+              onChange={(clientId) => setForm((f) => ({ ...f, clientId }))}
+              options={clientSearchOptions}
               disabled={disabled}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, clientId: e.target.value }))
-              }
-              className={inputClass}
-            >
-              <option value="">Sin asignar</option>
-              {clientOptions.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              loading={catalogLoading}
+              emptyLabel="Sin asignar"
+              searchPlaceholder="Buscar cliente…"
+            />
+          </div>
 
           {canPickSoftware && (
-            <label className="block">
+            <div className="block">
               <span className="mb-1.5 block text-sm font-medium">Software</span>
-              <select
+              <SearchableSelect
                 value={form.softwareId}
-                disabled={disabled}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, softwareId: e.target.value }))
+                onChange={(softwareId) =>
+                  setForm((f) => ({ ...f, softwareId }))
                 }
-                className={inputClass}
-              >
-                <option value="">Sin asignar</option>
-                {softwareOptions.map((opt) => (
-                  <option key={opt.id} value={opt.id}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+                options={softwareSearchOptions}
+                disabled={disabled}
+                loading={catalogLoading}
+                emptyLabel="Sin asignar"
+                searchPlaceholder="Buscar software…"
+              />
+            </div>
           )}
 
           <div className="grid gap-4 sm:grid-cols-2">
