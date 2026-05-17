@@ -46,14 +46,14 @@ function LoginForm() {
 
   if (isLoading || user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-screen items-center justify-center bg-login-panel">
         <Loader2 className="size-8 animate-spin text-accent" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-login-panel">
       <div className="relative hidden flex-1 flex-col justify-between overflow-hidden p-10 text-sidebar-foreground lg:flex">
         <LoginAnimatedBackdrop />
         <div className="relative z-10">
@@ -118,7 +118,7 @@ function LoginForm() {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-card py-2.5 pl-10 pr-4 text-sm outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-ring/20"
+                  className="w-full rounded-lg border border-border/80 bg-login-field py-2.5 pl-10 pr-4 text-sm outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-ring/20"
                   placeholder="tu.usuario@empresa.com"
                 />
               </div>
@@ -137,7 +137,7 @@ function LoginForm() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-card py-2.5 pl-10 pr-11 text-sm outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-ring/20"
+                  className="w-full rounded-lg border border-border/80 bg-login-field py-2.5 pl-10 pr-11 text-sm outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-ring/20"
                   placeholder="••••••••"
                 />
                 <button
@@ -200,7 +200,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex min-h-screen items-center justify-center bg-login-panel">
           <Loader2 className="size-8 animate-spin text-accent" />
         </div>
       }

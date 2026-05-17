@@ -13,6 +13,8 @@
   --accent-foreground: #ffffff;
   --muted: #64748b;
   --ring: #0033ff;
+  --login-panel: #f0f3f7;
+  --login-field: #f7f9fc;
 }
 
 @theme inline {
@@ -46,6 +48,8 @@
     --accent-foreground: #ffffff;
     --muted: #94a3b8;
     --ring: #3366ff;
+    --login-panel: #0f172a;
+    --login-field: #1e293b;
   }
 }
 
