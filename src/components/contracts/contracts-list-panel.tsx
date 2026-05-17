@@ -228,12 +228,12 @@ export function ContractsListPanel({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-col gap-2 md:flex-row md:flex-nowrap md:items-center md:justify-end">
         <button
           type="button"
           onClick={loadContracts}
           disabled={loading}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card sm:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+          className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card md:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
         >
           <RefreshCw className={cn("size-4", loading && "animate-spin")} />
           Actualizar
@@ -242,7 +242,7 @@ export function ContractsListPanel({
           type="button"
           onClick={openCreate}
           disabled={catalogLoading || partyOptions.length === 0}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 sm:w-auto text-sm font-medium text-accent-foreground disabled:opacity-50"
+          className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground disabled:opacity-50"
         >
           <Plus className="size-4" />
           Nuevo contrato

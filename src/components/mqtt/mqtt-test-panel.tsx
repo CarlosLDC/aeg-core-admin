@@ -180,8 +180,8 @@ export function MqttTestPanel() {
       </p>
 
       <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
+        <div className="flex flex-col gap-4 md:flex-row md:flex-nowrap md:items-center md:justify-between">
+          <div className="min-w-0 flex-1">
             <h2 className="flex items-center gap-2 font-semibold text-card-foreground">
               <Wifi className="size-5 text-accent" />
               Conexión con el broker
@@ -190,12 +190,12 @@ export function MqttTestPanel() {
               Prueba TCP/MQTT contra el broker configurado en el servidor.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex shrink-0 flex-col gap-2 md:flex-row md:flex-nowrap">
             <button
               type="button"
               onClick={handleConnectionCheck}
               disabled={probeLoading}
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-foreground/5 disabled:opacity-50"
+              className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-foreground/5 disabled:opacity-50"
             >
               {probeLoading ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -208,7 +208,7 @@ export function MqttTestPanel() {
               type="button"
               onClick={handleTestMessage}
               disabled={testLoading}
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-foreground/5 disabled:opacity-50"
+              className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-foreground/5 disabled:opacity-50"
             >
               {testLoading ? (
                 <Loader2 className="size-4 animate-spin" />

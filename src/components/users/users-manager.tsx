@@ -239,18 +239,18 @@ export function UsersManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <p className="min-w-0 text-sm text-muted">
+      <div className="flex flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:justify-between md:gap-4">
+        <p className="min-w-0 flex-1 text-sm text-muted">
           Crea cuentas con usuario y contraseña. Para distribuidores, indica
           sucursal y distribuidora: al iniciar sesión solo verán los datos de su
           ámbito.
         </p>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        <div className="flex w-full shrink-0 flex-col gap-2 max-md:w-full md:w-auto md:flex-row md:flex-nowrap">
           <button
             type="button"
             onClick={refreshAll}
             disabled={loading || catalogLoading}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card sm:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card md:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
           >
             <RefreshCw
               className={cn(
@@ -264,7 +264,7 @@ export function UsersManager() {
             type="button"
             onClick={openCreate}
             disabled={!catalogReady}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 sm:w-auto text-sm font-medium text-accent-foreground disabled:opacity-50"
+            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground disabled:opacity-50"
           >
             <Plus className="size-4" />
             Nuevo usuario

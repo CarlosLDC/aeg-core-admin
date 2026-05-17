@@ -399,14 +399,14 @@ export function PrintersOverviewChart({
         </section>
 
         <section className="lg:col-span-3">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div className="mb-4 flex flex-nowrap items-center justify-between gap-2">
             <p className="text-xs font-medium uppercase tracking-wide text-muted">
               Altas por mes
             </p>
             {trend && (
               <span
                 className={cn(
-                  "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                  "shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium",
                   trend.delta >= 0
                     ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
                     : "bg-rose-500/10 text-rose-700 dark:text-rose-300",

@@ -29,6 +29,7 @@ function NavRow({
   const Icon = item.icon;
   const rowClass = cn(
     "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+    isCollapsed && "justify-center px-2",
     item.disabled
       ? "cursor-default text-sidebar-muted/70"
       : isActive
@@ -81,6 +82,7 @@ export function Sidebar({
   const pathname = usePathname();
   const { user } = useAuth();
   const isCollapsed = collapsed && !mobileOpen;
+  const isMobileDrawer = mobileOpen;
   const sections = user ? navSectionsForRole(user.role) : [];
 
   function isItemActive(item: NavItem): boolean {
@@ -94,26 +96,31 @@ export function Sidebar({
     <aside
       className={cn(
         "fixed inset-y-0 left-0 z-40 flex flex-col border-r border-white/10 bg-sidebar text-sidebar-foreground transition-[width,transform] duration-300 ease-out",
-        isCollapsed ? "w-[72px]" : "w-64",
-        "max-lg:translate-x-0",
-        mobileOpen ? "max-lg:translate-x-0" : "max-lg:-translate-x-full",
+        isCollapsed ? "lg:w-[72px]" : "lg:w-64",
+        isMobileDrawer
+          ? "max-lg:w-[min(17rem,calc(100vw-2.5rem))] max-lg:translate-x-0 max-lg:shadow-2xl"
+          : "max-lg:pointer-events-none max-lg:-translate-x-full",
         "lg:translate-x-0",
       )}
     >
       <div
         className={cn(
           "flex h-16 shrink-0 items-center border-b border-white/10",
-          isCollapsed ? "justify-center pl-1.5 pr-2" : "gap-2 px-3",
+          isMobileDrawer
+            ? "gap-2 px-3"
+            : isCollapsed
+              ? "justify-center px-0"
+              : "gap-2 px-3",
         )}
       >
         <BrandLogo
-          variant={isCollapsed ? "mark" : "full"}
+          variant={isCollapsed && !isMobileDrawer ? "mark" : "full"}
           onDark
           href="/"
           priority
-          centered={isCollapsed}
+          centered={isCollapsed && !isMobileDrawer}
         />
-        {mobileOpen && onMobileClose && (
+        {isMobileDrawer && onMobileClose && (
           <button
             type="button"
             onClick={onMobileClose}
@@ -132,7 +139,7 @@ export function Sidebar({
             className={cn(sectionIndex > 0 && "mt-5")}
             aria-label={section.title}
           >
-            {!isCollapsed ? (
+            {!isCollapsed || isMobileDrawer ? (
               <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted/80">
                 {section.title}
               </p>
@@ -150,7 +157,7 @@ export function Sidebar({
                   <NavRow
                     item={item}
                     isActive={isItemActive(item)}
-                    isCollapsed={isCollapsed}
+                    isCollapsed={isCollapsed && !isMobileDrawer}
                     onNavigate={onMobileClose}
                   />
                 </li>
@@ -160,23 +167,36 @@ export function Sidebar({
         ))}
       </nav>
 
-      <div className="hidden border-t border-white/10 px-2 py-3 lg:block">
+      {isMobileDrawer && onMobileClose ? (
+        <div className="shrink-0 border-t border-white/10 p-3 lg:hidden">
+          <button
+            type="button"
+            onClick={onMobileClose}
+            className="flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium text-sidebar-muted transition-colors hover:bg-white/5 hover:text-sidebar-foreground"
+          >
+            <ChevronLeft className="size-5" />
+            Cerrar menú
+          </button>
+        </div>
+      ) : null}
+
+      <div className="hidden shrink-0 border-t border-white/10 px-2 py-3 lg:block">
         <button
           type="button"
           onClick={onToggle}
           className={cn(
-            "flex w-full items-center gap-2 rounded-lg py-2 text-sm text-sidebar-muted transition-colors hover:bg-white/5 hover:text-sidebar-foreground",
+            "flex w-full items-center rounded-lg py-2 text-sm text-sidebar-muted transition-colors hover:bg-white/5 hover:text-sidebar-foreground",
             isCollapsed
-              ? "justify-center -translate-x-1.5 px-1"
-              : "justify-start pl-3 pr-2",
+              ? "justify-center px-0"
+              : "justify-start gap-2 pl-3 pr-2",
           )}
           aria-label={isCollapsed ? "Expandir menú" : "Contraer menú"}
         >
           {isCollapsed ? (
-            <ChevronRight className="size-5" />
+            <ChevronRight className="size-5 shrink-0" />
           ) : (
             <>
-              <ChevronLeft className="size-5" />
+              <ChevronLeft className="size-5 shrink-0" />
               <span>Contraer</span>
             </>
           )}

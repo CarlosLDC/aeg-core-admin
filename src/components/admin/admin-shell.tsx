@@ -25,6 +25,15 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
     };
   }, [mobileOpen]);
 
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    function onChange() {
+      if (mq.matches) setMobileOpen(false);
+    }
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
   return (
     <AuthGuard>
       <div className="min-h-screen overflow-x-hidden bg-background">
