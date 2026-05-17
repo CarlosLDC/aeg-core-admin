@@ -5,9 +5,9 @@ import { ApiError } from "@/types/auth";
 
 export function getApiBaseUrl(): string {
   const base = resolveApiBaseUrl();
-  if (!base) {
+  if (base === null) {
     throw new Error(
-      "NEXT_PUBLIC_API_URL no está configurada. En Vercel, añade la variable de entorno con la URL del API Java.",
+      "NEXT_PUBLIC_API_URL no está configurada. En desarrollo local usa http://localhost:8080.",
     );
   }
   return base;
