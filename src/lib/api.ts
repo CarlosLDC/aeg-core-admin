@@ -1,13 +1,16 @@
+import { resolveApiBaseUrl } from "@/lib/api-config";
 import { getStoredToken } from "@/lib/auth-storage";
 import { redirectToLoginAfterExpired } from "@/lib/session-expired";
 import { ApiError } from "@/types/auth";
 
 export function getApiBaseUrl(): string {
-  const base = process.env.NEXT_PUBLIC_API_URL;
+  const base = resolveApiBaseUrl();
   if (!base) {
-    throw new Error("NEXT_PUBLIC_API_URL no está configurada");
+    throw new Error(
+      "NEXT_PUBLIC_API_URL no está configurada. En Vercel, añade la variable de entorno con la URL del API Java.",
+    );
   }
-  return base.replace(/\/$/, "");
+  return base;
 }
 
 type ApiFetchOptions = RequestInit & {

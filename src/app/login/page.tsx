@@ -6,6 +6,7 @@ import { AlertCircle, Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
 import { LoginAnimatedBackdrop } from "@/components/auth/login-animated-backdrop";
 import { BrandLogo } from "@/components/brand/logo";
 import { getLoginErrorMessage, useAuth } from "@/context/auth-provider";
+import { getApiDisplayLabel, isApiConfigured } from "@/lib/api-config";
 import { getSafeRedirectPath } from "@/lib/safe-redirect";
 import { cn } from "@/lib/utils";
 
@@ -68,7 +69,12 @@ function LoginForm() {
           </p>
         </div>
         <p className="relative z-10 text-sm text-sidebar-muted/90">
-          API: {process.env.NEXT_PUBLIC_API_URL ?? "no configurada"}
+          API: {getApiDisplayLabel()}
+          {!isApiConfigured() && (
+            <span className="mt-1 block text-amber-300/90">
+              Configura NEXT_PUBLIC_API_URL en el despliegue.
+            </span>
+          )}
         </p>
       </div>
 

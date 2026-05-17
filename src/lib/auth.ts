@@ -58,6 +58,11 @@ export function getSession(): (UserProfile & { token: string }) | null {
 }
 
 export function getLoginErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    if (error.message.includes("NEXT_PUBLIC_API_URL")) {
+      return error.message;
+    }
+  }
   if (error instanceof ApiError) {
     if (
       error.status === 401 &&
@@ -74,7 +79,10 @@ export function getLoginErrorMessage(error: unknown): string {
     return error.message;
   }
   if (error instanceof TypeError) {
-    return "No se pudo conectar con el servidor. Comprueba tu conexión.";
+    return "No se pudo conectar con el API. Comprueba la URL del servidor, CORS y que el backend esté en línea.";
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
   }
   return "No se pudo iniciar sesión. Inténtalo de nuevo.";
 }
