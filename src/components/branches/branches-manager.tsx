@@ -4,6 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
 import {
+  BranchCreateWizardDialog,
+  type BranchWizardValues,
+} from "@/components/branches/branch-create-wizard-dialog";
+import {
   BranchFormDialog,
   type BranchFormValues,
 } from "@/components/branches/branch-form-dialog";
@@ -38,6 +42,11 @@ import {
   getBranchesErrorMessage,
   updateBranch,
 } from "@/lib/branches-api";
+import {
+  createCompany,
+  getCompaniesErrorMessage,
+} from "@/lib/companies-api";
+import { findCompanyByRif } from "@/lib/seniat-extract";
 import { fetchClients } from "@/lib/clients-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
@@ -109,7 +118,8 @@ export function BranchesManager() {
   const [loading, setLoading] = useState(true);
   const companiesLoading = scopeLoading;
   const [listError, setListError] = useState<string | null>(null);
-  const [dialog, setDialog] = useState<"create" | "edit" | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [dialog, setDialog] = useState<"edit" | null>(null);
   const [selected, setSelected] = useState<BranchWithRoles | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -225,7 +235,12 @@ export function BranchesManager() {
   function openCreate() {
     setSelected(null);
     setFormError(null);
-    setDialog("create");
+    setWizardOpen(true);
+  }
+
+  function closeWizard() {
+    setWizardOpen(false);
+    setFormError(null);
   }
 
   function openEdit(branch: BranchWithRoles) {
@@ -240,12 +255,68 @@ export function BranchesManager() {
     setFormError(null);
   }
 
-  async function handleSubmit(values: BranchFormValues) {
-    if (dialog === "create" && !canCreate) {
+  async function handleWizardSubmit(values: BranchWizardValues) {
+    if (!canCreate) {
       setFormError(CATALOG_CREATE_FORBIDDEN_MESSAGE);
       return;
     }
-    if (dialog === "edit" && !canModify) {
+
+    setSaving(true);
+    setFormError(null);
+    const label = `${values.city}, ${values.state}`;
+
+    try {
+      let companyId = values.linkedCompanyId;
+      if (companyId == null) {
+        const existing = values.rif
+          ? findCompanyByRif(companies, values.rif)
+          : undefined;
+        if (existing) {
+          companyId = existing.id;
+        } else {
+          const company = await createCompany({
+            rif: values.rif,
+            businessName: values.businessName,
+            contributorType: values.contributorType,
+          });
+          companyId = company.id;
+          await refreshScope();
+        }
+      }
+
+      const created = await createBranch({
+        companyId,
+        city: values.city,
+        state: values.state,
+        address: values.address || undefined,
+        phone: values.phone || undefined,
+        email: values.email || undefined,
+      });
+
+      await syncBranchRoles(created.id, null, {
+        isClient: values.isClient,
+        isDistributor: values.isDistributor,
+        isServiceCenter: values.isServiceCenter,
+        clientDistributorId: values.clientDistributorId,
+      });
+
+      toast.success(`Sucursal "${label}" creada correctamente.`);
+      closeWizard();
+      await loadBranches();
+    } catch (err) {
+      const message =
+        getCompaniesErrorMessage(err) ||
+        getBranchesErrorMessage(err) ||
+        getBranchRolesErrorMessage(err);
+      setFormError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSubmit(values: BranchFormValues) {
+    if (!canModify) {
       setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
@@ -257,11 +328,7 @@ export function BranchesManager() {
     const label = `${values.city}, ${values.state}`;
 
     try {
-      if (dialog === "create") {
-        const created = await createBranch(body);
-        await syncBranchRoles(created.id, null, roles);
-        toast.success(`Sucursal "${label}" creada correctamente.`);
-      } else if (selected) {
+      if (selected) {
         await updateBranch(selected.id, body);
         await syncBranchRoles(selected.id, selected, roles);
         toast.success(`Sucursal "${label}" actualizada.`);
@@ -493,14 +560,26 @@ export function BranchesManager() {
         )}
       </div>
 
+      <BranchCreateWizardDialog
+        open={wizardOpen}
+        saving={saving}
+        error={formError}
+        companies={companies}
+        branches={branches}
+        distributors={distributors}
+        companiesLoading={companiesLoading}
+        onClose={closeWizard}
+        onSubmit={handleWizardSubmit}
+      />
+
       <BranchFormDialog
-        mode={dialog === "create" ? "create" : "edit"}
+        mode="edit"
         branch={selected ?? undefined}
         companies={companies}
         branches={branches}
         distributors={distributors}
         companiesLoading={companiesLoading}
-        open={dialog !== null}
+        open={dialog === "edit"}
         saving={saving}
         error={formError}
         onClose={closeDialog}
