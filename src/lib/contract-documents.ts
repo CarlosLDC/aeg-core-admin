@@ -17,8 +17,19 @@ export function isContractDocumentMime(type: string): boolean {
   return ALLOWED_MIME.has(type);
 }
 
+function resolveContractDocumentMime(file: File): string | null {
+  if (isContractDocumentMime(file.type)) return file.type;
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".pdf")) return "application/pdf";
+  if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
+  if (name.endsWith(".png")) return "image/png";
+  if (name.endsWith(".webp")) return "image/webp";
+  if (name.endsWith(".gif")) return "image/gif";
+  return null;
+}
+
 export function validateContractDocumentFile(file: File): string | null {
-  if (!isContractDocumentMime(file.type)) {
+  if (!resolveContractDocumentMime(file)) {
     return "Solo se permiten PDF o imágenes (JPG, PNG, WebP, GIF).";
   }
   if (file.size > CONTRACT_DOCUMENT_MAX_BYTES) {
@@ -59,9 +70,12 @@ export async function uploadContractDocument(
 
   if (!res.ok) {
     const data = (await res.json().catch(() => null)) as {
+      error?: string;
       message?: string;
     } | null;
-    throw new Error(data?.message ?? "No se pudo subir el archivo.");
+    throw new Error(
+      data?.error ?? data?.message ?? "No se pudo subir el archivo.",
+    );
   }
 
   const data = (await res.json()) as { url: string };

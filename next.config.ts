@@ -12,12 +12,16 @@ const nextConfig: NextConfig = {
       (process.env.VERCEL ? "true" : "false"),
   },
   async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${apiUpstream.replace(/\/$/, "")}/api/:path*`,
-      },
-    ];
+    const upstream = apiUpstream.replace(/\/$/, "");
+    // fallback: proxy al backend Java solo si Next no tiene Route Handler (/api/uploads/*).
+    return {
+      fallback: [
+        {
+          source: "/api/:path*",
+          destination: `${upstream}/api/:path*`,
+        },
+      ],
+    };
   },
 };
 
