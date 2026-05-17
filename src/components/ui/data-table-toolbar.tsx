@@ -37,11 +37,11 @@ export function DataTableToolbar({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 border-b border-border px-5 py-4",
+        "flex flex-col gap-3 border-b border-border px-3 py-3 sm:px-5 sm:py-4",
         className,
       )}
     >
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <label className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
           <input
@@ -57,13 +57,13 @@ export function DataTableToolbar({
             {filters.map((filter) => (
               <label
                 key={filter.id}
-                className="flex items-center gap-2 text-sm text-muted"
+                className="flex min-w-0 flex-1 flex-col gap-1 text-sm text-muted sm:flex-none sm:flex-row sm:items-center sm:gap-2"
               >
                 <span className="whitespace-nowrap">{filter.label}</span>
                 <select
                   value={filter.value}
                   onChange={(e) => filter.onChange(e.target.value)}
-                  className="rounded-lg border border-border bg-background px-2.5 py-2 text-sm text-foreground outline-none focus:border-accent focus:ring-1 focus:ring-ring/30"
+                  className="w-full min-w-0 rounded-lg border border-border bg-background px-2.5 py-2 text-sm text-foreground outline-none focus:border-accent focus:ring-1 focus:ring-ring/30 sm:w-auto"
                 >
                   {filter.options.map((opt) => (
                     <option key={opt.value} value={opt.value}>

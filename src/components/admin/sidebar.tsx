@@ -117,7 +117,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={onMobileClose}
-            className="ml-auto rounded-lg p-1.5 text-sidebar-muted hover:bg-white/5 hover:text-white lg:hidden"
+            className="ml-auto shrink-0 rounded-lg p-1.5 text-sidebar-muted hover:bg-white/5 hover:text-white lg:hidden"
             aria-label="Cerrar menú"
           >
             <X className="size-5" />

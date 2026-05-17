@@ -29,7 +29,7 @@ export function TablePagination<T>({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 border-t border-border px-5 py-3 sm:flex-row sm:items-center sm:justify-between",
+        "flex flex-col gap-3 border-t border-border px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5",
         className,
       )}
     >

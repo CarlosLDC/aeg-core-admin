@@ -47,6 +47,7 @@ import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { EmployeeRequest } from "@/types/employee";
 import { cn } from "@/lib/utils";
+import { TableScroll } from "@/components/ui/table-scroll";
 
 function employeeLabel(employee: EmployeeWithRoles) {
   return `${employee.name} (${employee.nationalId})`;
@@ -336,17 +337,17 @@ export function EmployeesManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <p className="min-w-0 text-sm text-muted">
           Personal por sucursal con un solo rol. Solo un administrador puede
           editar o eliminar empleados.
         </p>
-        <div className="flex gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <button
             type="button"
             onClick={refreshAll}
             disabled={loading || scopeLoading}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card sm:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
           >
             <RefreshCw
               className={cn(
@@ -361,7 +362,7 @@ export function EmployeesManager() {
               type="button"
               onClick={openCreate}
               disabled={!catalogReady || branches.length === 0}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 sm:w-auto text-sm font-medium text-accent-foreground disabled:opacity-50"
             >
               <Plus className="size-4" />
               Nuevo empleado
@@ -425,7 +426,7 @@ export function EmployeesManager() {
               </p>
             ) : (
               <>
-                <div className="overflow-x-auto">
+                <TableScroll>
                   <table className="w-full min-w-[960px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
@@ -506,8 +507,8 @@ export function EmployeesManager() {
                       ))}
                     </tbody>
                   </table>
-                </div>
-                <TablePagination pagination={pagination} />
+                </TableScroll>
+            <TablePagination pagination={pagination} />
               </>
             )}
           </>

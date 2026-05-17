@@ -24,6 +24,7 @@ import {
 } from "@/lib/technical-services-api";
 import type { TechnicalServiceResponse } from "@/types/technical-service";
 import { cn } from "@/lib/utils";
+import { TableScroll } from "@/components/ui/table-scroll";
 
 export function TechnicalServicesManager() {
   const toast = useToast();
@@ -145,11 +146,11 @@ export function TechnicalServicesManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <p className="min-w-0 text-sm text-muted">
           Visitas de servicio técnico, reportes Z y gestión de precintos en campo.
         </p>
-        <div className="flex gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <button
             type="button"
             onClick={() => {
@@ -157,7 +158,7 @@ export function TechnicalServicesManager() {
               catalog.refresh();
             }}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card sm:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
           >
             <RefreshCw className={cn("size-4", loading && "animate-spin")} />
             Actualizar
@@ -169,7 +170,7 @@ export function TechnicalServicesManager() {
               setFormError(null);
               setDialog("create");
             }}
-            className="inline-flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 sm:w-auto text-sm font-medium text-accent-foreground"
           >
             <Plus className="size-4" />
             Nuevo servicio
@@ -211,7 +212,7 @@ export function TechnicalServicesManager() {
               </p>
             ) : (
               <>
-                <div className="overflow-x-auto">
+                <TableScroll>
                   <table className="w-full min-w-[1100px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
@@ -291,8 +292,8 @@ export function TechnicalServicesManager() {
                       ))}
                     </tbody>
                   </table>
-                </div>
-                <TablePagination pagination={pagination} />
+                </TableScroll>
+            <TablePagination pagination={pagination} />
               </>
             )}
           </>

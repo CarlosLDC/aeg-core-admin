@@ -22,7 +22,7 @@ export function StatCard({
   const showTrend = change != null && trend != null;
 
   return (
-    <article className="rounded-xl border border-border bg-card p-5 shadow-sm">
+    <article className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-muted">{title}</p>

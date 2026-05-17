@@ -222,7 +222,7 @@ export function EmployeeFormDialog({
             </select>
           </label>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
             <button
               type="button"
               onClick={onClose}

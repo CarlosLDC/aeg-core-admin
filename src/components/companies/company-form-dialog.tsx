@@ -85,7 +85,7 @@ export function CompanyFormDialog({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl">
+      <div className="relative max-h-[min(90vh,100dvh)] w-full max-w-md overflow-y-auto rounded-xl border border-border bg-card p-4 shadow-xl sm:p-6">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-card-foreground">
@@ -165,7 +165,7 @@ export function CompanyFormDialog({
             </select>
           </label>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
             <button
               type="button"
               onClick={onClose}

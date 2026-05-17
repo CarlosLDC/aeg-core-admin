@@ -39,8 +39,8 @@ function iconForStat(stat: DashboardStat): LucideIcon {
   return STAT_ICONS[stat.title] ?? Building2;
 }
 
-function statGridClass(role: Role): string {
-  return "grid gap-4 sm:grid-cols-2 xl:grid-cols-4";
+function statGridClass(_role: Role): string {
+  return "grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4";
 }
 
 export function DashboardManager() {
@@ -152,7 +152,7 @@ export function DashboardManager() {
             ))}
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-5">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
             {canSeePrinters ? (
               <PrintersOverviewChart
                 className="xl:col-span-3"

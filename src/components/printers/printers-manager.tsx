@@ -50,6 +50,7 @@ import type { PrinterModelResponse } from "@/types/printer-model";
 import type { PrinterResponse, PrinterStatus } from "@/types/printer";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
+import { TableScroll } from "@/components/ui/table-scroll";
 
 function clientLabel(
   client: ClientResponse,
@@ -370,13 +371,13 @@ export function PrintersManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <p className="min-w-0 text-sm text-muted">
           {isDistributor
             ? "Impresoras asignadas a tu distribuidora."
             : "Inventario de impresoras fiscales. Acceso para administradores, distribuidores y técnicos."}
         </p>
-        <div className="flex gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <button
             type="button"
             onClick={() => {
@@ -384,7 +385,7 @@ export function PrintersManager() {
               loadCatalog();
             }}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card sm:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
           >
             <RefreshCw className={cn("size-4", loading && "animate-spin")} />
             Actualizar
@@ -393,7 +394,7 @@ export function PrintersManager() {
             <button
               type="button"
               onClick={openCreate}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 sm:w-auto text-sm font-medium text-accent-foreground"
             >
               <Plus className="size-4" />
               Nueva impresora
@@ -464,7 +465,7 @@ export function PrintersManager() {
               </p>
             ) : (
               <>
-                <div className="overflow-x-auto">
+                <TableScroll>
                   <table className="w-full min-w-[1100px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
@@ -549,8 +550,8 @@ export function PrintersManager() {
                       ))}
                     </tbody>
                   </table>
-                </div>
-                <TablePagination pagination={pagination} />
+                </TableScroll>
+            <TablePagination pagination={pagination} />
               </>
             )}
           </>

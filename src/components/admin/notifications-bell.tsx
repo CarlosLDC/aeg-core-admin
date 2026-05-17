@@ -233,7 +233,7 @@ export function NotificationsBell() {
         <div
           role="dialog"
           aria-label="Panel de notificaciones"
-          className="absolute right-0 z-50 mt-2 w-[min(100vw-2rem,22rem)] overflow-hidden rounded-xl border border-border bg-card shadow-xl"
+          className="absolute right-0 z-50 mt-2 w-[min(calc(100vw-1.5rem),22rem)] max-sm:fixed max-sm:right-3 max-sm:left-3 max-sm:w-auto overflow-hidden rounded-xl border border-border bg-card shadow-xl"
         >
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div>

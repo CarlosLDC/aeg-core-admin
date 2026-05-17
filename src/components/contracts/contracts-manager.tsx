@@ -119,17 +119,17 @@ export function ContractsManager() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted">
+      <p className="min-w-0 text-sm text-muted">
         Contratos con distribuidoras o centros de servicio. Solo un
         administrador puede gestionarlos.
       </p>
 
-      <div className="flex gap-1 rounded-lg border border-border bg-card p-1">
+      <div className="flex flex-col gap-1 rounded-lg border border-border bg-card p-1 sm:flex-row">
         <button
           type="button"
           onClick={() => setTab("distributor")}
           className={cn(
-            "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+            "rounded-md px-4 py-2.5 text-sm font-medium transition-colors sm:flex-1",
             tab === "distributor"
               ? "bg-accent text-accent-foreground"
               : "text-muted hover:text-foreground",
@@ -141,7 +141,7 @@ export function ContractsManager() {
           type="button"
           onClick={() => setTab("serviceCenter")}
           className={cn(
-            "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+            "rounded-md px-4 py-2.5 text-sm font-medium transition-colors sm:flex-1",
             tab === "serviceCenter"
               ? "bg-accent text-accent-foreground"
               : "text-muted hover:text-foreground",

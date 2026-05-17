@@ -13,7 +13,7 @@ export function DashboardActivityList({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-card p-5 shadow-sm",
+        "rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5",
         className,
       )}
     >
