@@ -76,8 +76,7 @@ async function readErrorMessage(response: Response): Promise<string> {
       return (
         data.message ??
         data.error ??
-        response.statusText ||
-        `Error del servidor (${response.status})`
+        (response.statusText || `Error del servidor (${response.status})`)
       );
     }
     const text = (await response.text()).trim();
