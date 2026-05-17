@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { Loader2, X } from "lucide-react";
+import { PhotoDocumentUpload } from "@/components/ui/photo-document-upload";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 import {
@@ -402,22 +403,18 @@ export function TechnicalServiceFormDialog({
             </div>
           </fieldset>
 
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              URLs de fotos (una por línea)
-            </span>
-            <textarea
-              required
-              rows={4}
-              value={form.photoUrlsText}
+          <div className="block">
+            <span className="mb-1.5 block text-sm font-medium">Fotos</span>
+            <PhotoDocumentUpload
+              folder="technical-services"
+              urls={form.photoUrls}
+              onChange={(photoUrls) => setForm((f) => ({ ...f, photoUrls }))}
               disabled={disabled}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, photoUrlsText: e.target.value }))
-              }
-              className={cn(inputClass, "font-mono text-xs")}
-              placeholder="https://…"
+              ariaLabel="Subir fotos del servicio técnico"
+              addLabel="Añadir fotos"
+              requiredHint="Se requiere al menos una foto."
             />
-          </label>
+          </div>
 
           <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
             <button
@@ -429,10 +426,11 @@ export function TechnicalServiceFormDialog({
             </button>
             <button
               type="submit"
-              disabled={disabled}
+              disabled={disabled || form.photoUrls.length === 0}
               className={cn(
                 "flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
-                disabled && "cursor-not-allowed opacity-70",
+                (disabled || form.photoUrls.length === 0) &&
+                  "cursor-not-allowed opacity-70",
               )}
             >
               {saving && <Loader2 className="size-4 animate-spin" />}

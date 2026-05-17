@@ -1,4 +1,3 @@
-import { parsePhotoUrls, photoUrlsToText } from "@/lib/contract-form";
 import { toDateInputValue } from "@/lib/datetime-form";
 import type {
   AnnualInspectionRequest,
@@ -10,7 +9,7 @@ export type AnnualInspectionFormValues = {
   employeeId: string;
   sealTampered: boolean;
   notes: string;
-  photoUrlsText: string;
+  photoUrls: string[];
   inspectionDate: string;
 };
 
@@ -19,7 +18,7 @@ export const emptyAnnualInspectionForm = (): AnnualInspectionFormValues => ({
   employeeId: "",
   sealTampered: false,
   notes: "",
-  photoUrlsText: "",
+  photoUrls: [],
   inspectionDate: "",
 });
 
@@ -31,7 +30,7 @@ export function annualInspectionToFormValues(
     employeeId: String(row.employeeId),
     sealTampered: row.sealTampered,
     notes: row.notes ?? "",
-    photoUrlsText: photoUrlsToText(row.photoUrls),
+    photoUrls: [...(row.photoUrls ?? [])],
     inspectionDate: toDateInputValue(row.inspectionDate),
   };
 }
@@ -49,9 +48,8 @@ export function toAnnualInspectionRequest(
     return "Selecciona un empleado.";
   }
 
-  const photoUrls = parsePhotoUrls(values.photoUrlsText);
-  if (photoUrls.length === 0) {
-    return "Indica al menos una URL de foto (una por línea).";
+  if (values.photoUrls.length === 0) {
+    return "Añade al menos una foto o documento.";
   }
 
   return {
@@ -59,7 +57,7 @@ export function toAnnualInspectionRequest(
     employeeId,
     sealTampered: values.sealTampered,
     notes: values.notes.trim() || null,
-    photoUrls,
+    photoUrls: values.photoUrls,
     inspectionDate: values.inspectionDate.trim() || null,
   };
 }

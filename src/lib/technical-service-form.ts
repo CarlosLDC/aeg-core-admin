@@ -1,4 +1,3 @@
-import { parsePhotoUrls, photoUrlsToText } from "@/lib/contract-form";
 import {
   parseDatetimeLocal,
   toDateInputValue,
@@ -18,7 +17,7 @@ export type TechnicalServiceFormValues = {
   notes: string;
   startAt: string;
   endAt: string;
-  photoUrlsText: string;
+  photoUrls: string[];
   installedSealId: string;
   removedSealId: string;
   initialZReport: string;
@@ -39,7 +38,7 @@ export const emptyTechnicalServiceForm = (): TechnicalServiceFormValues => ({
   notes: "",
   startAt: "",
   endAt: "",
-  photoUrlsText: "",
+  photoUrls: [],
   installedSealId: "",
   removedSealId: "",
   initialZReport: "",
@@ -65,7 +64,7 @@ export function technicalServiceToFormValues(
     notes: row.notes ?? "",
     startAt: toDatetimeLocalValue(row.startAt),
     endAt: toDatetimeLocalValue(row.endAt),
-    photoUrlsText: photoUrlsToText(row.photoUrls),
+    photoUrls: [...(row.photoUrls ?? [])],
     installedSealId:
       row.installedSealId != null ? String(row.installedSealId) : "",
     removedSealId: row.removedSealId != null ? String(row.removedSealId) : "",
@@ -152,9 +151,8 @@ export function toTechnicalServiceRequest(
     return "El costo debe ser un número mayor o igual a 0.";
   }
 
-  const photoUrls = parsePhotoUrls(values.photoUrlsText);
-  if (photoUrls.length === 0) {
-    return "Indica al menos una URL de foto (una por línea).";
+  if (values.photoUrls.length === 0) {
+    return "Añade al menos una foto o documento.";
   }
 
   return {
@@ -166,7 +164,7 @@ export function toTechnicalServiceRequest(
     notes: values.notes.trim() || null,
     startAt,
     endAt,
-    photoUrls,
+    photoUrls: values.photoUrls,
     installedSealId,
     removedSealId,
     initialZReport,

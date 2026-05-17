@@ -21,5 +21,5 @@ export function blobAccessForUrl(url: string): "private" | "public" {
 /** URL para ver/descargar un blob (público o privado) desde el admin autenticado. */
 export function blobViewUrl(storedUrl: string): string {
   if (!isVercelBlobUrl(storedUrl)) return storedUrl;
-  return `/api/uploads/contract-documents?url=${encodeURIComponent(storedUrl)}`;
+  return `/api/uploads/documents?url=${encodeURIComponent(storedUrl)}`;
 }
