@@ -264,15 +264,16 @@ export function MqttTestPanel() {
           </label>
 
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              Payload (JSON objeto)
-            </span>
+            <span className="mb-1.5 block text-sm font-medium">Objeto JSON</span>
             <textarea
               required
-              rows={10}
+              rows={5}
               value={payloadText}
               onChange={(e) => setPayloadText(e.target.value)}
-              className={cn(inputClass, "font-mono text-xs")}
+              className={cn(
+                inputClass,
+                "min-h-[7.5rem] resize-y py-1.5 font-mono text-xs leading-relaxed",
+              )}
               spellCheck={false}
             />
           </label>
