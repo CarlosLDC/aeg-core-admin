@@ -240,10 +240,9 @@ export function UsersManager() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
-          Crea cuentas con usuario y contraseña. Para distribuidores, asigna
-          sucursal y <code className="text-xs">distributorId</code>: el backend
-          filtrará automáticamente clientes, sucursales y empresas al iniciar
-          sesión.
+          Crea cuentas con usuario y contraseña. Para distribuidores, indica
+          sucursal y distribuidora: al iniciar sesión solo verán los datos de su
+          ámbito.
         </p>
         <div className="flex gap-2">
           <button

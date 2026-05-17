@@ -6,7 +6,6 @@ import { AlertCircle, Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
 import { LoginAnimatedBackdrop } from "@/components/auth/login-animated-backdrop";
 import { BrandLogo } from "@/components/brand/logo";
 import { getLoginErrorMessage, useAuth } from "@/context/auth-provider";
-import { getApiDisplayLabel, isApiConfigured } from "@/lib/api-config";
 import { getSafeRedirectPath } from "@/lib/safe-redirect";
 import { cn } from "@/lib/utils";
 
@@ -64,17 +63,12 @@ function LoginForm() {
             Gestiona tu operación desde un solo lugar
           </h1>
           <p className="mt-4 text-sidebar-muted">
-            Accede con tus credenciales corporativas. El token JWT se envía en
-            cada petición protegida mediante Authorization Bearer.
+            Accede con tu usuario y contraseña corporativos para gestionar
+            impresoras, sucursales y operaciones del día a día.
           </p>
         </div>
         <p className="relative z-10 text-sm text-sidebar-muted/90">
-          API: {getApiDisplayLabel()}
-          {!isApiConfigured() && (
-            <span className="mt-1 block text-amber-300/90">
-              Configura NEXT_PUBLIC_API_URL en el despliegue.
-            </span>
-          )}
+          Acceso seguro con tu cuenta corporativa.
         </p>
       </div>
 
@@ -188,7 +182,7 @@ function LoginForm() {
           </form>
 
           <p className="mt-6 text-center text-xs text-muted">
-            Autenticación stateless con JWT · Sin cookies de sesión
+            Tu sesión se mantiene activa mientras uses el panel
           </p>
         </div>
       </div>

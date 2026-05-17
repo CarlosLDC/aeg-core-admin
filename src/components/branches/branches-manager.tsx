@@ -310,9 +310,8 @@ export function BranchesManager() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
-          Crear, editar y eliminar sucursales requiere rol{" "}
-          <code className="text-xs">ADMIN</code>. El listado respeta tu
-          alcance de empresas y sucursales.
+          Solo un administrador puede crear, editar o eliminar sucursales. El
+          listado muestra las empresas y sucursales a las que tienes acceso.
         </p>
         <div className="flex gap-2">
           <button

@@ -120,9 +120,8 @@ export function ContractsManager() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted">
-        Contratos vinculados a distribuidoras o centros de servicio (sucursales
-        con ese rol). Solo usuarios{" "}
-        <code className="text-xs">ADMIN</code>.
+        Contratos con distribuidoras o centros de servicio. Solo un
+        administrador puede gestionarlos.
       </p>
 
       <div className="flex gap-1 rounded-lg border border-border bg-card p-1">

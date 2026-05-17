@@ -281,9 +281,8 @@ export function SealsManager() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
-          Inventario de precintos fiscales (
-          <code className="text-xs">/api/seals</code>). Asignación opcional a
-          impresora, color y ciclo de vida.
+          Inventario de precintos fiscales. Puedes asignarlos a una impresora,
+          indicar color y seguir su ciclo de vida.
         </p>
         <div className="flex gap-2">
           <button

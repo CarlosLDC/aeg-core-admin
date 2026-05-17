@@ -31,16 +31,16 @@ export function canModifyCatalogRecord(role: Role): boolean {
 }
 
 export const CATALOG_CREATE_FORBIDDEN_MESSAGE =
-  "Solo usuarios con rol ADMIN pueden crear registros.";
+  "Solo un administrador puede crear registros.";
 
 export const CATALOG_UPDATE_FORBIDDEN_MESSAGE =
-  "Solo usuarios con rol ADMIN pueden actualizar registros existentes.";
+  "Solo un administrador puede modificar registros existentes.";
 
 export const CATALOG_DELETE_FORBIDDEN_MESSAGE =
-  "Solo usuarios con rol ADMIN pueden eliminar registros.";
+  "Solo un administrador puede eliminar registros.";
 
 export const CATALOG_MODIFY_FORBIDDEN_MESSAGE =
-  "Solo usuarios con rol ADMIN pueden modificar o eliminar registros existentes.";
+  "Solo un administrador puede modificar o eliminar registros.";
 
 export function getCatalogForbiddenMessage(
   method: "PUT" | "DELETE" | "MODIFY",

@@ -338,8 +338,8 @@ export function EmployeesManager() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
-          Personal por sucursal con un solo rol. Editar o eliminar datos del
-          empleado requiere <code className="text-xs">ADMIN</code>.
+          Personal por sucursal con un solo rol. Solo un administrador puede
+          editar o eliminar empleados.
         </p>
         <div className="flex gap-2">
           <button

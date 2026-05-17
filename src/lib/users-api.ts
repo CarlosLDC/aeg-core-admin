@@ -45,7 +45,7 @@ export function getUsersErrorMessage(error: unknown): string {
       return "Sesión no válida. Vuelve a iniciar sesión.";
     }
     if (error.status === 403) {
-      return "Solo usuarios con rol ADMIN pueden gestionar usuarios.";
+      return "Solo un administrador puede gestionar usuarios.";
     }
     if (error.status === 409) {
       return "Ese nombre de usuario ya está en uso.";

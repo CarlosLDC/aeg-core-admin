@@ -159,9 +159,8 @@ export function PrinterModelsManager() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
-          Catálogo de modelos de impresora fiscal homologados. Solo administradores
-          pueden gestionar este recurso (
-          <code className="text-xs">/api/printer-models</code>).
+          Catálogo de modelos de impresora fiscal homologados. Solo un
+          administrador puede añadir, editar o eliminar modelos.
         </p>
         <div className="flex gap-2">
           <button

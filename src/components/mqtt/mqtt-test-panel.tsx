@@ -174,10 +174,9 @@ export function MqttTestPanel() {
   return (
     <div className="space-y-6">
       <p className="text-sm text-muted">
-        Herramientas de diagnóstico MQTT (
-        <code className="text-xs">/api/mqtt</code>). Solo administradores. La API
-        confirma envío al broker; los mensajes entrantes se registran en los
-        logs del servidor backend.
+        Herramientas para probar la conexión con el broker de mensajes. Solo
+        administradores. El panel confirma el envío; los mensajes recibidos se
+        registran en el servidor.
       </p>
 
       <section className="rounded-xl border border-border bg-card p-5 shadow-sm">

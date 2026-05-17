@@ -147,8 +147,7 @@ export function TechnicalServicesManager() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
-          Visitas de servicio técnico (
-          <code className="text-xs">/api/technical-services</code>).
+          Visitas de servicio técnico, reportes Z y gestión de precintos en campo.
         </p>
         <div className="flex gap-2">
           <button

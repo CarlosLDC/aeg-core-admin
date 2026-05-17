@@ -60,7 +60,7 @@ export function getSession(): (UserProfile & { token: string }) | null {
 export function getLoginErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     if (error.message.includes("NEXT_PUBLIC_API_URL")) {
-      return error.message;
+      return "El servidor no está configurado. Contacta al administrador del sistema.";
     }
   }
   if (error instanceof ApiError) {
@@ -79,7 +79,7 @@ export function getLoginErrorMessage(error: unknown): string {
     return error.message;
   }
   if (error instanceof TypeError) {
-    return "No se pudo conectar con el API. Comprueba la URL del servidor, CORS y que el backend esté en línea.";
+    return "No se pudo conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.";
   }
   if (error instanceof Error && error.message) {
     return error.message;

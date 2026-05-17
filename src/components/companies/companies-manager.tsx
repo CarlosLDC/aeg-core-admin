@@ -159,15 +159,13 @@ export function CompaniesManager() {
         <p className="text-sm text-muted">
           {isDistributor ? (
             <>
-              El API filtra por tu distribuidor. Puedes crear empresas; editar o
-              eliminar existentes requiere rol{" "}
-              <code className="text-xs">ADMIN</code>.
+              Ves las empresas de tu distribuidora. Puedes crear nuevas; solo un
+              administrador puede editar o eliminar las existentes.
             </>
           ) : (
             <>
-              Una empresa puede tener muchas sucursales. Cualquier usuario
-              autenticado puede crear; modificar o eliminar requiere{" "}
-              <code className="text-xs">ADMIN</code>.
+              Una empresa puede tener muchas sucursales. Cualquier usuario puede
+              crear empresas; solo un administrador puede editar o eliminar.
             </>
           )}
         </p>

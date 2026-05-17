@@ -46,8 +46,7 @@ export async function resolveAndStoreUserProfile(
 
   if (!role || !ROLES.includes(role)) {
     throw new ApiError(
-      "Inicio de sesión correcto, pero no se pudo obtener el rol del usuario. " +
-        "El backend debe emitir JWT con claim role o exponer GET /api/auth/me con role, branchId y distributorId.",
+      "Inicio de sesión correcto, pero no pudimos determinar tus permisos. Contacta al administrador del sistema.",
       401,
     );
   }

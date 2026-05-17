@@ -408,8 +408,7 @@ export function PrintersManager() {
           className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200"
         >
           Tu usuario no tiene una distribuidora vinculada. Contacta a un
-          administrador para asignar{" "}
-          <code className="text-xs">distributorId</code> en tu cuenta.
+          administrador para que te asigne una en tu cuenta.
         </p>
       )}
 

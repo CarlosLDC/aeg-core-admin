@@ -160,11 +160,16 @@ export function Sidebar({
         ))}
       </nav>
 
-      <div className="hidden border-t border-white/10 p-3 lg:block">
+      <div className="hidden border-t border-white/10 px-2 py-3 lg:block">
         <button
           type="button"
           onClick={onToggle}
-          className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-sidebar-muted transition-colors hover:bg-white/5 hover:text-sidebar-foreground"
+          className={cn(
+            "flex w-full items-center gap-2 rounded-lg py-2 text-sm text-sidebar-muted transition-colors hover:bg-white/5 hover:text-sidebar-foreground",
+            isCollapsed
+              ? "justify-center -translate-x-1.5 px-1"
+              : "justify-start pl-3 pr-2",
+          )}
           aria-label={isCollapsed ? "Expandir menú" : "Contraer menú"}
         >
           {isCollapsed ? (

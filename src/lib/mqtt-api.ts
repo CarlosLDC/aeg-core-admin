@@ -47,7 +47,7 @@ async function mqttFetch<T>(
   }
 
   if (response.status === 403) {
-    throw new ApiError("Solo usuarios ADMIN pueden usar las pruebas MQTT.", 403);
+    throw new ApiError("Solo un administrador puede usar las pruebas MQTT.", 403);
   }
 
   return { data, status: response.status };

@@ -39,7 +39,7 @@ export async function deleteServiceCenterContract(id: number): Promise<void> {
 export function getServiceCenterContractsErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 403) {
-      return "Solo usuarios con rol ADMIN pueden gestionar contratos.";
+      return "Solo un administrador puede gestionar contratos.";
     }
     if (error.status === 404) {
       return "Contrato de centro de servicio no encontrado.";

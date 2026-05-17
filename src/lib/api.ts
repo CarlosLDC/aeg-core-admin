@@ -7,7 +7,7 @@ export function getApiBaseUrl(): string {
   const base = resolveApiBaseUrl();
   if (base === null) {
     throw new Error(
-      "NEXT_PUBLIC_API_URL no está configurada. En desarrollo local usa http://localhost:8080.",
+      "NEXT_PUBLIC_API_URL no está configurada.",
     );
   }
   return base;

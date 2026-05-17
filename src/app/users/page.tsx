@@ -6,7 +6,7 @@ export default function UsersPage() {
   return (
     <AdminShell
       title="Usuarios"
-      description="Gestión de cuentas y roles (solo ADMIN)"
+      description="Gestión de cuentas y roles (solo administradores)"
     >
       <RoleGuard path="/users">
         <UsersManager />

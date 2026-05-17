@@ -11,7 +11,7 @@ export async function fetchSoftware(): Promise<SoftwareResponse[]> {
 export function getSoftwareErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 403) {
-      return "Solo usuarios con rol ADMIN pueden consultar el catálogo de software.";
+      return "Solo un administrador puede consultar el catálogo de software.";
     }
     return error.message;
   }

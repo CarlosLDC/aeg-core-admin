@@ -22,10 +22,10 @@ export const ROLE_LABELS: Record<Role, string> = {
 };
 
 export const ROLE_DESCRIPTIONS: Record<Role, string> = {
-  ADMIN: "Acceso completo al panel y endpoints /api/admin/**",
-  DISTRIBUTOR: "Sucursales, clientes y personas distribuidor",
-  TECHNICIAN: "Impresoras, sellos e inspecciones",
-  SERVICE_CENTER: "Sellos, servicios técnicos e inspecciones",
+  ADMIN: "Acceso completo a todas las secciones del panel",
+  DISTRIBUTOR: "Empresas, sucursales y clientes de tu distribuidora",
+  TECHNICIAN: "Impresoras, precintos e inspecciones en campo",
+  SERVICE_CENTER: "Precintos, servicios técnicos e inspecciones",
 };
 
 export const ROLE_STYLES: Record<Role, string> = {

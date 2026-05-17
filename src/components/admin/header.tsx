@@ -2,6 +2,7 @@
 
 import { LogOut, Menu } from "lucide-react";
 import { useAuth } from "@/context/auth-provider";
+import { ROLE_LABELS } from "@/lib/roles";
 import { NotificationsBell } from "@/components/admin/notifications-bell";
 
 type HeaderProps = {
@@ -47,7 +48,9 @@ export function Header({ title, description, onMenuClick }: HeaderProps) {
               <p className="max-w-[140px] truncate text-sm font-medium text-foreground">
                 {user?.username ?? "—"}
               </p>
-              <p className="text-xs text-muted">Sesión JWT</p>
+              <p className="text-xs text-muted">
+                {user?.role ? ROLE_LABELS[user.role] : "Conectado"}
+              </p>
             </div>
             <button
               type="button"

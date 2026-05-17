@@ -43,7 +43,7 @@ export async function deletePrinterModel(id: number): Promise<void> {
 export function getPrinterModelsErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 403) {
-      return "Solo usuarios con rol ADMIN pueden gestionar modelos de impresora.";
+      return "Solo un administrador puede gestionar modelos de impresora.";
     }
     if (error.status === 404) {
       return "Modelo de impresora no encontrado.";

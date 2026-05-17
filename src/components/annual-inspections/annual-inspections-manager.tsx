@@ -157,8 +157,7 @@ export function AnnualInspectionsManager() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
-          Inspecciones anuales (
-          <code className="text-xs">/api/annual-inspections</code>).
+          Revisiones anuales de impresoras fiscales con evidencia fotográfica.
         </p>
         <div className="flex gap-2">
           <button
