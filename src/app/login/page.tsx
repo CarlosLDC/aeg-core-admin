@@ -60,15 +60,16 @@ function LoginForm() {
         </div>
         <div className="relative z-10 max-w-md">
           <h1 className="text-3xl font-semibold tracking-tight text-sidebar-foreground drop-shadow-sm">
-            Gestiona tu operación desde un solo lugar
+            El centro de mando de tu red fiscal
           </h1>
-          <p className="mt-4 text-sidebar-muted">
-            Accede con tu usuario y contraseña corporativos para gestionar
-            impresoras, sucursales y operaciones del día a día.
+          <p className="mt-4 text-lg leading-relaxed text-sidebar-muted">
+            Visibilidad total sobre impresoras, sucursales y equipos en campo.
+            Menos fricción, más control — todo en un panel pensado para equipos
+            que no se detienen.
           </p>
         </div>
-        <p className="relative z-10 text-sm text-sidebar-muted/90">
-          Acceso seguro con tu cuenta corporativa.
+        <p className="relative z-10 text-sm font-medium text-sidebar-foreground/90">
+          Operaciones conectadas. Decisiones más rápidas.
         </p>
       </div>
 
@@ -77,16 +78,19 @@ function LoginForm() {
           <div className="mb-8 flex flex-col items-center lg:hidden">
             <BrandLogo variant="full" href={null} className="h-12" />
             <h2 className="mt-4 text-center text-2xl font-semibold tracking-tight">
-              Iniciar sesión
+              Bienvenido de nuevo
             </h2>
+            <p className="mt-2 text-center text-sm text-muted">
+              Tu panel te espera. Un acceso y sigues donde lo dejaste.
+            </p>
           </div>
 
           <div className="hidden lg:block">
             <h2 className="text-2xl font-semibold tracking-tight">
-              Iniciar sesión
+              Bienvenido de nuevo
             </h2>
             <p className="mt-2 text-sm text-muted">
-              Introduce tu usuario y contraseña
+              Un acceso y vuelves al mando de tu operación.
             </p>
           </div>
 
@@ -176,13 +180,14 @@ function LoginForm() {
                   Entrando...
                 </>
               ) : (
-                "Entrar"
+                "Acceder al panel"
               )}
             </button>
           </form>
 
           <p className="mt-6 text-center text-xs text-muted">
-            Tu sesión se mantiene activa mientras uses el panel
+            Impresoras, sucursales y servicios en campo — un solo lugar para
+            hacer crecer tu operación.
           </p>
         </div>
       </div>
