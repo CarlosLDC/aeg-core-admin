@@ -47,7 +47,7 @@ export function SealBatchFormDialog({
   onClose,
   onSubmit,
 }: SealBatchFormDialogProps) {
-  const [range, setRange] = useState<SerialRangeFormValues>(emptySerialRangeForm);
+  const [range, setRange] = useState<SerialRangeFormValues>(emptySerialRangeForm());
   const [form, setForm] = useState<Omit<SealFormValues, "serial">>(emptySealForm());
 
   useEffect(() => {
@@ -64,11 +64,7 @@ export function SealBatchFormDialog({
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const digitLength = Number(range.digitLength) || 7;
-    const serials = buildSerialRange(
-      { ...range, digitLength },
-      { mode: "flexible" },
-    );
+    const serials = buildSerialRange(range, { mode: "seal" });
     if (typeof serials === "string") return;
     onSubmit({ serials, base: form });
   }
@@ -88,15 +84,15 @@ export function SealBatchFormDialog({
         onClick={onClose}
         disabled={busy}
       />
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
+      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-card-foreground">
               Crear precintos por lote
             </h2>
-            <p className="mt-1 text-sm text-muted">
-              Mismo color, estatus e impresora para todos; los seriales se generan
-              del rango indicado.
+            <p className="mt-1 text-sm text-muted leading-relaxed">
+              Igual que en impresoras: primero defines el rango de seriales y
+              después los datos que comparten todos los precintos del lote.
             </p>
           </div>
           <button
@@ -126,84 +122,102 @@ export function SealBatchFormDialog({
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <SerialRangeFields
-            mode="flexible"
+            mode="seal"
             values={range}
             onChange={setRange}
             disabled={disabled}
           />
 
-          <div className="block">
-            <span className="mb-1.5 block text-sm font-medium">Impresora</span>
-            {printerOptions.length > 0 ? (
-              <PrinterSelect
-                value={form.printerId}
-                onChange={(printerId) =>
-                  setForm((f) => ({ ...f, printerId }))
-                }
-                options={printerOptions}
-                disabled={disabled}
-                loading={printersLoading}
-              />
-            ) : (
-              <input
-                type="number"
-                min={1}
-                value={form.printerId}
-                disabled={disabled}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, printerId: e.target.value }))
-                }
-                className={inputClass}
-                placeholder="ID de impresora (opcional)"
-              />
-            )}
-          </div>
+          <div className="space-y-4 border-t border-border pt-6">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-accent">
+                Paso 2 · Datos comunes
+              </p>
+              <h3 className="mt-1 text-sm font-semibold text-card-foreground">
+                Mismos valores para todo el lote
+              </h3>
+              <p className="mt-1 text-sm text-muted">
+                Color, estatus e impresora opcional se aplican a cada precinto
+                generado. Si el estatus es «En impresora», asigna la impresora
+                correspondiente.
+              </p>
+            </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Color</span>
-              <select
-                required
-                value={form.color}
-                disabled={disabled}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    color: e.target.value as SealFormValues["color"],
-                  }))
-                }
-                className={inputClass}
-              >
-                {SEAL_COLORS.map((color) => (
-                  <option key={color} value={color}>
-                    {SEAL_COLOR_LABELS[color]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Estatus</span>
-              <select
-                required
-                value={form.status}
-                disabled={disabled}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    status: e.target.value as SealFormValues["status"],
-                  }))
-                }
-                className={inputClass}
-              >
-                {SEAL_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {SEAL_STATUS_LABELS[status]}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="block">
+              <span className="mb-1.5 block text-sm font-medium">
+                Impresora (opcional)
+              </span>
+              {printerOptions.length > 0 ? (
+                <PrinterSelect
+                  value={form.printerId}
+                  onChange={(printerId) =>
+                    setForm((f) => ({ ...f, printerId }))
+                  }
+                  options={printerOptions}
+                  disabled={disabled}
+                  loading={printersLoading}
+                />
+              ) : (
+                <input
+                  type="number"
+                  min={1}
+                  value={form.printerId}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, printerId: e.target.value }))
+                  }
+                  className={inputClass}
+                  placeholder="ID de impresora"
+                />
+              )}
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium">Color</span>
+                <select
+                  required
+                  value={form.color}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      color: e.target.value as SealFormValues["color"],
+                    }))
+                  }
+                  className={inputClass}
+                >
+                  {SEAL_COLORS.map((color) => (
+                    <option key={color} value={color}>
+                      {SEAL_COLOR_LABELS[color]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium">Estatus</span>
+                <select
+                  required
+                  value={form.status}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      status: e.target.value as SealFormValues["status"],
+                    }))
+                  }
+                  className={inputClass}
+                >
+                  {SEAL_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {SEAL_STATUS_LABELS[status]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
 
           <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">

@@ -58,11 +58,13 @@ export function SerialRangeFields({
       { mode },
     );
     if (typeof built === "string") {
-      return { error: built, count: 0, sample: "" };
+      return { error: built, count: 0, first: "", last: "", sample: "" };
     }
     return {
       error: null,
       count: built.length,
+      first: built[0] ?? "",
+      last: built[built.length - 1] ?? "",
       sample: describeSerialRangePreview(built),
     };
   }, [mode, values]);
@@ -71,42 +73,78 @@ export function SerialRangeFields({
     onChange({ ...values, ...partial });
   }
 
+  const isFiscal = mode === "fiscal";
+
   return (
-    <div className="space-y-4 rounded-lg border border-accent/30 bg-accent/5 p-4">
+    <div className="space-y-4 rounded-lg border border-accent/30 bg-accent/5 p-4 sm:p-5">
       <div>
-        <h3 className="text-sm font-semibold text-card-foreground">
-          Rango de seriales
-        </h3>
-        <p className="mt-1 text-xs text-muted">
-          {mode === "fiscal"
-            ? `Prefijo de 3 letras y números consecutivos de ${FISCAL_SERIAL_DIGIT_COUNT} dígitos (ej. ABC0000001–ABC0000100).`
-            : "Prefijo común y números consecutivos con la longitud indicada."}
+        <p className="text-xs font-medium uppercase tracking-wide text-accent">
+          Paso 1 · Seriales
         </p>
+        <h3 className="mt-1 text-sm font-semibold text-card-foreground">
+          {isFiscal ? "Rango de seriales fiscales" : "Rango de seriales del precinto"}
+        </h3>
+        <p className="mt-2 text-sm text-muted leading-relaxed">
+          {isFiscal ? (
+            <>
+              Todas las impresoras del lote comparten modelo, distribuidor y demás
+              datos; solo cambia el <strong className="font-medium text-foreground">serial fiscal</strong>.
+              Usa un prefijo de 3 letras y un tramo numérico de 7 dígitos.
+            </>
+          ) : (
+            <>
+              Todos los precintos del lote tendrán el mismo color, estatus e
+              impresora; solo cambia el <strong className="font-medium text-foreground">serial</strong>.
+              Indica un prefijo (texto fijo) y los números consecutivos que quieres
+              generar.
+            </>
+          )}
+        </p>
+        {!isFiscal && (
+          <p className="mt-2 rounded-md bg-background/80 px-3 py-2 font-mono text-xs text-muted">
+            Ejemplo: prefijo <span className="text-foreground">SN-</span>, desde{" "}
+            <span className="text-foreground">1</span> hasta{" "}
+            <span className="text-foreground">100</span>, 7 dígitos →{" "}
+            <span className="text-foreground">SN-0000001</span> …{" "}
+            <span className="text-foreground">SN-0000100</span>
+          </p>
+        )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <label className="block sm:col-span-1">
-          <span className="mb-1.5 block text-sm font-medium">Prefijo</span>
+      <div
+        className={cn(
+          "grid gap-4",
+          isFiscal ? "sm:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-4",
+        )}
+      >
+        <label className={cn("block", isFiscal && "sm:col-span-1")}>
+          <span className="mb-1.5 block text-sm font-medium">
+            Prefijo {isFiscal ? "(3 letras)" : "(texto fijo)"}
+          </span>
           <input
             type="text"
             required
             value={values.prefix}
             disabled={disabled}
-            maxLength={mode === "fiscal" ? FISCAL_SERIAL_LETTER_COUNT : 20}
+            maxLength={isFiscal ? FISCAL_SERIAL_LETTER_COUNT : 20}
             onChange={(e) =>
               patch({
-                prefix:
-                  mode === "fiscal"
-                    ? e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase()
-                    : e.target.value,
+                prefix: isFiscal
+                  ? e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase()
+                  : e.target.value,
               })
             }
-            className={cn(inputClass, "font-mono uppercase")}
-            placeholder={mode === "fiscal" ? "ABC" : "SN-"}
+            className={cn(inputClass, isFiscal && "uppercase", "font-mono")}
+            placeholder={isFiscal ? "ABC" : "SN-"}
           />
+          {!isFiscal && (
+            <span className="mt-1 block text-xs text-muted">
+              Puede incluir guiones u otros caracteres.
+            </span>
+          )}
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium">Desde</span>
+          <span className="mb-1.5 block text-sm font-medium">Número desde</span>
           <input
             type="number"
             required
@@ -119,7 +157,7 @@ export function SerialRangeFields({
           />
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium">Hasta</span>
+          <span className="mb-1.5 block text-sm font-medium">Número hasta</span>
           <input
             type="number"
             required
@@ -131,40 +169,56 @@ export function SerialRangeFields({
             placeholder="100"
           />
         </label>
+        {!isFiscal && (
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium">
+              Cifras del número
+            </span>
+            <input
+              type="number"
+              required
+              min={1}
+              max={12}
+              value={values.digitLength}
+              disabled={disabled}
+              onChange={(e) => patch({ digitLength: e.target.value })}
+              className={cn(inputClass, "font-mono")}
+            />
+            <span className="mt-1 block text-xs text-muted">
+              Ceros a la izquierda (habitual: 7).
+            </span>
+          </label>
+        )}
       </div>
 
-      {mode === "flexible" && (
-        <label className="block max-w-xs">
-          <span className="mb-1.5 block text-sm font-medium">
-            Dígitos del número
-          </span>
-          <input
-            type="number"
-            required
-            min={1}
-            max={12}
-            value={values.digitLength}
-            disabled={disabled}
-            onChange={(e) => patch({ digitLength: e.target.value })}
-            className={cn(inputClass, "font-mono")}
-          />
-        </label>
-      )}
-
       {preview && (
-        <p
+        <div
           className={cn(
-            "text-xs",
+            "rounded-lg border px-3 py-3 text-sm",
             preview.error
-              ? "text-rose-700 dark:text-rose-300"
-              : "text-muted",
+              ? "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300"
+              : "border-border bg-card text-card-foreground",
           )}
-          role={preview.error ? "alert" : undefined}
+          role={preview.error ? "alert" : "status"}
         >
-          {preview.error
-            ? preview.error
-            : `${preview.count} registro${preview.count === 1 ? "" : "s"}: ${preview.sample}`}
-        </p>
+          {preview.error ? (
+            preview.error
+          ) : (
+            <>
+              <p className="font-medium">
+                Se crearán{" "}
+                <span className="font-semibold text-accent">{preview.count}</span>{" "}
+                {isFiscal ? "impresora" : "precinto"}
+                {preview.count === 1 ? "" : "s"}
+              </p>
+              <p className="mt-1.5 font-mono text-xs text-muted">
+                Primero: <span className="text-foreground">{preview.first}</span>
+                {" · "}
+                Último: <span className="text-foreground">{preview.last}</span>
+              </p>
+            </>
+          )}
+        </div>
       )}
     </div>
   );

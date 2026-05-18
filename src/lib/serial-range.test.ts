@@ -27,10 +27,10 @@ describe("serial-range", () => {
     expect(typeof result).toBe("string");
   });
 
-  it("builds flexible seal-style range", () => {
+  it("builds seal-style range", () => {
     const result = buildSerialRange(
       { prefix: "SN-", from: "1", to: "2", digitLength: 3 },
-      { mode: "flexible" },
+      { mode: "seal" },
     );
     expect(result).toEqual(["SN-001", "SN-002"]);
   });

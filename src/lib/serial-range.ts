@@ -22,7 +22,7 @@ function resolveDigitLength(
   return Number.isFinite(n) ? n : fallback;
 }
 
-export type SerialRangeMode = "fiscal" | "flexible";
+export type SerialRangeMode = "fiscal" | "seal";
 
 export type SerialRangeBuildOptions = {
   mode: SerialRangeMode;
@@ -93,7 +93,7 @@ export function validateSerialRangeInput(
     return `El rango genera ${count} registros; el máximo permitido es ${maxCount}.`;
   }
 
-  if (options.mode === "flexible") {
+  if (options.mode === "seal") {
     if (!Number.isInteger(digitLength) || digitLength < 1 || digitLength > 12) {
       return "La longitud numérica debe estar entre 1 y 12 dígitos.";
     }
