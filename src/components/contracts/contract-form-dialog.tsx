@@ -1,9 +1,10 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { ContractDocumentUpload } from "@/components/contracts/contract-document-upload";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { type ContractFormValues } from "@/lib/contract-form";
 import type { ContractKind } from "@/types/contract";
 import type {
@@ -62,6 +63,15 @@ export function ContractFormDialog({
 
   const partyLabel =
     kind === "distributor" ? "Distribuidora" : "Centro de servicio";
+
+  const partySelectOptions = useMemo(
+    () =>
+      partyOptions.map((opt) => ({
+        value: String(opt.id),
+        label: opt.label,
+      })),
+    [partyOptions],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -131,28 +141,24 @@ export function ContractFormDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium">{partyLabel}</span>
-            <select
-              required
+            <SearchableSelect
               value={form.partyId}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, partyId: e.target.value }))
-              }
+              onChange={(partyId) => setForm((f) => ({ ...f, partyId }))}
+              options={partySelectOptions}
+              loading={catalogLoading}
               disabled={catalogLoading || partyOptions.length === 0}
-              className={inputClass}
-            >
-              <option value="">
-                {catalogLoading
-                  ? "Cargando…"
-                  : partyOptions.length === 0
-                    ? "No hay registros disponibles"
-                    : "Seleccionar…"}
-              </option>
-              {partyOptions.map((opt) => (
-                <option key={opt.id} value={String(opt.id)}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+              required
+              emptyLabel={
+                partyOptions.length === 0
+                  ? "No hay registros disponibles"
+                  : "Seleccionar…"
+              }
+              searchPlaceholder={
+                kind === "distributor"
+                  ? "Buscar distribuidora o sucursal…"
+                  : "Buscar centro de servicio o sucursal…"
+              }
+            />
           </label>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -196,7 +202,13 @@ export function ContractFormDialog({
             mode={mode}
             saving={saving}
             deleting={deleting}
-            submitDisabled={catalogLoading || form.photoUrls.length === 0}
+            submitDisabled={
+              catalogLoading ||
+              !form.partyId ||
+              !form.startDate ||
+              !form.endDate ||
+              form.photoUrls.length === 0
+            }
             onClose={onClose}
             onDelete={onDelete}
           />
