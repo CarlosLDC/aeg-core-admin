@@ -8,6 +8,7 @@ import {
   type CompanyResponse,
   type ContributorType,
 } from "@/types/company";
+import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { cn } from "@/lib/utils";
 
 const RIF_PATTERN = /^[VEJPG][0-9]{7,9}$/;
@@ -26,6 +27,8 @@ type CompanyFormDialogProps = {
   error: string | null;
   onClose: () => void;
   onSubmit: (values: CompanyFormValues) => void;
+  onDelete?: () => void;
+  deleting?: boolean;
 };
 
 const emptyForm: CompanyFormValues = {
@@ -42,6 +45,8 @@ export function CompanyFormDialog({
   error,
   onClose,
   onSubmit,
+  onDelete,
+  deleting = false,
 }: CompanyFormDialogProps) {
   const [form, setForm] = useState<CompanyFormValues>(emptyForm);
   const [rifError, setRifError] = useState<string | null>(null);
@@ -165,26 +170,13 @@ export function CompanyFormDialog({
             </select>
           </label>
 
-          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className={cn(
-                "flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
-                saving && "cursor-not-allowed opacity-70",
-              )}
-            >
-              {saving && <Loader2 className="size-4 animate-spin" />}
-              {mode === "create" ? "Crear" : "Guardar"}
-            </button>
-          </div>
+          <FormDialogFooter
+            mode={mode}
+            saving={saving}
+            deleting={deleting}
+            onClose={onClose}
+            onDelete={onDelete}
+          />
         </form>
       </div>
     </div>

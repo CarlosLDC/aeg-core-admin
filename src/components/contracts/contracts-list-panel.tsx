@@ -11,6 +11,7 @@ import {
   distributorContractPath,
   serviceCenterContractPath,
 } from "@/lib/resource-routes";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 import { usePagination } from "@/hooks/use-pagination";
 import {
@@ -214,6 +215,7 @@ export function ContractsListPanel({
 
   async function handleDelete(
     contract: DistributorContractResponse | ServiceCenterContractResponse,
+    fromDialog = false,
   ) {
     const label = getPartyLabel(contract);
     if (
@@ -230,6 +232,7 @@ export function ContractsListPanel({
       } else {
         await deleteServiceCenterContract(contract.id);
       }
+      if (fromDialog) closeDialog();
       await loadContracts();
       toast.success("Contrato eliminado.");
     } catch (err) {
@@ -340,10 +343,15 @@ export function ContractsListPanel({
                       </tr>
                     </thead>
                     <tbody>
-                      {pagination.paginatedItems.map((contract) => (
-                        <tr
+                      {pagination.paginatedItems.map((contract) => {
+                        const contractHref =
+                          kind === "distributor"
+                            ? distributorContractPath(contract.id)
+                            : serviceCenterContractPath(contract.id);
+                        return (
+                        <ClickableTableRow
                           key={contract.id}
-                          className="border-b border-border last:border-0 hover:bg-foreground/[0.02]"
+                          href={contractHref}
                         >
                           <td className="px-5 py-3.5 text-muted">
                             {contract.id}
@@ -384,14 +392,10 @@ export function ContractsListPanel({
                               </ul>
                             )}
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
-                                href={
-                                  kind === "distributor"
-                                    ? distributorContractPath(contract.id)
-                                    : serviceCenterContractPath(contract.id)
-                                }
+                                href={contractHref}
                                 label={`Ver contrato #${contract.id}`}
                               />
                               <button
@@ -417,8 +421,9 @@ export function ContractsListPanel({
                               </button>
                             </div>
                           </td>
-                        </tr>
-                      ))}
+                        </ClickableTableRow>
+                      );
+                      })}
                     </tbody>
                   </table>
                 </TableScroll>
@@ -440,6 +445,12 @@ export function ContractsListPanel({
         error={formError}
         onClose={closeDialog}
         onSubmit={handleSubmit}
+        deleting={Boolean(selected && deletingId === selected.id)}
+        onDelete={
+          dialog === "edit" && selected
+            ? () => void handleDelete(selected, true)
+            : undefined
+        }
       />
     </div>
   );

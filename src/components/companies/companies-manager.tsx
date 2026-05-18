@@ -29,6 +29,7 @@ import { CONTRIBUTOR_TYPES, type CompanyResponse } from "@/types/company";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { companyPath } from "@/lib/resource-routes";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 export function CompaniesManager() {
@@ -133,7 +134,7 @@ export function CompaniesManager() {
     }
   }
 
-  async function handleDelete(company: CompanyResponse) {
+  async function handleDelete(company: CompanyResponse, fromDialog = false) {
     const label = company.businessName || company.rif;
     if (
       !window.confirm(
@@ -145,6 +146,7 @@ export function CompaniesManager() {
     setDeletingId(company.id);
     try {
       await deleteCompany(company.id);
+      if (fromDialog) closeDialog();
       await reload();
       toast.success(`Empresa "${label}" eliminada.`);
     } catch (err) {
@@ -263,9 +265,9 @@ export function CompaniesManager() {
                     </thead>
                     <tbody>
                       {pagination.paginatedItems.map((company) => (
-                        <tr
+                        <ClickableTableRow
                           key={company.id}
-                          className="border-b border-border last:border-0 hover:bg-foreground/[0.02]"
+                          href={companyPath(company.id)}
                         >
                           <td className="px-5 py-3.5 text-muted">
                             {company.id}
@@ -279,7 +281,7 @@ export function CompaniesManager() {
                           <td className="px-5 py-3.5">
                             <ContributorBadge type={company.contributorType} />
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
                                 href={companyPath(company.id)}
@@ -312,7 +314,7 @@ export function CompaniesManager() {
                               )}
                             </div>
                           </td>
-                        </tr>
+                        </ClickableTableRow>
                       ))}
                     </tbody>
                   </table>
@@ -330,9 +332,15 @@ export function CompaniesManager() {
           company={selected ?? undefined}
           open={dialog !== null}
           saving={saving}
+          deleting={Boolean(selected && deletingId === selected.id)}
           error={formError}
           onClose={closeDialog}
           onSubmit={handleSubmit}
+          onDelete={
+            dialog === "edit" && selected && canModify
+              ? () => void handleDelete(selected, true)
+              : undefined
+          }
         />
       )}
     </div>

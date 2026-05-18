@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
+import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { PhotoDocumentUpload } from "@/components/ui/photo-document-upload";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
@@ -25,6 +26,8 @@ type AnnualInspectionFormDialogProps = {
   employeeOptions: SearchableSelectOption[];
   onClose: () => void;
   onSubmit: (values: AnnualInspectionFormValues) => void;
+  onDelete?: () => void;
+  deleting?: boolean;
 };
 
 export function AnnualInspectionFormDialog({
@@ -39,6 +42,8 @@ export function AnnualInspectionFormDialog({
   employeeOptions,
   onClose,
   onSubmit,
+  onDelete,
+  deleting = false,
 }: AnnualInspectionFormDialogProps) {
   const [form, setForm] = useState<AnnualInspectionFormValues>(
     emptyAnnualInspectionForm(),
@@ -209,27 +214,14 @@ export function AnnualInspectionFormDialog({
             />
           </div>
 
-          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={disabled || form.photoUrls.length === 0}
-              className={cn(
-                "flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
-                (disabled || form.photoUrls.length === 0) &&
-                  "cursor-not-allowed opacity-70",
-              )}
-            >
-              {saving && <Loader2 className="size-4 animate-spin" />}
-              {mode === "create" ? "Crear" : "Guardar"}
-            </button>
-          </div>
+          <FormDialogFooter
+            mode={mode}
+            saving={saving}
+            deleting={deleting}
+            submitDisabled={catalogLoading || form.photoUrls.length === 0}
+            onClose={onClose}
+            onDelete={onDelete}
+          />
         </form>
       </div>
     </div>

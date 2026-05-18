@@ -24,6 +24,7 @@ import type { PrinterModelResponse } from "@/types/printer-model";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { printerModelPath } from "@/lib/resource-routes";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 function modelLabel(model: PrinterModelResponse) {
@@ -139,7 +140,7 @@ export function PrinterModelsManager() {
     }
   }
 
-  async function handleDelete(model: PrinterModelResponse) {
+  async function handleDelete(model: PrinterModelResponse, fromDialog = false) {
     const label = modelLabel(model);
     if (
       !window.confirm(
@@ -151,6 +152,7 @@ export function PrinterModelsManager() {
     setDeletingId(model.id);
     try {
       await deletePrinterModel(model.id);
+      if (fromDialog) closeDialog();
       await loadModels();
       toast.success(`Modelo "${label}" eliminado.`);
     } catch (err) {
@@ -241,9 +243,9 @@ export function PrinterModelsManager() {
                     </thead>
                     <tbody>
                       {pagination.paginatedItems.map((model) => (
-                        <tr
+                        <ClickableTableRow
                           key={model.id}
-                          className="border-b border-border last:border-0 hover:bg-foreground/[0.02]"
+                          href={printerModelPath(model.id)}
                         >
                           <td className="px-5 py-3.5 text-muted">{model.id}</td>
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
@@ -261,7 +263,7 @@ export function PrinterModelsManager() {
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
                             {formatPrinterModelPrice(model.price)}
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
                                 href={printerModelPath(model.id)}
@@ -290,7 +292,7 @@ export function PrinterModelsManager() {
                               </button>
                             </div>
                           </td>
-                        </tr>
+                        </ClickableTableRow>
                       ))}
                     </tbody>
                   </table>
@@ -310,6 +312,12 @@ export function PrinterModelsManager() {
         error={formError}
         onClose={closeDialog}
         onSubmit={handleSubmit}
+        deleting={Boolean(selected && deletingId === selected.id)}
+        onDelete={
+          dialog === "edit" && selected
+            ? () => void handleDelete(selected, true)
+            : undefined
+        }
       />
     </div>
   );

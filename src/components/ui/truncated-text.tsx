@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { stopTableRowClick } from "@/components/ui/clickable-table-row";
 
 type TruncatedTextProps = {
   children: string;
@@ -27,7 +28,9 @@ export function TruncatedText({
     <span
       className={cn(
         "min-w-0",
-        expanded ? "whitespace-normal break-words" : cn("block truncate", maxClassName),
+        expanded
+          ? "whitespace-nowrap"
+          : cn("block truncate", maxClassName),
         className,
       )}
       title={!expanded && !canExpand ? children : undefined}
@@ -39,7 +42,8 @@ export function TruncatedText({
   const content = href ? (
     <Link
       href={href}
-      className="min-w-0 font-medium text-card-foreground underline-offset-2 hover:text-accent hover:underline"
+      onClick={stopTableRowClick}
+      className="min-w-0 shrink-0 font-medium text-card-foreground underline-offset-2 hover:text-accent hover:underline"
     >
       {text}
     </Link>
@@ -48,18 +52,24 @@ export function TruncatedText({
   );
 
   return (
-    <span className="inline-flex min-w-0 max-w-full flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+    <span
+      data-expanded={expanded ? "true" : undefined}
+      className="inline-flex max-w-full flex-nowrap items-center gap-x-1.5"
+    >
       {content}
-      {canExpand && (
+      {canExpand ? (
         <button
           type="button"
-          onClick={() => setExpanded((v) => !v)}
+          onClick={(e) => {
+            stopTableRowClick(e);
+            setExpanded((v) => !v);
+          }}
           className="shrink-0 text-xs font-medium text-accent hover:underline"
           aria-expanded={expanded}
         >
           {expanded ? "Ocultar" : "Ver completo"}
         </button>
-      )}
+      ) : null}
     </span>
   );
 }

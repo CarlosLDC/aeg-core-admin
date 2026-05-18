@@ -35,6 +35,7 @@ import { ROLES } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { userPath } from "@/lib/resource-routes";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 function parseOptionalId(value: string): number | undefined {
@@ -218,7 +219,7 @@ export function UsersManager() {
     }
   }
 
-  async function handleDelete(user: UserResponse) {
+  async function handleDelete(user: UserResponse, fromDialog = false) {
     if (
       !window.confirm(
         `¿Eliminar al usuario "${user.username}"? Esta acción no se puede deshacer.`,
@@ -229,6 +230,7 @@ export function UsersManager() {
     setDeletingId(user.id);
     try {
       await deleteUser(user.id);
+      if (fromDialog) closeDialog();
       await loadUsers();
       toast.success(`Usuario "${user.username}" eliminado.`);
     } catch (err) {
@@ -365,9 +367,9 @@ export function UsersManager() {
                     </thead>
                     <tbody>
                       {pagination.paginatedItems.map((user) => (
-                        <tr
+                        <ClickableTableRow
                           key={user.id}
-                          className="border-b border-border last:border-0 hover:bg-foreground/[0.02]"
+                          href={userPath(user.id)}
                         >
                           <td className="px-5 py-3.5 text-muted">{user.id}</td>
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
@@ -396,7 +398,7 @@ export function UsersManager() {
                               {user.enabled ? "Activo" : "Inactivo"}
                             </span>
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
                                 href={userPath(user.id)}
@@ -425,7 +427,7 @@ export function UsersManager() {
                               </button>
                             </div>
                           </td>
-                        </tr>
+                        </ClickableTableRow>
                       ))}
                     </tbody>
                   </table>
@@ -449,6 +451,12 @@ export function UsersManager() {
         error={formError}
         onClose={closeDialog}
         onSubmit={handleSubmit}
+        deleting={Boolean(selected && deletingId === selected.id)}
+        onDelete={
+          dialog === "edit" && selected
+            ? () => void handleDelete(selected, true)
+            : undefined
+        }
       />
     </div>
   );

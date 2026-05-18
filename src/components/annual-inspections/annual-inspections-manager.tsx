@@ -5,6 +5,7 @@ import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { AnnualInspectionFormDialog } from "@/components/annual-inspections/annual-inspection-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { annualInspectionPath } from "@/lib/resource-routes";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
@@ -134,8 +135,7 @@ export function AnnualInspectionsManager() {
           href: annualInspectionPath(selected.id),
         });
       }
-      setDialog(null);
-      setSelected(null);
+      closeDialog();
       await loadRows();
     } catch (err) {
       const message = getAnnualInspectionsErrorMessage(err);
@@ -146,11 +146,18 @@ export function AnnualInspectionsManager() {
     }
   }
 
-  async function handleDelete(row: AnnualInspectionResponse) {
+  function closeDialog() {
+    setDialog(null);
+    setSelected(null);
+    setFormError(null);
+  }
+
+  async function handleDelete(row: AnnualInspectionResponse, fromDialog = false) {
     if (!window.confirm(`¿Eliminar la inspección #${row.id}?`)) return;
     setDeletingId(row.id);
     try {
       await deleteAnnualInspection(row.id);
+      if (fromDialog) closeDialog();
       toast.success("Inspección eliminada.");
       await loadRows();
     } catch (err) {
@@ -245,9 +252,9 @@ export function AnnualInspectionsManager() {
                     </thead>
                     <tbody>
                       {pagination.paginatedItems.map((row) => (
-                        <tr
+                        <ClickableTableRow
                           key={row.id}
-                          className="border-b border-border last:border-0 hover:bg-foreground/[0.02]"
+                          href={annualInspectionPath(row.id)}
                         >
                           <td className="px-5 py-3.5 text-muted">{row.id}</td>
                           <td className="max-w-[140px] truncate px-5 py-3.5 font-mono text-card-foreground">
@@ -267,7 +274,7 @@ export function AnnualInspectionsManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {row.photoUrls?.length ?? 0}
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
                                 href={annualInspectionPath(row.id)}
@@ -300,7 +307,7 @@ export function AnnualInspectionsManager() {
                               </button>
                             </div>
                           </td>
-                        </tr>
+                        </ClickableTableRow>
                       ))}
                     </tbody>
                   </table>
@@ -317,17 +324,19 @@ export function AnnualInspectionsManager() {
         row={selected ?? undefined}
         open={dialog !== null}
         saving={saving}
+        deleting={Boolean(selected && deletingId === selected.id)}
         error={formError}
         catalogLoading={catalog.loading}
         canLoadPrinters={catalog.canLoadPrinters}
         printerOptions={catalog.printerOptions}
         employeeOptions={catalog.employeeOptions}
-        onClose={() => {
-          setDialog(null);
-          setSelected(null);
-          setFormError(null);
-        }}
+        onClose={closeDialog}
         onSubmit={handleSubmit}
+        onDelete={
+          dialog === "edit" && selected
+            ? () => void handleDelete(selected, true)
+            : undefined
+        }
       />
     </div>
   );

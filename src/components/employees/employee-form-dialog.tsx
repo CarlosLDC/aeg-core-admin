@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
+import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { BranchSelect } from "@/components/users/branch-select";
 import {
   EMPLOYEE_UI_ROLE_LABELS,
@@ -30,6 +31,8 @@ type EmployeeFormDialogProps = {
   error: string | null;
   onClose: () => void;
   onSubmit: (values: EmployeeFormValues) => void;
+  onDelete?: () => void;
+  deleting?: boolean;
 };
 
 const emptyForm: EmployeeFormValues = {
@@ -53,6 +56,8 @@ export function EmployeeFormDialog({
   error,
   onClose,
   onSubmit,
+  onDelete,
+  deleting = false,
 }: EmployeeFormDialogProps) {
   const [form, setForm] = useState<EmployeeFormValues>(emptyForm);
 
@@ -222,26 +227,14 @@ export function EmployeeFormDialog({
             </select>
           </label>
 
-          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving || branchesLoading}
-              className={cn(
-                "flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
-                (saving || branchesLoading) && "cursor-not-allowed opacity-70",
-              )}
-            >
-              {saving && <Loader2 className="size-4 animate-spin" />}
-              {mode === "create" ? "Crear" : "Guardar"}
-            </button>
-          </div>
+          <FormDialogFooter
+            mode={mode}
+            saving={saving}
+            deleting={deleting}
+            submitDisabled={branchesLoading}
+            onClose={onClose}
+            onDelete={onDelete}
+          />
         </form>
       </div>
     </div>

@@ -58,6 +58,7 @@ import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { branchPath, companyPath } from "@/lib/resource-routes";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 const TYPE_FILTER_OPTIONS = [
@@ -402,7 +403,7 @@ export function BranchesManager() {
     }
   }
 
-  async function handleDelete(branch: BranchWithRoles) {
+  async function handleDelete(branch: BranchWithRoles, fromDialog = false) {
     if (!canModify) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
@@ -419,6 +420,7 @@ export function BranchesManager() {
     try {
       await deleteBranchRoles(branch);
       await deleteBranch(branch.id);
+      if (fromDialog) closeDialog();
       await loadBranches();
       toast.success(`Sucursal "${label}" eliminada.`);
     } catch (err) {
@@ -536,12 +538,12 @@ export function BranchesManager() {
                     </thead>
                     <tbody>
                       {pagination.paginatedItems.map((branch) => (
-                        <tr
+                        <ClickableTableRow
                           key={branch.id}
-                          className="border-b border-border last:border-0 hover:bg-foreground/[0.02]"
+                          href={branchPath(branch.id)}
                         >
                           <td className="px-5 py-3.5 text-muted">{branch.id}</td>
-                          <td className="max-w-[200px] px-5 py-3.5">
+                          <td className="max-w-[200px] px-5 py-3.5 has-[[data-expanded=true]]:max-w-none">
                             <TruncatedText
                               href={companyPath(branch.companyId)}
                               maxClassName="max-w-[180px]"
@@ -581,7 +583,7 @@ export function BranchesManager() {
                               companies,
                             )}
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
                                 href={branchPath(branch.id)}
@@ -614,7 +616,7 @@ export function BranchesManager() {
                               )}
                             </div>
                           </td>
-                        </tr>
+                        </ClickableTableRow>
                       ))}
                     </tbody>
                   </table>
@@ -651,6 +653,12 @@ export function BranchesManager() {
         error={formError}
         onClose={closeDialog}
         onSubmit={handleSubmit}
+        deleting={Boolean(selected && deletingId === selected.id)}
+        onDelete={
+          selected && canModify
+            ? () => void handleDelete(selected, true)
+            : undefined
+        }
       />
     </div>
   );

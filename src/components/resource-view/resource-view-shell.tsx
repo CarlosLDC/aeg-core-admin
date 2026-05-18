@@ -10,6 +10,7 @@ type ResourceViewShellProps = {
   subtitle?: string;
   loading?: boolean;
   error?: string | null;
+  actions?: React.ReactNode;
   children: React.ReactNode;
 };
 
@@ -20,6 +21,7 @@ export function ResourceViewShell({
   subtitle,
   loading,
   error,
+  actions,
   children,
 }: ResourceViewShellProps) {
   return (
@@ -32,11 +34,14 @@ export function ResourceViewShell({
         {backLabel}
       </Link>
 
-      <div>
-        <h2 className="text-xl font-semibold text-card-foreground">{title}</h2>
-        {subtitle ? (
-          <p className="mt-1 text-sm text-muted">{subtitle}</p>
-        ) : null}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-xl font-semibold text-card-foreground">{title}</h2>
+          {subtitle ? (
+            <p className="mt-1 text-sm text-muted">{subtitle}</p>
+          ) : null}
+        </div>
+        {actions ? <div className="shrink-0">{actions}</div> : null}
       </div>
 
       {loading ? (

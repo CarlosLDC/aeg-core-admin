@@ -1,3 +1,5 @@
+import { fetchBranchById } from "@/lib/branches-api";
+import { fetchClients } from "@/lib/clients-api";
 import {
   createClient,
   deleteClient,
@@ -6,10 +8,12 @@ import {
 import {
   createDistributor,
   deleteDistributor,
+  fetchDistributors,
 } from "@/lib/distributors-api";
 import {
   createServiceCenter,
   deleteServiceCenter,
+  fetchServiceCenters,
 } from "@/lib/service-centers-api";
 import { getCatalogForbiddenMessage } from "@/lib/api-permissions";
 import { ApiError } from "@/types/auth";
@@ -117,6 +121,25 @@ export async function deleteBranchRoles(branch: BranchWithRoles): Promise<void> 
   if (branch.client) await deleteClient(branch.client.id);
   if (branch.serviceCenter) await deleteServiceCenter(branch.serviceCenter.id);
   if (branch.distributor) await deleteDistributor(branch.distributor.id);
+}
+
+export async function fetchBranchWithRolesById(
+  id: number,
+): Promise<BranchWithRoles> {
+  const [branch, distributors, clients, serviceCenters] = await Promise.all([
+    fetchBranchById(id),
+    fetchDistributors(),
+    fetchClients(),
+    fetchServiceCenters(),
+  ]);
+
+  const merged = mergeBranchesWithRoles(
+    [branch],
+    distributors,
+    clients,
+    serviceCenters,
+  );
+  return merged[0]!;
 }
 
 export function getBranchRolesErrorMessage(error: unknown): string {

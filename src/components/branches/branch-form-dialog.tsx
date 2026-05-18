@@ -1,15 +1,14 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
+import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { CompanySelect } from "@/components/companies/company-select";
 import { DistributorSelect } from "@/components/branches/distributor-select";
 import type { BranchRoleFormState } from "@/lib/branch-roles";
 import type { BranchResponse, BranchWithRoles } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
-import { cn } from "@/lib/utils";
-
 export type BranchFormValues = {
   companyId: string;
   city: string;
@@ -35,6 +34,8 @@ type BranchFormDialogProps = {
   error: string | null;
   onClose: () => void;
   onSubmit: (values: BranchFormValues) => void;
+  onDelete?: () => void;
+  deleting?: boolean;
 };
 
 const emptyForm: BranchFormValues = {
@@ -73,6 +74,8 @@ export function BranchFormDialog({
   error,
   onClose,
   onSubmit,
+  onDelete,
+  deleting = false,
 }: BranchFormDialogProps) {
   const [form, setForm] = useState<BranchFormValues>(emptyForm);
 
@@ -291,27 +294,14 @@ export function BranchFormDialog({
             )}
           </fieldset>
 
-          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving || companiesLoading || !form.companyId}
-              className={cn(
-                "flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
-                (saving || companiesLoading || !form.companyId) &&
-                  "cursor-not-allowed opacity-70",
-              )}
-            >
-              {saving && <Loader2 className="size-4 animate-spin" />}
-              {mode === "create" ? "Crear" : "Guardar"}
-            </button>
-          </div>
+          <FormDialogFooter
+            mode={mode}
+            saving={saving}
+            deleting={deleting}
+            submitDisabled={companiesLoading || !form.companyId}
+            onClose={onClose}
+            onDelete={onDelete}
+          />
         </form>
       </div>
     </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
+import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { ContractDocumentUpload } from "@/components/contracts/contract-document-upload";
 import { type ContractFormValues } from "@/lib/contract-form";
 import type { ContractKind } from "@/types/contract";
@@ -9,8 +10,6 @@ import type {
   DistributorContractResponse,
   ServiceCenterContractResponse,
 } from "@/types/contract";
-import { cn } from "@/lib/utils";
-
 type PartyOption = { id: number; label: string };
 
 type ContractFormDialogProps = {
@@ -24,6 +23,8 @@ type ContractFormDialogProps = {
   error: string | null;
   onClose: () => void;
   onSubmit: (values: ContractFormValues) => void;
+  onDelete?: () => void;
+  deleting?: boolean;
 };
 
 const emptyForm: ContractFormValues = {
@@ -54,6 +55,8 @@ export function ContractFormDialog({
   error,
   onClose,
   onSubmit,
+  onDelete,
+  deleting = false,
 }: ContractFormDialogProps) {
   const [form, setForm] = useState<ContractFormValues>(emptyForm);
 
@@ -189,27 +192,14 @@ export function ContractFormDialog({
             />
           </div>
 
-          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving || catalogLoading || form.photoUrls.length === 0}
-              className={cn(
-                "flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
-                (saving || catalogLoading || form.photoUrls.length === 0) &&
-                  "cursor-not-allowed opacity-70",
-              )}
-            >
-              {saving && <Loader2 className="size-4 animate-spin" />}
-              {mode === "create" ? "Crear" : "Guardar"}
-            </button>
-          </div>
+          <FormDialogFooter
+            mode={mode}
+            saving={saving}
+            deleting={deleting}
+            submitDisabled={catalogLoading || form.photoUrls.length === 0}
+            onClose={onClose}
+            onDelete={onDelete}
+          />
         </form>
       </div>
     </div>

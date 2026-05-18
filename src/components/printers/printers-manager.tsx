@@ -52,6 +52,7 @@ import { PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { printerPath } from "@/lib/resource-routes";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 function clientLabel(
@@ -351,7 +352,7 @@ export function PrintersManager() {
     }
   }
 
-  async function handleDelete(printer: PrinterResponse) {
+  async function handleDelete(printer: PrinterResponse, fromDialog = false) {
     if (!canModify) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
@@ -366,6 +367,7 @@ export function PrintersManager() {
     setDeletingId(printer.id);
     try {
       await deletePrinter(printer.id);
+      if (fromDialog) closeDialog();
       toast.success("Impresora eliminada.");
       await loadPrinters();
     } catch (err) {
@@ -491,9 +493,9 @@ export function PrintersManager() {
                     </thead>
                     <tbody>
                       {pagination.paginatedItems.map((printer) => (
-                        <tr
+                        <ClickableTableRow
                           key={printer.id}
-                          className="border-b border-border last:border-0 hover:bg-foreground/[0.02]"
+                          href={printerPath(printer.id)}
                         >
                           <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
                             {printer.fiscalSerial}
@@ -523,7 +525,7 @@ export function PrintersManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {formatPrinterDate(printer.installationDate)}
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
                                 href={printerPath(printer.id)}
@@ -556,7 +558,7 @@ export function PrintersManager() {
                               )}
                             </div>
                           </td>
-                        </tr>
+                        </ClickableTableRow>
                       ))}
                     </tbody>
                   </table>
@@ -585,6 +587,12 @@ export function PrintersManager() {
         defaultDistributorId={distributorId}
         onClose={closeDialog}
         onSubmit={handleSubmit}
+        deleting={Boolean(selected && deletingId === selected.id)}
+        onDelete={
+          dialog === "edit" && selected && canModify
+            ? () => void handleDelete(selected, true)
+            : undefined
+        }
       />
     </div>
   );

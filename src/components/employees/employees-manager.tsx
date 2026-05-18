@@ -49,6 +49,7 @@ import type { EmployeeRequest } from "@/types/employee";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { employeePath } from "@/lib/resource-routes";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 function employeeLabel(employee: EmployeeWithRoles) {
@@ -310,7 +311,7 @@ export function EmployeesManager() {
     }
   }
 
-  async function handleDelete(employee: EmployeeWithRoles) {
+  async function handleDelete(employee: EmployeeWithRoles, fromDialog = false) {
     if (!canModify) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
@@ -327,6 +328,7 @@ export function EmployeesManager() {
     try {
       await deleteEmployeeRoles(employee);
       await deleteEmployee(employee.id);
+      if (fromDialog) closeDialog();
       await loadEmployees();
       toast.success(`Empleado "${label}" eliminado.`);
     } catch (err) {
@@ -448,9 +450,9 @@ export function EmployeesManager() {
                     </thead>
                     <tbody>
                       {pagination.paginatedItems.map((employee) => (
-                        <tr
+                        <ClickableTableRow
                           key={employee.id}
-                          className="border-b border-border last:border-0 hover:bg-foreground/[0.02]"
+                          href={employeePath(employee.id)}
                         >
                           <td className="px-5 py-3.5 text-muted">
                             {employee.id}
@@ -477,7 +479,7 @@ export function EmployeesManager() {
                               {employee.email}
                             </span>
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
                                 href={employeePath(employee.id)}
@@ -510,7 +512,7 @@ export function EmployeesManager() {
                               )}
                             </div>
                           </td>
-                        </tr>
+                        </ClickableTableRow>
                       ))}
                     </tbody>
                   </table>
@@ -532,9 +534,15 @@ export function EmployeesManager() {
           branchesLoading={scopeLoading}
           open={dialog !== null}
           saving={saving}
+          deleting={Boolean(selected && deletingId === selected.id)}
           error={formError}
           onClose={closeDialog}
           onSubmit={handleSubmit}
+          onDelete={
+            dialog === "edit" && selected && canModify
+              ? () => void handleDelete(selected, true)
+              : undefined
+          }
         />
       )}
     </div>

@@ -1,80 +1,185 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ContributorBadge } from "@/components/companies/contributor-badge";
+import {
+  CompanyFormDialog,
+  type CompanyFormValues,
+} from "@/components/companies/company-form-dialog";
 import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
+import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
+import { useAuth } from "@/context/auth-provider";
+import { useCompanyScope } from "@/context/company-scope-provider";
+import { useToast } from "@/context/toast-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
+  canModifyCatalogRecord,
+  CATALOG_MODIFY_FORBIDDEN_MESSAGE,
+} from "@/lib/api-permissions";
+import {
+  deleteCompany,
   fetchCompanyById,
   getCompaniesErrorMessage,
+  updateCompany,
 } from "@/lib/companies-api";
 import { formatDate } from "@/lib/datetime-form";
+import { companyPath } from "@/lib/resource-routes";
 import type { CompanyResponse } from "@/types/company";
 
 export function CompanyView() {
   const id = useResourceId();
+  const router = useRouter();
+  const toast = useToast();
+  const { user } = useAuth();
+  const { refresh } = useCompanyScope();
+  const canModify = user ? canModifyCatalogRecord(user.role) : false;
+
   const [company, setCompany] = useState<CompanyResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (id == null) {
       setError("Identificador de empresa no válido.");
       setLoading(false);
       return;
     }
 
-    let cancelled = false;
     setLoading(true);
     setError(null);
-
-    fetchCompanyById(id)
-      .then((data) => {
-        if (!cancelled) setCompany(data);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(getCompaniesErrorMessage(err));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    try {
+      const data = await fetchCompanyById(id);
+      setCompany(data);
+    } catch (err) {
+      setError(getCompaniesErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function handleSubmit(values: CompanyFormValues) {
+    if (!company || !canModify) {
+      setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+      return;
+    }
+
+    setSaving(true);
+    setFormError(null);
+    try {
+      const updated = await updateCompany(company.id, values);
+      setCompany(updated);
+      toast.success(
+        `Empresa "${values.businessName || values.rif}" actualizada.`,
+        { href: companyPath(updated.id) },
+      );
+      setEditOpen(false);
+      await refresh();
+    } catch (err) {
+      const message = getCompaniesErrorMessage(err);
+      setFormError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!company || !canModify) {
+      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+      return;
+    }
+    const label = company.businessName || company.rif;
+    if (
+      !window.confirm(
+        `¿Eliminar "${label}"? Las sucursales vinculadas pueden verse afectadas.`,
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await deleteCompany(company.id);
+      await refresh();
+      toast.success(`Empresa "${label}" eliminada.`);
+      router.push("/companies");
+    } catch (err) {
+      toast.error(getCompaniesErrorMessage(err));
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const title = company?.businessName || company?.rif || "Empresa";
 
   return (
-    <ResourceViewShell
-      backHref="/companies"
-      backLabel="Volver a empresas"
-      title={title}
-      subtitle={company?.rif}
-      loading={loading}
-      error={error}
-    >
-      {company && (
-        <DetailCard>
-          <DetailField label="ID" value={String(company.id)} mono />
-          <DetailField label="RIF" value={company.rif} mono />
-          <DetailField
-            label="Razón social"
-            value={company.businessName || "—"}
-            fullWidth
-          />
-          <DetailField
-            label="Tipo de contribuyente"
-            value={<ContributorBadge type={company.contributorType} />}
-          />
-          <DetailField
-            label="Registrada"
-            value={formatDate(company.createdAt)}
-          />
-        </DetailCard>
+    <>
+      <ResourceViewShell
+        backHref="/companies"
+        backLabel="Volver a empresas"
+        title={title}
+        subtitle={company?.rif}
+        loading={loading}
+        error={error}
+        actions={
+          company && canModify ? (
+            <ResourceViewActions
+              onEdit={() => {
+                setFormError(null);
+                setEditOpen(true);
+              }}
+              onDelete={() => void handleDelete()}
+              deleting={deleting}
+            />
+          ) : undefined
+        }
+      >
+        {company && (
+          <DetailCard>
+            <DetailField label="ID" value={String(company.id)} mono />
+            <DetailField label="RIF" value={company.rif} mono />
+            <DetailField
+              label="Razón social"
+              value={company.businessName || "—"}
+              fullWidth
+            />
+            <DetailField
+              label="Tipo de contribuyente"
+              value={<ContributorBadge type={company.contributorType} />}
+            />
+            <DetailField
+              label="Registrada"
+              value={formatDate(company.createdAt)}
+            />
+          </DetailCard>
+        )}
+      </ResourceViewShell>
+
+      {company && editOpen && (
+        <CompanyFormDialog
+          mode="edit"
+          company={company}
+          open={editOpen}
+          saving={saving}
+          deleting={deleting}
+          error={formError}
+          onClose={() => {
+            if (!saving && !deleting) setEditOpen(false);
+          }}
+          onSubmit={handleSubmit}
+          onDelete={() => void handleDelete()}
+        />
       )}
-    </ResourceViewShell>
+    </>
   );
 }

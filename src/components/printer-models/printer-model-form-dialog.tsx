@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
+import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import type { PrinterModelFormValues } from "@/lib/printer-model-form";
 import type { PrinterModelResponse } from "@/types/printer-model";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,8 @@ type PrinterModelFormDialogProps = {
   error: string | null;
   onClose: () => void;
   onSubmit: (values: PrinterModelFormValues) => void;
+  onDelete?: () => void;
+  deleting?: boolean;
 };
 
 const emptyForm: PrinterModelFormValues = {
@@ -37,6 +40,8 @@ export function PrinterModelFormDialog({
   error,
   onClose,
   onSubmit,
+  onDelete,
+  deleting = false,
 }: PrinterModelFormDialogProps) {
   const [form, setForm] = useState<PrinterModelFormValues>(emptyForm);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -182,26 +187,13 @@ export function PrinterModelFormDialog({
             </label>
           </div>
 
-          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className={cn(
-                "flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
-                saving && "cursor-not-allowed opacity-70",
-              )}
-            >
-              {saving && <Loader2 className="size-4 animate-spin" />}
-              {mode === "create" ? "Crear" : "Guardar"}
-            </button>
-          </div>
+          <FormDialogFooter
+            mode={mode}
+            saving={saving}
+            deleting={deleting}
+            onClose={onClose}
+            onDelete={onDelete}
+          />
         </form>
       </div>
     </div>

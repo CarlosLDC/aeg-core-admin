@@ -5,6 +5,7 @@ import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { TechnicalServiceFormDialog } from "@/components/technical-services/technical-service-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { technicalServicePath } from "@/lib/resource-routes";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
@@ -104,6 +105,12 @@ export function TechnicalServicesManager() {
     void loadRows();
   }, [catalog.loading, loadRows]);
 
+  function closeDialog() {
+    setDialog(null);
+    setSelected(null);
+    setFormError(null);
+  }
+
   async function handleSubmit(values: TechnicalServiceFormValues) {
     const bodyOrError = toTechnicalServiceRequest(values);
     if (typeof bodyOrError === "string") {
@@ -124,8 +131,7 @@ export function TechnicalServicesManager() {
           href: technicalServicePath(selected.id),
         });
       }
-      setDialog(null);
-      setSelected(null);
+      closeDialog();
       await loadRows();
     } catch (err) {
       const message = getTechnicalServicesErrorMessage(err);
@@ -136,11 +142,12 @@ export function TechnicalServicesManager() {
     }
   }
 
-  async function handleDelete(row: TechnicalServiceResponse) {
+  async function handleDelete(row: TechnicalServiceResponse, fromDialog = false) {
     if (!window.confirm(`¿Eliminar el servicio técnico #${row.id}?`)) return;
     setDeletingId(row.id);
     try {
       await deleteTechnicalService(row.id);
+      if (fromDialog) closeDialog();
       toast.success("Servicio eliminado.");
       await loadRows();
     } catch (err) {
@@ -237,9 +244,9 @@ export function TechnicalServicesManager() {
                     </thead>
                     <tbody>
                       {pagination.paginatedItems.map((row) => (
-                        <tr
+                        <ClickableTableRow
                           key={row.id}
-                          className="border-b border-border last:border-0 hover:bg-foreground/[0.02]"
+                          href={technicalServicePath(row.id)}
                         >
                           <td className="px-5 py-3.5 text-muted">{row.id}</td>
                           <td className="max-w-[140px] truncate px-5 py-3.5 font-mono text-card-foreground">
@@ -265,7 +272,7 @@ export function TechnicalServicesManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {row.sealTampered ? "Violentado" : "OK"}
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
                                 href={technicalServicePath(row.id)}
@@ -298,7 +305,7 @@ export function TechnicalServicesManager() {
                               </button>
                             </div>
                           </td>
-                        </tr>
+                        </ClickableTableRow>
                       ))}
                     </tbody>
                   </table>
@@ -315,6 +322,7 @@ export function TechnicalServicesManager() {
         row={selected ?? undefined}
         open={dialog !== null}
         saving={saving}
+        deleting={Boolean(selected && deletingId === selected.id)}
         error={formError}
         catalogLoading={catalog.loading}
         canLoadPrinters={catalog.canLoadPrinters}
@@ -323,12 +331,13 @@ export function TechnicalServicesManager() {
         sealOptions={catalog.sealOptions}
         serviceCenterOptions={catalog.serviceCenterOptions}
         distributorOptions={catalog.distributorOptions}
-        onClose={() => {
-          setDialog(null);
-          setSelected(null);
-          setFormError(null);
-        }}
+        onClose={closeDialog}
         onSubmit={handleSubmit}
+        onDelete={
+          dialog === "edit" && selected
+            ? () => void handleDelete(selected, true)
+            : undefined
+        }
       />
     </div>
   );

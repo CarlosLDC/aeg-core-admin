@@ -2,7 +2,8 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { formatBranchLabel } from "@/lib/branches";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
+import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { BranchSelect } from "@/components/users/branch-select";
 import { DistributorIdSelect } from "@/components/users/distributor-id-select";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -16,8 +17,6 @@ import type { DistributorResponse } from "@/types/branch-role";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import { ROLES, type Role, type UserResponse } from "@/types/user";
-import { cn } from "@/lib/utils";
-
 export type UserFormValues = {
   username: string;
   password: string;
@@ -39,6 +38,8 @@ type UserFormDialogProps = {
   error: string | null;
   onClose: () => void;
   onSubmit: (values: UserFormValues) => void;
+  onDelete?: () => void;
+  deleting?: boolean;
 };
 
 const emptyForm: UserFormValues = {
@@ -62,6 +63,8 @@ export function UserFormDialog({
   error,
   onClose,
   onSubmit,
+  onDelete,
+  deleting = false,
 }: UserFormDialogProps) {
   const [form, setForm] = useState<UserFormValues>(emptyForm);
 
@@ -286,26 +289,15 @@ export function UserFormDialog({
             </label>
           )}
 
-          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving || branchesLoading}
-              className={cn(
-                "flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
-                (saving || branchesLoading) && "cursor-not-allowed opacity-70",
-              )}
-            >
-              {saving && <Loader2 className="size-4 animate-spin" />}
-              {mode === "create" ? "Crear y dar acceso" : "Guardar"}
-            </button>
-          </div>
+          <FormDialogFooter
+            mode={mode}
+            saving={saving}
+            deleting={deleting}
+            submitDisabled={branchesLoading}
+            onClose={onClose}
+            onDelete={onDelete}
+            createLabel="Crear y dar acceso"
+          />
         </form>
       </div>
     </div>

@@ -38,6 +38,7 @@ import { SEAL_COLORS, SEAL_STATUSES } from "@/types/seal";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { sealPath } from "@/lib/resource-routes";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 export function SealsManager() {
@@ -266,7 +267,7 @@ export function SealsManager() {
     }
   }
 
-  async function handleDelete(seal: SealResponse) {
+  async function handleDelete(seal: SealResponse, fromDialog = false) {
     if (
       !window.confirm(`¿Eliminar el precinto con serial ${seal.serial}?`)
     ) {
@@ -275,6 +276,7 @@ export function SealsManager() {
     setDeletingId(seal.id);
     try {
       await deleteSeal(seal.id);
+      if (fromDialog) closeDialog();
       toast.success("Precinto eliminado.");
       await loadSeals();
     } catch (err) {
@@ -396,9 +398,9 @@ export function SealsManager() {
                     </thead>
                     <tbody>
                       {pagination.paginatedItems.map((seal) => (
-                        <tr
+                        <ClickableTableRow
                           key={seal.id}
-                          className="border-b border-border last:border-0 hover:bg-foreground/[0.02]"
+                          href={sealPath(seal.id)}
                         >
                           <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
                             {seal.serial}
@@ -418,7 +420,7 @@ export function SealsManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {formatSealDate(seal.removalDate)}
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
                                 href={sealPath(seal.id)}
@@ -447,7 +449,7 @@ export function SealsManager() {
                               </button>
                             </div>
                           </td>
-                        </tr>
+                        </ClickableTableRow>
                       ))}
                     </tbody>
                   </table>
@@ -464,11 +466,17 @@ export function SealsManager() {
         seal={selected ?? undefined}
         open={dialog !== null}
         saving={saving}
+        deleting={Boolean(selected && deletingId === selected.id)}
         error={formError}
         printerOptions={printerOptions}
         printersLoading={printersLoading}
         onClose={closeDialog}
         onSubmit={handleSubmit}
+        onDelete={
+          dialog === "edit" && selected
+            ? () => void handleDelete(selected, true)
+            : undefined
+        }
       />
     </div>
   );
