@@ -34,7 +34,7 @@ Claims esperados por el panel: `role`, `branchId`, `distributorId`.
 - `/api/companies` POST — ADMIN, DISTRIBUTOR (scope)
 - `/api/companies` PUT/DELETE — ADMIN
 - `/api/branches` POST — ADMIN, DISTRIBUTOR; PUT/DELETE — ADMIN
-- `/api/printers` POST — ADMIN, DISTRIBUTOR, TECHNICIAN; PUT/DELETE — ADMIN
+- `/api/printers` GET — ADMIN, DISTRIBUTOR, TECHNICIAN (filtrado por scope); POST/PUT/DELETE — solo ADMIN
 
 ## Pruebas de integración
 

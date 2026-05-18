@@ -19,7 +19,7 @@ Documento de referencia alineado con `src/lib/permissions/matrix.ts`. El backend
 | companies | ADMIN, DISTRIBUTOR | ADMIN, DISTRIBUTOR | ADMIN | ADMIN | DIST: API filtra por distribuidora |
 | branches | Todos | ADMIN, DISTRIBUTOR | ADMIN | ADMIN | Wizard SENIAT: create company+branch |
 | employees | Todos | ADMIN | ADMIN | ADMIN | `assignRoles`: ADMIN, TECHNICIAN, SERVICE_CENTER, DISTRIBUTOR |
-| printers | ADMIN, DISTRIBUTOR, TECHNICIAN | ADMIN, DISTRIBUTOR, TECHNICIAN | ADMIN | ADMIN | DIST: `distributorId` |
+| printers | ADMIN, DISTRIBUTOR, TECHNICIAN | ADMIN | ADMIN | ADMIN | Solo lectura fuera de ADMIN; alcance por API/scope |
 | printerModels | ADMIN, DISTRIBUTOR, TECHNICIAN | ADMIN | ADMIN | ADMIN | Catálogo de consulta para quien opera impresoras |
 | seals | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual lectura | Igual | Igual | Impresoras en scope |
 | technicalServices | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual | Igual | Igual | |
@@ -34,7 +34,7 @@ Documento de referencia alineado con `src/lib/permissions/matrix.ts`. El backend
 
 1. **DISTRIBUTOR** puede crear empresas y sucursales (coherente con descripción de rol y wizard SENIAT); no puede editar ni eliminar registros existentes del catálogo.
 2. **PUT/DELETE** en empresas, sucursales y empleados: solo **ADMIN**.
-3. **Impresoras**: operadores pueden registrar; solo **ADMIN** edita o elimina.
+3. **Impresoras**: DISTRIBUTOR y TECHNICIAN solo **leen** las de su alcance; crear, editar y eliminar: solo **ADMIN**.
 4. Operaciones de campo (precintos, ST, inspección): roles con acceso al módulo pueden CRUD dentro del alcance que devuelva el API.
 
 ## Backend (checklist)

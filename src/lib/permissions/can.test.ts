@@ -21,6 +21,13 @@ describe("can", () => {
     expect(can("TECHNICIAN", "seals", "create")).toBe(true);
   });
 
+  it("allows non-admin printer read but not mutations", () => {
+    expect(can("TECHNICIAN", "printers", "read")).toBe(true);
+    expect(can("TECHNICIAN", "printers", "create")).toBe(false);
+    expect(can("DISTRIBUTOR", "printers", "update")).toBe(false);
+    expect(can("ADMIN", "printers", "create")).toBe(true);
+  });
+
   it("allows FIELD_OPS on seals and printer model read for printer operators", () => {
     expect(can("SERVICE_CENTER", "annualInspections", "update")).toBe(true);
     expect(can("TECHNICIAN", "printerModels", "read")).toBe(true);
