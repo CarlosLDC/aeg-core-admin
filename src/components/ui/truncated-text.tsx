@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { HoverTooltip } from "@/components/ui/hover-tooltip";
 import { stopTableRowClick } from "@/components/ui/clickable-table-row";
+import { cn } from "@/lib/utils";
 
 type TruncatedTextProps = {
   children: string;
@@ -13,63 +13,31 @@ type TruncatedTextProps = {
   href?: string;
 };
 
-const EXPAND_THRESHOLD = 28;
-
 export function TruncatedText({
   children,
   className,
   maxClassName = "max-w-[160px]",
   href,
 }: TruncatedTextProps) {
-  const [expanded, setExpanded] = useState(false);
-  const canExpand = children.length > EXPAND_THRESHOLD;
-
-  const text = (
-    <span
-      className={cn(
-        "min-w-0",
-        expanded
-          ? "whitespace-nowrap"
-          : cn("block truncate", maxClassName),
-        className,
-      )}
-      title={!expanded && !canExpand ? children : undefined}
-    >
-      {children}
-    </span>
+  const textClass = cn(
+    "block min-w-0 truncate",
+    maxClassName,
+    className,
+    href &&
+      "font-medium text-card-foreground underline-offset-2 hover:text-accent hover:underline",
   );
 
-  const content = href ? (
-    <Link
-      href={href}
-      onClick={stopTableRowClick}
-      className="min-w-0 shrink-0 font-medium text-card-foreground underline-offset-2 hover:text-accent hover:underline"
-    >
-      {text}
-    </Link>
-  ) : (
-    text
-  );
+  const inner = <span className={textClass}>{children}</span>;
 
   return (
-    <span
-      data-expanded={expanded ? "true" : undefined}
-      className="inline-flex max-w-full flex-nowrap items-center gap-x-1.5"
-    >
-      {content}
-      {canExpand ? (
-        <button
-          type="button"
-          onClick={(e) => {
-            stopTableRowClick(e);
-            setExpanded((v) => !v);
-          }}
-          className="shrink-0 text-xs font-medium text-accent hover:underline"
-          aria-expanded={expanded}
-        >
-          {expanded ? "Ocultar" : "Ver completo"}
-        </button>
-      ) : null}
-    </span>
+    <HoverTooltip label={children}>
+      {href ? (
+        <Link href={href} onClick={stopTableRowClick} className="block min-w-0">
+          {inner}
+        </Link>
+      ) : (
+        inner
+      )}
+    </HoverTooltip>
   );
 }

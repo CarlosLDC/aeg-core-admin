@@ -543,7 +543,7 @@ export function BranchesManager() {
                           href={branchPath(branch.id)}
                         >
                           <td className="px-5 py-3.5 text-muted">{branch.id}</td>
-                          <td className="max-w-[200px] px-5 py-3.5 has-[[data-expanded=true]]:max-w-none">
+                          <td className="max-w-[200px] px-5 py-3.5">
                             <TruncatedText
                               href={companyPath(branch.companyId)}
                               maxClassName="max-w-[180px]"
