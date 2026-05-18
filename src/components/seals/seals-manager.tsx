@@ -1,8 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Layers, Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import {
+  SealBatchFormDialog,
+  type SealBatchSubmitPayload,
+} from "@/components/seals/seal-batch-form-dialog";
 import { SealFormDialog } from "@/components/seals/seal-form-dialog";
+import { runSerialBatch } from "@/lib/batch-create";
 import type { PrinterSelectOption } from "@/components/printers/printer-select";
 import { SealColorBadge } from "@/components/seals/seal-color-badge";
 import { SealStatusBadge } from "@/components/seals/seal-status-badge";
@@ -68,9 +73,13 @@ export function SealsManager() {
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
 
-  const [dialog, setDialog] = useState<"create" | "edit" | null>(null);
+  const [dialog, setDialog] = useState<"create" | "edit" | "batch" | null>(null);
   const [selected, setSelected] = useState<SealResponse | null>(null);
   const [saving, setSaving] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
@@ -232,6 +241,13 @@ export function SealsManager() {
     setDialog("create");
   }
 
+  function openBatchCreate() {
+    setSelected(null);
+    setFormError(null);
+    setBatchProgress(null);
+    setDialog("batch");
+  }
+
   function openEdit(seal: SealResponse) {
     setSelected(seal);
     setFormError(null);
@@ -242,6 +258,68 @@ export function SealsManager() {
     setDialog(null);
     setSelected(null);
     setFormError(null);
+    setBatchProgress(null);
+  }
+
+  async function handleBatchSubmit({ serials, base }: SealBatchSubmitPayload) {
+    if (!canCreate) {
+      setFormError(forbiddenMessage("create", "seals"));
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `¿Crear ${serials.length} precinto${serials.length === 1 ? "" : "s"} con seriales del rango indicado?`,
+      )
+    ) {
+      return;
+    }
+
+    setSaving(true);
+    setFormError(null);
+    setBatchProgress({ done: 0, total: serials.length });
+
+    const result = await runSerialBatch(
+      serials,
+      async (serial) => {
+        const bodyOrError = toSealRequest({ ...base, serial });
+        if (typeof bodyOrError === "string") {
+          throw new Error(bodyOrError);
+        }
+        await createSeal(bodyOrError);
+      },
+      (p) => setBatchProgress({ done: p.done, total: p.total }),
+    );
+
+    setSaving(false);
+    setBatchProgress(null);
+
+    if (result.succeeded > 0) {
+      toast.success(
+        `${result.succeeded} precinto${result.succeeded === 1 ? "" : "s"} creado${result.succeeded === 1 ? "" : "s"}.`,
+      );
+      await loadSeals();
+    }
+
+    if (result.failed.length > 0) {
+      const sample = result.failed
+        .slice(0, 3)
+        .map((f) => `${f.serial}: ${f.message}`)
+        .join(" · ");
+      const more =
+        result.failed.length > 3
+          ? ` (+${result.failed.length - 3} más)`
+          : "";
+      setFormError(
+        `No se pudieron crear ${result.failed.length} registro(s). ${sample}${more}`,
+      );
+      toast.error(
+        `Lote incompleto: ${result.failed.length} error${result.failed.length === 1 ? "" : "es"}.`,
+      );
+      if (result.succeeded > 0) return;
+    } else {
+      closeDialog();
+    }
   }
 
   async function handleSubmit(values: SealFormValues) {
@@ -330,14 +408,24 @@ export function SealsManager() {
             Actualizar
           </button>
           {canCreate && (
-            <button
-              type="button"
-              onClick={openCreate}
-              className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
-            >
-              <Plus className="size-4" />
-              Nuevo precinto
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={openBatchCreate}
+                className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card md:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
+              >
+                <Layers className="size-4" />
+                Crear por lote
+              </button>
+              <button
+                type="button"
+                onClick={openCreate}
+                className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
+              >
+                <Plus className="size-4" />
+                Nuevo precinto
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -490,10 +578,21 @@ export function SealsManager() {
         )}
       </div>
 
+      <SealBatchFormDialog
+        open={dialog === "batch"}
+        saving={saving}
+        progress={batchProgress}
+        error={formError}
+        printerOptions={printerOptions}
+        printersLoading={printersLoading}
+        onClose={closeDialog}
+        onSubmit={(payload) => void handleBatchSubmit(payload)}
+      />
+
       <SealFormDialog
         mode={dialog === "create" ? "create" : "edit"}
         seal={selected ?? undefined}
-        open={dialog !== null}
+        open={dialog === "create" || dialog === "edit"}
         saving={saving}
         deleting={Boolean(selected && deletingId === selected.id)}
         error={formError}

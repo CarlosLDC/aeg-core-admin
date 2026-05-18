@@ -1,11 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Layers, Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import {
+  PrinterBatchFormDialog,
+  type PrinterBatchSubmitPayload,
+} from "@/components/printers/printer-batch-form-dialog";
 import {
   PrinterFormDialog,
   type SelectOption,
 } from "@/components/printers/printer-form-dialog";
+import { runSerialBatch } from "@/lib/batch-create";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
@@ -91,9 +96,13 @@ export function PrintersManager() {
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
 
-  const [dialog, setDialog] = useState<"create" | "edit" | null>(null);
+  const [dialog, setDialog] = useState<"create" | "edit" | "batch" | null>(null);
   const [selected, setSelected] = useState<PrinterResponse | null>(null);
   const [saving, setSaving] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
@@ -294,6 +303,13 @@ export function PrintersManager() {
     setDialog("create");
   }
 
+  function openBatchCreate() {
+    setSelected(null);
+    setFormError(null);
+    setBatchProgress(null);
+    setDialog("batch");
+  }
+
   function openEdit(printer: PrinterResponse) {
     setSelected(printer);
     setFormError(null);
@@ -304,6 +320,71 @@ export function PrintersManager() {
     setDialog(null);
     setSelected(null);
     setFormError(null);
+    setBatchProgress(null);
+  }
+
+  async function handleBatchSubmit({ serials, base }: PrinterBatchSubmitPayload) {
+    if (!canCreate) {
+      setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `¿Crear ${serials.length} impresora${serials.length === 1 ? "" : "s"} con seriales del rango indicado?`,
+      )
+    ) {
+      return;
+    }
+
+    setSaving(true);
+    setFormError(null);
+    setBatchProgress({ done: 0, total: serials.length });
+
+    const result = await runSerialBatch(
+      serials,
+      async (fiscalSerial) => {
+        const bodyOrError = toPrinterRequest({ ...base, fiscalSerial });
+        if (typeof bodyOrError === "string") {
+          throw new Error(bodyOrError);
+        }
+        if (lockDistributor && distributorId != null) {
+          bodyOrError.distributorId = distributorId;
+        }
+        await createPrinter(bodyOrError);
+      },
+      (p) => setBatchProgress({ done: p.done, total: p.total }),
+    );
+
+    setSaving(false);
+    setBatchProgress(null);
+
+    if (result.succeeded > 0) {
+      toast.success(
+        `${result.succeeded} impresora${result.succeeded === 1 ? "" : "s"} creada${result.succeeded === 1 ? "" : "s"}.`,
+      );
+      await loadPrinters();
+    }
+
+    if (result.failed.length > 0) {
+      const sample = result.failed
+        .slice(0, 3)
+        .map((f) => `${f.serial}: ${f.message}`)
+        .join(" · ");
+      const more =
+        result.failed.length > 3
+          ? ` (+${result.failed.length - 3} más)`
+          : "";
+      setFormError(
+        `No se pudieron crear ${result.failed.length} registro(s). ${sample}${more}`,
+      );
+      toast.error(
+        `Lote incompleto: ${result.failed.length} error${result.failed.length === 1 ? "" : "es"}.`,
+      );
+      if (result.succeeded > 0) return;
+    } else {
+      closeDialog();
+    }
   }
 
   async function handleSubmit(values: PrinterFormValues) {
@@ -399,14 +480,24 @@ export function PrintersManager() {
             Actualizar
           </button>
           {canCreate && (
-            <button
-              type="button"
-              onClick={openCreate}
-              className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
-            >
-              <Plus className="size-4" />
-              Nueva impresora
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={openBatchCreate}
+                className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card md:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
+              >
+                <Layers className="size-4" />
+                Crear por lote
+              </button>
+              <button
+                type="button"
+                onClick={openCreate}
+                className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
+              >
+                <Plus className="size-4" />
+                Nueva impresora
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -570,10 +661,28 @@ export function PrintersManager() {
         )}
       </div>
 
+      <PrinterBatchFormDialog
+        open={dialog === "batch"}
+        saving={saving}
+        progress={batchProgress}
+        error={formError}
+        modelOptions={modelOptions}
+        softwareOptions={software}
+        clientOptions={clientOptions}
+        distributorOptions={distributorOptions}
+        modelsLoading={modelsLoading}
+        catalogLoading={catalogLoading}
+        canPickSoftware={user?.role === "ADMIN"}
+        lockDistributor={lockDistributor}
+        defaultDistributorId={distributorId}
+        onClose={closeDialog}
+        onSubmit={(payload) => void handleBatchSubmit(payload)}
+      />
+
       <PrinterFormDialog
         mode={dialog === "create" ? "create" : "edit"}
         printer={selected ?? undefined}
-        open={dialog !== null}
+        open={dialog === "create" || dialog === "edit"}
         saving={saving}
         error={formError}
         modelOptions={modelOptions}
