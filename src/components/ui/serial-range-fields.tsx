@@ -8,6 +8,7 @@ import {
   FISCAL_SERIAL_LETTER_COUNT,
   type SerialRangeMode,
 } from "@/lib/serial-range";
+import { BATCH_FORM_INPUT_CLASS } from "@/components/ui/batch-form-dialog";
 import { cn } from "@/lib/utils";
 
 export type SerialRangeFormValues = {
@@ -37,9 +38,6 @@ export function SerialRangeFields({
   onChange,
   disabled,
 }: SerialRangeFieldsProps) {
-  const inputClass =
-    "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
-
   const preview = useMemo(() => {
     if (!values.from.trim() || !values.to.trim() || !values.prefix.trim()) {
       return null;
@@ -100,15 +98,25 @@ export function SerialRangeFields({
             </>
           )}
         </p>
-        {!isFiscal && (
-          <p className="mt-2 rounded-md bg-background/80 px-3 py-2 font-mono text-xs text-muted">
-            Ejemplo: prefijo <span className="text-foreground">SN-</span>, desde{" "}
-            <span className="text-foreground">1</span> hasta{" "}
-            <span className="text-foreground">100</span>, 7 dígitos →{" "}
-            <span className="text-foreground">SN-0000001</span> …{" "}
-            <span className="text-foreground">SN-0000100</span>
-          </p>
-        )}
+        <p className="mt-2 rounded-md bg-background/80 px-3 py-2 font-mono text-xs text-muted">
+          {isFiscal ? (
+            <>
+              Ejemplo: prefijo <span className="text-foreground">ABC</span>, desde{" "}
+              <span className="text-foreground">1</span> hasta{" "}
+              <span className="text-foreground">100</span> →{" "}
+              <span className="text-foreground">ABC0000001</span> …{" "}
+              <span className="text-foreground">ABC0000100</span>
+            </>
+          ) : (
+            <>
+              Ejemplo: prefijo <span className="text-foreground">SN-</span>, desde{" "}
+              <span className="text-foreground">1</span> hasta{" "}
+              <span className="text-foreground">100</span>, 7 cifras →{" "}
+              <span className="text-foreground">SN-0000001</span> …{" "}
+              <span className="text-foreground">SN-0000100</span>
+            </>
+          )}
+        </p>
       </div>
 
       <div
@@ -134,7 +142,7 @@ export function SerialRangeFields({
                   : e.target.value,
               })
             }
-            className={cn(inputClass, isFiscal && "uppercase", "font-mono")}
+            className={cn(BATCH_FORM_INPUT_CLASS, isFiscal && "uppercase", "font-mono")}
             placeholder={isFiscal ? "ABC" : "SN-"}
           />
           {!isFiscal && (
@@ -152,7 +160,7 @@ export function SerialRangeFields({
             value={values.from}
             disabled={disabled}
             onChange={(e) => patch({ from: e.target.value })}
-            className={cn(inputClass, "font-mono")}
+            className={cn(BATCH_FORM_INPUT_CLASS, "font-mono")}
             placeholder="1"
           />
         </label>
@@ -165,7 +173,7 @@ export function SerialRangeFields({
             value={values.to}
             disabled={disabled}
             onChange={(e) => patch({ to: e.target.value })}
-            className={cn(inputClass, "font-mono")}
+            className={cn(BATCH_FORM_INPUT_CLASS, "font-mono")}
             placeholder="100"
           />
         </label>
@@ -182,7 +190,7 @@ export function SerialRangeFields({
               value={values.digitLength}
               disabled={disabled}
               onChange={(e) => patch({ digitLength: e.target.value })}
-              className={cn(inputClass, "font-mono")}
+              className={cn(BATCH_FORM_INPUT_CLASS, "font-mono")}
             />
             <span className="mt-1 block text-xs text-muted">
               Ceros a la izquierda (habitual: 7).
