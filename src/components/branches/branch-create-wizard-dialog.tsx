@@ -39,6 +39,8 @@ type BranchCreateWizardDialogProps = {
   open: boolean;
   saving: boolean;
   error: string | null;
+  /** Empresa ya creada en un intento anterior (reintento de sucursal). */
+  resumeCompanyId?: number | null;
   companies: CompanyResponse[];
   branches: BranchResponse[];
   distributors: DistributorResponse[];
@@ -67,6 +69,7 @@ export function BranchCreateWizardDialog({
   open,
   saving,
   error,
+  resumeCompanyId = null,
   companies,
   branches,
   distributors,
@@ -80,10 +83,21 @@ export function BranchCreateWizardDialog({
 
   useEffect(() => {
     if (!open) return;
-    setForm(emptyForm());
+    if (resumeCompanyId != null) {
+      const company = companies.find((c) => c.id === resumeCompanyId);
+      setForm({
+        ...emptyForm(),
+        linkedCompanyId: resumeCompanyId,
+        rif: company?.rif ?? "",
+        businessName: company?.businessName ?? "",
+        contributorType: company?.contributorType ?? "ordinario",
+      });
+    } else {
+      setForm(emptyForm());
+    }
     setRifError(null);
     setScanApplied(false);
-  }, [open]);
+  }, [open, resumeCompanyId, companies]);
 
   if (!open) return null;
 

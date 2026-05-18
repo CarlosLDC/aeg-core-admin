@@ -23,6 +23,8 @@ import {
 import type { PrinterModelResponse } from "@/types/printer-model";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { printerModelPath } from "@/lib/resource-routes";
+import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 function modelLabel(model: PrinterModelResponse) {
   return `${model.brand} ${model.modelCode}`.trim();
@@ -116,11 +118,15 @@ export function PrinterModelsManager() {
 
     try {
       if (dialog === "create") {
-        await createPrinterModel(bodyOrError);
-        toast.success(`Modelo "${label}" creado correctamente.`);
+        const created = await createPrinterModel(bodyOrError);
+        toast.success(`Modelo "${label}" creado correctamente.`, {
+          href: printerModelPath(created.id),
+        });
       } else if (selected) {
         await updatePrinterModel(selected.id, bodyOrError);
-        toast.success(`Modelo "${label}" actualizado.`);
+        toast.success(`Modelo "${label}" actualizado.`, {
+          href: printerModelPath(selected.id),
+        });
       }
       closeDialog();
       await loadModels();
@@ -257,6 +263,10 @@ export function PrinterModelsManager() {
                           </td>
                           <td className="px-5 py-3.5">
                             <div className="flex justify-end gap-1">
+                              <ViewResourceLink
+                                href={printerModelPath(model.id)}
+                                label={`Ver modelo ${modelLabel(model)}`}
+                              />
                               <button
                                 type="button"
                                 onClick={() => openEdit(model)}

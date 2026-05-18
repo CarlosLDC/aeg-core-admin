@@ -13,6 +13,12 @@ export async function fetchAnnualInspections(): Promise<
   return apiFetch<AnnualInspectionResponse[]>(BASE);
 }
 
+export async function fetchAnnualInspectionById(
+  id: number,
+): Promise<AnnualInspectionResponse> {
+  return apiFetch<AnnualInspectionResponse>(`${BASE}/${id}`);
+}
+
 export async function createAnnualInspection(
   body: AnnualInspectionRequest,
 ): Promise<AnnualInspectionResponse> {

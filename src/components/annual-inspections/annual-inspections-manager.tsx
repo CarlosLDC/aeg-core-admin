@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { AnnualInspectionFormDialog } from "@/components/annual-inspections/annual-inspection-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { annualInspectionPath } from "@/lib/resource-routes";
+import { ViewResourceLink } from "@/components/ui/view-resource-link";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
@@ -122,11 +124,15 @@ export function AnnualInspectionsManager() {
     setFormError(null);
     try {
       if (dialog === "create") {
-        await createAnnualInspection(bodyOrError);
-        toast.success("Inspección anual registrada.");
+        const created = await createAnnualInspection(bodyOrError);
+        toast.success("Inspección anual registrada.", {
+          href: annualInspectionPath(created.id),
+        });
       } else if (selected) {
         await updateAnnualInspection(selected.id, bodyOrError);
-        toast.success("Inspección actualizada.");
+        toast.success("Inspección actualizada.", {
+          href: annualInspectionPath(selected.id),
+        });
       }
       setDialog(null);
       setSelected(null);
@@ -263,6 +269,10 @@ export function AnnualInspectionsManager() {
                           </td>
                           <td className="px-5 py-3.5">
                             <div className="flex justify-end gap-1">
+                              <ViewResourceLink
+                                href={annualInspectionPath(row.id)}
+                                label={`Ver inspección #${row.id}`}
+                              />
                               <button
                                 type="button"
                                 onClick={() => {

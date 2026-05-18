@@ -37,6 +37,8 @@ import type { SealColor, SealResponse, SealStatus } from "@/types/seal";
 import { SEAL_COLORS, SEAL_STATUSES } from "@/types/seal";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { sealPath } from "@/lib/resource-routes";
+import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 export function SealsManager() {
   const toast = useToast();
@@ -243,11 +245,15 @@ export function SealsManager() {
 
     try {
       if (dialog === "create") {
-        await createSeal(bodyOrError);
-        toast.success(`Precinto ${bodyOrError.serial} creado.`);
+        const created = await createSeal(bodyOrError);
+        toast.success(`Precinto ${bodyOrError.serial} creado.`, {
+          href: sealPath(created.id),
+        });
       } else if (selected) {
         await updateSeal(selected.id, bodyOrError);
-        toast.success("Precinto actualizado.");
+        toast.success("Precinto actualizado.", {
+          href: sealPath(selected.id),
+        });
       }
       closeDialog();
       await loadSeals();
@@ -414,6 +420,10 @@ export function SealsManager() {
                           </td>
                           <td className="px-5 py-3.5">
                             <div className="flex justify-end gap-1">
+                              <ViewResourceLink
+                                href={sealPath(seal.id)}
+                                label={`Ver precinto ${seal.serial}`}
+                              />
                               <button
                                 type="button"
                                 onClick={() => openEdit(seal)}

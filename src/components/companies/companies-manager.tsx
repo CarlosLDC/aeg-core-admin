@@ -28,6 +28,8 @@ import {
 import { CONTRIBUTOR_TYPES, type CompanyResponse } from "@/types/company";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { companyPath } from "@/lib/resource-routes";
+import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 export function CompaniesManager() {
   const toast = useToast();
@@ -108,14 +110,16 @@ export function CompaniesManager() {
     setFormError(null);
     try {
       if (dialog === "create") {
-        await createCompany(values);
+        const created = await createCompany(values);
         toast.success(
           `Empresa "${values.businessName || values.rif}" creada correctamente.`,
+          { href: companyPath(created.id) },
         );
       } else if (selected) {
         await updateCompany(selected.id, values);
         toast.success(
           `Empresa "${values.businessName || values.rif}" actualizada.`,
+          { href: companyPath(selected.id) },
         );
       }
       closeDialog();
@@ -252,11 +256,9 @@ export function CompaniesManager() {
                         <th className="px-5 py-3 font-medium">Razón social</th>
                         <th className="px-5 py-3 font-medium">RIF</th>
                         <th className="px-5 py-3 font-medium">Contribuyente</th>
-                        {canModify && (
-                          <th className="px-5 py-3 font-medium text-right">
-                            Acciones
-                          </th>
-                        )}
+                        <th className="px-5 py-3 font-medium text-right">
+                          Acciones
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -277,9 +279,13 @@ export function CompaniesManager() {
                           <td className="px-5 py-3.5">
                             <ContributorBadge type={company.contributorType} />
                           </td>
-                          {canModify && (
-                            <td className="px-5 py-3.5">
-                              <div className="flex justify-end gap-1">
+                          <td className="px-5 py-3.5">
+                            <div className="flex justify-end gap-1">
+                              <ViewResourceLink
+                                href={companyPath(company.id)}
+                                label={`Ver empresa ${company.businessName || company.rif}`}
+                              />
+                              {canModify && (
                                 <button
                                   type="button"
                                   onClick={() => openEdit(company)}
@@ -288,6 +294,8 @@ export function CompaniesManager() {
                                 >
                                   <Pencil className="size-4" />
                                 </button>
+                              )}
+                              {canModify && (
                                 <button
                                   type="button"
                                   onClick={() => handleDelete(company)}
@@ -301,9 +309,9 @@ export function CompaniesManager() {
                                     <Trash2 className="size-4" />
                                   )}
                                 </button>
-                              </div>
-                            </td>
-                          )}
+                              )}
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

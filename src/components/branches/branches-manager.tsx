@@ -21,6 +21,7 @@ import {
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
 import { useCompanyScope } from "@/context/company-scope-provider";
+import { canBrowseOtherCompanies } from "@/lib/company-scope";
 import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import {
@@ -55,6 +56,9 @@ import type { CompanyResponse } from "@/types/company";
 import type { DistributorResponse } from "@/types/branch-role";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { TruncatedText } from "@/components/ui/truncated-text";
+import { branchPath, companyPath } from "@/lib/resource-routes";
+import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 const TYPE_FILTER_OPTIONS = [
   { value: "all", label: "Todos los tipos" },
@@ -119,6 +123,9 @@ export function BranchesManager() {
   const companiesLoading = scopeLoading;
   const [listError, setListError] = useState<string | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardResumeCompanyId, setWizardResumeCompanyId] = useState<
+    number | null
+  >(null);
   const [dialog, setDialog] = useState<"edit" | null>(null);
   const [selected, setSelected] = useState<BranchWithRoles | null>(null);
   const [saving, setSaving] = useState(false);
@@ -178,8 +185,14 @@ export function BranchesManager() {
 
       setDistributors(distributorRows);
 
-      const scopedIds = new Set(scope.branches.map((b) => b.id));
-      const scopedMerged = merged.filter((b) => scopedIds.has(b.id));
+      // ADMIN/DISTRIBUTOR: el API ya devuelve el alcance correcto; no filtrar por
+      // scope.branches (queda obsoleto tras crear una sucursal nueva).
+      const scopedMerged =
+        canBrowseOtherCompanies(scope.role)
+          ? merged
+          : merged.filter((b) =>
+              scope.branches.some((allowed) => allowed.id === b.id),
+            );
 
       setBranches(
         scopedMerged.sort((a, b) => {
@@ -235,12 +248,14 @@ export function BranchesManager() {
   function openCreate() {
     setSelected(null);
     setFormError(null);
+    setWizardResumeCompanyId(null);
     setWizardOpen(true);
   }
 
   function closeWizard() {
     setWizardOpen(false);
     setFormError(null);
+    setWizardResumeCompanyId(null);
   }
 
   function openEdit(branch: BranchWithRoles) {
@@ -265,8 +280,12 @@ export function BranchesManager() {
     setFormError(null);
     const label = `${values.city}, ${values.state}`;
 
+    let companyCreatedInThisSubmit = false;
+    let companyId: number | null =
+      wizardResumeCompanyId ?? values.linkedCompanyId ?? null;
+
     try {
-      let companyId = values.linkedCompanyId;
+
       if (companyId == null) {
         const existing = values.rif
           ? findCompanyByRif(companies, values.rif)
@@ -279,19 +298,34 @@ export function BranchesManager() {
             businessName: values.businessName,
             contributorType: values.contributorType,
           });
+          if (!company?.id) {
+            throw new Error(
+              "El servidor no devolvió la empresa creada. Revisa el listado de empresas.",
+            );
+          }
           companyId = company.id;
-          await refreshScope();
+          companyCreatedInThisSubmit = true;
         }
+      }
+
+      if (!Number.isFinite(companyId) || companyId <= 0) {
+        throw new Error("No se pudo determinar la empresa para la sucursal.");
       }
 
       const created = await createBranch({
         companyId,
-        city: values.city,
-        state: values.state,
-        address: values.address || undefined,
-        phone: values.phone || undefined,
-        email: values.email || undefined,
+        city: values.city.trim(),
+        state: values.state.trim(),
+        address: values.address.trim() || undefined,
+        phone: values.phone.trim() || undefined,
+        email: values.email.trim() || undefined,
       });
+
+      if (!created?.id) {
+        throw new Error(
+          "El servidor no devolvió la sucursal creada. Revisa el listado o intenta de nuevo.",
+        );
+      }
 
       await syncBranchRoles(created.id, null, {
         isClient: values.isClient,
@@ -300,16 +334,37 @@ export function BranchesManager() {
         clientDistributorId: values.clientDistributorId,
       });
 
-      toast.success(`Sucursal "${label}" creada correctamente.`);
+      const companyLabel =
+        companies.find((c) => c.id === companyId)?.businessName ??
+        values.businessName;
+      toast.success(
+        companyCreatedInThisSubmit
+          ? `Empresa "${companyLabel}" y sucursal "${label}" creadas correctamente.`
+          : `Sucursal "${label}" creada correctamente.`,
+        { href: branchPath(created.id) },
+      );
       closeWizard();
-      await loadBranches();
+      await refreshScope();
     } catch (err) {
       const message =
         getCompaniesErrorMessage(err) ||
         getBranchesErrorMessage(err) ||
         getBranchRolesErrorMessage(err);
-      setFormError(message);
-      toast.error(message);
+
+      if (companyCreatedInThisSubmit) {
+        const resumeId =
+          typeof companyId === "number" && companyId > 0 ? companyId : null;
+        if (resumeId != null) {
+          setWizardResumeCompanyId(resumeId);
+        }
+        await refreshScope();
+        const partial = `La empresa se creó, pero la sucursal no: ${message}. Revisa los datos de ubicación y pulsa «Crear sucursal» de nuevo (la empresa ya está vinculada).`;
+        setFormError(partial);
+        toast.error(partial);
+      } else {
+        setFormError(message);
+        toast.error(message);
+      }
     } finally {
       setSaving(false);
     }
@@ -331,10 +386,12 @@ export function BranchesManager() {
       if (selected) {
         await updateBranch(selected.id, body);
         await syncBranchRoles(selected.id, selected, roles);
-        toast.success(`Sucursal "${label}" actualizada.`);
+        toast.success(`Sucursal "${label}" actualizada.`, {
+          href: branchPath(selected.id),
+        });
       }
       closeDialog();
-      await loadBranches();
+      await refreshScope();
     } catch (err) {
       const message =
         getBranchesErrorMessage(err) || getBranchRolesErrorMessage(err);
@@ -472,11 +529,9 @@ export function BranchesManager() {
                         <th className="px-5 py-3 font-medium">Contacto</th>
                         <th className="px-5 py-3 font-medium">Roles</th>
                         <th className="px-5 py-3 font-medium">Distribuidor</th>
-                        {canModify && (
-                          <th className="px-5 py-3 font-medium text-right">
-                            Acciones
-                          </th>
-                        )}
+                        <th className="px-5 py-3 font-medium text-right">
+                          Acciones
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -486,8 +541,13 @@ export function BranchesManager() {
                           className="border-b border-border last:border-0 hover:bg-foreground/[0.02]"
                         >
                           <td className="px-5 py-3.5 text-muted">{branch.id}</td>
-                          <td className="max-w-[160px] truncate px-5 py-3.5 font-medium text-card-foreground">
-                            {companyNameById(companies, branch.companyId)}
+                          <td className="max-w-[200px] px-5 py-3.5">
+                            <TruncatedText
+                              href={companyPath(branch.companyId)}
+                              maxClassName="max-w-[180px]"
+                            >
+                              {companyNameById(companies, branch.companyId)}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5 text-card-foreground">
                             <span className="font-medium">
@@ -521,33 +581,39 @@ export function BranchesManager() {
                               companies,
                             )}
                           </td>
-                          {canModify && (
-                            <td className="px-5 py-3.5">
-                              <div className="flex justify-end gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => openEdit(branch)}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                  aria-label="Editar sucursal"
-                                >
-                                  <Pencil className="size-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDelete(branch)}
-                                  disabled={deletingId === branch.id}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                  aria-label="Eliminar sucursal"
-                                >
-                                  {deletingId === branch.id ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="size-4" />
-                                  )}
-                                </button>
-                              </div>
-                            </td>
-                          )}
+                          <td className="px-5 py-3.5">
+                            <div className="flex justify-end gap-1">
+                              <ViewResourceLink
+                                href={branchPath(branch.id)}
+                                label={`Ver sucursal ${branch.city}, ${branch.state}`}
+                              />
+                              {canModify && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => openEdit(branch)}
+                                    className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
+                                    aria-label="Editar sucursal"
+                                  >
+                                    <Pencil className="size-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDelete(branch)}
+                                    disabled={deletingId === branch.id}
+                                    className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
+                                    aria-label="Eliminar sucursal"
+                                  >
+                                    {deletingId === branch.id ? (
+                                      <Loader2 className="size-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="size-4" />
+                                    )}
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -564,6 +630,7 @@ export function BranchesManager() {
         open={wizardOpen}
         saving={saving}
         error={formError}
+        resumeCompanyId={wizardResumeCompanyId}
         companies={companies}
         branches={branches}
         distributors={distributors}

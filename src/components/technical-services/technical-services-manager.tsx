@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { TechnicalServiceFormDialog } from "@/components/technical-services/technical-service-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { technicalServicePath } from "@/lib/resource-routes";
+import { ViewResourceLink } from "@/components/ui/view-resource-link";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
@@ -112,11 +114,15 @@ export function TechnicalServicesManager() {
     setFormError(null);
     try {
       if (dialog === "create") {
-        await createTechnicalService(bodyOrError);
-        toast.success("Servicio técnico registrado.");
+        const created = await createTechnicalService(bodyOrError);
+        toast.success("Servicio técnico registrado.", {
+          href: technicalServicePath(created.id),
+        });
       } else if (selected) {
         await updateTechnicalService(selected.id, bodyOrError);
-        toast.success("Servicio técnico actualizado.");
+        toast.success("Servicio técnico actualizado.", {
+          href: technicalServicePath(selected.id),
+        });
       }
       setDialog(null);
       setSelected(null);
@@ -261,6 +267,10 @@ export function TechnicalServicesManager() {
                           </td>
                           <td className="px-5 py-3.5">
                             <div className="flex justify-end gap-1">
+                              <ViewResourceLink
+                                href={technicalServicePath(row.id)}
+                                label={`Ver servicio técnico #${row.id}`}
+                              />
                               <button
                                 type="button"
                                 onClick={() => {

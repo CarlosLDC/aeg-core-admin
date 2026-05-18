@@ -13,6 +13,12 @@ export async function fetchServiceCenterContracts(): Promise<
   return apiFetch<ServiceCenterContractResponse[]>(BASE);
 }
 
+export async function fetchServiceCenterContractById(
+  id: number,
+): Promise<ServiceCenterContractResponse> {
+  return apiFetch<ServiceCenterContractResponse>(`${BASE}/${id}`);
+}
+
 export async function createServiceCenterContract(
   body: ServiceCenterContractRequest,
 ): Promise<ServiceCenterContractResponse> {

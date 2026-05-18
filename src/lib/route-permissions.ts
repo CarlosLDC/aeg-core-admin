@@ -9,11 +9,29 @@ const rolesByPath = new Map<string, Role[] | undefined>(
  * Roles permitidos para una ruta del panel.
  * `null` = cualquier usuario autenticado.
  */
+function normalizePath(path: string): string {
+  return path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
+}
+
+/** Resuelve permisos de rutas anidadas (/companies/12 → /companies). */
+function resolveNavPath(path: string): string | null {
+  const normalized = normalizePath(path);
+  if (rolesByPath.has(normalized)) return normalized;
+
+  let current = normalized;
+  while (current.includes("/")) {
+    const parent = current.replace(/\/[^/]+$/, "");
+    if (!parent || parent === current) break;
+    if (rolesByPath.has(parent)) return parent;
+    current = parent;
+  }
+  return null;
+}
+
 export function allowedRolesForPath(path: string): Role[] | null {
-  const normalized =
-    path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
-  if (!rolesByPath.has(normalized)) return null;
-  const roles = rolesByPath.get(normalized);
+  const navPath = resolveNavPath(path);
+  if (!navPath) return null;
+  const roles = rolesByPath.get(navPath);
   if (!roles) return null;
   return roles;
 }
@@ -36,9 +54,7 @@ export function defaultPathForRole(role: Role): string {
 }
 
 export function isKnownAppPath(path: string): boolean {
-  const normalized =
-    path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
-  return rolesByPath.has(normalized);
+  return resolveNavPath(path) != null;
 }
 
 export { ROLES };

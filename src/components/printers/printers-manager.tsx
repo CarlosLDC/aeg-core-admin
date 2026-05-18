@@ -51,6 +51,8 @@ import type { PrinterResponse, PrinterStatus } from "@/types/printer";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { printerPath } from "@/lib/resource-routes";
+import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 function clientLabel(
   client: ClientResponse,
@@ -328,11 +330,15 @@ export function PrintersManager() {
 
     try {
       if (dialog === "create") {
-        await createPrinter(bodyOrError);
-        toast.success(`Impresora ${bodyOrError.fiscalSerial} creada.`);
+        const created = await createPrinter(bodyOrError);
+        toast.success(`Impresora ${bodyOrError.fiscalSerial} creada.`, {
+          href: printerPath(created.id),
+        });
       } else if (selected) {
         await updatePrinter(selected.id, bodyOrError);
-        toast.success("Impresora actualizada.");
+        toast.success("Impresora actualizada.", {
+          href: printerPath(selected.id),
+        });
       }
       closeDialog();
       await loadPrinters();
@@ -518,33 +524,37 @@ export function PrintersManager() {
                             {formatPrinterDate(printer.installationDate)}
                           </td>
                           <td className="px-5 py-3.5">
-                            {canModify ? (
-                              <div className="flex justify-end gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => openEdit(printer)}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                  aria-label={`Editar ${printer.fiscalSerial}`}
-                                >
-                                  <Pencil className="size-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDelete(printer)}
-                                  disabled={deletingId === printer.id}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                  aria-label={`Eliminar ${printer.fiscalSerial}`}
-                                >
-                                  {deletingId === printer.id ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="size-4" />
-                                  )}
-                                </button>
-                              </div>
-                            ) : (
-                              <span className="text-muted">—</span>
-                            )}
+                            <div className="flex justify-end gap-1">
+                              <ViewResourceLink
+                                href={printerPath(printer.id)}
+                                label={`Ver impresora ${printer.fiscalSerial}`}
+                              />
+                              {canModify && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => openEdit(printer)}
+                                    className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
+                                    aria-label={`Editar ${printer.fiscalSerial}`}
+                                  >
+                                    <Pencil className="size-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDelete(printer)}
+                                    disabled={deletingId === printer.id}
+                                    className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
+                                    aria-label={`Eliminar ${printer.fiscalSerial}`}
+                                  >
+                                    {deletingId === printer.id ? (
+                                      <Loader2 className="size-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="size-4" />
+                                    )}
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}

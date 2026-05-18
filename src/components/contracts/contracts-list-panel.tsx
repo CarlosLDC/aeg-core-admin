@@ -7,6 +7,11 @@ import { ContractStatusBadge } from "@/components/contracts/contract-status-badg
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useToast } from "@/context/toast-provider";
+import {
+  distributorContractPath,
+  serviceCenterContractPath,
+} from "@/lib/resource-routes";
+import { ViewResourceLink } from "@/components/ui/view-resource-link";
 import { usePagination } from "@/hooks/use-pagination";
 import {
   contractStatus,
@@ -168,11 +173,15 @@ export function ContractsListPanel({
           return;
         }
         if (dialog === "create") {
-          await createDistributorContract(body);
-          toast.success("Contrato creado correctamente.");
+          const created = await createDistributorContract(body);
+          toast.success("Contrato creado correctamente.", {
+            href: distributorContractPath(created.id),
+          });
         } else if (selected) {
           await updateDistributorContract(selected.id, body);
-          toast.success("Contrato actualizado.");
+          toast.success("Contrato actualizado.", {
+            href: distributorContractPath(selected.id),
+          });
         }
       } else {
         const body = toServiceCenterContractBody(values);
@@ -181,11 +190,15 @@ export function ContractsListPanel({
           return;
         }
         if (dialog === "create") {
-          await createServiceCenterContract(body);
-          toast.success("Contrato creado correctamente.");
+          const created = await createServiceCenterContract(body);
+          toast.success("Contrato creado correctamente.", {
+            href: serviceCenterContractPath(created.id),
+          });
         } else if (selected) {
           await updateServiceCenterContract(selected.id, body);
-          toast.success("Contrato actualizado.");
+          toast.success("Contrato actualizado.", {
+            href: serviceCenterContractPath(selected.id),
+          });
         }
       }
       closeDialog();
@@ -373,6 +386,14 @@ export function ContractsListPanel({
                           </td>
                           <td className="px-5 py-3.5">
                             <div className="flex justify-end gap-1">
+                              <ViewResourceLink
+                                href={
+                                  kind === "distributor"
+                                    ? distributorContractPath(contract.id)
+                                    : serviceCenterContractPath(contract.id)
+                                }
+                                label={`Ver contrato #${contract.id}`}
+                              />
                               <button
                                 type="button"
                                 onClick={() => openEdit(contract)}

@@ -9,6 +9,10 @@ export async function fetchCompanies(): Promise<CompanyResponse[]> {
   return apiFetch<CompanyResponse[]>(BASE);
 }
 
+export async function fetchCompanyById(id: number): Promise<CompanyResponse> {
+  return apiFetch<CompanyResponse>(`${BASE}/${id}`);
+}
+
 export async function createCompany(
   body: CompanyRequest,
 ): Promise<CompanyResponse> {

@@ -13,6 +13,12 @@ export async function fetchTechnicalServices(): Promise<
   return apiFetch<TechnicalServiceResponse[]>(BASE);
 }
 
+export async function fetchTechnicalServiceById(
+  id: number,
+): Promise<TechnicalServiceResponse> {
+  return apiFetch<TechnicalServiceResponse>(`${BASE}/${id}`);
+}
+
 export async function createTechnicalService(
   body: TechnicalServiceRequest,
 ): Promise<TechnicalServiceResponse> {

@@ -34,6 +34,8 @@ import { ROLE_LABELS } from "@/lib/roles";
 import { ROLES } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { userPath } from "@/lib/resource-routes";
+import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 function parseOptionalId(value: string): number | undefined {
   if (!value.trim()) return undefined;
@@ -174,7 +176,7 @@ export function UsersManager() {
 
     try {
       if (dialog === "create") {
-        await createUser({
+        const created = await createUser({
           username,
           password: values.password,
           role: values.role,
@@ -183,6 +185,7 @@ export function UsersManager() {
         });
         toast.success(
           `Usuario "${username}" creado. Ya puede iniciar sesión en el panel.`,
+          { href: userPath(created.id) },
         );
       } else if (selected) {
         const body: Parameters<typeof updateUser>[1] = {
@@ -200,7 +203,9 @@ export function UsersManager() {
           body.distributorId = distributorId;
         }
         await updateUser(selected.id, body);
-        toast.success(`Usuario "${username}" actualizado.`);
+        toast.success(`Usuario "${username}" actualizado.`, {
+          href: userPath(selected.id),
+        });
       }
       closeDialog();
       await loadUsers();
@@ -393,6 +398,10 @@ export function UsersManager() {
                           </td>
                           <td className="px-5 py-3.5">
                             <div className="flex justify-end gap-1">
+                              <ViewResourceLink
+                                href={userPath(user.id)}
+                                label={`Ver usuario ${user.username}`}
+                              />
                               <button
                                 type="button"
                                 onClick={() => openEdit(user)}

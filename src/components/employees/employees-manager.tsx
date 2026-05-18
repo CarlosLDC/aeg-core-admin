@@ -48,6 +48,8 @@ import type { CompanyResponse } from "@/types/company";
 import type { EmployeeRequest } from "@/types/employee";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { employeePath } from "@/lib/resource-routes";
+import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 function employeeLabel(employee: EmployeeWithRoles) {
   return `${employee.name} (${employee.nationalId})`;
@@ -281,7 +283,9 @@ export function EmployeesManager() {
       if (dialog === "create" && body) {
         const created = await createEmployee(body);
         await syncEmployeeRoles(created.id, null, tableRoles);
-        toast.success(`Empleado "${label}" creado correctamente.`);
+        toast.success(`Empleado "${label}" creado correctamente.`, {
+          href: employeePath(created.id),
+        });
       } else if (selected) {
         if (body && canModify) {
           await updateEmployee(selected.id, body);
@@ -291,6 +295,7 @@ export function EmployeesManager() {
           editingRolesOnly
             ? `Rol de "${label}" actualizado.`
             : `Empleado "${label}" actualizado.`,
+          { href: employeePath(selected.id) },
         );
       }
       closeDialog();
@@ -436,11 +441,9 @@ export function EmployeesManager() {
                         <th className="px-5 py-3 font-medium">Rol</th>
                         <th className="px-5 py-3 font-medium">Sucursal</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
-                        {showActions && (
-                          <th className="px-5 py-3 font-medium text-right">
-                            Acciones
-                          </th>
-                        )}
+                        <th className="px-5 py-3 font-medium text-right">
+                          Acciones
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -474,9 +477,13 @@ export function EmployeesManager() {
                               {employee.email}
                             </span>
                           </td>
-                          {showActions && (
-                            <td className="px-5 py-3.5">
-                              <div className="flex justify-end gap-1">
+                          <td className="px-5 py-3.5">
+                            <div className="flex justify-end gap-1">
+                              <ViewResourceLink
+                                href={employeePath(employee.id)}
+                                label={`Ver empleado ${employee.name}`}
+                              />
+                              {showActions && (
                                 <button
                                   type="button"
                                   onClick={() => openEdit(employee)}
@@ -485,7 +492,8 @@ export function EmployeesManager() {
                                 >
                                   <Pencil className="size-4" />
                                 </button>
-                                {canModify && (
+                              )}
+                              {canModify && (
                                 <button
                                   type="button"
                                   onClick={() => handleDelete(employee)}
@@ -499,10 +507,9 @@ export function EmployeesManager() {
                                     <Trash2 className="size-4" />
                                   )}
                                 </button>
-                                )}
-                              </div>
-                            </td>
-                          )}
+                              )}
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

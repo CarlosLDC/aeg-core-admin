@@ -13,6 +13,12 @@ export async function fetchDistributorContracts(): Promise<
   return apiFetch<DistributorContractResponse[]>(BASE);
 }
 
+export async function fetchDistributorContractById(
+  id: number,
+): Promise<DistributorContractResponse> {
+  return apiFetch<DistributorContractResponse>(`${BASE}/${id}`);
+}
+
 export async function createDistributorContract(
   body: DistributorContractRequest,
 ): Promise<DistributorContractResponse> {
