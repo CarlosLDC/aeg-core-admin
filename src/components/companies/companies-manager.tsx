@@ -16,7 +16,7 @@ import { usePagination } from "@/hooks/use-pagination";
 import { CONTRIBUTOR_LABELS } from "@/lib/contributor-types";
 import {
   canCreateCatalogRecord,
-  canModifyCatalogRecord,
+  canUpdateCompanyRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
 import {
@@ -48,7 +48,7 @@ export function CompaniesManager() {
   const [contributorFilter, setContributorFilter] = useState("all");
 
   const canCreate = user ? canCreateCatalogRecord(user.role) : false;
-  const canModify = user ? canModifyCatalogRecord(user.role) : false;
+  const canModify = user ? canUpdateCompanyRecord(user.role) : false;
   const isDistributor = user?.role === "DISTRIBUTOR";
 
   useEffect(() => {
@@ -166,13 +166,14 @@ export function CompaniesManager() {
         <p className="min-w-0 flex-1 text-sm text-muted">
           {isDistributor ? (
             <>
-              Ves las empresas de tu distribuidora. Puedes crear nuevas; solo un
-              administrador puede editar o eliminar las existentes.
+              Ves las empresas de tu distribuidora. Puedes registrar nuevas;
+              solo un administrador puede editar o eliminar las existentes.
             </>
           ) : (
             <>
-              Una empresa puede tener muchas sucursales. Cualquier usuario puede
-              crear empresas; solo un administrador puede editar o eliminar.
+              Una empresa puede tener muchas sucursales. Administradores y
+              distribuidores pueden crear empresas; solo un administrador puede
+              editar o eliminar.
             </>
           )}
         </p>

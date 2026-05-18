@@ -1,3 +1,4 @@
+import { getStoredToken } from "@/lib/auth-storage";
 import type { SeniatExtractResult } from "@/lib/seniat-extract";
 
 export const SENIAT_SCAN_ACCEPT = "image/jpeg,image/png,image/webp,application/pdf";
@@ -6,8 +7,13 @@ export async function requestSeniatExtract(file: File): Promise<SeniatExtractRes
   const body = new FormData();
   body.append("file", file);
 
+  const headers: HeadersInit = {};
+  const token = getStoredToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
   const res = await fetch("/api/ai/seniat-extract", {
     method: "POST",
+    headers,
     body,
     credentials: "include",
   });

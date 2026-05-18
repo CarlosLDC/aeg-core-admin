@@ -7,8 +7,14 @@ import { ContractStatusBadge } from "@/components/contracts/contract-status-badg
 import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
+import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
+import {
+  canDeleteContractRecord,
+  canManageContracts,
+} from "@/lib/api-permissions";
+import { forbiddenMessage } from "@/lib/permissions/messages";
 import { useResourceId } from "@/hooks/use-resource-id";
 import { distributorLabel } from "@/lib/branch-roles";
 import { formatBranchShort } from "@/lib/branches";
@@ -63,7 +69,10 @@ export function ContractView({ kind }: ContractViewProps) {
   const id = useResourceId();
   const router = useRouter();
   const toast = useToast();
+  const { user } = useAuth();
   const { scope } = useCompanyScope();
+  const canModify = user ? canManageContracts(user.role) : false;
+  const canDelete = user ? canDeleteContractRecord(user.role) : false;
   const isDistributor = kind === "distributor";
 
   const [contract, setContract] = useState<
@@ -166,6 +175,10 @@ export function ContractView({ kind }: ContractViewProps) {
 
   async function handleSubmit(values: ContractFormValues) {
     if (!contract) return;
+    if (!canModify) {
+      setFormError(forbiddenMessage("update", "contracts"));
+      return;
+    }
 
     setSaving(true);
     setFormError(null);
@@ -208,6 +221,10 @@ export function ContractView({ kind }: ContractViewProps) {
 
   async function handleDelete() {
     if (!contract) return;
+    if (!canDelete) {
+      toast.error(forbiddenMessage("delete", "contracts"));
+      return;
+    }
     if (
       !window.confirm(
         `¿Eliminar el contrato #${contract.id} (${partyLabel})? Esta acción no se puede deshacer.`,
@@ -251,11 +268,15 @@ export function ContractView({ kind }: ContractViewProps) {
         actions={
           contract ? (
             <ResourceViewActions
-              onEdit={() => {
-                setFormError(null);
-                setEditOpen(true);
-              }}
-              onDelete={() => void handleDelete()}
+              onEdit={
+                canModify
+                  ? () => {
+                      setFormError(null);
+                      setEditOpen(true);
+                    }
+                  : undefined
+              }
+              onDelete={canDelete ? () => void handleDelete() : undefined}
               deleting={deleting}
             />
           ) : undefined

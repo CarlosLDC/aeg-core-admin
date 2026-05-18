@@ -6,8 +6,15 @@ import { TechnicalServiceFormDialog } from "@/components/technical-services/tech
 import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
+import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
 import { useFieldOperationsCatalog } from "@/hooks/use-field-operations-catalog";
+import {
+  canDeleteTechnicalServiceRecord,
+  canModifyTechnicalServiceRecord,
+} from "@/lib/api-permissions";
+import { assertTechnicalServiceInScope } from "@/lib/permissions/scope-access";
+import { forbiddenMessage } from "@/lib/permissions/messages";
 import { useResourceId } from "@/hooks/use-resource-id";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/datetime-form";
 import {
@@ -27,7 +34,10 @@ export function TechnicalServiceView() {
   const id = useResourceId();
   const router = useRouter();
   const toast = useToast();
+  const { user } = useAuth();
   const catalog = useFieldOperationsCatalog();
+  const canModify = user ? canModifyTechnicalServiceRecord(user.role) : false;
+  const canDelete = user ? canDeleteTechnicalServiceRecord(user.role) : false;
 
   const [service, setService] = useState<TechnicalServiceResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,13 +58,26 @@ export function TechnicalServiceView() {
     setError(null);
     try {
       const data = await fetchTechnicalServiceById(id);
+      if (
+        user &&
+        !assertTechnicalServiceInScope(
+          data,
+          catalog.scopedPrinterIds,
+          user.role,
+          catalog.distributorId,
+        )
+      ) {
+        setError("No tienes acceso a este recurso.");
+        setService(null);
+        return;
+      }
       setService(data);
     } catch (err) {
       setError(getTechnicalServicesErrorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, user, catalog.scopedPrinterIds, catalog.distributorId]);
 
   useEffect(() => {
     void load();
@@ -62,6 +85,10 @@ export function TechnicalServiceView() {
 
   async function handleSubmit(values: TechnicalServiceFormValues) {
     if (!service) return;
+    if (!canModify) {
+      setFormError(forbiddenMessage("update", "technicalServices"));
+      return;
+    }
 
     const bodyOrError = toTechnicalServiceRequest(values);
     if (typeof bodyOrError === "string") {
@@ -90,6 +117,10 @@ export function TechnicalServiceView() {
 
   async function handleDelete() {
     if (!service) return;
+    if (!canDelete) {
+      toast.error(forbiddenMessage("delete", "technicalServices"));
+      return;
+    }
     if (!window.confirm(`¿Eliminar el servicio técnico #${service.id}?`)) {
       return;
     }
@@ -117,11 +148,15 @@ export function TechnicalServiceView() {
         actions={
           service ? (
             <ResourceViewActions
-              onEdit={() => {
-                setFormError(null);
-                setEditOpen(true);
-              }}
-              onDelete={() => void handleDelete()}
+              onEdit={
+                canModify
+                  ? () => {
+                      setFormError(null);
+                      setEditOpen(true);
+                    }
+                  : undefined
+              }
+              onDelete={canDelete ? () => void handleDelete() : undefined}
               deleting={deleting}
             />
           ) : undefined

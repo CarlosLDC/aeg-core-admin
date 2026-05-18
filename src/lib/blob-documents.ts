@@ -1,3 +1,4 @@
+import { getStoredToken } from "@/lib/auth-storage";
 import type { BlobUploadFolder } from "@/lib/blob-upload-categories";
 import { blobViewUrl } from "@/lib/blob-storage";
 
@@ -61,8 +62,13 @@ export async function uploadBlobDocument(
   body.append("file", file);
   body.append("folder", folder);
 
+  const headers: HeadersInit = {};
+  const token = getStoredToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
   const res = await fetch("/api/uploads/documents", {
     method: "POST",
+    headers,
     body,
     credentials: "include",
   });

@@ -11,6 +11,7 @@ import { fetchServiceCenterContracts } from "@/lib/service-center-contracts-api"
 import { fetchServiceCenters } from "@/lib/service-centers-api";
 import { fetchUsers } from "@/lib/users-api";
 import type { CompanyScope } from "@/lib/company-scope";
+import { can } from "@/lib/permissions/can";
 import {
   branchIdsFromScope,
   filterByBranchScope,
@@ -261,8 +262,8 @@ export async function loadDashboardSnapshot(options: {
     role === "ADMIN" || role === "DISTRIBUTOR" || role === "TECHNICIAN"
       ? settled(fetchPrinters())
       : Promise.resolve(null),
-    role === "ADMIN" ? settled(fetchUsers()) : Promise.resolve(null),
-    role === "ADMIN"
+    can(role, "users", "read") ? settled(fetchUsers()) : Promise.resolve(null),
+    can(role, "contracts", "read")
       ? settled(
           Promise.all([
             fetchDistributorContracts(),

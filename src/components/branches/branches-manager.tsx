@@ -15,8 +15,8 @@ import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
 import {
-  canCreateCatalogRecord,
-  canModifyCatalogRecord,
+  canCreateBranchRecord,
+  canUpdateBranchRecord,
   CATALOG_CREATE_FORBIDDEN_MESSAGE,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
@@ -109,8 +109,8 @@ function clientDistributorSummary(
 export function BranchesManager() {
   const toast = useToast();
   const { user } = useAuth();
-  const canCreate = user ? canCreateCatalogRecord(user.role) : false;
-  const canModify = user ? canModifyCatalogRecord(user.role) : false;
+  const canCreate = user ? canCreateBranchRecord(user.role) : false;
+  const canModify = user ? canUpdateBranchRecord(user.role) : false;
   const {
     scope,
     loading: scopeLoading,

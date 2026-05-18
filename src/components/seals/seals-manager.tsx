@@ -11,6 +11,12 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
+import {
+  canCreateSealRecord,
+  canDeleteSealRecord,
+  canModifySealRecord,
+} from "@/lib/api-permissions";
+import { forbiddenMessage } from "@/lib/permissions/messages";
 import { fetchAuthMe } from "@/lib/auth-me-api";
 import { fetchBranches } from "@/lib/branches-api";
 import { fetchClients } from "@/lib/clients-api";
@@ -45,6 +51,10 @@ export function SealsManager() {
   const toast = useToast();
   const { user } = useAuth();
   const { scope } = useCompanyScope();
+  const canCreate = user ? canCreateSealRecord(user.role) : false;
+  const canModify = user ? canModifySealRecord(user.role) : false;
+  const canDelete = user ? canDeleteSealRecord(user.role) : false;
+
   const canLoadPrinters =
     user?.role === "ADMIN" ||
     user?.role === "DISTRIBUTOR" ||
@@ -235,6 +245,15 @@ export function SealsManager() {
   }
 
   async function handleSubmit(values: SealFormValues) {
+    if (dialog === "create" && !canCreate) {
+      setFormError(forbiddenMessage("create", "seals"));
+      return;
+    }
+    if (dialog === "edit" && !canModify) {
+      setFormError(forbiddenMessage("update", "seals"));
+      return;
+    }
+
     const bodyOrError = toSealRequest(values);
     if (typeof bodyOrError === "string") {
       setFormError(bodyOrError);
@@ -268,6 +287,10 @@ export function SealsManager() {
   }
 
   async function handleDelete(seal: SealResponse, fromDialog = false) {
+    if (!canDelete) {
+      toast.error(forbiddenMessage("delete", "seals"));
+      return;
+    }
     if (
       !window.confirm(`¿Eliminar el precinto con serial ${seal.serial}?`)
     ) {
@@ -306,14 +329,16 @@ export function SealsManager() {
             <RefreshCw className={cn("size-4", loading && "animate-spin")} />
             Actualizar
           </button>
-          <button
-            type="button"
-            onClick={openCreate}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
-          >
-            <Plus className="size-4" />
-            Nuevo precinto
-          </button>
+          {canCreate && (
+            <button
+              type="button"
+              onClick={openCreate}
+              className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
+            >
+              <Plus className="size-4" />
+              Nuevo precinto
+            </button>
+          )}
         </div>
       </div>
 
@@ -426,27 +451,31 @@ export function SealsManager() {
                                 href={sealPath(seal.id)}
                                 label={`Ver precinto ${seal.serial}`}
                               />
-                              <button
-                                type="button"
-                                onClick={() => openEdit(seal)}
-                                className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                aria-label={`Editar ${seal.serial}`}
-                              >
-                                <Pencil className="size-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(seal)}
-                                disabled={deletingId === seal.id}
-                                className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                aria-label={`Eliminar ${seal.serial}`}
-                              >
-                                {deletingId === seal.id ? (
-                                  <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                  <Trash2 className="size-4" />
-                                )}
-                              </button>
+                              {canModify && (
+                                <button
+                                  type="button"
+                                  onClick={() => openEdit(seal)}
+                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
+                                  aria-label={`Editar ${seal.serial}`}
+                                >
+                                  <Pencil className="size-4" />
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(seal)}
+                                  disabled={deletingId === seal.id}
+                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
+                                  aria-label={`Eliminar ${seal.serial}`}
+                                >
+                                  {deletingId === seal.id ? (
+                                    <Loader2 className="size-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="size-4" />
+                                  )}
+                                </button>
+                              )}
                             </div>
                           </td>
                         </ClickableTableRow>

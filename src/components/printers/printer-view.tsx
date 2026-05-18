@@ -14,9 +14,11 @@ import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
+  canDeletePrinterRecord,
   canModifyPrinterRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
+import { assertPrinterInScope } from "@/lib/permissions/scope-access";
 import { distributorLabel } from "@/lib/branch-roles";
 import { formatBranchShort } from "@/lib/branches";
 import { fetchBranches } from "@/lib/branches-api";
@@ -64,6 +66,7 @@ export function PrinterView() {
   const { user } = useAuth();
   const { scope } = useCompanyScope();
   const canModify = user ? canModifyPrinterRecord(user.role) : false;
+  const canDelete = user ? canDeletePrinterRecord(user.role) : false;
   const isDistributor = user?.role === "DISTRIBUTOR";
 
   const [printer, setPrinter] = useState<PrinterResponse | null>(null);
@@ -98,13 +101,21 @@ export function PrinterView() {
     setError(null);
     try {
       const data = await fetchPrinterById(id);
+      if (
+        user &&
+        !assertPrinterInScope(scope, data, user.role, distributorId)
+      ) {
+        setError("No tienes acceso a este recurso.");
+        setPrinter(null);
+        return;
+      }
       setPrinter(data);
     } catch (err) {
       setError(getPrintersErrorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, scope, user, distributorId]);
 
   useEffect(() => {
     void load();
@@ -247,7 +258,7 @@ export function PrinterView() {
   }
 
   async function handleDelete() {
-    if (!printer || !canModify) {
+    if (!printer || !canDelete) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
@@ -281,13 +292,17 @@ export function PrinterView() {
         loading={loading}
         error={error}
         actions={
-          printer && canModify ? (
+          printer ? (
             <ResourceViewActions
-              onEdit={() => {
-                setFormError(null);
-                setEditOpen(true);
-              }}
-              onDelete={() => void handleDelete()}
+              onEdit={
+                canModify
+                  ? () => {
+                      setFormError(null);
+                      setEditOpen(true);
+                    }
+                  : undefined
+              }
+              onDelete={canDelete ? () => void handleDelete() : undefined}
               deleting={deleting}
             />
           ) : undefined

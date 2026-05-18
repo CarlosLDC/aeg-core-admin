@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { RouteAccessGuard } from "@/components/auth/route-access-guard";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,7 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
 
   return (
     <AuthGuard>
+      <RouteAccessGuard>
       <div className="min-h-screen overflow-x-hidden bg-background">
         {mobileOpen && (
           <button
@@ -67,6 +69,7 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
           <main className="min-w-0 p-3 sm:p-6 lg:p-8">{children}</main>
         </div>
       </div>
+      </RouteAccessGuard>
     </AuthGuard>
   );
 }

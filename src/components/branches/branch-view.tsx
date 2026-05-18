@@ -15,9 +15,11 @@ import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
-  canModifyCatalogRecord,
+  canDeleteBranchRecord,
+  canUpdateBranchRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
+import { assertBranchInScope } from "@/lib/permissions/scope-access";
 import {
   deleteBranchRoles,
   fetchBranchWithRolesById,
@@ -63,7 +65,8 @@ export function BranchView() {
   const toast = useToast();
   const { user } = useAuth();
   const { scope, refresh } = useCompanyScope();
-  const canModify = user ? canModifyCatalogRecord(user.role) : false;
+  const canModify = user ? canUpdateBranchRecord(user.role) : false;
+  const canDelete = user ? canDeleteBranchRecord(user.role) : false;
 
   const [branch, setBranch] = useState<BranchWithRoles | null>(null);
   const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
@@ -91,6 +94,11 @@ export function BranchView() {
         fetchBranchWithRolesById(id),
         fetchDistributors(),
       ]);
+      if (user && !assertBranchInScope(scope, branchData, user.role)) {
+        setError("No tienes acceso a este recurso.");
+        setBranch(null);
+        return;
+      }
       setBranch(branchData);
       setDistributors(distributorRows);
     } catch (err) {
@@ -100,7 +108,7 @@ export function BranchView() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, scope, user]);
 
   useEffect(() => {
     void load();
@@ -139,7 +147,7 @@ export function BranchView() {
   }
 
   async function handleDelete() {
-    if (!branch || !canModify) {
+    if (!branch || !canDelete) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
@@ -183,13 +191,17 @@ export function BranchView() {
         loading={loading}
         error={error}
         actions={
-          branch && canModify ? (
+          branch ? (
             <ResourceViewActions
-              onEdit={() => {
-                setFormError(null);
-                setEditOpen(true);
-              }}
-              onDelete={() => void handleDelete()}
+              onEdit={
+                canModify
+                  ? () => {
+                      setFormError(null);
+                      setEditOpen(true);
+                    }
+                  : undefined
+              }
+              onDelete={canDelete ? () => void handleDelete() : undefined}
               deleting={deleting}
             />
           ) : undefined

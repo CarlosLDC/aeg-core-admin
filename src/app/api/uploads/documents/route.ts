@@ -8,17 +8,25 @@ import {
 } from "@/lib/blob-upload-server";
 import { blobAccessForUrl, isVercelBlobUrl } from "@/lib/blob-storage";
 import { getSessionCookieName } from "@/lib/session-cookie";
+import { requireRole } from "@/lib/server-request-auth";
 
-function requireSession(request: NextRequest): NextResponse | null {
+function requireSession(
+  request: NextRequest,
+  action: "read" | "create",
+): NextResponse | null {
   const session = request.cookies.get(getSessionCookieName())?.value;
   if (!session) {
     return NextResponse.json({ error: "Sesión no válida." }, { status: 401 });
+  }
+  const auth = requireRole(request, "uploads", action);
+  if (auth instanceof Response) {
+    return NextResponse.json({ error: "Sin permiso." }, { status: auth.status });
   }
   return null;
 }
 
 export async function GET(request: NextRequest) {
-  const unauthorized = requireSession(request);
+  const unauthorized = requireSession(request, "read");
   if (unauthorized) return unauthorized;
 
   const url = request.nextUrl.searchParams.get("url")?.trim();
@@ -74,7 +82,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const unauthorized = requireSession(request);
+  const unauthorized = requireSession(request, "create");
   if (unauthorized) return unauthorized;
 
   if (!process.env.BLOB_READ_WRITE_TOKEN?.trim()) {

@@ -15,9 +15,11 @@ import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
-  canModifyCatalogRecord,
+  canDeleteCompanyRecord,
+  canUpdateCompanyRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
+import { assertCompanyInScope } from "@/lib/permissions/scope-access";
 import {
   deleteCompany,
   fetchCompanyById,
@@ -33,8 +35,9 @@ export function CompanyView() {
   const router = useRouter();
   const toast = useToast();
   const { user } = useAuth();
-  const { refresh } = useCompanyScope();
-  const canModify = user ? canModifyCatalogRecord(user.role) : false;
+  const { scope, refresh } = useCompanyScope();
+  const canModify = user ? canUpdateCompanyRecord(user.role) : false;
+  const canDelete = user ? canDeleteCompanyRecord(user.role) : false;
 
   const [company, setCompany] = useState<CompanyResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,13 +58,18 @@ export function CompanyView() {
     setError(null);
     try {
       const data = await fetchCompanyById(id);
+      if (user && !assertCompanyInScope(scope, data, user.role)) {
+        setError("No tienes acceso a este recurso.");
+        setCompany(null);
+        return;
+      }
       setCompany(data);
     } catch (err) {
       setError(getCompaniesErrorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, scope, user]);
 
   useEffect(() => {
     void load();
@@ -94,7 +102,7 @@ export function CompanyView() {
   }
 
   async function handleDelete() {
-    if (!company || !canModify) {
+    if (!company || !canDelete) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
@@ -132,13 +140,17 @@ export function CompanyView() {
         loading={loading}
         error={error}
         actions={
-          company && canModify ? (
+          company ? (
             <ResourceViewActions
-              onEdit={() => {
-                setFormError(null);
-                setEditOpen(true);
-              }}
-              onDelete={() => void handleDelete()}
+              onEdit={
+                canModify
+                  ? () => {
+                      setFormError(null);
+                      setEditOpen(true);
+                    }
+                  : undefined
+              }
+              onDelete={canDelete ? () => void handleDelete() : undefined}
               deleting={deleting}
             />
           ) : undefined

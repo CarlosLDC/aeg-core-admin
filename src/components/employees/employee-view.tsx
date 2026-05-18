@@ -14,9 +14,11 @@ import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
-  canModifyCatalogRecord,
+  canDeleteEmployeeRecord,
+  canUpdateEmployeeRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
+import { assertEmployeeInScope } from "@/lib/permissions/scope-access";
 import { branchLabelById } from "@/lib/branches";
 import { fetchDistributorPersons } from "@/lib/distributor-persons-api";
 import {
@@ -54,7 +56,8 @@ export function EmployeeView() {
   const toast = useToast();
   const { user } = useAuth();
   const { scope, refresh } = useCompanyScope();
-  const canModify = user ? canModifyCatalogRecord(user.role) : false;
+  const canModify = user ? canUpdateEmployeeRecord(user.role) : false;
+  const canDelete = user ? canDeleteEmployeeRecord(user.role) : false;
   const userRole = (user?.role ?? "ADMIN") as Role;
 
   const [employee, setEmployee] = useState<EmployeeWithRoles | null>(null);
@@ -88,13 +91,19 @@ export function EmployeeView() {
         technicians.filter((t) => t.employeeId === id),
         distributorPersons.filter((d) => d.employeeId === id),
       );
-      setEmployee(merged[0] ?? null);
+      const record = merged[0] ?? null;
+      if (user && record && !assertEmployeeInScope(scope, record, user.role)) {
+        setError("No tienes acceso a este recurso.");
+        setEmployee(null);
+        return;
+      }
+      setEmployee(record);
     } catch (err) {
       setError(getEmployeesErrorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, scope, user]);
 
   useEffect(() => {
     void load();
@@ -136,7 +145,7 @@ export function EmployeeView() {
   }
 
   async function handleDelete() {
-    if (!employee || !canModify) {
+    if (!employee || !canDelete) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
@@ -179,13 +188,17 @@ export function EmployeeView() {
         loading={loading}
         error={error}
         actions={
-          employee && canModify ? (
+          employee ? (
             <ResourceViewActions
-              onEdit={() => {
-                setFormError(null);
-                setEditOpen(true);
-              }}
-              onDelete={() => void handleDelete()}
+              onEdit={
+                canModify
+                  ? () => {
+                      setFormError(null);
+                      setEditOpen(true);
+                    }
+                  : undefined
+              }
+              onDelete={canDelete ? () => void handleDelete() : undefined}
               deleting={deleting}
             />
           ) : undefined

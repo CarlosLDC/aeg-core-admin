@@ -6,11 +6,16 @@ import {
   SENIAT_EXTRACT_MAX_BYTES,
 } from "@/lib/seniat-extract";
 import { getSessionCookieName } from "@/lib/session-cookie";
+import { requireRole } from "@/lib/server-request-auth";
 
 function requireSession(request: NextRequest): NextResponse | null {
   const session = request.cookies.get(getSessionCookieName())?.value;
   if (!session) {
     return NextResponse.json({ error: "Sesión no válida." }, { status: 401 });
+  }
+  const auth = requireRole(request, "seniatExtract", "create");
+  if (auth instanceof Response) {
+    return NextResponse.json({ error: "Sin permiso." }, { status: auth.status });
   }
   return null;
 }

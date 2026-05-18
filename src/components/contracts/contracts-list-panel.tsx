@@ -6,7 +6,14 @@ import { ContractFormDialog } from "@/components/contracts/contract-form-dialog"
 import { ContractStatusBadge } from "@/components/contracts/contract-status-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
+import {
+  canCreateContractRecord,
+  canDeleteContractRecord,
+  canManageContracts,
+} from "@/lib/api-permissions";
+import { forbiddenMessage } from "@/lib/permissions/messages";
 import {
   distributorContractPath,
   serviceCenterContractPath,
@@ -75,6 +82,10 @@ export function ContractsListPanel({
   getPartyLabel,
 }: ContractsListPanelProps) {
   const toast = useToast();
+  const { user } = useAuth();
+  const canCreate = user ? canCreateContractRecord(user.role) : false;
+  const canModify = user ? canManageContracts(user.role) : false;
+  const canDelete = user ? canDeleteContractRecord(user.role) : false;
   const [contracts, setContracts] = useState<
     (DistributorContractResponse | ServiceCenterContractResponse)[]
   >([]);
@@ -162,6 +173,15 @@ export function ContractsListPanel({
   }
 
   async function handleSubmit(values: ContractFormValues) {
+    if (dialog === "create" && !canCreate) {
+      setFormError(forbiddenMessage("create", "contracts"));
+      return;
+    }
+    if (dialog === "edit" && !canModify) {
+      setFormError(forbiddenMessage("update", "contracts"));
+      return;
+    }
+
     setFormError(null);
 
     setSaving(true);
@@ -217,6 +237,10 @@ export function ContractsListPanel({
     contract: DistributorContractResponse | ServiceCenterContractResponse,
     fromDialog = false,
   ) {
+    if (!canDelete) {
+      toast.error(forbiddenMessage("delete", "contracts"));
+      return;
+    }
     const label = getPartyLabel(contract);
     if (
       !window.confirm(
@@ -259,15 +283,17 @@ export function ContractsListPanel({
           <RefreshCw className={cn("size-4", loading && "animate-spin")} />
           Actualizar
         </button>
-        <button
-          type="button"
-          onClick={openCreate}
-          disabled={catalogLoading || partyOptions.length === 0}
-          className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground disabled:opacity-50"
-        >
-          <Plus className="size-4" />
-          Nuevo contrato
-        </button>
+        {canCreate && (
+          <button
+            type="button"
+            onClick={openCreate}
+            disabled={catalogLoading || partyOptions.length === 0}
+            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground disabled:opacity-50"
+          >
+            <Plus className="size-4" />
+            Nuevo contrato
+          </button>
+        )}
       </div>
 
       {partyOptions.length === 0 && !catalogLoading && (
@@ -398,27 +424,31 @@ export function ContractsListPanel({
                                 href={contractHref}
                                 label={`Ver contrato #${contract.id}`}
                               />
-                              <button
-                                type="button"
-                                onClick={() => openEdit(contract)}
-                                className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                aria-label="Editar contrato"
-                              >
-                                <Pencil className="size-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(contract)}
-                                disabled={deletingId === contract.id}
-                                className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                aria-label="Eliminar contrato"
-                              >
-                                {deletingId === contract.id ? (
-                                  <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                  <Trash2 className="size-4" />
-                                )}
-                              </button>
+                              {canModify && (
+                                <button
+                                  type="button"
+                                  onClick={() => openEdit(contract)}
+                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
+                                  aria-label="Editar contrato"
+                                >
+                                  <Pencil className="size-4" />
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(contract)}
+                                  disabled={deletingId === contract.id}
+                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
+                                  aria-label="Eliminar contrato"
+                                >
+                                  {deletingId === contract.id ? (
+                                    <Loader2 className="size-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="size-4" />
+                                  )}
+                                </button>
+                              )}
                             </div>
                           </td>
                         </ClickableTableRow>

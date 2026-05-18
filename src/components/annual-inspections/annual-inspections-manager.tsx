@@ -10,6 +10,12 @@ import { ViewResourceLink } from "@/components/ui/view-resource-link";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
+import {
+  canCreateAnnualInspectionRecord,
+  canDeleteAnnualInspectionRecord,
+  canModifyAnnualInspectionRecord,
+} from "@/lib/api-permissions";
+import { forbiddenMessage } from "@/lib/permissions/messages";
 import { useFieldOperationsCatalog } from "@/hooks/use-field-operations-catalog";
 import { filterAnnualInspectionsInScope } from "@/lib/scope-filters";
 import { usePagination } from "@/hooks/use-pagination";
@@ -32,6 +38,9 @@ import { TableScroll } from "@/components/ui/table-scroll";
 export function AnnualInspectionsManager() {
   const toast = useToast();
   const { user } = useAuth();
+  const canCreate = user ? canCreateAnnualInspectionRecord(user.role) : false;
+  const canModify = user ? canModifyAnnualInspectionRecord(user.role) : false;
+  const canDelete = user ? canDeleteAnnualInspectionRecord(user.role) : false;
   const catalog = useFieldOperationsCatalog();
 
   const [rows, setRows] = useState<AnnualInspectionResponse[]>([]);
@@ -116,6 +125,15 @@ export function AnnualInspectionsManager() {
   }, [catalog.loading, loadRows]);
 
   async function handleSubmit(values: AnnualInspectionFormValues) {
+    if (dialog === "create" && !canCreate) {
+      setFormError(forbiddenMessage("create", "annualInspections"));
+      return;
+    }
+    if (dialog === "edit" && !canModify) {
+      setFormError(forbiddenMessage("update", "annualInspections"));
+      return;
+    }
+
     const bodyOrError = toAnnualInspectionRequest(values);
     if (typeof bodyOrError === "string") {
       setFormError(bodyOrError);
@@ -153,6 +171,10 @@ export function AnnualInspectionsManager() {
   }
 
   async function handleDelete(row: AnnualInspectionResponse, fromDialog = false) {
+    if (!canDelete) {
+      toast.error(forbiddenMessage("delete", "annualInspections"));
+      return;
+    }
     if (!window.confirm(`¿Eliminar la inspección #${row.id}?`)) return;
     setDeletingId(row.id);
     try {
@@ -186,18 +208,20 @@ export function AnnualInspectionsManager() {
             <RefreshCw className={cn("size-4", loading && "animate-spin")} />
             Actualizar
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setSelected(null);
-              setFormError(null);
-              setDialog("create");
-            }}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
-          >
-            <Plus className="size-4" />
-            Nueva inspección
-          </button>
+          {canCreate && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelected(null);
+                setFormError(null);
+                setDialog("create");
+              }}
+              className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
+            >
+              <Plus className="size-4" />
+              Nueva inspección
+            </button>
+          )}
         </div>
       </div>
 
@@ -280,31 +304,35 @@ export function AnnualInspectionsManager() {
                                 href={annualInspectionPath(row.id)}
                                 label={`Ver inspección #${row.id}`}
                               />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelected(row);
-                                  setFormError(null);
-                                  setDialog("edit");
-                                }}
-                                className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                aria-label={`Editar inspección #${row.id}`}
-                              >
-                                <Pencil className="size-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(row)}
-                                disabled={deletingId === row.id}
-                                className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                aria-label={`Eliminar inspección #${row.id}`}
-                              >
-                                {deletingId === row.id ? (
-                                  <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                  <Trash2 className="size-4" />
-                                )}
-                              </button>
+                              {canModify && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelected(row);
+                                    setFormError(null);
+                                    setDialog("edit");
+                                  }}
+                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
+                                  aria-label={`Editar inspección #${row.id}`}
+                                >
+                                  <Pencil className="size-4" />
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(row)}
+                                  disabled={deletingId === row.id}
+                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
+                                  aria-label={`Eliminar inspección #${row.id}`}
+                                >
+                                  {deletingId === row.id ? (
+                                    <Loader2 className="size-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="size-4" />
+                                  )}
+                                </button>
+                              )}
                             </div>
                           </td>
                         </ClickableTableRow>

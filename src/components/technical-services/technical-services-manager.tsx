@@ -10,6 +10,12 @@ import { ViewResourceLink } from "@/components/ui/view-resource-link";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
+import {
+  canCreateTechnicalServiceRecord,
+  canDeleteTechnicalServiceRecord,
+  canModifyTechnicalServiceRecord,
+} from "@/lib/api-permissions";
+import { forbiddenMessage } from "@/lib/permissions/messages";
 import { useFieldOperationsCatalog } from "@/hooks/use-field-operations-catalog";
 import { filterTechnicalServicesInScope } from "@/lib/scope-filters";
 import { usePagination } from "@/hooks/use-pagination";
@@ -32,6 +38,9 @@ import { TableScroll } from "@/components/ui/table-scroll";
 export function TechnicalServicesManager() {
   const toast = useToast();
   const { user } = useAuth();
+  const canCreate = user ? canCreateTechnicalServiceRecord(user.role) : false;
+  const canModify = user ? canModifyTechnicalServiceRecord(user.role) : false;
+  const canDelete = user ? canDeleteTechnicalServiceRecord(user.role) : false;
   const catalog = useFieldOperationsCatalog();
 
   const [rows, setRows] = useState<TechnicalServiceResponse[]>([]);
@@ -112,6 +121,15 @@ export function TechnicalServicesManager() {
   }
 
   async function handleSubmit(values: TechnicalServiceFormValues) {
+    if (dialog === "create" && !canCreate) {
+      setFormError(forbiddenMessage("create", "technicalServices"));
+      return;
+    }
+    if (dialog === "edit" && !canModify) {
+      setFormError(forbiddenMessage("update", "technicalServices"));
+      return;
+    }
+
     const bodyOrError = toTechnicalServiceRequest(values);
     if (typeof bodyOrError === "string") {
       setFormError(bodyOrError);
@@ -143,6 +161,10 @@ export function TechnicalServicesManager() {
   }
 
   async function handleDelete(row: TechnicalServiceResponse, fromDialog = false) {
+    if (!canDelete) {
+      toast.error(forbiddenMessage("delete", "technicalServices"));
+      return;
+    }
     if (!window.confirm(`¿Eliminar el servicio técnico #${row.id}?`)) return;
     setDeletingId(row.id);
     try {
@@ -176,18 +198,20 @@ export function TechnicalServicesManager() {
             <RefreshCw className={cn("size-4", loading && "animate-spin")} />
             Actualizar
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setSelected(null);
-              setFormError(null);
-              setDialog("create");
-            }}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
-          >
-            <Plus className="size-4" />
-            Nuevo servicio
-          </button>
+          {canCreate && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelected(null);
+                setFormError(null);
+                setDialog("create");
+              }}
+              className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
+            >
+              <Plus className="size-4" />
+              Nuevo servicio
+            </button>
+          )}
         </div>
       </div>
 
@@ -278,31 +302,35 @@ export function TechnicalServicesManager() {
                                 href={technicalServicePath(row.id)}
                                 label={`Ver servicio técnico #${row.id}`}
                               />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelected(row);
-                                  setFormError(null);
-                                  setDialog("edit");
-                                }}
-                                className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                aria-label={`Editar servicio #${row.id}`}
-                              >
-                                <Pencil className="size-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(row)}
-                                disabled={deletingId === row.id}
-                                className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                aria-label={`Eliminar servicio #${row.id}`}
-                              >
+                              {canModify && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelected(row);
+                                    setFormError(null);
+                                    setDialog("edit");
+                                  }}
+                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
+                                  aria-label={`Editar servicio #${row.id}`}
+                                >
+                                  <Pencil className="size-4" />
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(row)}
+                                  disabled={deletingId === row.id}
+                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
+                                  aria-label={`Eliminar servicio #${row.id}`}
+                                >
                                 {deletingId === row.id ? (
                                   <Loader2 className="size-4 animate-spin" />
                                 ) : (
                                   <Trash2 className="size-4" />
                                 )}
                               </button>
+                              )}
                             </div>
                           </td>
                         </ClickableTableRow>

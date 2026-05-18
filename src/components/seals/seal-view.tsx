@@ -10,6 +10,13 @@ import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
+import { useFieldOperationsCatalog } from "@/hooks/use-field-operations-catalog";
+import {
+  canDeleteSealRecord,
+  canModifySealRecord,
+} from "@/lib/api-permissions";
+import { assertSealInScope } from "@/lib/permissions/scope-access";
+import { forbiddenMessage } from "@/lib/permissions/messages";
 import { applyScopedFieldCatalog } from "@/lib/scope-filters";
 import { fetchAuthMe } from "@/lib/auth-me-api";
 import { fetchBranches } from "@/lib/branches-api";
@@ -40,6 +47,9 @@ export function SealView() {
   const toast = useToast();
   const { user } = useAuth();
   const { scope } = useCompanyScope();
+  const catalog = useFieldOperationsCatalog();
+  const canModify = user ? canModifySealRecord(user.role) : false;
+  const canDelete = user ? canDeleteSealRecord(user.role) : false;
 
   const [seal, setSeal] = useState<SealResponse | null>(null);
   const [printerOptions, setPrinterOptions] = useState<PrinterSelectOption[]>(
@@ -69,13 +79,21 @@ export function SealView() {
     setError(null);
     try {
       const data = await fetchSealById(id);
+      if (
+        user &&
+        !assertSealInScope(data, catalog.scopedPrinterIds, user.role)
+      ) {
+        setError("No tienes acceso a este recurso.");
+        setSeal(null);
+        return;
+      }
       setSeal(data);
     } catch (err) {
       setError(getSealsErrorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, user, catalog.scopedPrinterIds]);
 
   useEffect(() => {
     void load();
@@ -147,6 +165,10 @@ export function SealView() {
 
   async function handleSubmit(values: SealFormValues) {
     if (!seal) return;
+    if (!canModify) {
+      setFormError(forbiddenMessage("update", "seals"));
+      return;
+    }
 
     const bodyOrError = toSealRequest(values);
     if (typeof bodyOrError === "string") {
@@ -173,6 +195,10 @@ export function SealView() {
 
   async function handleDelete() {
     if (!seal) return;
+    if (!canDelete) {
+      toast.error(forbiddenMessage("delete", "seals"));
+      return;
+    }
     if (!window.confirm(`¿Eliminar el precinto con serial ${seal.serial}?`)) {
       return;
     }
@@ -205,11 +231,15 @@ export function SealView() {
         actions={
           seal ? (
             <ResourceViewActions
-              onEdit={() => {
-                setFormError(null);
-                setEditOpen(true);
-              }}
-              onDelete={() => void handleDelete()}
+              onEdit={
+                canModify
+                  ? () => {
+                      setFormError(null);
+                      setEditOpen(true);
+                    }
+                  : undefined
+              }
+              onDelete={canDelete ? () => void handleDelete() : undefined}
               deleting={deleting}
             />
           ) : undefined

@@ -6,8 +6,15 @@ import { AnnualInspectionFormDialog } from "@/components/annual-inspections/annu
 import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
+import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
 import { useFieldOperationsCatalog } from "@/hooks/use-field-operations-catalog";
+import {
+  canDeleteAnnualInspectionRecord,
+  canModifyAnnualInspectionRecord,
+} from "@/lib/api-permissions";
+import { assertAnnualInspectionInScope } from "@/lib/permissions/scope-access";
+import { forbiddenMessage } from "@/lib/permissions/messages";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
   toAnnualInspectionRequest,
@@ -31,7 +38,10 @@ export function AnnualInspectionView() {
   const id = useResourceId();
   const router = useRouter();
   const toast = useToast();
+  const { user } = useAuth();
   const catalog = useFieldOperationsCatalog();
+  const canModify = user ? canModifyAnnualInspectionRecord(user.role) : false;
+  const canDelete = user ? canDeleteAnnualInspectionRecord(user.role) : false;
 
   const [inspection, setInspection] = useState<AnnualInspectionResponse | null>(
     null,
@@ -54,13 +64,26 @@ export function AnnualInspectionView() {
     setError(null);
     try {
       const data = await fetchAnnualInspectionById(id);
+      if (
+        user &&
+        !assertAnnualInspectionInScope(
+          data,
+          catalog.scopedPrinterIds,
+          catalog.scopedEmployeeIds,
+          user.role,
+        )
+      ) {
+        setError("No tienes acceso a este recurso.");
+        setInspection(null);
+        return;
+      }
       setInspection(data);
     } catch (err) {
       setError(getAnnualInspectionsErrorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, user, catalog.scopedPrinterIds, catalog.scopedEmployeeIds]);
 
   useEffect(() => {
     void load();
@@ -68,6 +91,10 @@ export function AnnualInspectionView() {
 
   async function handleSubmit(values: AnnualInspectionFormValues) {
     if (!inspection) return;
+    if (!canModify) {
+      setFormError(forbiddenMessage("update", "annualInspections"));
+      return;
+    }
 
     const bodyOrError = toAnnualInspectionRequest(values);
     if (typeof bodyOrError === "string") {
@@ -96,6 +123,10 @@ export function AnnualInspectionView() {
 
   async function handleDelete() {
     if (!inspection) return;
+    if (!canDelete) {
+      toast.error(forbiddenMessage("delete", "annualInspections"));
+      return;
+    }
     if (!window.confirm(`¿Eliminar la inspección #${inspection.id}?`)) {
       return;
     }
@@ -123,11 +154,15 @@ export function AnnualInspectionView() {
         actions={
           inspection ? (
             <ResourceViewActions
-              onEdit={() => {
-                setFormError(null);
-                setEditOpen(true);
-              }}
-              onDelete={() => void handleDelete()}
+              onEdit={
+                canModify
+                  ? () => {
+                      setFormError(null);
+                      setEditOpen(true);
+                    }
+                  : undefined
+              }
+              onDelete={canDelete ? () => void handleDelete() : undefined}
               deleting={deleting}
             />
           ) : undefined

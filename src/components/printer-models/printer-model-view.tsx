@@ -6,8 +6,14 @@ import { PrinterModelFormDialog } from "@/components/printer-models/printer-mode
 import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
+import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
+import {
+  canDeletePrinterModelRecord,
+  canManagePrinterModels,
+} from "@/lib/api-permissions";
+import { forbiddenMessage } from "@/lib/permissions/messages";
 import { formatDate, formatMoney } from "@/lib/datetime-form";
 import {
   toPrinterModelRequest,
@@ -26,6 +32,9 @@ export function PrinterModelView() {
   const id = useResourceId();
   const router = useRouter();
   const toast = useToast();
+  const { user } = useAuth();
+  const canModify = user ? canManagePrinterModels(user.role) : false;
+  const canDelete = user ? canDeletePrinterModelRecord(user.role) : false;
 
   const [model, setModel] = useState<PrinterModelResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,6 +69,10 @@ export function PrinterModelView() {
 
   async function handleSubmit(values: PrinterModelFormValues) {
     if (!model) return;
+    if (!canModify) {
+      setFormError(forbiddenMessage("update", "printerModels"));
+      return;
+    }
 
     const bodyOrError = toPrinterModelRequest(values);
     if (typeof bodyOrError === "string") {
@@ -89,6 +102,10 @@ export function PrinterModelView() {
 
   async function handleDelete() {
     if (!model) return;
+    if (!canDelete) {
+      toast.error(forbiddenMessage("delete", "printerModels"));
+      return;
+    }
     const label = `${model.brand} ${model.modelCode}`;
     if (
       !window.confirm(
@@ -124,11 +141,15 @@ export function PrinterModelView() {
         actions={
           model ? (
             <ResourceViewActions
-              onEdit={() => {
-                setFormError(null);
-                setEditOpen(true);
-              }}
-              onDelete={() => void handleDelete()}
+              onEdit={
+                canModify
+                  ? () => {
+                      setFormError(null);
+                      setEditOpen(true);
+                    }
+                  : undefined
+              }
+              onDelete={canDelete ? () => void handleDelete() : undefined}
               deleting={deleting}
             />
           ) : undefined

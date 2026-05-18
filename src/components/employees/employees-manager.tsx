@@ -11,8 +11,9 @@ import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import {
-  canCreateCatalogRecord,
-  canModifyCatalogRecord,
+  canAssignEmployeeRoles,
+  canCreateEmployeeRecord,
+  canUpdateEmployeeRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
 import { branchLabelById } from "@/lib/branches";
@@ -66,12 +67,9 @@ export function EmployeesManager() {
     refresh: refreshScope,
   } = useCompanyScope();
 
-  const canCreate = user ? canCreateCatalogRecord(user.role) : false;
-  const canModify = user ? canModifyCatalogRecord(user.role) : false;
-  const canEditRoles = user
-    ? canAssignTechnicianRole(user.role) ||
-      canAssignDistributorPersonRole(user.role)
-    : false;
+  const canCreate = user ? canCreateEmployeeRecord(user.role) : false;
+  const canModify = user ? canUpdateEmployeeRecord(user.role) : false;
+  const canEditRoles = user ? canAssignEmployeeRoles(user.role) : false;
   const showActions = canModify || canEditRoles;
 
   const [employees, setEmployees] = useState<EmployeeWithRoles[]>([]);

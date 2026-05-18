@@ -5,7 +5,14 @@ import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { PrinterModelFormDialog } from "@/components/printer-models/printer-model-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
+import {
+  canCreatePrinterModelRecord,
+  canDeletePrinterModelRecord,
+  canManagePrinterModels,
+} from "@/lib/api-permissions";
+import { forbiddenMessage } from "@/lib/permissions/messages";
 import { usePagination } from "@/hooks/use-pagination";
 import {
   formatPrinterModelDate,
@@ -33,6 +40,10 @@ function modelLabel(model: PrinterModelResponse) {
 
 export function PrinterModelsManager() {
   const toast = useToast();
+  const { user } = useAuth();
+  const canCreate = user ? canCreatePrinterModelRecord(user.role) : false;
+  const canModify = user ? canManagePrinterModels(user.role) : false;
+  const canDelete = user ? canDeletePrinterModelRecord(user.role) : false;
   const [models, setModels] = useState<PrinterModelResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
@@ -107,6 +118,15 @@ export function PrinterModelsManager() {
   }
 
   async function handleSubmit(values: PrinterModelFormValues) {
+    if (dialog === "create" && !canCreate) {
+      setFormError(forbiddenMessage("create", "printerModels"));
+      return;
+    }
+    if (dialog === "edit" && !canModify) {
+      setFormError(forbiddenMessage("update", "printerModels"));
+      return;
+    }
+
     const bodyOrError = toPrinterModelRequest(values);
     if (typeof bodyOrError === "string") {
       setFormError(bodyOrError);
@@ -141,6 +161,10 @@ export function PrinterModelsManager() {
   }
 
   async function handleDelete(model: PrinterModelResponse, fromDialog = false) {
+    if (!canDelete) {
+      toast.error(forbiddenMessage("delete", "printerModels"));
+      return;
+    }
     const label = modelLabel(model);
     if (
       !window.confirm(
@@ -181,14 +205,16 @@ export function PrinterModelsManager() {
             <RefreshCw className={cn("size-4", loading && "animate-spin")} />
             Actualizar
           </button>
-          <button
-            type="button"
-            onClick={openCreate}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
-          >
-            <Plus className="size-4" />
-            Nuevo modelo
-          </button>
+          {canCreate && (
+            <button
+              type="button"
+              onClick={openCreate}
+              className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
+            >
+              <Plus className="size-4" />
+              Nuevo modelo
+            </button>
+          )}
         </div>
       </div>
 
@@ -269,27 +295,31 @@ export function PrinterModelsManager() {
                                 href={printerModelPath(model.id)}
                                 label={`Ver modelo ${modelLabel(model)}`}
                               />
-                              <button
-                                type="button"
-                                onClick={() => openEdit(model)}
-                                className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                aria-label={`Editar ${modelLabel(model)}`}
-                              >
-                                <Pencil className="size-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(model)}
-                                disabled={deletingId === model.id}
-                                className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                aria-label={`Eliminar ${modelLabel(model)}`}
-                              >
-                                {deletingId === model.id ? (
-                                  <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                  <Trash2 className="size-4" />
-                                )}
-                              </button>
+                              {canModify && (
+                                <button
+                                  type="button"
+                                  onClick={() => openEdit(model)}
+                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
+                                  aria-label={`Editar ${modelLabel(model)}`}
+                                >
+                                  <Pencil className="size-4" />
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(model)}
+                                  disabled={deletingId === model.id}
+                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
+                                  aria-label={`Eliminar ${modelLabel(model)}`}
+                                >
+                                  {deletingId === model.id ? (
+                                    <Loader2 className="size-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="size-4" />
+                                  )}
+                                </button>
+                              )}
                             </div>
                           </td>
                         </ClickableTableRow>
