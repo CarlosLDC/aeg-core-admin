@@ -20,7 +20,7 @@ Documento de referencia alineado con `src/lib/permissions/matrix.ts`. El backend
 | branches | Todos | ADMIN, DISTRIBUTOR | ADMIN | ADMIN | Wizard SENIAT: create company+branch |
 | employees | Todos | ADMIN | ADMIN | ADMIN | `assignRoles`: ADMIN, TECHNICIAN, SERVICE_CENTER, DISTRIBUTOR |
 | printers | ADMIN, DISTRIBUTOR, TECHNICIAN | ADMIN, DISTRIBUTOR, TECHNICIAN | ADMIN | ADMIN | DIST: `distributorId` |
-| printerModels | ADMIN | ADMIN | ADMIN | ADMIN | |
+| printerModels | ADMIN, DISTRIBUTOR, TECHNICIAN | ADMIN | ADMIN | ADMIN | Catálogo de consulta para quien opera impresoras |
 | seals | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual lectura | Igual | Igual | Impresoras en scope |
 | technicalServices | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual | Igual | Igual | |
 | annualInspections | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual | Igual | Igual | |

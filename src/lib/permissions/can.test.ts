@@ -21,9 +21,10 @@ describe("can", () => {
     expect(can("TECHNICIAN", "seals", "create")).toBe(true);
   });
 
-  it("allows FIELD_OPS on seals and denies printer model read for TECHNICIAN", () => {
+  it("allows FIELD_OPS on seals and printer model read for printer operators", () => {
     expect(can("SERVICE_CENTER", "annualInspections", "update")).toBe(true);
-    expect(can("TECHNICIAN", "printerModels", "read")).toBe(false);
+    expect(can("TECHNICIAN", "printerModels", "read")).toBe(true);
+    expect(can("DISTRIBUTOR", "printerModels", "create")).toBe(false);
   });
 });
 
@@ -44,5 +45,10 @@ describe("canAccessRoute", () => {
 
   it("blocks DISTRIBUTOR from contracts", () => {
     expect(canAccessRoute("DISTRIBUTOR", "/contracts")).toBe(false);
+  });
+
+  it("allows TECHNICIAN and DISTRIBUTOR on printer models catalog", () => {
+    expect(canAccessRoute("TECHNICIAN", "/printer-models")).toBe(true);
+    expect(canAccessRoute("DISTRIBUTOR", "/printer-models/1")).toBe(true);
   });
 });
