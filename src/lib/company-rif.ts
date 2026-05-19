@@ -1,6 +1,10 @@
 import { ApiError } from "@/types/auth";
 import type { CompanyResponse } from "@/types/company";
-import { createCompany, fetchCompanies } from "@/lib/companies-api";
+import {
+  createCompany,
+  fetchCompanies,
+  resolveCompanyByRif,
+} from "@/lib/companies-api";
 import { findCompanyByRif, normalizeRif } from "@/lib/seniat-extract";
 import type { CompanyRequest } from "@/types/company";
 
@@ -23,6 +27,14 @@ function findCompanyInCatalog(
   return findCompanyByRif(companies, rif);
 }
 
+function mergeCompanyIntoCatalog(
+  catalog: CompanyResponse[],
+  company: CompanyResponse,
+): CompanyResponse[] {
+  if (catalog.some((c) => c.id === company.id)) return catalog;
+  return [...catalog, company];
+}
+
 async function refreshAndFindByRif(
   rif: string,
   initial: CompanyResponse[],
@@ -31,9 +43,22 @@ async function refreshAndFindByRif(
   if (inInitial) {
     return { company: inInitial, companies: initial };
   }
+
   const refreshed = await fetchCompanies();
-  const found = findCompanyInCatalog(refreshed, rif);
-  return { company: found, companies: refreshed };
+  const foundInList = findCompanyInCatalog(refreshed, rif);
+  if (foundInList) {
+    return { company: foundInList, companies: refreshed };
+  }
+
+  const resolved = await resolveCompanyByRif(rif);
+  if (resolved) {
+    return {
+      company: resolved,
+      companies: mergeCompanyIntoCatalog(refreshed, resolved),
+    };
+  }
+
+  return { company: undefined, companies: refreshed };
 }
 
 export type ResolveCompanyByRifResult = {

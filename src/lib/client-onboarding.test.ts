@@ -36,7 +36,7 @@ describe("createClientOnboarding", () => {
     vi.clearAllMocks();
   });
 
-  it("creates company, branch and syncs roles", async () => {
+  it("empresa nueva: crea empresa, sucursal y cliente del distribuidor", async () => {
     vi.mocked(resolveCompanyIdForRif).mockResolvedValue({
       companyId: 10,
       companyCreated: true,
@@ -83,7 +83,7 @@ describe("createClientOnboarding", () => {
     expect(result.companyLinkedExisting).toBe(false);
   });
 
-  it("links existing company when resolve returns no create", async () => {
+  it("empresa existente: solo sucursal nueva y cliente del distribuidor", async () => {
     vi.mocked(resolveCompanyIdForRif).mockResolvedValue({
       companyId: 77,
       companyCreated: false,
@@ -121,5 +121,11 @@ describe("createClientOnboarding", () => {
     expect(createBranch).toHaveBeenCalledWith(
       expect.objectContaining({ companyId: 77 }),
     );
+    expect(syncBranchRoles).toHaveBeenCalledWith(
+      21,
+      null,
+      distributorClientRoles(5),
+    );
+    expect(syncBranchRoles).toHaveBeenCalledOnce();
   });
 });

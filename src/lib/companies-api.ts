@@ -14,6 +14,24 @@ export async function fetchCompanyById(id: number): Promise<CompanyResponse> {
   return apiFetch<CompanyResponse>(`${BASE}/${id}`);
 }
 
+/** Empresa por RIF aunque no esté en el listado filtrado del distribuidor (p. ej. primer cliente). */
+export async function resolveCompanyByRif(
+  rif: string,
+): Promise<CompanyResponse | null> {
+  const trimmed = rif.trim();
+  if (!trimmed) return null;
+  try {
+    return await apiFetch<CompanyResponse>(
+      `${BASE}/resolve?rif=${encodeURIComponent(trimmed)}`,
+    );
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function createCompany(
   body: CompanyRequest,
 ): Promise<CompanyResponse> {

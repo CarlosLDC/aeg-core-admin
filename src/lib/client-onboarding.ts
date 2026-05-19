@@ -42,7 +42,15 @@ export type CreateClientOnboardingResult = {
   refreshedCompanies?: CompanyResponse[];
 };
 
-/** Empresa (si aplica) + sucursal + roles — usado por wizard admin y alta de cliente distribuidor. */
+/**
+ * Alta de cliente (distribuidor o wizard admin con roles explícitos):
+ *
+ * 1. **Empresa nueva** (`companyCreated: true`): crea la empresa, crea la sucursal y
+ *    asigna roles (`syncBranchRoles`, p. ej. cliente del `distributorId` indicado).
+ * 2. **Empresa existente** (`companyLinkedExisting: true`): reutiliza el `companyId`
+ *    (lista local, `/api/companies/resolve` o RIF duplicado en API), crea solo la
+ *    sucursal y asigna los mismos roles en esa sucursal nueva.
+ */
 export async function createClientOnboarding(
   input: CreateClientOnboardingInput,
 ): Promise<CreateClientOnboardingResult> {

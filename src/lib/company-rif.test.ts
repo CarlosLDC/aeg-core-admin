@@ -8,9 +8,14 @@ import {
 vi.mock("@/lib/companies-api", () => ({
   createCompany: vi.fn(),
   fetchCompanies: vi.fn(),
+  resolveCompanyByRif: vi.fn(),
 }));
 
-import { createCompany, fetchCompanies } from "@/lib/companies-api";
+import {
+  createCompany,
+  fetchCompanies,
+  resolveCompanyByRif,
+} from "@/lib/companies-api";
 
 describe("isDuplicateCompanyRifError", () => {
   it("detects rif already exists message", () => {
@@ -84,18 +89,42 @@ describe("resolveCompanyIdForRif", () => {
     expect(createCompany).not.toHaveBeenCalled();
   });
 
-  it("on duplicate RIF from API, fetches companies and links existing", async () => {
-    vi.mocked(fetchCompanies)
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([
-        {
-          id: 77,
-          rif: "J315694205",
-          businessName: "Empresa existente",
-          contributorType: "ordinario",
-          createdAt: "",
-        },
-      ]);
+  it("resolves company by RIF when absent from distributor-scoped list", async () => {
+    vi.mocked(fetchCompanies).mockResolvedValue([]);
+    vi.mocked(resolveCompanyByRif).mockResolvedValue({
+      id: 77,
+      rif: "J315694205",
+      businessName: "Empresa existente",
+      contributorType: "ordinario",
+      createdAt: "",
+    });
+
+    const result = await resolveCompanyIdForRif(
+      {
+        rif: "J315694205",
+        businessName: "Nuevo nombre",
+        contributorType: "ordinario",
+      },
+      [],
+    );
+
+    expect(result.companyId).toBe(77);
+    expect(result.companyCreated).toBe(false);
+    expect(createCompany).not.toHaveBeenCalled();
+    expect(resolveCompanyByRif).toHaveBeenCalledWith("J315694205");
+  });
+
+  it("on duplicate RIF from API, resolves via lookup and links existing", async () => {
+    vi.mocked(fetchCompanies).mockResolvedValue([]);
+    vi.mocked(resolveCompanyByRif)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 77,
+        rif: "J315694205",
+        businessName: "Empresa existente",
+        contributorType: "ordinario",
+        createdAt: "",
+      });
     vi.mocked(createCompany).mockRejectedValue(
       new ApiError("rif already exists: J315694205", 400),
     );
@@ -112,6 +141,6 @@ describe("resolveCompanyIdForRif", () => {
     expect(result.companyId).toBe(77);
     expect(result.companyCreated).toBe(false);
     expect(createCompany).toHaveBeenCalledOnce();
-    expect(fetchCompanies).toHaveBeenCalledTimes(2);
+    expect(resolveCompanyByRif).toHaveBeenCalledTimes(2);
   });
 });
