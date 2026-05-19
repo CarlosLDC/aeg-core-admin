@@ -3,6 +3,7 @@ import {
   deleteDistributorPerson,
   fetchDistributorPersons,
 } from "@/lib/distributor-persons-api";
+import { fetchEmployeeById } from "@/lib/employees-api";
 import {
   createTechnician,
   deleteTechnician,
@@ -116,6 +117,40 @@ export function uiRoleToBackend(uiRole: EmployeeUiRole): {
         tableRoles: { isTechnician: false, isDistributorPerson: false },
       };
   }
+}
+
+/** Distribuidores no pueden listar técnicos (403 en GET /api/technicians). */
+export async function fetchEmployeeRoleTables(role: Role): Promise<{
+  technicians: TechnicianResponse[];
+  distributorPersons: DistributorPersonResponse[];
+}> {
+  const [technicians, distributorPersons] = await Promise.all([
+    role === "DISTRIBUTOR"
+      ? Promise.resolve([] as TechnicianResponse[])
+      : fetchTechnicians(),
+    fetchDistributorPersons(),
+  ]);
+  return { technicians, distributorPersons };
+}
+
+export async function loadEmployeeWithRoles(
+  employeeId: number,
+  role: Role,
+): Promise<EmployeeWithRoles> {
+  const [row, { technicians, distributorPersons }] = await Promise.all([
+    fetchEmployeeById(employeeId),
+    fetchEmployeeRoleTables(role),
+  ]);
+  const merged = mergeEmployeesWithRoles(
+    [row],
+    technicians.filter((t) => t.employeeId === employeeId),
+    distributorPersons.filter((d) => d.employeeId === employeeId),
+  );
+  const record = merged[0];
+  if (!record) {
+    throw new Error("Empleado no encontrado.");
+  }
+  return record;
 }
 
 export function mergeEmployeesWithRoles(

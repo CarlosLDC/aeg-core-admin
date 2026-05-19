@@ -1,5 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
-import { syncEmployeeRoles } from "./employee-roles";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  fetchEmployeeRoleTables,
+  syncEmployeeRoles,
+} from "./employee-roles";
+import type { Role } from "@/types/user";
 
 vi.mock("@/lib/technicians-api", () => ({
   fetchTechnicians: vi.fn(),
@@ -22,7 +26,23 @@ import {
   fetchTechnicians,
 } from "@/lib/technicians-api";
 
+describe("fetchEmployeeRoleTables", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+  it("skips technicians list for distributors", async () => {
+    vi.mocked(fetchDistributorPersons).mockResolvedValue([]);
+    const tables = await fetchEmployeeRoleTables("DISTRIBUTOR" as Role);
+    expect(fetchTechnicians).not.toHaveBeenCalled();
+    expect(tables.technicians).toEqual([]);
+  });
+});
+
 describe("syncEmployeeRoles", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("does not fetch technicians when role is only administrativo", async () => {
     await syncEmployeeRoles(42, null, {
       isTechnician: false,

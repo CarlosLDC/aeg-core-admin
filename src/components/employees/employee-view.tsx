@@ -23,7 +23,6 @@ import {
 } from "@/lib/api-permissions";
 import { assertEmployeeInScope } from "@/lib/permissions/scope-access";
 import { branchLabelById } from "@/lib/branches";
-import { fetchDistributorPersons } from "@/lib/distributor-persons-api";
 import {
   toEmployeePayload,
   type EmployeeFormValues,
@@ -31,17 +30,15 @@ import {
 import {
   deleteEmployeeRoles,
   getEmployeeRolesErrorMessage,
-  mergeEmployeesWithRoles,
+  loadEmployeeWithRoles,
   syncEmployeeRoles,
   type EmployeeWithRoles,
 } from "@/lib/employee-roles";
 import {
   deleteEmployee,
-  fetchEmployeeById,
   getEmployeesErrorMessage,
   updateEmployee,
 } from "@/lib/employees-api";
-import { fetchTechnicians } from "@/lib/technicians-api";
 import { formatDate } from "@/lib/datetime-form";
 import { branchPath, employeePath } from "@/lib/resource-routes";
 import type { Role } from "@/types/user";
@@ -95,17 +92,10 @@ export function EmployeeView() {
     setLoading(true);
     setError(null);
     try {
-      const [row, technicians, distributorPersons] = await Promise.all([
-        fetchEmployeeById(id),
-        fetchTechnicians(),
-        fetchDistributorPersons(),
-      ]);
-      const merged = mergeEmployeesWithRoles(
-        [row],
-        technicians.filter((t) => t.employeeId === id),
-        distributorPersons.filter((d) => d.employeeId === id),
+      const record = await loadEmployeeWithRoles(
+        id,
+        user?.role ?? "ADMIN",
       );
-      const record = merged[0] ?? null;
       if (
         user &&
         record &&

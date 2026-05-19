@@ -30,7 +30,6 @@ import { branchLabelById } from "@/lib/branches";
 import { filterEmployeesForDistributorStaff } from "@/lib/distributor-scope";
 import { useDistributorId } from "@/hooks/use-distributor-id";
 import { useDistributorStaffBranches } from "@/hooks/use-distributor-staff-branches";
-import { fetchDistributorPersons } from "@/lib/distributor-persons-api";
 import {
   toEmployeePayload,
   type EmployeeFormValues,
@@ -41,6 +40,7 @@ import {
   deleteEmployeeRoles,
   EMPLOYEE_UI_ROLE_LABELS,
   EMPLOYEE_UI_ROLES,
+  fetchEmployeeRoleTables,
   getEmployeeRolesErrorMessage,
   mergeEmployeesWithRoles,
   resolveEmployeeUiRole,
@@ -56,7 +56,6 @@ import {
   getEmployeesErrorMessage,
   updateEmployee,
 } from "@/lib/employees-api";
-import { fetchTechnicians } from "@/lib/technicians-api";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { EmployeeRequest } from "@/types/employee";
@@ -221,18 +220,9 @@ export function EmployeesManager() {
     setListError(null);
     try {
       const employeeRows = await fetchEmployees();
-      const [technicianResult, distributorPersonResult] =
-        await Promise.allSettled([
-          fetchTechnicians(),
-          fetchDistributorPersons(),
-        ]);
-
-      const technicians =
-        technicianResult.status === "fulfilled" ? technicianResult.value : [];
-      const distributorPersons =
-        distributorPersonResult.status === "fulfilled"
-          ? distributorPersonResult.value
-          : [];
+      const { technicians, distributorPersons } = await fetchEmployeeRoleTables(
+        user?.role ?? "ADMIN",
+      );
 
       const merged = mergeEmployeesWithRoles(
         employeeRows,
@@ -250,7 +240,7 @@ export function EmployeesManager() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, user?.role]);
 
   const refreshAll = useCallback(async () => {
     await Promise.all([refreshScope(), loadEmployees()]);
