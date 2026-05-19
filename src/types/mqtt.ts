@@ -6,15 +6,18 @@ export type MqttConnectionProbeResult = {
   message: string;
 };
 
+/** Objeto JSON o array de valores JSON (p. ej. lote de mensajes). */
+export type MqttPublishPayload = Record<string, unknown> | unknown[];
+
 export type MqttPublishRequest = {
   topic: string;
-  payload: Record<string, unknown>;
+  payload: MqttPublishPayload;
 };
 
 export type MqttPublishResponse = {
   status: string;
   topic: string;
-  payload: Record<string, unknown>;
+  payload: MqttPublishPayload;
   broker: string;
 };
 

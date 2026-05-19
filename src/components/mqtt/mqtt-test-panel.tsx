@@ -11,6 +11,7 @@ import {
 } from "@/lib/mqtt-api";
 import type {
   MqttConnectionProbeResult,
+  MqttPublishPayload,
   MqttPublishResponse,
   MqttTestMessageResponse,
 } from "@/types/mqtt";
@@ -124,21 +125,28 @@ export function MqttTestPanel() {
     setPublishError(null);
     setPublishResult(null);
 
-    let payload: Record<string, unknown>;
+    let payload: MqttPublishPayload;
     try {
       const parsed: unknown = JSON.parse(payloadText);
-      if (
-        parsed === null ||
-        typeof parsed !== "object" ||
-        Array.isArray(parsed)
-      ) {
-        setPublishError("El payload debe ser un objeto JSON (no un array ni null).");
-        setPublishLoading(false);
-        return;
-      }
-      payload = parsed as Record<string, unknown>;
-      if (Object.keys(payload).length === 0) {
-        setPublishError("El payload debe tener al menos un campo.");
+      if (Array.isArray(parsed)) {
+        if (parsed.length === 0) {
+          setPublishError("El array JSON debe tener al menos un elemento.");
+          setPublishLoading(false);
+          return;
+        }
+        payload = parsed;
+      } else if (parsed !== null && typeof parsed === "object") {
+        const obj = parsed as Record<string, unknown>;
+        if (Object.keys(obj).length === 0) {
+          setPublishError("El objeto JSON debe tener al menos un campo.");
+          setPublishLoading(false);
+          return;
+        }
+        payload = obj;
+      } else {
+        setPublishError(
+          "El payload debe ser un objeto JSON o un array JSON.",
+        );
         setPublishLoading(false);
         return;
       }
@@ -246,8 +254,8 @@ export function MqttTestPanel() {
           Publicar mensaje
         </h2>
         <p className="mt-1 text-sm text-muted">
-          Envía un tópico y un payload JSON; la respuesta refleja la confirmación
-          del API (HTTP 202).
+          Envía un tópico y un payload JSON (objeto o array de objetos); la
+          respuesta refleja la confirmación del API (HTTP 202).
         </p>
 
         <form onSubmit={handlePublish} className="mt-5 space-y-4">
@@ -264,7 +272,9 @@ export function MqttTestPanel() {
           </label>
 
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Objeto JSON</span>
+            <span className="mb-1.5 block text-sm font-medium">
+              JSON (objeto o array)
+            </span>
             <textarea
               required
               rows={5}
