@@ -19,6 +19,7 @@ import {
   filterPrintersForUser,
 } from "@/lib/scope-filters";
 import type { BranchResponse } from "@/types/branch";
+import type { CompanyResponse } from "@/types/company";
 import type { EmployeeResponse } from "@/types/employee";
 import type { PrinterResponse, PrinterStatus } from "@/types/printer";
 import type { Role } from "@/types/user";
@@ -137,6 +138,43 @@ export function formatRelativeTime(iso: string): string {
   return date.toLocaleDateString("es", { dateStyle: "medium" });
 }
 
+export function companiesStatHint(
+  companies: CompanyResponse[],
+  branches: BranchResponse[],
+): string {
+  const withBranchIds = new Set(branches.map((b) => b.companyId));
+  const withBranch = companies.filter((c) => withBranchIds.has(c.id)).length;
+  const withoutBranch = companies.length - withBranch;
+  return `${withBranch} con sucursales · ${withoutBranch} sin sucursal`;
+}
+
+export function branchesStatHint(
+  _branches: BranchResponse[],
+  network: {
+    clients: number;
+    distributors: number;
+    serviceCenters: number;
+  },
+): string {
+  const n = (count: number, singular: string, plural: string) =>
+    `${count} ${count === 1 ? singular : plural}`;
+  return [
+    n(network.clients, "cliente", "clientes"),
+    n(network.distributors, "distribuidora", "distribuidoras"),
+    n(network.serviceCenters, "centro", "centros"),
+  ].join(" · ");
+}
+
+export function uniquePlaces(branches: BranchResponse[]): string {
+  const cities = new Set(
+    branches.map((b) => b.city?.trim()).filter((c): c is string => Boolean(c)),
+  ).size;
+  const states = new Set(
+    branches.map((b) => b.state?.trim()).filter((s): s is string => Boolean(s)),
+  ).size;
+  return `${states} estados · ${cities} ciudades`;
+}
+
 function buildActivity(
   printers: PrinterResponse[],
   employees: EmployeeResponse[],
@@ -171,8 +209,8 @@ function buildActivity(
 function buildStats(
   role: Role,
   counts: {
-    companies: number;
-    branches: number;
+    companies: CompanyResponse[];
+    branches: BranchResponse[];
     clients: number;
     distributors: number;
     serviceCenters: number;
@@ -184,12 +222,27 @@ function buildStats(
 ): DashboardStat[] {
   const activePrinters = counts.printers.filter((p) => p.status === "activo").length;
   const paidPrinters = counts.printers.filter((p) => p.paid).length;
+  const companyHint = companiesStatHint(counts.companies, counts.branches);
+  const branchHint = branchesStatHint(counts.branches, {
+    clients: counts.clients,
+    distributors: counts.distributors,
+    serviceCenters: counts.serviceCenters,
+  });
+  const placesHint = uniquePlaces(counts.branches);
 
   switch (role) {
     case "ADMIN":
       return [
-        { title: "Empresas", value: String(counts.companies) },
-        { title: "Sucursales", value: String(counts.branches) },
+        {
+          title: "Empresas",
+          value: String(counts.companies.length),
+          hint: companyHint,
+        },
+        {
+          title: "Sucursales",
+          value: String(counts.branches.length),
+          hint: branchHint,
+        },
         {
           title: "Impresoras",
           value: String(counts.printers.length),
@@ -215,9 +268,21 @@ function buildStats(
           value: String(counts.printers.length),
           hint: `${activePrinters} activas`,
         },
-        { title: "Clientes", value: String(counts.clients) },
-        { title: "Sucursales", value: String(counts.branches) },
-        { title: "Empleados", value: String(counts.employees) },
+        {
+          title: "Clientes",
+          value: String(counts.clients),
+          hint: `${counts.branches.length} sucursales en red`,
+        },
+        {
+          title: "Sucursales",
+          value: String(counts.branches.length),
+          hint: placesHint,
+        },
+        {
+          title: "Empleados",
+          value: String(counts.employees),
+          hint: `${counts.companies.length} empresas vinculadas`,
+        },
       ];
     case "TECHNICIAN":
       return [
@@ -226,8 +291,16 @@ function buildStats(
           value: String(counts.printers.length),
           hint: `${activePrinters} activas · ${counts.printers.filter((p) => p.status === "laboratorio").length} en laboratorio`,
         },
-        { title: "Empleados", value: String(counts.employees) },
-        { title: "Sucursales", value: String(counts.branches) },
+        {
+          title: "Empleados",
+          value: String(counts.employees),
+          hint: `${counts.branches.length} sucursales cubiertas`,
+        },
+        {
+          title: "Sucursales",
+          value: String(counts.branches.length),
+          hint: placesHint,
+        },
         {
           title: "Distribuidores",
           value: String(counts.distributors),
@@ -237,9 +310,21 @@ function buildStats(
     case "SERVICE_CENTER":
     default:
       return [
-        { title: "Empresas", value: String(counts.companies) },
-        { title: "Sucursales", value: String(counts.branches) },
-        { title: "Empleados", value: String(counts.employees) },
+        {
+          title: "Empresas",
+          value: String(counts.companies.length),
+          hint: companyHint,
+        },
+        {
+          title: "Sucursales",
+          value: String(counts.branches.length),
+          hint: branchHint,
+        },
+        {
+          title: "Empleados",
+          value: String(counts.employees),
+          hint: placesHint,
+        },
         {
           title: "Centros de servicio",
           value: String(counts.serviceCenters),
@@ -346,8 +431,8 @@ export async function loadDashboardSnapshot(options: {
   }
 
   const stats = buildStats(role, {
-    companies: companies.length,
-    branches: scopedBranches.length,
+    companies,
+    branches: scopedBranches,
     clients: scopedClients.length,
     distributors: scopedDistributors.length,
     serviceCenters: scopedServiceCenters.length,

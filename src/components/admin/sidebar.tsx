@@ -1,12 +1,45 @@
 "use client";
 
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { BrandLogo } from "@/components/brand/logo";
-import { navSectionsForRole, type NavItem } from "@/lib/navigation";
+import {
+  isNavItemActive,
+  navItemsForRole,
+  navSectionsForRole,
+  type NavItem,
+} from "@/lib/navigation";
 import { useAuth } from "@/context/auth-provider";
 import { cn } from "@/lib/utils";
+
+const SIDEBAR_NAV_SCROLL_KEY = "aeg-admin-sidebar-nav-scroll";
+
+/** Survives sidebar remounts on client-side route changes. */
+let sidebarNavScrollTop = 0;
+
+function readStoredNavScroll(): number {
+  try {
+    const raw = sessionStorage.getItem(SIDEBAR_NAV_SCROLL_KEY);
+    if (raw != null) {
+      const n = Number(raw);
+      if (Number.isFinite(n) && n >= 0) return n;
+    }
+  } catch {
+    /* private mode / quota */
+  }
+  return sidebarNavScrollTop;
+}
+
+function storeNavScroll(top: number) {
+  sidebarNavScrollTop = top;
+  try {
+    sessionStorage.setItem(SIDEBAR_NAV_SCROLL_KEY, String(top));
+  } catch {
+    /* private mode / quota */
+  }
+}
 
 type SidebarProps = {
   collapsed: boolean;
@@ -20,11 +53,13 @@ function NavRow({
   isActive,
   isCollapsed,
   onNavigate,
+  onBeforeNavigate,
 }: {
   item: NavItem;
   isActive: boolean;
   isCollapsed: boolean;
   onNavigate?: () => void;
+  onBeforeNavigate?: () => void;
 }) {
   const Icon = item.icon;
   const rowClass = cn(
@@ -53,7 +88,10 @@ function NavRow({
   return (
     <Link
       href={item.href}
-      onClick={onNavigate}
+      onClick={() => {
+        onBeforeNavigate?.();
+        onNavigate?.();
+      }}
       title={isCollapsed ? item.title : undefined}
       className={rowClass}
     >
@@ -84,13 +122,29 @@ export function Sidebar({
   const isCollapsed = collapsed && !mobileOpen;
   const isMobileDrawer = mobileOpen;
   const sections = user ? navSectionsForRole(user.role) : [];
+  const navItems = user ? navItemsForRole(user.role) : [];
+  const navRef = useRef<HTMLElement>(null);
 
-  function isItemActive(item: NavItem): boolean {
-    if (item.disabled) return false;
-    return item.href === "/"
-      ? pathname === "/"
-      : pathname.startsWith(item.href);
-  }
+  const persistNavScroll = useCallback(() => {
+    const el = navRef.current;
+    if (!el) return;
+    storeNavScroll(el.scrollTop);
+  }, []);
+
+  useLayoutEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const top = readStoredNavScroll();
+    if (top > 0) el.scrollTop = top;
+  }, [pathname, sections.length]);
+
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const onScroll = () => storeNavScroll(el.scrollTop);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [sections.length]);
 
   return (
     <aside
@@ -132,7 +186,7 @@ export function Sidebar({
         )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-3">
+      <nav ref={navRef} className="flex-1 overflow-y-auto p-3 overscroll-contain">
         {sections.map((section, sectionIndex) => (
           <div
             key={section.title}
@@ -156,8 +210,9 @@ export function Sidebar({
                 <li key={item.href}>
                   <NavRow
                     item={item}
-                    isActive={isItemActive(item)}
+                    isActive={isNavItemActive(item, pathname, navItems)}
                     isCollapsed={isCollapsed && !isMobileDrawer}
+                    onBeforeNavigate={persistNavScroll}
                     onNavigate={onMobileClose}
                   />
                 </li>

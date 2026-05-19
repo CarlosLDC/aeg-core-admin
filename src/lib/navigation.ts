@@ -142,3 +142,29 @@ export function navSectionsForRole(role: Role): NavSection[] {
     }))
     .filter((section) => section.items.length > 0);
 }
+
+/** True when pathname is exactly this item or a nested route under it. */
+export function navItemMatchesPath(item: NavItem, pathname: string): boolean {
+  if (item.disabled) return false;
+  if (item.href === "/") return pathname === "/";
+  return pathname === item.href || pathname.startsWith(`${item.href}/`);
+}
+
+/** Longest matching href wins (e.g. /settings/permissions over /settings). */
+export function activeNavHref(
+  pathname: string,
+  items: NavItem[],
+): string | null {
+  const match = items
+    .filter((item) => navItemMatchesPath(item, pathname))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+  return match?.href ?? null;
+}
+
+export function isNavItemActive(
+  item: NavItem,
+  pathname: string,
+  items: NavItem[],
+): boolean {
+  return activeNavHref(pathname, items) === item.href;
+}
