@@ -175,29 +175,14 @@ export async function syncEmployeeRoles(
 
   if (roles.isTechnician && !prev.technician) {
     await createTechnician({ employeeId });
-  } else if (!roles.isTechnician) {
-    const technician = await resolveTechnicianForEmployee(
-      employeeId,
-      prev.technician,
-    );
-    if (technician) {
-      await deleteTechnician(technician.id);
-    }
+  } else if (!roles.isTechnician && prev.technician) {
+    await deleteTechnician(prev.technician.id);
   }
 
   if (roles.isDistributorPerson && !prev.distributorPerson) {
-    const existing = await resolveDistributorPersonForEmployee(employeeId);
-    if (!existing) {
-      await createDistributorPerson({ employeeId });
-    }
-  } else if (!roles.isDistributorPerson) {
-    const distributorPerson = await resolveDistributorPersonForEmployee(
-      employeeId,
-      prev.distributorPerson,
-    );
-    if (distributorPerson) {
-      await deleteDistributorPerson(distributorPerson.id);
-    }
+    await createDistributorPerson({ employeeId });
+  } else if (!roles.isDistributorPerson && prev.distributorPerson) {
+    await deleteDistributorPerson(prev.distributorPerson.id);
   }
 }
 

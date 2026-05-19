@@ -39,6 +39,9 @@ export async function deleteEmployee(id: number): Promise<void> {
 export function getEmployeesErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 403) {
+      if (/employee|empleado|branch|sucursal/i.test(error.message)) {
+        return error.message;
+      }
       return getCatalogForbiddenMessage("MODIFY");
     }
     if (error.status === 404) {

@@ -89,6 +89,13 @@ export function EmployeeFormDialog({
     }
   }, [open, mode, employee, roleOptions, defaultBranchId]);
 
+  useEffect(() => {
+    if (!open || mode !== "create" || !lockBranch || !defaultBranchId) return;
+    setForm((f) =>
+      f.branchId === defaultBranchId ? f : { ...f, branchId: defaultBranchId },
+    );
+  }, [open, mode, lockBranch, defaultBranchId]);
+
   if (!open) return null;
 
   function handleSubmit(e: FormEvent) {
