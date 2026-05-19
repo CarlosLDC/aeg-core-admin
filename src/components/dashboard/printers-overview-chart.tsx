@@ -16,23 +16,11 @@ type PrintersOverviewChartProps = {
 
 const STATUS_STYLES: Record<
   string,
-  { stroke: string; fill: string; dot: string }
+  { stroke: string; dot: string }
 > = {
-  laboratorio: {
-    stroke: "#f59e0b",
-    fill: "rgba(245, 158, 11, 0.15)",
-    dot: "bg-amber-500",
-  },
-  activo: {
-    stroke: "#10b981",
-    fill: "rgba(16, 185, 129, 0.15)",
-    dot: "bg-emerald-500",
-  },
-  inactivo: {
-    stroke: "#94a3b8",
-    fill: "rgba(148, 163, 184, 0.12)",
-    dot: "bg-slate-400",
-  },
+  laboratorio: { stroke: "#f59e0b", dot: "bg-amber-500" },
+  activo: { stroke: "#10b981", dot: "bg-emerald-500" },
+  inactivo: { stroke: "#94a3b8", dot: "bg-slate-400" },
 };
 
 function monthlyTrend(months: MonthlyCount[]): {
@@ -58,8 +46,8 @@ function StatusDonut({
   total: number;
   activeCount: number;
 }) {
-  const size = 168;
-  const stroke = 18;
+  const size = 152;
+  const stroke = 16;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const activePct = total > 0 ? Math.round((activeCount / total) * 100) : 0;
@@ -83,20 +71,17 @@ function StatusDonut({
 
   if (total === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-6">
-        <div
-          className="flex size-40 items-center justify-center rounded-full border-2 border-dashed border-border bg-foreground/[0.02]"
-          aria-hidden
-        >
-          <span className="text-sm text-muted">Sin datos</span>
+      <div className="flex flex-col items-center justify-center py-8">
+        <div className="flex size-36 items-center justify-center rounded-full border-2 border-dashed border-border bg-foreground/[0.02]">
+          <span className="text-sm text-muted">Sin impresoras</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-8">
-      <div className="relative shrink-0">
+    <div className="flex flex-col items-center gap-6">
+      <div className="relative shrink-0 p-1">
         <svg
           width={size}
           height={size}
@@ -114,57 +99,71 @@ function StatusDonut({
             strokeWidth={stroke}
             className="text-border/80"
           />
-          {segments.map((seg) => (
+          {segments.length > 0 ? (
+            segments.map((seg) => (
+              <circle
+                key={seg.status}
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                fill="none"
+                stroke={seg.color}
+                strokeWidth={stroke}
+                strokeLinecap="butt"
+                strokeDasharray={seg.dasharray}
+                strokeDashoffset={seg.dashoffset}
+              />
+            ))
+          ) : (
             <circle
-              key={seg.status}
               cx={size / 2}
               cy={size / 2}
               r={radius}
               fill="none"
-              stroke={seg.color}
+              stroke="currentColor"
               strokeWidth={stroke}
-              strokeLinecap="round"
-              strokeDasharray={seg.dasharray}
-              strokeDashoffset={seg.dashoffset}
-              className="transition-all duration-700 ease-out"
+              className="text-muted/40"
             />
-          ))}
+          )}
         </svg>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-semibold tracking-tight text-card-foreground">
+          <span className="text-2xl font-semibold tracking-tight text-card-foreground tabular-nums">
             {activePct}%
           </span>
           <span className="text-xs text-muted">activas</span>
         </div>
       </div>
 
-      <ul className="w-full min-w-0 space-y-2.5 sm:flex-1">
+      <ul className="grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-3">
         {statusCounts.map((item) => {
           const pct = total > 0 ? Math.round((item.count / total) * 100) : 0;
           const style = STATUS_STYLES[item.status];
           return (
-            <li key={item.status}>
-              <div className="mb-1 flex items-center justify-between gap-2 text-sm">
-                <span className="flex items-center gap-2 text-card-foreground">
+            <li
+              key={item.status}
+              className="rounded-lg border border-border bg-background/50 px-3 py-2.5"
+            >
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <span className="flex min-w-0 items-center gap-2 font-medium text-card-foreground">
                   <span
                     className={cn("size-2.5 shrink-0 rounded-full", style?.dot)}
                   />
-                  {item.label}
+                  <span className="truncate">{item.label}</span>
                 </span>
-                <span className="tabular-nums text-muted">
-                  {item.count}{" "}
-                  <span className="text-xs">({pct}%)</span>
+                <span className="shrink-0 tabular-nums text-muted">
+                  {item.count}
                 </span>
               </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-foreground/5">
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-foreground/5">
                 <div
-                  className="h-full rounded-full transition-all duration-700 ease-out"
+                  className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${pct}%`,
                     backgroundColor: style?.stroke,
                   }}
                 />
               </div>
+              <p className="mt-1 text-xs text-muted">{pct}% del total</p>
             </li>
           );
         })}
@@ -182,16 +181,19 @@ function MonthlyAreaChart({
   hoveredIndex: number | null;
   onHover: (index: number | null) => void;
 }) {
-  const width = 400;
-  const height = 160;
-  const padX = 8;
-  const padY = 20;
+  const width = 480;
+  const height = 180;
+  const padX = 24;
+  const padY = 16;
+  const labelH = 20;
   const chartW = width - padX * 2;
-  const chartH = height - padY * 2;
+  const chartH = height - padY - labelH;
   const max = Math.max(1, ...data.map((d) => d.count));
 
   const points = data.map((d, i) => {
-    const x = padX + (data.length <= 1 ? chartW / 2 : (i / (data.length - 1)) * chartW);
+    const x =
+      padX +
+      (data.length <= 1 ? chartW / 2 : (i / Math.max(data.length - 1, 1)) * chartW);
     const y = padY + chartH - (d.count / max) * chartH;
     return { x, y, ...d, i };
   });
@@ -206,31 +208,29 @@ function MonthlyAreaChart({
       ? `${linePath} L ${points[points.length - 1]!.x} ${padY + chartH} L ${points[0]!.x} ${padY + chartH} Z`
       : "";
 
-  const gridLines = [0, 0.5, 1].map((t) => padY + chartH * (1 - t));
-
   const hovered = hoveredIndex != null ? points[hoveredIndex] : null;
 
   if (data.every((d) => d.count === 0)) {
     return (
-      <div className="flex h-44 items-center justify-center rounded-lg border border-dashed border-border bg-foreground/[0.02]">
+      <div className="flex h-48 items-center justify-center rounded-lg border border-dashed border-border bg-foreground/[0.02]">
         <p className="text-sm text-muted">Sin altas en los últimos meses</p>
       </div>
     );
   }
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="h-44 w-full overflow-visible"
-        preserveAspectRatio="none"
+        className="h-auto w-full max-h-52"
+        preserveAspectRatio="xMidYMid meet"
         onMouseLeave={() => onHover(null)}
         role="img"
         aria-label="Altas de impresoras por mes"
       >
         <defs>
           <linearGradient id="monthly-area-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#0033ff" stopOpacity="0.35" />
+            <stop offset="0%" stopColor="#0033ff" stopOpacity="0.3" />
             <stop offset="100%" stopColor="#0033ff" stopOpacity="0.02" />
           </linearGradient>
           <linearGradient id="monthly-line" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -239,24 +239,26 @@ function MonthlyAreaChart({
           </linearGradient>
         </defs>
 
-        {gridLines.map((y, i) => (
-          <line
-            key={i}
-            x1={padX}
-            y1={y}
-            x2={width - padX}
-            y2={y}
-            className="stroke-border/60"
-            strokeWidth={1}
-            strokeDasharray="4 4"
-          />
-        ))}
+        {[0, 0.5, 1].map((t, i) => {
+          const y = padY + chartH * (1 - t);
+          return (
+            <line
+              key={i}
+              x1={padX}
+              y1={y}
+              x2={width - padX}
+              y2={y}
+              className="stroke-border/50"
+              strokeWidth={1}
+              strokeDasharray="4 4"
+            />
+          );
+        })}
 
-        {areaPath && (
-          <path d={areaPath} fill="url(#monthly-area-fill)" className="transition-opacity duration-300" />
-        )}
-
-        {linePath && (
+        {areaPath ? (
+          <path d={areaPath} fill="url(#monthly-area-fill)" />
+        ) : null}
+        {linePath ? (
           <path
             d={linePath}
             fill="none"
@@ -265,15 +267,15 @@ function MonthlyAreaChart({
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-        )}
+        ) : null}
 
         {points.map((p) => (
           <g key={p.key}>
             <rect
               x={p.x - chartW / data.length / 2}
               y={0}
-              width={chartW / data.length}
-              height={height}
+              width={Math.max(chartW / data.length, 24)}
+              height={height - labelH}
               fill="transparent"
               onMouseEnter={() => onHover(p.i)}
             />
@@ -282,55 +284,53 @@ function MonthlyAreaChart({
               cy={p.y}
               r={hoveredIndex === p.i ? 6 : 4}
               className={cn(
-                "fill-accent stroke-card transition-all duration-200",
+                "fill-accent stroke-card",
                 hoveredIndex === p.i ? "stroke-2" : "stroke-[1.5]",
               )}
             />
+            <text
+              x={p.x}
+              y={height - 6}
+              textAnchor="middle"
+              className={cn(
+                "fill-current text-[11px] capitalize",
+                hoveredIndex === p.i
+                  ? "font-semibold text-card-foreground"
+                  : "text-muted",
+              )}
+            >
+              {p.label}
+            </text>
           </g>
         ))}
 
-        {hovered && (
-          <g>
-            <line
-              x1={hovered.x}
-              y1={padY}
-              x2={hovered.x}
-              y2={padY + chartH}
-              className="stroke-accent/40"
-              strokeWidth={1}
-              strokeDasharray="3 3"
-            />
-          </g>
-        )}
+        {hovered ? (
+          <line
+            x1={hovered.x}
+            y1={padY}
+            x2={hovered.x}
+            y2={padY + chartH}
+            className="stroke-accent/40"
+            strokeWidth={1}
+            strokeDasharray="3 3"
+          />
+        ) : null}
       </svg>
 
-      <div className="mt-2 flex justify-between gap-1 px-0.5">
-        {data.map((item, i) => (
-          <span
-            key={item.key}
-            className={cn(
-              "flex-1 truncate text-center text-[10px] capitalize sm:text-xs",
-              hoveredIndex === i
-                ? "font-medium text-card-foreground"
-                : "text-muted",
-            )}
-          >
-            {item.label}
-          </span>
-        ))}
-      </div>
-
-      {hovered && (
+      {hovered ? (
         <div
-          className="pointer-events-none absolute -top-1 left-1/2 z-10 -translate-x-1/2 rounded-lg border border-border bg-card px-3 py-1.5 text-center text-xs shadow-md"
+          className="pointer-events-none absolute top-2 rounded-lg border border-border bg-card px-3 py-1.5 text-center text-xs shadow-md"
           style={{
-            left: `${((hovered.x - padX) / chartW) * 100}%`,
+            left: `${((hovered.x / width) * 100).toFixed(1)}%`,
+            transform: "translateX(-50%)",
           }}
         >
-          <p className="font-semibold text-card-foreground">{hovered.count}</p>
+          <p className="font-semibold tabular-nums text-card-foreground">
+            {hovered.count}
+          </p>
           <p className="capitalize text-muted">{hovered.label}</p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -357,77 +357,83 @@ export function PrintersOverviewChart({
   return (
     <div
       className={cn(
-        "flex h-full min-h-0 flex-col rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5",
+        "rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6",
         className,
       )}
     >
-      <div className="mb-5 flex shrink-0 flex-wrap items-end justify-between gap-4 sm:mb-6">
+      <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-semibold text-card-foreground">Impresoras</h2>
-          <p className="text-sm text-muted">
-            Distribución por estatus y tendencia de altas
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-2xl font-semibold tracking-tight text-card-foreground">
-            {totalPrinters}
-          </p>
+          <h2 className="text-lg font-semibold text-card-foreground">Impresoras</h2>
           <p className="mt-0.5 text-sm text-muted">
-            <span className="font-medium text-emerald-600 dark:text-emerald-400">
-              {activeCount} activas
-            </span>
-            {recentTotal > 0 && (
-              <span className="text-muted">
-                {" "}
-                · {recentTotal} altas en 6 meses
-              </span>
-            )}
+            Estatus de la flota y altas mensuales
           </p>
         </div>
+        <dl className="flex flex-wrap gap-4 sm:gap-6 sm:text-right">
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted">
+              Total
+            </dt>
+            <dd className="text-2xl font-semibold tabular-nums text-card-foreground">
+              {totalPrinters}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted">
+              Activas
+            </dt>
+            <dd className="text-2xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+              {activeCount}
+            </dd>
+          </div>
+          {recentTotal > 0 ? (
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-muted">
+                Altas (6 meses)
+              </dt>
+              <dd className="text-2xl font-semibold tabular-nums text-card-foreground">
+                {recentTotal}
+              </dd>
+            </div>
+          ) : null}
+        </dl>
       </div>
 
-      <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-5 lg:items-stretch lg:gap-8">
-        <section className="flex min-h-[220px] flex-col lg:col-span-2 lg:min-h-0">
-          <p className="mb-4 text-xs font-medium uppercase tracking-wide text-muted">
-            Por estatus
-          </p>
-          <div className="flex flex-1 items-center justify-center">
-            <StatusDonut
-              statusCounts={statusCounts}
-              total={totalPrinters}
-              activeCount={activeCount}
-            />
-          </div>
-        </section>
+      <section className="border-b border-border py-6">
+        <h3 className="mb-4 text-xs font-medium uppercase tracking-wide text-muted">
+          Por estatus
+        </h3>
+        <StatusDonut
+          statusCounts={statusCounts}
+          total={totalPrinters}
+          activeCount={activeCount}
+        />
+      </section>
 
-        <section className="flex min-h-[220px] flex-col lg:col-span-3 lg:min-h-0">
-          <div className="mb-4 flex flex-nowrap items-center justify-between gap-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted">
-              Altas por mes
-            </p>
-            {trend && (
-              <span
-                className={cn(
-                  "shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium",
-                  trend.delta >= 0
-                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                    : "bg-rose-500/10 text-rose-700 dark:text-rose-300",
-                )}
-              >
-                {trend.delta >= 0 ? "+" : ""}
-                {trend.delta}% vs. {trend.label}
-              </span>
-            )}
-          </div>
-          <div className="flex min-h-0 flex-1 flex-col justify-center">
-            <MonthlyAreaChart
-              data={monthlyRegistrations}
-              hoveredIndex={hoveredMonth}
-              onHover={setHoveredMonth}
-            />
-          </div>
-        </section>
-      </div>
+      <section className="pt-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-xs font-medium uppercase tracking-wide text-muted">
+            Altas por mes
+          </h3>
+          {trend ? (
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                trend.delta >= 0
+                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                  : "bg-rose-500/10 text-rose-700 dark:text-rose-300",
+              )}
+            >
+              {trend.delta >= 0 ? "+" : ""}
+              {trend.delta}% vs. {trend.label}
+            </span>
+          ) : null}
+        </div>
+        <MonthlyAreaChart
+          data={monthlyRegistrations}
+          hoveredIndex={hoveredMonth}
+          onHover={setHoveredMonth}
+        />
+      </section>
     </div>
   );
 }

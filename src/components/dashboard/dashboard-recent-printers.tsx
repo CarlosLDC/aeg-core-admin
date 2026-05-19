@@ -19,7 +19,7 @@ export function DashboardRecentPrinters({
 }: DashboardRecentPrintersProps) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-      <div className="flex flex-col gap-2 border-b border-border px-3 py-3 sm:flex-row sm:items-end sm:justify-between sm:px-5 sm:py-4">
+      <div className="flex flex-col gap-2 border-b border-border bg-foreground/[0.02] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div>
           <h2 className="font-semibold text-card-foreground">
             Impresoras recientes

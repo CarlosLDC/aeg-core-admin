@@ -158,20 +158,20 @@ export function DashboardManager() {
 
           <section
             aria-labelledby="dashboard-overview"
-            className="grid grid-cols-1 items-stretch gap-4 sm:gap-6 lg:grid-cols-5 lg:min-h-[26rem] lg:max-h-[32rem]"
+            className="grid grid-cols-1 gap-6 xl:grid-cols-3 xl:items-start"
           >
             <h2 id="dashboard-overview" className="sr-only">
               Resumen y actividad
             </h2>
             {canSeePrinters ? (
               <PrintersOverviewChart
-                className="h-full min-h-0 lg:col-span-3"
+                className="min-w-0 xl:col-span-2"
                 statusCounts={snapshot.printerStatusCounts}
                 monthlyRegistrations={snapshot.monthlyPrinterRegistrations}
                 totalPrinters={snapshot.printers.length}
               />
             ) : (
-              <div className="flex h-full min-h-0 flex-col rounded-xl border border-border bg-card p-5 shadow-sm lg:col-span-3">
+              <div className="min-w-0 rounded-xl border border-border bg-card p-5 shadow-sm xl:col-span-2">
                 <h3 className="font-semibold text-card-foreground">
                   Resumen operativo
                 </h3>
@@ -200,12 +200,15 @@ export function DashboardManager() {
             )}
             <DashboardActivityList
               items={snapshot.activity}
-              className="h-full min-h-0 lg:col-span-2"
+              className="min-w-0 xl:col-span-1"
             />
           </section>
 
           {canSeePrinters && (
-            <section aria-labelledby="dashboard-recent-printers">
+            <section
+              aria-labelledby="dashboard-recent-printers"
+              className="border-t border-border pt-6"
+            >
               <h2 id="dashboard-recent-printers" className="sr-only">
                 Impresoras recientes
               </h2>
