@@ -4,7 +4,19 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { PrinterModelFormDialog } from "@/components/printer-models/printer-model-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import {
+  PageToolbar,
+  pageToolbarButtonClass,
+} from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
+import {
+  TableCreatedAtCell,
+  TableCreatedAtHeader,
+} from "@/components/ui/table-created-at";
+import {
+  filterAllOption,
+  uniqueFilterOptions,
+} from "@/lib/table-filter-options";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
@@ -55,11 +67,21 @@ export function PrinterModelsManager() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
+  const [brandFilter, setBrandFilter] = useState("all");
+
+  const brandFilterOptions = useMemo(
+    () => [
+      filterAllOption("Todas las marcas"),
+      ...uniqueFilterOptions(models.map((model) => model.brand)),
+    ],
+    [models],
+  );
 
   const filteredModels = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return models;
     return models.filter((model) => {
+      if (brandFilter !== "all" && model.brand !== brandFilter) return false;
+      if (!q) return true;
       const haystack = [
         model.id,
         model.brand,
@@ -72,7 +94,7 @@ export function PrinterModelsManager() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [models, search]);
+  }, [models, search, brandFilter]);
 
   const pagination = usePagination(filteredModels);
 
@@ -188,33 +210,37 @@ export function PrinterModelsManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:justify-between md:gap-4">
-        <p className="min-w-0 flex-1 text-sm text-muted">
-          Catálogo de modelos de impresora fiscal homologados. Solo un
-          administrador puede añadir, editar o eliminar modelos.
-        </p>
-        <div className="flex w-full shrink-0 flex-col gap-2 max-md:w-full md:w-auto md:flex-row md:flex-nowrap">
-          <button
-            type="button"
-            onClick={loadModels}
-            disabled={loading}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card md:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
-          >
-            <RefreshCw className={cn("size-4", loading && "animate-spin")} />
-            Actualizar
-          </button>
-          {canCreate && (
+      <PageToolbar
+        actions={
+          <>
             <button
               type="button"
-              onClick={openCreate}
-              className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
+              onClick={loadModels}
+              disabled={loading}
+              className={cn(
+                pageToolbarButtonClass,
+                "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
+              )}
             >
-              <Plus className="size-4" />
-              Nuevo modelo
+              <RefreshCw className={cn("size-4", loading && "animate-spin")} />
+              Actualizar
             </button>
-          )}
-        </div>
-      </div>
+            {canCreate && (
+              <button
+                type="button"
+                onClick={openCreate}
+                className={cn(
+                  pageToolbarButtonClass,
+                  "bg-accent text-accent-foreground",
+                )}
+              >
+                <Plus className="size-4" />
+                Nuevo modelo
+              </button>
+            )}
+          </>
+        }
+      />
 
       {listError && (
         <p
@@ -243,6 +269,15 @@ export function PrinterModelsManager() {
               searchPlaceholder="Buscar por marca, modelo, providencia…"
               resultCount={filteredModels.length}
               totalCount={models.length}
+              filters={[
+                {
+                  id: "brand",
+                  label: "Marca",
+                  value: brandFilter,
+                  onChange: setBrandFilter,
+                  options: brandFilterOptions,
+                },
+              ]}
             />
             {filteredModels.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted">
@@ -254,7 +289,7 @@ export function PrinterModelsManager() {
                   <table className="w-full min-w-[880px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <th className="px-5 py-3 font-medium">ID</th>
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Marca</th>
                         <th className="px-5 py-3 font-medium">Modelo</th>
                         <th className="px-5 py-3 font-medium">Providencia</th>
@@ -271,7 +306,7 @@ export function PrinterModelsManager() {
                           key={model.id}
                           href={printerModelPath(model.id)}
                         >
-                          <td className="px-5 py-3.5 text-muted">{model.id}</td>
+                          <TableCreatedAtCell value={model.createdAt} />
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
                             {model.brand}
                           </td>

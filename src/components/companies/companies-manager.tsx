@@ -16,6 +16,10 @@ import {
 } from "@/components/ui/page-toolbar";
 import { useConfirm } from "@/context/confirm-provider";
 import { TablePagination } from "@/components/ui/table-pagination";
+import {
+  TableCreatedAtCell,
+  TableCreatedAtHeader,
+} from "@/components/ui/table-created-at";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
@@ -167,22 +171,6 @@ export function CompaniesManager() {
   return (
     <div className="space-y-4">
       <PageToolbar
-        description={
-          <>
-          {isDistributor ? (
-            <>
-              Ves las empresas de tu distribuidora. Puedes registrar nuevas;
-              solo un administrador puede editar o eliminar las existentes.
-            </>
-          ) : (
-            <>
-              Una empresa puede tener muchas sucursales. Administradores y
-              distribuidores pueden crear empresas; solo un administrador puede
-              editar o eliminar.
-            </>
-          )}
-          </>
-        }
         actions={
           <>
           <button
@@ -231,11 +219,6 @@ export function CompaniesManager() {
                 ? "No hay empresas de clientes visibles"
                 : "No hay empresas registradas"
             }
-            description={
-              isDistributor
-                ? "Cuando existan empresas asociadas a tu distribuidor aparecerán aquí."
-                : "Crea la primera empresa para comenzar."
-            }
             action={
               canCreate ? (
                 <button
@@ -283,7 +266,7 @@ export function CompaniesManager() {
                   <table className="w-full min-w-[720px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <th className="px-5 py-3 font-medium">ID</th>
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Razón social</th>
                         <th className="px-5 py-3 font-medium">RIF</th>
                         <th className="px-5 py-3 font-medium">Contribuyente</th>
@@ -298,9 +281,7 @@ export function CompaniesManager() {
                           key={company.id}
                           href={companyPath(company.id)}
                         >
-                          <td className="px-5 py-3.5 text-muted">
-                            {company.id}
-                          </td>
+                          <TableCreatedAtCell value={company.createdAt} />
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
                             {company.businessName || "—"}
                           </td>

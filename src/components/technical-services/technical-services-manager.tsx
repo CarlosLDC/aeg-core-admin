@@ -4,6 +4,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { TechnicalServiceFormDialog } from "@/components/technical-services/technical-service-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import {
+  PageToolbar,
+  pageToolbarButtonClass,
+} from "@/components/ui/page-toolbar";
+import {
+  TableCreatedAtCell,
+  TableCreatedAtHeader,
+} from "@/components/ui/table-created-at";
+import { filterAllOption } from "@/lib/table-filter-options";
 import { technicalServicePath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
@@ -56,6 +65,8 @@ export function TechnicalServicesManager() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
+  const [printerFilter, setPrinterFilter] = useState("all");
+  const [technicianFilter, setTechnicianFilter] = useState("all");
 
   const printerLabelById = useMemo(
     () => new Map(catalog.printerOptions.map((p) => [p.value, p.label])),
@@ -66,10 +77,32 @@ export function TechnicalServicesManager() {
     [catalog.technicianOptions],
   );
 
+  const printerFilterOptions = useMemo(
+    () => [filterAllOption("Todas las impresoras"), ...catalog.printerOptions],
+    [catalog.printerOptions],
+  );
+
+  const technicianFilterOptions = useMemo(
+    () => [filterAllOption("Todos los técnicos"), ...catalog.technicianOptions],
+    [catalog.technicianOptions],
+  );
+
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
     return rows.filter((row) => {
+      if (
+        printerFilter !== "all" &&
+        String(row.printerId) !== printerFilter
+      ) {
+        return false;
+      }
+      if (
+        technicianFilter !== "all" &&
+        String(row.technicianId) !== technicianFilter
+      ) {
+        return false;
+      }
+      if (!q) return true;
       const haystack = [
         row.id,
         row.printerId,
@@ -83,7 +116,14 @@ export function TechnicalServicesManager() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [rows, search, printerLabelById, technicianLabelById]);
+  }, [
+    rows,
+    search,
+    printerFilter,
+    technicianFilter,
+    printerLabelById,
+    technicianLabelById,
+  ]);
 
   const pagination = usePagination(filteredRows);
 
@@ -183,39 +223,44 @@ export function TechnicalServicesManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:justify-between md:gap-4">
-        <p className="min-w-0 flex-1 text-sm text-muted">
-          Visitas de servicio técnico, reportes Z y gestión de precintos en campo.
-        </p>
-        <div className="flex w-full shrink-0 flex-col gap-2 max-md:w-full md:w-auto md:flex-row md:flex-nowrap">
-          <button
-            type="button"
-            onClick={() => {
-              loadRows();
-              catalog.refresh();
-            }}
-            disabled={loading}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card md:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
-          >
-            <RefreshCw className={cn("size-4", loading && "animate-spin")} />
-            Actualizar
-          </button>
-          {canCreate && (
+      <PageToolbar
+        actions={
+          <>
             <button
               type="button"
               onClick={() => {
-                setSelected(null);
-                setFormError(null);
-                setDialog("create");
+                loadRows();
+                catalog.refresh();
               }}
-              className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
+              disabled={loading}
+              className={cn(
+                pageToolbarButtonClass,
+                "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
+              )}
             >
-              <Plus className="size-4" />
-              Nuevo servicio
+              <RefreshCw className={cn("size-4", loading && "animate-spin")} />
+              Actualizar
             </button>
-          )}
-        </div>
-      </div>
+            {canCreate && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelected(null);
+                  setFormError(null);
+                  setDialog("create");
+                }}
+                className={cn(
+                  pageToolbarButtonClass,
+                  "bg-accent text-accent-foreground",
+                )}
+              >
+                <Plus className="size-4" />
+                Nuevo servicio
+              </button>
+            )}
+          </>
+        }
+      />
 
       {listError && (
         <p
@@ -244,6 +289,22 @@ export function TechnicalServicesManager() {
               searchPlaceholder="Buscar por impresora, técnico, falla…"
               resultCount={filteredRows.length}
               totalCount={rows.length}
+              filters={[
+                {
+                  id: "printer",
+                  label: "Impresora",
+                  value: printerFilter,
+                  onChange: setPrinterFilter,
+                  options: printerFilterOptions,
+                },
+                {
+                  id: "technician",
+                  label: "Técnico",
+                  value: technicianFilter,
+                  onChange: setTechnicianFilter,
+                  options: technicianFilterOptions,
+                },
+              ]}
             />
             {filteredRows.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted">
@@ -255,7 +316,7 @@ export function TechnicalServicesManager() {
                   <table className="w-full min-w-[1100px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <th className="px-5 py-3 font-medium">ID</th>
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Impresora</th>
                         <th className="px-5 py-3 font-medium">Técnico</th>
                         <th className="px-5 py-3 font-medium">Inicio</th>
@@ -274,7 +335,7 @@ export function TechnicalServicesManager() {
                           key={row.id}
                           href={technicalServicePath(row.id)}
                         >
-                          <td className="px-5 py-3.5 text-muted">{row.id}</td>
+                          <TableCreatedAtCell value={row.createdAt} />
                           <td className="max-w-[140px] truncate px-5 py-3.5 font-mono text-card-foreground">
                             {printerLabelById.get(String(row.printerId)) ??
                               `#${row.printerId}`}

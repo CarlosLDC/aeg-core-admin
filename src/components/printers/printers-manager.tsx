@@ -13,7 +13,16 @@ import {
 import { runSerialBatch } from "@/lib/batch-create";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import {
+  PageToolbar,
+  pageToolbarButtonClass,
+} from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
+import {
+  TableCreatedAtCell,
+  TableCreatedAtHeader,
+} from "@/components/ui/table-created-at";
+import { filterAllOption } from "@/lib/table-filter-options";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import {
@@ -112,6 +121,8 @@ export function PrintersManager() {
   const [statusFilter, setStatusFilter] = useState<PrinterStatus | "all">(
     "all",
   );
+  const [modelFilter, setModelFilter] = useState("all");
+  const [paidFilter, setPaidFilter] = useState("all");
 
   useEffect(() => {
     if (!isDistributor) {
@@ -151,12 +162,40 @@ export function PrintersManager() {
     [visibleModels],
   );
 
+  const modelFilterOptions = useMemo(
+    () => [
+      filterAllOption("Todos los modelos"),
+      ...visibleModels.map((model) => ({
+        value: String(model.id),
+        label: printerModelLabel(model),
+      })),
+    ],
+    [visibleModels],
+  );
+
+  const paidFilterOptions = useMemo(
+    () => [
+      filterAllOption(),
+      { value: "yes", label: "Pagadas" },
+      { value: "no", label: "No pagadas" },
+    ],
+    [],
+  );
+
   const filteredPrinters = useMemo(() => {
     const q = search.trim().toLowerCase();
     return visiblePrinters.filter((printer) => {
       if (statusFilter !== "all" && printer.status !== statusFilter) {
         return false;
       }
+      if (
+        modelFilter !== "all" &&
+        printer.modelId !== Number(modelFilter)
+      ) {
+        return false;
+      }
+      if (paidFilter === "yes" && !printer.paid) return false;
+      if (paidFilter === "no" && printer.paid) return false;
       if (!q) return true;
       const model = modelById.get(printer.modelId);
       const haystack = [
@@ -175,7 +214,7 @@ export function PrintersManager() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [visiblePrinters, search, statusFilter, modelById]);
+  }, [visiblePrinters, search, statusFilter, modelFilter, paidFilter, modelById]);
 
   const pagination = usePagination(filteredPrinters);
 
@@ -460,47 +499,53 @@ export function PrintersManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:justify-between md:gap-4">
-        <p className="min-w-0 flex-1 text-sm text-muted">
-          {isDistributor
-            ? "Impresoras asignadas a tu distribuidora."
-            : "Inventario de impresoras fiscales. Acceso para administradores, distribuidores y técnicos."}
-        </p>
-        <div className="flex w-full shrink-0 flex-col gap-2 max-md:w-full md:w-auto md:flex-row md:flex-nowrap">
-          <button
-            type="button"
-            onClick={() => {
-              loadPrinters();
-              loadCatalog();
-            }}
-            disabled={loading}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card md:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
-          >
-            <RefreshCw className={cn("size-4", loading && "animate-spin")} />
-            Actualizar
-          </button>
-          {canCreate && (
-            <>
-              <button
-                type="button"
-                onClick={openBatchCreate}
-                className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card md:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
-              >
-                <Layers className="size-4" />
-                Crear por lote
-              </button>
-              <button
-                type="button"
-                onClick={openCreate}
-                className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
-              >
-                <Plus className="size-4" />
-                Nueva impresora
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+      <PageToolbar
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                loadPrinters();
+                loadCatalog();
+              }}
+              disabled={loading}
+              className={cn(
+                pageToolbarButtonClass,
+                "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
+              )}
+            >
+              <RefreshCw className={cn("size-4", loading && "animate-spin")} />
+              Actualizar
+            </button>
+            {canCreate && (
+              <>
+                <button
+                  type="button"
+                  onClick={openBatchCreate}
+                  className={cn(
+                    pageToolbarButtonClass,
+                    "border border-border bg-card text-foreground hover:bg-foreground/5",
+                  )}
+                >
+                  <Layers className="size-4" />
+                  Crear por lote
+                </button>
+                <button
+                  type="button"
+                  onClick={openCreate}
+                  className={cn(
+                    pageToolbarButtonClass,
+                    "bg-accent text-accent-foreground",
+                  )}
+                >
+                  <Plus className="size-4" />
+                  Nueva impresora
+                </button>
+              </>
+            )}
+          </>
+        }
+      />
 
       {isDistributor && distributorId == null && !loading && (
         <p
@@ -549,12 +594,26 @@ export function PrintersManager() {
                   onChange: (value) =>
                     setStatusFilter(value as PrinterStatus | "all"),
                   options: [
-                    { value: "all", label: "Todos" },
+                    filterAllOption(),
                     ...PRINTER_STATUSES.map((status) => ({
                       value: status,
                       label: PRINTER_STATUS_LABELS[status],
                     })),
                   ],
+                },
+                {
+                  id: "model",
+                  label: "Modelo",
+                  value: modelFilter,
+                  onChange: setModelFilter,
+                  options: modelFilterOptions,
+                },
+                {
+                  id: "paid",
+                  label: "Pago",
+                  value: paidFilter,
+                  onChange: setPaidFilter,
+                  options: paidFilterOptions,
                 },
               ]}
             />
@@ -568,6 +627,7 @@ export function PrintersManager() {
                   <table className="w-full min-w-[1100px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Serial</th>
                         <th className="px-5 py-3 font-medium">Modelo</th>
                         <th className="px-5 py-3 font-medium">Estatus</th>
@@ -588,6 +648,7 @@ export function PrintersManager() {
                           key={printer.id}
                           href={printerPath(printer.id)}
                         >
+                          <TableCreatedAtCell value={printer.createdAt} />
                           <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
                             {printer.fiscalSerial}
                           </td>

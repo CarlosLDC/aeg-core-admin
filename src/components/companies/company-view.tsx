@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Building2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { CompanyBranchesTable } from "@/components/companies/company-branches-table";
+import { CompanyBranchesWizardDialog } from "@/components/companies/company-branches-wizard-dialog";
 import { ContributorBadge } from "@/components/companies/contributor-badge";
 import {
   CompanyFormDialog,
@@ -49,6 +50,7 @@ export function CompanyView() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [branchesOpen, setBranchesOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (id == null) {
@@ -175,9 +177,21 @@ export function CompanyView() {
               />
             </DetailCard>
 
-            <CompanyBranchesTable
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setBranchesOpen(true)}
+                className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
+              >
+                <Building2 className="size-4" />
+                Ver sucursales
+              </button>
+            </div>
+            <CompanyBranchesWizardDialog
               companyId={company.id}
               companies={scope?.companies ?? [company]}
+              open={branchesOpen}
+              onClose={() => setBranchesOpen(false)}
             />
           </div>
         )}

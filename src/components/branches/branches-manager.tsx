@@ -12,7 +12,19 @@ import {
   type BranchFormValues,
 } from "@/components/branches/branch-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import {
+  PageToolbar,
+  pageToolbarButtonClass,
+} from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
+import {
+  TableCreatedAtCell,
+  TableCreatedAtHeader,
+} from "@/components/ui/table-created-at";
+import {
+  filterAllOption,
+  uniqueFilterOptions,
+} from "@/lib/table-filter-options";
 import { useAuth } from "@/context/auth-provider";
 import {
   canCreateBranchRecord,
@@ -133,6 +145,27 @@ export function BranchesManager() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [stateFilter, setStateFilter] = useState("all");
+  const [companyFilter, setCompanyFilter] = useState("all");
+
+  const stateFilterOptions = useMemo(
+    () => [
+      filterAllOption("Todos los estados"),
+      ...uniqueFilterOptions(branches.map((b) => b.state)),
+    ],
+    [branches],
+  );
+
+  const companyFilterOptions = useMemo(
+    () => [
+      filterAllOption("Todas las empresas"),
+      ...companies.map((c) => ({
+        value: String(c.id),
+        label: c.businessName || c.rif,
+      })),
+    ],
+    [companies],
+  );
 
   const filteredBranches = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -140,6 +173,13 @@ export function BranchesManager() {
       if (typeFilter === "client" && !branch.client) return false;
       if (typeFilter === "distributor" && !branch.distributor) return false;
       if (typeFilter === "serviceCenter" && !branch.serviceCenter) {
+        return false;
+      }
+      if (stateFilter !== "all" && branch.state !== stateFilter) return false;
+      if (
+        companyFilter !== "all" &&
+        branch.companyId !== Number(companyFilter)
+      ) {
         return false;
       }
       if (!q) return true;
@@ -157,7 +197,15 @@ export function BranchesManager() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [branches, search, typeFilter, companies, distributors]);
+  }, [
+    branches,
+    search,
+    typeFilter,
+    stateFilter,
+    companyFilter,
+    companies,
+    distributors,
+  ]);
 
   const pagination = usePagination(filteredBranches);
 
@@ -397,40 +445,43 @@ export function BranchesManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:justify-between md:gap-4">
-        <p className="min-w-0 flex-1 text-sm text-muted">
-          {canCreate
-            ? "Registra sucursales con documento fiscal (SENIAT) o datos manuales. Solo un administrador puede editar o eliminar."
-            : "Listado de sucursales a las que tienes acceso. Solo un administrador puede crear, editar o eliminar."}
-        </p>
-        <div className="flex w-full shrink-0 flex-col gap-2 max-md:w-full md:w-auto md:flex-row md:flex-nowrap">
-          <button
-            type="button"
-            onClick={refreshAll}
-            disabled={loading || companiesLoading}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card md:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
-          >
-            <RefreshCw
-              className={cn(
-                "size-4",
-                (loading || companiesLoading) && "animate-spin",
-              )}
-            />
-            Actualizar
-          </button>
-          {canCreate && (
+      <PageToolbar
+        actions={
+          <>
             <button
               type="button"
-              onClick={openCreate}
-              disabled={companiesLoading}
-              className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground disabled:opacity-50"
+              onClick={refreshAll}
+              disabled={loading || companiesLoading}
+              className={cn(
+                pageToolbarButtonClass,
+                "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
+              )}
             >
-              <Plus className="size-4" />
-              Nueva sucursal
+              <RefreshCw
+                className={cn(
+                  "size-4",
+                  (loading || companiesLoading) && "animate-spin",
+                )}
+              />
+              Actualizar
             </button>
-          )}
-        </div>
-      </div>
+            {canCreate && (
+              <button
+                type="button"
+                onClick={openCreate}
+                disabled={companiesLoading}
+                className={cn(
+                  pageToolbarButtonClass,
+                  "bg-accent text-accent-foreground disabled:opacity-50",
+                )}
+              >
+                <Plus className="size-4" />
+                Nueva sucursal
+              </button>
+            )}
+          </>
+        }
+      />
 
       {canCreate && companies.length === 0 && !companiesLoading && (
         <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
@@ -477,6 +528,20 @@ export function BranchesManager() {
                     label: o.label,
                   })),
                 },
+                {
+                  id: "state",
+                  label: "Estado",
+                  value: stateFilter,
+                  onChange: setStateFilter,
+                  options: stateFilterOptions,
+                },
+                {
+                  id: "company",
+                  label: "Empresa",
+                  value: companyFilter,
+                  onChange: setCompanyFilter,
+                  options: companyFilterOptions,
+                },
               ]}
             />
             {filteredBranches.length === 0 ? (
@@ -489,7 +554,7 @@ export function BranchesManager() {
                   <table className="w-full min-w-[1040px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <th className="px-5 py-3 font-medium">ID</th>
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Empresa</th>
                         <th className="px-5 py-3 font-medium">Ubicación</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
@@ -506,7 +571,7 @@ export function BranchesManager() {
                           key={branch.id}
                           href={branchPath(branch.id)}
                         >
-                          <td className="px-5 py-3.5 text-muted">{branch.id}</td>
+                          <TableCreatedAtCell value={branch.createdAt} />
                           <td className="max-w-[200px] px-5 py-3.5">
                             <TruncatedText
                               href={companyPath(branch.companyId)}

@@ -12,7 +12,12 @@ import type { PrinterSelectOption } from "@/components/printers/printer-select";
 import { SealColorBadge } from "@/components/seals/seal-color-badge";
 import { SealStatusBadge } from "@/components/seals/seal-status-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import {
+  PageToolbar,
+  pageToolbarButtonClass,
+} from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { filterAllOption } from "@/lib/table-filter-options";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
@@ -87,9 +92,21 @@ export function SealsManager() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<SealStatus | "all">("all");
   const [colorFilter, setColorFilter] = useState<SealColor | "all">("all");
+  const [printerFilter, setPrinterFilter] = useState("all");
 
   const printerLabelById = useMemo(
     () => new Map(printerOptions.map((p) => [p.id, p.label])),
+    [printerOptions],
+  );
+
+  const printerFilterOptions = useMemo(
+    () => [
+      filterAllOption("Todas las impresoras"),
+      ...printerOptions.map((printer) => ({
+        value: String(printer.id),
+        label: printer.label,
+      })),
+    ],
     [printerOptions],
   );
 
@@ -98,6 +115,12 @@ export function SealsManager() {
     return seals.filter((seal) => {
       if (statusFilter !== "all" && seal.status !== statusFilter) return false;
       if (colorFilter !== "all" && seal.color !== colorFilter) return false;
+      if (
+        printerFilter !== "all" &&
+        String(seal.printerId ?? "") !== printerFilter
+      ) {
+        return false;
+      }
       if (!q) return true;
       const haystack = [
         seal.id,
@@ -111,7 +134,7 @@ export function SealsManager() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [seals, search, statusFilter, colorFilter, printerLabelById]);
+  }, [seals, search, statusFilter, colorFilter, printerFilter, printerLabelById]);
 
   const pagination = usePagination(filteredSeals);
 
@@ -385,46 +408,53 @@ export function SealsManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:justify-between md:gap-4">
-        <p className="min-w-0 flex-1 text-sm text-muted">
-          Inventario de precintos fiscales. Puedes asignarlos a una impresora,
-          indicar color y seguir su ciclo de vida.
-        </p>
-        <div className="flex w-full shrink-0 flex-col gap-2 max-md:w-full md:w-auto md:flex-row md:flex-nowrap">
-          <button
+      <PageToolbar
+        actions={
+          <>
+            <button
             type="button"
             onClick={() => {
               loadSeals();
               loadPrinters();
             }}
             disabled={loading}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card md:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
-          >
-            <RefreshCw className={cn("size-4", loading && "animate-spin")} />
-            Actualizar
-          </button>
-          {canCreate && (
-            <>
-              <button
-                type="button"
-                onClick={openBatchCreate}
-                className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card md:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
-              >
-                <Layers className="size-4" />
-                Crear por lote
-              </button>
-              <button
-                type="button"
-                onClick={openCreate}
-                className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
-              >
-                <Plus className="size-4" />
-                Nuevo precinto
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+              className={cn(
+                pageToolbarButtonClass,
+                "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
+              )}
+            >
+              <RefreshCw className={cn("size-4", loading && "animate-spin")} />
+              Actualizar
+            </button>
+            {canCreate && (
+              <>
+                <button
+                  type="button"
+                  onClick={openBatchCreate}
+                  className={cn(
+                    pageToolbarButtonClass,
+                    "border border-border bg-card text-foreground hover:bg-foreground/5",
+                  )}
+                >
+                  <Layers className="size-4" />
+                  Crear por lote
+                </button>
+                <button
+                  type="button"
+                  onClick={openCreate}
+                  className={cn(
+                    pageToolbarButtonClass,
+                    "bg-accent text-accent-foreground",
+                  )}
+                >
+                  <Plus className="size-4" />
+                  Nuevo precinto
+                </button>
+              </>
+            )}
+          </>
+        }
+      />
 
       {listError && (
         <p
@@ -461,7 +491,7 @@ export function SealsManager() {
                   onChange: (value) =>
                     setStatusFilter(value as SealStatus | "all"),
                   options: [
-                    { value: "all", label: "Todos" },
+                    filterAllOption(),
                     ...SEAL_STATUSES.map((status) => ({
                       value: status,
                       label: SEAL_STATUS_LABELS[status],
@@ -475,12 +505,19 @@ export function SealsManager() {
                   onChange: (value) =>
                     setColorFilter(value as SealColor | "all"),
                   options: [
-                    { value: "all", label: "Todos" },
+                    filterAllOption(),
                     ...SEAL_COLORS.map((color) => ({
                       value: color,
                       label: SEAL_COLOR_LABELS[color],
                     })),
                   ],
+                },
+                {
+                  id: "printer",
+                  label: "Impresora",
+                  value: printerFilter,
+                  onChange: setPrinterFilter,
+                  options: printerFilterOptions,
                 },
               ]}
             />

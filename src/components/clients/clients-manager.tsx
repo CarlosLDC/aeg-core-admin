@@ -15,6 +15,14 @@ import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
+import {
+  TableCreatedAtCell,
+  TableCreatedAtHeader,
+} from "@/components/ui/table-created-at";
+import {
+  filterAllOption,
+  uniqueFilterOptions,
+} from "@/lib/table-filter-options";
 import { fetchAuthMe } from "@/lib/auth-me-api";
 import { mergeBranchesWithRoles } from "@/lib/branch-roles";
 import { fetchBranchById, fetchBranches } from "@/lib/branches-api";
@@ -59,6 +67,7 @@ export function ClientsManager() {
   const [formError, setFormError] = useState<string | null>(null);
   const [resumeBranchId, setResumeBranchId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
+  const [stateFilter, setStateFilter] = useState("all");
 
   useEffect(() => {
     if (user?.role !== "DISTRIBUTOR") {
@@ -158,9 +167,18 @@ export function ClientsManager() {
       .filter((b): b is BranchWithRoles => b != null);
   }, [clients, branches, distributorId]);
 
+  const stateFilterOptions = useMemo(
+    () => [
+      filterAllOption("Todos los estados"),
+      ...uniqueFilterOptions(clientBranches.map((b) => b.state)),
+    ],
+    [clientBranches],
+  );
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return clientBranches.filter((branch) => {
+      if (stateFilter !== "all" && branch.state !== stateFilter) return false;
       if (!q) return true;
       const haystack = [
         branch.id,
@@ -175,7 +193,7 @@ export function ClientsManager() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [clientBranches, search, companies]);
+  }, [clientBranches, search, stateFilter, companies]);
 
   const pagination = usePagination(filtered);
 
@@ -248,7 +266,6 @@ export function ClientsManager() {
   return (
     <div className="space-y-4">
       <PageToolbar
-        description="Registra clientes escaneando el documento fiscal. Empresa y ubicación se crean en un solo paso."
         actions={
           <>
             <button
@@ -312,7 +329,6 @@ export function ClientsManager() {
         ) : clientBranches.length === 0 ? (
           <EmptyState
             title="Sin clientes registrados"
-            description="Escanea el RIF del cliente para darlo de alta con datos fiscales y ubicación."
             action={
               canCreate ? (
                 <button
@@ -334,6 +350,15 @@ export function ClientsManager() {
               searchPlaceholder="Buscar por razón social, RIF, ciudad…"
               resultCount={filtered.length}
               totalCount={clientBranches.length}
+              filters={[
+                {
+                  id: "state",
+                  label: "Estado",
+                  value: stateFilter,
+                  onChange: setStateFilter,
+                  options: stateFilterOptions,
+                },
+              ]}
             />
             {filtered.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted">
@@ -345,6 +370,7 @@ export function ClientsManager() {
                   <table className="w-full min-w-[720px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Cliente</th>
                         <th className="px-5 py-3 font-medium">RIF</th>
                         <th className="px-5 py-3 font-medium">Ubicación</th>
@@ -362,6 +388,7 @@ export function ClientsManager() {
                             key={branch.id}
                             href={branchPath(branch.id)}
                           >
+                            <TableCreatedAtCell value={branch.createdAt} />
                             <td className="max-w-[220px] px-5 py-3.5 font-medium text-card-foreground">
                               <TruncatedText maxClassName="max-w-[200px]">
                                 {company?.businessName ??

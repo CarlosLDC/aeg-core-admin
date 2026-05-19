@@ -5,7 +5,16 @@ import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { EmployeeFormDialog } from "@/components/employees/employee-form-dialog";
 import { EmployeeRoleBadge } from "@/components/employees/employee-role-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import {
+  PageToolbar,
+  pageToolbarButtonClass,
+} from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
+import {
+  TableCreatedAtCell,
+  TableCreatedAtHeader,
+} from "@/components/ui/table-created-at";
+import { filterAllOption } from "@/lib/table-filter-options";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
@@ -98,6 +107,7 @@ export function EmployeesManager() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [branchFilter, setBranchFilter] = useState("all");
 
   const roleFilterOptions = useMemo(() => {
     const base = user ? uiRolesForUser(user.role) : EMPLOYEE_UI_ROLES;
@@ -193,9 +203,34 @@ export function EmployeesManager() {
     return employees.filter((e) => visibleBranchIds.has(e.branchId));
   }, [employees, user?.role, staffBranchIdSet, branches]);
 
+  const branchFilterOptions = useMemo(() => {
+    const allBranches = [...branches, ...staffBranches];
+    const branchIds = [
+      ...new Set(scopedEmployees.map((employee) => employee.branchId)),
+    ].sort((a, b) =>
+      branchLabelById(allBranches, companies, a).localeCompare(
+        branchLabelById(allBranches, companies, b),
+        "es",
+      ),
+    );
+    return [
+      filterAllOption("Todas las sucursales"),
+      ...branchIds.map((id) => ({
+        value: String(id),
+        label: branchLabelById(allBranches, companies, id),
+      })),
+    ];
+  }, [scopedEmployees, branches, staffBranches, companies]);
+
   const filteredEmployees = useMemo(() => {
     const q = search.trim().toLowerCase();
     return scopedEmployees.filter((employee) => {
+      if (
+        branchFilter !== "all" &&
+        employee.branchId !== Number(branchFilter)
+      ) {
+        return false;
+      }
       if (
         roleFilter !== "all" &&
         resolveEmployeeUiRole(employee) !== roleFilter
@@ -221,7 +256,15 @@ export function EmployeesManager() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [scopedEmployees, search, roleFilter, branches, staffBranches, companies]);
+  }, [
+    scopedEmployees,
+    search,
+    roleFilter,
+    branchFilter,
+    branches,
+    staffBranches,
+    companies,
+  ]);
 
   const pagination = usePagination(filteredEmployees);
 
@@ -423,39 +466,43 @@ export function EmployeesManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:justify-between md:gap-4">
-        <p className="min-w-0 flex-1 text-sm text-muted">
-          Personal por sucursal con un solo rol. Solo un administrador puede
-          editar o eliminar empleados.
-        </p>
-        <div className="flex w-full shrink-0 flex-col gap-2 max-md:w-full md:w-auto md:flex-row md:flex-nowrap">
-          <button
-            type="button"
-            onClick={refreshAll}
-            disabled={loading || scopeLoading}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card md:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
-          >
-            <RefreshCw
-              className={cn(
-                "size-4",
-                (loading || scopeLoading) && "animate-spin",
-              )}
-            />
-            Actualizar
-          </button>
-          {canCreate && (
+      <PageToolbar
+        actions={
+          <>
             <button
               type="button"
-              onClick={openCreate}
-              disabled={!catalogReady || !branchesReadyForCreate}
-              className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground disabled:opacity-50"
+              onClick={refreshAll}
+              disabled={loading || scopeLoading}
+              className={cn(
+                pageToolbarButtonClass,
+                "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
+              )}
             >
-              <Plus className="size-4" />
-              Nuevo empleado
+              <RefreshCw
+                className={cn(
+                  "size-4",
+                  (loading || scopeLoading) && "animate-spin",
+                )}
+              />
+              Actualizar
             </button>
-          )}
-        </div>
-      </div>
+            {canCreate && (
+              <button
+                type="button"
+                onClick={openCreate}
+                disabled={!catalogReady || !branchesReadyForCreate}
+                className={cn(
+                  pageToolbarButtonClass,
+                  "bg-accent text-accent-foreground disabled:opacity-50",
+                )}
+              >
+                <Plus className="size-4" />
+                Nuevo empleado
+              </button>
+            )}
+          </>
+        }
+      />
 
       {!branchesReadyForCreate && catalogReady && (
         <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
@@ -499,12 +546,19 @@ export function EmployeesManager() {
                   value: roleFilter,
                   onChange: setRoleFilter,
                   options: [
-                    { value: "all", label: "Todos" },
+                    filterAllOption(),
                     ...roleFilterOptions.map((role) => ({
                       value: role,
                       label: EMPLOYEE_UI_ROLE_LABELS[role as EmployeeUiRole],
                     })),
                   ],
+                },
+                {
+                  id: "branch",
+                  label: "Sucursal",
+                  value: branchFilter,
+                  onChange: setBranchFilter,
+                  options: branchFilterOptions,
                 },
               ]}
             />
@@ -518,7 +572,7 @@ export function EmployeesManager() {
                   <table className="w-full min-w-[960px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <th className="px-5 py-3 font-medium">ID</th>
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Nombre</th>
                         <th className="px-5 py-3 font-medium">Cédula</th>
                         <th className="px-5 py-3 font-medium">Rol</th>
@@ -535,9 +589,7 @@ export function EmployeesManager() {
                           key={employee.id}
                           href={employeePath(employee.id)}
                         >
-                          <td className="px-5 py-3.5 text-muted">
-                            {employee.id}
-                          </td>
+                          <TableCreatedAtCell value={employee.createdAt} />
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
                             {employee.name}
                           </td>

@@ -27,7 +27,12 @@ import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { UserResponse } from "@/types/user";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import {
+  PageToolbar,
+  pageToolbarButtonClass,
+} from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { filterAllOption } from "@/lib/table-filter-options";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { usePagination } from "@/hooks/use-pagination";
@@ -244,38 +249,41 @@ export function UsersManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:justify-between md:gap-4">
-        <p className="min-w-0 flex-1 text-sm text-muted">
-          Crea cuentas con usuario y contraseña. Para distribuidores, indica
-          sucursal y distribuidora: al iniciar sesión solo verán los datos de su
-          ámbito.
-        </p>
-        <div className="flex w-full shrink-0 flex-col gap-2 max-md:w-full md:w-auto md:flex-row md:flex-nowrap">
-          <button
-            type="button"
-            onClick={refreshAll}
-            disabled={loading || catalogLoading}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card md:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
-          >
-            <RefreshCw
+      <PageToolbar
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={refreshAll}
+              disabled={loading || catalogLoading}
               className={cn(
-                "size-4",
-                (loading || catalogLoading) && "animate-spin",
+                pageToolbarButtonClass,
+                "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
               )}
-            />
-            Actualizar
-          </button>
-          <button
-            type="button"
-            onClick={openCreate}
-            disabled={!catalogReady}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground disabled:opacity-50"
-          >
-            <Plus className="size-4" />
-            Nuevo usuario
-          </button>
-        </div>
-      </div>
+            >
+              <RefreshCw
+                className={cn(
+                  "size-4",
+                  (loading || catalogLoading) && "animate-spin",
+                )}
+              />
+              Actualizar
+            </button>
+            <button
+              type="button"
+              onClick={openCreate}
+              disabled={!catalogReady}
+              className={cn(
+                pageToolbarButtonClass,
+                "bg-accent text-accent-foreground disabled:opacity-50",
+              )}
+            >
+              <Plus className="size-4" />
+              Nuevo usuario
+            </button>
+          </>
+        }
+      />
 
       {listError && (
         <p
@@ -322,7 +330,7 @@ export function UsersManager() {
                   value: roleFilter,
                   onChange: setRoleFilter,
                   options: [
-                    { value: "all", label: "Todos" },
+                    filterAllOption(),
                     ...ROLES.map((role) => ({
                       value: role,
                       label: ROLE_LABELS[role],
@@ -335,7 +343,7 @@ export function UsersManager() {
                   value: statusFilter,
                   onChange: setStatusFilter,
                   options: [
-                    { value: "all", label: "Todos" },
+                    filterAllOption(),
                     { value: "active", label: "Activos" },
                     { value: "inactive", label: "Inactivos" },
                   ],
@@ -352,7 +360,6 @@ export function UsersManager() {
                   <table className="w-full min-w-[800px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <th className="px-5 py-3 font-medium">ID</th>
                         <th className="px-5 py-3 font-medium">Usuario</th>
                         <th className="px-5 py-3 font-medium">Rol</th>
                         <th className="px-5 py-3 font-medium">Sucursal</th>
@@ -369,7 +376,6 @@ export function UsersManager() {
                           key={user.id}
                           href={userPath(user.id)}
                         >
-                          <td className="px-5 py-3.5 text-muted">{user.id}</td>
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
                             {user.username}
                           </td>
