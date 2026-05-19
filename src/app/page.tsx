@@ -5,7 +5,7 @@ export default function DashboardPage() {
   return (
     <AdminShell
       title="Dashboard"
-      description="Vista general de tu negocio"
+      description="Indicadores, flota fiscal y actividad reciente"
     >
       <DashboardManager />
     </AdminShell>

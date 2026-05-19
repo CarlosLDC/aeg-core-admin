@@ -29,7 +29,23 @@ export type DashboardStat = {
   title: string;
   value: string;
   hint?: string;
+  href?: string;
 };
+
+const STAT_HREFS: Record<string, string> = {
+  Empresas: "/companies",
+  Sucursales: "/branches",
+  Impresoras: "/printers",
+  Empleados: "/employees",
+  Clientes: "/branches",
+  Distribuidores: "/branches",
+  "Centros de servicio": "/branches",
+};
+
+function withStatHref(stat: DashboardStat): DashboardStat {
+  const href = STAT_HREFS[stat.title];
+  return href ? { ...stat, href } : stat;
+}
 
 export type DashboardActivity = {
   id: string;
@@ -350,7 +366,7 @@ export async function loadDashboardSnapshot(options: {
   const activity = buildActivity(printers, employees, scopedBranches);
 
   return {
-    stats: stats.slice(0, 4),
+    stats: stats.slice(0, 4).map(withStatHref),
     printers,
     printerStatusCounts,
     monthlyPrinterRegistrations,

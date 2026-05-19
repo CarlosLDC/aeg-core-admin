@@ -1,8 +1,12 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatPrinterPrice } from "@/lib/printer-form";
+import { printerPath } from "@/lib/resource-routes";
 import type { PrinterResponse } from "@/types/printer";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 
 type DashboardRecentPrintersProps = {
   printers: PrinterResponse[];
@@ -32,9 +36,21 @@ export function DashboardRecentPrinters({
         )}
       </div>
       {printers.length === 0 ? (
-        <p className="py-12 text-center text-sm text-muted">
-          No hay impresoras registradas.
-        </p>
+        <EmptyState
+          title="Sin impresoras recientes"
+          description="Registra equipos fiscales para verlos en este listado."
+          action={
+            showLink ? (
+              <Link
+                href="/printers"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground"
+              >
+                <Plus className="size-4" />
+                Ir a impresoras
+              </Link>
+            ) : undefined
+          }
+        />
       ) : (
         <TableScroll>
           <table className="w-full min-w-[640px] text-left text-sm">
@@ -49,10 +65,7 @@ export function DashboardRecentPrinters({
             </thead>
             <tbody>
               {printers.map((printer) => (
-                <tr
-                  key={printer.id}
-                  className="border-b border-border last:border-0 hover:bg-foreground/[0.02]"
-                >
+                <ClickableTableRow key={printer.id} href={printerPath(printer.id)}>
                   <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
                     {printer.fiscalSerial}
                   </td>
@@ -70,7 +83,7 @@ export function DashboardRecentPrinters({
                       dateStyle: "short",
                     })}
                   </td>
-                </tr>
+                </ClickableTableRow>
               ))}
             </tbody>
           </table>
