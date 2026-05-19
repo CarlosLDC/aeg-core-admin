@@ -1,10 +1,12 @@
 import {
   createDistributorPerson,
   deleteDistributorPerson,
+  fetchDistributorPersons,
 } from "@/lib/distributor-persons-api";
 import {
   createTechnician,
   deleteTechnician,
+  fetchTechnicians,
 } from "@/lib/technicians-api";
 import { ApiError } from "@/types/auth";
 import type {
@@ -135,6 +137,24 @@ export function mergeEmployeesWithRoles(
   }));
 }
 
+async function resolveTechnicianForEmployee(
+  employeeId: number,
+  known?: TechnicianResponse,
+): Promise<TechnicianResponse | undefined> {
+  if (known) return known;
+  const technicians = await fetchTechnicians();
+  return technicians.find((t) => t.employeeId === employeeId);
+}
+
+async function resolveDistributorPersonForEmployee(
+  employeeId: number,
+  known?: DistributorPersonResponse,
+): Promise<DistributorPersonResponse | undefined> {
+  if (known) return known;
+  const persons = await fetchDistributorPersons();
+  return persons.find((d) => d.employeeId === employeeId);
+}
+
 export async function syncEmployeeRoles(
   employeeId: number,
   previous: EmployeeWithRoles | null,
@@ -155,25 +175,49 @@ export async function syncEmployeeRoles(
 
   if (roles.isTechnician && !prev.technician) {
     await createTechnician({ employeeId });
-  } else if (!roles.isTechnician && prev.technician) {
-    await deleteTechnician(prev.technician.id);
+  } else if (!roles.isTechnician) {
+    const technician = await resolveTechnicianForEmployee(
+      employeeId,
+      prev.technician,
+    );
+    if (technician) {
+      await deleteTechnician(technician.id);
+    }
   }
 
   if (roles.isDistributorPerson && !prev.distributorPerson) {
-    await createDistributorPerson({ employeeId });
-  } else if (!roles.isDistributorPerson && prev.distributorPerson) {
-    await deleteDistributorPerson(prev.distributorPerson.id);
+    const existing = await resolveDistributorPersonForEmployee(employeeId);
+    if (!existing) {
+      await createDistributorPerson({ employeeId });
+    }
+  } else if (!roles.isDistributorPerson) {
+    const distributorPerson = await resolveDistributorPersonForEmployee(
+      employeeId,
+      prev.distributorPerson,
+    );
+    if (distributorPerson) {
+      await deleteDistributorPerson(distributorPerson.id);
+    }
   }
 }
 
 export async function deleteEmployeeRoles(
   employee: EmployeeWithRoles,
 ): Promise<void> {
-  if (employee.technician) {
-    await deleteTechnician(employee.technician.id);
+  const technician = await resolveTechnicianForEmployee(
+    employee.id,
+    employee.technician,
+  );
+  if (technician) {
+    await deleteTechnician(technician.id);
   }
-  if (employee.distributorPerson) {
-    await deleteDistributorPerson(employee.distributorPerson.id);
+
+  const distributorPerson = await resolveDistributorPersonForEmployee(
+    employee.id,
+    employee.distributorPerson,
+  );
+  if (distributorPerson) {
+    await deleteDistributorPerson(distributorPerson.id);
   }
 }
 
