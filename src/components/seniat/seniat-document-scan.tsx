@@ -164,7 +164,7 @@ export function SeniatDocumentScan({
             onClick={onRequestManual}
             className="font-medium text-foreground underline-offset-2 hover:underline disabled:opacity-50"
           >
-            Ingresar sin documento
+            Ingresar manualmente
           </button>
         </p>
       )}
