@@ -142,7 +142,7 @@ export function DashboardManager() {
             <h2 id="dashboard-kpis" className="sr-only">
               Indicadores principales
             </h2>
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-4 lg:grid-cols-4">
               {snapshot.stats.map((stat) => (
                 <StatCard
                   key={stat.title}
@@ -158,20 +158,20 @@ export function DashboardManager() {
 
           <section
             aria-labelledby="dashboard-overview"
-            className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5"
+            className="grid grid-cols-1 items-stretch gap-4 sm:gap-6 lg:grid-cols-5 lg:min-h-[26rem] lg:max-h-[32rem]"
           >
             <h2 id="dashboard-overview" className="sr-only">
               Resumen y actividad
             </h2>
             {canSeePrinters ? (
               <PrintersOverviewChart
-                className="lg:col-span-3"
+                className="h-full min-h-0 lg:col-span-3"
                 statusCounts={snapshot.printerStatusCounts}
                 monthlyRegistrations={snapshot.monthlyPrinterRegistrations}
                 totalPrinters={snapshot.printers.length}
               />
             ) : (
-              <div className="rounded-xl border border-border bg-card p-5 shadow-sm lg:col-span-3">
+              <div className="flex h-full min-h-0 flex-col rounded-xl border border-border bg-card p-5 shadow-sm lg:col-span-3">
                 <h3 className="font-semibold text-card-foreground">
                   Resumen operativo
                 </h3>
@@ -200,7 +200,7 @@ export function DashboardManager() {
             )}
             <DashboardActivityList
               items={snapshot.activity}
-              className="lg:col-span-2"
+              className="h-full min-h-0 lg:col-span-2"
             />
           </section>
 

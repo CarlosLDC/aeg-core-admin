@@ -357,11 +357,11 @@ export function PrintersOverviewChart({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5",
+        "flex h-full min-h-0 flex-col rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5",
         className,
       )}
     >
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <div className="mb-5 flex shrink-0 flex-wrap items-end justify-between gap-4 sm:mb-6">
         <div>
           <h2 className="font-semibold text-card-foreground">Impresoras</h2>
           <p className="text-sm text-muted">
@@ -386,19 +386,21 @@ export function PrintersOverviewChart({
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-5">
-        <section className="lg:col-span-2">
+      <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-5 lg:items-stretch lg:gap-8">
+        <section className="flex min-h-[220px] flex-col lg:col-span-2 lg:min-h-0">
           <p className="mb-4 text-xs font-medium uppercase tracking-wide text-muted">
             Por estatus
           </p>
-          <StatusDonut
-            statusCounts={statusCounts}
-            total={totalPrinters}
-            activeCount={activeCount}
-          />
+          <div className="flex flex-1 items-center justify-center">
+            <StatusDonut
+              statusCounts={statusCounts}
+              total={totalPrinters}
+              activeCount={activeCount}
+            />
+          </div>
         </section>
 
-        <section className="lg:col-span-3">
+        <section className="flex min-h-[220px] flex-col lg:col-span-3 lg:min-h-0">
           <div className="mb-4 flex flex-nowrap items-center justify-between gap-2">
             <p className="text-xs font-medium uppercase tracking-wide text-muted">
               Altas por mes
@@ -417,11 +419,13 @@ export function PrintersOverviewChart({
               </span>
             )}
           </div>
-          <MonthlyAreaChart
-            data={monthlyRegistrations}
-            hoveredIndex={hoveredMonth}
-            onHover={setHoveredMonth}
-          />
+          <div className="flex min-h-0 flex-1 flex-col justify-center">
+            <MonthlyAreaChart
+              data={monthlyRegistrations}
+              hoveredIndex={hoveredMonth}
+              onHover={setHoveredMonth}
+            />
+          </div>
         </section>
       </div>
     </div>

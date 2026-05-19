@@ -39,7 +39,7 @@ export function DashboardActivityList({
           description="Cuando se registren impresoras, empleados o sucursales aparecerán aquí."
         />
       ) : (
-        <ul className="mt-4 flex-1 space-y-1 overflow-y-auto">
+        <ul className="mt-4 min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain">
           {items.map((item) => {
             const Icon = iconForActivity(item.id);
             return (
