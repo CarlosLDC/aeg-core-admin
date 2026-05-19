@@ -1,8 +1,11 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { ArrowLeft, Loader2, X } from "lucide-react";
-import { ClientFormFields } from "@/components/clients/client-form-fields";
+import { Building2, Loader2, MapPin, Phone, X } from "lucide-react";
+import {
+  ClientFormFields,
+  type ClientFormSection,
+} from "@/components/clients/client-form-fields";
 import { SeniatDocumentScan } from "@/components/seniat/seniat-document-scan";
 import type { ClientOnboardingValues } from "@/lib/client-onboarding";
 import {
@@ -26,6 +29,21 @@ type ClientCreateDialogProps = {
   onSubmit: (values: ClientOnboardingValues) => void;
 };
 
+type WizardStep = 0 | 1 | 2 | 3;
+
+const FORM_STEPS: { step: 1 | 2 | 3; section: ClientFormSection; label: string }[] =
+  [
+    { step: 1, section: "fiscal", label: "Fiscal" },
+    { step: 2, section: "location", label: "Ubicación" },
+    { step: 3, section: "contact", label: "Contacto" },
+  ];
+
+const STEP_ICONS = {
+  1: Building2,
+  2: MapPin,
+  3: Phone,
+} as const;
+
 const emptyForm = (): ClientOnboardingValues => ({
   rif: "",
   businessName: "",
@@ -34,9 +52,25 @@ const emptyForm = (): ClientOnboardingValues => ({
   city: "",
   state: "",
   address: "",
+  contactPersonName: "",
   phone: "",
   email: "",
 });
+
+function stepSubtitle(step: WizardStep): string {
+  switch (step) {
+    case 0:
+      return "Escanea el RIF o ingresa los datos manualmente.";
+    case 1:
+      return "Revisa o completa los datos fiscales del cliente.";
+    case 2:
+      return "Indica estado, ciudad y dirección de la sucursal.";
+    case 3:
+      return "Persona de contacto, teléfono y correo.";
+    default:
+      return "";
+  }
+}
 
 export function ClientCreateDialog({
   open,
@@ -46,19 +80,19 @@ export function ClientCreateDialog({
   onClose,
   onSubmit,
 }: ClientCreateDialogProps) {
-  const [phase, setPhase] = useState<"scan" | "form">("scan");
-  const [inputMode, setInputMode] = useState<"ai" | "manual">("ai");
+  const [step, setStep] = useState<WizardStep>(0);
+  const [inputMode, setInputMode] = useState<"ai" | "manual">("manual");
   const [form, setForm] = useState<ClientOnboardingValues>(emptyForm);
   const [aiFields, setAiFields] = useState<Set<SeniatLockableField>>(new Set());
-  const [rifError, setRifError] = useState<string | null>(null);
+  const [stepError, setStepError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
-    setPhase("scan");
-    setInputMode("ai");
+    setStep(0);
+    setInputMode("manual");
     setForm(emptyForm());
     setAiFields(new Set());
-    setRifError(null);
+    setStepError(null);
   }, [open]);
 
   if (!open) return null;
@@ -68,12 +102,11 @@ export function ClientCreateDialog({
       ? companies.find((c) => c.id === form.linkedCompanyId)
       : undefined;
 
-  function goToForm(mode: "ai" | "manual") {
-    setInputMode(mode);
-    setPhase("form");
-    if (mode === "manual") {
-      setAiFields(new Set());
-    }
+  function startManualWizard() {
+    setInputMode("manual");
+    setAiFields(new Set());
+    setStepError(null);
+    setStep(1);
   }
 
   function applyExtracted(data: SeniatExtractResult) {
@@ -97,28 +130,79 @@ export function ClientCreateDialog({
       email: data.email ?? f.email,
     }));
     setAiFields(filled);
-    setRifError(null);
-    goToForm("ai");
+    setInputMode("ai");
+    setStepError(null);
+    setStep(1);
+  }
+
+  function validateFiscal(): string | null {
+    const rif = form.rif.trim().toUpperCase();
+    const companyLocked = Boolean(linkedCompany);
+    if (!companyLocked && !RIF_PATTERN.test(rif)) {
+      return "Formato: letra V, E, J, P o G seguida de 7 a 9 dígitos.";
+    }
+    if (!companyLocked && !form.businessName.trim()) {
+      return "Indica la razón social del cliente.";
+    }
+    return null;
+  }
+
+  function validateLocation(): string | null {
+    if (!form.state.trim() || !form.city.trim()) {
+      return "Estado y ciudad son obligatorios.";
+    }
+    return null;
+  }
+
+  function goNext() {
+    if (step === 1) {
+      const err = validateFiscal();
+      if (err) {
+        setStepError(err);
+        return;
+      }
+      setStepError(null);
+      setStep(2);
+      return;
+    }
+    if (step === 2) {
+      const err = validateLocation();
+      if (err) {
+        setStepError(err);
+        return;
+      }
+      setStepError(null);
+      setStep(3);
+    }
+  }
+
+  function goBack() {
+    setStepError(null);
+    if (step === 1) {
+      setStep(0);
+      return;
+    }
+    if (step > 1) {
+      setStep((step - 1) as WizardStep);
+    }
   }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    const fiscalErr = validateFiscal();
+    if (fiscalErr) {
+      setStepError(fiscalErr);
+      setStep(1);
+      return;
+    }
+    const locationErr = validateLocation();
+    if (locationErr) {
+      setStepError(locationErr);
+      setStep(2);
+      return;
+    }
+    setStepError(null);
     const rif = form.rif.trim().toUpperCase();
-    const companyLocked = Boolean(linkedCompany);
-
-    if (!companyLocked && !RIF_PATTERN.test(rif)) {
-      setRifError("Formato: letra V, E, J, P o G seguida de 7 a 9 dígitos.");
-      return;
-    }
-    if (!companyLocked && !form.businessName.trim()) {
-      setRifError("Indica la razón social del cliente.");
-      return;
-    }
-    if (!form.state.trim() || !form.city.trim()) {
-      setRifError("Estado y ciudad son obligatorios.");
-      return;
-    }
-    setRifError(null);
     onSubmit({
       ...form,
       rif,
@@ -126,10 +210,14 @@ export function ClientCreateDialog({
       state: form.state.trim(),
       city: form.city.trim(),
       address: form.address.trim(),
+      contactPersonName: form.contactPersonName.trim(),
       phone: form.phone.trim(),
       email: form.email.trim(),
     });
   }
+
+  const displayError = stepError ?? error;
+  const currentFormStep = FORM_STEPS.find((s) => s.step === step);
 
   return (
     <div
@@ -143,73 +231,114 @@ export function ClientCreateDialog({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative max-h-[min(92vh,100dvh)] w-full max-w-2xl overflow-y-auto rounded-xl border border-border bg-card p-4 shadow-xl sm:p-6">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-card-foreground">
-              Nuevo cliente
-            </h2>
-            <p className="mt-1 text-sm text-muted">
-              {phase === "scan"
-                ? "Empieza escaneando el documento fiscal del cliente."
-                : "Revisa los datos y completa teléfono y correo si hace falta."}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-muted hover:bg-foreground/5"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
-
-        {phase === "scan" ? (
-          <SeniatDocumentScan
-            variant="client"
-            onExtracted={applyExtracted}
-            onRequestManual={() => goToForm("manual")}
-            disabled={saving}
-          />
-        ) : (
-          <>
+      <div className="relative flex max-h-[min(92vh,100dvh)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+        <div className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-card-foreground">
+                Nuevo cliente
+              </h2>
+              <p className="mt-1 text-sm text-muted">{stepSubtitle(step)}</p>
+            </div>
             <button
               type="button"
-              disabled={saving}
-              onClick={() => setPhase("scan")}
-              className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-foreground"
+              onClick={onClose}
+              className="rounded-lg p-1.5 text-muted hover:bg-foreground/5"
             >
-              <ArrowLeft className="size-4" />
-              Volver al escaneo
+              <X className="size-5" />
             </button>
+          </div>
 
-            {inputMode === "ai" && (
-              <p className="mb-4 rounded-lg border border-teal-200/70 bg-teal-500/8 px-3 py-2 text-sm text-teal-900 dark:border-teal-500/25 dark:text-teal-100">
-                Datos extraídos del documento. Completa contacto y revisa antes
-                de registrar.
-              </p>
-            )}
+          {step > 0 && (
+            <nav
+              className="mt-4 flex gap-1"
+              aria-label="Pasos del registro"
+            >
+              {FORM_STEPS.map(({ step: s, label }) => {
+                const Icon = STEP_ICONS[s];
+                const isActive = step === s;
+                const isDone = step > s;
+                return (
+                  <div
+                    key={s}
+                    className={cn(
+                      "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2 text-center transition-colors",
+                      isActive && "bg-accent/10 text-accent",
+                      isDone && !isActive && "text-card-foreground",
+                      !isActive && !isDone && "text-muted",
+                    )}
+                    aria-current={isActive ? "step" : undefined}
+                  >
+                    <Icon className="size-4 shrink-0" aria-hidden />
+                    <span className="text-[11px] font-medium leading-tight sm:text-xs">
+                      {label}
+                    </span>
+                  </div>
+                );
+              })}
+            </nav>
+          )}
+        </div>
 
-            {(error || rifError) && (
-              <p
-                role="alert"
-                className="mb-4 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
+        <div className="min-h-0 flex-1 overflow-hidden px-4 py-4 sm:px-6">
+          {step === 0 ? (
+            <SeniatDocumentScan
+              variant="client"
+              analyzeOnSelect
+              onExtracted={applyExtracted}
+              onRequestManual={startManualWizard}
+              disabled={saving}
+            />
+          ) : (
+            <form
+              id="client-create-form"
+              onSubmit={handleSubmit}
+              className="flex h-full flex-col"
+            >
+              {displayError && (
+                <p
+                  role="alert"
+                  className="mb-4 shrink-0 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
+                >
+                  {displayError}
+                </p>
+              )}
+
+              {currentFormStep && (
+                <ClientFormFields
+                  form={form}
+                  setForm={setForm}
+                  saving={saving}
+                  linkedCompany={linkedCompany}
+                  inputMode={inputMode}
+                  aiFields={aiFields}
+                  section={currentFormStep.section}
+                />
+              )}
+            </form>
+          )}
+        </div>
+
+        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border px-4 py-4 sm:flex-row sm:justify-between sm:px-6 [&_button]:w-full sm:[&_button]:w-auto">
+          {step === 0 ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 sm:ml-auto"
+            >
+              Cancelar
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={goBack}
+                disabled={saving}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
               >
-                {rifError ?? error}
-              </p>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <ClientFormFields
-                form={form}
-                setForm={setForm}
-                saving={saving}
-                linkedCompany={linkedCompany}
-                inputMode={inputMode}
-                aiFields={aiFields}
-              />
-
-              <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
+                Atrás
+              </button>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row">
                 <button
                   type="button"
                   onClick={onClose}
@@ -217,21 +346,33 @@ export function ClientCreateDialog({
                 >
                   Cancelar
                 </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className={cn(
-                    "flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
-                    saving && "cursor-not-allowed opacity-70",
-                  )}
-                >
-                  {saving && <Loader2 className="size-4 animate-spin" />}
-                  Registrar cliente
-                </button>
+                {step < 3 ? (
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={goNext}
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
+                  >
+                    Siguiente
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    form="client-create-form"
+                    disabled={saving}
+                    className={cn(
+                      "flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
+                      saving && "cursor-not-allowed opacity-70",
+                    )}
+                  >
+                    {saving && <Loader2 className="size-4 animate-spin" />}
+                    Registrar cliente
+                  </button>
+                )}
               </div>
-            </form>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

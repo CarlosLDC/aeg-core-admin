@@ -17,7 +17,7 @@ import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import { fetchAuthMe } from "@/lib/auth-me-api";
 import { mergeBranchesWithRoles } from "@/lib/branch-roles";
-import { fetchBranches } from "@/lib/branches-api";
+import { fetchBranchById, fetchBranches } from "@/lib/branches-api";
 import { companyNameById, companySearchTextById } from "@/lib/branches";
 import {
   createClientOnboarding,
@@ -30,6 +30,7 @@ import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
 import { branchPath } from "@/lib/resource-routes";
 import type { BranchWithRoles } from "@/types/branch";
+import type { ClientResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
@@ -45,7 +46,10 @@ export function ClientsManager() {
     error: scopeError,
     refresh: refreshScope,
   } = useCompanyScope();
-  const [distributorId, setDistributorId] = useState<number | null>(null);
+  const [distributorId, setDistributorId] = useState<number | null>(
+    user?.distributorId ?? null,
+  );
+  const [clients, setClients] = useState<ClientResponse[]>([]);
   const [branches, setBranches] = useState<BranchWithRoles[]>([]);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,11 +61,26 @@ export function ClientsManager() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    if (user?.role !== "DISTRIBUTOR") return;
+    if (user?.role !== "DISTRIBUTOR") {
+      setDistributorId(user?.distributorId ?? null);
+      return;
+    }
+    if (user.distributorId != null) {
+      setDistributorId(user.distributorId);
+      return;
+    }
+    let cancelled = false;
     void fetchAuthMe()
-      .then((me) => setDistributorId(me.distributorId ?? null))
-      .catch(() => setDistributorId(null));
-  }, [user?.role]);
+      .then((me) => {
+        if (!cancelled) setDistributorId(me.distributorId ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setDistributorId(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.role, user?.distributorId]);
 
   const loadClients = useCallback(async () => {
     if (!scope) return;
@@ -75,12 +94,39 @@ export function ClientsManager() {
           fetchClients(),
           fetchServiceCenters(),
         ]);
-      const merged = mergeBranchesWithRoles(
+      let merged = mergeBranchesWithRoles(
         branchRows,
         distributorRows,
         clientRows,
         serviceCenterRows,
       );
+      const mergedIds = new Set(merged.map((b) => b.id));
+      const missingBranchIds = [
+        ...new Set(
+          clientRows
+            .map((c) => c.branchId)
+            .filter((id) => !mergedIds.has(id)),
+        ),
+      ];
+      if (missingBranchIds.length > 0) {
+        const fetched = await Promise.all(
+          missingBranchIds.map((id) =>
+            fetchBranchById(id).catch(() => null),
+          ),
+        );
+        const extraBranches = fetched.filter(
+          (b): b is NonNullable<typeof b> => b != null,
+        );
+        if (extraBranches.length > 0) {
+          merged = mergeBranchesWithRoles(
+            [...branchRows, ...extraBranches],
+            distributorRows,
+            clientRows,
+            serviceCenterRows,
+          );
+        }
+      }
+      setClients(clientRows);
       setBranches(merged);
       setCompanies(
         [...scope.companies].sort((a, b) =>
@@ -105,10 +151,12 @@ export function ClientsManager() {
 
   const clientBranches = useMemo(() => {
     if (distributorId == null) return [];
-    return branches.filter(
-      (b) => b.client?.distributorId === distributorId,
-    );
-  }, [branches, distributorId]);
+    const branchById = new Map(branches.map((b) => [b.id, b]));
+    return clients
+      .filter((c) => c.distributorId === distributorId)
+      .map((c) => branchById.get(c.branchId))
+      .filter((b): b is BranchWithRoles => b != null);
+  }, [clients, branches, distributorId]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -121,6 +169,7 @@ export function ClientsManager() {
         branch.state,
         branch.phone,
         branch.email,
+        branch.contactPersonName,
       ]
         .join(" ")
         .toLowerCase();

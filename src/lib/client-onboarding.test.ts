@@ -108,6 +108,7 @@ describe("createClientOnboarding", () => {
         city: "Caracas",
         state: "Miranda",
         address: "",
+        contactPersonName: "Ana López",
         phone: "0412",
         email: "a@test.com",
       },
@@ -115,7 +116,15 @@ describe("createClientOnboarding", () => {
       roles: distributorClientRoles(5),
     });
 
-    expect(createBranch).toHaveBeenCalledOnce();
+    expect(createBranch).toHaveBeenCalledWith({
+      companyId: 10,
+      city: "Caracas",
+      state: "Miranda",
+      address: undefined,
+      contactPersonName: "Ana López",
+      phone: "0412",
+      email: "a@test.com",
+    });
     expect(createClient).toHaveBeenCalledWith({
       branchId: 20,
       distributorId: 5,
@@ -146,6 +155,7 @@ describe("createClientOnboarding", () => {
         city: "Valencia",
         state: "Carabobo",
         address: "",
+        contactPersonName: "",
         phone: "",
         email: "",
       },
@@ -184,6 +194,7 @@ describe("createClientOnboarding", () => {
         city: "Valencia",
         state: "Carabobo",
         address: "",
+        contactPersonName: "",
         phone: "",
         email: "",
       },

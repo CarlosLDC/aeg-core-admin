@@ -23,6 +23,7 @@ export type ClientOnboardingValues = {
   city: string;
   state: string;
   address: string;
+  contactPersonName: string;
   phone: string;
   email: string;
 };
@@ -154,6 +155,7 @@ export async function createClientOnboarding(
           city: values.city.trim(),
           state: values.state.trim(),
           address: values.address.trim() || undefined,
+          contactPersonName: values.contactPersonName.trim() || undefined,
           phone: values.phone.trim() || undefined,
           email: values.email.trim() || undefined,
         });

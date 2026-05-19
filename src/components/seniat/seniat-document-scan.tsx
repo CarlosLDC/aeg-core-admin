@@ -16,6 +16,8 @@ type SeniatDocumentScanProps = {
   /** Copy y CTA para flujo de registro de cliente */
   variant?: "default" | "client";
   onRequestManual?: () => void;
+  /** Inicia el análisis en cuanto se elige un archivo (flujo cliente). */
+  analyzeOnSelect?: boolean;
 };
 
 export function SeniatDocumentScan({
@@ -24,6 +26,7 @@ export function SeniatDocumentScan({
   className,
   variant = "default",
   onRequestManual,
+  analyzeOnSelect = false,
 }: SeniatDocumentScanProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -31,20 +34,14 @@ export function SeniatDocumentScan({
   const [error, setError] = useState<string | null>(null);
   const [notConfigured, setNotConfigured] = useState(false);
 
-  function onPick(fileList: FileList | null) {
-    if (!fileList?.length) return;
-    setFile(fileList[0]);
-    setError(null);
-    setNotConfigured(false);
-  }
-
-  async function analyze() {
-    if (!file || disabled || analyzing) return;
+  async function analyze(fileToAnalyze?: File) {
+    const target = fileToAnalyze ?? file;
+    if (!target || disabled || analyzing) return;
     setAnalyzing(true);
     setError(null);
     setNotConfigured(false);
     try {
-      const data = await requestSeniatExtract(file);
+      const data = await requestSeniatExtract(target);
       onExtracted(data);
     } catch (err) {
       const code =
@@ -68,6 +65,19 @@ export function SeniatDocumentScan({
     }
   }
 
+  function onPick(fileList: FileList | null) {
+    if (!fileList?.length) return;
+    const picked = fileList[0];
+    setFile(picked);
+    setError(null);
+    setNotConfigured(false);
+    if (analyzeOnSelect) {
+      void analyze(picked);
+    }
+  }
+
+  const showAnalyzeButton = !analyzeOnSelect;
+
   return (
     <div className={cn("space-y-3", className)}>
       <input
@@ -87,7 +97,9 @@ export function SeniatDocumentScan({
       >
         <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
-            {file?.type === "application/pdf" ? (
+            {analyzing ? (
+              <Loader2 className="size-5 animate-spin" aria-hidden />
+            ) : file?.type === "application/pdf" ? (
               <FileText className="size-5" aria-hidden />
             ) : (
               <Upload className="size-5" aria-hidden />
@@ -101,12 +113,14 @@ export function SeniatDocumentScan({
             </p>
             <p className="text-xs leading-relaxed text-muted">
               {variant === "client"
-                ? "Imagen o PDF del RIF. La IA rellena razón social y ubicación."
+                ? analyzeOnSelect
+                  ? "Elige imagen o PDF del RIF; se analizará al instante."
+                  : "Imagen o PDF del RIF. La IA rellena razón social y ubicación."
                 : "Sube una foto o PDF del RIF o registro fiscal. La IA rellenará empresa y sucursal."}
             </p>
             {file && (
               <p className="truncate pt-1 text-xs text-card-foreground">
-                {file.name}
+                {analyzing ? "Analizando documento…" : file.name}
               </p>
             )}
           </div>
@@ -117,25 +131,27 @@ export function SeniatDocumentScan({
               onClick={() => inputRef.current?.click()}
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
             >
-              Elegir archivo
+              {file && analyzeOnSelect ? "Cambiar archivo" : "Elegir archivo"}
             </button>
-            <button
-              type="button"
-              disabled={disabled || analyzing || !file}
-              onClick={() => void analyze()}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {analyzing ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <ScanLine className="size-4" />
-              )}
-              {analyzing
-                ? "Analizando…"
-                : variant === "client"
-                  ? "Escanear y continuar"
-                  : "Analizar"}
-            </button>
+            {showAnalyzeButton && (
+              <button
+                type="button"
+                disabled={disabled || analyzing || !file}
+                onClick={() => void analyze()}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {analyzing ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <ScanLine className="size-4" />
+                )}
+                {analyzing
+                  ? "Analizando…"
+                  : variant === "client"
+                    ? "Escanear y continuar"
+                    : "Analizar"}
+              </button>
+            )}
           </div>
         </div>
       </div>
