@@ -48,7 +48,7 @@ function mapCatalogApiMessage(message: string): string {
     return "No puedes registrar clientes para otra distribuidora.";
   }
   if (lower.includes("binding property is null")) {
-    return "La sucursal ya existe pero falta completar el vínculo como cliente. Pulsa «Registrar» de nuevo.";
+    return "La sucursal ya existe; se reintentará completar el vínculo como cliente automáticamente.";
   }
   if (lower.includes("branch already linked")) {
     return "Esta sucursal ya es cliente de otra distribuidora.";

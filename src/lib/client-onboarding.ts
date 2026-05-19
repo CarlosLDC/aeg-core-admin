@@ -2,6 +2,7 @@ import { mergeBranchesWithRoles, syncBranchRoles } from "@/lib/branch-roles";
 import {
   isDistributorClientOnlyRoles,
   linkDistributorClientToBranch,
+  linkDistributorClientWithRetry,
 } from "@/lib/client-link";
 import {
   createBranch,
@@ -95,7 +96,7 @@ export async function createClientOnboarding(
     resumeBranchId > 0 &&
     isDistributorClientOnlyRoles(roles)
   ) {
-    await linkDistributorClientToBranch(resumeBranchId, roles);
+    await linkDistributorClientWithRetry(resumeBranchId, roles);
     const branch = await fetchBranchById(resumeBranchId);
     const companyList = companies;
     return {
@@ -189,7 +190,7 @@ export async function createClientOnboarding(
 
   try {
     if (isDistributorClientOnlyRoles(roles)) {
-      await linkDistributorClientToBranch(created.id, roles);
+      await linkDistributorClientWithRetry(created.id, roles);
     } else {
       const previous = await loadBranchWithRoles(created.id);
       await syncBranchRoles(created.id, previous, roles);

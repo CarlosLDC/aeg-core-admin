@@ -2,6 +2,7 @@ import { getCatalogErrorMessage } from "@/lib/api-error-message";
 import {
   createClient,
   fetchClientByBranchId,
+  updateClient,
 } from "@/lib/clients-api";
 import type { ClientOnboardingRoleOptions } from "@/lib/client-onboarding";
 
@@ -20,29 +21,24 @@ function isRecoverableLinkError(error: unknown): boolean {
   return (
     msg.includes("binding property") ||
     msg.includes("completar el vínculo") ||
+    msg.includes("conflicto de datos") ||
     msg.includes("registro duplicado") ||
     msg.includes("sucursal ya está registrada") ||
     msg.includes("ya está registrado")
   );
 }
 
-/** Vincula sucursal como cliente del distribuidor (POST idempotente; sin catálogos completos). */
-export async function linkDistributorClientToBranch(
-  branchId: number,
-  roles: ClientOnboardingRoleOptions,
-): Promise<void> {
-  if (!roles.isClient) return;
-
-  const distributorId = parseDistributorId(roles);
-  const body = { branchId, distributorId };
-
-  const existing = await fetchClientByBranchId(branchId);
-  if (existing?.distributorId === distributorId) {
+async function linkViaPost(body: {
+  branchId: number;
+  distributorId: number;
+}): Promise<void> {
+  const existing = await fetchClientByBranchId(body.branchId);
+  if (existing?.distributorId === body.distributorId) {
     return;
   }
   if (
     existing?.distributorId != null &&
-    existing.distributorId !== distributorId
+    existing.distributorId !== body.distributorId
   ) {
     throw new Error("Esta sucursal ya es cliente de otra distribuidora.");
   }
@@ -53,18 +49,54 @@ export async function linkDistributorClientToBranch(
     if (!isRecoverableLinkError(error)) {
       throw error;
     }
-    const after = await fetchClientByBranchId(branchId);
-    if (after?.distributorId === distributorId) {
+    const after = await fetchClientByBranchId(body.branchId);
+    if (after?.distributorId === body.distributorId) {
       return;
     }
     if (
       after?.distributorId != null &&
-      after.distributorId !== distributorId
+      after.distributorId !== body.distributorId
     ) {
       throw new Error("Esta sucursal ya es cliente de otra distribuidora.");
     }
+    if (after?.id != null) {
+      await updateClient(after.id, body);
+      return;
+    }
     await createClient(body);
   }
+}
+
+/** Reintenta el vínculo tras errores transitorios de persistencia en el API. */
+export async function linkDistributorClientWithRetry(
+  branchId: number,
+  roles: ClientOnboardingRoleOptions,
+  maxAttempts = 3,
+): Promise<void> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      await linkDistributorClientToBranch(branchId, roles);
+      return;
+    } catch (error) {
+      lastError = error;
+      if (!isRecoverableLinkError(error) || attempt === maxAttempts - 1) {
+        throw error;
+      }
+    }
+  }
+  throw lastError;
+}
+
+/** Vincula sucursal como cliente del distribuidor (POST idempotente; sin catálogos completos). */
+export async function linkDistributorClientToBranch(
+  branchId: number,
+  roles: ClientOnboardingRoleOptions,
+): Promise<void> {
+  if (!roles.isClient) return;
+
+  const distributorId = parseDistributorId(roles);
+  await linkViaPost({ branchId, distributorId });
 }
 
 export function isDistributorClientOnlyRoles(

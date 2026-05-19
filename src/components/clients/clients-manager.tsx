@@ -227,7 +227,8 @@ export function ClientsManager() {
         resumeId != null &&
         (message.includes("vinculo") ||
           message.includes("vínculo") ||
-          message.includes("Registrar"));
+          message.includes("reintentará") ||
+          message.includes("binding property"));
       if (shouldAutoRetry && resumeId != null) {
         setResumeBranchId(resumeId);
         setSaving(false);

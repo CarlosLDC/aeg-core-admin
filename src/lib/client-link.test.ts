@@ -8,11 +8,13 @@ import { distributorClientRoles } from "./client-onboarding";
 vi.mock("@/lib/clients-api", () => ({
   createClient: vi.fn(),
   fetchClientByBranchId: vi.fn(),
+  updateClient: vi.fn(),
 }));
 
 import {
   createClient,
   fetchClientByBranchId,
+  updateClient,
 } from "@/lib/clients-api";
 
 describe("isDistributorClientOnlyRoles", () => {
@@ -81,6 +83,33 @@ describe("linkDistributorClientToBranch", () => {
     await linkDistributorClientToBranch(10, distributorClientRoles(3));
 
     expect(createClient).toHaveBeenCalledWith({
+      branchId: 10,
+      distributorId: 3,
+    });
+  });
+
+  it("on recoverable error, completes link with PUT when client row exists", async () => {
+    vi.mocked(fetchClientByBranchId)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 5,
+        branchId: 10,
+        distributorId: undefined,
+        createdAt: "",
+      });
+    vi.mocked(createClient).mockRejectedValue(
+      new Error("Binding property is null"),
+    );
+    vi.mocked(updateClient).mockResolvedValue({
+      id: 5,
+      branchId: 10,
+      distributorId: 3,
+      createdAt: "",
+    });
+
+    await linkDistributorClientToBranch(10, distributorClientRoles(3));
+
+    expect(updateClient).toHaveBeenCalledWith(5, {
       branchId: 10,
       distributorId: 3,
     });

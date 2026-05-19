@@ -34,7 +34,7 @@ describe("messageFromUnknownError", () => {
       messageFromUnknownError(
         new ApiError("Binding property is null", 409),
       ),
-    ).toMatch(/completar el vínculo/i);
+    ).toMatch(/reintentará completar el vínculo/i);
   });
 
   it("maps branch scope errors to Spanish", () => {
