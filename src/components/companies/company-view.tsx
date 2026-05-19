@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CompanyBranchesTable } from "@/components/companies/company-branches-table";
 import { ContributorBadge } from "@/components/companies/contributor-badge";
 import {
   CompanyFormDialog,
@@ -155,23 +156,30 @@ export function CompanyView() {
         }
       >
         {company && (
-          <DetailCard>
-            <DetailField label="ID" value={String(company.id)} mono />
-            <DetailField label="RIF" value={company.rif} mono />
-            <DetailField
-              label="Razón social"
-              value={company.businessName || "—"}
-              fullWidth
+          <div className="space-y-8">
+            <DetailCard>
+              <DetailField label="ID" value={String(company.id)} mono />
+              <DetailField label="RIF" value={company.rif} mono />
+              <DetailField
+                label="Razón social"
+                value={company.businessName || "—"}
+                fullWidth
+              />
+              <DetailField
+                label="Tipo de contribuyente"
+                value={<ContributorBadge type={company.contributorType} />}
+              />
+              <DetailField
+                label="Registrada"
+                value={formatDate(company.createdAt)}
+              />
+            </DetailCard>
+
+            <CompanyBranchesTable
+              companyId={company.id}
+              companies={scope?.companies ?? [company]}
             />
-            <DetailField
-              label="Tipo de contribuyente"
-              value={<ContributorBadge type={company.contributorType} />}
-            />
-            <DetailField
-              label="Registrada"
-              value={formatDate(company.createdAt)}
-            />
-          </DetailCard>
+          </div>
         )}
       </ResourceViewShell>
 
