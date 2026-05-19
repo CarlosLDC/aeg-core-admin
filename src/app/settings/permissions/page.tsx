@@ -1,12 +1,14 @@
 "use client";
 
 import { AdminShell } from "@/components/admin/admin-shell";
+import { PermissionsMatrixTable } from "@/components/permissions/permissions-matrix-table";
+import { PermissionsRoleCards } from "@/components/permissions/permissions-role-cards";
+import { useAuth } from "@/context/auth-provider";
 import { usePermissions } from "@/hooks/use-permissions";
-import { PERMISSION_MATRIX } from "@/lib/permissions/matrix";
-import { ACTIONS, type Resource } from "@/lib/permissions/types";
-import { RESOURCES } from "@/lib/permissions/types";
+import { ROLE_LABELS } from "@/lib/permissions/messages";
 
-export default function PermissionsDebugPage() {
+export default function PermissionsPage() {
+  const { user } = useAuth();
   const perms = usePermissions();
 
   if (!perms.isAdmin) {
@@ -19,55 +21,57 @@ export default function PermissionsDebugPage() {
     );
   }
 
+  const currentRole = user?.role ?? null;
+
   return (
     <AdminShell
       title="Matriz de permisos"
-      description="Vista de depuración del rol actual frente a la matriz efectiva del panel."
+      description="Reglas efectivas del panel por recurso, acción y rol."
     >
-      <div className="overflow-x-auto rounded-xl border border-border bg-card">
-        <table className="w-full min-w-[720px] text-left text-sm">
-          <thead>
-            <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-              <th className="px-4 py-3 font-medium">Recurso</th>
-              {ACTIONS.map((action) => (
-                <th key={action} className="px-3 py-3 font-medium capitalize">
-                  {action}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {RESOURCES.map((resource) => (
-              <tr key={resource} className="border-b border-border/60">
-                <td className="px-4 py-2.5 font-mono text-xs">{resource}</td>
-                {ACTIONS.map((action) => {
-                  const defined = PERMISSION_MATRIX[resource]?.[action];
-                  const allowed =
-                    defined && perms.role
-                      ? perms.can(resource as Resource, action)
-                      : false;
-                  return (
-                    <td key={action} className="px-3 py-2.5 text-center">
-                      {defined ? (
-                        <span
-                          className={
-                            allowed
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : "text-muted"
-                          }
-                        >
-                          {allowed ? "✓" : "—"}
-                        </span>
-                      ) : (
-                        <span className="text-muted/40">·</span>
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="space-y-8">
+        {currentRole ? (
+          <p className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted">
+            Sesión actual:{" "}
+            <span className="font-medium text-card-foreground">
+              {ROLE_LABELS[currentRole]}
+            </span>
+            . Las etiquetas resaltadas en la tabla corresponden a este rol.
+          </p>
+        ) : null}
+
+        <section aria-labelledby="permissions-matrix-heading">
+          <h2
+            id="permissions-matrix-heading"
+            className="text-base font-semibold text-card-foreground"
+          >
+            Matriz recurso × acción
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Referencia alineada con{" "}
+            <code className="rounded bg-foreground/5 px-1 text-xs">
+              docs/permissions-matrix.md
+            </code>{" "}
+            y el backend RBAC.
+          </p>
+          <div className="mt-4">
+            <PermissionsMatrixTable highlightRole={currentRole} />
+          </div>
+        </section>
+
+        <section aria-labelledby="permissions-by-role-heading">
+          <h2
+            id="permissions-by-role-heading"
+            className="text-base font-semibold text-card-foreground"
+          >
+            Resumen por rol
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Vista compacta de lo que cada rol puede hacer en el panel.
+          </p>
+          <div className="mt-4">
+            <PermissionsRoleCards highlightRole={currentRole} />
+          </div>
+        </section>
       </div>
     </AdminShell>
   );

@@ -1,5 +1,9 @@
 export { can } from "@/lib/permissions/can";
-export { PERMISSION_MATRIX } from "@/lib/permissions/matrix";
+export {
+  PERMISSION_MATRIX,
+  allowedRolesFor,
+  isPermissionDefined,
+} from "@/lib/permissions/matrix";
 export {
   CATALOG_CREATE_FORBIDDEN_MESSAGE,
   CATALOG_DELETE_FORBIDDEN_MESSAGE,
@@ -7,6 +11,10 @@ export {
   CATALOG_UPDATE_FORBIDDEN_MESSAGE,
   forbiddenMessage,
   getCatalogForbiddenMessage,
+  ACTION_COLUMN_LABELS,
+  RESOURCE_LABELS,
+  ROLE_ABBREV,
+  ROLE_LABELS,
 } from "@/lib/permissions/messages";
 export {
   allowedRolesForPath,

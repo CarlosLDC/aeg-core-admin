@@ -1,6 +1,7 @@
 import type { Action, Resource } from "@/lib/permissions/types";
+import type { Role } from "@/types/user";
 
-const RESOURCE_LABELS: Record<Resource, string> = {
+export const RESOURCE_LABELS: Record<Resource, string> = {
   dashboard: "el panel",
   companies: "empresas",
   branches: "sucursales",
@@ -17,12 +18,35 @@ const RESOURCE_LABELS: Record<Resource, string> = {
   uploads: "documentos adjuntos",
 };
 
-const ACTION_LABELS: Record<Action, string> = {
+export const ACTION_LABELS: Record<Action, string> = {
   read: "ver",
   create: "crear",
   update: "modificar",
   delete: "eliminar",
   assignRoles: "asignar roles operativos en",
+};
+
+/** Encabezados cortos para la matriz de permisos */
+export const ACTION_COLUMN_LABELS: Record<Action, string> = {
+  read: "Leer",
+  create: "Crear",
+  update: "Editar",
+  delete: "Eliminar",
+  assignRoles: "Asignar roles",
+};
+
+export const ROLE_LABELS: Record<Role, string> = {
+  ADMIN: "Administrador",
+  DISTRIBUTOR: "Distribuidor",
+  TECHNICIAN: "Técnico",
+  SERVICE_CENTER: "Centro de servicio",
+};
+
+export const ROLE_ABBREV: Record<Role, string> = {
+  ADMIN: "ADM",
+  DISTRIBUTOR: "DIST",
+  TECHNICIAN: "TEC",
+  SERVICE_CENTER: "CS",
 };
 
 export function forbiddenMessage(

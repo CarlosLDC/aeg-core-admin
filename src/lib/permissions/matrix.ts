@@ -1,4 +1,5 @@
-import type { PermissionMatrix } from "@/lib/permissions/types";
+import type { Action, PermissionMatrix, Resource } from "@/lib/permissions/types";
+import type { Role } from "@/types/user";
 
 const ADMIN_ONLY = ["ADMIN"] as const;
 const ADMIN_DIST = ["ADMIN", "DISTRIBUTOR"] as const;
@@ -90,3 +91,18 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     create: [...ADMIN_DIST_TECH, "SERVICE_CENTER"],
   },
 };
+
+/** Roles permitidos para recurso × acción; vacío si la acción no aplica al recurso. */
+export function allowedRolesFor(
+  resource: Resource,
+  action: Action,
+): readonly Role[] {
+  return PERMISSION_MATRIX[resource]?.[action] ?? [];
+}
+
+export function isPermissionDefined(
+  resource: Resource,
+  action: Action,
+): boolean {
+  return PERMISSION_MATRIX[resource]?.[action] != null;
+}
