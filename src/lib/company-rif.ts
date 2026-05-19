@@ -6,13 +6,34 @@ import type { CompanyRequest } from "@/types/company";
 
 export function isDuplicateCompanyRifError(error: unknown): boolean {
   if (!(error instanceof ApiError)) return false;
+  if (error.status === 409 || error.status === 422) return true;
   const msg = error.message.toLowerCase();
   return (
-    error.status === 409 ||
-    (error.status === 400 &&
-      msg.includes("rif") &&
-      (msg.includes("exist") || msg.includes("ya existe") || msg.includes("duplicate")))
+    msg.includes("already exist") ||
+    msg.includes("ya existe") ||
+    msg.includes("duplicate") ||
+    (msg.includes("rif") && msg.includes("exist"))
   );
+}
+
+function findCompanyInCatalog(
+  companies: CompanyResponse[],
+  rif: string,
+): CompanyResponse | undefined {
+  return findCompanyByRif(companies, rif);
+}
+
+async function refreshAndFindByRif(
+  rif: string,
+  initial: CompanyResponse[],
+): Promise<{ company?: CompanyResponse; companies: CompanyResponse[] }> {
+  const inInitial = findCompanyInCatalog(initial, rif);
+  if (inInitial) {
+    return { company: inInitial, companies: initial };
+  }
+  const refreshed = await fetchCompanies();
+  const found = findCompanyInCatalog(refreshed, rif);
+  return { company: found, companies: refreshed };
 }
 
 export type ResolveCompanyByRifResult = {
@@ -35,9 +56,18 @@ export async function resolveCompanyIdForRif(
     return { companyId: preset, companyCreated: false };
   }
 
-  const local = body.rif ? findCompanyByRif(companies, body.rif) : undefined;
-  if (local) {
-    return { companyId: local.id, companyCreated: false };
+  if (body.rif?.trim()) {
+    const { company: existing, companies: catalog } = await refreshAndFindByRif(
+      body.rif,
+      companies,
+    );
+    if (existing) {
+      return {
+        companyId: existing.id,
+        companyCreated: false,
+        companies: catalog !== companies ? catalog : undefined,
+      };
+    }
   }
 
   try {
@@ -53,11 +83,13 @@ export async function resolveCompanyIdForRif(
       throw error;
     }
 
-    const refreshed = await fetchCompanies();
-    const existing = findCompanyByRif(refreshed, body.rif);
+    const { company: existing, companies: refreshed } = await refreshAndFindByRif(
+      body.rif,
+      companies,
+    );
     if (!existing) {
       throw new Error(
-        `El RIF ${normalizeRif(body.rif)} ya está registrado, pero no aparece en tu listado. Actualiza la página o contacta a un administrador.`,
+        `El RIF ${normalizeRif(body.rif)} ya está registrado en el sistema, pero no está en tu listado. Actualiza la página o contacta a un administrador.`,
       );
     }
 

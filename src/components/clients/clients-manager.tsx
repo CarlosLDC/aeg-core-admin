@@ -16,11 +16,8 @@ import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import { fetchAuthMe } from "@/lib/auth-me-api";
-import {
-  mergeBranchesWithRoles,
-  getBranchRolesErrorMessage,
-} from "@/lib/branch-roles";
-import { fetchBranches, getBranchesErrorMessage } from "@/lib/branches-api";
+import { mergeBranchesWithRoles } from "@/lib/branch-roles";
+import { fetchBranches } from "@/lib/branches-api";
 import { companyNameById, companySearchTextById } from "@/lib/branches";
 import {
   createClientOnboarding,
@@ -28,9 +25,7 @@ import {
   type ClientOnboardingValues,
 } from "@/lib/client-onboarding";
 import { fetchClients } from "@/lib/clients-api";
-import {
-  getCompaniesErrorMessage,
-} from "@/lib/companies-api";
+import { getCatalogErrorMessage } from "@/lib/api-error-message";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
 import { branchPath } from "@/lib/resource-routes";
@@ -92,7 +87,7 @@ export function ClientsManager() {
         ),
       );
     } catch (err) {
-      setListError(getBranchesErrorMessage(err));
+      setListError(getCatalogErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -157,11 +152,7 @@ export function ClientsManager() {
       await refreshScope();
       await loadClients();
     } catch (err) {
-      setFormError(
-        getCompaniesErrorMessage(err) ||
-          getBranchesErrorMessage(err) ||
-          getBranchRolesErrorMessage(err),
-      );
+      setFormError(getCatalogErrorMessage(err));
     } finally {
       setSaving(false);
     }

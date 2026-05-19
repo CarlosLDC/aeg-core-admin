@@ -28,7 +28,6 @@ import { usePagination } from "@/hooks/use-pagination";
 import {
   deleteBranchRoles,
   distributorLabel,
-  getBranchRolesErrorMessage,
   mergeBranchesWithRoles,
   syncBranchRoles,
 } from "@/lib/branch-roles";
@@ -37,13 +36,12 @@ import {
   companySearchTextById,
   formatBranchShort,
 } from "@/lib/branches";
+import { getCatalogErrorMessage } from "@/lib/api-error-message";
 import {
   deleteBranch,
   fetchBranches,
-  getBranchesErrorMessage,
   updateBranch,
 } from "@/lib/branches-api";
-import { getCompaniesErrorMessage } from "@/lib/companies-api";
 import {
   createClientOnboarding,
   type ClientOnboardingValues,
@@ -211,7 +209,7 @@ export function BranchesManager() {
       );
     } catch (err) {
       const message =
-        getBranchesErrorMessage(err) || getBranchRolesErrorMessage(err);
+        getCatalogErrorMessage(err);
       setListError(message);
       toast.error(message);
     } finally {
@@ -317,10 +315,7 @@ export function BranchesManager() {
       closeWizard();
       await refreshScope();
     } catch (err) {
-      const message =
-        getCompaniesErrorMessage(err) ||
-        getBranchesErrorMessage(err) ||
-        getBranchRolesErrorMessage(err);
+      const message = getCatalogErrorMessage(err);
 
       const resumeId =
         err instanceof Error
@@ -365,7 +360,7 @@ export function BranchesManager() {
       await refreshScope();
     } catch (err) {
       const message =
-        getBranchesErrorMessage(err) || getBranchRolesErrorMessage(err);
+        getCatalogErrorMessage(err);
       setFormError(message);
       toast.error(message);
     } finally {
@@ -391,7 +386,7 @@ export function BranchesManager() {
       toast.success(`Sucursal "${label}" eliminada.`);
     } catch (err) {
       const message =
-        getBranchesErrorMessage(err) || getBranchRolesErrorMessage(err);
+        getCatalogErrorMessage(err);
       setListError(message);
       toast.error(message);
     } finally {

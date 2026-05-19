@@ -39,6 +39,11 @@ export async function readErrorMessageFromResponse(
 export function messageFromUnknownError(error: unknown): string {
   if (error instanceof ApiError) return error.message;
   if (error instanceof TypeError) return "No se pudo conectar con el servidor.";
-  if (error instanceof Error) return error.message;
+  if (error instanceof Error && error.message.trim()) return error.message;
   return "Error desconocido.";
+}
+
+/** Mensaje legible para formularios de catálogo / alta de cliente (no ocultar Error.message). */
+export function getCatalogErrorMessage(error: unknown): string {
+  return messageFromUnknownError(error);
 }

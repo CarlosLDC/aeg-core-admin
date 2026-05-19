@@ -19,6 +19,9 @@ describe("isDuplicateCompanyRifError", () => {
         new ApiError("rif already exists: J315694205", 400),
       ),
     ).toBe(true);
+    expect(
+      isDuplicateCompanyRifError(new ApiError("Conflict", 500)),
+    ).toBe(false);
   });
 
   it("detects 409 conflict", () => {
@@ -31,6 +34,32 @@ describe("isDuplicateCompanyRifError", () => {
 describe("resolveCompanyIdForRif", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("refreshes catalog when RIF not in initial list but exists on server", async () => {
+    vi.mocked(fetchCompanies).mockResolvedValue([
+      {
+        id: 55,
+        rif: "J315694205",
+        businessName: "Remota",
+        contributorType: "ordinario",
+        createdAt: "",
+      },
+    ]);
+
+    const result = await resolveCompanyIdForRif(
+      {
+        rif: "J315694205",
+        businessName: "ACME",
+        contributorType: "ordinario",
+      },
+      [],
+    );
+
+    expect(result.companyId).toBe(55);
+    expect(result.companyCreated).toBe(false);
+    expect(createCompany).not.toHaveBeenCalled();
+    expect(fetchCompanies).toHaveBeenCalledOnce();
   });
 
   it("reuses company from local list without calling API", async () => {
@@ -56,18 +85,20 @@ describe("resolveCompanyIdForRif", () => {
   });
 
   it("on duplicate RIF from API, fetches companies and links existing", async () => {
+    vi.mocked(fetchCompanies)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 77,
+          rif: "J315694205",
+          businessName: "Empresa existente",
+          contributorType: "ordinario",
+          createdAt: "",
+        },
+      ]);
     vi.mocked(createCompany).mockRejectedValue(
       new ApiError("rif already exists: J315694205", 400),
     );
-    vi.mocked(fetchCompanies).mockResolvedValue([
-      {
-        id: 77,
-        rif: "J315694205",
-        businessName: "Empresa existente",
-        contributorType: "ordinario",
-        createdAt: "",
-      },
-    ]);
 
     const result = await resolveCompanyIdForRif(
       {
@@ -80,8 +111,7 @@ describe("resolveCompanyIdForRif", () => {
 
     expect(result.companyId).toBe(77);
     expect(result.companyCreated).toBe(false);
-    expect(result.companies).toHaveLength(1);
     expect(createCompany).toHaveBeenCalledOnce();
-    expect(fetchCompanies).toHaveBeenCalledOnce();
+    expect(fetchCompanies).toHaveBeenCalledTimes(2);
   });
 });

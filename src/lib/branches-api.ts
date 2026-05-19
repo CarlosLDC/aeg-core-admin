@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api";
+import { getCatalogErrorMessage } from "@/lib/api-error-message";
 import { getCatalogForbiddenMessage } from "@/lib/api-permissions";
 import { ApiError } from "@/types/auth";
 import type { BranchRequest, BranchResponse } from "@/types/branch";
@@ -47,8 +48,5 @@ export function getBranchesErrorMessage(error: unknown): string {
     }
     return error.message;
   }
-  if (error instanceof TypeError) {
-    return "No se pudo conectar con el servidor.";
-  }
-  return "Ha ocurrido un error inesperado.";
+  return getCatalogErrorMessage(error);
 }

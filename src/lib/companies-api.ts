@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api";
+import { getCatalogErrorMessage } from "@/lib/api-error-message";
 import { getCatalogForbiddenMessage } from "@/lib/api-permissions";
 import { ApiError } from "@/types/auth";
 import type { CompanyRequest, CompanyResponse } from "@/types/company";
@@ -44,18 +45,7 @@ export function getCompaniesErrorMessage(error: unknown): string {
     if (error.status === 404) {
       return "Empresa no encontrada.";
     }
-    if (
-      error.status === 409 ||
-      (error.status === 400 &&
-        error.message.toLowerCase().includes("rif") &&
-        error.message.toLowerCase().includes("exist"))
-    ) {
-      return error.message;
-    }
     return error.message;
   }
-  if (error instanceof TypeError) {
-    return "No se pudo conectar con el servidor.";
-  }
-  return "Ha ocurrido un error inesperado.";
+  return getCatalogErrorMessage(error);
 }
