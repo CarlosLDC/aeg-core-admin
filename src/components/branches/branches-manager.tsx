@@ -287,6 +287,7 @@ export function BranchesManager() {
       city: values.city,
       state: values.state,
       address: values.address,
+      contactPersonName: "",
       phone: values.phone,
       email: values.email,
     };
