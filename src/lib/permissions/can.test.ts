@@ -55,8 +55,9 @@ describe("canAccessRoute", () => {
     expect(canAccessRoute("DISTRIBUTOR", "/contracts")).toBe(false);
   });
 
-  it("allows TECHNICIAN and DISTRIBUTOR on printer models catalog", () => {
+  it("allows TECHNICIAN on printer models catalog; DISTRIBUTOR reads models via impresoras", () => {
     expect(canAccessRoute("TECHNICIAN", "/printer-models")).toBe(true);
-    expect(canAccessRoute("DISTRIBUTOR", "/printer-models/1")).toBe(true);
+    expect(canAccessRoute("DISTRIBUTOR", "/printer-models/1")).toBe(false);
+    expect(can("DISTRIBUTOR", "printerModels", "read")).toBe(true);
   });
 });

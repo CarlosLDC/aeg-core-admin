@@ -30,7 +30,8 @@ Claims esperados por el panel: `role`, `branchId`, `distributorId`.
 
 - `/api/admin/users` — solo ADMIN
 - `/api/distributor-contracts`, `/api/service-center-contracts` — solo ADMIN
-- `/api/printer-models` GET — ADMIN, DISTRIBUTOR, TECHNICIAN; POST/PUT/DELETE — solo ADMIN
+- `/api/printer-models` GET — ADMIN, DISTRIBUTOR (solo modelos de sus impresoras), TECHNICIAN; POST/PUT/DELETE — solo ADMIN
+- `/api/employees` GET — DISTRIBUTOR filtrado por sucursal de la distribuidora (no sucursales cliente)
 - `/api/companies` POST — ADMIN, DISTRIBUTOR (scope)
 - `/api/companies/resolve?rif=` GET — ADMIN, DISTRIBUTOR (empresa por RIF aunque no esté en el listado filtrado)
 - `/api/companies` PUT/DELETE — ADMIN

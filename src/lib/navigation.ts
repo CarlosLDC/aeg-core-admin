@@ -51,7 +51,7 @@ export const navSections: NavSection[] = [
         title: "Modelos fiscales",
         href: "/printer-models",
         icon: FileDigit,
-        roles: ["ADMIN", "DISTRIBUTOR", "TECHNICIAN"],
+        roles: ["ADMIN", "TECHNICIAN"],
       },
       {
         title: "Precintos fiscales",

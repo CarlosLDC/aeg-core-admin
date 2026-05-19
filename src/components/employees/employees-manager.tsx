@@ -17,7 +17,14 @@ import {
   canUpdateEmployeeRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
+import { fetchAuthMe } from "@/lib/auth-me-api";
 import { branchLabelById } from "@/lib/branches";
+import { fetchBranchById } from "@/lib/branches-api";
+import {
+  distributorStaffBranchIds,
+  filterEmployeesForDistributorStaff,
+} from "@/lib/distributor-scope";
+import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchDistributorPersons } from "@/lib/distributor-persons-api";
 import {
   toEmployeePayload,
@@ -46,6 +53,7 @@ import {
 } from "@/lib/employees-api";
 import { fetchTechnicians } from "@/lib/technicians-api";
 import type { BranchResponse } from "@/types/branch";
+import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { EmployeeRequest } from "@/types/employee";
 import { cn } from "@/lib/utils";
@@ -76,6 +84,9 @@ export function EmployeesManager() {
 
   const [employees, setEmployees] = useState<EmployeeWithRoles[]>([]);
   const [branches, setBranches] = useState<BranchResponse[]>([]);
+  const [staffBranches, setStaffBranches] = useState<BranchResponse[]>([]);
+  const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
+  const [distributorId, setDistributorId] = useState<number | null>(null);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
@@ -91,6 +102,20 @@ export function EmployeesManager() {
     const base = user ? uiRolesForUser(user.role) : EMPLOYEE_UI_ROLES;
     return base;
   }, [user]);
+
+  useEffect(() => {
+    if (user?.role !== "DISTRIBUTOR") {
+      setDistributorId(null);
+      return;
+    }
+    if (user.distributorId != null) {
+      setDistributorId(user.distributorId);
+      return;
+    }
+    void fetchAuthMe()
+      .then((me) => setDistributorId(me.distributorId ?? null))
+      .catch(() => setDistributorId(null));
+  }, [user?.role, user?.distributorId]);
 
   useEffect(() => {
     if (!scope) return;
@@ -111,15 +136,57 @@ export function EmployeesManager() {
     }
   }, [scope, scopeError]);
 
-  const visibleBranchIds = useMemo(
-    () => new Set(branches.map((b) => b.id)),
-    [branches],
+  useEffect(() => {
+    if (user?.role !== "DISTRIBUTOR" || distributorId == null) {
+      setDistributors([]);
+      setStaffBranches([]);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const distributorRows = await fetchDistributors();
+        if (cancelled) return;
+        setDistributors(distributorRows);
+        const staffIds = distributorStaffBranchIds(distributorRows, distributorId);
+        const loaded = await Promise.all(
+          [...staffIds].map((id) => fetchBranchById(id)),
+        );
+        if (!cancelled) {
+          setStaffBranches(loaded);
+        }
+      } catch {
+        if (!cancelled) {
+          setDistributors([]);
+          setStaffBranches([]);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.role, distributorId]);
+
+  const staffBranchIdSet = useMemo(
+    () => distributorStaffBranchIds(distributors, distributorId),
+    [distributors, distributorId],
   );
+
+  const formBranches =
+    user?.role === "DISTRIBUTOR" ? staffBranches : branches;
 
   const scopedEmployees = useMemo(() => {
     if (user?.role === "ADMIN") return employees;
+    if (user?.role === "DISTRIBUTOR") {
+      return filterEmployeesForDistributorStaff(
+        employees,
+        "DISTRIBUTOR",
+        staffBranchIdSet,
+      );
+    }
+    const visibleBranchIds = new Set(branches.map((b) => b.id));
     return employees.filter((e) => visibleBranchIds.has(e.branchId));
-  }, [employees, user?.role, visibleBranchIds]);
+  }, [employees, user?.role, staffBranchIdSet, branches]);
 
   const filteredEmployees = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -131,7 +198,11 @@ export function EmployeesManager() {
         return false;
       }
       if (!q) return true;
-      const branch = branchLabelById(branches, companies, employee.branchId);
+      const branch = branchLabelById(
+        [...branches, ...staffBranches],
+        companies,
+        employee.branchId,
+      );
       const haystack = [
         employee.id,
         employee.nationalId,
@@ -145,7 +216,7 @@ export function EmployeesManager() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [scopedEmployees, search, roleFilter, branches, companies]);
+  }, [scopedEmployees, search, roleFilter, branches, staffBranches, companies]);
 
   const pagination = usePagination(filteredEmployees);
 
@@ -251,12 +322,19 @@ export function EmployeesManager() {
         setFormError(payload);
         return;
       }
-      if (
-        !visibleBranchIds.has(payload.request.branchId) &&
-        user?.role !== "ADMIN"
-      ) {
-        setFormError("La sucursal seleccionada no está dentro de tu alcance.");
-        return;
+      if (user?.role === "DISTRIBUTOR") {
+        if (!staffBranchIdSet.has(payload.request.branchId)) {
+          setFormError(
+            "Solo puedes registrar empleados en la sucursal de tu distribuidora.",
+          );
+          return;
+        }
+      } else if (user?.role !== "ADMIN") {
+        const visibleBranchIds = new Set(branches.map((b) => b.id));
+        if (!visibleBranchIds.has(payload.request.branchId)) {
+          setFormError("La sucursal seleccionada no está dentro de tu alcance.");
+          return;
+        }
       }
       body = payload.request;
       tableRoles = payload.tableRoles;
@@ -525,7 +603,7 @@ export function EmployeesManager() {
           mode={dialog === "create" ? "create" : "edit"}
           employee={selected ?? undefined}
           userRole={user.role}
-          branches={branches}
+          branches={formBranches}
           companies={companies}
           branchesLoading={scopeLoading}
           open={dialog !== null}

@@ -11,6 +11,7 @@ import type { TechnicianResponse } from "@/types/employee-role";
 import type { PrinterResponse } from "@/types/printer";
 import type { SealResponse } from "@/types/seal";
 import type { Role } from "@/types/user";
+import { filterEmployeesForDistributorStaff } from "@/lib/distributor-scope";
 
 export function branchIdsFromScope(
   scope: CompanyScope | null,
@@ -74,7 +75,15 @@ export function filterEmployeesInScope(
   branchIds: Set<number>,
   role: Role,
   userBranchId: number | null,
+  distributorStaffBranchIds?: Set<number>,
 ): EmployeeResponse[] {
+  if (role === "DISTRIBUTOR") {
+    return filterEmployeesForDistributorStaff(
+      employees,
+      role,
+      distributorStaffBranchIds ?? new Set(),
+    );
+  }
   if (branchIds.size > 0) {
     return employees.filter((e) => branchIds.has(e.branchId));
   }
@@ -175,6 +184,14 @@ export function applyScopedFieldCatalog(input: ScopedFieldCatalogInput) {
   } = input;
 
   const branchIds = branchIdsFromScope(scope, branches);
+  const staffBranchIds =
+    role === "DISTRIBUTOR" && distributorId != null
+      ? new Set(
+          distributors
+            .filter((d) => d.id === distributorId)
+            .map((d) => d.branchId),
+        )
+      : undefined;
   const scopedClients = filterByBranchScope(clients, branchIds, role);
   const scopedDistributors = filterByBranchScope(
     distributors,
@@ -191,6 +208,7 @@ export function applyScopedFieldCatalog(input: ScopedFieldCatalogInput) {
     branchIds,
     role,
     userBranchId,
+    staffBranchIds,
   );
   const scopedTechnicians = filterTechniciansInScope(
     technicians,

@@ -48,6 +48,7 @@ import {
   updatePrinter,
 } from "@/lib/printers-api";
 import { fetchAuthMe } from "@/lib/auth-me-api";
+import { filterPrinterModelsForDistributor } from "@/lib/distributor-scope";
 import { fetchSoftware } from "@/lib/software-api";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
@@ -112,11 +113,6 @@ export function PrintersManager() {
     "all",
   );
 
-  const modelById = useMemo(
-    () => new Map(models.map((m) => [m.id, m])),
-    [models],
-  );
-
   useEffect(() => {
     if (!isDistributor) {
       setResolvedDistributorId(null);
@@ -144,6 +140,16 @@ export function PrintersManager() {
     if (distributorId == null) return [];
     return printers.filter((p) => p.distributorId === distributorId);
   }, [printers, isDistributor, distributorId]);
+
+  const visibleModels = useMemo(() => {
+    if (!isDistributor) return models;
+    return filterPrinterModelsForDistributor(models, visiblePrinters);
+  }, [models, isDistributor, visiblePrinters]);
+
+  const modelById = useMemo(
+    () => new Map(visibleModels.map((m) => [m.id, m])),
+    [visibleModels],
+  );
 
   const filteredPrinters = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -175,12 +181,12 @@ export function PrintersManager() {
 
   const modelOptions = useMemo<SelectOption[]>(
     () =>
-      [...models]
+      [...visibleModels]
         .sort((a, b) =>
           printerModelLabel(a).localeCompare(printerModelLabel(b), "es"),
         )
         .map((m) => ({ id: m.id, label: `#${m.id} · ${printerModelLabel(m)}` })),
-    [models],
+    [visibleModels],
   );
 
   const scopedClients = useMemo(() => {

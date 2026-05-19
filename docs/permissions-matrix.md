@@ -7,7 +7,7 @@ Documento de referencia alineado con `src/lib/permissions/matrix.ts`. El backend
 | Rol | Descripción |
 |-----|-------------|
 | ADMIN | Acceso global; único que modifica/elimina catálogos sensibles y usuarios |
-| DISTRIBUTOR | Alta de **clientes** (empresa + sucursal + rol cliente) vía `/clients`; impresoras de su cartera |
+| DISTRIBUTOR | Alta de **clientes** vía `/clients`; **empleados** solo en su sucursal (no los de clientes); **impresoras** de su cartera; **modelos fiscales** solo lectura de los usados en sus impresoras (sin menú de catálogo) |
 | TECHNICIAN | Impresoras, precintos, servicios e inspecciones en alcance de sucursales |
 | SERVICE_CENTER | Precintos, servicios técnicos e inspecciones anuales |
 
@@ -18,9 +18,9 @@ Documento de referencia alineado con `src/lib/permissions/matrix.ts`. El backend
 | dashboard | Todos | — | — | — | |
 | companies | ADMIN, DISTRIBUTOR | ADMIN, DISTRIBUTOR | ADMIN | ADMIN | DIST: API filtra por distribuidora |
 | branches | Todos | ADMIN, DISTRIBUTOR | ADMIN | ADMIN | Wizard SENIAT: create company+branch |
-| employees | Todos | ADMIN | ADMIN | ADMIN | `assignRoles`: ADMIN, TECHNICIAN, SERVICE_CENTER, DISTRIBUTOR |
-| printers | ADMIN, DISTRIBUTOR, TECHNICIAN | ADMIN | ADMIN | ADMIN | Solo lectura fuera de ADMIN; alcance por API/scope |
-| printerModels | ADMIN, DISTRIBUTOR, TECHNICIAN | ADMIN | ADMIN | ADMIN | Catálogo de consulta para quien opera impresoras |
+| employees | Todos | ADMIN | ADMIN | ADMIN | DIST: solo empleados de la **sucursal de la distribuidora** (no clientes) |
+| printers | ADMIN, DISTRIBUTOR, TECHNICIAN | ADMIN | ADMIN | ADMIN | DIST: solo su cartera (`distributorId`); solo lectura |
+| printerModels | ADMIN, DISTRIBUTOR, TECHNICIAN | ADMIN | ADMIN | ADMIN | DIST: lectura de modelos de **sus** impresoras; sin página `/printer-models` |
 | seals | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual lectura | Igual | Igual | Impresoras en scope |
 | technicalServices | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual | Igual | Igual | |
 | annualInspections | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual | Igual | Igual | |
