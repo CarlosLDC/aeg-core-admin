@@ -15,6 +15,13 @@ describe("can", () => {
     expect(can("DISTRIBUTOR", "companies", "update")).toBe(false);
   });
 
+  it("allows DISTRIBUTOR to create employees on own branch but not edit catalog", () => {
+    expect(can("DISTRIBUTOR", "employees", "create")).toBe(true);
+    expect(can("DISTRIBUTOR", "employees", "update")).toBe(false);
+    expect(can("DISTRIBUTOR", "employees", "delete")).toBe(false);
+    expect(can("DISTRIBUTOR", "employees", "assignRoles")).toBe(true);
+  });
+
   it("denies TECHNICIAN users and contracts", () => {
     expect(can("TECHNICIAN", "users", "read")).toBe(false);
     expect(can("TECHNICIAN", "contracts", "read")).toBe(false);

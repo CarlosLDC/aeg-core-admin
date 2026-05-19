@@ -77,6 +77,7 @@ export function EmployeesManager() {
     refresh: refreshScope,
   } = useCompanyScope();
 
+  const isDistributor = user?.role === "DISTRIBUTOR";
   const canCreate = user ? canCreateEmployeeRecord(user.role) : false;
   const canModify = user ? canUpdateEmployeeRecord(user.role) : false;
   const canEditRoles = user ? canAssignEmployeeRoles(user.role) : false;
@@ -172,8 +173,12 @@ export function EmployeesManager() {
     [distributors, distributorId],
   );
 
-  const formBranches =
-    user?.role === "DISTRIBUTOR" ? staffBranches : branches;
+  const formBranches = isDistributor ? staffBranches : branches;
+  const branchesReadyForCreate = isDistributor
+    ? staffBranches.length > 0
+    : branches.length > 0;
+  const defaultStaffBranchId =
+    staffBranches.length === 1 ? String(staffBranches[0].id) : "";
 
   const scopedEmployees = useMemo(() => {
     if (user?.role === "ADMIN") return employees;
@@ -442,7 +447,7 @@ export function EmployeesManager() {
             <button
               type="button"
               onClick={openCreate}
-              disabled={!catalogReady || branches.length === 0}
+              disabled={!catalogReady || !branchesReadyForCreate}
               className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground disabled:opacity-50"
             >
               <Plus className="size-4" />
@@ -452,9 +457,11 @@ export function EmployeesManager() {
         </div>
       </div>
 
-      {branches.length === 0 && catalogReady && (
+      {!branchesReadyForCreate && catalogReady && (
         <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-          Registra al menos una sucursal antes de dar de alta empleados.
+          {isDistributor
+            ? "Tu usuario no tiene una sucursal de distribuidora vinculada. Contacta a un administrador."
+            : "Registra al menos una sucursal antes de dar de alta empleados."}
         </p>
       )}
 
@@ -605,7 +612,13 @@ export function EmployeesManager() {
           userRole={user.role}
           branches={formBranches}
           companies={companies}
-          branchesLoading={scopeLoading}
+          branchesLoading={
+            isDistributor
+              ? distributorId != null && staffBranches.length === 0
+              : scopeLoading
+          }
+          defaultBranchId={defaultStaffBranchId}
+          lockBranch={isDistributor && staffBranches.length === 1}
           open={dialog !== null}
           saving={saving}
           deleting={Boolean(selected && deletingId === selected.id)}

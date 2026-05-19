@@ -18,7 +18,7 @@ Documento de referencia alineado con `src/lib/permissions/matrix.ts`. El backend
 | dashboard | Todos | — | — | — | |
 | companies | ADMIN, DISTRIBUTOR | ADMIN, DISTRIBUTOR | ADMIN | ADMIN | DIST: API filtra por distribuidora |
 | branches | Todos | ADMIN, DISTRIBUTOR | ADMIN | ADMIN | Wizard SENIAT: create company+branch |
-| employees | Todos | ADMIN | ADMIN | ADMIN | DIST: solo empleados de la **sucursal de la distribuidora** (no clientes) |
+| employees | Todos | ADMIN, DISTRIBUTOR | ADMIN | ADMIN | DIST: alta solo en **su sucursal**; no edita/elimina fichas |
 | printers | ADMIN, DISTRIBUTOR, TECHNICIAN | ADMIN | ADMIN | ADMIN | DIST: solo su cartera (`distributorId`); solo lectura |
 | printerModels | ADMIN, DISTRIBUTOR, TECHNICIAN | ADMIN | ADMIN | ADMIN | DIST: lectura de modelos de **sus** impresoras; sin página `/printer-models` |
 | seals | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual lectura | Igual | Igual | Impresoras en scope |

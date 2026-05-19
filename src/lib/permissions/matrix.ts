@@ -31,7 +31,7 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
   },
   employees: {
     read: ALL_ROLES,
-    create: ADMIN_ONLY,
+    create: ADMIN_DIST,
     update: ADMIN_ONLY,
     delete: ADMIN_ONLY,
     assignRoles: ["ADMIN", "DISTRIBUTOR", "TECHNICIAN", "SERVICE_CENTER"],

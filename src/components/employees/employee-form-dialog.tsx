@@ -26,6 +26,10 @@ type EmployeeFormDialogProps = {
   branches: BranchResponse[];
   companies: CompanyResponse[];
   branchesLoading: boolean;
+  /** Sucursal por defecto al crear (p. ej. sucursal de la distribuidora). */
+  defaultBranchId?: string;
+  /** Impide cambiar sucursal (distribuidor con una sola sucursal propia). */
+  lockBranch?: boolean;
   open: boolean;
   saving: boolean;
   error: string | null;
@@ -51,6 +55,8 @@ export function EmployeeFormDialog({
   branches,
   companies,
   branchesLoading,
+  defaultBranchId = "",
+  lockBranch = false,
   open,
   saving,
   error,
@@ -78,9 +84,10 @@ export function EmployeeFormDialog({
       setForm({
         ...emptyForm,
         role: roleOptions[0] ?? "administrativo",
+        branchId: defaultBranchId,
       });
     }
-  }, [open, mode, employee, roleOptions]);
+  }, [open, mode, employee, roleOptions, defaultBranchId]);
 
   if (!open) return null;
 
@@ -201,7 +208,9 @@ export function EmployeeFormDialog({
                 branches={branches}
                 companies={companies}
                 loading={branchesLoading}
-                disabled={disabledProfile || branches.length === 0}
+                disabled={
+                  disabledProfile || branches.length === 0 || lockBranch
+                }
               />
             </label>
           </fieldset>
