@@ -9,7 +9,48 @@ import type {
 const BASE = "/api/service-centers";
 
 export async function fetchServiceCenters(): Promise<ServiceCenterResponse[]> {
-  return apiFetch<ServiceCenterResponse[]>(BASE);
+  // #region agent log
+  try {
+    const rows = await apiFetch<ServiceCenterResponse[]>(BASE);
+    fetch("http://127.0.0.1:7781/ingest/0c54bab8-f62a-45dc-8c96-475b3dbd518d", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "f91276",
+      },
+      body: JSON.stringify({
+        sessionId: "f91276",
+        location: "service-centers-api.ts:fetchServiceCenters",
+        message: "GET /api/service-centers ok",
+        data: { count: rows.length },
+        hypothesisId: "H5",
+        runId: "post-fix",
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    return rows;
+  } catch (error) {
+    fetch("http://127.0.0.1:7781/ingest/0c54bab8-f62a-45dc-8c96-475b3dbd518d", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "f91276",
+      },
+      body: JSON.stringify({
+        sessionId: "f91276",
+        location: "service-centers-api.ts:fetchServiceCenters",
+        message: "GET /api/service-centers failed",
+        data: {
+          status: error instanceof ApiError ? error.status : null,
+        },
+        hypothesisId: "H5",
+        runId: "post-fix",
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    throw error;
+  }
+  // #endregion
 }
 
 export async function createServiceCenter(
