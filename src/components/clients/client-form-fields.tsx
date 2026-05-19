@@ -219,7 +219,7 @@ export function ClientFormFields({
             value={form.phone}
             disabled={saving}
             onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-            placeholder="Opcional si no está en el PDF"
+            placeholder="Ej. 0412 1234567"
             className={clientFormInputClass}
           />
         </label>
@@ -230,7 +230,7 @@ export function ClientFormFields({
             value={form.email}
             disabled={saving}
             onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-            placeholder="Opcional si no está en el PDF"
+            placeholder="Ej. contacto@empresa.com"
             className={clientFormInputClass}
           />
         </label>

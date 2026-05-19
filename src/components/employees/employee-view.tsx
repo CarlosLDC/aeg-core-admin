@@ -13,6 +13,8 @@ import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
+import { useDistributorId } from "@/hooks/use-distributor-id";
+import { useDistributorStaffBranches } from "@/hooks/use-distributor-staff-branches";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
   canDeleteEmployeeRecord,
@@ -61,6 +63,13 @@ export function EmployeeView() {
   const canModify = user ? canUpdateEmployeeRecord(user.role) : false;
   const canDelete = user ? canDeleteEmployeeRecord(user.role) : false;
   const userRole = (user?.role ?? "ADMIN") as Role;
+  const isDistributor = user?.role === "DISTRIBUTOR";
+  const distributorId = useDistributorId();
+  const {
+    staffBranches,
+    staffBranchIdSet,
+    loading: staffBranchesLoading,
+  } = useDistributorStaffBranches(isDistributor ? distributorId : null);
 
   const [employee, setEmployee] = useState<EmployeeWithRoles | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,8 +79,11 @@ export function EmployeeView() {
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const branches = scope?.branches ?? [];
+  const clientBranches = scope?.branches ?? [];
   const companies = scope?.companies ?? [];
+  const formBranches = isDistributor ? staffBranches : clientBranches;
+  const defaultStaffBranchId =
+    staffBranches.length === 1 ? String(staffBranches[0].id) : "";
 
   const load = useCallback(async () => {
     if (id == null) {
@@ -94,7 +106,16 @@ export function EmployeeView() {
         distributorPersons.filter((d) => d.employeeId === id),
       );
       const record = merged[0] ?? null;
-      if (user && record && !assertEmployeeInScope(scope, record, user.role)) {
+      if (
+        user &&
+        record &&
+        !assertEmployeeInScope(
+          scope,
+          record,
+          user.role,
+          isDistributor ? staffBranchIdSet : undefined,
+        )
+      ) {
         setError("No tienes acceso a este recurso.");
         setEmployee(null);
         return;
@@ -105,11 +126,12 @@ export function EmployeeView() {
     } finally {
       setLoading(false);
     }
-  }, [id, scope, user]);
+  }, [id, scope, user, isDistributor, staffBranchIdSet]);
 
   useEffect(() => {
+    if (isDistributor && staffBranchesLoading) return;
     void load();
-  }, [load]);
+  }, [load, isDistributor, staffBranchesLoading]);
 
   async function handleSubmit(values: EmployeeFormValues) {
     if (!employee || !canModify) {
@@ -120,6 +142,16 @@ export function EmployeeView() {
     const payload = toEmployeePayload(values);
     if (typeof payload === "string") {
       setFormError(payload);
+      return;
+    }
+
+    if (
+      isDistributor &&
+      !staffBranchIdSet.has(payload.request.branchId)
+    ) {
+      setFormError(
+        "Solo puedes registrar empleados en la sucursal de tu distribuidora.",
+      );
       return;
     }
 
@@ -173,7 +205,7 @@ export function EmployeeView() {
   }
 
   const branchLabel = employee
-    ? branchLabelById(branches, companies, employee.branchId)
+    ? branchLabelById(formBranches, companies, employee.branchId)
     : "";
 
   return (
@@ -236,9 +268,11 @@ export function EmployeeView() {
           mode="edit"
           employee={employee}
           userRole={userRole}
-          branches={branches}
+          branches={formBranches}
           companies={companies}
-          branchesLoading={false}
+          branchesLoading={isDistributor && staffBranchesLoading}
+          defaultBranchId={defaultStaffBranchId}
+          lockBranch={isDistributor && staffBranches.length === 1}
           open={editOpen}
           saving={saving}
           deleting={deleting}

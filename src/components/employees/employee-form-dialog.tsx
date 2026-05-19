@@ -202,16 +202,22 @@ export function EmployeeFormDialog({
 
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium">Sucursal</span>
-              <BranchSelect
-                value={form.branchId}
-                onChange={(branchId) => setForm((f) => ({ ...f, branchId }))}
-                branches={branches}
-                companies={companies}
-                loading={branchesLoading}
-                disabled={
-                  disabledProfile || branches.length === 0 || lockBranch
-                }
-              />
+              {lockBranch ? (
+                <p className="rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-sm text-muted">
+                  Sucursal de tu distribuidora (personal interno)
+                </p>
+              ) : (
+                <BranchSelect
+                  value={form.branchId}
+                  onChange={(branchId) =>
+                    setForm((f) => ({ ...f, branchId }))
+                  }
+                  branches={branches}
+                  companies={companies}
+                  loading={branchesLoading}
+                  disabled={disabledProfile || branches.length === 0}
+                />
+              )}
             </label>
           </fieldset>
 

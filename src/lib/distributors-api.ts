@@ -12,6 +12,12 @@ export async function fetchDistributors(): Promise<DistributorResponse[]> {
   return apiFetch<DistributorResponse[]>(BASE);
 }
 
+export async function fetchDistributorById(
+  id: number,
+): Promise<DistributorResponse> {
+  return apiFetch<DistributorResponse>(`${BASE}/${id}`);
+}
+
 export async function createDistributor(
   body: DistributorRequest,
 ): Promise<DistributorResponse> {

@@ -52,8 +52,13 @@ export function assertEmployeeInScope(
   scope: CompanyScope | null,
   employee: EmployeeResponse | null | undefined,
   role: Role,
+  distributorStaffBranchIds?: Set<number>,
 ): boolean {
   if (!employee) return false;
+  if (role === "ADMIN") return true;
+  if (role === "DISTRIBUTOR") {
+    return distributorStaffBranchIds?.has(employee.branchId) ?? false;
+  }
   return isBranchInScope(scope, employee.branchId, role);
 }
 

@@ -1,11 +1,43 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   distributorStaffBranchIds,
   filterEmployeesForDistributorStaff,
   filterPrinterModelsForDistributor,
+  loadDistributorStaffBranches,
 } from "./distributor-scope";
 
+vi.mock("@/lib/distributors-api", () => ({
+  fetchDistributorById: vi.fn(),
+}));
+
+vi.mock("@/lib/branches-api", () => ({
+  fetchBranchById: vi.fn(),
+}));
+
+import { fetchBranchById } from "@/lib/branches-api";
+import { fetchDistributorById } from "@/lib/distributors-api";
+
 describe("distributor-scope", () => {
+  it("loads staff branch from distributor id", async () => {
+    vi.mocked(fetchDistributorById).mockResolvedValue({
+      id: 5,
+      branchId: 100,
+      createdAt: "",
+    });
+    vi.mocked(fetchBranchById).mockResolvedValue({
+      id: 100,
+      companyId: 1,
+      name: "Sede distribuidor",
+      address: "",
+      phone: "",
+      email: "",
+      createdAt: "",
+    });
+    const branches = await loadDistributorStaffBranches(5);
+    expect(branches).toHaveLength(1);
+    expect(branches[0].id).toBe(100);
+  });
+
   it("resolves staff branch from distributor row", () => {
     const ids = distributorStaffBranchIds(
       [{ id: 5, branchId: 100, createdAt: "" }],
