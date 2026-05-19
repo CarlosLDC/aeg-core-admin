@@ -36,7 +36,7 @@ import { fetchClientByBranchId, fetchClients } from "@/lib/clients-api";
 import { getCatalogErrorMessage } from "@/lib/api-error-message";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
-import { branchPath } from "@/lib/resource-routes";
+import { branchPath, clientPath } from "@/lib/resource-routes";
 import type { BranchWithRoles } from "@/types/branch";
 import type { ClientResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -186,31 +186,6 @@ export function ClientsManager() {
       }
       setClients(clientRows);
       setBranches(merged);
-      // #region agent log
-      fetch("http://127.0.0.1:7781/ingest/0c54bab8-f62a-45dc-8c96-475b3dbd518d", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "f91276",
-        },
-        body: JSON.stringify({
-          sessionId: "f91276",
-          location: "clients-manager.tsx:loadClients",
-          message: "clients loaded",
-          data: {
-            distributorId,
-            clientCount: clientRows.length,
-            forDistributor: clientRows.filter(
-              (c) => c.distributorId === distributorId,
-            ).length,
-            branchCount: merged.length,
-            missingResolved: missingBranchIds.length,
-          },
-          hypothesisId: "H4",
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
       setCompanies(
         [...scope.companies].sort((a, b) =>
           (a.businessName || "").localeCompare(b.businessName || "", "es"),
@@ -234,31 +209,7 @@ export function ClientsManager() {
 
   const clientListRows = useMemo(() => {
     if (distributorId == null) return [];
-    const rows = buildClientListRows(clients, distributorId, branches, companies);
-    // #region agent log
-    const matched = clients.filter((c) => c.distributorId === distributorId);
-    fetch("http://127.0.0.1:7781/ingest/0c54bab8-f62a-45dc-8c96-475b3dbd518d", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "f91276",
-      },
-      body: JSON.stringify({
-        sessionId: "f91276",
-        location: "clients-manager.tsx:clientListRows",
-        message: "client list built",
-        data: {
-          distributorId,
-          apiClients: matched.length,
-          visibleRows: rows.length,
-          enrichedFromApi: matched.filter((c) => c.companyBusinessName).length,
-        },
-        hypothesisId: "H4",
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-    return rows;
+    return buildClientListRows(clients, distributorId, branches, companies);
   }, [clients, branches, companies, distributorId]);
 
   const stateFilterOptions = useMemo(
@@ -315,11 +266,16 @@ export function ClientsManager() {
       ].filter(Boolean);
       const linkedHint =
         linkedParts.length > 0 ? ` (${linkedParts.join(", ")})` : "";
+      const createdClient = await fetchClientByBranchId(result.branch.id);
       toast.success(
         result.companyLinkedExisting || result.branchLinkedExisting
           ? `Cliente registrado en "${result.companyLabel}" — ${result.branchLabel}${linkedHint}.`
           : `Cliente "${result.companyLabel}" registrado en ${result.branchLabel}.`,
-        { href: branchPath(result.branch.id) },
+        {
+          href: createdClient
+            ? clientPath(createdClient.id)
+            : branchPath(result.branch.id),
+        },
       );
       setResumeBranchId(null);
       setCreateOpen(false);
@@ -355,7 +311,7 @@ export function ClientsManager() {
           if (linked?.distributorId === distributorId) {
             toast.success(
               `Cliente registrado en ${values.city.trim()}, ${values.state.trim()}.`,
-              { href: branchPath(resumeId) },
+              { href: clientPath(linked.id) },
             );
             setResumeBranchId(null);
             setCreateOpen(false);
@@ -494,7 +450,7 @@ export function ClientsManager() {
                       {pagination.paginatedItems.map((row) => (
                         <ClickableTableRow
                           key={row.key}
-                          href={branchPath(row.client.branchId)}
+                          href={clientPath(row.client.id)}
                         >
                           <TableCreatedAtCell value={row.createdAt} />
                           <td className="max-w-[220px] px-5 py-3.5 font-medium text-card-foreground">

@@ -33,4 +33,10 @@ describe("route permissions", () => {
     expect(canAccessRoute("ADMIN", "/companies")).toBe(true);
     expect(canAccessRoute("ADMIN", "/clients")).toBe(false);
   });
+
+  it("allows DISTRIBUTOR on client and branch detail routes", () => {
+    expect(canAccessRoute("DISTRIBUTOR", "/clients/42")).toBe(true);
+    expect(canAccessRoute("DISTRIBUTOR", "/branches/99")).toBe(true);
+    expect(canAccessRoute("DISTRIBUTOR", "/branches")).toBe(false);
+  });
 });
