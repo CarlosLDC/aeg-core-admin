@@ -120,16 +120,96 @@ function getGeminiClient(): GoogleGenAI {
   return new GoogleGenAI({ apiKey });
 }
 
+const GEMINI_OVERLOAD_MESSAGE =
+  "El análisis automático del documento no está disponible ahora por alta demanda. Espera un momento e inténtalo de nuevo, o completa el formulario manualmente.";
+
+const GEMINI_GENERIC_MESSAGE =
+  "No se pudo leer el documento automáticamente. Prueba con otra imagen más nítida o completa el formulario manualmente.";
+
+/** Texto unificado del error (mensaje plano o JSON anidado de la API). */
+export function geminiErrorText(error: unknown): string {
+  if (error == null) return "";
+  if (error instanceof Error && error.message === "GEMINI_NOT_CONFIGURED") {
+    return error.message;
+  }
+  if (error instanceof Error) {
+    return expandGeminiErrorPayload(error.message);
+  }
+  if (typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    const nested = record.error as Record<string, unknown> | undefined;
+    const inner = nested?.error as Record<string, unknown> | undefined;
+    const parts = [
+      record.message,
+      nested?.message,
+      inner?.message,
+      nested?.status,
+      inner?.status,
+    ];
+    return expandGeminiErrorPayload(
+      parts.filter((p) => p != null && String(p).trim()).map(String).join(" "),
+    );
+  }
+  return expandGeminiErrorPayload(String(error));
+}
+
+function expandGeminiErrorPayload(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith("{")) return trimmed;
+  try {
+    const parsed = JSON.parse(trimmed) as Record<string, unknown>;
+    const nested = parsed.error as Record<string, unknown> | undefined;
+    const inner = nested?.error as Record<string, unknown> | undefined;
+    const message =
+      (inner?.message as string | undefined) ??
+      (nested?.message as string | undefined) ??
+      (parsed.message as string | undefined);
+    const code = inner?.code ?? nested?.code ?? parsed.code;
+    const status = inner?.status ?? nested?.status ?? parsed.status;
+    return [message, code != null ? String(code) : "", status != null ? String(status) : "", trimmed]
+      .filter(Boolean)
+      .join(" ");
+  } catch {
+    return trimmed;
+  }
+}
+
 function isModelNotFoundError(error: unknown): boolean {
-  const message =
-    error instanceof Error ? error.message : String(error ?? "");
+  const message = geminiErrorText(error).toLowerCase();
   return message.includes("404") || message.includes("not found");
 }
 
 function isQuotaError(error: unknown): boolean {
-  const message =
-    error instanceof Error ? error.message : String(error ?? "");
-  return message.includes("429") || message.includes("quota");
+  const message = geminiErrorText(error).toLowerCase();
+  return (
+    message.includes("429") ||
+    message.includes("quota") ||
+    message.includes("rate limit") ||
+    message.includes("resource_exhausted")
+  );
+}
+
+export function isGeminiOverloadError(error: unknown): boolean {
+  const message = geminiErrorText(error).toLowerCase();
+  return (
+    message.includes("503") ||
+    message.includes("unavailable") ||
+    message.includes("high demand") ||
+    message.includes("overloaded") ||
+    message.includes("temporarily unavailable") ||
+    message.includes("try again later")
+  );
+}
+
+function isTechnicalErrorPayload(message: string): boolean {
+  const trimmed = message.trim();
+  if (!trimmed) return false;
+  if (trimmed.startsWith("{") && trimmed.includes('"error"')) return true;
+  if (trimmed.length > 220) return true;
+  if (/"code"\s*:\s*\d+/.test(trimmed) && trimmed.includes('"message"')) {
+    return true;
+  }
+  return false;
 }
 
 export function formatGeminiError(error: unknown): string {
@@ -139,13 +219,22 @@ export function formatGeminiError(error: unknown): string {
   if (isQuotaError(error)) {
     return "Cuota de Gemini agotada. Revisa tu plan en Google AI Studio o prueba más tarde.";
   }
+  if (isGeminiOverloadError(error)) {
+    return GEMINI_OVERLOAD_MESSAGE;
+  }
   if (isModelNotFoundError(error)) {
-    return `Modelo no disponible. Prueba GEMINI_MODEL=gemini-2.5-flash o gemini-3-flash-preview en .env.local.`;
+    return "Modelo de IA no disponible. Completa el formulario manualmente o contacta al administrador.";
   }
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
+  const text = geminiErrorText(error).trim();
+  if (text && !isTechnicalErrorPayload(text) && isHumanReadableGeminiMessage(text)) {
+    return text;
   }
-  return "No se pudo analizar el documento con Gemini.";
+  return GEMINI_GENERIC_MESSAGE;
+}
+
+function isHumanReadableGeminiMessage(message: string): boolean {
+  if (message.includes("GEMINI_NOT_CONFIGURED")) return false;
+  return true;
 }
 
 async function generateExtraction(
@@ -197,13 +286,20 @@ export async function extractSeniatFromFile(file: File): Promise<SeniatExtractRe
       return parseSeniatExtractJson(text);
     } catch (error) {
       lastError = error;
-      if (!isModelNotFoundError(error)) break;
+      const retryable =
+        isModelNotFoundError(error) || isGeminiOverloadError(error);
+      if (!retryable) break;
     }
   }
 
-  throw lastError instanceof Error
-    ? lastError
-    : new Error(formatGeminiError(lastError));
+  const message = formatGeminiError(lastError);
+  const err = new Error(message) as Error & { code?: string };
+  if (isGeminiOverloadError(lastError)) {
+    err.code = "GEMINI_OVERLOAD";
+  } else if (isQuotaError(lastError)) {
+    err.code = "GEMINI_QUOTA";
+  }
+  throw err;
 }
 
 export function findCompanyByRif<T extends { id: number; rif: string }>(

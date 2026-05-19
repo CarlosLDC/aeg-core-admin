@@ -111,8 +111,17 @@ export async function POST(request: NextRequest) {
         { status: 503 },
       );
     }
+    const code =
+      error instanceof Error
+        ? (error as Error & { code?: string }).code
+        : undefined;
     const message = formatGeminiError(error);
-    const status = message.includes("Cuota") ? 429 : 422;
-    return NextResponse.json({ error: message }, { status });
+    const status =
+      code === "GEMINI_QUOTA" || message.includes("Cuota")
+        ? 429
+        : code === "GEMINI_OVERLOAD"
+          ? 503
+          : 422;
+    return NextResponse.json({ error: message, code }, { status });
   }
 }

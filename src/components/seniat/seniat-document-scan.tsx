@@ -96,12 +96,12 @@ export function SeniatDocumentScan({
           <div className="min-w-0 flex-1 space-y-0.5">
             <p className="text-sm font-medium text-card-foreground">
               {variant === "client"
-                ? "Escanear documento del cliente"
+                ? "Escanear RIF"
                 : "Documento fiscal (SENIAT)"}
             </p>
             <p className="text-xs leading-relaxed text-muted">
               {variant === "client"
-                ? "Sube el RIF o registro fiscal del cliente. La IA completará razón social y ubicación; luego podrás añadir teléfono y correo."
+                ? "Imagen o PDF del RIF. La IA rellena razón social y ubicación."
                 : "Sube una foto o PDF del RIF o registro fiscal. La IA rellenará empresa y sucursal."}
             </p>
             {file && (
