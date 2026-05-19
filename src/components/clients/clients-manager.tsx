@@ -137,6 +137,31 @@ export function ClientsManager() {
       }
       setClients(clientRows);
       setBranches(merged);
+      // #region agent log
+      fetch("http://127.0.0.1:7781/ingest/0c54bab8-f62a-45dc-8c96-475b3dbd518d", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "f91276",
+        },
+        body: JSON.stringify({
+          sessionId: "f91276",
+          location: "clients-manager.tsx:loadClients",
+          message: "clients loaded",
+          data: {
+            distributorId,
+            clientCount: clientRows.length,
+            forDistributor: clientRows.filter(
+              (c) => c.distributorId === distributorId,
+            ).length,
+            branchCount: merged.length,
+            missingResolved: missingBranchIds.length,
+          },
+          hypothesisId: "H4",
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
       setCompanies(
         [...scope.companies].sort((a, b) =>
           (a.businessName || "").localeCompare(b.businessName || "", "es"),
@@ -161,10 +186,37 @@ export function ClientsManager() {
   const clientBranches = useMemo(() => {
     if (distributorId == null) return [];
     const branchById = new Map(branches.map((b) => [b.id, b]));
-    return clients
-      .filter((c) => c.distributorId === distributorId)
+    const matched = clients.filter((c) => c.distributorId === distributorId);
+    const rows = matched
       .map((c) => branchById.get(c.branchId))
       .filter((b): b is BranchWithRoles => b != null);
+    // #region agent log
+    if (matched.length !== rows.length) {
+      fetch("http://127.0.0.1:7781/ingest/0c54bab8-f62a-45dc-8c96-475b3dbd518d", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "f91276",
+        },
+        body: JSON.stringify({
+          sessionId: "f91276",
+          location: "clients-manager.tsx:clientBranches",
+          message: "clients missing branch in map",
+          data: {
+            distributorId,
+            matchedClients: matched.length,
+            visibleRows: rows.length,
+            missingBranchIds: matched
+              .filter((c) => !branchById.has(c.branchId))
+              .map((c) => c.branchId),
+          },
+          hypothesisId: "H4",
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+    }
+    // #endregion
+    return rows;
   }, [clients, branches, distributorId]);
 
   const stateFilterOptions = useMemo(

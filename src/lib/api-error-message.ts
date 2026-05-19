@@ -47,7 +47,10 @@ function mapCatalogApiMessage(message: string): string {
   if (lower.includes("not allowed to create client for this distributor")) {
     return "No puedes registrar clientes para otra distribuidora.";
   }
-  if (lower.includes("binding property is null")) {
+  if (
+    lower.includes("binding property is null") ||
+    lower.includes("completar el vínculo")
+  ) {
     return "La sucursal ya existe; se reintentará completar el vínculo como cliente automáticamente.";
   }
   if (lower.includes("branch already linked")) {
