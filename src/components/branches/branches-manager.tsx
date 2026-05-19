@@ -541,6 +541,7 @@ export function BranchesManager() {
                   value: companyFilter,
                   onChange: setCompanyFilter,
                   options: companyFilterOptions,
+                  wide: true,
                 },
               ]}
             />

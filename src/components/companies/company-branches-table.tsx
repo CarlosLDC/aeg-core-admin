@@ -36,6 +36,10 @@ import { fetchClients } from "@/lib/clients-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
 import { branchPath } from "@/lib/resource-routes";
+import {
+  filterAllOption,
+  uniqueFilterOptions,
+} from "@/lib/table-filter-options";
 import type { BranchRequest, BranchWithRoles } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { DistributorResponse } from "@/types/branch-role";
@@ -109,6 +113,7 @@ export function CompanyBranchesTable({
   const [listError, setListError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [stateFilter, setStateFilter] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selected, setSelected] = useState<BranchWithRoles | null>(null);
   const [saving, setSaving] = useState(false);
@@ -170,9 +175,18 @@ export function CompanyBranchesTable({
     void loadBranches();
   }, [scopeLoading, scope, loadBranches]);
 
+  const stateFilterOptions = useMemo(
+    () => [
+      filterAllOption("Todos los estados"),
+      ...uniqueFilterOptions(branches.map((b) => b.state)),
+    ],
+    [branches],
+  );
+
   const filteredBranches = useMemo(() => {
     const q = search.trim().toLowerCase();
     return branches.filter((branch) => {
+      if (stateFilter !== "all" && branch.state !== stateFilter) return false;
       if (typeFilter === "client" && !branch.client) return false;
       if (typeFilter === "distributor" && !branch.distributor) return false;
       if (typeFilter === "serviceCenter" && !branch.serviceCenter) {
@@ -192,7 +206,7 @@ export function CompanyBranchesTable({
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [branches, search, typeFilter, distributors, allBranches, companies]);
+  }, [branches, search, typeFilter, stateFilter, distributors, allBranches, companies]);
 
   const pagination = usePagination(filteredBranches);
 
@@ -273,7 +287,7 @@ export function CompanyBranchesTable({
     <section className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-base font-semibold text-card-foreground">
-          Sucursales
+          Sucursales de la empresa
         </h3>
         <button
           type="button"
@@ -325,6 +339,13 @@ export function CompanyBranchesTable({
                     value: o.value,
                     label: o.label,
                   })),
+                },
+                {
+                  id: "state",
+                  label: "Estado",
+                  value: stateFilter,
+                  onChange: setStateFilter,
+                  options: stateFilterOptions,
                 },
               ]}
             />
