@@ -162,6 +162,7 @@ export function BranchesManager() {
       ...companies.map((c) => ({
         value: String(c.id),
         label: c.businessName || c.rif,
+        searchText: `${c.rif} ${c.businessName ?? ""}`,
       })),
     ],
     [companies],
@@ -541,7 +542,8 @@ export function BranchesManager() {
                   value: companyFilter,
                   onChange: setCompanyFilter,
                   options: companyFilterOptions,
-                  wide: true,
+                  searchable: true,
+                  searchPlaceholder: "Buscar empresa o RIF…",
                 },
               ]}
             />
