@@ -16,6 +16,9 @@ vi.mock("@/lib/branches-api", () => ({
 
 vi.mock("@/lib/clients-api", () => ({
   fetchClients: vi.fn(),
+  fetchClientByBranchId: vi.fn(),
+  createClient: vi.fn(),
+  updateClient: vi.fn(),
 }));
 
 vi.mock("@/lib/distributors-api", () => ({
@@ -40,7 +43,11 @@ import {
   lookupBranchByCompanyLocation,
 } from "@/lib/branches-api";
 import { syncBranchRoles } from "@/lib/branch-roles";
-import { fetchClients } from "@/lib/clients-api";
+import {
+  createClient,
+  fetchClientByBranchId,
+  fetchClients,
+} from "@/lib/clients-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
 
@@ -77,6 +84,13 @@ describe("createClientOnboarding", () => {
     vi.mocked(fetchClients).mockResolvedValue([]);
     vi.mocked(fetchDistributors).mockResolvedValue([]);
     vi.mocked(fetchServiceCenters).mockResolvedValue([]);
+    vi.mocked(fetchClientByBranchId).mockResolvedValue(null);
+    vi.mocked(createClient).mockResolvedValue({
+      id: 1,
+      branchId: 20,
+      distributorId: 5,
+      createdAt: "",
+    });
   });
 
   it("empresa nueva: crea empresa, sucursal y cliente del distribuidor", async () => {
@@ -85,8 +99,6 @@ describe("createClientOnboarding", () => {
       companyCreated: true,
     });
     vi.mocked(createBranch).mockResolvedValue(branchRow);
-    vi.mocked(syncBranchRoles).mockResolvedValue(undefined);
-
     const result = await createClientOnboarding({
       values: {
         rif: "J123456789",
@@ -104,7 +116,11 @@ describe("createClientOnboarding", () => {
     });
 
     expect(createBranch).toHaveBeenCalledOnce();
-    expect(syncBranchRoles).toHaveBeenCalled();
+    expect(createClient).toHaveBeenCalledWith({
+      branchId: 20,
+      distributorId: 5,
+    });
+    expect(syncBranchRoles).not.toHaveBeenCalled();
     expect(result.companyCreated).toBe(true);
     expect(result.branchLinkedExisting).toBe(false);
   });
@@ -121,8 +137,6 @@ describe("createClientOnboarding", () => {
       city: "Valencia",
       state: "Carabobo",
     });
-    vi.mocked(syncBranchRoles).mockResolvedValue(undefined);
-
     const result = await createClientOnboarding({
       values: {
         rif: "J315694205",
@@ -140,6 +154,10 @@ describe("createClientOnboarding", () => {
     });
 
     expect(createBranch).not.toHaveBeenCalled();
+    expect(createClient).toHaveBeenCalledWith({
+      branchId: 322,
+      distributorId: 5,
+    });
     expect(result.branch.id).toBe(322);
     expect(result.branchLinkedExisting).toBe(true);
   });

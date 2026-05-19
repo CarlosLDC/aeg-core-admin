@@ -130,18 +130,22 @@ export function ClientsManager() {
 
   const pagination = usePagination(filtered);
 
-  async function handleCreate(values: ClientOnboardingValues) {
+  async function handleCreate(
+    values: ClientOnboardingValues,
+    options?: { autoRetry?: boolean },
+  ) {
     if (distributorId == null) {
       setFormError("Tu usuario no tiene una distribuidora vinculada.");
       return;
     }
     setSaving(true);
     setFormError(null);
+    const branchIdForRetry = resumeBranchId;
     try {
       const result = await createClientOnboarding({
         values,
         companies,
-        resumeBranchId,
+        resumeBranchId: branchIdForRetry,
         roles: distributorClientRoles(distributorId),
       });
       const linkedParts = [
@@ -168,7 +172,22 @@ export function ClientsManager() {
       if (resumeId != null) {
         setResumeBranchId(resumeId);
       }
-      setFormError(getCatalogErrorMessage(err));
+      const message = getCatalogErrorMessage(err);
+      const shouldAutoRetry =
+        !options?.autoRetry &&
+        resumeId != null &&
+        (message.includes("vinculo") ||
+          message.includes("vínculo") ||
+          message.includes("Registrar"));
+      if (shouldAutoRetry) {
+        setSaving(false);
+        return handleCreate(values, { autoRetry: true });
+      }
+      setFormError(
+        resumeId != null
+          ? `${message} Pulsa «Registrar» otra vez para completar el vínculo.`
+          : message,
+      );
     } finally {
       setSaving(false);
     }

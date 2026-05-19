@@ -10,6 +10,19 @@ export async function fetchClients(): Promise<ClientResponse[]> {
   return apiFetch<ClientResponse[]>(BASE);
 }
 
+export async function fetchClientByBranchId(
+  branchId: number,
+): Promise<ClientResponse | null> {
+  try {
+    return await apiFetch<ClientResponse>(`${BASE}/by-branch/${branchId}`);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function createClient(body: ClientRequest): Promise<ClientResponse> {
   return apiFetch<ClientResponse>(BASE, {
     method: "POST",

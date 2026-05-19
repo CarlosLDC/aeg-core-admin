@@ -29,12 +29,12 @@ describe("messageFromUnknownError", () => {
     );
   });
 
-  it("maps binding property null to branch already registered", () => {
+  it("maps binding property null to incomplete client link", () => {
     expect(
       messageFromUnknownError(
         new ApiError("Binding property is null", 409),
       ),
-    ).toMatch(/sucursal ya está registrada/i);
+    ).toMatch(/completar el vínculo/i);
   });
 
   it("maps branch scope errors to Spanish", () => {

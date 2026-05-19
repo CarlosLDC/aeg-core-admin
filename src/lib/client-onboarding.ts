@@ -1,5 +1,9 @@
 import { mergeBranchesWithRoles, syncBranchRoles } from "@/lib/branch-roles";
 import {
+  isDistributorClientOnlyRoles,
+  linkDistributorClientToBranch,
+} from "@/lib/client-link";
+import {
   createBranch,
   fetchBranchById,
   lookupBranchByCompanyLocation,
@@ -161,8 +165,12 @@ export async function createClientOnboarding(
   }
 
   try {
-    const previous = await loadBranchWithRoles(created.id);
-    await syncBranchRoles(created.id, previous, roles);
+    if (isDistributorClientOnlyRoles(roles)) {
+      await linkDistributorClientToBranch(created.id, roles);
+    } else {
+      const previous = await loadBranchWithRoles(created.id);
+      await syncBranchRoles(created.id, previous, roles);
+    }
   } catch (roleError) {
     const err = new Error(
       roleError instanceof Error
