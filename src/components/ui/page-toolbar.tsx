@@ -17,21 +17,24 @@ export function PageToolbar({
   actions,
   className,
 }: PageToolbarProps) {
-  if (!description && !actions) return null;
+  const hasDescription = description != null && description !== false;
+  const hasActions = actions != null && actions !== false;
+
+  if (!hasDescription && !hasActions) return null;
 
   return (
     <div
       className={cn(
         "flex flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:gap-4",
-        !description && actions && "md:justify-end",
-        description && actions && "md:justify-between",
+        !hasDescription && hasActions && "md:justify-end",
+        hasDescription && hasActions && "md:justify-between",
         className,
       )}
     >
-      {description ? (
+      {hasDescription ? (
         <p className="min-w-0 flex-1 text-sm text-muted">{description}</p>
       ) : null}
-      {actions ? (
+      {hasActions ? (
         <div className="flex w-full shrink-0 flex-col gap-2 max-md:w-full md:w-auto md:flex-row md:flex-nowrap">
           {actions}
         </div>
