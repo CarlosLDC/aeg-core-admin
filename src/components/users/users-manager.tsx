@@ -29,6 +29,7 @@ import type { UserResponse } from "@/types/user";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import { ROLE_LABELS } from "@/lib/roles";
 import { ROLES } from "@/types/user";
@@ -62,6 +63,7 @@ function sortBranches(
 
 export function UsersManager() {
   const toast = useToast();
+  const confirm = useConfirm();
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [branches, setBranches] = useState<BranchResponse[]>([]);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
@@ -220,11 +222,7 @@ export function UsersManager() {
   }
 
   async function handleDelete(user: UserResponse, fromDialog = false) {
-    if (
-      !window.confirm(
-        `¿Eliminar al usuario "${user.username}"? Esta acción no se puede deshacer.`,
-      )
-    ) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar al usuario "${user.username}"? Esta acción no se puede deshacer.`, destructive: true }))) {
       return;
     }
     setDeletingId(user.id);

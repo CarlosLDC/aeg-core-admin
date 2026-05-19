@@ -8,6 +8,7 @@ import { ResourceViewActions } from "@/components/resource-view/resource-view-ac
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import { useFieldOperationsCatalog } from "@/hooks/use-field-operations-catalog";
 import {
   canDeleteAnnualInspectionRecord,
@@ -38,6 +39,7 @@ export function AnnualInspectionView() {
   const id = useResourceId();
   const router = useRouter();
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const catalog = useFieldOperationsCatalog();
   const canModify = user ? canModifyAnnualInspectionRecord(user.role) : false;
@@ -127,7 +129,7 @@ export function AnnualInspectionView() {
       toast.error(forbiddenMessage("delete", "annualInspections"));
       return;
     }
-    if (!window.confirm(`¿Eliminar la inspección #${inspection.id}?`)) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la inspección #${inspection.id}?`, destructive: true }))) {
       return;
     }
 

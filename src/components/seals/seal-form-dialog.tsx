@@ -3,6 +3,8 @@
 import { FormEvent, useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
+import { zodFieldErrors } from "@/lib/form-zod";
+import { sealFormSchema } from "@/lib/schemas/seal-form-schema";
 import {
   emptySealForm,
   SEAL_COLOR_LABELS,
@@ -48,6 +50,9 @@ export function SealFormDialog({
   deleting = false,
 }: SealFormDialogProps) {
   const [form, setForm] = useState<SealFormValues>(emptySealForm());
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<keyof SealFormValues, string>>
+  >({});
 
   useEffect(() => {
     if (!open) return;
@@ -56,12 +61,21 @@ export function SealFormDialog({
     } else {
       setForm(emptySealForm());
     }
+    setFieldErrors({});
   }, [open, mode, seal]);
 
   if (!open) return null;
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    const parsed = sealFormSchema.safeParse(form);
+    const errors = zodFieldErrors(parsed);
+    if (errors) {
+      setFieldErrors(errors);
+      return;
+    }
+    if (!parsed.success) return;
+    setFieldErrors({});
     onSubmit(form);
   }
 
@@ -123,6 +137,11 @@ export function SealFormDialog({
               className={cn(inputClass, "font-mono")}
               placeholder="SN-001"
             />
+            {fieldErrors.serial ? (
+              <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
+                {fieldErrors.serial}
+              </span>
+            ) : null}
           </label>
 
           <div className="block">

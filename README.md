@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AEG Core Admin
 
-## Getting Started
+Panel de administración web para **Alpha Engineer Group**: gestión de impresoras fiscales, precintos, empresas, sucursales, contratos y usuarios. Consume el API Java (Spring) con control de acceso por roles (RBAC).
 
-First, run the development server:
+## Requisitos
+
+- Node.js 20+
+- npm 10+
+- Backend [AEG Core API](https://github.com/) en ejecución (Spring), o URL del entorno desplegado
+
+## Inicio rápido
 
 ```bash
+cp .env.example .env.local
+# Edita NEXT_PUBLIC_API_URL con la URL de tu API
+
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000) e inicia sesión con un usuario del backend.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de producción |
+| `npm run start` | Servidor de producción |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | Verificación TypeScript (`tsc --noEmit`) |
+| `npm run test` | Tests unitarios (Vitest) |
+| `npm run test:coverage` | Tests con cobertura |
+| `npm run test:e2e` | E2E Playwright (requiere credenciales) |
 
-## Learn More
+## Variables de entorno
 
-To learn more about Next.js, take a look at the following resources:
+Copia `.env.example` a `.env.local`. Las principales:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable | Uso |
+|----------|-----|
+| `NEXT_PUBLIC_API_URL` | URL base del API Java en desarrollo |
+| `API_UPSTREAM_URL` | Upstream para proxy `/api/*` en Vercel (servidor) |
+| `NEXT_PUBLIC_USE_API_PROXY` | `true` para rutas relativas `/api` (producción Vercel) |
+| `GEMINI_API_KEY` | Extracción de datos SENIAT (solo servidor) |
+| `BLOB_READ_WRITE_TOKEN` | Subida de documentos en Vercel Blob |
+| `NEXT_PUBLIC_SENTRY_DSN` | Errores en producción (opcional) |
+| `E2E_USER` / `E2E_PASSWORD` | Credenciales para tests E2E |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+En Vercel, el proxy same-origin evita CORS: las peticiones van a `/api/...` y Next reescribe al backend.
 
-## Deploy on Vercel
+## Arquitectura
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Next.js 16** App Router, React 19, TypeScript estricto
+- **`src/lib/api.ts`**: cliente HTTP con JWT y mensajes en español
+- **`src/lib/permissions/`**: matriz RBAC, `can()`, rutas protegidas
+- **Managers**: listados con filtros, paginación y diálogos por dominio
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Documentación interna:
+
+- [Matriz de permisos](docs/permissions-matrix.md)
+- [Contrato RBAC backend](docs/backend-rbac.md)
+
+## Despliegue
+
+Despliegue habitual en **Vercel**. Configura `API_UPSTREAM_URL` o `NEXT_PUBLIC_API_URL` y los secretos de Gemini/Blob según las funciones usadas.
+
+## CI
+
+Cada PR ejecuta lint, typecheck, tests y build (ver `.github/workflows/ci.yml`).

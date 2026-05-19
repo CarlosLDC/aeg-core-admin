@@ -35,7 +35,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light) {
     --background: #020617;
     --foreground: #f1f5f9;
     --sidebar: #000000;
@@ -51,6 +51,35 @@
     --login-panel: #0f172a;
     --login-field: #1e293b;
   }
+}
+
+html.dark {
+  --background: #020617;
+  --foreground: #f1f5f9;
+  --sidebar: #000000;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-muted: #64748b;
+  --card: #0f172a;
+  --card-foreground: #f1f5f9;
+  --border: #1e293b;
+  --accent: #3366ff;
+  --accent-foreground: #ffffff;
+  --muted: #94a3b8;
+  --ring: #3366ff;
+  --login-panel: #0f172a;
+  --login-field: #1e293b;
+}
+
+html.light {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --border: #e2e8f0;
+  --accent: #0033ff;
+  --muted: #64748b;
+  --login-panel: #f0f3f7;
+  --login-field: #f7f9fc;
 }
 
 html {

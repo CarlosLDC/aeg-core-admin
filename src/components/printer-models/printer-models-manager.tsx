@@ -7,6 +7,7 @@ import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import {
   canCreatePrinterModelRecord,
   canDeletePrinterModelRecord,
@@ -40,6 +41,7 @@ function modelLabel(model: PrinterModelResponse) {
 
 export function PrinterModelsManager() {
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const canCreate = user ? canCreatePrinterModelRecord(user.role) : false;
   const canModify = user ? canManagePrinterModels(user.role) : false;
@@ -166,11 +168,7 @@ export function PrinterModelsManager() {
       return;
     }
     const label = modelLabel(model);
-    if (
-      !window.confirm(
-        `¿Eliminar el modelo "${label}"? Las impresoras vinculadas pueden verse afectadas.`,
-      )
-    ) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el modelo "${label}"? Las impresoras vinculadas pueden verse afectadas.`, destructive: true }))) {
       return;
     }
     setDeletingId(model.id);

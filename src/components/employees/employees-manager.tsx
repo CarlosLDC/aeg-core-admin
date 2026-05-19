@@ -9,6 +9,7 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import {
   canAssignEmployeeRoles,
@@ -59,6 +60,7 @@ function employeeLabel(employee: EmployeeWithRoles) {
 
 export function EmployeesManager() {
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const {
     scope,
@@ -315,11 +317,7 @@ export function EmployeesManager() {
       return;
     }
     const label = employeeLabel(employee);
-    if (
-      !window.confirm(
-        `¿Eliminar al empleado "${label}"? Puede afectar técnicos o inspecciones vinculadas.`,
-      )
-    ) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar al empleado "${label}"? Puede afectar técnicos o inspecciones vinculadas.`, destructive: true }))) {
       return;
     }
     setDeletingId(employee.id);

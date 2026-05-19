@@ -16,6 +16,7 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import {
   canCreateSealRecord,
   canDeleteSealRecord,
@@ -54,6 +55,7 @@ import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 export function SealsManager() {
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const { scope } = useCompanyScope();
   const canCreate = user ? canCreateSealRecord(user.role) : false;
@@ -267,11 +269,7 @@ export function SealsManager() {
       return;
     }
 
-    if (
-      !window.confirm(
-        `¿Crear ${serials.length} precinto${serials.length === 1 ? "" : "s"} con seriales del rango indicado?`,
-      )
-    ) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Crear ${serials.length} precinto${serials.length === 1 ? "" : "s"} con seriales del rango indicado?`, destructive: true }))) {
       return;
     }
 
@@ -369,9 +367,7 @@ export function SealsManager() {
       toast.error(forbiddenMessage("delete", "seals"));
       return;
     }
-    if (
-      !window.confirm(`¿Eliminar el precinto con serial ${seal.serial}?`)
-    ) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el precinto con serial ${seal.serial}?`, destructive: true }))) {
       return;
     }
     setDeletingId(seal.id);

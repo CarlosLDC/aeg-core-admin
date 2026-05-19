@@ -8,6 +8,7 @@ import { ResourceViewActions } from "@/components/resource-view/resource-view-ac
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import { useFieldOperationsCatalog } from "@/hooks/use-field-operations-catalog";
 import {
   canDeleteTechnicalServiceRecord,
@@ -34,6 +35,7 @@ export function TechnicalServiceView() {
   const id = useResourceId();
   const router = useRouter();
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const catalog = useFieldOperationsCatalog();
   const canModify = user ? canModifyTechnicalServiceRecord(user.role) : false;
@@ -121,7 +123,7 @@ export function TechnicalServiceView() {
       toast.error(forbiddenMessage("delete", "technicalServices"));
       return;
     }
-    if (!window.confirm(`¿Eliminar el servicio técnico #${service.id}?`)) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el servicio técnico #${service.id}?`, destructive: true }))) {
       return;
     }
 

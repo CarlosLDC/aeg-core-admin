@@ -1,6 +1,7 @@
 "use client";
 
 import { LogOut, Menu } from "lucide-react";
+import { ThemeToggle } from "@/components/admin/theme-toggle";
 import { useAuth } from "@/context/auth-provider";
 import { ROLE_LABELS } from "@/lib/roles";
 import { NotificationsBell } from "@/components/admin/notifications-bell";
@@ -38,6 +39,7 @@ export function Header({ title, description, onMenuClick }: HeaderProps) {
         </div>
 
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <ThemeToggle />
           <NotificationsBell />
 
           <div className="flex items-center gap-1 rounded-lg border border-border bg-card py-1 pl-1 pr-1 sm:gap-2 sm:py-1.5 sm:pl-1.5 sm:pr-2">

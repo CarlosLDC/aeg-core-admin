@@ -12,6 +12,7 @@ import { ResourceViewShell } from "@/components/resource-view/resource-view-shel
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
   canDeletePrinterRecord,
@@ -63,6 +64,7 @@ export function PrinterView() {
   const id = useResourceId();
   const router = useRouter();
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const { scope } = useCompanyScope();
   const canModify = user ? canModifyPrinterRecord(user.role) : false;
@@ -262,11 +264,7 @@ export function PrinterView() {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
-    if (
-      !window.confirm(
-        `¿Eliminar la impresora con serial ${printer.fiscalSerial}?`,
-      )
-    ) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la impresora con serial ${printer.fiscalSerial}?`, destructive: true }))) {
       return;
     }
 

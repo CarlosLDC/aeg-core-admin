@@ -12,6 +12,7 @@ import { ResourceViewActions } from "@/components/resource-view/resource-view-ac
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
 import { branchLabelById } from "@/lib/branches";
 import { fetchBranches } from "@/lib/branches-api";
@@ -40,6 +41,7 @@ export function UserView() {
   const id = useResourceId();
   const router = useRouter();
   const toast = useToast();
+  const confirm = useConfirm();
   const { scope } = useCompanyScope();
 
   const [user, setUser] = useState<UserResponse | null>(null);
@@ -149,11 +151,7 @@ export function UserView() {
 
   async function handleDelete() {
     if (!user) return;
-    if (
-      !window.confirm(
-        `¿Eliminar al usuario "${user.username}"? Esta acción no se puede deshacer.`,
-      )
-    ) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar al usuario "${user.username}"? Esta acción no se puede deshacer.`, destructive: true }))) {
       return;
     }
 

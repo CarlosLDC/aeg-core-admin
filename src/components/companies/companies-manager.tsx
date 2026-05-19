@@ -8,6 +8,13 @@ import {
   type CompanyFormValues,
 } from "@/components/companies/company-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
+import {
+  PageToolbar,
+  pageToolbarButtonClass,
+} from "@/components/ui/page-toolbar";
+import { useConfirm } from "@/context/confirm-provider";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
@@ -34,6 +41,7 @@ import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
 export function CompaniesManager() {
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const { scope, loading: scopeLoading, error: scopeError, refresh } =
     useCompanyScope();
@@ -136,11 +144,7 @@ export function CompaniesManager() {
 
   async function handleDelete(company: CompanyResponse, fromDialog = false) {
     const label = company.businessName || company.rif;
-    if (
-      !window.confirm(
-        `¿Eliminar "${label}"? Las sucursales vinculadas pueden verse afectadas.`,
-      )
-    ) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar "${label}"? Las sucursales vinculadas pueden verse afectadas.`, destructive: true }))) {
       return;
     }
     setDeletingId(company.id);
@@ -162,8 +166,9 @@ export function CompaniesManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:justify-between md:gap-4">
-        <p className="min-w-0 flex-1 text-sm text-muted">
+      <PageToolbar
+        description={
+          <>
           {isDistributor ? (
             <>
               Ves las empresas de tu distribuidora. Puedes registrar nuevas;
@@ -176,13 +181,18 @@ export function CompaniesManager() {
               editar o eliminar.
             </>
           )}
-        </p>
-        <div className="flex w-full shrink-0 flex-col gap-2 max-md:w-full md:w-auto md:flex-row md:flex-nowrap">
+          </>
+        }
+        actions={
+          <>
           <button
             type="button"
             onClick={reload}
             disabled={loading}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card md:w-auto px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+            className={cn(
+              pageToolbarButtonClass,
+              "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
+            )}
           >
             <RefreshCw className={cn("size-4", loading && "animate-spin")} />
             Actualizar
@@ -191,22 +201,21 @@ export function CompaniesManager() {
             <button
               type="button"
               onClick={openCreate}
-              className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground"
+              className={cn(
+                pageToolbarButtonClass,
+                "bg-accent text-accent-foreground",
+              )}
             >
               <Plus className="size-4" />
               Nueva empresa
             </button>
           )}
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {listError && (
-        <p
-          role="alert"
-          className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300"
-        >
-          {listError}
-        </p>
+        <ErrorState message={listError} onRetry={reload} retrying={loading} />
       )}
 
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
@@ -216,11 +225,30 @@ export function CompaniesManager() {
             Cargando empresas…
           </div>
         ) : companies.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted">
-            {isDistributor
-              ? "No hay empresas de clientes visibles para tu distribuidor."
-              : "No hay empresas registradas."}
-          </p>
+          <EmptyState
+            title={
+              isDistributor
+                ? "No hay empresas de clientes visibles"
+                : "No hay empresas registradas"
+            }
+            description={
+              isDistributor
+                ? "Cuando existan empresas asociadas a tu distribuidor aparecerán aquí."
+                : "Crea la primera empresa para comenzar."
+            }
+            action={
+              canCreate ? (
+                <button
+                  type="button"
+                  onClick={openCreate}
+                  className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground"
+                >
+                  <Plus className="size-4" />
+                  Crear primera empresa
+                </button>
+              ) : undefined
+            }
+          />
         ) : (
           <>
             <DataTableToolbar

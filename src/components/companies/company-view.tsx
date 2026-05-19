@@ -13,6 +13,7 @@ import { ResourceViewShell } from "@/components/resource-view/resource-view-shel
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
   canDeleteCompanyRecord,
@@ -34,6 +35,7 @@ export function CompanyView() {
   const id = useResourceId();
   const router = useRouter();
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const { scope, refresh } = useCompanyScope();
   const canModify = user ? canUpdateCompanyRecord(user.role) : false;
@@ -107,11 +109,7 @@ export function CompanyView() {
       return;
     }
     const label = company.businessName || company.rif;
-    if (
-      !window.confirm(
-        `¿Eliminar "${label}"? Las sucursales vinculadas pueden verse afectadas.`,
-      )
-    ) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar "${label}"? Las sucursales vinculadas pueden verse afectadas.`, destructive: true }))) {
       return;
     }
 

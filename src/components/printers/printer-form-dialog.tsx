@@ -17,6 +17,8 @@ import {
 } from "@/lib/printer-form";
 import type { PrinterResponse } from "@/types/printer";
 import { DEVICE_TYPES, PRINTER_STATUSES } from "@/types/printer";
+import { zodFieldErrors } from "@/lib/form-zod";
+import { printerFormSchema } from "@/lib/schemas/printer-form-schema";
 import { cn } from "@/lib/utils";
 
 export type SelectOption = { id: number; label: string };
@@ -71,6 +73,9 @@ export function PrinterFormDialog({
   deleting = false,
 }: PrinterFormDialogProps) {
   const [form, setForm] = useState<PrinterFormValues>(emptyPrinterForm());
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<keyof PrinterFormValues, string>>
+  >({});
 
   useEffect(() => {
     if (!open) return;
@@ -92,6 +97,7 @@ export function PrinterFormDialog({
         }),
       );
     }
+    setFieldErrors({});
   }, [open, mode, printer, lockDistributor, defaultDistributorId]);
 
   const distributorSearchOptions = useMemo(
@@ -111,6 +117,14 @@ export function PrinterFormDialog({
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    const parsed = printerFormSchema.safeParse(form);
+    const errors = zodFieldErrors(parsed);
+    if (errors) {
+      setFieldErrors(errors);
+      return;
+    }
+    if (!parsed.success) return;
+    setFieldErrors({});
     onSubmit(form);
   }
 
@@ -223,6 +237,11 @@ export function PrinterFormDialog({
               className={cn(inputClass, "font-mono uppercase")}
               placeholder="ABC1234567"
             />
+            {fieldErrors.fiscalSerial ? (
+              <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
+                {fieldErrors.fiscalSerial}
+              </span>
+            ) : null}
           </label>
 
           <div className="grid gap-4 sm:grid-cols-2">

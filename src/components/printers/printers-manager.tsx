@@ -22,6 +22,7 @@ import {
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import { distributorLabel } from "@/lib/branch-roles";
 import { formatBranchShort } from "@/lib/branches";
@@ -72,6 +73,7 @@ function clientLabel(
 
 export function PrintersManager() {
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const { scope } = useCompanyScope();
   const canCreate = user ? canCreatePrinterRecord(user.role) : false;
@@ -329,11 +331,7 @@ export function PrintersManager() {
       return;
     }
 
-    if (
-      !window.confirm(
-        `¿Crear ${serials.length} impresora${serials.length === 1 ? "" : "s"} con seriales del rango indicado?`,
-      )
-    ) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Crear ${serials.length} impresora${serials.length === 1 ? "" : "s"} con seriales del rango indicado?`, destructive: true }))) {
       return;
     }
 
@@ -438,11 +436,7 @@ export function PrintersManager() {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
-    if (
-      !window.confirm(
-        `¿Eliminar la impresora con serial ${printer.fiscalSerial}?`,
-      )
-    ) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la impresora con serial ${printer.fiscalSerial}?`, destructive: true }))) {
       return;
     }
     setDeletingId(printer.id);

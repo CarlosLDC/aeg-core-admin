@@ -8,6 +8,7 @@ import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import {
   canCreateContractRecord,
   canDeleteContractRecord,
@@ -82,6 +83,7 @@ export function ContractsListPanel({
   getPartyLabel,
 }: ContractsListPanelProps) {
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const canCreate = user ? canCreateContractRecord(user.role) : false;
   const canModify = user ? canManageContracts(user.role) : false;
@@ -242,11 +244,7 @@ export function ContractsListPanel({
       return;
     }
     const label = getPartyLabel(contract);
-    if (
-      !window.confirm(
-        `¿Eliminar el contrato #${contract.id} (${label})? Esta acción no se puede deshacer.`,
-      )
-    ) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el contrato #${contract.id} (${label})? Esta acción no se puede deshacer.`, destructive: true }))) {
       return;
     }
     setDeletingId(contract.id);

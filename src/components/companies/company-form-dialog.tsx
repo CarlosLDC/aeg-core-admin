@@ -9,9 +9,9 @@ import {
   type ContributorType,
 } from "@/types/company";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
+import { zodFieldErrors } from "@/lib/form-zod";
+import { companyFormSchema } from "@/lib/schemas/company-form-schema";
 import { cn } from "@/lib/utils";
-
-const RIF_PATTERN = /^[VEJPG][0-9]{7,9}$/;
 
 export type CompanyFormValues = {
   businessName: string;
@@ -49,7 +49,9 @@ export function CompanyFormDialog({
   deleting = false,
 }: CompanyFormDialogProps) {
   const [form, setForm] = useState<CompanyFormValues>(emptyForm);
-  const [rifError, setRifError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<keyof CompanyFormValues, string>>
+  >({});
 
   useEffect(() => {
     if (!open) return;
@@ -62,20 +64,26 @@ export function CompanyFormDialog({
     } else {
       setForm(emptyForm);
     }
-    setRifError(null);
+    setFieldErrors({});
   }, [open, mode, company]);
 
   if (!open) return null;
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const rif = form.rif.trim().toUpperCase();
-    if (!RIF_PATTERN.test(rif)) {
-      setRifError("Formato: letra V, E, J, P o G seguida de 7 a 9 dígitos.");
+    const parsed = companyFormSchema.safeParse({
+      ...form,
+      businessName: form.businessName.trim(),
+      rif: form.rif.trim(),
+    });
+    const errors = zodFieldErrors(parsed);
+    if (errors) {
+      setFieldErrors(errors);
       return;
     }
-    setRifError(null);
-    onSubmit({ ...form, businessName: form.businessName.trim(), rif });
+    if (!parsed.success) return;
+    setFieldErrors({});
+    onSubmit(parsed.data);
   }
 
   return (
@@ -109,12 +117,12 @@ export function CompanyFormDialog({
           </button>
         </div>
 
-        {(error || rifError) && (
+        {error && (
           <p
             role="alert"
             className="mb-4 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
           >
-            {rifError ?? error}
+            {error}
           </p>
         )}
 
@@ -132,6 +140,11 @@ export function CompanyFormDialog({
               }
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20"
             />
+            {fieldErrors.businessName ? (
+              <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
+                {fieldErrors.businessName}
+              </span>
+            ) : null}
           </label>
 
           <label className="block">
@@ -146,6 +159,11 @@ export function CompanyFormDialog({
               placeholder="J123456789"
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm uppercase outline-none focus:border-accent focus:ring-2 focus:ring-ring/20"
             />
+            {fieldErrors.rif ? (
+              <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
+                {fieldErrors.rif}
+              </span>
+            ) : null}
           </label>
 
           <label className="block">

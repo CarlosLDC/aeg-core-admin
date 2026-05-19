@@ -9,6 +9,7 @@ import { ResourceViewShell } from "@/components/resource-view/resource-view-shel
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
 import { useFieldOperationsCatalog } from "@/hooks/use-field-operations-catalog";
 import {
@@ -45,6 +46,7 @@ export function SealView() {
   const id = useResourceId();
   const router = useRouter();
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const { scope } = useCompanyScope();
   const catalog = useFieldOperationsCatalog();
@@ -199,7 +201,7 @@ export function SealView() {
       toast.error(forbiddenMessage("delete", "seals"));
       return;
     }
-    if (!window.confirm(`¿Eliminar el precinto con serial ${seal.serial}?`)) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el precinto con serial ${seal.serial}?`, destructive: true }))) {
       return;
     }
 

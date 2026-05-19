@@ -10,6 +10,7 @@ import { ViewResourceLink } from "@/components/ui/view-resource-link";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import {
   canCreateTechnicalServiceRecord,
   canDeleteTechnicalServiceRecord,
@@ -37,6 +38,7 @@ import { TableScroll } from "@/components/ui/table-scroll";
 
 export function TechnicalServicesManager() {
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const canCreate = user ? canCreateTechnicalServiceRecord(user.role) : false;
   const canModify = user ? canModifyTechnicalServiceRecord(user.role) : false;
@@ -165,7 +167,7 @@ export function TechnicalServicesManager() {
       toast.error(forbiddenMessage("delete", "technicalServices"));
       return;
     }
-    if (!window.confirm(`¿Eliminar el servicio técnico #${row.id}?`)) return;
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el servicio técnico #${row.id}?`, destructive: true }))) return;
     setDeletingId(row.id);
     try {
       await deleteTechnicalService(row.id);

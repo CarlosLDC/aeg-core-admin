@@ -10,6 +10,7 @@ import { ViewResourceLink } from "@/components/ui/view-resource-link";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import {
   canCreateAnnualInspectionRecord,
   canDeleteAnnualInspectionRecord,
@@ -37,6 +38,7 @@ import { TableScroll } from "@/components/ui/table-scroll";
 
 export function AnnualInspectionsManager() {
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const canCreate = user ? canCreateAnnualInspectionRecord(user.role) : false;
   const canModify = user ? canModifyAnnualInspectionRecord(user.role) : false;
@@ -175,7 +177,7 @@ export function AnnualInspectionsManager() {
       toast.error(forbiddenMessage("delete", "annualInspections"));
       return;
     }
-    if (!window.confirm(`¿Eliminar la inspección #${row.id}?`)) return;
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la inspección #${row.id}?`, destructive: true }))) return;
     setDeletingId(row.id);
     try {
       await deleteAnnualInspection(row.id);

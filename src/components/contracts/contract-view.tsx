@@ -10,6 +10,7 @@ import { ResourceViewShell } from "@/components/resource-view/resource-view-shel
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import {
   canDeleteContractRecord,
   canManageContracts,
@@ -69,6 +70,7 @@ export function ContractView({ kind }: ContractViewProps) {
   const id = useResourceId();
   const router = useRouter();
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const { scope } = useCompanyScope();
   const canModify = user ? canManageContracts(user.role) : false;
@@ -225,11 +227,7 @@ export function ContractView({ kind }: ContractViewProps) {
       toast.error(forbiddenMessage("delete", "contracts"));
       return;
     }
-    if (
-      !window.confirm(
-        `¿Eliminar el contrato #${contract.id} (${partyLabel})? Esta acción no se puede deshacer.`,
-      )
-    ) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el contrato #${contract.id} (${partyLabel})? Esta acción no se puede deshacer.`, destructive: true }))) {
       return;
     }
 

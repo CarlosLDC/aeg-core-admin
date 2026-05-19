@@ -8,6 +8,7 @@ import { ResourceViewActions } from "@/components/resource-view/resource-view-ac
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
   canDeletePrinterModelRecord,
@@ -32,6 +33,7 @@ export function PrinterModelView() {
   const id = useResourceId();
   const router = useRouter();
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const canModify = user ? canManagePrinterModels(user.role) : false;
   const canDelete = user ? canDeletePrinterModelRecord(user.role) : false;
@@ -107,11 +109,7 @@ export function PrinterModelView() {
       return;
     }
     const label = `${model.brand} ${model.modelCode}`;
-    if (
-      !window.confirm(
-        `¿Eliminar el modelo "${label}"? Las impresoras vinculadas pueden verse afectadas.`,
-      )
-    ) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el modelo "${label}"? Las impresoras vinculadas pueden verse afectadas.`, destructive: true }))) {
       return;
     }
 

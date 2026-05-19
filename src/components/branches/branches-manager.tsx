@@ -23,6 +23,7 @@ import {
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { canBrowseOtherCompanies } from "@/lib/company-scope";
 import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import {
   deleteBranchRoles,
@@ -108,6 +109,7 @@ function clientDistributorSummary(
 
 export function BranchesManager() {
   const toast = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const canCreate = user ? canCreateBranchRecord(user.role) : false;
   const canModify = user ? canUpdateBranchRecord(user.role) : false;
@@ -409,11 +411,7 @@ export function BranchesManager() {
       return;
     }
     const label = branchSummary(branch, companies);
-    if (
-      !window.confirm(
-        `¿Eliminar la sucursal "${label}"? Se quitarán también sus roles (cliente, distribuidor, centro de servicio) si existen.`,
-      )
-    ) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la sucursal "${label}"? Se quitarán también sus roles (cliente, distribuidor, centro de servicio) si existen.`, destructive: true }))) {
       return;
     }
     setDeletingId(branch.id);
