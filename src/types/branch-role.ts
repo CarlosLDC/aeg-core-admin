@@ -13,6 +13,12 @@ export type ClientResponse = {
   branchId: number;
   distributorId?: number;
   createdAt: string;
+  branchCity?: string | null;
+  branchState?: string | null;
+  companyBusinessName?: string | null;
+  companyRif?: string | null;
+  branchPhone?: string | null;
+  branchEmail?: string | null;
 };
 
 export type ClientRequest = {

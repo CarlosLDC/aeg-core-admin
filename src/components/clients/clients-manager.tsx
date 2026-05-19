@@ -26,13 +26,13 @@ import {
 import { fetchAuthMe } from "@/lib/auth-me-api";
 import { mergeBranchesWithRoles } from "@/lib/branch-roles";
 import { fetchBranchById, fetchBranches } from "@/lib/branches-api";
-import { companyNameById, companySearchTextById } from "@/lib/branches";
+import { companyNameById } from "@/lib/branches";
 import {
   createClientOnboarding,
   distributorClientRoles,
   type ClientOnboardingValues,
 } from "@/lib/client-onboarding";
-import { fetchClients } from "@/lib/clients-api";
+import { fetchClientByBranchId, fetchClients } from "@/lib/clients-api";
 import { getCatalogErrorMessage } from "@/lib/api-error-message";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
@@ -44,6 +44,57 @@ import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TruncatedText } from "@/components/ui/truncated-text";
+type ClientListRow = {
+  key: number;
+  client: ClientResponse;
+  branch?: BranchWithRoles;
+  businessName: string;
+  rif: string;
+  city: string;
+  state: string;
+  phone: string;
+  email: string;
+  createdAt: string;
+};
+
+function buildClientListRows(
+  clients: ClientResponse[],
+  distributorId: number,
+  branches: BranchWithRoles[],
+  companies: CompanyResponse[],
+): ClientListRow[] {
+  const branchById = new Map(branches.map((b) => [b.id, b]));
+  return clients
+    .filter((c) => c.distributorId === distributorId)
+    .map((client) => {
+      const branch = branchById.get(client.branchId);
+      const companyFromScope =
+        branch != null
+          ? companies.find((c) => c.id === branch.companyId)
+          : undefined;
+      return {
+        key: client.id,
+        client,
+        branch,
+        businessName:
+          client.companyBusinessName?.trim() ||
+          companyFromScope?.businessName ||
+          (branch != null
+            ? companyNameById(companies, branch.companyId)
+            : "—"),
+        rif:
+          client.companyRif?.trim() ||
+          companyFromScope?.rif ||
+          "—",
+        city: client.branchCity?.trim() || branch?.city || "—",
+        state: client.branchState?.trim() || branch?.state || "—",
+        phone: client.branchPhone?.trim() || branch?.phone || "—",
+        email: client.branchEmail?.trim() || branch?.email || "—",
+        createdAt: branch?.createdAt ?? client.createdAt,
+      };
+    })
+    .sort((a, b) => a.businessName.localeCompare(b.businessName, "es"));
+}
 
 export function ClientsManager() {
   const toast = useToast();
@@ -183,69 +234,62 @@ export function ClientsManager() {
     if (scopeError) setListError((prev) => prev ?? scopeError);
   }, [scopeError]);
 
-  const clientBranches = useMemo(() => {
+  const clientListRows = useMemo(() => {
     if (distributorId == null) return [];
-    const branchById = new Map(branches.map((b) => [b.id, b]));
-    const matched = clients.filter((c) => c.distributorId === distributorId);
-    const rows = matched
-      .map((c) => branchById.get(c.branchId))
-      .filter((b): b is BranchWithRoles => b != null);
+    const rows = buildClientListRows(clients, distributorId, branches, companies);
     // #region agent log
-    if (matched.length !== rows.length) {
-      fetch("http://127.0.0.1:7781/ingest/0c54bab8-f62a-45dc-8c96-475b3dbd518d", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "f91276",
+    const matched = clients.filter((c) => c.distributorId === distributorId);
+    fetch("http://127.0.0.1:7781/ingest/0c54bab8-f62a-45dc-8c96-475b3dbd518d", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "f91276",
+      },
+      body: JSON.stringify({
+        sessionId: "f91276",
+        location: "clients-manager.tsx:clientListRows",
+        message: "client list built",
+        data: {
+          distributorId,
+          apiClients: matched.length,
+          visibleRows: rows.length,
+          enrichedFromApi: matched.filter((c) => c.companyBusinessName).length,
         },
-        body: JSON.stringify({
-          sessionId: "f91276",
-          location: "clients-manager.tsx:clientBranches",
-          message: "clients missing branch in map",
-          data: {
-            distributorId,
-            matchedClients: matched.length,
-            visibleRows: rows.length,
-            missingBranchIds: matched
-              .filter((c) => !branchById.has(c.branchId))
-              .map((c) => c.branchId),
-          },
-          hypothesisId: "H4",
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-    }
+        hypothesisId: "H4",
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
     // #endregion
     return rows;
-  }, [clients, branches, distributorId]);
+  }, [clients, branches, companies, distributorId]);
 
   const stateFilterOptions = useMemo(
     () => [
       filterAllOption("Todos los estados"),
-      ...uniqueFilterOptions(clientBranches.map((b) => b.state)),
+      ...uniqueFilterOptions(clientListRows.map((r) => r.state)),
     ],
-    [clientBranches],
+    [clientListRows],
   );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return clientBranches.filter((branch) => {
-      if (stateFilter !== "all" && branch.state !== stateFilter) return false;
+    return clientListRows.filter((row) => {
+      if (stateFilter !== "all" && row.state !== stateFilter) return false;
       if (!q) return true;
       const haystack = [
-        branch.id,
-        companySearchTextById(companies, branch.companyId),
-        branch.city,
-        branch.state,
-        branch.phone,
-        branch.email,
-        branch.contactPersonName,
+        row.businessName,
+        row.rif,
+        row.city,
+        row.state,
+        row.phone,
+        row.email,
+        row.branch?.contactPersonName,
       ]
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [clientBranches, search, stateFilter, companies]);
+  }, [clientListRows, search, stateFilter]);
 
   const pagination = usePagination(filtered);
 
@@ -306,6 +350,24 @@ export function ClientsManager() {
           autoRetry: true,
           resumeBranchId: resumeId,
         });
+      }
+      if (resumeId != null && distributorId != null) {
+        try {
+          const linked = await fetchClientByBranchId(resumeId);
+          if (linked?.distributorId === distributorId) {
+            toast.success(
+              `Cliente registrado en ${values.city.trim()}, ${values.state.trim()}.`,
+              { href: branchPath(resumeId) },
+            );
+            setResumeBranchId(null);
+            setCreateOpen(false);
+            await refreshScope();
+            await loadClients();
+            return;
+          }
+        } catch {
+          /* vínculo aún no legible */
+        }
       }
       setFormError(message);
     } finally {
@@ -378,7 +440,7 @@ export function ClientsManager() {
             <Loader2 className="size-5 animate-spin" />
             Cargando clientes…
           </div>
-        ) : clientBranches.length === 0 ? (
+        ) : clientListRows.length === 0 ? (
           <EmptyState
             title="Sin clientes registrados"
             action={
@@ -401,7 +463,7 @@ export function ClientsManager() {
               onSearchChange={setSearch}
               searchPlaceholder="Buscar por razón social, RIF, ciudad…"
               resultCount={filtered.length}
-              totalCount={clientBranches.length}
+              totalCount={clientListRows.length}
               filters={[
                 {
                   id: "state",
@@ -431,37 +493,31 @@ export function ClientsManager() {
                       </tr>
                     </thead>
                     <tbody>
-                      {pagination.paginatedItems.map((branch) => {
-                        const company = companies.find(
-                          (c) => c.id === branch.companyId,
-                        );
-                        return (
-                          <ClickableTableRow
-                            key={branch.id}
-                            href={branchPath(branch.id)}
-                          >
-                            <TableCreatedAtCell value={branch.createdAt} />
-                            <td className="max-w-[220px] px-5 py-3.5 font-medium text-card-foreground">
-                              <TruncatedText maxClassName="max-w-[200px]">
-                                {company?.businessName ??
-                                  companyNameById(companies, branch.companyId)}
-                              </TruncatedText>
-                            </td>
-                            <td className="px-5 py-3.5 font-mono text-muted">
-                              {company?.rif ?? "—"}
-                            </td>
-                            <td className="px-5 py-3.5 text-muted">
-                              {branch.city}, {branch.state}
-                            </td>
-                            <td className="px-5 py-3.5 text-muted">
-                              {branch.phone || "—"}
-                            </td>
-                            <td className="px-5 py-3.5 text-muted">
-                              {branch.email || "—"}
-                            </td>
-                          </ClickableTableRow>
-                        );
-                      })}
+                      {pagination.paginatedItems.map((row) => (
+                        <ClickableTableRow
+                          key={row.key}
+                          href={branchPath(row.client.branchId)}
+                        >
+                          <TableCreatedAtCell value={row.createdAt} />
+                          <td className="max-w-[220px] px-5 py-3.5 font-medium text-card-foreground">
+                            <TruncatedText maxClassName="max-w-[200px]">
+                              {row.businessName}
+                            </TruncatedText>
+                          </td>
+                          <td className="px-5 py-3.5 font-mono text-muted">
+                            {row.rif}
+                          </td>
+                          <td className="px-5 py-3.5 text-muted">
+                            {row.city}, {row.state}
+                          </td>
+                          <td className="px-5 py-3.5 text-muted">
+                            {row.phone}
+                          </td>
+                          <td className="px-5 py-3.5 text-muted">
+                            {row.email}
+                          </td>
+                        </ClickableTableRow>
+                      ))}
                     </tbody>
                   </table>
                 </TableScroll>
