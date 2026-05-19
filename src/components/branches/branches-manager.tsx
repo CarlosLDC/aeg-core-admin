@@ -38,17 +38,16 @@ import {
   formatBranchShort,
 } from "@/lib/branches";
 import {
-  createBranch,
   deleteBranch,
   fetchBranches,
   getBranchesErrorMessage,
   updateBranch,
 } from "@/lib/branches-api";
+import { getCompaniesErrorMessage } from "@/lib/companies-api";
 import {
-  createCompany,
-  getCompaniesErrorMessage,
-} from "@/lib/companies-api";
-import { findCompanyByRif } from "@/lib/seniat-extract";
+  createClientOnboarding,
+  type ClientOnboardingValues,
+} from "@/lib/client-onboarding";
 import { fetchClients } from "@/lib/clients-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
@@ -281,70 +280,37 @@ export function BranchesManager() {
 
     setSaving(true);
     setFormError(null);
-    const label = `${values.city}, ${values.state}`;
 
-    let companyCreatedInThisSubmit = false;
-    let companyId: number | null =
-      wizardResumeCompanyId ?? values.linkedCompanyId ?? null;
+    const onboardingValues: ClientOnboardingValues = {
+      rif: values.rif,
+      businessName: values.businessName,
+      contributorType: values.contributorType,
+      linkedCompanyId: values.linkedCompanyId,
+      city: values.city,
+      state: values.state,
+      address: values.address,
+      phone: values.phone,
+      email: values.email,
+    };
 
     try {
-
-      if (companyId == null) {
-        const existing = values.rif
-          ? findCompanyByRif(companies, values.rif)
-          : undefined;
-        if (existing) {
-          companyId = existing.id;
-        } else {
-          const company = await createCompany({
-            rif: values.rif,
-            businessName: values.businessName,
-            contributorType: values.contributorType,
-          });
-          if (!company?.id) {
-            throw new Error(
-              "El servidor no devolvió la empresa creada. Revisa el listado de empresas.",
-            );
-          }
-          companyId = company.id;
-          companyCreatedInThisSubmit = true;
-        }
-      }
-
-      if (!Number.isFinite(companyId) || companyId <= 0) {
-        throw new Error("No se pudo determinar la empresa para la sucursal.");
-      }
-
-      const created = await createBranch({
-        companyId,
-        city: values.city.trim(),
-        state: values.state.trim(),
-        address: values.address.trim() || undefined,
-        phone: values.phone.trim() || undefined,
-        email: values.email.trim() || undefined,
+      const result = await createClientOnboarding({
+        values: onboardingValues,
+        companies,
+        resumeCompanyId: wizardResumeCompanyId,
+        roles: {
+          isClient: values.isClient,
+          isDistributor: values.isDistributor,
+          isServiceCenter: values.isServiceCenter,
+          clientDistributorId: values.clientDistributorId,
+        },
       });
 
-      if (!created?.id) {
-        throw new Error(
-          "El servidor no devolvió la sucursal creada. Revisa el listado o intenta de nuevo.",
-        );
-      }
-
-      await syncBranchRoles(created.id, null, {
-        isClient: values.isClient,
-        isDistributor: values.isDistributor,
-        isServiceCenter: values.isServiceCenter,
-        clientDistributorId: values.clientDistributorId,
-      });
-
-      const companyLabel =
-        companies.find((c) => c.id === companyId)?.businessName ??
-        values.businessName;
       toast.success(
-        companyCreatedInThisSubmit
-          ? `Empresa "${companyLabel}" y sucursal "${label}" creadas correctamente.`
-          : `Sucursal "${label}" creada correctamente.`,
-        { href: branchPath(created.id) },
+        result.companyCreated
+          ? `Empresa "${result.companyLabel}" y sucursal "${result.branchLabel}" creadas correctamente.`
+          : `Sucursal "${result.branchLabel}" creada correctamente.`,
+        { href: branchPath(result.branch.id) },
       );
       closeWizard();
       await refreshScope();
@@ -354,12 +320,12 @@ export function BranchesManager() {
         getBranchesErrorMessage(err) ||
         getBranchRolesErrorMessage(err);
 
-      if (companyCreatedInThisSubmit) {
-        const resumeId =
-          typeof companyId === "number" && companyId > 0 ? companyId : null;
-        if (resumeId != null) {
-          setWizardResumeCompanyId(resumeId);
-        }
+      const resumeId =
+        err instanceof Error
+          ? (err as Error & { resumeCompanyId?: number }).resumeCompanyId
+          : undefined;
+      if (resumeId != null && wizardResumeCompanyId == null) {
+        setWizardResumeCompanyId(resumeId);
         await refreshScope();
         const partial = `La empresa se creó, pero la sucursal no: ${message}. Revisa los datos de ubicación y pulsa «Crear sucursal» de nuevo (la empresa ya está vinculada).`;
         setFormError(partial);
@@ -435,8 +401,9 @@ export function BranchesManager() {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:justify-between md:gap-4">
         <p className="min-w-0 flex-1 text-sm text-muted">
-          Solo un administrador puede crear, editar o eliminar sucursales. El
-          listado muestra las empresas y sucursales a las que tienes acceso.
+          {canCreate
+            ? "Registra sucursales con documento fiscal (SENIAT) o datos manuales. Solo un administrador puede editar o eliminar."
+            : "Listado de sucursales a las que tienes acceso. Solo un administrador puede crear, editar o eliminar."}
         </p>
         <div className="flex w-full shrink-0 flex-col gap-2 max-md:w-full md:w-auto md:flex-row md:flex-nowrap">
           <button
@@ -457,7 +424,7 @@ export function BranchesManager() {
             <button
               type="button"
               onClick={openCreate}
-              disabled={companiesLoading || companies.length === 0}
+              disabled={companiesLoading}
               className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 md:w-auto text-sm font-medium text-accent-foreground disabled:opacity-50"
             >
               <Plus className="size-4" />
@@ -467,9 +434,10 @@ export function BranchesManager() {
         </div>
       </div>
 
-      {companies.length === 0 && !companiesLoading && (
+      {canCreate && companies.length === 0 && !companiesLoading && (
         <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-          Crea al menos una empresa antes de registrar sucursales.
+          Puedes crear la empresa desde el asistente al registrar una sucursal
+          (escaneo SENIAT o datos manuales).
         </p>
       )}
 

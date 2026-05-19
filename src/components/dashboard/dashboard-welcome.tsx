@@ -25,7 +25,7 @@ function greetingForHour(): string {
 
 const ROLE_CONTEXT: Record<Role, string> = {
   ADMIN: "Vista global del catálogo operativo y la flota fiscal.",
-  DISTRIBUTOR: "Tu red de impresoras, clientes y sucursales en un vistazo.",
+  DISTRIBUTOR: "Tu red de impresoras y clientes en un vistazo.",
   TECHNICIAN: "Equipos en campo, precintos y personal de tu ámbito.",
   SERVICE_CENTER: "Empresas, sucursales y operaciones de tu centro.",
 };

@@ -13,12 +13,17 @@ type SeniatDocumentScanProps = {
   onExtracted: (data: SeniatExtractResult) => void;
   disabled?: boolean;
   className?: string;
+  /** Copy y CTA para flujo de registro de cliente */
+  variant?: "default" | "client";
+  onRequestManual?: () => void;
 };
 
 export function SeniatDocumentScan({
   onExtracted,
   disabled = false,
   className,
+  variant = "default",
+  onRequestManual,
 }: SeniatDocumentScanProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -90,11 +95,14 @@ export function SeniatDocumentScan({
           </div>
           <div className="min-w-0 flex-1 space-y-0.5">
             <p className="text-sm font-medium text-card-foreground">
-              Documento fiscal (SENIAT)
+              {variant === "client"
+                ? "Escanear documento del cliente"
+                : "Documento fiscal (SENIAT)"}
             </p>
             <p className="text-xs leading-relaxed text-muted">
-              Sube una foto o PDF del RIF o registro fiscal. La IA rellenará
-              empresa y sucursal.
+              {variant === "client"
+                ? "Sube el RIF o registro fiscal del cliente. La IA completará razón social y ubicación; luego podrás añadir teléfono y correo."
+                : "Sube una foto o PDF del RIF o registro fiscal. La IA rellenará empresa y sucursal."}
             </p>
             {file && (
               <p className="truncate pt-1 text-xs text-card-foreground">
@@ -122,11 +130,28 @@ export function SeniatDocumentScan({
               ) : (
                 <ScanLine className="size-4" />
               )}
-              {analyzing ? "Analizando…" : "Analizar"}
+              {analyzing
+                ? "Analizando…"
+                : variant === "client"
+                  ? "Escanear y continuar"
+                  : "Analizar"}
             </button>
           </div>
         </div>
       </div>
+
+      {variant === "client" && onRequestManual && (
+        <p className="text-center text-sm text-muted">
+          <button
+            type="button"
+            disabled={disabled || analyzing}
+            onClick={onRequestManual}
+            className="font-medium text-foreground underline-offset-2 hover:underline disabled:opacity-50"
+          >
+            Ingresar sin documento
+          </button>
+        </p>
+      )}
 
       {notConfigured && (
         <p className="rounded-lg border border-amber-200/70 bg-amber-500/8 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/25 dark:text-amber-100">

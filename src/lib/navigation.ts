@@ -8,6 +8,7 @@ import {
   Printer,
   FileDigit,
   Contact,
+  UserRound,
   FileText,
   Stamp,
   Wrench,
@@ -81,12 +82,23 @@ export const navSections: NavSection[] = [
     title: "Organización",
     items: [
       {
+        title: "Clientes",
+        href: "/clients",
+        icon: UserRound,
+        roles: ["DISTRIBUTOR"],
+      },
+      {
         title: "Empresas",
         href: "/companies",
         icon: Building2,
-        roles: ["ADMIN", "DISTRIBUTOR"],
+        roles: ["ADMIN"],
       },
-      { title: "Sucursales", href: "/branches", icon: MapPin },
+      {
+        title: "Sucursales",
+        href: "/branches",
+        icon: MapPin,
+        roles: ["ADMIN", "TECHNICIAN", "SERVICE_CENTER"],
+      },
       { title: "Empleados", href: "/employees", icon: Contact },
       {
         title: "Contratos",

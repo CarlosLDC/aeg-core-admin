@@ -45,9 +45,10 @@ describe("canAccessRoute", () => {
     expect(canAccessRoute("TECHNICIAN", "/users")).toBe(false);
   });
 
-  it("allows DISTRIBUTOR dashboard and companies list", () => {
+  it("allows DISTRIBUTOR dashboard and clients, not companies nav", () => {
     expect(canAccessRoute("DISTRIBUTOR", "/")).toBe(true);
-    expect(canAccessRoute("DISTRIBUTOR", "/companies")).toBe(true);
+    expect(canAccessRoute("DISTRIBUTOR", "/clients")).toBe(true);
+    expect(canAccessRoute("DISTRIBUTOR", "/companies")).toBe(false);
   });
 
   it("blocks DISTRIBUTOR from contracts", () => {

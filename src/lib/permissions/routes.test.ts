@@ -22,4 +22,15 @@ describe("route permissions", () => {
     const roles: Role[] = ["ADMIN", "DISTRIBUTOR", "TECHNICIAN", "SERVICE_CENTER"];
     expect(roles.filter((r) => canAccessRoute(r, "/mqtt-tests"))).toEqual(["ADMIN"]);
   });
+
+  it("allows DISTRIBUTOR on /clients and denies /companies", () => {
+    expect(canAccessRoute("DISTRIBUTOR", "/clients")).toBe(true);
+    expect(resourceForPath("/clients")).toBe("branches");
+    expect(canAccessRoute("DISTRIBUTOR", "/companies")).toBe(false);
+  });
+
+  it("allows ADMIN on /companies; /clients is DISTRIBUTOR-only in nav", () => {
+    expect(canAccessRoute("ADMIN", "/companies")).toBe(true);
+    expect(canAccessRoute("ADMIN", "/clients")).toBe(false);
+  });
 });

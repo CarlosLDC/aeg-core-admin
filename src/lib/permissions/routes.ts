@@ -5,6 +5,7 @@ import type { Role } from "@/types/user";
 
 /** Ruta → recurso para comprobar permiso read. */
 const ROUTE_RESOURCE: Array<{ prefix: string; resource: Resource }> = [
+  { prefix: "/clients", resource: "branches" },
   { prefix: "/companies", resource: "companies" },
   { prefix: "/branches", resource: "branches" },
   { prefix: "/employees", resource: "employees" },

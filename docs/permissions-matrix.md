@@ -7,7 +7,7 @@ Documento de referencia alineado con `src/lib/permissions/matrix.ts`. El backend
 | Rol | Descripción |
 |-----|-------------|
 | ADMIN | Acceso global; único que modifica/elimina catálogos sensibles y usuarios |
-| DISTRIBUTOR | Empresas y sucursales de su distribuidora; impresoras de su cartera |
+| DISTRIBUTOR | Alta de **clientes** (empresa + sucursal + rol cliente) vía `/clients`; impresoras de su cartera |
 | TECHNICIAN | Impresoras, precintos, servicios e inspecciones en alcance de sucursales |
 | SERVICE_CENTER | Precintos, servicios técnicos e inspecciones anuales |
 
@@ -36,6 +36,14 @@ Documento de referencia alineado con `src/lib/permissions/matrix.ts`. El backend
 2. **PUT/DELETE** en empresas, sucursales y empleados: solo **ADMIN**.
 3. **Impresoras**: DISTRIBUTOR y TECHNICIAN solo **leen** las de su alcance; crear, editar y eliminar: solo **ADMIN**.
 4. Operaciones de campo (precintos, ST, inspección): roles con acceso al módulo pueden CRUD dentro del alcance que devuelva el API.
+
+## Flujo distribuidor (`/clients`)
+
+- Menú **Clientes** (solo DISTRIBUTOR): sustituye Empresas + Sucursales en la navegación.
+- Alta **scan-first**: escaneo SENIAT (IA) → revisión de datos fiscales/ubicación (bloqueados si vienen del PDF) → teléfono y correo siempre editables.
+- Opción **Ingresar sin documento** para modo manual completo.
+- Al guardar: `createCompany` (si el RIF es nuevo) + `createBranch` + rol **cliente** con `distributorId` del usuario (`src/lib/client-onboarding.ts`).
+- Sin edición ni eliminación de clientes existentes (solo ADMIN).
 
 ## Backend (checklist)
 

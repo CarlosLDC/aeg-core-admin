@@ -8,7 +8,7 @@ export default function CompaniesPage() {
       title="Empresas"
       description="Razón social, RIF y tipo de contribuyente"
     >
-      <RoleGuard path="/companies">
+      <RoleGuard path="/companies" redirectTo="/clients">
         <CompaniesManager />
       </RoleGuard>
     </AdminShell>
