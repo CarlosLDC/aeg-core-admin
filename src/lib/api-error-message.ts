@@ -36,10 +36,26 @@ export async function readErrorMessageFromResponse(
   return response.statusText || `Error en la petición (${response.status})`;
 }
 
+function mapCatalogApiMessage(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes("not allowed to access branch")) {
+    return "No tienes permiso sobre esa sucursal.";
+  }
+  if (lower.includes("branch already assigned to another distributor")) {
+    return "Esta sucursal ya es cliente de otra distribuidora.";
+  }
+  if (lower.includes("not allowed to create client for this distributor")) {
+    return "No puedes registrar clientes para otra distribuidora.";
+  }
+  return message;
+}
+
 export function messageFromUnknownError(error: unknown): string {
-  if (error instanceof ApiError) return error.message;
+  if (error instanceof ApiError) return mapCatalogApiMessage(error.message);
   if (error instanceof TypeError) return "No se pudo conectar con el servidor.";
-  if (error instanceof Error && error.message.trim()) return error.message;
+  if (error instanceof Error && error.message.trim()) {
+    return mapCatalogApiMessage(error.message);
+  }
   return "Error desconocido.";
 }
 

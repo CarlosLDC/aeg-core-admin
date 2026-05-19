@@ -29,6 +29,14 @@ describe("messageFromUnknownError", () => {
     );
   });
 
+  it("maps branch scope errors to Spanish", () => {
+    expect(
+      messageFromUnknownError(
+        new ApiError("Not allowed to access branch id: 322", 403),
+      ),
+    ).toBe("No tienes permiso sobre esa sucursal.");
+  });
+
   it("handles network TypeError", () => {
     expect(messageFromUnknownError(new TypeError("fetch failed"))).toBe(
       "No se pudo conectar con el servidor.",
