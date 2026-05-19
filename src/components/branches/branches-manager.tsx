@@ -309,7 +309,9 @@ export function BranchesManager() {
       toast.success(
         result.companyCreated
           ? `Empresa "${result.companyLabel}" y sucursal "${result.branchLabel}" creadas correctamente.`
-          : `Sucursal "${result.branchLabel}" creada correctamente.`,
+          : result.companyLinkedExisting
+            ? `Sucursal "${result.branchLabel}" añadida a la empresa existente "${result.companyLabel}".`
+            : `Sucursal "${result.branchLabel}" creada correctamente.`,
         { href: branchPath(result.branch.id) },
       );
       closeWizard();

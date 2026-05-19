@@ -44,6 +44,14 @@ export function getCompaniesErrorMessage(error: unknown): string {
     if (error.status === 404) {
       return "Empresa no encontrada.";
     }
+    if (
+      error.status === 409 ||
+      (error.status === 400 &&
+        error.message.toLowerCase().includes("rif") &&
+        error.message.toLowerCase().includes("exist"))
+    ) {
+      return error.message;
+    }
     return error.message;
   }
   if (error instanceof TypeError) {

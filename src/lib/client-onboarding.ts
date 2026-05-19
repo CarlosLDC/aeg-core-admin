@@ -1,7 +1,6 @@
 import { syncBranchRoles } from "@/lib/branch-roles";
 import { createBranch } from "@/lib/branches-api";
-import { createCompany } from "@/lib/companies-api";
-import { findCompanyByRif } from "@/lib/seniat-extract";
+import { resolveCompanyIdForRif } from "@/lib/company-rif";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse, ContributorType } from "@/types/company";
 
@@ -35,8 +34,12 @@ export type CreateClientOnboardingResult = {
   branch: BranchResponse;
   companyId: number;
   companyCreated: boolean;
+  /** Empresa ya existía (local o por RIF duplicado en API); solo se creó la sucursal/cliente */
+  companyLinkedExisting: boolean;
   companyLabel: string;
   branchLabel: string;
+  /** Empresas refrescadas tras resolver RIF duplicado (para actualizar scope en UI) */
+  refreshedCompanies?: CompanyResponse[];
 };
 
 /** Empresa (si aplica) + sucursal + roles — usado por wizard admin y alta de cliente distribuidor. */
@@ -46,30 +49,25 @@ export async function createClientOnboarding(
   const { values, companies, resumeCompanyId, roles } = input;
   const branchLabel = `${values.city.trim()}, ${values.state.trim()}`;
 
-  let companyCreated = false;
-  let companyId: number | null = resumeCompanyId ?? values.linkedCompanyId ?? null;
+  const resolved = await resolveCompanyIdForRif(
+    {
+      rif: values.rif,
+      businessName: values.businessName,
+      contributorType: values.contributorType,
+    },
+    companies,
+    {
+      resumeCompanyId,
+      linkedCompanyId: values.linkedCompanyId,
+    },
+  );
 
-  if (companyId == null) {
-    const existing = values.rif
-      ? findCompanyByRif(companies, values.rif)
-      : undefined;
-    if (existing) {
-      companyId = existing.id;
-    } else {
-      const company = await createCompany({
-        rif: values.rif,
-        businessName: values.businessName,
-        contributorType: values.contributorType,
-      });
-      if (!company?.id) {
-        throw new Error(
-          "El servidor no devolvió la empresa creada. Revisa el listado de empresas.",
-        );
-      }
-      companyId = company.id;
-      companyCreated = true;
-    }
-  }
+  const companyId = resolved.companyId;
+  const companyCreated = resolved.companyCreated;
+  const companyLinkedExisting = !companyCreated;
+  const companyList =
+    resolved.companies ??
+    companies;
 
   if (!Number.isFinite(companyId) || companyId <= 0) {
     throw new Error("No se pudo determinar la empresa para la sucursal.");
@@ -127,15 +125,17 @@ export async function createClientOnboarding(
   }
 
   const companyLabel =
-    companies.find((c) => c.id === companyId)?.businessName ??
+    companyList.find((c) => c.id === companyId)?.businessName ??
     values.businessName;
 
   return {
     branch: created,
     companyId,
     companyCreated,
+    companyLinkedExisting,
     companyLabel,
     branchLabel,
+    refreshedCompanies: resolved.companies,
   };
 }
 

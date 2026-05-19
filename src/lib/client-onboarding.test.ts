@@ -4,8 +4,8 @@ import {
   distributorClientRoles,
 } from "./client-onboarding";
 
-vi.mock("@/lib/companies-api", () => ({
-  createCompany: vi.fn(),
+vi.mock("@/lib/company-rif", () => ({
+  resolveCompanyIdForRif: vi.fn(),
 }));
 
 vi.mock("@/lib/branches-api", () => ({
@@ -16,7 +16,7 @@ vi.mock("@/lib/branch-roles", () => ({
   syncBranchRoles: vi.fn(),
 }));
 
-import { createCompany } from "@/lib/companies-api";
+import { resolveCompanyIdForRif } from "@/lib/company-rif";
 import { createBranch } from "@/lib/branches-api";
 import { syncBranchRoles } from "@/lib/branch-roles";
 
@@ -37,12 +37,9 @@ describe("createClientOnboarding", () => {
   });
 
   it("creates company, branch and syncs roles", async () => {
-    vi.mocked(createCompany).mockResolvedValue({
-      id: 10,
-      businessName: "ACME",
-      rif: "J123456789",
-      contributorType: "ordinario",
-      createdAt: "",
+    vi.mocked(resolveCompanyIdForRif).mockResolvedValue({
+      companyId: 10,
+      companyCreated: true,
     });
     vi.mocked(createBranch).mockResolvedValue({
       id: 20,
@@ -72,7 +69,7 @@ describe("createClientOnboarding", () => {
       roles: distributorClientRoles(5),
     });
 
-    expect(createCompany).toHaveBeenCalledOnce();
+    expect(resolveCompanyIdForRif).toHaveBeenCalledOnce();
     expect(createBranch).toHaveBeenCalledWith(
       expect.objectContaining({ companyId: 10, phone: "0412" }),
     );
@@ -83,5 +80,46 @@ describe("createClientOnboarding", () => {
     );
     expect(result.branch.id).toBe(20);
     expect(result.companyCreated).toBe(true);
+    expect(result.companyLinkedExisting).toBe(false);
+  });
+
+  it("links existing company when resolve returns no create", async () => {
+    vi.mocked(resolveCompanyIdForRif).mockResolvedValue({
+      companyId: 77,
+      companyCreated: false,
+    });
+    vi.mocked(createBranch).mockResolvedValue({
+      id: 21,
+      companyId: 77,
+      city: "Valencia",
+      state: "Carabobo",
+      address: "",
+      phone: "",
+      email: "",
+      createdAt: "",
+    });
+    vi.mocked(syncBranchRoles).mockResolvedValue(undefined);
+
+    const result = await createClientOnboarding({
+      values: {
+        rif: "J315694205",
+        businessName: "ACME",
+        contributorType: "ordinario",
+        linkedCompanyId: null,
+        city: "Valencia",
+        state: "Carabobo",
+        address: "",
+        phone: "",
+        email: "",
+      },
+      companies: [],
+      roles: distributorClientRoles(5),
+    });
+
+    expect(result.companyLinkedExisting).toBe(true);
+    expect(result.companyCreated).toBe(false);
+    expect(createBranch).toHaveBeenCalledWith(
+      expect.objectContaining({ companyId: 77 }),
+    );
   });
 });

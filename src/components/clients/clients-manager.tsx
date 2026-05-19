@@ -148,7 +148,9 @@ export function ClientsManager() {
         roles: distributorClientRoles(distributorId),
       });
       toast.success(
-        `Cliente "${result.companyLabel}" registrado en ${result.branchLabel}.`,
+        result.companyLinkedExisting
+          ? `Sucursal registrada en la empresa existente "${result.companyLabel}" (${result.branchLabel}).`
+          : `Cliente "${result.companyLabel}" registrado en ${result.branchLabel}.`,
         { href: branchPath(result.branch.id) },
       );
       setCreateOpen(false);
