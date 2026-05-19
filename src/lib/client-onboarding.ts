@@ -89,6 +89,27 @@ export async function createClientOnboarding(
   const { values, companies, resumeCompanyId, resumeBranchId, roles } = input;
   const branchLabel = `${values.city.trim()}, ${values.state.trim()}`;
 
+  if (
+    resumeBranchId != null &&
+    resumeBranchId > 0 &&
+    isDistributorClientOnlyRoles(roles)
+  ) {
+    await linkDistributorClientToBranch(resumeBranchId, roles);
+    const branch = await fetchBranchById(resumeBranchId);
+    const companyList = companies;
+    return {
+      branch,
+      companyId: branch.companyId,
+      companyCreated: false,
+      companyLinkedExisting: true,
+      branchLinkedExisting: true,
+      companyLabel:
+        companyList.find((c) => c.id === branch.companyId)?.businessName ??
+        values.businessName,
+      branchLabel,
+    };
+  }
+
   const resolved = await resolveCompanyIdForRif(
     {
       rif: values.rif,

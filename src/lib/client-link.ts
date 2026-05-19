@@ -2,7 +2,6 @@ import { getCatalogErrorMessage } from "@/lib/api-error-message";
 import {
   createClient,
   fetchClientByBranchId,
-  updateClient,
 } from "@/lib/clients-api";
 import type { ClientOnboardingRoleOptions } from "@/lib/client-onboarding";
 
@@ -21,12 +20,13 @@ function isRecoverableLinkError(error: unknown): boolean {
   return (
     msg.includes("binding property") ||
     msg.includes("completar el vínculo") ||
+    msg.includes("registro duplicado") ||
     msg.includes("sucursal ya está registrada") ||
     msg.includes("ya está registrado")
   );
 }
 
-/** Vincula sucursal como cliente del distribuidor (sin cargar catálogos completos). */
+/** Vincula sucursal como cliente del distribuidor (POST idempotente; sin catálogos completos). */
 export async function linkDistributorClientToBranch(
   branchId: number,
   roles: ClientOnboardingRoleOptions,
@@ -37,18 +37,14 @@ export async function linkDistributorClientToBranch(
   const body = { branchId, distributorId };
 
   const existing = await fetchClientByBranchId(branchId);
-  if (existing) {
-    if (
-      existing.distributorId != null &&
-      existing.distributorId !== distributorId
-    ) {
-      throw new Error("Esta sucursal ya es cliente de otra distribuidora.");
-    }
-    if (existing.distributorId === distributorId) {
-      return;
-    }
-    await updateClient(existing.id, body);
+  if (existing?.distributorId === distributorId) {
     return;
+  }
+  if (
+    existing?.distributorId != null &&
+    existing.distributorId !== distributorId
+  ) {
+    throw new Error("Esta sucursal ya es cliente de otra distribuidora.");
   }
 
   try {
@@ -58,17 +54,14 @@ export async function linkDistributorClientToBranch(
       throw error;
     }
     const after = await fetchClientByBranchId(branchId);
-    if (after) {
-      if (
-        after.distributorId != null &&
-        after.distributorId !== distributorId
-      ) {
-        throw new Error("Esta sucursal ya es cliente de otra distribuidora.");
-      }
-      if (after.distributorId !== distributorId) {
-        await updateClient(after.id, body);
-      }
+    if (after?.distributorId === distributorId) {
       return;
+    }
+    if (
+      after?.distributorId != null &&
+      after.distributorId !== distributorId
+    ) {
+      throw new Error("Esta sucursal ya es cliente de otra distribuidora.");
     }
     await createClient(body);
   }

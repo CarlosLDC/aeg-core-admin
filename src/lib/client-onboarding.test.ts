@@ -161,4 +161,44 @@ describe("createClientOnboarding", () => {
     expect(result.branch.id).toBe(322);
     expect(result.branchLinkedExisting).toBe(true);
   });
+
+  it("reintento: solo vincula cliente cuando resumeBranchId está definido", async () => {
+    vi.mocked(fetchBranchById).mockResolvedValue({
+      ...branchRow,
+      id: 322,
+      companyId: 77,
+    });
+    vi.mocked(createClient).mockResolvedValue({
+      id: 9,
+      branchId: 322,
+      distributorId: 5,
+      createdAt: "",
+    });
+
+    const result = await createClientOnboarding({
+      values: {
+        rif: "J315694205",
+        businessName: "ACME",
+        contributorType: "ordinario",
+        linkedCompanyId: null,
+        city: "Valencia",
+        state: "Carabobo",
+        address: "",
+        phone: "",
+        email: "",
+      },
+      companies: [],
+      resumeBranchId: 322,
+      roles: distributorClientRoles(5),
+    });
+
+    expect(resolveCompanyIdForRif).not.toHaveBeenCalled();
+    expect(createBranch).not.toHaveBeenCalled();
+    expect(createClient).toHaveBeenCalledWith({
+      branchId: 322,
+      distributorId: 5,
+    });
+    expect(result.branch.id).toBe(322);
+    expect(result.branchLinkedExisting).toBe(true);
+  });
 });
