@@ -64,9 +64,7 @@ function buildClientListRows(
   companies: CompanyResponse[],
 ): ClientListRow[] {
   const branchById = new Map(branches.map((b) => [b.id, b]));
-  return clients
-    .filter((c) => c.distributorId === distributorId)
-    .map((client) => {
+  return clients.map((client) => {
       const branch = branchById.get(client.branchId);
       const companyFromScope =
         branch != null
