@@ -1,7 +1,14 @@
-import { syncBranchRoles } from "@/lib/branch-roles";
-import { createBranch } from "@/lib/branches-api";
+import { mergeBranchesWithRoles, syncBranchRoles } from "@/lib/branch-roles";
+import {
+  createBranch,
+  fetchBranchById,
+  lookupBranchByCompanyLocation,
+} from "@/lib/branches-api";
+import { fetchClients } from "@/lib/clients-api";
 import { resolveCompanyIdForRif } from "@/lib/company-rif";
-import type { BranchResponse } from "@/types/branch";
+import { fetchDistributors } from "@/lib/distributors-api";
+import { fetchServiceCenters } from "@/lib/service-centers-api";
+import type { BranchResponse, BranchWithRoles } from "@/types/branch";
 import type { CompanyResponse, ContributorType } from "@/types/company";
 
 export type ClientOnboardingValues = {
@@ -27,6 +34,7 @@ export type CreateClientOnboardingInput = {
   values: ClientOnboardingValues;
   companies: CompanyResponse[];
   resumeCompanyId?: number | null;
+  resumeBranchId?: number | null;
   roles: ClientOnboardingRoleOptions;
 };
 
@@ -36,11 +44,29 @@ export type CreateClientOnboardingResult = {
   companyCreated: boolean;
   /** Empresa ya existía (local o por RIF duplicado en API); solo se creó la sucursal/cliente */
   companyLinkedExisting: boolean;
+  /** Sucursal reutilizada (misma empresa y ubicación) */
+  branchLinkedExisting: boolean;
   companyLabel: string;
   branchLabel: string;
   /** Empresas refrescadas tras resolver RIF duplicado (para actualizar scope en UI) */
   refreshedCompanies?: CompanyResponse[];
 };
+
+async function loadBranchWithRoles(branchId: number): Promise<BranchWithRoles | null> {
+  const [branch, distributorRows, clientRows, serviceCenterRows] = await Promise.all([
+    fetchBranchById(branchId),
+    fetchDistributors(),
+    fetchClients(),
+    fetchServiceCenters(),
+  ]);
+  const merged = mergeBranchesWithRoles(
+    [branch],
+    distributorRows,
+    clientRows,
+    serviceCenterRows,
+  );
+  return merged[0] ?? null;
+}
 
 /**
  * Alta de cliente (distribuidor o wizard admin con roles explícitos):
@@ -50,11 +76,13 @@ export type CreateClientOnboardingResult = {
  * 2. **Empresa existente** (`companyLinkedExisting: true`): reutiliza el `companyId`
  *    (lista local, `/api/companies/resolve` o RIF duplicado en API), crea solo la
  *    sucursal y asigna los mismos roles en esa sucursal nueva.
+ * 3. **Sucursal existente** (`branchLinkedExisting: true`): misma empresa y ciudad/estado;
+ *    solo vincula el rol cliente (reintentos tras error parcial).
  */
 export async function createClientOnboarding(
   input: CreateClientOnboardingInput,
 ): Promise<CreateClientOnboardingResult> {
-  const { values, companies, resumeCompanyId, roles } = input;
+  const { values, companies, resumeCompanyId, resumeBranchId, roles } = input;
   const branchLabel = `${values.city.trim()}, ${values.state.trim()}`;
 
   const resolved = await resolveCompanyIdForRif(
@@ -73,35 +101,50 @@ export async function createClientOnboarding(
   const companyId = resolved.companyId;
   const companyCreated = resolved.companyCreated;
   const companyLinkedExisting = !companyCreated;
-  const companyList =
-    resolved.companies ??
-    companies;
+  const companyList = resolved.companies ?? companies;
 
   if (!Number.isFinite(companyId) || companyId <= 0) {
     throw new Error("No se pudo determinar la empresa para la sucursal.");
   }
 
-  let created;
-  try {
-    created = await createBranch({
+  let branchLinkedExisting = false;
+  let created: BranchResponse;
+
+  if (resumeBranchId != null && resumeBranchId > 0) {
+    created = await fetchBranchById(resumeBranchId);
+    branchLinkedExisting = true;
+  } else {
+    const existing = await lookupBranchByCompanyLocation(
       companyId,
-      city: values.city.trim(),
-      state: values.state.trim(),
-      address: values.address.trim() || undefined,
-      phone: values.phone.trim() || undefined,
-      email: values.email.trim() || undefined,
-    });
-  } catch (branchError) {
-    if (companyCreated && companyId != null) {
-      const err = new Error(
-        branchError instanceof Error
-          ? branchError.message
-          : "No se pudo crear la sucursal.",
-      ) as Error & { resumeCompanyId?: number };
-      err.resumeCompanyId = companyId;
-      throw err;
+      values.city,
+      values.state,
+    );
+    if (existing) {
+      created = existing;
+      branchLinkedExisting = true;
+    } else {
+      try {
+        created = await createBranch({
+          companyId,
+          city: values.city.trim(),
+          state: values.state.trim(),
+          address: values.address.trim() || undefined,
+          phone: values.phone.trim() || undefined,
+          email: values.email.trim() || undefined,
+        });
+      } catch (branchError) {
+        if (companyCreated && companyId != null) {
+          const err = new Error(
+            branchError instanceof Error
+              ? branchError.message
+              : "No se pudo crear la sucursal.",
+          ) as Error & { resumeCompanyId?: number };
+          err.resumeCompanyId = companyId;
+          throw err;
+        }
+        throw branchError;
+      }
     }
-    throw branchError;
   }
 
   if (!created?.id) {
@@ -118,18 +161,17 @@ export async function createClientOnboarding(
   }
 
   try {
-    await syncBranchRoles(created.id, null, roles);
+    const previous = await loadBranchWithRoles(created.id);
+    await syncBranchRoles(created.id, previous, roles);
   } catch (roleError) {
-    if (companyCreated && companyId != null) {
-      const err = new Error(
-        roleError instanceof Error
-          ? roleError.message
-          : "No se pudieron asignar los roles.",
-      ) as Error & { resumeCompanyId?: number };
-      err.resumeCompanyId = companyId;
-      throw err;
-    }
-    throw roleError;
+    const err = new Error(
+      roleError instanceof Error
+        ? roleError.message
+        : "No se pudieron asignar los roles.",
+    ) as Error & { resumeCompanyId?: number; resumeBranchId?: number };
+    if (companyId != null) err.resumeCompanyId = companyId;
+    err.resumeBranchId = created.id;
+    throw err;
   }
 
   const companyLabel =
@@ -141,6 +183,7 @@ export async function createClientOnboarding(
     companyId,
     companyCreated,
     companyLinkedExisting,
+    branchLinkedExisting,
     companyLabel,
     branchLabel,
     refreshedCompanies: resolved.companies,
@@ -148,7 +191,9 @@ export async function createClientOnboarding(
 }
 
 /** Roles por defecto al registrar un cliente desde el panel del distribuidor. */
-export function distributorClientRoles(distributorId: number): ClientOnboardingRoleOptions {
+export function distributorClientRoles(
+  distributorId: number,
+): ClientOnboardingRoleOptions {
   return {
     isClient: true,
     isDistributor: false,

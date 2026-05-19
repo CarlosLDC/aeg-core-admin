@@ -53,6 +53,7 @@ export function ClientsManager() {
   const [createOpen, setCreateOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [resumeBranchId, setResumeBranchId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -140,18 +141,33 @@ export function ClientsManager() {
       const result = await createClientOnboarding({
         values,
         companies,
+        resumeBranchId,
         roles: distributorClientRoles(distributorId),
       });
+      const linkedParts = [
+        result.companyLinkedExisting ? "empresa existente" : null,
+        result.branchLinkedExisting ? "sucursal existente" : null,
+      ].filter(Boolean);
+      const linkedHint =
+        linkedParts.length > 0 ? ` (${linkedParts.join(", ")})` : "";
       toast.success(
-        result.companyLinkedExisting
-          ? `Sucursal registrada en la empresa existente "${result.companyLabel}" (${result.branchLabel}).`
+        result.companyLinkedExisting || result.branchLinkedExisting
+          ? `Cliente registrado en "${result.companyLabel}" — ${result.branchLabel}${linkedHint}.`
           : `Cliente "${result.companyLabel}" registrado en ${result.branchLabel}.`,
         { href: branchPath(result.branch.id) },
       );
+      setResumeBranchId(null);
       setCreateOpen(false);
       await refreshScope();
       await loadClients();
     } catch (err) {
+      const resumeId =
+        err instanceof Error
+          ? (err as Error & { resumeBranchId?: number }).resumeBranchId
+          : undefined;
+      if (resumeId != null) {
+        setResumeBranchId(resumeId);
+      }
       setFormError(getCatalogErrorMessage(err));
     } finally {
       setSaving(false);

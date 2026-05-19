@@ -14,6 +14,27 @@ export async function fetchBranchById(id: number): Promise<BranchResponse> {
   return apiFetch<BranchResponse>(`${BASE}/${id}`);
 }
 
+/** Sucursal existente por empresa y ubicación (reintentos de alta de cliente). */
+export async function lookupBranchByCompanyLocation(
+  companyId: number,
+  city: string,
+  state: string,
+): Promise<BranchResponse | null> {
+  const params = new URLSearchParams({
+    companyId: String(companyId),
+    city: city.trim(),
+    state: state.trim(),
+  });
+  try {
+    return await apiFetch<BranchResponse>(`${BASE}/lookup?${params}`);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function createBranch(body: BranchRequest): Promise<BranchResponse> {
   return apiFetch<BranchResponse>(BASE, {
     method: "POST",

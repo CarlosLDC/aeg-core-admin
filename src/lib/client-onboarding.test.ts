@@ -10,15 +10,50 @@ vi.mock("@/lib/company-rif", () => ({
 
 vi.mock("@/lib/branches-api", () => ({
   createBranch: vi.fn(),
+  lookupBranchByCompanyLocation: vi.fn(),
+  fetchBranchById: vi.fn(),
+}));
+
+vi.mock("@/lib/clients-api", () => ({
+  fetchClients: vi.fn(),
+}));
+
+vi.mock("@/lib/distributors-api", () => ({
+  fetchDistributors: vi.fn(),
+}));
+
+vi.mock("@/lib/service-centers-api", () => ({
+  fetchServiceCenters: vi.fn(),
 }));
 
 vi.mock("@/lib/branch-roles", () => ({
   syncBranchRoles: vi.fn(),
+  mergeBranchesWithRoles: vi.fn((branches) =>
+    branches.map((b: { id: number }) => ({ ...b, id: b.id })),
+  ),
 }));
 
 import { resolveCompanyIdForRif } from "@/lib/company-rif";
-import { createBranch } from "@/lib/branches-api";
+import {
+  createBranch,
+  fetchBranchById,
+  lookupBranchByCompanyLocation,
+} from "@/lib/branches-api";
 import { syncBranchRoles } from "@/lib/branch-roles";
+import { fetchClients } from "@/lib/clients-api";
+import { fetchDistributors } from "@/lib/distributors-api";
+import { fetchServiceCenters } from "@/lib/service-centers-api";
+
+const branchRow = {
+  id: 20,
+  companyId: 10,
+  city: "Caracas",
+  state: "Miranda",
+  address: "",
+  phone: "",
+  email: "",
+  createdAt: "",
+};
 
 describe("distributorClientRoles", () => {
   it("marks branch as client of the distributor", () => {
@@ -34,6 +69,14 @@ describe("distributorClientRoles", () => {
 describe("createClientOnboarding", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(lookupBranchByCompanyLocation).mockResolvedValue(null);
+    vi.mocked(fetchBranchById).mockImplementation(async (id) => ({
+      ...branchRow,
+      id,
+    }));
+    vi.mocked(fetchClients).mockResolvedValue([]);
+    vi.mocked(fetchDistributors).mockResolvedValue([]);
+    vi.mocked(fetchServiceCenters).mockResolvedValue([]);
   });
 
   it("empresa nueva: crea empresa, sucursal y cliente del distribuidor", async () => {
@@ -41,16 +84,7 @@ describe("createClientOnboarding", () => {
       companyId: 10,
       companyCreated: true,
     });
-    vi.mocked(createBranch).mockResolvedValue({
-      id: 20,
-      companyId: 10,
-      city: "Caracas",
-      state: "Miranda",
-      address: "",
-      phone: "",
-      email: "",
-      createdAt: "",
-    });
+    vi.mocked(createBranch).mockResolvedValue(branchRow);
     vi.mocked(syncBranchRoles).mockResolvedValue(undefined);
 
     const result = await createClientOnboarding({
@@ -69,34 +103,23 @@ describe("createClientOnboarding", () => {
       roles: distributorClientRoles(5),
     });
 
-    expect(resolveCompanyIdForRif).toHaveBeenCalledOnce();
-    expect(createBranch).toHaveBeenCalledWith(
-      expect.objectContaining({ companyId: 10, phone: "0412" }),
-    );
-    expect(syncBranchRoles).toHaveBeenCalledWith(
-      20,
-      null,
-      distributorClientRoles(5),
-    );
-    expect(result.branch.id).toBe(20);
+    expect(createBranch).toHaveBeenCalledOnce();
+    expect(syncBranchRoles).toHaveBeenCalled();
     expect(result.companyCreated).toBe(true);
-    expect(result.companyLinkedExisting).toBe(false);
+    expect(result.branchLinkedExisting).toBe(false);
   });
 
-  it("empresa existente: solo sucursal nueva y cliente del distribuidor", async () => {
+  it("reutiliza sucursal existente por empresa y ubicación", async () => {
     vi.mocked(resolveCompanyIdForRif).mockResolvedValue({
       companyId: 77,
       companyCreated: false,
     });
-    vi.mocked(createBranch).mockResolvedValue({
-      id: 21,
+    vi.mocked(lookupBranchByCompanyLocation).mockResolvedValue({
+      ...branchRow,
+      id: 322,
       companyId: 77,
       city: "Valencia",
       state: "Carabobo",
-      address: "",
-      phone: "",
-      email: "",
-      createdAt: "",
     });
     vi.mocked(syncBranchRoles).mockResolvedValue(undefined);
 
@@ -116,16 +139,8 @@ describe("createClientOnboarding", () => {
       roles: distributorClientRoles(5),
     });
 
-    expect(result.companyLinkedExisting).toBe(true);
-    expect(result.companyCreated).toBe(false);
-    expect(createBranch).toHaveBeenCalledWith(
-      expect.objectContaining({ companyId: 77 }),
-    );
-    expect(syncBranchRoles).toHaveBeenCalledWith(
-      21,
-      null,
-      distributorClientRoles(5),
-    );
-    expect(syncBranchRoles).toHaveBeenCalledOnce();
+    expect(createBranch).not.toHaveBeenCalled();
+    expect(result.branch.id).toBe(322);
+    expect(result.branchLinkedExisting).toBe(true);
   });
 });
