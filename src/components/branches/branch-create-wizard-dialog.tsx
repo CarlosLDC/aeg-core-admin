@@ -1,46 +1,38 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Building2, Loader2, MapPin, X } from "lucide-react";
-import { DistributorSelect } from "@/components/branches/distributor-select";
+import { Building2, Loader2, MapPin, Phone, Tags, X } from "lucide-react";
+import { BranchWizardRolesFields } from "@/components/branches/branch-wizard-roles-fields";
+import {
+  emptyBranchWizardForm,
+  type BranchWizardValues,
+} from "@/components/branches/branch-wizard-types";
+import {
+  ClientFormFields,
+  type ClientFormSection,
+} from "@/components/clients/client-form-fields";
 import { SeniatDocumentScan } from "@/components/seniat/seniat-document-scan";
-import { CONTRIBUTOR_LABELS } from "@/lib/contributor-types";
+import {
+  collectAiFilledFields,
+  type SeniatLockableField,
+} from "@/lib/seniat-ai-fields";
 import {
   findCompanyByRif,
   RIF_PATTERN,
   type SeniatExtractResult,
 } from "@/lib/seniat-extract";
+import type { ClientOnboardingValues } from "@/lib/client-onboarding";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
-import {
-  CONTRIBUTOR_TYPES,
-  type CompanyResponse,
-  type ContributorType,
-} from "@/types/company";
+import type { CompanyResponse } from "@/types/company";
 import { cn } from "@/lib/utils";
 
-export type BranchWizardValues = {
-  rif: string;
-  businessName: string;
-  contributorType: ContributorType;
-  linkedCompanyId: number | null;
-  city: string;
-  state: string;
-  address: string;
-  contactPersonName: string;
-  phone: string;
-  email: string;
-  isClient: boolean;
-  isDistributor: boolean;
-  isServiceCenter: boolean;
-  clientDistributorId: string;
-};
+export type { BranchWizardValues } from "@/components/branches/branch-wizard-types";
 
 type BranchCreateWizardDialogProps = {
   open: boolean;
   saving: boolean;
   error: string | null;
-  /** Empresa ya creada en un intento anterior (reintento de sucursal). */
   resumeCompanyId?: number | null;
   companies: CompanyResponse[];
   branches: BranchResponse[];
@@ -50,22 +42,51 @@ type BranchCreateWizardDialogProps = {
   onSubmit: (values: BranchWizardValues) => void;
 };
 
-const emptyForm = (): BranchWizardValues => ({
-  rif: "",
-  businessName: "",
-  contributorType: "ordinario",
-  linkedCompanyId: null,
-  city: "",
-  state: "",
-  address: "",
-  contactPersonName: "",
-  phone: "",
-  email: "",
-  isClient: false,
-  isDistributor: false,
-  isServiceCenter: false,
-  clientDistributorId: "",
-});
+type WizardStep = 0 | 1 | 2 | 3 | 4;
+
+const FORM_STEPS: {
+  step: 1 | 2 | 3 | 4;
+  section: ClientFormSection | "roles";
+  label: string;
+}[] = [
+  { step: 1, section: "fiscal", label: "Fiscal" },
+  { step: 2, section: "location", label: "Ubicación" },
+  { step: 3, section: "contact", label: "Contacto" },
+  { step: 4, section: "roles", label: "Roles" },
+];
+
+const STEP_ICONS = {
+  1: Building2,
+  2: MapPin,
+  3: Phone,
+  4: Tags,
+} as const;
+
+function stepSubtitle(step: WizardStep, resuming: boolean): string {
+  switch (step) {
+    case 0:
+      return resuming
+        ? "Completa la ubicación y los datos de la sucursal."
+        : "Escanea el RIF o ingresa los datos manualmente.";
+    case 1:
+      return "Revisa o completa los datos fiscales de la empresa.";
+    case 2:
+      return "Indica estado, ciudad y dirección de la sucursal.";
+    case 3:
+      return "Persona de contacto, teléfono y correo.";
+    case 4:
+      return "Asigna los roles de esta sucursal.";
+    default:
+      return "";
+  }
+}
+
+function mergeClientPatch(
+  prev: BranchWizardValues,
+  patch: Partial<ClientOnboardingValues>,
+): BranchWizardValues {
+  return { ...prev, ...patch };
+}
 
 export function BranchCreateWizardDialog({
   open,
@@ -79,26 +100,34 @@ export function BranchCreateWizardDialog({
   onClose,
   onSubmit,
 }: BranchCreateWizardDialogProps) {
-  const [form, setForm] = useState<BranchWizardValues>(emptyForm);
-  const [rifError, setRifError] = useState<string | null>(null);
-  const [scanApplied, setScanApplied] = useState(false);
+  const [step, setStep] = useState<WizardStep>(0);
+  const [inputMode, setInputMode] = useState<"ai" | "manual">("manual");
+  const [form, setForm] = useState<BranchWizardValues>(emptyBranchWizardForm);
+  const [aiFields, setAiFields] = useState<Set<SeniatLockableField>>(new Set());
+  const [stepError, setStepError] = useState<string | null>(null);
+
+  const resuming = resumeCompanyId != null;
 
   useEffect(() => {
     if (!open) return;
     if (resumeCompanyId != null) {
       const company = companies.find((c) => c.id === resumeCompanyId);
       setForm({
-        ...emptyForm(),
+        ...emptyBranchWizardForm(),
         linkedCompanyId: resumeCompanyId,
         rif: company?.rif ?? "",
         businessName: company?.businessName ?? "",
         contributorType: company?.contributorType ?? "ordinario",
       });
+      setStep(2);
+      setInputMode("manual");
     } else {
-      setForm(emptyForm());
+      setForm(emptyBranchWizardForm());
+      setStep(0);
+      setInputMode("manual");
     }
-    setRifError(null);
-    setScanApplied(false);
+    setAiFields(new Set());
+    setStepError(null);
   }, [open, resumeCompanyId, companies]);
 
   if (!open) return null;
@@ -107,10 +136,27 @@ export function BranchCreateWizardDialog({
     form.linkedCompanyId != null
       ? companies.find((c) => c.id === form.linkedCompanyId)
       : undefined;
-  const companyLocked = Boolean(linkedCompany);
+
+  const setClientForm: React.Dispatch<
+    React.SetStateAction<ClientOnboardingValues>
+  > = (action) => {
+    setForm((prev) => {
+      const patch =
+        typeof action === "function" ? action(prev) : action;
+      return mergeClientPatch(prev, patch);
+    });
+  };
+
+  function startManualWizard() {
+    setInputMode("manual");
+    setAiFields(new Set());
+    setStepError(null);
+    setStep(1);
+  }
 
   function applyExtracted(data: SeniatExtractResult) {
     const match = data.rif ? findCompanyByRif(companies, data.rif) : undefined;
+    const filled = collectAiFilledFields(data);
 
     setForm((f) => ({
       ...f,
@@ -128,26 +174,103 @@ export function BranchCreateWizardDialog({
       phone: data.phone ?? f.phone,
       email: data.email ?? f.email,
     }));
-    setScanApplied(true);
-    setRifError(null);
+    setAiFields(filled);
+    setInputMode("ai");
+    setStepError(null);
+    setStep(1);
   }
 
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  function validateFiscal(): string | null {
     const rif = form.rif.trim().toUpperCase();
+    const companyLocked = Boolean(linkedCompany);
     if (!companyLocked && !RIF_PATTERN.test(rif)) {
-      setRifError("Formato: letra V, E, J, P o G seguida de 7 a 9 dígitos.");
-      return;
+      return "Formato: letra V, E, J, P o G seguida de 7 a 9 dígitos.";
     }
     if (!companyLocked && !form.businessName.trim()) {
-      setRifError("Indica la razón social de la empresa.");
-      return;
+      return "Indica la razón social de la empresa.";
     }
+    return null;
+  }
+
+  function validateLocation(): string | null {
     if (!form.state.trim() || !form.city.trim()) {
-      setRifError("Estado y ciudad son obligatorios para la sucursal.");
+      return "Estado y ciudad son obligatorios.";
+    }
+    return null;
+  }
+
+  function validateContact(): string | null {
+    if (!form.contactPersonName.trim()) {
+      return "Indica el nombre de la persona de contacto.";
+    }
+    return null;
+  }
+
+  function goNext() {
+    if (step === 1) {
+      const err = validateFiscal();
+      if (err) {
+        setStepError(err);
+        return;
+      }
+      setStepError(null);
+      setStep(2);
       return;
     }
-    setRifError(null);
+    if (step === 2) {
+      const err = validateLocation();
+      if (err) {
+        setStepError(err);
+        return;
+      }
+      setStepError(null);
+      setStep(3);
+      return;
+    }
+    if (step === 3) {
+      const err = validateContact();
+      if (err) {
+        setStepError(err);
+        return;
+      }
+      setStepError(null);
+      setStep(4);
+    }
+  }
+
+  function goBack() {
+    setStepError(null);
+    if (step === 1) {
+      if (resuming) return;
+      setStep(0);
+      return;
+    }
+    if (step > 1) {
+      setStep((step - 1) as WizardStep);
+    }
+  }
+
+  function submitRegistration() {
+    const fiscalErr = validateFiscal();
+    if (fiscalErr) {
+      setStepError(fiscalErr);
+      setStep(1);
+      return;
+    }
+    const locationErr = validateLocation();
+    if (locationErr) {
+      setStepError(locationErr);
+      setStep(2);
+      return;
+    }
+    const contactErr = validateContact();
+    if (contactErr) {
+      setStepError(contactErr);
+      setStep(3);
+      return;
+    }
+    setStepError(null);
+    const rif = form.rif.trim().toUpperCase();
     onSubmit({
       ...form,
       rif,
@@ -155,13 +278,23 @@ export function BranchCreateWizardDialog({
       state: form.state.trim(),
       city: form.city.trim(),
       address: form.address.trim(),
+      contactPersonName: form.contactPersonName.trim(),
       phone: form.phone.trim(),
       email: form.email.trim(),
     });
   }
 
-  const inputClass =
-    "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:bg-foreground/[0.03] disabled:text-muted";
+  function handleFormSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (step < 4) {
+      goNext();
+      return;
+    }
+    submitRegistration();
+  }
+
+  const displayError = stepError ?? error;
+  const currentFormStep = FORM_STEPS.find((s) => s.step === step);
 
   return (
     <div
@@ -175,294 +308,168 @@ export function BranchCreateWizardDialog({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative max-h-[min(92vh,100dvh)] w-full max-w-2xl overflow-y-auto rounded-xl border border-border bg-card p-4 shadow-xl sm:p-6">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-card-foreground">
-              Nueva sucursal
-            </h2>
-            <p className="mt-1 text-sm text-muted">
-              Escanea el documento fiscal o completa empresa y ubicación. Si el
-              RIF ya existe, se vincula automáticamente.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-muted hover:bg-foreground/5"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
-
-        <SeniatDocumentScan
-          onExtracted={applyExtracted}
-          disabled={saving}
-          className="mb-5"
-        />
-
-        {scanApplied && (
-          <p className="mb-4 rounded-lg border border-teal-200/70 bg-teal-500/8 px-3 py-2 text-sm text-teal-900 dark:border-teal-500/25 dark:text-teal-100">
-            Datos sugeridos por IA aplicados. Revisa antes de guardar.
-          </p>
-        )}
-
-        {(error || rifError) && (
-          <p
-            role="alert"
-            className="mb-4 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
-          >
-            {rifError ?? error}
-          </p>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <fieldset className="space-y-4 rounded-lg border border-border p-4">
-            <legend className="flex items-center gap-2 px-1 text-sm font-semibold text-card-foreground">
-              <Building2 className="size-4 text-accent" />
-              Empresa (datos SENIAT)
-            </legend>
-
-            {linkedCompany && (
-              <p className="rounded-lg border border-accent/20 bg-accent/5 px-3 py-2 text-sm text-card-foreground">
-                Empresa existente vinculada:{" "}
-                <span className="font-medium">
-                  {linkedCompany.businessName || linkedCompany.rif}
-                </span>{" "}
-                <span className="font-mono text-xs text-muted">
-                  ({linkedCompany.rif})
-                </span>
+      <div className="relative flex max-h-[min(92vh,100dvh)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+        <div className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-card-foreground">
+                Nueva sucursal
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                {stepSubtitle(step, resuming)}
               </p>
-            )}
-
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">RIF</span>
-              <input
-                type="text"
-                required
-                value={form.rif}
-                disabled={saving || companyLocked}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    rif: e.target.value.toUpperCase(),
-                    linkedCompanyId: null,
-                  }))
-                }
-                placeholder="J123456789"
-                className={cn(inputClass, "font-mono uppercase")}
-              />
-            </label>
-
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">
-                Razón social
-              </span>
-              <input
-                type="text"
-                required
-                value={form.businessName}
-                disabled={saving || companyLocked}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, businessName: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">
-                Tipo de contribuyente
-              </span>
-              <select
-                value={form.contributorType}
-                disabled={saving || companyLocked}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    contributorType: e.target.value as ContributorType,
-                  }))
-                }
-                className={inputClass}
-              >
-                {CONTRIBUTOR_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {CONTRIBUTOR_LABELS[type]} ({type})
-                  </option>
-                ))}
-              </select>
-            </label>
-          </fieldset>
-
-          <fieldset className="space-y-4 rounded-lg border border-border p-4">
-            <legend className="flex items-center gap-2 px-1 text-sm font-semibold text-card-foreground">
-              <MapPin className="size-4 text-accent" />
-              Sucursal (ubicación)
-            </legend>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Estado</span>
-                <input
-                  type="text"
-                  required
-                  value={form.state}
-                  disabled={saving}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, state: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Ciudad</span>
-                <input
-                  type="text"
-                  required
-                  value={form.city}
-                  disabled={saving}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, city: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
             </div>
-
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Dirección</span>
-              <input
-                type="text"
-                value={form.address}
-                disabled={saving}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, address: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">
-                Nombre persona de contacto
-              </span>
-              <input
-                type="text"
-                required
-                value={form.contactPersonName}
-                disabled={saving}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, contactPersonName: e.target.value }))
-                }
-                placeholder="Ej. María Pérez"
-                className={inputClass}
-              />
-            </label>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Teléfono</span>
-                <input
-                  type="tel"
-                  value={form.phone}
-                  disabled={saving}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, phone: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Email</span>
-                <input
-                  type="email"
-                  value={form.email}
-                  disabled={saving}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, email: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset className="space-y-3 rounded-lg border border-border p-4">
-            <legend className="px-1 text-sm font-medium">Roles de sucursal</legend>
-            <p className="text-xs text-muted">
-              Cada rol crea un registro vinculado a la sucursal.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              {(
-                [
-                  ["isDistributor", "Distribuidor"],
-                  ["isClient", "Cliente"],
-                  ["isServiceCenter", "Centro de servicio"],
-                ] as const
-              ).map(([key, label]) => (
-                <label
-                  key={key}
-                  className="flex cursor-pointer items-center gap-2 text-sm"
-                >
-                  <input
-                    type="checkbox"
-                    checked={form[key]}
-                    disabled={saving}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        [key]: e.target.checked,
-                        ...(key === "isClient" && !e.target.checked
-                          ? { clientDistributorId: "" }
-                          : {}),
-                      }))
-                    }
-                    className="size-4 rounded border-border accent-accent"
-                  />
-                  <span>{label}</span>
-                </label>
-              ))}
-            </div>
-
-            {form.isClient && (
-              <label className="block pt-1">
-                <span className="mb-1.5 block text-sm font-medium">
-                  Distribuidor del cliente
-                </span>
-                <DistributorSelect
-                  value={form.clientDistributorId}
-                  onChange={(clientDistributorId) =>
-                    setForm((f) => ({ ...f, clientDistributorId }))
-                  }
-                  distributors={distributors}
-                  branches={branches}
-                  companies={companies}
-                />
-              </label>
-            )}
-          </fieldset>
-
-          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5"
+              className="rounded-lg p-1.5 text-muted hover:bg-foreground/5"
+            >
+              <X className="size-5" />
+            </button>
+          </div>
+
+          {step > 0 && (
+            <nav
+              className="mt-4 flex gap-1"
+              aria-label="Pasos del registro"
+            >
+              {FORM_STEPS.map(({ step: s, label }) => {
+                const Icon = STEP_ICONS[s];
+                const isActive = step === s;
+                const isDone = step > s;
+                const skipFiscal = resuming && s === 1;
+                return (
+                  <div
+                    key={s}
+                    className={cn(
+                      "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2 text-center transition-colors",
+                      skipFiscal && "opacity-50",
+                      isActive && "bg-accent/10 text-accent",
+                      isDone && !isActive && "text-card-foreground",
+                      !isActive && !isDone && "text-muted",
+                    )}
+                    aria-current={isActive ? "step" : undefined}
+                  >
+                    <Icon className="size-4 shrink-0" aria-hidden />
+                    <span className="text-[11px] font-medium leading-tight sm:text-xs">
+                      {label}
+                    </span>
+                  </div>
+                );
+              })}
+            </nav>
+          )}
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+          {resuming && step >= 2 && (
+            <p className="mb-4 rounded-lg border border-accent/20 bg-accent/5 px-3 py-2 text-sm text-card-foreground">
+              La empresa ya está registrada. Completa los datos de la sucursal y
+              pulsa «Crear sucursal».
+            </p>
+          )}
+
+          {step === 0 ? (
+            <SeniatDocumentScan
+              variant="client"
+              analyzeOnSelect
+              onExtracted={applyExtracted}
+              onRequestManual={startManualWizard}
+              disabled={saving}
+            />
+          ) : (
+            <form
+              onSubmit={handleFormSubmit}
+              className="flex h-full flex-col"
+            >
+              {displayError && (
+                <p
+                  role="alert"
+                  className="mb-4 shrink-0 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
+                >
+                  {displayError}
+                </p>
+              )}
+
+              {currentFormStep?.section === "roles" ? (
+                <BranchWizardRolesFields
+                  form={form}
+                  setForm={setForm}
+                  saving={saving}
+                  branches={branches}
+                  distributors={distributors}
+                  companies={companies}
+                />
+              ) : currentFormStep ? (
+                <ClientFormFields
+                  form={form}
+                  setForm={setClientForm}
+                  saving={saving}
+                  linkedCompany={linkedCompany}
+                  inputMode={inputMode}
+                  aiFields={aiFields}
+                  section={currentFormStep.section}
+                />
+              ) : null}
+            </form>
+          )}
+        </div>
+
+        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border px-4 py-4 sm:flex-row sm:justify-between sm:px-6 [&_button]:w-full sm:[&_button]:w-auto">
+          {step === 0 ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 sm:ml-auto"
             >
               Cancelar
             </button>
-            <button
-              type="submit"
-              disabled={saving || companiesLoading}
-              className={cn(
-                "flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
-                (saving || companiesLoading) && "cursor-not-allowed opacity-70",
-              )}
-            >
-              {saving && <Loader2 className="size-4 animate-spin" />}
-              Crear sucursal
-            </button>
-          </div>
-        </form>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={goBack}
+                disabled={saving || (resuming && step === 2)}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
+              >
+                Atrás
+              </button>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5"
+                >
+                  Cancelar
+                </button>
+                {step < 4 ? (
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={goNext}
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
+                  >
+                    Siguiente
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={saving || companiesLoading}
+                    onClick={submitRegistration}
+                    className={cn(
+                      "flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
+                      (saving || companiesLoading) &&
+                        "cursor-not-allowed opacity-70",
+                    )}
+                  >
+                    {saving && <Loader2 className="size-4 animate-spin" />}
+                    Crear sucursal
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
