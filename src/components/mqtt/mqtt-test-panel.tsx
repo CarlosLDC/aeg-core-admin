@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, Radio, Send, Wifi } from "lucide-react";
 import { useToast } from "@/context/toast-provider";
+import { MqttMonitorPanel } from "@/components/mqtt/mqtt-monitor-panel";
 import {
   checkMqttConnection,
   getMqttErrorMessage,
@@ -183,9 +184,10 @@ export function MqttTestPanel() {
     <div className="space-y-6">
       <p className="text-sm text-muted">
         Herramientas para probar la conexión con el broker de mensajes. Solo
-        administradores. El panel confirma el envío; los mensajes recibidos se
-        registran en el servidor.
+        administradores.
       </p>
+
+      <MqttMonitorPanel />
 
       <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:flex-nowrap md:items-center md:justify-between">
