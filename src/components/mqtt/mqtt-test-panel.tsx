@@ -187,8 +187,6 @@ export function MqttTestPanel() {
         administradores.
       </p>
 
-      <MqttMonitorPanel />
-
       <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:flex-nowrap md:items-center md:justify-between">
           <div className="min-w-0 flex-1">
@@ -320,6 +318,8 @@ export function MqttTestPanel() {
           </div>
         )}
       </section>
+
+      <MqttMonitorPanel />
     </div>
   );
 }
