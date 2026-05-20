@@ -306,7 +306,6 @@ export function PrinterModelsManager() {
                           key={model.id}
                           href={printerModelPath(model.id)}
                         >
-                          <TableCreatedAtCell value={model.createdAt} />
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
                             {model.brand}
                           </td>
@@ -322,6 +321,7 @@ export function PrinterModelsManager() {
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
                             {formatPrinterModelPrice(model.price)}
                           </td>
+                          <TableCreatedAtCell value={model.createdAt} />
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink

@@ -358,6 +358,7 @@ export function TechnicalServicesManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {row.sealTampered ? "Violentado" : "OK"}
                           </td>
+                          <TableCreatedAtCell value={row.createdAt} />
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
