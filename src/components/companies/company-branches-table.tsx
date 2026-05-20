@@ -27,20 +27,15 @@ import {
 } from "@/lib/branch-roles";
 import { formatBranchShort } from "@/lib/branches";
 import { getCatalogErrorMessage } from "@/lib/api-error-message";
-import {
-  deleteBranch,
-  fetchBranches,
-  updateBranch,
-} from "@/lib/branches-api";
-import { fetchClients } from "@/lib/clients-api";
-import { fetchDistributors } from "@/lib/distributors-api";
-import { fetchServiceCenters } from "@/lib/service-centers-api";
+import { toBranchRequest } from "@/lib/branch-request";
+import { invalidateCatalogRoles } from "@/lib/catalog-roles-cache";
+import { deleteBranch, updateBranch } from "@/lib/branches-api";
 import { branchPath } from "@/lib/resource-routes";
 import {
   filterAllOption,
   uniqueFilterOptions,
 } from "@/lib/table-filter-options";
-import type { BranchRequest, BranchWithRoles } from "@/types/branch";
+import type { BranchWithRoles } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { DistributorResponse } from "@/types/branch-role";
 import { cn } from "@/lib/utils";
@@ -55,18 +50,6 @@ const TYPE_FILTER_OPTIONS = [
   { value: "distributor", label: "Distribuidor" },
   { value: "serviceCenter", label: "Centro de servicio" },
 ] as const;
-
-function toBranchRequest(values: BranchFormValues): BranchRequest {
-  return {
-    companyId: Number(values.companyId),
-    city: values.city.trim(),
-    state: values.state.trim(),
-    address: values.address.trim() || undefined,
-    contactPersonName: values.contactPersonName.trim(),
-    phone: values.phone.trim() || undefined,
-    email: values.email.trim() || undefined,
-  };
-}
 
 function toRoleFormState(values: BranchFormValues) {
   return {
@@ -104,8 +87,12 @@ export function CompanyBranchesTable({
   const confirm = useConfirm();
   const { user } = useAuth();
   const canModify = user ? canUpdateBranchRecord(user.role) : false;
-  const { scope, loading: scopeLoading, refresh: refreshScope } =
-    useCompanyScope();
+  const {
+    scope,
+    catalogRoles,
+    loading: scopeLoading,
+    refresh: refreshScope,
+  } = useCompanyScope();
 
   const [branches, setBranches] = useState<BranchWithRoles[]>([]);
   const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
@@ -122,24 +109,16 @@ export function CompanyBranchesTable({
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const loadBranches = useCallback(async () => {
-    if (!scope) return;
+    if (!scope || !catalogRoles) return;
 
     setLoading(true);
     setListError(null);
     try {
-      const [branchRows, distributorRows, clientRows, serviceCenterRows] =
-        await Promise.all([
-          fetchBranches(),
-          fetchDistributors(),
-          fetchClients(),
-          fetchServiceCenters(),
-        ]);
-
       const merged = mergeBranchesWithRoles(
-        branchRows,
-        distributorRows,
-        clientRows,
-        serviceCenterRows,
+        scope.branches,
+        catalogRoles.distributors,
+        catalogRoles.clients,
+        catalogRoles.serviceCenters,
       );
 
       const scopedMerged = canBrowseOtherCompanies(scope.role)
@@ -154,7 +133,7 @@ export function CompanyBranchesTable({
           `${a.city} ${a.state}`.localeCompare(`${b.city} ${b.state}`, "es"),
         );
 
-      setDistributors(distributorRows);
+      setDistributors(catalogRoles.distributors);
       setAllBranches(scopedMerged);
       setBranches(forCompany);
     } catch (err) {
@@ -164,7 +143,7 @@ export function CompanyBranchesTable({
     } finally {
       setLoading(false);
     }
-  }, [scope, companyId, toast]);
+  }, [scope, catalogRoles, companyId, toast]);
 
   useEffect(() => {
     if (scopeLoading) return;
@@ -173,8 +152,10 @@ export function CompanyBranchesTable({
       setBranches([]);
       return;
     }
-    void loadBranches();
-  }, [scopeLoading, scope, loadBranches]);
+    if (catalogRoles) {
+      void loadBranches();
+    }
+  }, [scopeLoading, scope, catalogRoles, loadBranches]);
 
   const stateFilterOptions = useMemo(
     () => [
@@ -243,6 +224,7 @@ export function CompanyBranchesTable({
         href: branchPath(selected.id),
       });
       closeDialog();
+      invalidateCatalogRoles();
       await refreshScope();
       await loadBranches();
     } catch (err) {

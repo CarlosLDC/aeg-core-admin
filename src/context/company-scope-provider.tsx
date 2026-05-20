@@ -10,11 +10,17 @@ import {
 } from "react";
 import { useAuth } from "@/context/auth-provider";
 import { buildCompanyScope, type CompanyScope } from "@/lib/company-scope";
+import {
+  invalidateCatalogRoles,
+  loadCatalogRoles,
+  type CatalogRolesSnapshot,
+} from "@/lib/catalog-roles-cache";
 import { fetchBranches } from "@/lib/branches-api";
 import { fetchCompanies } from "@/lib/companies-api";
 
 type CompanyScopeContextValue = {
   scope: CompanyScope | null;
+  catalogRoles: CatalogRolesSnapshot | null;
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -31,12 +37,15 @@ export function CompanyScopeProvider({
 }) {
   const { user } = useAuth();
   const [scope, setScope] = useState<CompanyScope | null>(null);
+  const [catalogRoles, setCatalogRoles] =
+    useState<CatalogRolesSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!user) {
       setScope(null);
+      setCatalogRoles(null);
       setError(null);
       setLoading(false);
       return;
@@ -44,10 +53,12 @@ export function CompanyScopeProvider({
 
     setLoading(true);
     setError(null);
+    invalidateCatalogRoles();
     try {
-      const [companies, branches] = await Promise.all([
+      const [companies, branches, roles] = await Promise.all([
         fetchCompanies(),
         fetchBranches(),
+        loadCatalogRoles(true),
       ]);
 
       const built = buildCompanyScope({
@@ -59,8 +70,10 @@ export function CompanyScopeProvider({
       });
 
       setScope(built);
+      setCatalogRoles(roles);
     } catch (err) {
       setScope(null);
+      setCatalogRoles(null);
       setError(
         err instanceof Error
           ? err.message
@@ -76,8 +89,8 @@ export function CompanyScopeProvider({
   }, [refresh]);
 
   const value = useMemo(
-    () => ({ scope, loading, error, refresh }),
-    [scope, loading, error, refresh],
+    () => ({ scope, catalogRoles, loading, error, refresh }),
+    [scope, catalogRoles, loading, error, refresh],
   );
 
   return (

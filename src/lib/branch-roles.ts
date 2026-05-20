@@ -1,3 +1,4 @@
+import { loadCatalogRoles } from "@/lib/catalog-roles-cache";
 import { fetchBranchById } from "@/lib/branches-api";
 import { fetchClients } from "@/lib/clients-api";
 import {
@@ -126,18 +127,16 @@ export async function deleteBranchRoles(branch: BranchWithRoles): Promise<void> 
 export async function fetchBranchWithRolesById(
   id: number,
 ): Promise<BranchWithRoles> {
-  const [branch, distributors, clients, serviceCenters] = await Promise.all([
+  const [branch, roles] = await Promise.all([
     fetchBranchById(id),
-    fetchDistributors(),
-    fetchClients(),
-    fetchServiceCenters(),
+    loadCatalogRoles(),
   ]);
 
   const merged = mergeBranchesWithRoles(
     [branch],
-    distributors,
-    clients,
-    serviceCenters,
+    roles.distributors,
+    roles.clients,
+    roles.serviceCenters,
   );
   return merged[0]!;
 }

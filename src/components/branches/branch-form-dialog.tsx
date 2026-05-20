@@ -1,10 +1,12 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useId, useState } from "react";
 import { X } from "lucide-react";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { CompanySelect } from "@/components/companies/company-select";
 import { DistributorSelect } from "@/components/branches/distributor-select";
+import { zodFieldErrors } from "@/lib/form-zod";
+import { branchFormSchema } from "@/lib/schemas/branch-form-schema";
 import type { BranchRoleFormState } from "@/lib/branch-roles";
 import type { BranchResponse, BranchWithRoles } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
@@ -79,10 +81,15 @@ export function BranchFormDialog({
   onDelete,
   deleting = false,
 }: BranchFormDialogProps) {
+  const titleId = useId();
   const [form, setForm] = useState<BranchFormValues>(emptyForm);
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<keyof BranchFormValues, string>>
+  >({});
 
   useEffect(() => {
     if (!open) return;
+    setFieldErrors({});
     if (mode === "edit" && branch) {
       const roles = rolesFromBranch(branch);
       setForm({
@@ -107,7 +114,28 @@ export function BranchFormDialog({
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    onSubmit(form);
+    const parsed = branchFormSchema.safeParse({
+      ...form,
+      companyId: form.companyId.trim(),
+      city: form.city.trim(),
+      state: form.state.trim(),
+      address: form.address.trim(),
+      contactPersonName: form.contactPersonName.trim(),
+      phone: form.phone.trim(),
+      email: form.email.trim(),
+    });
+    const errors = zodFieldErrors(parsed);
+    if (errors || !parsed.success) {
+      if (errors) setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors({});
+    onSubmit({
+      ...parsed.data,
+      address: parsed.data.address ?? "",
+      phone: parsed.data.phone ?? "",
+      email: parsed.data.email ?? "",
+    });
   }
 
   const branchIdForExclude =
@@ -121,6 +149,7 @@ export function BranchFormDialog({
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
+      aria-labelledby={titleId}
     >
       <button
         type="button"
@@ -131,7 +160,10 @@ export function BranchFormDialog({
       <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-card-foreground">
+            <h2
+              id={titleId}
+              className="text-lg font-semibold text-card-foreground"
+            >
               {mode === "create" ? "Nueva sucursal" : "Editar sucursal"}
             </h2>
             <p className="mt-1 text-sm text-muted">
@@ -143,6 +175,7 @@ export function BranchFormDialog({
           <button
             type="button"
             onClick={onClose}
+            aria-label="Cerrar"
             className="rounded-lg p-1.5 text-muted hover:bg-foreground/5"
           >
             <X className="size-5" />
@@ -183,8 +216,12 @@ export function BranchFormDialog({
                 onChange={(e) =>
                   setForm((f) => ({ ...f, city: e.target.value }))
                 }
+                aria-invalid={Boolean(fieldErrors.city)}
                 className={inputClass}
               />
+              {fieldErrors.city && (
+                <p className="mt-1 text-xs text-rose-600">{fieldErrors.city}</p>
+              )}
             </label>
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium">Estado</span>
@@ -224,8 +261,14 @@ export function BranchFormDialog({
                 setForm((f) => ({ ...f, contactPersonName: e.target.value }))
               }
               placeholder="Ej. María Pérez"
+              aria-invalid={Boolean(fieldErrors.contactPersonName)}
               className={inputClass}
             />
+            {fieldErrors.contactPersonName && (
+              <p className="mt-1 text-xs text-rose-600">
+                {fieldErrors.contactPersonName}
+              </p>
+            )}
           </label>
 
           <div className="grid gap-4 sm:grid-cols-2">

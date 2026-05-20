@@ -49,19 +49,14 @@ import {
   formatBranchShort,
 } from "@/lib/branches";
 import { getCatalogErrorMessage } from "@/lib/api-error-message";
-import {
-  deleteBranch,
-  fetchBranches,
-  updateBranch,
-} from "@/lib/branches-api";
+import { deleteBranch, updateBranch } from "@/lib/branches-api";
 import {
   createClientOnboarding,
   type ClientOnboardingValues,
 } from "@/lib/client-onboarding";
-import { fetchClients } from "@/lib/clients-api";
-import { fetchDistributors } from "@/lib/distributors-api";
-import { fetchServiceCenters } from "@/lib/service-centers-api";
-import type { BranchRequest, BranchWithRoles } from "@/types/branch";
+import { toBranchRequest } from "@/lib/branch-request";
+import { invalidateCatalogRoles } from "@/lib/catalog-roles-cache";
+import type { BranchWithRoles } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { DistributorResponse } from "@/types/branch-role";
 import { cn } from "@/lib/utils";
@@ -77,18 +72,6 @@ const TYPE_FILTER_OPTIONS = [
   { value: "distributor", label: "Distribuidor" },
   { value: "serviceCenter", label: "Centro de servicio" },
 ] as const;
-
-function toBranchRequest(values: BranchFormValues): BranchRequest {
-  return {
-    companyId: Number(values.companyId),
-    city: values.city.trim(),
-    state: values.state.trim(),
-    address: values.address.trim() || undefined,
-    contactPersonName: values.contactPersonName.trim(),
-    phone: values.phone.trim() || undefined,
-    email: values.email.trim() || undefined,
-  };
-}
 
 function toRoleFormState(values: BranchFormValues) {
   return {
@@ -125,6 +108,7 @@ export function BranchesManager() {
   const canModify = user ? canUpdateBranchRecord(user.role) : false;
   const {
     scope,
+    catalogRoles,
     loading: scopeLoading,
     error: scopeError,
     refresh: refreshScope,
@@ -213,28 +197,21 @@ export function BranchesManager() {
   const pagination = usePagination(filteredBranches);
 
   const loadBranches = useCallback(async () => {
-    if (!scope) return;
+    if (!scope || !catalogRoles) return;
 
     const companyList = scope.companies;
     setLoading(true);
     setListError(null);
     try {
-      const [branchRows, distributorRows, clientRows, serviceCenterRows] =
-        await Promise.all([
-          fetchBranches(),
-          fetchDistributors(),
-          fetchClients(),
-          fetchServiceCenters(),
-        ]);
-
+      const branchRows = scope.branches;
       const merged = mergeBranchesWithRoles(
         branchRows,
-        distributorRows,
-        clientRows,
-        serviceCenterRows,
+        catalogRoles.distributors,
+        catalogRoles.clients,
+        catalogRoles.serviceCenters,
       );
 
-      setDistributors(distributorRows);
+      setDistributors(catalogRoles.distributors);
 
       // ADMIN/DISTRIBUTOR: el API ya devuelve el alcance correcto; no filtrar por
       // scope.branches (queda obsoleto tras crear una sucursal nueva).
@@ -266,7 +243,7 @@ export function BranchesManager() {
     } finally {
       setLoading(false);
     }
-  }, [scope, toast]);
+  }, [scope, catalogRoles, toast]);
 
   const refreshAll = useCallback(async () => {
     await refreshScope();
@@ -293,8 +270,10 @@ export function BranchesManager() {
     if (scopeError) {
       setListError((prev) => prev ?? scopeError);
     }
-    void loadBranches();
-  }, [scopeLoading, scope, scopeError, loadBranches]);
+    if (catalogRoles) {
+      void loadBranches();
+    }
+  }, [scopeLoading, scope, catalogRoles, scopeError, loadBranches]);
 
   function openCreate() {
     setSelected(null);
@@ -365,6 +344,7 @@ export function BranchesManager() {
         { href: branchPath(result.branch.id) },
       );
       closeWizard();
+      invalidateCatalogRoles();
       await refreshScope();
     } catch (err) {
       const message = getCatalogErrorMessage(err);
@@ -375,7 +355,8 @@ export function BranchesManager() {
           : undefined;
       if (resumeId != null && wizardResumeCompanyId == null) {
         setWizardResumeCompanyId(resumeId);
-        await refreshScope();
+        invalidateCatalogRoles();
+      await refreshScope();
         const partial = `La empresa se creó, pero la sucursal no: ${message}. Revisa los datos de ubicación y pulsa «Crear sucursal» de nuevo (la empresa ya está vinculada).`;
         setFormError(partial);
         toast.error(partial);
@@ -409,6 +390,7 @@ export function BranchesManager() {
         });
       }
       closeDialog();
+      invalidateCatalogRoles();
       await refreshScope();
     } catch (err) {
       const message =

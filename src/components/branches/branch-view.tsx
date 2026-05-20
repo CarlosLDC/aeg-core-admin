@@ -36,21 +36,11 @@ import {
 import { fetchDistributors } from "@/lib/distributors-api";
 import { formatDate } from "@/lib/datetime-form";
 import { branchPath, companyPath } from "@/lib/resource-routes";
-import type { BranchRequest, BranchWithRoles } from "@/types/branch";
+import { toBranchRequest } from "@/lib/branch-request";
+import { invalidateCatalogRoles } from "@/lib/catalog-roles-cache";
+import type { BranchWithRoles } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
-
-function toBranchRequest(values: BranchFormValues): BranchRequest {
-  return {
-    companyId: Number(values.companyId),
-    city: values.city.trim(),
-    state: values.state.trim(),
-    address: values.address.trim() || undefined,
-    contactPersonName: values.contactPersonName.trim(),
-    phone: values.phone.trim() || undefined,
-    email: values.email.trim() || undefined,
-  };
-}
 
 function toRoleFormState(values: BranchFormValues) {
   return {
@@ -138,6 +128,7 @@ export function BranchView() {
         href: branchPath(updated.id),
       });
       setEditOpen(false);
+      invalidateCatalogRoles();
       await refresh();
     } catch (err) {
       const message =
@@ -163,6 +154,7 @@ export function BranchView() {
     try {
       await deleteBranchRoles(branch);
       await deleteBranch(branch.id);
+      invalidateCatalogRoles();
       await refresh();
       toast.success(`Sucursal "${label}" eliminada.`);
       router.push("/branches");

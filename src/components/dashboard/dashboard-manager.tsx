@@ -43,7 +43,7 @@ function iconForStat(stat: DashboardStat): LucideIcon {
 
 export function DashboardManager() {
   const { user } = useAuth();
-  const { scope, loading: scopeLoading } = useCompanyScope();
+  const { scope, catalogRoles, loading: scopeLoading } = useCompanyScope();
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,6 +81,7 @@ export function DashboardManager() {
       const data = await loadDashboardSnapshot({
         role: user.role,
         scope,
+        catalogRoles,
         distributorId,
         userBranchId: user.branchId,
       });
@@ -93,7 +94,7 @@ export function DashboardManager() {
     } finally {
       setLoading(false);
     }
-  }, [user, scope, distributorId]);
+  }, [user, scope, catalogRoles, distributorId]);
 
   useEffect(() => {
     if (!user || scopeLoading) return;

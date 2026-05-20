@@ -1,14 +1,15 @@
 import { contractStatus } from "@/lib/contract-form";
 import { PRINTER_STATUS_LABELS } from "@/lib/printer-form";
 import { fetchBranches } from "@/lib/branches-api";
-import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
+import {
+  loadCatalogRoles,
+  type CatalogRolesSnapshot,
+} from "@/lib/catalog-roles-cache";
 import { fetchDistributorContracts } from "@/lib/distributor-contracts-api";
-import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchEmployees } from "@/lib/employees-api";
 import { fetchPrinters } from "@/lib/printers-api";
 import { fetchServiceCenterContracts } from "@/lib/service-center-contracts-api";
-import { fetchServiceCenters } from "@/lib/service-centers-api";
 import { fetchUsers } from "@/lib/users-api";
 import type { CompanyScope } from "@/lib/company-scope";
 import { can } from "@/lib/permissions/can";
@@ -337,10 +338,11 @@ function buildStats(
 export async function loadDashboardSnapshot(options: {
   role: Role;
   scope: CompanyScope | null;
+  catalogRoles?: CatalogRolesSnapshot | null;
   distributorId: number | null;
   userBranchId: number | null;
 }): Promise<DashboardSnapshot> {
-  const { role, scope, distributorId, userBranchId } = options;
+  const { role, scope, catalogRoles, distributorId, userBranchId } = options;
   const loadWarnings: string[] = [];
 
   const [
@@ -356,9 +358,21 @@ export async function loadDashboardSnapshot(options: {
   ] = await Promise.all([
     settled(scope ? Promise.resolve(scope.companies) : fetchCompanies()),
     settled(scope ? Promise.resolve(scope.branches) : fetchBranches()),
-    settled(fetchClients()),
-    settled(fetchDistributors()),
-    settled(fetchServiceCenters()),
+    settled(
+      catalogRoles
+        ? Promise.resolve(catalogRoles.clients)
+        : loadCatalogRoles().then((r) => r.clients),
+    ),
+    settled(
+      catalogRoles
+        ? Promise.resolve(catalogRoles.distributors)
+        : loadCatalogRoles().then((r) => r.distributors),
+    ),
+    settled(
+      catalogRoles
+        ? Promise.resolve(catalogRoles.serviceCenters)
+        : loadCatalogRoles().then((r) => r.serviceCenters),
+    ),
     settled(fetchEmployees()),
     role === "ADMIN" || role === "DISTRIBUTOR" || role === "TECHNICIAN"
       ? settled(fetchPrinters())
