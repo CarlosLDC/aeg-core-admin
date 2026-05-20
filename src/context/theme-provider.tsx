@@ -9,57 +9,46 @@ import {
   type ReactNode,
 } from "react";
 
-export type ThemePreference = "light" | "dark" | "system";
+export type ThemePreference = "light" | "dark";
 
 type ThemeContextValue = {
   theme: ThemePreference;
   setTheme: (theme: ThemePreference) => void;
-  resolved: "light" | "dark";
+  /** Igual que `theme` (sin modo sistema). */
+  resolved: ThemePreference;
 };
 
 const STORAGE_KEY = "aeg-admin-theme";
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function resolveTheme(preference: ThemePreference): "light" | "dark" {
-  if (preference === "system" && typeof window !== "undefined") {
+function applyTheme(theme: ThemePreference) {
+  document.documentElement.classList.toggle("dark", theme === "dark");
+}
+
+function readStoredTheme(): ThemePreference {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored === "light" || stored === "dark") {
+    return stored;
+  }
+  if (stored === "system") {
     return window.matchMedia("(prefers-color-scheme: dark)").matches
       ? "dark"
       : "light";
   }
-  return preference === "dark" ? "dark" : "light";
-}
-
-function applyTheme(resolved: "light" | "dark") {
-  document.documentElement.classList.toggle("dark", resolved === "dark");
+  return "light";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemePreference>("system");
-  const [resolved, setResolved] = useState<"light" | "dark">("light");
+  const [theme, setThemeState] = useState<ThemePreference>("light");
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY) as ThemePreference | null;
-    if (stored === "light" || stored === "dark" || stored === "system") {
-      setThemeState(stored);
-    }
+    setThemeState(readStoredTheme());
   }, []);
 
   useEffect(() => {
-    const next = resolveTheme(theme);
-    setResolved(next);
-    applyTheme(next);
+    applyTheme(theme);
     localStorage.setItem(STORAGE_KEY, theme);
-
-    if (theme !== "system") return;
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    function onChange() {
-      const r = resolveTheme("system");
-      setResolved(r);
-      applyTheme(r);
-    }
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
   }, [theme]);
 
   const setTheme = useCallback((next: ThemePreference) => {
@@ -67,7 +56,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, resolved }}>
+    <ThemeContext.Provider value={{ theme, setTheme, resolved: theme }}>
       {children}
     </ThemeContext.Provider>
   );
