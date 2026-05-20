@@ -316,7 +316,6 @@ export function TechnicalServicesManager() {
                   <table className="w-full min-w-[1100px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Impresora</th>
                         <th className="px-5 py-3 font-medium">Técnico</th>
                         <th className="px-5 py-3 font-medium">Inicio</th>
@@ -324,6 +323,7 @@ export function TechnicalServicesManager() {
                         <th className="px-5 py-3 font-medium">Falla</th>
                         <th className="px-5 py-3 font-medium">Costo</th>
                         <th className="px-5 py-3 font-medium">Precinto</th>
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -335,7 +335,6 @@ export function TechnicalServicesManager() {
                           key={row.id}
                           href={technicalServicePath(row.id)}
                         >
-                          <TableCreatedAtCell value={row.createdAt} />
                           <td className="max-w-[140px] truncate px-5 py-3.5 font-mono text-card-foreground">
                             {printerLabelById.get(String(row.printerId)) ??
                               `#${row.printerId}`}

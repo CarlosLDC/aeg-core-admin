@@ -510,12 +510,12 @@ export function EmployeesManager() {
                   <table className="w-full min-w-[960px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Nombre</th>
                         <th className="px-5 py-3 font-medium">Cédula</th>
                         <th className="px-5 py-3 font-medium">Rol</th>
                         <th className="px-5 py-3 font-medium">Sucursal</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -527,7 +527,6 @@ export function EmployeesManager() {
                           key={employee.id}
                           href={employeePath(employee.id)}
                         >
-                          <TableCreatedAtCell value={employee.createdAt} />
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
                             {employee.name}
                           </td>
@@ -550,6 +549,7 @@ export function EmployeesManager() {
                               {employee.email}
                             </span>
                           </td>
+                          <TableCreatedAtCell value={employee.createdAt} />
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink

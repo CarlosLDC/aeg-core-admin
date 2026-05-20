@@ -557,12 +557,12 @@ export function BranchesManager() {
                   <table className="w-full min-w-[1040px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Empresa</th>
                         <th className="px-5 py-3 font-medium">Ubicación</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
                         <th className="px-5 py-3 font-medium">Roles</th>
                         <th className="px-5 py-3 font-medium">Distribuidor</th>
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -574,7 +574,6 @@ export function BranchesManager() {
                           key={branch.id}
                           href={branchPath(branch.id)}
                         >
-                          <TableCreatedAtCell value={branch.createdAt} />
                           <td className="max-w-[200px] px-5 py-3.5">
                             <TruncatedText
                               href={companyPath(branch.companyId)}
@@ -615,6 +614,7 @@ export function BranchesManager() {
                               companies,
                             )}
                           </td>
+                          <TableCreatedAtCell value={branch.createdAt} />
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink

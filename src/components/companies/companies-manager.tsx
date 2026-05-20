@@ -266,10 +266,10 @@ export function CompaniesManager() {
                   <table className="w-full min-w-[720px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Razón social</th>
                         <th className="px-5 py-3 font-medium">RIF</th>
                         <th className="px-5 py-3 font-medium">Contribuyente</th>
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -281,7 +281,6 @@ export function CompaniesManager() {
                           key={company.id}
                           href={companyPath(company.id)}
                         >
-                          <TableCreatedAtCell value={company.createdAt} />
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
                             {company.businessName || "—"}
                           </td>
@@ -291,6 +290,7 @@ export function CompaniesManager() {
                           <td className="px-5 py-3.5">
                             <ContributorBadge type={company.contributorType} />
                           </td>
+                          <TableCreatedAtCell value={company.createdAt} />
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink

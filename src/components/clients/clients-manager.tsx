@@ -438,12 +438,12 @@ export function ClientsManager() {
                   <table className="w-full min-w-[720px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Cliente</th>
                         <th className="px-5 py-3 font-medium">RIF</th>
                         <th className="px-5 py-3 font-medium">Ubicación</th>
                         <th className="px-5 py-3 font-medium">Teléfono</th>
                         <th className="px-5 py-3 font-medium">Correo</th>
+                        <TableCreatedAtHeader />
                       </tr>
                     </thead>
                     <tbody>
@@ -452,7 +452,6 @@ export function ClientsManager() {
                           key={row.key}
                           href={clientPath(row.client.id)}
                         >
-                          <TableCreatedAtCell value={row.createdAt} />
                           <td className="max-w-[220px] px-5 py-3.5 font-medium text-card-foreground">
                             <TruncatedText maxClassName="max-w-[200px]">
                               {row.businessName}
@@ -470,6 +469,7 @@ export function ClientsManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {row.email}
                           </td>
+                          <TableCreatedAtCell value={row.createdAt} />
                         </ClickableTableRow>
                       ))}
                     </tbody>

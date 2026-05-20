@@ -627,7 +627,6 @@ export function PrintersManager() {
                   <table className="w-full min-w-[1100px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Serial</th>
                         <th className="px-5 py-3 font-medium">Modelo</th>
                         <th className="px-5 py-3 font-medium">Estatus</th>
@@ -637,6 +636,7 @@ export function PrintersManager() {
                         <th className="px-5 py-3 font-medium">Precio</th>
                         <th className="px-5 py-3 font-medium">Pagada</th>
                         <th className="px-5 py-3 font-medium">Instalación</th>
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -648,7 +648,6 @@ export function PrintersManager() {
                           key={printer.id}
                           href={printerPath(printer.id)}
                         >
-                          <TableCreatedAtCell value={printer.createdAt} />
                           <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
                             {printer.fiscalSerial}
                           </td>
@@ -677,6 +676,7 @@ export function PrintersManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {formatPrinterDate(printer.installationDate)}
                           </td>
+                          <TableCreatedAtCell value={printer.createdAt} />
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
