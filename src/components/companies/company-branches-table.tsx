@@ -62,6 +62,7 @@ function toBranchRequest(values: BranchFormValues): BranchRequest {
     city: values.city.trim(),
     state: values.state.trim(),
     address: values.address.trim() || undefined,
+    contactPersonName: values.contactPersonName.trim(),
     phone: values.phone.trim() || undefined,
     email: values.email.trim() || undefined,
   };
@@ -198,6 +199,7 @@ export function CompanyBranchesTable({
         branch.city,
         branch.state,
         branch.address,
+        branch.contactPersonName,
         branch.phone,
         branch.email,
         clientDistributorSummary(branch, distributors, allBranches, companies),
@@ -389,6 +391,11 @@ export function CompanyBranchesTable({
                             )}
                           </td>
                           <td className="px-5 py-3.5 text-muted">
+                            {branch.contactPersonName && (
+                              <span className="block font-medium text-card-foreground">
+                                {branch.contactPersonName}
+                              </span>
+                            )}
                             {branch.phone && (
                               <span className="block">{branch.phone}</span>
                             )}
@@ -397,7 +404,10 @@ export function CompanyBranchesTable({
                                 {branch.email}
                               </span>
                             )}
-                            {!branch.phone && !branch.email && "—"}
+                            {!branch.contactPersonName &&
+                              !branch.phone &&
+                              !branch.email &&
+                              "—"}
                           </td>
                           <td className="px-5 py-3.5">
                             <BranchTypeBadges branch={branch} />

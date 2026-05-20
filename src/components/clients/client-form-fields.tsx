@@ -201,6 +201,7 @@ export function ClientFormFields({
         </span>
         <input
           type="text"
+          required
           value={form.contactPersonName}
           disabled={saving}
           onChange={(e) =>

@@ -156,7 +156,7 @@ export async function createClientOnboarding(
           city: values.city.trim(),
           state: values.state.trim(),
           address: values.address.trim() || undefined,
-          contactPersonName: values.contactPersonName.trim() || undefined,
+          contactPersonName: values.contactPersonName.trim(),
           phone: values.phone.trim() || undefined,
           email: values.email.trim() || undefined,
         });

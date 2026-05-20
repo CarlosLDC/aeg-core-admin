@@ -84,6 +84,7 @@ function toBranchRequest(values: BranchFormValues): BranchRequest {
     city: values.city.trim(),
     state: values.state.trim(),
     address: values.address.trim() || undefined,
+    contactPersonName: values.contactPersonName.trim(),
     phone: values.phone.trim() || undefined,
     email: values.email.trim() || undefined,
   };
@@ -190,6 +191,7 @@ export function BranchesManager() {
         branch.city,
         branch.state,
         branch.address,
+        branch.contactPersonName,
         branch.phone,
         branch.email,
         clientDistributorSummary(branch, distributors, branches, companies),
@@ -336,7 +338,7 @@ export function BranchesManager() {
       city: values.city,
       state: values.state,
       address: values.address,
-      contactPersonName: "",
+      contactPersonName: values.contactPersonName,
       phone: values.phone,
       email: values.email,
     };
@@ -593,6 +595,11 @@ export function BranchesManager() {
                             )}
                           </td>
                           <td className="px-5 py-3.5 text-muted">
+                            {branch.contactPersonName && (
+                              <span className="block font-medium text-card-foreground">
+                                {branch.contactPersonName}
+                              </span>
+                            )}
                             {branch.phone && (
                               <span className="block">{branch.phone}</span>
                             )}
@@ -601,7 +608,10 @@ export function BranchesManager() {
                                 {branch.email}
                               </span>
                             )}
-                            {!branch.phone && !branch.email && "—"}
+                            {!branch.contactPersonName &&
+                              !branch.phone &&
+                              !branch.email &&
+                              "—"}
                           </td>
                           <td className="px-5 py-3.5">
                             <BranchTypeBadges branch={branch} />

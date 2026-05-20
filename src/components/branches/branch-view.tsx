@@ -46,6 +46,7 @@ function toBranchRequest(values: BranchFormValues): BranchRequest {
     city: values.city.trim(),
     state: values.state.trim(),
     address: values.address.trim() || undefined,
+    contactPersonName: values.contactPersonName.trim(),
     phone: values.phone.trim() || undefined,
     email: values.email.trim() || undefined,
   };
@@ -220,6 +221,10 @@ export function BranchView() {
               label="Dirección"
               value={branch.address || "—"}
               fullWidth
+            />
+            <DetailField
+              label="Persona de contacto"
+              value={branch.contactPersonName?.trim() || "—"}
             />
             <DetailField label="Teléfono" value={branch.phone || "—"} />
             <DetailField label="Correo" value={branch.email || "—"} />

@@ -154,6 +154,13 @@ export function ClientCreateDialog({
     return null;
   }
 
+  function validateContact(): string | null {
+    if (!form.contactPersonName.trim()) {
+      return "Indica el nombre de la persona de contacto.";
+    }
+    return null;
+  }
+
   function goNext() {
     if (step === 1) {
       const err = validateFiscal();
@@ -198,6 +205,12 @@ export function ClientCreateDialog({
     if (locationErr) {
       setStepError(locationErr);
       setStep(2);
+      return;
+    }
+    const contactErr = validateContact();
+    if (contactErr) {
+      setStepError(contactErr);
+      setStep(3);
       return;
     }
     setStepError(null);

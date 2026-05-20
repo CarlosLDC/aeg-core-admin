@@ -23,7 +23,7 @@ export type BranchRequest = {
   address?: string;
   phone?: string;
   email?: string;
-  contactPersonName?: string;
+  contactPersonName: string;
 };
 
 export type BranchWithRoles = BranchResponse & {

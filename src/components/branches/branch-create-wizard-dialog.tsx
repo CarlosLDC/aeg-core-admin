@@ -27,6 +27,7 @@ export type BranchWizardValues = {
   city: string;
   state: string;
   address: string;
+  contactPersonName: string;
   phone: string;
   email: string;
   isClient: boolean;
@@ -57,6 +58,7 @@ const emptyForm = (): BranchWizardValues => ({
   city: "",
   state: "",
   address: "",
+  contactPersonName: "",
   phone: "",
   email: "",
   isClient: false,
@@ -336,6 +338,23 @@ export function BranchCreateWizardDialog({
                 onChange={(e) =>
                   setForm((f) => ({ ...f, address: e.target.value }))
                 }
+                className={inputClass}
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">
+                Nombre persona de contacto
+              </span>
+              <input
+                type="text"
+                required
+                value={form.contactPersonName}
+                disabled={saving}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, contactPersonName: e.target.value }))
+                }
+                placeholder="Ej. María Pérez"
                 className={inputClass}
               />
             </label>
