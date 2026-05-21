@@ -8,11 +8,12 @@ describe("can", () => {
     expect(can("ADMIN", "contracts", "read")).toBe(true);
   });
 
-  it("allows DISTRIBUTOR to create companies and branches but not delete", () => {
+  it("allows DISTRIBUTOR to create/update companies and branches but not delete", () => {
     expect(can("DISTRIBUTOR", "companies", "create")).toBe(true);
     expect(can("DISTRIBUTOR", "branches", "create")).toBe(true);
+    expect(can("DISTRIBUTOR", "companies", "update")).toBe(true);
+    expect(can("DISTRIBUTOR", "branches", "update")).toBe(true);
     expect(can("DISTRIBUTOR", "companies", "delete")).toBe(false);
-    expect(can("DISTRIBUTOR", "companies", "update")).toBe(false);
   });
 
   it("allows DISTRIBUTOR to create employees on own branch but not edit catalog", () => {

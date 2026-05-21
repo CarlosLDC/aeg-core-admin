@@ -124,6 +124,7 @@ describe("createClientOnboarding", () => {
       contactPersonName: "Ana López",
       phone: "0412",
       email: "a@test.com",
+      isHeadquarters: true,
     });
     expect(createClient).toHaveBeenCalledWith({
       branchId: 20,
@@ -211,5 +212,45 @@ describe("createClientOnboarding", () => {
     });
     expect(result.branch.id).toBe(322);
     expect(result.branchLinkedExisting).toBe(true);
+  });
+
+  it("permite seleccionar casa matriz existente sin crear sucursal nueva", async () => {
+    vi.mocked(resolveCompanyIdForRif).mockResolvedValue({
+      companyId: 77,
+      companyCreated: false,
+    });
+    vi.mocked(fetchBranchById).mockResolvedValue({
+      ...branchRow,
+      id: 501,
+      companyId: 77,
+      city: "Caracas",
+      state: "Distrito Capital",
+    });
+    const result = await createClientOnboarding({
+      values: {
+        rif: "J315694205",
+        businessName: "ACME",
+        contributorType: "ordinario",
+        linkedCompanyId: 77,
+        city: "Caracas",
+        state: "Distrito Capital",
+        address: "",
+        contactPersonName: "Ana López",
+        phone: "",
+        email: "",
+        headquartersMode: "existing",
+        headquartersBranchId: 501,
+      },
+      companies: [],
+      roles: distributorClientRoles(5),
+    });
+
+    expect(createBranch).not.toHaveBeenCalled();
+    expect(result.branch.id).toBe(501);
+    expect(result.branchLinkedExisting).toBe(true);
+    expect(createClient).toHaveBeenCalledWith({
+      branchId: 501,
+      distributorId: 5,
+    });
   });
 });

@@ -11,10 +11,10 @@ import {
   pageToolbarButtonClass,
 } from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
-import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
+import { useDistributorId } from "@/hooks/use-distributor-id";
 import {
   TableCreatedAtCell,
   TableCreatedAtHeader,
@@ -23,7 +23,6 @@ import {
   filterAllOption,
   uniqueFilterOptions,
 } from "@/lib/table-filter-options";
-import { fetchAuthMe } from "@/lib/auth-me-api";
 import { mergeBranchesWithRoles } from "@/lib/branch-roles";
 import { fetchBranchById, fetchBranches } from "@/lib/branches-api";
 import { companyNameById } from "@/lib/branches";
@@ -64,7 +63,9 @@ function buildClientListRows(
   companies: CompanyResponse[],
 ): ClientListRow[] {
   const branchById = new Map(branches.map((b) => [b.id, b]));
-  return clients.map((client) => {
+  return clients
+    .filter((client) => client.distributorId === distributorId)
+    .map((client) => {
       const branch = branchById.get(client.branchId);
       const companyFromScope =
         branch != null
@@ -96,16 +97,13 @@ function buildClientListRows(
 
 export function ClientsManager() {
   const toast = useToast();
-  const { user } = useAuth();
   const {
     scope,
     loading: scopeLoading,
     error: scopeError,
     refresh: refreshScope,
   } = useCompanyScope();
-  const [distributorId, setDistributorId] = useState<number | null>(
-    user?.distributorId ?? null,
-  );
+  const distributorId = useDistributorId();
   const [clients, setClients] = useState<ClientResponse[]>([]);
   const [branches, setBranches] = useState<BranchWithRoles[]>([]);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
@@ -117,28 +115,6 @@ export function ClientsManager() {
   const [resumeBranchId, setResumeBranchId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [stateFilter, setStateFilter] = useState("all");
-
-  useEffect(() => {
-    if (user?.role !== "DISTRIBUTOR") {
-      setDistributorId(user?.distributorId ?? null);
-      return;
-    }
-    if (user.distributorId != null) {
-      setDistributorId(user.distributorId);
-      return;
-    }
-    let cancelled = false;
-    void fetchAuthMe()
-      .then((me) => {
-        if (!cancelled) setDistributorId(me.distributorId ?? null);
-      })
-      .catch(() => {
-        if (!cancelled) setDistributorId(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.role, user?.distributorId]);
 
   const loadClients = useCallback(async () => {
     if (!scope) return;
@@ -487,6 +463,7 @@ export function ClientsManager() {
         saving={saving}
         error={formError}
         companies={companies}
+        branches={branches}
         onClose={() => {
           setCreateOpen(false);
           setFormError(null);

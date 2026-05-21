@@ -42,6 +42,7 @@ export function CompanyView() {
   const confirm = useConfirm();
   const { user } = useAuth();
   const { scope, refresh } = useCompanyScope();
+  const isDistributor = user?.role === "DISTRIBUTOR";
   const canModify = user ? canUpdateCompanyRecord(user.role) : false;
   const canDelete = user ? canDeleteCompanyRecord(user.role) : false;
 
@@ -135,8 +136,8 @@ export function CompanyView() {
   return (
     <>
       <ResourceViewShell
-        backHref="/companies"
-        backLabel="Volver a empresas"
+        backHref={isDistributor ? "/clients" : "/companies"}
+        backLabel={isDistributor ? "Volver a clientes" : "Volver a empresas"}
         title={title}
         subtitle={company?.rif}
         loading={loading}

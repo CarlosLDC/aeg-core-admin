@@ -27,6 +27,9 @@ export type ClientOnboardingValues = {
   contactPersonName: string;
   phone: string;
   email: string;
+  headquartersMode?: "new" | "existing";
+  headquartersBranchId?: number | null;
+  isHeadquarters?: boolean;
 };
 
 export type ClientOnboardingRoleOptions = {
@@ -140,6 +143,18 @@ export async function createClientOnboarding(
   if (resumeBranchId != null && resumeBranchId > 0) {
     created = await fetchBranchById(resumeBranchId);
     branchLinkedExisting = true;
+  } else if (
+    values.headquartersMode === "existing" &&
+    values.headquartersBranchId != null &&
+    values.headquartersBranchId > 0
+  ) {
+    created = await fetchBranchById(values.headquartersBranchId);
+    if (created.companyId !== companyId) {
+      throw new Error(
+        "La casa matriz seleccionada no pertenece a la empresa indicada.",
+      );
+    }
+    branchLinkedExisting = true;
   } else {
     const existing = await lookupBranchByCompanyLocation(
       companyId,
@@ -159,6 +174,10 @@ export async function createClientOnboarding(
           contactPersonName: values.contactPersonName.trim(),
           phone: values.phone.trim() || undefined,
           email: values.email.trim() || undefined,
+          isHeadquarters:
+            values.headquartersMode === "existing"
+              ? undefined
+              : values.isHeadquarters ?? true,
         });
       } catch (branchError) {
         if (companyCreated && companyId != null) {

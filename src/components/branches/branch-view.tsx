@@ -58,6 +58,7 @@ export function BranchView() {
   const confirm = useConfirm();
   const { user } = useAuth();
   const { scope, refresh } = useCompanyScope();
+  const isDistributor = user?.role === "DISTRIBUTOR";
   const canModify = user ? canUpdateBranchRecord(user.role) : false;
   const canDelete = user ? canDeleteBranchRecord(user.role) : false;
 
@@ -175,8 +176,8 @@ export function BranchView() {
   return (
     <>
       <ResourceViewShell
-        backHref="/branches"
-        backLabel="Volver a sucursales"
+        backHref={isDistributor ? "/clients" : "/branches"}
+        backLabel={isDistributor ? "Volver a clientes" : "Volver a sucursales"}
         title={title}
         subtitle={companyLabel}
         loading={loading}

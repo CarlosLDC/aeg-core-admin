@@ -20,13 +20,13 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
   companies: {
     read: ADMIN_DIST,
     create: ADMIN_DIST,
-    update: ADMIN_ONLY,
+    update: ADMIN_DIST,
     delete: ADMIN_ONLY,
   },
   branches: {
     read: ALL_ROLES,
     create: ADMIN_DIST,
-    update: ADMIN_ONLY,
+    update: ADMIN_DIST,
     delete: ADMIN_ONLY,
   },
   employees: {

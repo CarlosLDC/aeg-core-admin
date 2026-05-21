@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { Building2, Loader2, MapPin, Phone, Tags, X } from "lucide-react";
+import { HeadquartersSelectorFields } from "@/components/branches/headquarters-selector-fields";
 import { BranchWizardRolesFields } from "@/components/branches/branch-wizard-roles-fields";
 import {
   emptyBranchWizardForm,
@@ -18,9 +19,12 @@ import {
 } from "@/lib/seniat-ai-fields";
 import {
   findCompanyByRif,
-  RIF_PATTERN,
   type SeniatExtractResult,
 } from "@/lib/seniat-extract";
+import {
+  validateOnboardingSection,
+  type OnboardingStepSection,
+} from "@/lib/distributor-onboarding-policy";
 import type { ClientOnboardingValues } from "@/lib/client-onboarding";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
@@ -42,17 +46,18 @@ type BranchCreateWizardDialogProps = {
   onSubmit: (values: BranchWizardValues) => void;
 };
 
-type WizardStep = 0 | 1 | 2 | 3 | 4;
+type WizardStep = 0 | 1 | 2 | 3 | 4 | 5;
 
 const FORM_STEPS: {
-  step: 1 | 2 | 3 | 4;
-  section: ClientFormSection | "roles";
+  step: 1 | 2 | 3 | 4 | 5;
+  section: ClientFormSection | "headquarters" | "roles";
   label: string;
 }[] = [
   { step: 1, section: "fiscal", label: "Fiscal" },
   { step: 2, section: "location", label: "Ubicación" },
   { step: 3, section: "contact", label: "Contacto" },
-  { step: 4, section: "roles", label: "Roles" },
+  { step: 4, section: "headquarters", label: "Casa matriz" },
+  { step: 5, section: "roles", label: "Roles" },
 ];
 
 const STEP_ICONS = {
@@ -60,6 +65,7 @@ const STEP_ICONS = {
   2: MapPin,
   3: Phone,
   4: Tags,
+  5: Tags,
 } as const;
 
 function stepSubtitle(step: WizardStep, resuming: boolean): string {
@@ -75,6 +81,8 @@ function stepSubtitle(step: WizardStep, resuming: boolean): string {
     case 3:
       return "Persona de contacto, teléfono y correo.";
     case 4:
+      return "Selecciona o confirma la casa matriz.";
+    case 5:
       return "Asigna los roles de esta sucursal.";
     default:
       return "";
@@ -180,35 +188,13 @@ export function BranchCreateWizardDialog({
     setStep(1);
   }
 
-  function validateFiscal(): string | null {
-    const rif = form.rif.trim().toUpperCase();
-    const companyLocked = Boolean(linkedCompany);
-    if (!companyLocked && !RIF_PATTERN.test(rif)) {
-      return "Formato: letra V, E, J, P o G seguida de 7 a 9 dígitos.";
-    }
-    if (!companyLocked && !form.businessName.trim()) {
-      return "Indica la razón social de la empresa.";
-    }
-    return null;
-  }
-
-  function validateLocation(): string | null {
-    if (!form.state.trim() || !form.city.trim()) {
-      return "Estado y ciudad son obligatorios.";
-    }
-    return null;
-  }
-
-  function validateContact(): string | null {
-    if (!form.contactPersonName.trim()) {
-      return "Indica el nombre de la persona de contacto.";
-    }
-    return null;
+  function validateSection(section: OnboardingStepSection): string | null {
+    return validateOnboardingSection(section, form);
   }
 
   function goNext() {
     if (step === 1) {
-      const err = validateFiscal();
+      const err = validateSection("fiscal");
       if (err) {
         setStepError(err);
         return;
@@ -218,7 +204,7 @@ export function BranchCreateWizardDialog({
       return;
     }
     if (step === 2) {
-      const err = validateLocation();
+      const err = validateSection("location");
       if (err) {
         setStepError(err);
         return;
@@ -228,13 +214,23 @@ export function BranchCreateWizardDialog({
       return;
     }
     if (step === 3) {
-      const err = validateContact();
+      const err = validateSection("contact");
       if (err) {
         setStepError(err);
         return;
       }
       setStepError(null);
       setStep(4);
+      return;
+    }
+    if (step === 4) {
+      const err = validateSection("headquarters");
+      if (err) {
+        setStepError(err);
+        return;
+      }
+      setStepError(null);
+      setStep(5);
     }
   }
 
@@ -251,22 +247,28 @@ export function BranchCreateWizardDialog({
   }
 
   function submitRegistration() {
-    const fiscalErr = validateFiscal();
+    const fiscalErr = validateSection("fiscal");
     if (fiscalErr) {
       setStepError(fiscalErr);
       setStep(1);
       return;
     }
-    const locationErr = validateLocation();
+    const locationErr = validateSection("location");
     if (locationErr) {
       setStepError(locationErr);
       setStep(2);
       return;
     }
-    const contactErr = validateContact();
+    const contactErr = validateSection("contact");
     if (contactErr) {
       setStepError(contactErr);
       setStep(3);
+      return;
+    }
+    const headquartersErr = validateSection("headquarters");
+    if (headquartersErr) {
+      setStepError(headquartersErr);
+      setStep(4);
       return;
     }
     setStepError(null);
@@ -286,7 +288,7 @@ export function BranchCreateWizardDialog({
 
   function handleFormSubmit(e: FormEvent) {
     e.preventDefault();
-    if (step < 4) {
+    if (step < 5) {
       goNext();
       return;
     }
@@ -400,6 +402,30 @@ export function BranchCreateWizardDialog({
                   distributors={distributors}
                   companies={companies}
                 />
+              ) : currentFormStep?.section === "headquarters" ? (
+                <HeadquartersSelectorFields
+                  companyId={form.linkedCompanyId}
+                  mode={form.headquartersMode}
+                  branchId={form.headquartersBranchId}
+                  isHeadquarters={form.isHeadquarters}
+                  branches={branches}
+                  companies={companies}
+                  disabled={saving}
+                  onModeChange={(mode) =>
+                    setForm((f) => ({
+                      ...f,
+                      headquartersMode: mode,
+                      headquartersBranchId:
+                        mode === "existing" ? f.headquartersBranchId : null,
+                    }))
+                  }
+                  onBranchChange={(branchId) =>
+                    setForm((f) => ({ ...f, headquartersBranchId: branchId }))
+                  }
+                  onHeadquartersChange={(value) =>
+                    setForm((f) => ({ ...f, isHeadquarters: value }))
+                  }
+                />
               ) : currentFormStep ? (
                 <ClientFormFields
                   form={form}
@@ -442,7 +468,7 @@ export function BranchCreateWizardDialog({
                 >
                   Cancelar
                 </button>
-                {step < 4 ? (
+                {step < 5 ? (
                   <button
                     type="button"
                     disabled={saving}

@@ -15,6 +15,7 @@ describe("branchFormSchema", () => {
       isDistributor: false,
       isServiceCenter: false,
       clientDistributorId: "",
+      isHeadquarters: false,
     });
     expect(result.success).toBe(false);
   });
@@ -32,6 +33,7 @@ describe("branchFormSchema", () => {
       isDistributor: false,
       isServiceCenter: false,
       clientDistributorId: "5",
+      isHeadquarters: true,
     });
     expect(result.success).toBe(true);
   });

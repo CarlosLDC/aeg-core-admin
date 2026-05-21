@@ -320,6 +320,9 @@ export function BranchesManager() {
       contactPersonName: values.contactPersonName,
       phone: values.phone,
       email: values.email,
+      headquartersMode: values.headquartersMode,
+      headquartersBranchId: values.headquartersBranchId,
+      isHeadquarters: values.isHeadquarters,
     };
 
     try {

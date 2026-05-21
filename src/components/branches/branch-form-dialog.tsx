@@ -23,6 +23,7 @@ export type BranchFormValues = {
   isDistributor: boolean;
   isServiceCenter: boolean;
   clientDistributorId: string;
+  isHeadquarters: boolean;
 };
 
 type BranchFormDialogProps = {
@@ -53,6 +54,7 @@ const emptyForm: BranchFormValues = {
   isDistributor: false,
   isServiceCenter: false,
   clientDistributorId: "",
+  isHeadquarters: false,
 };
 
 function rolesFromBranch(branch: BranchWithRoles): BranchRoleFormState {
@@ -104,6 +106,7 @@ export function BranchFormDialog({
         isDistributor: roles.isDistributor,
         isServiceCenter: roles.isServiceCenter,
         clientDistributorId: roles.clientDistributorId,
+        isHeadquarters: Boolean(branch.isHeadquarters),
       });
     } else {
       setForm(emptyForm);
@@ -331,6 +334,20 @@ export function BranchFormDialog({
                   <span>{label}</span>
                 </label>
               ))}
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.isHeadquarters}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      isHeadquarters: e.target.checked,
+                    }))
+                  }
+                  className="size-4 rounded border-border accent-accent"
+                />
+                <span>Casa matriz</span>
+              </label>
             </div>
 
             {form.isClient && (

@@ -1,26 +1,40 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ClientEditDialog, type ClientEditValues } from "@/components/clients/client-edit-dialog";
 import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
+import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
+import { useToast } from "@/context/toast-provider";
+import { canUpdateBranchRecord, canUpdateCompanyRecord, CATALOG_MODIFY_FORBIDDEN_MESSAGE } from "@/lib/api-permissions";
 import { fetchBranchById } from "@/lib/branches-api";
 import {
   fetchClientById,
   getClientsErrorMessage,
 } from "@/lib/clients-api";
+import { fetchCompanyById, getCompaniesErrorMessage, updateCompany } from "@/lib/companies-api";
+import { updateBranch } from "@/lib/branches-api";
 import { formatDate } from "@/lib/datetime-form";
 import { useResourceId } from "@/hooks/use-resource-id";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse } from "@/types/branch-role";
+import type { CompanyResponse } from "@/types/company";
 
 export function ClientView() {
   const id = useResourceId();
   const { user } = useAuth();
+  const toast = useToast();
   const [client, setClient] = useState<ClientResponse | null>(null);
   const [branch, setBranch] = useState<BranchResponse | null>(null);
+  const [company, setCompany] = useState<CompanyResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const canEditCompany = user ? canUpdateCompanyRecord(user.role) : false;
+  const canEditBranch = user ? canUpdateBranchRecord(user.role) : false;
 
   const load = useCallback(async () => {
     if (id == null) {
@@ -47,13 +61,21 @@ export function ClientView() {
       try {
         const branchRow = await fetchBranchById(clientRow.branchId);
         setBranch(branchRow);
+        try {
+          const companyRow = await fetchCompanyById(branchRow.companyId);
+          setCompany(companyRow);
+        } catch {
+          setCompany(null);
+        }
       } catch {
         setBranch(null);
+        setCompany(null);
       }
     } catch (err) {
       setError(getClientsErrorMessage(err));
       setClient(null);
       setBranch(null);
+      setCompany(null);
     } finally {
       setLoading(false);
     }
@@ -64,20 +86,69 @@ export function ClientView() {
   }, [load]);
 
   const businessName =
-    client?.companyBusinessName?.trim() || "Cliente";
-  const rif = client?.companyRif?.trim() || "—";
+    company?.businessName?.trim() || client?.companyBusinessName?.trim() || "Cliente";
+  const rif = company?.rif?.trim() || client?.companyRif?.trim() || "—";
   const city = client?.branchCity?.trim() || branch?.city || "—";
   const state = client?.branchState?.trim() || branch?.state || "—";
   const title = businessName !== "Cliente" ? businessName : `${city}, ${state}`;
 
+  async function handleEdit(values: ClientEditValues) {
+    if (!client || !branch || !company || !canEditCompany || !canEditBranch) {
+      setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+      return;
+    }
+    setSaving(true);
+    setFormError(null);
+    try {
+      const [updatedCompany, updatedBranch] = await Promise.all([
+        updateCompany(company.id, {
+          businessName: values.businessName,
+          rif: values.rif,
+          contributorType: values.contributorType,
+        }),
+        updateBranch(branch.id, {
+          companyId: company.id,
+          city: values.city,
+          state: values.state,
+          address: values.address || undefined,
+          contactPersonName: values.contactPersonName,
+          phone: values.phone || undefined,
+          email: values.email || undefined,
+        }),
+      ]);
+      setCompany(updatedCompany);
+      setBranch(updatedBranch);
+      setEditOpen(false);
+      toast.success("Cliente actualizado.");
+    } catch (err) {
+      const message =
+        getCompaniesErrorMessage(err) || getClientsErrorMessage(err);
+      setFormError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
-    <ResourceViewShell
+    <>
+      <ResourceViewShell
       backHref="/clients"
       backLabel="Volver a clientes"
       title={title}
       subtitle={rif !== "—" ? rif : undefined}
       loading={loading}
       error={error}
+      actions={
+        client && branch && company && canEditCompany && canEditBranch ? (
+          <ResourceViewActions
+            onEdit={() => {
+              setFormError(null);
+              setEditOpen(true);
+            }}
+          />
+        ) : undefined
+      }
     >
       {client && (
         <DetailCard>
@@ -118,6 +189,20 @@ export function ClientView() {
           />
         </DetailCard>
       )}
-    </ResourceViewShell>
+      </ResourceViewShell>
+      {client && branch && company && editOpen && (
+        <ClientEditDialog
+          open={editOpen}
+          saving={saving}
+          error={formError}
+          company={company}
+          branch={branch}
+          onClose={() => {
+            if (!saving) setEditOpen(false);
+          }}
+          onSubmit={handleEdit}
+        />
+      )}
+    </>
   );
 }
