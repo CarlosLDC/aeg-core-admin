@@ -16,6 +16,7 @@ import type {
   MqttPublishResponse,
   MqttTestMessageResponse,
 } from "@/types/mqtt";
+import { formatJsonText } from "@/lib/format-json-paste";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_TOPIC = "aeg/test/manual";
@@ -87,6 +88,26 @@ export function MqttTestPanel() {
 
   const inputClass =
     "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
+
+  function handlePayloadPaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const pasted = e.clipboardData.getData("text/plain");
+    const formatted = formatJsonText(pasted);
+    if (formatted == null) return;
+
+    e.preventDefault();
+    const { selectionStart, selectionEnd } = e.currentTarget;
+    const next =
+      payloadText.slice(0, selectionStart) +
+      formatted +
+      payloadText.slice(selectionEnd);
+    setPayloadText(next);
+    setPublishError(null);
+
+    const cursor = selectionStart + formatted.length;
+    requestAnimationFrame(() => {
+      e.currentTarget.setSelectionRange(cursor, cursor);
+    });
+  }
 
   async function handleConnectionCheck() {
     setProbeLoading(true);
@@ -254,8 +275,9 @@ export function MqttTestPanel() {
           Publicar mensaje
         </h2>
         <p className="mt-1 text-sm text-muted">
-          Envía un tópico y un payload JSON (objeto o array de objetos); la
-          respuesta refleja la confirmación del API (HTTP 202).
+          Envía un tópico y un payload JSON (objeto o array de objetos); al
+          pegar JSON válido se formatea automáticamente. La respuesta refleja la
+          confirmación del API (HTTP 202).
         </p>
 
         <form onSubmit={handlePublish} className="mt-5 space-y-4">
@@ -280,6 +302,7 @@ export function MqttTestPanel() {
               rows={5}
               value={payloadText}
               onChange={(e) => setPayloadText(e.target.value)}
+              onPaste={handlePayloadPaste}
               className={cn(
                 inputClass,
                 "min-h-[7.5rem] resize-y py-1.5 font-mono text-xs leading-relaxed",

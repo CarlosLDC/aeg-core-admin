@@ -12,7 +12,12 @@ import {
   ROLE_DESCRIPTIONS,
   ROLE_LABELS,
 } from "@/lib/roles";
-import { roleRequiresBranch, roleRequiresDistributorId } from "@/lib/user-form";
+import {
+  branchIdsWithDistributorRole,
+  findDistributorForBranch,
+  roleRequiresBranch,
+  roleRequiresDistributorId,
+} from "@/lib/user-form";
 import type { DistributorResponse } from "@/types/branch-role";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
@@ -68,11 +73,52 @@ export function UserFormDialog({
 }: UserFormDialogProps) {
   const [form, setForm] = useState<UserFormValues>(emptyForm);
 
+  const distributorBranchIds = useMemo(
+    () => branchIdsWithDistributorRole(distributors),
+    [distributors],
+  );
+
+  const branchesForRole = useMemo(() => {
+    if (form.role !== "DISTRIBUTOR") return branches;
+    return branches.filter((b) => distributorBranchIds.has(b.id));
+  }, [branches, distributorBranchIds, form.role]);
+
   const selectedBranchDetail = useMemo(() => {
     if (!form.branchId) return null;
     const branch = branches.find((b) => String(b.id) === form.branchId);
     return branch ? formatBranchLabel(branch, companies) : null;
   }, [form.branchId, branches, companies]);
+
+  function handleBranchChange(branchId: string) {
+    setForm((f) => {
+      const next = { ...f, branchId };
+      if (f.role === "DISTRIBUTOR") {
+        const distributor = findDistributorForBranch(branchId, distributors);
+        next.distributorId = distributor ? String(distributor.id) : "";
+      }
+      return next;
+    });
+  }
+
+  function handleRoleChange(role: Role) {
+    setForm((f) => {
+      const next: UserFormValues = {
+        ...f,
+        role,
+        ...(role !== "DISTRIBUTOR" ? { distributorId: "" } : {}),
+      };
+      if (role === "DISTRIBUTOR") {
+        const distributor = findDistributorForBranch(f.branchId, distributors);
+        if (!distributor) {
+          next.branchId = "";
+          next.distributorId = "";
+        } else {
+          next.distributorId = String(distributor.id);
+        }
+      }
+      return next;
+    });
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -186,14 +232,7 @@ export function UserFormDialog({
             <span className="mb-1.5 block text-sm font-medium">Rol</span>
             <select
               value={form.role}
-              onChange={(e) => {
-                const role = e.target.value as Role;
-                setForm((f) => ({
-                  ...f,
-                  role,
-                  ...(role !== "DISTRIBUTOR" ? { distributorId: "" } : {}),
-                }));
-              }}
+              onChange={(e) => handleRoleChange(e.target.value as Role)}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20"
             >
               {ROLES.map((role) => {
@@ -229,15 +268,26 @@ export function UserFormDialog({
             </span>
             <BranchSelect
               value={form.branchId}
-              onChange={(branchId) => setForm((f) => ({ ...f, branchId }))}
-              branches={branches}
+              onChange={handleBranchChange}
+              branches={branchesForRole}
               companies={companies}
               loading={branchesLoading}
               disabled={branchesLoading}
             />
+            {form.role === "DISTRIBUTOR" && branchesForRole.length === 0 && (
+              <p className="mt-1.5 text-xs text-amber-700 dark:text-amber-300">
+                No hay sucursales con rol distribuidor. Asigna ese rol en
+                Sucursales antes de crear el usuario.
+              </p>
+            )}
             {roleRequiresBranch(form.role) && !form.branchId && (
               <p className="mt-1.5 text-xs text-amber-700 dark:text-amber-300">
                 Obligatoria para distribuidores, técnicos y centros de servicio.
+              </p>
+            )}
+            {form.role === "DISTRIBUTOR" && (
+              <p className="mt-1.5 text-xs text-muted">
+                Solo se listan sucursales registradas como distribuidor.
               </p>
             )}
             {selectedBranchDetail && (
@@ -265,11 +315,17 @@ export function UserFormDialog({
                 onChange={(distributorId) =>
                   setForm((f) => ({ ...f, distributorId }))
                 }
-                distributors={distributors}
+                distributors={
+                  form.branchId
+                    ? distributors.filter(
+                        (d) => String(d.branchId) === form.branchId,
+                      )
+                    : distributors
+                }
                 branches={branches}
                 companies={companies}
                 loading={branchesLoading}
-                disabled={branchesLoading}
+                disabled={branchesLoading || !form.branchId}
                 required
               />
             </label>
