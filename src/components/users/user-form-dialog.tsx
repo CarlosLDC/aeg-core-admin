@@ -154,7 +154,7 @@ export function UserFormDialog({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
+      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2
@@ -165,8 +165,8 @@ export function UserFormDialog({
             </h2>
             <p className="mt-1 text-sm text-muted">
               {mode === "create"
-                ? "Registra acceso con nombre, correo, clave, sucursal y rol."
-                : "Actualiza nombre, correo, clave, sucursal o rol."}
+                ? "Define rápidamente identidad, credenciales y asignación operativa."
+                : "Actualiza identidad, credenciales y asignación operativa."}
             </p>
           </div>
           <button
@@ -187,117 +187,128 @@ export function UserFormDialog({
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Nombre</span>
-            <input
-              type="text"
-              required
-              autoComplete="name"
-              value={form.name}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, name: e.target.value }))
-              }
-              placeholder="Ej. María Pérez"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20"
-            />
-          </label>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Identidad y acceso
+            </legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block sm:col-span-2">
+                <span className="mb-1.5 block text-sm font-medium">Nombre</span>
+                <input
+                  type="text"
+                  required
+                  autoComplete="name"
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, name: e.target.value }))
+                  }
+                  placeholder="Ej. María Pérez"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20"
+                />
+              </label>
 
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              Correo
-            </span>
-            <input
-              type="email"
-              required
-              autoComplete="email"
-              value={form.email}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, email: e.target.value }))
-              }
-              placeholder="nombre@empresa.com"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20"
-            />
-          </label>
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium">Correo</span>
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, email: e.target.value }))
+                  }
+                  placeholder="nombre@empresa.com"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20"
+                />
+              </label>
 
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              Clave
-              {mode === "edit" && (
-                <span className="font-normal text-muted"> (opcional)</span>
-              )}
-            </span>
-            <PasswordInput
-              value={form.password}
-              onChange={(password) => setForm((f) => ({ ...f, password }))}
-              autoComplete={mode === "create" ? "new-password" : "off"}
-              required={mode === "create"}
-              placeholder={mode === "create" ? "Mínimo 6 caracteres" : ""}
-            />
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium">
+                  Clave
+                  {mode === "edit" && (
+                    <span className="font-normal text-muted"> (opcional)</span>
+                  )}
+                </span>
+                <PasswordInput
+                  value={form.password}
+                  onChange={(password) => setForm((f) => ({ ...f, password }))}
+                  autoComplete={mode === "create" ? "new-password" : "off"}
+                  required={mode === "create"}
+                  placeholder={mode === "create" ? "Mínimo 6 caracteres" : ""}
+                />
+              </label>
+            </div>
             {mode === "create" && (
-              <p className="mt-1.5 text-xs text-muted">
-                Será la clave que la persona usará para iniciar sesión.
+              <p className="text-xs text-muted">
+                Esta será la clave para iniciar sesión.
               </p>
             )}
-          </label>
+          </fieldset>
 
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              Sucursal
-            </span>
-            <BranchSelect
-              value={form.branchId}
-              onChange={handleBranchChange}
-              branches={branchesForRole}
-              companies={companies}
-              loading={branchesLoading}
-              disabled={branchesLoading}
-            />
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Asignación operativa
+            </legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium">Sucursal</span>
+                <BranchSelect
+                  value={form.branchId}
+                  onChange={handleBranchChange}
+                  branches={branchesForRole}
+                  companies={companies}
+                  loading={branchesLoading}
+                  disabled={branchesLoading}
+                />
+                {selectedBranchDetail && (
+                  <p
+                    className="mt-1.5 truncate text-xs text-muted"
+                    title={selectedBranchDetail}
+                  >
+                    {selectedBranchDetail}
+                  </p>
+                )}
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium">Rol</span>
+                <select
+                  value={form.role}
+                  onChange={(e) => handleRoleChange(e.target.value as Role)}
+                  disabled={!form.branchId || availableRoles.length === 0}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {availableRoles.length === 0 ? (
+                    <option value="">Selecciona una sucursal primero</option>
+                  ) : (
+                    availableRoles.map((role) => (
+                      <option key={role} value={role}>
+                        {ROLE_LABELS[role]}
+                      </option>
+                    ))
+                  )}
+                </select>
+                {availableRoles.length > 0 && (
+                  <p className="mt-1.5 text-xs text-muted">
+                    {ROLE_DESCRIPTIONS[form.role]}
+                  </p>
+                )}
+              </label>
+            </div>
+
             {branchesForRole.length === 0 && (
-              <p className="mt-1.5 text-xs text-amber-700 dark:text-amber-300">
-                No hay sucursales con roles operativos habilitados. Asigna rol
-                de distribuidor o centro de servicio en Sucursales.
+              <p className="text-xs text-amber-700 dark:text-amber-300">
+                No hay sucursales con roles operativos habilitados. Asigna rol de
+                distribuidor o centro de servicio en Sucursales.
               </p>
             )}
             {!form.branchId && (
-              <p className="mt-1.5 text-xs text-amber-700 dark:text-amber-300">
+              <p className="text-xs text-amber-700 dark:text-amber-300">
                 La sucursal es obligatoria.
               </p>
             )}
-            {selectedBranchDetail && (
-              <p
-                className="mt-1.5 truncate text-xs text-muted"
-                title={selectedBranchDetail}
-              >
-                {selectedBranchDetail}
-              </p>
-            )}
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Rol</span>
-            <select
-              value={form.role}
-              onChange={(e) => handleRoleChange(e.target.value as Role)}
-              disabled={!form.branchId || availableRoles.length === 0}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {availableRoles.length === 0 ? (
-                <option value="">Selecciona una sucursal primero</option>
-              ) : (
-                availableRoles.map((role) => (
-                  <option key={role} value={role}>
-                    {ROLE_LABELS[role]}
-                  </option>
-                ))
-              )}
-            </select>
-            {availableRoles.length > 0 && (
-              <p className="mt-1.5 text-xs text-muted">
-                {ROLE_DESCRIPTIONS[form.role]}
-              </p>
-            )}
-          </label>
+          </fieldset>
 
           {mode === "edit" && (
             <label className="flex cursor-pointer items-center gap-2 text-sm">
