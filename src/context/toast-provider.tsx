@@ -77,7 +77,7 @@ function ToastItem({
     <div
       role="alert"
       className={cn(
-        "pointer-events-auto flex items-start gap-3.5 rounded-xl border px-5 py-4 text-[15px] leading-snug shadow-lg backdrop-blur-md",
+        "pointer-events-auto flex max-w-full items-start gap-3.5 overflow-hidden rounded-xl border px-5 py-4 text-[15px] leading-snug shadow-lg backdrop-blur-md",
         exiting ? "toast-exit" : "toast-enter",
         isSuccess
           ? "border-l-[3px] border-l-teal-500/50 border-teal-200/70 bg-card/95 text-card-foreground shadow-slate-900/6 dark:border-teal-500/25 dark:border-l-teal-400/45 dark:bg-card/90 dark:shadow-black/25"
@@ -142,10 +142,15 @@ function ToastBody({
   clickable: boolean;
 }) {
   return (
-    <div className="min-w-0 flex-1 pt-1.5">
-      <p className="font-medium">{message}</p>
+    <div className="min-w-0 flex-1 overflow-hidden pt-1.5">
+      <p
+        className="line-clamp-3 break-words font-medium"
+        title={message}
+      >
+        {message}
+      </p>
       {clickable && (
-        <p className="mt-1 text-xs font-normal text-muted">
+        <p className="mt-1 truncate text-xs font-normal text-muted">
           Pulsa para ver el detalle
         </p>
       )}
