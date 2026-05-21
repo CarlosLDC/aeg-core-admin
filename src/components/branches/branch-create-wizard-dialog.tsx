@@ -1,8 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, KeyboardEvent, useEffect, useState } from "react";
 import { Building2, Loader2, MapPin, Phone, Tags, X } from "lucide-react";
-import { HeadquartersSelectorFields } from "@/components/branches/headquarters-selector-fields";
 import { BranchWizardRolesFields } from "@/components/branches/branch-wizard-roles-fields";
 import {
   emptyBranchWizardForm,
@@ -46,18 +45,17 @@ type BranchCreateWizardDialogProps = {
   onSubmit: (values: BranchWizardValues) => void;
 };
 
-type WizardStep = 0 | 1 | 2 | 3 | 4 | 5;
+type WizardStep = 0 | 1 | 2 | 3 | 4;
 
 const FORM_STEPS: {
-  step: 1 | 2 | 3 | 4 | 5;
-  section: ClientFormSection | "headquarters" | "roles";
+  step: 1 | 2 | 3 | 4;
+  section: ClientFormSection | "roles";
   label: string;
 }[] = [
   { step: 1, section: "fiscal", label: "Fiscal" },
   { step: 2, section: "location", label: "Ubicación" },
   { step: 3, section: "contact", label: "Contacto" },
-  { step: 4, section: "headquarters", label: "Casa matriz" },
-  { step: 5, section: "roles", label: "Roles" },
+  { step: 4, section: "roles", label: "Roles" },
 ];
 
 const STEP_ICONS = {
@@ -65,7 +63,6 @@ const STEP_ICONS = {
   2: MapPin,
   3: Phone,
   4: Tags,
-  5: Tags,
 } as const;
 
 function stepSubtitle(step: WizardStep, resuming: boolean): string {
@@ -81,8 +78,6 @@ function stepSubtitle(step: WizardStep, resuming: boolean): string {
     case 3:
       return "Persona de contacto, teléfono y correo.";
     case 4:
-      return "Selecciona o confirma la casa matriz.";
-    case 5:
       return "Asigna los roles de esta sucursal.";
     default:
       return "";
@@ -221,16 +216,6 @@ export function BranchCreateWizardDialog({
       }
       setStepError(null);
       setStep(4);
-      return;
-    }
-    if (step === 4) {
-      const err = validateSection("headquarters");
-      if (err) {
-        setStepError(err);
-        return;
-      }
-      setStepError(null);
-      setStep(5);
     }
   }
 
@@ -265,12 +250,6 @@ export function BranchCreateWizardDialog({
       setStep(3);
       return;
     }
-    const headquartersErr = validateSection("headquarters");
-    if (headquartersErr) {
-      setStepError(headquartersErr);
-      setStep(4);
-      return;
-    }
     setStepError(null);
     const rif = form.rif.trim().toUpperCase();
     onSubmit({
@@ -288,7 +267,25 @@ export function BranchCreateWizardDialog({
 
   function handleFormSubmit(e: FormEvent) {
     e.preventDefault();
-    if (step < 5) {
+    if (step < 4) {
+      goNext();
+      return;
+    }
+    submitRegistration();
+  }
+
+  function handleEnterShortcut(e: KeyboardEvent<HTMLDivElement>) {
+    if (e.key !== "Enter" || step === 0 || saving || companiesLoading) return;
+    const target = e.target as HTMLElement;
+    if (
+      target.tagName === "TEXTAREA" ||
+      target.tagName === "BUTTON" ||
+      target.getAttribute("role") === "button"
+    ) {
+      return;
+    }
+    e.preventDefault();
+    if (step < 4) {
       goNext();
       return;
     }
@@ -303,6 +300,7 @@ export function BranchCreateWizardDialog({
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
+      onKeyDown={handleEnterShortcut}
     >
       <button
         type="button"
@@ -402,30 +400,6 @@ export function BranchCreateWizardDialog({
                   distributors={distributors}
                   companies={companies}
                 />
-              ) : currentFormStep?.section === "headquarters" ? (
-                <HeadquartersSelectorFields
-                  companyId={form.linkedCompanyId}
-                  mode={form.headquartersMode}
-                  branchId={form.headquartersBranchId}
-                  isHeadquarters={form.isHeadquarters}
-                  branches={branches}
-                  companies={companies}
-                  disabled={saving}
-                  onModeChange={(mode) =>
-                    setForm((f) => ({
-                      ...f,
-                      headquartersMode: mode,
-                      headquartersBranchId:
-                        mode === "existing" ? f.headquartersBranchId : null,
-                    }))
-                  }
-                  onBranchChange={(branchId) =>
-                    setForm((f) => ({ ...f, headquartersBranchId: branchId }))
-                  }
-                  onHeadquartersChange={(value) =>
-                    setForm((f) => ({ ...f, isHeadquarters: value }))
-                  }
-                />
               ) : currentFormStep ? (
                 <ClientFormFields
                   form={form}
@@ -468,7 +442,7 @@ export function BranchCreateWizardDialog({
                 >
                   Cancelar
                 </button>
-                {step < 5 ? (
+                {step < 4 ? (
                   <button
                     type="button"
                     disabled={saving}

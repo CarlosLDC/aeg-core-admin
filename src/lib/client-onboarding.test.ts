@@ -214,12 +214,12 @@ describe("createClientOnboarding", () => {
     expect(result.branchLinkedExisting).toBe(true);
   });
 
-  it("permite seleccionar casa matriz existente sin crear sucursal nueva", async () => {
+  it("permite registrar sucursal como no matriz", async () => {
     vi.mocked(resolveCompanyIdForRif).mockResolvedValue({
       companyId: 77,
       companyCreated: false,
     });
-    vi.mocked(fetchBranchById).mockResolvedValue({
+    vi.mocked(createBranch).mockResolvedValue({
       ...branchRow,
       id: 501,
       companyId: 77,
@@ -238,16 +238,24 @@ describe("createClientOnboarding", () => {
         contactPersonName: "Ana López",
         phone: "",
         email: "",
-        headquartersMode: "existing",
-        headquartersBranchId: 501,
+        isHeadquarters: false,
       },
       companies: [],
       roles: distributorClientRoles(5),
     });
 
-    expect(createBranch).not.toHaveBeenCalled();
+    expect(createBranch).toHaveBeenCalledWith({
+      companyId: 77,
+      city: "Caracas",
+      state: "Distrito Capital",
+      address: undefined,
+      contactPersonName: "Ana López",
+      phone: undefined,
+      email: undefined,
+      isHeadquarters: false,
+    });
     expect(result.branch.id).toBe(501);
-    expect(result.branchLinkedExisting).toBe(true);
+    expect(result.branchLinkedExisting).toBe(false);
     expect(createClient).toHaveBeenCalledWith({
       branchId: 501,
       distributorId: 5,

@@ -463,7 +463,6 @@ export function ClientsManager() {
         saving={saving}
         error={formError}
         companies={companies}
-        branches={branches}
         onClose={() => {
           setCreateOpen(false);
           setFormError(null);

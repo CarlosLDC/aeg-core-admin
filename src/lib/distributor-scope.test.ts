@@ -5,6 +5,8 @@ import {
   filterPrinterModelsForDistributor,
   loadDistributorStaffBranches,
 } from "./distributor-scope";
+import type { EmployeeResponse } from "@/types/employee";
+import type { PrinterResponse } from "@/types/printer";
 
 vi.mock("@/lib/distributors-api", () => ({
   fetchDistributorById: vi.fn(),
@@ -27,7 +29,8 @@ describe("distributor-scope", () => {
     vi.mocked(fetchBranchById).mockResolvedValue({
       id: 100,
       companyId: 1,
-      name: "Sede distribuidor",
+      city: "Caracas",
+      state: "Distrito Capital",
       address: "",
       phone: "",
       email: "",
@@ -48,9 +51,9 @@ describe("distributor-scope", () => {
 
   it("filters employees to distributor staff branches only", () => {
     const staff = new Set([10]);
-    const rows = [
-      { id: 1, branchId: 10, nationalId: "1", name: "A", phone: "", email: "", createdAt: "", type: "interno" },
-      { id: 2, branchId: 99, nationalId: "2", name: "B", phone: "", email: "", createdAt: "", type: "interno" },
+    const rows: EmployeeResponse[] = [
+      { id: 1, branchId: 10, nationalId: "1", name: "A", phone: "", email: "", createdAt: "", type: "administrativo" },
+      { id: 2, branchId: 99, nationalId: "2", name: "B", phone: "", email: "", createdAt: "", type: "administrativo" },
     ];
     const filtered = filterEmployeesForDistributorStaff(
       rows,
@@ -65,7 +68,7 @@ describe("distributor-scope", () => {
       { id: 1, brand: "A", modelCode: "X", providencia: "", approvalDate: "", createdAt: "", price: 0 },
       { id: 2, brand: "B", modelCode: "Y", providencia: "", approvalDate: "", createdAt: "", price: 0 },
     ];
-    const printers = [
+    const printers: PrinterResponse[] = [
       {
         id: 1,
         modelId: 1,
@@ -80,7 +83,7 @@ describe("distributor-scope", () => {
         installationDate: null,
         versionFirmware: "",
         macAddress: "",
-        deviceType: "fiscal",
+        deviceType: "interno",
       },
     ];
     expect(filterPrinterModelsForDistributor(models, printers).map((m) => m.id)).toEqual([

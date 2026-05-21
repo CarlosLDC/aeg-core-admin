@@ -224,6 +224,22 @@ export function PrinterView() {
       ? `Modelo #${printer.modelId}`
       : "";
 
+  const distributorLabelById = useMemo(
+    () =>
+      new Map(
+        distributorOptions.map((opt) => [opt.id, opt.label]),
+      ),
+    [distributorOptions],
+  );
+  const clientLabelById = useMemo(
+    () => new Map(clientOptions.map((opt) => [opt.id, opt.label])),
+    [clientOptions],
+  );
+  const softwareLabelById = useMemo(
+    () => new Map(software.map((opt) => [opt.id, opt.label])),
+    [software],
+  );
+
   async function handleSubmit(values: PrinterFormValues) {
     if (!printer || !canModify) {
       setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
@@ -327,6 +343,35 @@ export function PrinterView() {
             <DetailField
               label="Tipo de equipo"
               value={DEVICE_TYPE_LABELS[printer.deviceType]}
+            />
+            <DetailField
+              label="Distribuidor"
+              value={
+                printer.distributorId != null
+                  ? distributorLabelById.get(printer.distributorId) ??
+                    `#${printer.distributorId}`
+                  : "Sin asignar"
+              }
+              fullWidth
+            />
+            <DetailField
+              label="Cliente"
+              value={
+                printer.clientId != null
+                  ? clientLabelById.get(printer.clientId) ?? `#${printer.clientId}`
+                  : "Sin asignar"
+              }
+              fullWidth
+            />
+            <DetailField
+              label="Software"
+              value={
+                printer.softwareId != null
+                  ? softwareLabelById.get(printer.softwareId) ??
+                    `#${printer.softwareId}`
+                  : "Sin asignar"
+              }
+              fullWidth
             />
             <DetailField label="Pagada" value={printer.paid ? "Sí" : "No"} />
             <DetailField

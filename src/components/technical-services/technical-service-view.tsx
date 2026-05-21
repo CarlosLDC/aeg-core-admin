@@ -31,6 +31,15 @@ import {
 import { printerPath, sealPath, technicalServicePath } from "@/lib/resource-routes";
 import type { TechnicalServiceResponse } from "@/types/technical-service";
 
+function optionLabel(
+  options: Array<{ value: string; label: string }>,
+  id: number | null | undefined,
+  fallback: string,
+): string {
+  if (id == null) return fallback;
+  return options.find((opt) => Number(opt.value) === id)?.label ?? `#${id}`;
+}
+
 export function TechnicalServiceView() {
   const id = useResourceId();
   const router = useRouter();
@@ -170,13 +179,36 @@ export function TechnicalServiceView() {
               <DetailField label="ID" value={String(service.id)} mono />
               <DetailField
                 label="Impresora"
-                value={`#${service.printerId}`}
+                value={optionLabel(catalog.printerOptions, service.printerId, "—")}
                 href={printerPath(service.printerId)}
+                fullWidth
               />
               <DetailField
-                label="Técnico (ID)"
-                value={String(service.technicianId)}
-                mono
+                label="Técnico"
+                value={optionLabel(
+                  catalog.technicianOptions,
+                  service.technicianId,
+                  "—",
+                )}
+                fullWidth
+              />
+              <DetailField
+                label="Centro de servicio"
+                value={optionLabel(
+                  catalog.serviceCenterOptions,
+                  service.serviceCenterId,
+                  "Sin asignar",
+                )}
+                fullWidth
+              />
+              <DetailField
+                label="Distribuidor"
+                value={optionLabel(
+                  catalog.distributorOptions,
+                  service.distributorId,
+                  "Sin asignar",
+                )}
+                fullWidth
               />
               <DetailField
                 label="Falla reportada"
@@ -193,6 +225,24 @@ export function TechnicalServiceView() {
                 value={formatDateTime(service.startAt)}
               />
               <DetailField label="Fin" value={formatDateTime(service.endAt)} />
+              <DetailField
+                label="Z inicial"
+                value={String(service.initialZReport)}
+                mono
+              />
+              <DetailField
+                label="Fecha Z inicial"
+                value={formatDateTime(service.initialZDate)}
+              />
+              <DetailField
+                label="Z final"
+                value={String(service.finalZReport)}
+                mono
+              />
+              <DetailField
+                label="Fecha Z final"
+                value={formatDateTime(service.finalZDate)}
+              />
               <DetailField
                 label="Solicitud"
                 value={formatDate(service.requestDate)}

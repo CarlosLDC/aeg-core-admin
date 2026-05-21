@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { Building2, Loader2, MapPin, Phone, Tags, X } from "lucide-react";
+import { FormEvent, KeyboardEvent, useEffect, useState } from "react";
+import { Building2, Loader2, MapPin, Phone, X } from "lucide-react";
 import { HeadquartersSelectorFields } from "@/components/branches/headquarters-selector-fields";
 import {
   ClientFormFields,
@@ -21,7 +21,6 @@ import {
   validateOnboardingSection,
   type OnboardingStepSection,
 } from "@/lib/distributor-onboarding-policy";
-import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import { cn } from "@/lib/utils";
 
@@ -30,30 +29,27 @@ type ClientCreateDialogProps = {
   saving: boolean;
   error: string | null;
   companies: CompanyResponse[];
-  branches: BranchResponse[];
   onClose: () => void;
   onSubmit: (values: ClientOnboardingValues) => void;
 };
 
-type WizardStep = 0 | 1 | 2 | 3 | 4;
+type WizardStep = 0 | 1 | 2 | 3;
 
 const FORM_STEPS: {
-  step: 1 | 2 | 3 | 4;
-  section: ClientFormSection | "headquarters";
+  step: 1 | 2 | 3;
+  section: ClientFormSection;
   label: string;
 }[] =
   [
     { step: 1, section: "fiscal", label: "Fiscal" },
     { step: 2, section: "location", label: "Ubicación" },
     { step: 3, section: "contact", label: "Contacto" },
-    { step: 4, section: "headquarters", label: "Casa matriz" },
   ];
 
 const STEP_ICONS = {
   1: Building2,
   2: MapPin,
   3: Phone,
-  4: Tags,
 } as const;
 
 const emptyForm = (): ClientOnboardingValues => ({
@@ -67,8 +63,7 @@ const emptyForm = (): ClientOnboardingValues => ({
   contactPersonName: "",
   phone: "",
   email: "",
-  headquartersMode: "new",
-  headquartersBranchId: null,
+  isHeadquarters: true,
 });
 
 function stepSubtitle(step: WizardStep): string {
@@ -81,8 +76,6 @@ function stepSubtitle(step: WizardStep): string {
       return "Indica estado, ciudad y dirección de la sucursal.";
     case 3:
       return "Persona de contacto, teléfono y correo.";
-    case 4:
-      return "Selecciona o confirma la casa matriz.";
     default:
       return "";
   }
@@ -93,7 +86,6 @@ export function ClientCreateDialog({
   saving,
   error,
   companies,
-  branches,
   onClose,
   onSubmit,
 }: ClientCreateDialogProps) {
@@ -184,7 +176,6 @@ export function ClientCreateDialog({
         return;
       }
       setStepError(null);
-      setStep(4);
     }
   }
 
@@ -218,12 +209,6 @@ export function ClientCreateDialog({
       setStep(3);
       return;
     }
-    const headquartersErr = validateSection("headquarters");
-    if (headquartersErr) {
-      setStepError(headquartersErr);
-      setStep(4);
-      return;
-    }
     setStepError(null);
     const rif = form.rif.trim().toUpperCase();
     onSubmit({
@@ -236,13 +221,31 @@ export function ClientCreateDialog({
       contactPersonName: form.contactPersonName.trim(),
       phone: form.phone.trim(),
       email: form.email.trim(),
-      isHeadquarters: form.headquartersMode !== "existing",
+      isHeadquarters: form.isHeadquarters ?? true,
     });
   }
 
   function handleFormSubmit(e: FormEvent) {
     e.preventDefault();
-    if (step < 4) {
+    if (step < 3) {
+      goNext();
+      return;
+    }
+    submitRegistration();
+  }
+
+  function handleEnterShortcut(e: KeyboardEvent<HTMLDivElement>) {
+    if (e.key !== "Enter" || step === 0 || saving) return;
+    const target = e.target as HTMLElement;
+    if (
+      target.tagName === "TEXTAREA" ||
+      target.tagName === "BUTTON" ||
+      target.getAttribute("role") === "button"
+    ) {
+      return;
+    }
+    e.preventDefault();
+    if (step < 3) {
       goNext();
       return;
     }
@@ -257,6 +260,7 @@ export function ClientCreateDialog({
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
+      onKeyDown={handleEnterShortcut}
     >
       <button
         type="button"
@@ -336,30 +340,8 @@ export function ClientCreateDialog({
                 </p>
               )}
 
-              {currentFormStep &&
-                (currentFormStep.section === "headquarters" ? (
-                  <HeadquartersSelectorFields
-                    companyId={form.linkedCompanyId}
-                    mode={form.headquartersMode ?? "new"}
-                    branchId={form.headquartersBranchId ?? null}
-                    isHeadquarters={form.headquartersMode !== "existing"}
-                    branches={branches}
-                    companies={companies}
-                    disabled={saving}
-                    onModeChange={(mode) =>
-                      setForm((f) => ({
-                        ...f,
-                        headquartersMode: mode,
-                        headquartersBranchId:
-                          mode === "existing" ? f.headquartersBranchId : null,
-                      }))
-                    }
-                    onBranchChange={(branchId) =>
-                      setForm((f) => ({ ...f, headquartersBranchId: branchId }))
-                    }
-                    onHeadquartersChange={() => undefined}
-                  />
-                ) : (
+              {currentFormStep && (
+                <div className="space-y-4">
                   <ClientFormFields
                     form={form}
                     setForm={setForm}
@@ -369,7 +351,20 @@ export function ClientCreateDialog({
                     aiFields={aiFields}
                     section={currentFormStep.section}
                   />
-                ))}
+                  {currentFormStep.section === "contact" && (
+                    <HeadquartersSelectorFields
+                      isHeadquarters={form.isHeadquarters ?? true}
+                      disabled={saving}
+                      onChange={(value) =>
+                        setForm((f) => ({
+                          ...f,
+                          isHeadquarters: value,
+                        }))
+                      }
+                    />
+                  )}
+                </div>
+              )}
             </form>
           )}
         </div>
@@ -401,7 +396,7 @@ export function ClientCreateDialog({
                 >
                   Cancelar
                 </button>
-                {step < 4 ? (
+                {step < 3 ? (
                   <button
                     type="button"
                     disabled={saving}

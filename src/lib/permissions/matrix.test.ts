@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PERMISSION_MATRIX, isPermissionDefined } from "./matrix";
 import { ACTIONS, RESOURCES } from "./types";
+import type { Action } from "./types";
 
 describe("PERMISSION_MATRIX completeness", () => {
   it("defines read for every resource", () => {

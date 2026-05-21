@@ -60,6 +60,7 @@ Documentación interna:
 
 - [Matriz de permisos](docs/permissions-matrix.md)
 - [Contrato RBAC backend](docs/backend-rbac.md)
+- [Paridad UI Modal -> View](src/lib/ui-field-parity.md)
 
 ## Despliegue
 
@@ -68,3 +69,4 @@ Despliegue habitual en **Vercel**. Configura `API_UPSTREAM_URL` o `NEXT_PUBLIC_A
 ## CI
 
 Cada PR ejecuta lint, typecheck, tests y build (ver `.github/workflows/ci.yml`).
+Además, existe un guard automatizado de paridad de campos (modal/create/edit -> vista detalle) en `src/lib/ui-field-parity.test.ts`.

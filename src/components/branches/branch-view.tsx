@@ -222,6 +222,10 @@ export function BranchView() {
             <DetailField label="Teléfono" value={branch.phone || "—"} />
             <DetailField label="Correo" value={branch.email || "—"} />
             <DetailField
+              label="Casa matriz"
+              value={branch.isHeadquarters ? "Sí" : "No"}
+            />
+            <DetailField
               label="Roles"
               value={<BranchTypeBadges branch={branch} />}
             />

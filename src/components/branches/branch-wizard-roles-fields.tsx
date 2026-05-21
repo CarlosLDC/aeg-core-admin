@@ -1,6 +1,7 @@
 "use client";
 
 import { DistributorSelect } from "@/components/branches/distributor-select";
+import { HeadquartersSelectorFields } from "@/components/branches/headquarters-selector-fields";
 import type { BranchWizardValues } from "@/components/branches/branch-wizard-types";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
@@ -26,6 +27,16 @@ export function BranchWizardRolesFields({
   return (
     <fieldset className="space-y-4">
       <legend className="sr-only">Roles de sucursal</legend>
+      <HeadquartersSelectorFields
+        isHeadquarters={form.isHeadquarters}
+        disabled={saving}
+        onChange={(value) =>
+          setForm((f) => ({
+            ...f,
+            isHeadquarters: value,
+          }))
+        }
+      />
       <p className="text-xs text-muted">
         Cada rol crea un registro vinculado a la sucursal.
       </p>

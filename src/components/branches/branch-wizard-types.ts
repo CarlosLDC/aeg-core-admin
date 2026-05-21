@@ -16,8 +16,6 @@ export type BranchWizardValues = {
   isServiceCenter: boolean;
   clientDistributorId: string;
   isHeadquarters: boolean;
-  headquartersMode: "new" | "existing";
-  headquartersBranchId: number | null;
 };
 
 export const emptyBranchWizardForm = (): BranchWizardValues => ({
@@ -36,6 +34,4 @@ export const emptyBranchWizardForm = (): BranchWizardValues => ({
   isServiceCenter: false,
   clientDistributorId: "",
   isHeadquarters: true,
-  headquartersMode: "new",
-  headquartersBranchId: null,
 });
