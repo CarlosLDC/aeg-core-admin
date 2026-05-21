@@ -72,7 +72,7 @@ function employeeLabel(employee: EmployeeWithRoles) {
 export function EmployeesManager() {
   const toast = useToast();
   const confirm = useConfirm();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const {
     scope,
     loading: scopeLoading,
@@ -222,12 +222,16 @@ export function EmployeesManager() {
   const pagination = usePagination(filteredEmployees);
 
   const loadEmployees = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setListError(null);
     try {
       const employeeRows = await fetchEmployees();
       const { technicians, distributorPersons } = await fetchEmployeeRoleTables(
-        user?.role ?? "ADMIN",
+        user.role,
       );
 
       const merged = mergeEmployeesWithRoles(
@@ -246,20 +250,20 @@ export function EmployeesManager() {
     } finally {
       setLoading(false);
     }
-  }, [toast, user?.role]);
+  }, [toast, user]);
 
   const refreshAll = useCallback(async () => {
     await Promise.all([refreshScope(), loadEmployees()]);
   }, [refreshScope, loadEmployees]);
 
   useEffect(() => {
-    if (scopeLoading) return;
-    if (!scope) {
+    if (authLoading || scopeLoading) return;
+    if (!scope || !user) {
       setLoading(false);
       return;
     }
     void loadEmployees();
-  }, [scopeLoading, scope, loadEmployees]);
+  }, [authLoading, scopeLoading, scope, user, loadEmployees]);
 
   function openCreate() {
     setSelected(null);
@@ -416,7 +420,7 @@ export function EmployeesManager() {
             <button
               type="button"
               onClick={refreshAll}
-              disabled={loading || scopeLoading}
+              disabled={loading || scopeLoading || authLoading}
               className={cn(
                 pageToolbarButtonClass,
                 "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
