@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, KeyboardEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useId, useState } from "react";
 import { Building2, Loader2, MapPin, Phone, X } from "lucide-react";
 import { HeadquartersSelectorFields } from "@/components/branches/headquarters-selector-fields";
 import {
@@ -89,6 +89,7 @@ export function ClientCreateDialog({
   onClose,
   onSubmit,
 }: ClientCreateDialogProps) {
+  const formId = useId();
   const [step, setStep] = useState<WizardStep>(0);
   const [inputMode, setInputMode] = useState<"ai" | "manual">("manual");
   const [form, setForm] = useState<ClientOnboardingValues>(emptyForm);
@@ -234,24 +235,6 @@ export function ClientCreateDialog({
     submitRegistration();
   }
 
-  function handleEnterShortcut(e: KeyboardEvent<HTMLDivElement>) {
-    if (e.key !== "Enter" || step === 0 || saving) return;
-    const target = e.target as HTMLElement;
-    if (
-      target.tagName === "TEXTAREA" ||
-      target.tagName === "BUTTON" ||
-      target.getAttribute("role") === "button"
-    ) {
-      return;
-    }
-    e.preventDefault();
-    if (step < 3) {
-      goNext();
-      return;
-    }
-    submitRegistration();
-  }
-
   const displayError = stepError ?? error;
   const currentFormStep = FORM_STEPS.find((s) => s.step === step);
 
@@ -260,7 +243,6 @@ export function ClientCreateDialog({
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
-      onKeyDown={handleEnterShortcut}
     >
       <button
         type="button"
@@ -328,6 +310,7 @@ export function ClientCreateDialog({
             />
           ) : (
             <form
+              id={formId}
               onSubmit={handleFormSubmit}
               className="flex h-full flex-col"
             >
@@ -398,18 +381,18 @@ export function ClientCreateDialog({
                 </button>
                 {step < 3 ? (
                   <button
-                    type="button"
+                    type="submit"
+                    form={formId}
                     disabled={saving}
-                    onClick={goNext}
                     className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
                   >
                     Siguiente
                   </button>
                 ) : (
                   <button
-                    type="button"
+                    type="submit"
+                    form={formId}
                     disabled={saving}
-                    onClick={submitRegistration}
                     className={cn(
                       "flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
                       saving && "cursor-not-allowed opacity-70",
