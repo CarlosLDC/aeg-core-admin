@@ -26,3 +26,32 @@ export type MqttTestMessageResponse = {
   message: string;
   broker: string;
 };
+
+export type MqttMonitorStatus = {
+  inboundEnabled: boolean;
+  subscribedTopic: string;
+  brokerUrl: string;
+  connected: boolean;
+  lastMessageAt: string | null;
+  bufferedMessageCount: number;
+};
+
+export type MqttSubscriptionResponse = {
+  topic: string;
+  active: boolean;
+};
+
+export type MqttInboundMessage = {
+  topic: string;
+  payload: string;
+  receivedAt: string;
+  qos?: number | null;
+};
+
+export type MqttMonitorWireMessage = {
+  type: "message" | "subscription" | "pong";
+  topic?: string;
+  payload?: string;
+  receivedAt?: string;
+  qos?: number | null;
+};

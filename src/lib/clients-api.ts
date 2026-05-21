@@ -10,6 +10,10 @@ export async function fetchClients(): Promise<ClientResponse[]> {
   return apiFetch<ClientResponse[]>(BASE);
 }
 
+export async function fetchClientById(id: number): Promise<ClientResponse> {
+  return apiFetch<ClientResponse>(`${BASE}/${id}`);
+}
+
 export async function fetchClientByBranchId(
   branchId: number,
 ): Promise<ClientResponse | null> {

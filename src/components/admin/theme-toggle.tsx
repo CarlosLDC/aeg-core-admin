@@ -1,40 +1,26 @@
 "use client";
 
-import { Monitor, Moon, Sun } from "lucide-react";
-import { useTheme, type ThemePreference } from "@/context/theme-provider";
-import { cn } from "@/lib/utils";
-
-const OPTIONS: { value: ThemePreference; label: string; Icon: typeof Sun }[] = [
-  { value: "light", label: "Claro", Icon: Sun },
-  { value: "dark", label: "Oscuro", Icon: Moon },
-  { value: "system", label: "Sistema", Icon: Monitor },
-];
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "@/context/theme-provider";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
+  const label = isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro";
 
   return (
-    <div
-      className="flex items-center rounded-lg border border-border bg-card p-0.5"
-      role="group"
-      aria-label="Tema de la interfaz"
+    <button
+      type="button"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      title={label}
+      aria-label={label}
+      className="rounded-lg border border-border bg-card p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
     >
-      {OPTIONS.map(({ value, label, Icon }) => (
-        <button
-          key={value}
-          type="button"
-          onClick={() => setTheme(value)}
-          title={label}
-          aria-pressed={theme === value}
-          className={cn(
-            "rounded-md p-2 text-muted transition-colors",
-            theme === value && "bg-foreground/10 text-foreground",
-          )}
-        >
-          <Icon className="size-4" aria-hidden />
-          <span className="sr-only">{label}</span>
-        </button>
-      ))}
-    </div>
+      {isDark ? (
+        <Sun className="size-4" aria-hidden />
+      ) : (
+        <Moon className="size-4" aria-hidden />
+      )}
+    </button>
   );
 }

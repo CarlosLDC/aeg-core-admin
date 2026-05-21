@@ -289,12 +289,12 @@ export function PrinterModelsManager() {
                   <table className="w-full min-w-[880px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Marca</th>
                         <th className="px-5 py-3 font-medium">Modelo</th>
                         <th className="px-5 py-3 font-medium">Providencia</th>
                         <th className="px-5 py-3 font-medium">Aprobación</th>
                         <th className="px-5 py-3 font-medium">Precio</th>
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -306,7 +306,6 @@ export function PrinterModelsManager() {
                           key={model.id}
                           href={printerModelPath(model.id)}
                         >
-                          <TableCreatedAtCell value={model.createdAt} />
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
                             {model.brand}
                           </td>
@@ -322,6 +321,7 @@ export function PrinterModelsManager() {
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
                             {formatPrinterModelPrice(model.price)}
                           </td>
+                          <TableCreatedAtCell value={model.createdAt} />
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink

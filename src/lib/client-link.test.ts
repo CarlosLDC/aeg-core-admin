@@ -16,6 +16,7 @@ import {
   fetchClientByBranchId,
   updateClient,
 } from "@/lib/clients-api";
+import { ApiError } from "@/types/auth";
 
 describe("isDistributorClientOnlyRoles", () => {
   it("detects distributor client registration", () => {
@@ -98,7 +99,7 @@ describe("linkDistributorClientToBranch", () => {
         createdAt: "",
       });
     vi.mocked(createClient).mockRejectedValue(
-      new Error("Binding property is null"),
+      new ApiError("Binding property is null", 400),
     );
     vi.mocked(updateClient).mockResolvedValue({
       id: 5,

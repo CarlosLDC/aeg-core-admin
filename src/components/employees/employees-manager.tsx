@@ -26,15 +26,10 @@ import {
   canUpdateEmployeeRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
-import { fetchAuthMe } from "@/lib/auth-me-api";
 import { branchLabelById } from "@/lib/branches";
-import { fetchBranchById } from "@/lib/branches-api";
-import {
-  distributorStaffBranchIds,
-  filterEmployeesForDistributorStaff,
-} from "@/lib/distributor-scope";
-import { fetchDistributors } from "@/lib/distributors-api";
-import { fetchDistributorPersons } from "@/lib/distributor-persons-api";
+import { filterEmployeesForDistributorStaff } from "@/lib/distributor-scope";
+import { useDistributorId } from "@/hooks/use-distributor-id";
+import { useDistributorStaffBranches } from "@/hooks/use-distributor-staff-branches";
 import {
   toEmployeePayload,
   type EmployeeFormValues,
@@ -45,6 +40,7 @@ import {
   deleteEmployeeRoles,
   EMPLOYEE_UI_ROLE_LABELS,
   EMPLOYEE_UI_ROLES,
+  fetchEmployeeRoleTables,
   getEmployeeRolesErrorMessage,
   mergeEmployeesWithRoles,
   resolveEmployeeUiRole,
@@ -60,9 +56,7 @@ import {
   getEmployeesErrorMessage,
   updateEmployee,
 } from "@/lib/employees-api";
-import { fetchTechnicians } from "@/lib/technicians-api";
 import type { BranchResponse } from "@/types/branch";
-import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { EmployeeRequest } from "@/types/employee";
 import { cn } from "@/lib/utils";
@@ -87,6 +81,12 @@ export function EmployeesManager() {
   } = useCompanyScope();
 
   const isDistributor = user?.role === "DISTRIBUTOR";
+  const distributorId = useDistributorId();
+  const {
+    staffBranches,
+    staffBranchIdSet,
+    loading: staffBranchesLoading,
+  } = useDistributorStaffBranches(isDistributor ? distributorId : null);
   const canCreate = user ? canCreateEmployeeRecord(user.role) : false;
   const canModify = user ? canUpdateEmployeeRecord(user.role) : false;
   const canEditRoles = user ? canAssignEmployeeRoles(user.role) : false;
@@ -94,9 +94,6 @@ export function EmployeesManager() {
 
   const [employees, setEmployees] = useState<EmployeeWithRoles[]>([]);
   const [branches, setBranches] = useState<BranchResponse[]>([]);
-  const [staffBranches, setStaffBranches] = useState<BranchResponse[]>([]);
-  const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
-  const [distributorId, setDistributorId] = useState<number | null>(null);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
@@ -113,20 +110,6 @@ export function EmployeesManager() {
     const base = user ? uiRolesForUser(user.role) : EMPLOYEE_UI_ROLES;
     return base;
   }, [user]);
-
-  useEffect(() => {
-    if (user?.role !== "DISTRIBUTOR") {
-      setDistributorId(null);
-      return;
-    }
-    if (user.distributorId != null) {
-      setDistributorId(user.distributorId);
-      return;
-    }
-    void fetchAuthMe()
-      .then((me) => setDistributorId(me.distributorId ?? null))
-      .catch(() => setDistributorId(null));
-  }, [user?.role, user?.distributorId]);
 
   useEffect(() => {
     if (!scope) return;
@@ -147,43 +130,8 @@ export function EmployeesManager() {
     }
   }, [scope, scopeError]);
 
-  useEffect(() => {
-    if (user?.role !== "DISTRIBUTOR" || distributorId == null) {
-      setDistributors([]);
-      setStaffBranches([]);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      try {
-        const distributorRows = await fetchDistributors();
-        if (cancelled) return;
-        setDistributors(distributorRows);
-        const staffIds = distributorStaffBranchIds(distributorRows, distributorId);
-        const loaded = await Promise.all(
-          [...staffIds].map((id) => fetchBranchById(id)),
-        );
-        if (!cancelled) {
-          setStaffBranches(loaded);
-        }
-      } catch {
-        if (!cancelled) {
-          setDistributors([]);
-          setStaffBranches([]);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.role, distributorId]);
-
-  const staffBranchIdSet = useMemo(
-    () => distributorStaffBranchIds(distributors, distributorId),
-    [distributors, distributorId],
-  );
-
   const formBranches = isDistributor ? staffBranches : branches;
+  const displayBranches = isDistributor ? staffBranches : branches;
   const branchesReadyForCreate = isDistributor
     ? staffBranches.length > 0
     : branches.length > 0;
@@ -204,12 +152,11 @@ export function EmployeesManager() {
   }, [employees, user?.role, staffBranchIdSet, branches]);
 
   const branchFilterOptions = useMemo(() => {
-    const allBranches = [...branches, ...staffBranches];
     const branchIds = [
       ...new Set(scopedEmployees.map((employee) => employee.branchId)),
     ].sort((a, b) =>
-      branchLabelById(allBranches, companies, a).localeCompare(
-        branchLabelById(allBranches, companies, b),
+      branchLabelById(displayBranches, companies, a).localeCompare(
+        branchLabelById(displayBranches, companies, b),
         "es",
       ),
     );
@@ -217,10 +164,10 @@ export function EmployeesManager() {
       filterAllOption("Todas las sucursales"),
       ...branchIds.map((id) => ({
         value: String(id),
-        label: branchLabelById(allBranches, companies, id),
+        label: branchLabelById(displayBranches, companies, id),
       })),
     ];
-  }, [scopedEmployees, branches, staffBranches, companies]);
+  }, [scopedEmployees, displayBranches, companies]);
 
   const filteredEmployees = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -239,7 +186,7 @@ export function EmployeesManager() {
       }
       if (!q) return true;
       const branch = branchLabelById(
-        [...branches, ...staffBranches],
+        displayBranches,
         companies,
         employee.branchId,
       );
@@ -273,18 +220,9 @@ export function EmployeesManager() {
     setListError(null);
     try {
       const employeeRows = await fetchEmployees();
-      const [technicianResult, distributorPersonResult] =
-        await Promise.allSettled([
-          fetchTechnicians(),
-          fetchDistributorPersons(),
-        ]);
-
-      const technicians =
-        technicianResult.status === "fulfilled" ? technicianResult.value : [];
-      const distributorPersons =
-        distributorPersonResult.status === "fulfilled"
-          ? distributorPersonResult.value
-          : [];
+      const { technicians, distributorPersons } = await fetchEmployeeRoleTables(
+        user?.role ?? "ADMIN",
+      );
 
       const merged = mergeEmployeesWithRoles(
         employeeRows,
@@ -302,7 +240,7 @@ export function EmployeesManager() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, user?.role]);
 
   const refreshAll = useCallback(async () => {
     await Promise.all([refreshScope(), loadEmployees()]);
@@ -572,12 +510,12 @@ export function EmployeesManager() {
                   <table className="w-full min-w-[960px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Nombre</th>
                         <th className="px-5 py-3 font-medium">Cédula</th>
                         <th className="px-5 py-3 font-medium">Rol</th>
                         <th className="px-5 py-3 font-medium">Sucursal</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -589,7 +527,6 @@ export function EmployeesManager() {
                           key={employee.id}
                           href={employeePath(employee.id)}
                         >
-                          <TableCreatedAtCell value={employee.createdAt} />
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
                             {employee.name}
                           </td>
@@ -601,7 +538,7 @@ export function EmployeesManager() {
                           </td>
                           <td className="max-w-[200px] truncate px-5 py-3.5 text-card-foreground">
                             {branchLabelById(
-                              branches,
+                              displayBranches,
                               companies,
                               employee.branchId,
                             )}
@@ -612,6 +549,7 @@ export function EmployeesManager() {
                               {employee.email}
                             </span>
                           </td>
+                          <TableCreatedAtCell value={employee.createdAt} />
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
@@ -665,9 +603,7 @@ export function EmployeesManager() {
           branches={formBranches}
           companies={companies}
           branchesLoading={
-            isDistributor
-              ? distributorId != null && staffBranches.length === 0
-              : scopeLoading
+            isDistributor ? staffBranchesLoading : scopeLoading
           }
           defaultBranchId={defaultStaffBranchId}
           lockBranch={isDistributor && staffBranches.length === 1}

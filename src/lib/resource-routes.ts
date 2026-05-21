@@ -8,6 +8,10 @@ export function branchPath(id: number): string {
   return `/branches/${id}`;
 }
 
+export function clientPath(id: number): string {
+  return `/clients/${id}`;
+}
+
 export function employeePath(id: number): string {
   return `/employees/${id}`;
 }

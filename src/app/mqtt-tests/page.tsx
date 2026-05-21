@@ -6,7 +6,7 @@ export default function MqttTestsPage() {
   return (
     <AdminShell
       title="Pruebas MQTT"
-      description="Diagnóstico de conexión y publicación de mensajes al broker"
+      description="Monitor en vivo, diagnóstico de conexión y publicación al broker"
     >
       <RoleGuard path="/mqtt-tests">
         <MqttTestPanel />

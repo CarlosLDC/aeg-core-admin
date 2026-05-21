@@ -375,11 +375,11 @@ export function ContractsListPanel({
                   <table className="w-full min-w-[920px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">{partyColumn}</th>
                         <th className="px-5 py-3 font-medium">Vigencia</th>
                         <th className="px-5 py-3 font-medium">Estado</th>
                         <th className="px-5 py-3 font-medium">Documentos</th>
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -396,7 +396,6 @@ export function ContractsListPanel({
                           key={contract.id}
                           href={contractHref}
                         >
-                          <TableCreatedAtCell value={contract.createdAt} />
                           <td className="max-w-[220px] truncate px-5 py-3.5 font-medium text-card-foreground">
                             {getPartyLabel(contract)}
                           </td>
@@ -433,6 +432,7 @@ export function ContractsListPanel({
                               </ul>
                             )}
                           </td>
+                          <TableCreatedAtCell value={contract.createdAt} />
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink

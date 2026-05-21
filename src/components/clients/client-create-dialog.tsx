@@ -154,6 +154,13 @@ export function ClientCreateDialog({
     return null;
   }
 
+  function validateContact(): string | null {
+    if (!form.contactPersonName.trim()) {
+      return "Indica el nombre de la persona de contacto.";
+    }
+    return null;
+  }
+
   function goNext() {
     if (step === 1) {
       const err = validateFiscal();
@@ -187,8 +194,7 @@ export function ClientCreateDialog({
     }
   }
 
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  function submitRegistration() {
     const fiscalErr = validateFiscal();
     if (fiscalErr) {
       setStepError(fiscalErr);
@@ -199,6 +205,12 @@ export function ClientCreateDialog({
     if (locationErr) {
       setStepError(locationErr);
       setStep(2);
+      return;
+    }
+    const contactErr = validateContact();
+    if (contactErr) {
+      setStepError(contactErr);
+      setStep(3);
       return;
     }
     setStepError(null);
@@ -214,6 +226,15 @@ export function ClientCreateDialog({
       phone: form.phone.trim(),
       email: form.email.trim(),
     });
+  }
+
+  function handleFormSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (step < 3) {
+      goNext();
+      return;
+    }
+    submitRegistration();
   }
 
   const displayError = stepError ?? error;
@@ -291,8 +312,7 @@ export function ClientCreateDialog({
             />
           ) : (
             <form
-              id="client-create-form"
-              onSubmit={handleSubmit}
+              onSubmit={handleFormSubmit}
               className="flex h-full flex-col"
             >
               {displayError && (
@@ -357,9 +377,9 @@ export function ClientCreateDialog({
                   </button>
                 ) : (
                   <button
-                    type="submit"
-                    form="client-create-form"
+                    type="button"
                     disabled={saving}
+                    onClick={submitRegistration}
                     className={cn(
                       "flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
                       saving && "cursor-not-allowed opacity-70",

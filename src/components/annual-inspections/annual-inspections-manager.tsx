@@ -326,12 +326,12 @@ export function AnnualInspectionsManager() {
                   <table className="w-full min-w-[900px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium">Impresora</th>
                         <th className="px-5 py-3 font-medium">Empleado</th>
                         <th className="px-5 py-3 font-medium">Fecha</th>
                         <th className="px-5 py-3 font-medium">Precinto</th>
                         <th className="px-5 py-3 font-medium">Fotos</th>
+                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -343,7 +343,6 @@ export function AnnualInspectionsManager() {
                           key={row.id}
                           href={annualInspectionPath(row.id)}
                         >
-                          <TableCreatedAtCell value={row.createdAt} />
                           <td className="max-w-[140px] truncate px-5 py-3.5 font-mono text-card-foreground">
                             {printerLabelById.get(String(row.printerId)) ??
                               `#${row.printerId}`}
@@ -361,6 +360,7 @@ export function AnnualInspectionsManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {row.photoUrls?.length ?? 0}
                           </td>
+                          <TableCreatedAtCell value={row.createdAt} />
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink

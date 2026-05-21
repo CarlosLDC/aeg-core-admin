@@ -1,9 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Building2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { CompanyBranchesWizardDialog } from "@/components/companies/company-branches-wizard-dialog";
+import { CompanyBranchesTable } from "@/components/companies/company-branches-table";
 import { ContributorBadge } from "@/components/companies/contributor-badge";
 import {
   CompanyFormDialog,
@@ -31,7 +30,10 @@ import {
 } from "@/lib/companies-api";
 import { formatDate } from "@/lib/datetime-form";
 import { companyPath } from "@/lib/resource-routes";
+import { cn } from "@/lib/utils";
 import type { CompanyResponse } from "@/types/company";
+
+type CompanyDetailPanel = "company" | "branches";
 
 export function CompanyView() {
   const id = useResourceId();
@@ -50,8 +52,7 @@ export function CompanyView() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [branchesOpen, setBranchesOpen] = useState(false);
-
+  const [detailPanel, setDetailPanel] = useState<CompanyDetailPanel>("company");
   const load = useCallback(async () => {
     if (id == null) {
       setError("Identificador de empresa no válido.");
@@ -158,7 +159,43 @@ export function CompanyView() {
         }
       >
         {company && (
-          <div className="space-y-8">
+          <div className="space-y-4">
+            <div
+              className="inline-flex rounded-lg border border-border bg-card p-1"
+              role="tablist"
+              aria-label="Vista de empresa"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={detailPanel === "company"}
+                onClick={() => setDetailPanel("company")}
+                className={cn(
+                  "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                  detailPanel === "company"
+                    ? "bg-accent text-accent-foreground shadow-sm"
+                    : "text-muted hover:text-foreground",
+                )}
+              >
+                Empresa
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={detailPanel === "branches"}
+                onClick={() => setDetailPanel("branches")}
+                className={cn(
+                  "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                  detailPanel === "branches"
+                    ? "bg-accent text-accent-foreground shadow-sm"
+                    : "text-muted hover:text-foreground",
+                )}
+              >
+                Sucursales
+              </button>
+            </div>
+
+            {detailPanel === "company" ? (
             <DetailCard>
               <DetailField label="ID" value={String(company.id)} mono />
               <DetailField label="RIF" value={company.rif} mono />
@@ -176,23 +213,12 @@ export function CompanyView() {
                 value={formatDate(company.createdAt)}
               />
             </DetailCard>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setBranchesOpen(true)}
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
-              >
-                <Building2 className="size-4" />
-                Ver sucursales
-              </button>
-            </div>
-            <CompanyBranchesWizardDialog
+            ) : (
+            <CompanyBranchesTable
               companyId={company.id}
               companies={scope?.companies ?? [company]}
-              open={branchesOpen}
-              onClose={() => setBranchesOpen(false)}
             />
+            )}
           </div>
         )}
       </ResourceViewShell>

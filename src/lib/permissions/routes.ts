@@ -59,14 +59,23 @@ export function canAccessRoute(role: Role, pathname: string): boolean {
   const normalized = normalizePath(pathname);
   if (normalized === "/login") return true;
 
+  const resource = resourceForPath(normalized);
+  if (!can(role, resource, "read")) return false;
+
   const navPath = resolveNavPath(normalized);
   if (navPath) {
-    const roles = rolesByPath.get(navPath);
-    if (roles && !roles.includes(role)) return false;
+    const navRoles = rolesByPath.get(navPath);
+    if (navRoles && !navRoles.includes(role)) {
+      const isDetailRoute =
+        normalized !== navPath && normalized.startsWith(`${navPath}/`);
+      if (!isDetailRoute) return false;
+      // Detalle de sucursal sin listado en menú (distribuidor usa /clients).
+      if (navPath === "/branches" && role === "DISTRIBUTOR") return true;
+      return false;
+    }
   }
 
-  const resource = resourceForPath(normalized);
-  return can(role, resource, "read");
+  return true;
 }
 
 /** Primera ruta del menú a la que el rol puede acceder (fallback tras denegar). */

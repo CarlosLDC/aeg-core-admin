@@ -9,7 +9,7 @@ export function TableCreatedAtHeader({ className }: { className?: string }) {
         className,
       )}
     >
-      Creado
+      Creado el
     </th>
   );
 }

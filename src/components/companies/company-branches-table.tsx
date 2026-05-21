@@ -1,68 +1,46 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Loader2, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
-import {
-  BranchCreateWizardDialog,
-  type BranchWizardValues,
-} from "@/components/branches/branch-create-wizard-dialog";
 import {
   BranchFormDialog,
   type BranchFormValues,
 } from "@/components/branches/branch-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
-import {
-  PageToolbar,
-  pageToolbarButtonClass,
-} from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
-import {
-  TableCreatedAtCell,
-  TableCreatedAtHeader,
-} from "@/components/ui/table-created-at";
-import {
-  filterAllOption,
-  uniqueFilterOptions,
-} from "@/lib/table-filter-options";
 import { useAuth } from "@/context/auth-provider";
-import {
-  canCreateBranchRecord,
-  canUpdateBranchRecord,
-  CATALOG_CREATE_FORBIDDEN_MESSAGE,
-  CATALOG_MODIFY_FORBIDDEN_MESSAGE,
-} from "@/lib/api-permissions";
 import { useCompanyScope } from "@/context/company-scope-provider";
-import { canBrowseOtherCompanies } from "@/lib/company-scope";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { usePagination } from "@/hooks/use-pagination";
+import {
+  canUpdateBranchRecord,
+  CATALOG_MODIFY_FORBIDDEN_MESSAGE,
+} from "@/lib/api-permissions";
+import { canBrowseOtherCompanies } from "@/lib/company-scope";
 import {
   deleteBranchRoles,
   distributorLabel,
   mergeBranchesWithRoles,
   syncBranchRoles,
 } from "@/lib/branch-roles";
-import {
-  companyNameById,
-  companySearchTextById,
-  formatBranchShort,
-} from "@/lib/branches";
+import { formatBranchShort } from "@/lib/branches";
 import { getCatalogErrorMessage } from "@/lib/api-error-message";
-import { deleteBranch, updateBranch } from "@/lib/branches-api";
-import {
-  createClientOnboarding,
-  type ClientOnboardingValues,
-} from "@/lib/client-onboarding";
 import { toBranchRequest } from "@/lib/branch-request";
 import { invalidateCatalogRoles } from "@/lib/catalog-roles-cache";
+import { deleteBranch, updateBranch } from "@/lib/branches-api";
+import { branchPath } from "@/lib/resource-routes";
+import {
+  filterAllOption,
+  uniqueFilterOptions,
+} from "@/lib/table-filter-options";
 import type { BranchWithRoles } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { DistributorResponse } from "@/types/branch-role";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
-import { branchPath, companyPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
@@ -82,10 +60,6 @@ function toRoleFormState(values: BranchFormValues) {
   };
 }
 
-function branchSummary(branch: BranchWithRoles, companies: CompanyResponse[]) {
-  return formatBranchShort(branch, companies);
-}
-
 function clientDistributorSummary(
   branch: BranchWithRoles,
   distributors: DistributorResponse[],
@@ -100,38 +74,88 @@ function clientDistributorSummary(
   return distributorLabel(distributor, branches, companies);
 }
 
-export function BranchesManager() {
+type CompanyBranchesTableProps = {
+  companyId: number;
+  companies: CompanyResponse[];
+};
+
+export function CompanyBranchesTable({
+  companyId,
+  companies,
+}: CompanyBranchesTableProps) {
   const toast = useToast();
   const confirm = useConfirm();
   const { user } = useAuth();
-  const canCreate = user ? canCreateBranchRecord(user.role) : false;
   const canModify = user ? canUpdateBranchRecord(user.role) : false;
   const {
     scope,
     catalogRoles,
     loading: scopeLoading,
-    error: scopeError,
     refresh: refreshScope,
   } = useCompanyScope();
+
   const [branches, setBranches] = useState<BranchWithRoles[]>([]);
-  const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
+  const [allBranches, setAllBranches] = useState<BranchWithRoles[]>([]);
   const [loading, setLoading] = useState(true);
-  const companiesLoading = scopeLoading;
   const [listError, setListError] = useState<string | null>(null);
-  const [wizardOpen, setWizardOpen] = useState(false);
-  const [wizardResumeCompanyId, setWizardResumeCompanyId] = useState<
-    number | null
-  >(null);
-  const [dialog, setDialog] = useState<"edit" | null>(null);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [stateFilter, setStateFilter] = useState("all");
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [selected, setSelected] = useState<BranchWithRoles | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [stateFilter, setStateFilter] = useState("all");
-  const [companyFilter, setCompanyFilter] = useState("all");
+
+  const loadBranches = useCallback(async () => {
+    if (!scope || !catalogRoles) return;
+
+    setLoading(true);
+    setListError(null);
+    try {
+      const merged = mergeBranchesWithRoles(
+        scope.branches,
+        catalogRoles.distributors,
+        catalogRoles.clients,
+        catalogRoles.serviceCenters,
+      );
+
+      const scopedMerged = canBrowseOtherCompanies(scope.role)
+        ? merged
+        : merged.filter((b) =>
+            scope.branches.some((allowed) => allowed.id === b.id),
+          );
+
+      const forCompany = scopedMerged
+        .filter((b) => b.companyId === companyId)
+        .sort((a, b) =>
+          `${a.city} ${a.state}`.localeCompare(`${b.city} ${b.state}`, "es"),
+        );
+
+      setDistributors(catalogRoles.distributors);
+      setAllBranches(scopedMerged);
+      setBranches(forCompany);
+    } catch (err) {
+      const message = getCatalogErrorMessage(err);
+      setListError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [scope, catalogRoles, companyId, toast]);
+
+  useEffect(() => {
+    if (scopeLoading) return;
+    if (!scope) {
+      setLoading(false);
+      setBranches([]);
+      return;
+    }
+    if (catalogRoles) {
+      void loadBranches();
+    }
+  }, [scopeLoading, scope, catalogRoles, loadBranches]);
 
   const stateFilterOptions = useMemo(
     () => [
@@ -141,236 +165,48 @@ export function BranchesManager() {
     [branches],
   );
 
-  const companyFilterOptions = useMemo(
-    () => [
-      filterAllOption("Todas las empresas"),
-      ...companies.map((c) => ({
-        value: String(c.id),
-        label: c.businessName || c.rif,
-        searchText: `${c.rif} ${c.businessName ?? ""}`,
-      })),
-    ],
-    [companies],
-  );
-
   const filteredBranches = useMemo(() => {
     const q = search.trim().toLowerCase();
     return branches.filter((branch) => {
+      if (stateFilter !== "all" && branch.state !== stateFilter) return false;
       if (typeFilter === "client" && !branch.client) return false;
       if (typeFilter === "distributor" && !branch.distributor) return false;
       if (typeFilter === "serviceCenter" && !branch.serviceCenter) {
         return false;
       }
-      if (stateFilter !== "all" && branch.state !== stateFilter) return false;
-      if (
-        companyFilter !== "all" &&
-        branch.companyId !== Number(companyFilter)
-      ) {
-        return false;
-      }
       if (!q) return true;
       const haystack = [
         branch.id,
-        companySearchTextById(companies, branch.companyId),
         branch.city,
         branch.state,
         branch.address,
         branch.contactPersonName,
         branch.phone,
         branch.email,
-        clientDistributorSummary(branch, distributors, branches, companies),
+        clientDistributorSummary(branch, distributors, allBranches, companies),
       ]
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [
-    branches,
-    search,
-    typeFilter,
-    stateFilter,
-    companyFilter,
-    companies,
-    distributors,
-  ]);
+  }, [branches, search, typeFilter, stateFilter, distributors, allBranches, companies]);
 
   const pagination = usePagination(filteredBranches);
-
-  const loadBranches = useCallback(async () => {
-    if (!scope || !catalogRoles) return;
-
-    const companyList = scope.companies;
-    setLoading(true);
-    setListError(null);
-    try {
-      const branchRows = scope.branches;
-      const merged = mergeBranchesWithRoles(
-        branchRows,
-        catalogRoles.distributors,
-        catalogRoles.clients,
-        catalogRoles.serviceCenters,
-      );
-
-      setDistributors(catalogRoles.distributors);
-
-      // ADMIN/DISTRIBUTOR: el API ya devuelve el alcance correcto; no filtrar por
-      // scope.branches (queda obsoleto tras crear una sucursal nueva).
-      const scopedMerged =
-        canBrowseOtherCompanies(scope.role)
-          ? merged
-          : merged.filter((b) =>
-              scope.branches.some((allowed) => allowed.id === b.id),
-            );
-
-      setBranches(
-        scopedMerged.sort((a, b) => {
-          const companyCmp = companyNameById(
-            companyList,
-            a.companyId,
-          ).localeCompare(companyNameById(companyList, b.companyId), "es");
-          if (companyCmp !== 0) return companyCmp;
-          return `${a.city} ${a.state}`.localeCompare(
-            `${b.city} ${b.state}`,
-            "es",
-          );
-        }),
-      );
-    } catch (err) {
-      const message =
-        getCatalogErrorMessage(err);
-      setListError(message);
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
-  }, [scope, catalogRoles, toast]);
-
-  const refreshAll = useCallback(async () => {
-    await refreshScope();
-  }, [refreshScope]);
-
-  useEffect(() => {
-    if (scopeLoading) return;
-
-    if (!scope) {
-      setLoading(false);
-      setCompanies([]);
-      setBranches([]);
-      if (scopeError) {
-        setListError(scopeError);
-      }
-      return;
-    }
-
-    setCompanies(
-      [...scope.companies].sort((a, b) =>
-        (a.businessName || "").localeCompare(b.businessName || "", "es"),
-      ),
-    );
-    if (scopeError) {
-      setListError((prev) => prev ?? scopeError);
-    }
-    if (catalogRoles) {
-      void loadBranches();
-    }
-  }, [scopeLoading, scope, catalogRoles, scopeError, loadBranches]);
-
-  function openCreate() {
-    setSelected(null);
-    setFormError(null);
-    setWizardResumeCompanyId(null);
-    setWizardOpen(true);
-  }
-
-  function closeWizard() {
-    setWizardOpen(false);
-    setFormError(null);
-    setWizardResumeCompanyId(null);
-  }
 
   function openEdit(branch: BranchWithRoles) {
     setSelected(branch);
     setFormError(null);
-    setDialog("edit");
+    setDialogOpen(true);
   }
 
   function closeDialog() {
-    setDialog(null);
+    setDialogOpen(false);
     setSelected(null);
     setFormError(null);
   }
 
-  async function handleWizardSubmit(values: BranchWizardValues) {
-    if (!canCreate) {
-      setFormError(CATALOG_CREATE_FORBIDDEN_MESSAGE);
-      return;
-    }
-
-    setSaving(true);
-    setFormError(null);
-
-    const onboardingValues: ClientOnboardingValues = {
-      rif: values.rif,
-      businessName: values.businessName,
-      contributorType: values.contributorType,
-      linkedCompanyId: values.linkedCompanyId,
-      city: values.city,
-      state: values.state,
-      address: values.address,
-      contactPersonName: values.contactPersonName,
-      phone: values.phone,
-      email: values.email,
-    };
-
-    try {
-      const result = await createClientOnboarding({
-        values: onboardingValues,
-        companies,
-        resumeCompanyId: wizardResumeCompanyId,
-        roles: {
-          isClient: values.isClient,
-          isDistributor: values.isDistributor,
-          isServiceCenter: values.isServiceCenter,
-          clientDistributorId: values.clientDistributorId,
-        },
-      });
-
-      toast.success(
-        result.companyCreated
-          ? `Empresa "${result.companyLabel}" y sucursal "${result.branchLabel}" creadas correctamente.`
-          : result.companyLinkedExisting
-            ? `Sucursal "${result.branchLabel}" añadida a la empresa existente "${result.companyLabel}".`
-            : `Sucursal "${result.branchLabel}" creada correctamente.`,
-        { href: branchPath(result.branch.id) },
-      );
-      closeWizard();
-      invalidateCatalogRoles();
-      await refreshScope();
-    } catch (err) {
-      const message = getCatalogErrorMessage(err);
-
-      const resumeId =
-        err instanceof Error
-          ? (err as Error & { resumeCompanyId?: number }).resumeCompanyId
-          : undefined;
-      if (resumeId != null && wizardResumeCompanyId == null) {
-        setWizardResumeCompanyId(resumeId);
-        invalidateCatalogRoles();
-      await refreshScope();
-        const partial = `La empresa se creó, pero la sucursal no: ${message}. Revisa los datos de ubicación y pulsa «Crear sucursal» de nuevo (la empresa ya está vinculada).`;
-        setFormError(partial);
-        toast.error(partial);
-      } else {
-        setFormError(message);
-        toast.error(message);
-      }
-    } finally {
-      setSaving(false);
-    }
-  }
-
   async function handleSubmit(values: BranchFormValues) {
-    if (!canModify) {
+    if (!canModify || !selected) {
       setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
@@ -382,19 +218,17 @@ export function BranchesManager() {
     const label = `${values.city}, ${values.state}`;
 
     try {
-      if (selected) {
-        await updateBranch(selected.id, body);
-        await syncBranchRoles(selected.id, selected, roles);
-        toast.success(`Sucursal "${label}" actualizada.`, {
-          href: branchPath(selected.id),
-        });
-      }
+      await updateBranch(selected.id, body);
+      await syncBranchRoles(selected.id, selected, roles);
+      toast.success(`Sucursal "${label}" actualizada.`, {
+        href: branchPath(selected.id),
+      });
       closeDialog();
       invalidateCatalogRoles();
       await refreshScope();
+      await loadBranches();
     } catch (err) {
-      const message =
-        getCatalogErrorMessage(err);
+      const message = getCatalogErrorMessage(err);
       setFormError(message);
       toast.error(message);
     } finally {
@@ -407,8 +241,14 @@ export function BranchesManager() {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
-    const label = branchSummary(branch, companies);
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la sucursal "${label}"? Se quitarán también sus roles (cliente, distribuidor, centro de servicio) si existen.`, destructive: true }))) {
+    const label = formatBranchShort(branch, companies);
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar la sucursal "${label}"? Se quitarán también sus roles si existen.`,
+        destructive: true,
+      }))
+    ) {
       return;
     }
     setDeletingId(branch.id);
@@ -419,8 +259,7 @@ export function BranchesManager() {
       await loadBranches();
       toast.success(`Sucursal "${label}" eliminada.`);
     } catch (err) {
-      const message =
-        getCatalogErrorMessage(err);
+      const message = getCatalogErrorMessage(err);
       setListError(message);
       toast.error(message);
     } finally {
@@ -429,51 +268,23 @@ export function BranchesManager() {
   }
 
   return (
-    <div className="space-y-4">
-      <PageToolbar
-        actions={
-          <>
-            <button
-              type="button"
-              onClick={refreshAll}
-              disabled={loading || companiesLoading}
-              className={cn(
-                pageToolbarButtonClass,
-                "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
-              )}
-            >
-              <RefreshCw
-                className={cn(
-                  "size-4",
-                  (loading || companiesLoading) && "animate-spin",
-                )}
-              />
-              Actualizar
-            </button>
-            {canCreate && (
-              <button
-                type="button"
-                onClick={openCreate}
-                disabled={companiesLoading}
-                className={cn(
-                  pageToolbarButtonClass,
-                  "bg-accent text-accent-foreground disabled:opacity-50",
-                )}
-              >
-                <Plus className="size-4" />
-                Nueva sucursal
-              </button>
-            )}
-          </>
-        }
-      />
-
-      {canCreate && companies.length === 0 && !companiesLoading && (
-        <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-          Puedes crear la empresa desde el asistente al registrar una sucursal
-          (escaneo SENIAT o datos manuales).
-        </p>
-      )}
+    <section className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="text-base font-semibold text-card-foreground">
+          Sucursales de la empresa
+        </h3>
+        <button
+          type="button"
+          onClick={() => void loadBranches()}
+          disabled={loading || scopeLoading}
+          className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50 sm:w-auto"
+        >
+          <RefreshCw
+            className={cn("size-4", (loading || scopeLoading) && "animate-spin")}
+          />
+          Actualizar
+        </button>
+      </div>
 
       {listError && (
         <p
@@ -492,14 +303,14 @@ export function BranchesManager() {
           </div>
         ) : branches.length === 0 ? (
           <p className="py-16 text-center text-sm text-muted">
-            No hay sucursales registradas.
+            Esta empresa no tiene sucursales registradas.
           </p>
         ) : (
           <>
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por empresa, RIF, ciudad, distribuidor…"
+              searchPlaceholder="Buscar por ciudad, estado, contacto…"
               resultCount={filteredBranches.length}
               totalCount={branches.length}
               filters={[
@@ -520,15 +331,6 @@ export function BranchesManager() {
                   onChange: setStateFilter,
                   options: stateFilterOptions,
                 },
-                {
-                  id: "company",
-                  label: "Empresa",
-                  value: companyFilter,
-                  onChange: setCompanyFilter,
-                  options: companyFilterOptions,
-                  searchable: true,
-                  searchPlaceholder: "Buscar empresa o RIF…",
-                },
               ]}
             />
             {filteredBranches.length === 0 ? (
@@ -538,15 +340,14 @@ export function BranchesManager() {
             ) : (
               <>
                 <TableScroll>
-                  <table className="w-full min-w-[1040px] text-left text-sm">
+                  <table className="w-full min-w-[880px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <th className="px-5 py-3 font-medium">Empresa</th>
+                        <th className="px-5 py-3 font-medium">ID</th>
                         <th className="px-5 py-3 font-medium">Ubicación</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
                         <th className="px-5 py-3 font-medium">Roles</th>
                         <th className="px-5 py-3 font-medium">Distribuidor</th>
-                        <TableCreatedAtHeader />
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -558,22 +359,17 @@ export function BranchesManager() {
                           key={branch.id}
                           href={branchPath(branch.id)}
                         >
-                          <td className="max-w-[200px] px-5 py-3.5">
-                            <TruncatedText
-                              href={companyPath(branch.companyId)}
-                              maxClassName="max-w-[180px]"
-                            >
-                              {companyNameById(companies, branch.companyId)}
-                            </TruncatedText>
-                          </td>
+                          <td className="px-5 py-3.5 text-muted">{branch.id}</td>
                           <td className="px-5 py-3.5 text-card-foreground">
                             <span className="font-medium">
                               {branch.city}, {branch.state}
                             </span>
                             {branch.address && (
-                              <span className="mt-0.5 block truncate text-xs text-muted">
+                              <TruncatedText
+                                maxClassName="max-w-[240px] mt-0.5 block text-xs text-muted"
+                              >
                                 {branch.address}
-                              </span>
+                              </TruncatedText>
                             )}
                           </td>
                           <td className="px-5 py-3.5 text-muted">
@@ -602,11 +398,10 @@ export function BranchesManager() {
                             {clientDistributorSummary(
                               branch,
                               distributors,
-                              branches,
+                              allBranches,
                               companies,
                             )}
                           </td>
-                          <TableCreatedAtCell value={branch.createdAt} />
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
@@ -625,7 +420,7 @@ export function BranchesManager() {
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => handleDelete(branch)}
+                                    onClick={() => void handleDelete(branch)}
                                     disabled={deletingId === branch.id}
                                     className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
                                     aria-label="Eliminar sucursal"
@@ -645,34 +440,21 @@ export function BranchesManager() {
                     </tbody>
                   </table>
                 </TableScroll>
-            <TablePagination pagination={pagination} />
+                <TablePagination pagination={pagination} />
               </>
             )}
           </>
         )}
       </div>
 
-      <BranchCreateWizardDialog
-        open={wizardOpen}
-        saving={saving}
-        error={formError}
-        resumeCompanyId={wizardResumeCompanyId}
-        companies={companies}
-        branches={branches}
-        distributors={distributors}
-        companiesLoading={companiesLoading}
-        onClose={closeWizard}
-        onSubmit={handleWizardSubmit}
-      />
-
       <BranchFormDialog
         mode="edit"
         branch={selected ?? undefined}
         companies={companies}
-        branches={branches}
+        branches={allBranches}
         distributors={distributors}
-        companiesLoading={companiesLoading}
-        open={dialog === "edit"}
+        companiesLoading={scopeLoading}
+        open={dialogOpen}
         saving={saving}
         error={formError}
         onClose={closeDialog}
@@ -684,6 +466,6 @@ export function BranchesManager() {
             : undefined
         }
       />
-    </div>
+    </section>
   );
 }

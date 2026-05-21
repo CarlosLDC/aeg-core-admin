@@ -1,4 +1,4 @@
-import { getCatalogErrorMessage } from "@/lib/api-error-message";
+import { ApiError } from "@/types/auth";
 import {
   createClient,
   fetchClientByBranchId,
@@ -17,49 +17,31 @@ function parseDistributorId(roles: ClientOnboardingRoleOptions): number {
 }
 
 function isRecoverableLinkError(error: unknown): boolean {
-  const msg = getCatalogErrorMessage(error).toLowerCase();
-  return (
-    msg.includes("binding property") ||
-    msg.includes("completar el vínculo") ||
-    msg.includes("conflicto de datos") ||
-    msg.includes("registro duplicado") ||
-    msg.includes("sucursal ya está registrada") ||
-    msg.includes("ya está registrado")
-  );
+  if (!(error instanceof ApiError)) {
+    return false;
+  }
+  if (error.status === 409 || error.status === 422) {
+    return true;
+  }
+  if (error.status === 400) {
+    const msg = error.message.toLowerCase();
+    return (
+      msg.includes("binding property") ||
+      msg.includes("completar el vínculo") ||
+      msg.includes("conflicto de datos") ||
+      msg.includes("registro duplicado") ||
+      msg.includes("sucursal ya está registrada") ||
+      msg.includes("ya está registrado")
+    );
+  }
+  return false;
 }
-
-// #region agent log
-function debugClientLink(
-  message: string,
-  data: Record<string, unknown>,
-  hypothesisId: string,
-) {
-  fetch("http://127.0.0.1:7781/ingest/0c54bab8-f62a-45dc-8c96-475b3dbd518d", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "f91276",
-    },
-    body: JSON.stringify({
-      sessionId: "f91276",
-      location: "client-link.ts",
-      message,
-      data,
-      hypothesisId,
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-}
-// #endregion
 
 async function linkViaPost(body: {
   branchId: number;
   distributorId: number;
 }): Promise<void> {
   const existing = await fetchClientByBranchId(body.branchId);
-  // #region agent log
-  debugClientLink("linkViaPost:existing", { body, existing }, "H1");
-  // #endregion
   if (existing?.distributorId === body.distributorId) {
     return;
   }
@@ -71,25 +53,12 @@ async function linkViaPost(body: {
   }
 
   try {
-    const created = await createClient(body);
-    // #region agent log
-    debugClientLink("linkViaPost:create:ok", { body, created }, "H2");
-    // #endregion
+    await createClient(body);
   } catch (error) {
-    // #region agent log
-    debugClientLink(
-      "linkViaPost:create:error",
-      { body, message: getCatalogErrorMessage(error) },
-      "H2",
-    );
-    // #endregion
     if (!isRecoverableLinkError(error)) {
       throw error;
     }
     const after = await fetchClientByBranchId(body.branchId);
-    // #region agent log
-    debugClientLink("linkViaPost:afterRecoverable", { body, after }, "H3");
-    // #endregion
     if (after?.distributorId === body.distributorId) {
       return;
     }
