@@ -186,7 +186,10 @@ export function Sidebar({
         )}
       </div>
 
-      <nav ref={navRef} className="flex-1 overflow-y-auto p-3 overscroll-contain">
+      <nav
+        ref={navRef}
+        className="sidebar-nav-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain p-3"
+      >
         {sections.map((section, sectionIndex) => (
           <div
             key={section.title}
