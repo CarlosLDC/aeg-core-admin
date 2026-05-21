@@ -19,7 +19,7 @@ export function HeadquartersSelectorFields({
       <legend className="sr-only">Casa matriz</legend>
       <div className="space-y-1">
         <p className="text-sm font-semibold text-card-foreground">
-          Esta sucursal sera casa matriz?
+          ¿Esta sucursal será casa matriz?
         </p>
         <p className="text-xs text-muted">
           Elige el rol principal de esta sede dentro de la estructura del
@@ -67,7 +67,7 @@ export function HeadquartersSelectorFields({
                 isHeadquarters && "text-accent",
               )}
             />
-            <span className="text-sm font-semibold">Si, es matriz</span>
+            <span className="text-sm font-semibold">Sí, es matriz</span>
             <span
               className={cn(
                 "ml-auto size-2 rounded-full transition-colors",
@@ -76,7 +76,7 @@ export function HeadquartersSelectorFields({
             />
           </div>
           <p className="text-xs text-muted/90">
-            Esta sera la sede principal de la empresa.
+            Esta será la sede principal de la empresa.
           </p>
         </button>
         <button
@@ -117,7 +117,7 @@ export function HeadquartersSelectorFields({
             />
           </div>
           <p className="text-xs text-muted/90">
-            Se registrara como sede operativa secundaria.
+            Se registrará como sede operativa secundaria.
           </p>
         </button>
       </div>
