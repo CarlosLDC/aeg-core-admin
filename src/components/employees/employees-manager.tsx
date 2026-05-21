@@ -28,7 +28,7 @@ import {
 } from "@/lib/api-permissions";
 import { branchLabelById } from "@/lib/branches";
 import { filterEmployeesForDistributorStaff } from "@/lib/distributor-scope";
-import { useDistributorId } from "@/hooks/use-distributor-id";
+import { useDistributorIdState } from "@/hooks/use-distributor-id";
 import { useDistributorStaffBranches } from "@/hooks/use-distributor-staff-branches";
 import {
   toEmployeePayload,
@@ -81,7 +81,10 @@ export function EmployeesManager() {
   } = useCompanyScope();
 
   const isDistributor = user?.role === "DISTRIBUTOR";
-  const distributorId = useDistributorId();
+  const {
+    distributorId,
+    loading: distributorIdLoading,
+  } = useDistributorIdState();
   const {
     staffBranches,
     staffBranchIdSet,
@@ -135,6 +138,9 @@ export function EmployeesManager() {
   const branchesReadyForCreate = isDistributor
     ? staffBranches.length > 0
     : branches.length > 0;
+  const distributorBranchesReady = isDistributor
+    ? !distributorIdLoading && !staffBranchesLoading
+    : true;
   const defaultStaffBranchId =
     staffBranches.length === 1 ? String(staffBranches[0].id) : "";
 
@@ -442,7 +448,7 @@ export function EmployeesManager() {
         }
       />
 
-      {!branchesReadyForCreate && catalogReady && (
+      {!branchesReadyForCreate && catalogReady && distributorBranchesReady && (
         <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
           {isDistributor
             ? "Tu usuario no tiene una sucursal de distribuidora vinculada. Contacta a un administrador."
