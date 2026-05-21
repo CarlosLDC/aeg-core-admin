@@ -81,7 +81,7 @@ export function AnnualInspectionFormDialog({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
+      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-card-foreground">
@@ -90,7 +90,7 @@ export function AnnualInspectionFormDialog({
                 : "Editar inspección anual"}
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Revisión anual de impresora con evidencia fotográfica.
+              Documenta la revisión anual con datos técnicos y evidencia.
             </p>
           </div>
           <button
@@ -111,108 +111,126 @@ export function AnnualInspectionFormDialog({
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <span className="mb-1.5 block text-sm font-medium">Impresora</span>
-            {canLoadPrinters && printerOptions.length > 0 ? (
-              <SearchableSelect
-                value={form.printerId}
-                onChange={(printerId) =>
-                  setForm((f) => ({ ...f, printerId }))
-                }
-                options={printerOptions}
-                disabled={disabled}
-                loading={catalogLoading}
-                required
-                mono
-                searchPlaceholder="Buscar por serial…"
-              />
-            ) : (
-              <input
-                type="number"
-                required
-                min={1}
-                value={form.printerId}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Asignación
+            </legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <span className="mb-1.5 block text-sm font-medium">Impresora</span>
+                {canLoadPrinters && printerOptions.length > 0 ? (
+                  <SearchableSelect
+                    value={form.printerId}
+                    onChange={(printerId) =>
+                      setForm((f) => ({ ...f, printerId }))
+                    }
+                    options={printerOptions}
+                    disabled={disabled}
+                    loading={catalogLoading}
+                    required
+                    mono
+                    searchPlaceholder="Buscar por serial…"
+                  />
+                ) : (
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    value={form.printerId}
+                    disabled={disabled}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, printerId: e.target.value }))
+                    }
+                    className={inputClass}
+                    placeholder="ID de impresora"
+                  />
+                )}
+              </div>
+
+              <div>
+                <span className="mb-1.5 block text-sm font-medium">Empleado</span>
+                <SearchableSelect
+                  value={form.employeeId}
+                  onChange={(employeeId) =>
+                    setForm((f) => ({ ...f, employeeId }))
+                  }
+                  options={employeeOptions}
+                  disabled={disabled}
+                  loading={catalogLoading}
+                  required
+                  searchPlaceholder="Buscar empleado…"
+                />
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Resultado de inspección
+            </legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium">
+                  Fecha de inspección
+                </span>
+                <input
+                  type="date"
+                  value={form.inspectionDate}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, inspectionDate: e.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
+              <label className="flex items-center gap-2 rounded-lg border border-border bg-foreground/[0.02] px-3 py-2">
+                <input
+                  type="checkbox"
+                  checked={form.sealTampered}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, sealTampered: e.target.checked }))
+                  }
+                  className="size-4 rounded border-border"
+                />
+                <span className="text-sm font-medium">Precinto violentado</span>
+              </label>
+            </div>
+
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">
+                Observaciones
+              </span>
+              <textarea
+                rows={3}
+                value={form.notes}
                 disabled={disabled}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, printerId: e.target.value }))
+                  setForm((f) => ({ ...f, notes: e.target.value }))
                 }
                 className={inputClass}
-                placeholder="ID de impresora"
               />
-            )}
-          </div>
+            </label>
+          </fieldset>
 
-          <div>
-            <span className="mb-1.5 block text-sm font-medium">Empleado</span>
-            <SearchableSelect
-              value={form.employeeId}
-              onChange={(employeeId) =>
-                setForm((f) => ({ ...f, employeeId }))
-              }
-              options={employeeOptions}
-              disabled={disabled}
-              loading={catalogLoading}
-              required
-              searchPlaceholder="Buscar empleado…"
-            />
-          </div>
-
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              Fecha de inspección
-            </span>
-            <input
-              type="date"
-              value={form.inspectionDate}
-              disabled={disabled}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, inspectionDate: e.target.value }))
-              }
-              className={inputClass}
-            />
-          </label>
-
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={form.sealTampered}
-              disabled={disabled}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, sealTampered: e.target.checked }))
-              }
-              className="size-4 rounded border-border"
-            />
-            <span className="text-sm font-medium">Precinto violentado</span>
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              Observaciones
-            </span>
-            <textarea
-              rows={3}
-              value={form.notes}
-              disabled={disabled}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, notes: e.target.value }))
-              }
-              className={inputClass}
-            />
-          </label>
-
-          <div className="block">
-            <span className="mb-1.5 block text-sm font-medium">Fotos</span>
-            <PhotoDocumentUpload
-              folder="annual-inspections"
-              urls={form.photoUrls}
-              onChange={(photoUrls) => setForm((f) => ({ ...f, photoUrls }))}
-              disabled={disabled}
-              ariaLabel="Subir fotos de la inspección anual"
-              addLabel="Añadir fotos"
-              requiredHint="Se requiere al menos una foto."
-            />
-          </div>
+          <fieldset className="space-y-3 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Evidencia
+            </legend>
+            <div className="block">
+              <span className="mb-1.5 block text-sm font-medium">Fotos</span>
+              <PhotoDocumentUpload
+                folder="annual-inspections"
+                urls={form.photoUrls}
+                onChange={(photoUrls) => setForm((f) => ({ ...f, photoUrls }))}
+                disabled={disabled}
+                ariaLabel="Subir fotos de la inspección anual"
+                addLabel="Añadir fotos"
+                requiredHint="Se requiere al menos una foto."
+              />
+            </div>
+          </fieldset>
 
           <FormDialogFooter
             mode={mode}

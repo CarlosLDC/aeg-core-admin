@@ -160,7 +160,7 @@ export function BranchFormDialog({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
+      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2
@@ -170,9 +170,7 @@ export function BranchFormDialog({
               {mode === "create" ? "Nueva sucursal" : "Editar sucursal"}
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Datos de ubicación y contacto. Los roles (cliente, distribuidor,
-              centro de servicio) se registran en tablas propias vinculadas a la
-              sucursal.
+              Configura ubicación, contacto y roles operativos de la sucursal.
             </p>
           </div>
           <button
@@ -194,110 +192,120 @@ export function BranchFormDialog({
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Empresa</span>
-            <CompanySelect
-              value={form.companyId}
-              onChange={(companyId) =>
-                setForm((f) => ({ ...f, companyId }))
-              }
-              companies={companies}
-              loading={companiesLoading}
-              disabled={companiesLoading}
-              required
-            />
-          </label>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Ubicación
+            </legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block sm:col-span-2">
+                <span className="mb-1.5 block text-sm font-medium">Empresa</span>
+                <CompanySelect
+                  value={form.companyId}
+                  onChange={(companyId) =>
+                    setForm((f) => ({ ...f, companyId }))
+                  }
+                  companies={companies}
+                  loading={companiesLoading}
+                  disabled={companiesLoading}
+                  required
+                />
+              </label>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Ciudad</span>
-              <input
-                type="text"
-                required
-                value={form.city}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, city: e.target.value }))
-                }
-                aria-invalid={Boolean(fieldErrors.city)}
-                className={inputClass}
-              />
-              {fieldErrors.city && (
-                <p className="mt-1 text-xs text-rose-600">{fieldErrors.city}</p>
-              )}
-            </label>
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Estado</span>
-              <input
-                type="text"
-                required
-                value={form.state}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, state: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-          </div>
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium">Ciudad</span>
+                <input
+                  type="text"
+                  required
+                  value={form.city}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, city: e.target.value }))
+                  }
+                  aria-invalid={Boolean(fieldErrors.city)}
+                  className={inputClass}
+                />
+                {fieldErrors.city && (
+                  <p className="mt-1 text-xs text-rose-600">{fieldErrors.city}</p>
+                )}
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium">Estado</span>
+                <input
+                  type="text"
+                  required
+                  value={form.state}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, state: e.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
 
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Dirección</span>
-            <input
-              type="text"
-              value={form.address}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, address: e.target.value }))
-              }
-              className={inputClass}
-            />
-          </label>
+              <label className="block sm:col-span-2">
+                <span className="mb-1.5 block text-sm font-medium">Dirección</span>
+                <input
+                  type="text"
+                  value={form.address}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, address: e.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
+            </div>
+          </fieldset>
 
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              Nombre persona de contacto
-            </span>
-            <input
-              type="text"
-              required
-              value={form.contactPersonName}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, contactPersonName: e.target.value }))
-              }
-              placeholder="Ej. María Pérez"
-              aria-invalid={Boolean(fieldErrors.contactPersonName)}
-              className={inputClass}
-            />
-            {fieldErrors.contactPersonName && (
-              <p className="mt-1 text-xs text-rose-600">
-                {fieldErrors.contactPersonName}
-              </p>
-            )}
-          </label>
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Contacto
+            </legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block sm:col-span-2">
+                <span className="mb-1.5 block text-sm font-medium">
+                  Nombre persona de contacto
+                </span>
+                <input
+                  type="text"
+                  required
+                  value={form.contactPersonName}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, contactPersonName: e.target.value }))
+                  }
+                  placeholder="Ej. María Pérez"
+                  aria-invalid={Boolean(fieldErrors.contactPersonName)}
+                  className={inputClass}
+                />
+                {fieldErrors.contactPersonName && (
+                  <p className="mt-1 text-xs text-rose-600">
+                    {fieldErrors.contactPersonName}
+                  </p>
+                )}
+              </label>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Teléfono</span>
-              <input
-                type="tel"
-                value={form.phone}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, phone: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Email</span>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, email: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-          </div>
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium">Teléfono</span>
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, phone: e.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium">Email</span>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, email: e.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
+            </div>
+          </fieldset>
 
           <fieldset className="space-y-3 rounded-lg border border-border p-4">
             <legend className="px-1 text-sm font-medium">Roles de sucursal</legend>

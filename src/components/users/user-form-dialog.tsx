@@ -15,6 +15,7 @@ import type { ServiceCenterResponse } from "@/types/branch-role";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { Role, UserResponse } from "@/types/user";
+import { cn } from "@/lib/utils";
 export type UserFormValues = {
   name: string;
   email: string;
@@ -273,22 +274,48 @@ export function UserFormDialog({
 
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium">Rol</span>
-                <select
-                  value={form.role}
-                  onChange={(e) => handleRoleChange(e.target.value as Role)}
-                  disabled={!form.branchId || availableRoles.length === 0}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60"
+                <div
+                  className={cn(
+                    "grid gap-2 rounded-lg border border-border p-2",
+                    availableRoles.length > 2 ? "sm:grid-cols-2" : "grid-cols-1",
+                    (!form.branchId || availableRoles.length === 0) &&
+                      "opacity-70",
+                  )}
+                  role="group"
+                  aria-label="Roles disponibles para la sucursal"
                 >
                   {availableRoles.length === 0 ? (
-                    <option value="">Selecciona una sucursal primero</option>
+                    <p className="px-2 py-1 text-xs text-muted">
+                      Selecciona una sucursal para ver roles disponibles.
+                    </p>
                   ) : (
-                    availableRoles.map((role) => (
-                      <option key={role} value={role}>
-                        {ROLE_LABELS[role]}
-                      </option>
-                    ))
+                    availableRoles.map((role) => {
+                      const selected = form.role === role;
+                      return (
+                        <button
+                          key={role}
+                          type="button"
+                          onClick={() => handleRoleChange(role)}
+                          aria-pressed={selected}
+                          className={cn(
+                            "rounded-md border px-3 py-2 text-left text-sm transition-colors",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
+                            selected
+                              ? "border-accent/40 bg-accent/10 text-card-foreground"
+                              : "border-border bg-background text-muted hover:bg-muted/25 hover:text-card-foreground",
+                          )}
+                        >
+                          <span className="block font-medium text-card-foreground">
+                            {ROLE_LABELS[role]}
+                          </span>
+                          <span className="mt-0.5 block text-xs text-muted">
+                            {ROLE_DESCRIPTIONS[role]}
+                          </span>
+                        </button>
+                      );
+                    })
                   )}
-                </select>
+                </div>
                 {availableRoles.length > 0 && (
                   <p className="mt-1.5 text-xs text-muted">
                     {ROLE_DESCRIPTIONS[form.role]}

@@ -119,14 +119,14 @@ export function EmployeeFormDialog({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
+      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-card-foreground">
               {mode === "create" ? "Nuevo empleado" : "Editar empleado"}
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Datos de contacto, sucursal y un único rol.
+              Completa identidad, contacto y asignación operativa del empleado.
             </p>
           </div>
           <button
@@ -147,11 +147,17 @@ export function EmployeeFormDialog({
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <fieldset
             disabled={disabledProfile}
-            className={cn("space-y-4", disabledProfile && "opacity-80")}
+            className={cn(
+              "space-y-4 rounded-xl border border-border p-4",
+              disabledProfile && "opacity-80",
+            )}
           >
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Datos personales
+            </legend>
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium">
                 Cédula / documento
@@ -167,20 +173,20 @@ export function EmployeeFormDialog({
               />
             </label>
 
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Nombre</span>
-              <input
-                type="text"
-                required={canEditProfile}
-                value={form.name}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, name: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-
             <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block sm:col-span-2">
+                <span className="mb-1.5 block text-sm font-medium">Nombre</span>
+                <input
+                  type="text"
+                  required={canEditProfile}
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, name: e.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
+
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium">Teléfono</span>
                 <input
@@ -206,7 +212,12 @@ export function EmployeeFormDialog({
                 />
               </label>
             </div>
+          </fieldset>
 
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Asignación
+            </legend>
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium">Sucursal</span>
               {lockBranch ? (
@@ -226,28 +237,28 @@ export function EmployeeFormDialog({
                 />
               )}
             </label>
-          </fieldset>
 
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Rol</span>
-            <select
-              value={form.role}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  role: e.target.value as EmployeeUiRole,
-                }))
-              }
-              disabled={!canEditRole || saving}
-              className={inputClass}
-            >
-              {roleOptions.map((role) => (
-                <option key={role} value={role}>
-                  {EMPLOYEE_UI_ROLE_LABELS[role]}
-                </option>
-              ))}
-            </select>
-          </label>
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">Rol</span>
+              <select
+                value={form.role}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    role: e.target.value as EmployeeUiRole,
+                  }))
+                }
+                disabled={!canEditRole || saving}
+                className={inputClass}
+              >
+                {roleOptions.map((role) => (
+                  <option key={role} value={role}>
+                    {EMPLOYEE_UI_ROLE_LABELS[role]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </fieldset>
 
           <FormDialogFooter
             mode={mode}
