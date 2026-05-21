@@ -11,6 +11,7 @@ import { branchLabelById } from "@/lib/branches";
 import { fetchBranches } from "@/lib/branches-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
+import { fetchServiceCenters } from "@/lib/service-centers-api";
 import {
   createUser,
   deleteUser,
@@ -24,6 +25,7 @@ import {
 } from "@/lib/user-form";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
+import type { ServiceCenterResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { UserResponse } from "@/types/user";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
@@ -44,10 +46,12 @@ import { userPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
-function parseOptionalId(value: string): number | undefined {
-  if (!value.trim()) return undefined;
-  const id = Number(value);
-  return Number.isFinite(id) ? id : undefined;
+function parseRequiredId(value: string): number {
+  return Number(value);
+}
+
+function displayUserName(user: UserResponse): string {
+  return user.name?.trim() || user.username?.trim() || user.email;
 }
 
 function sortBranches(
@@ -73,6 +77,9 @@ export function UsersManager() {
   const [branches, setBranches] = useState<BranchResponse[]>([]);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
+  const [serviceCenters, setServiceCenters] = useState<ServiceCenterResponse[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
@@ -94,7 +101,7 @@ export function UsersManager() {
       if (!q) return true;
       const branch = branchLabelById(branches, companies, user.branchId);
       const haystack =
-        `${user.id} ${user.username} ${user.role} ${branch}`.toLowerCase();
+        `${user.id} ${displayUserName(user)} ${user.email} ${user.role} ${branch}`.toLowerCase();
       return haystack.includes(q);
     });
   }, [users, search, roleFilter, statusFilter, branches, companies]);
@@ -104,17 +111,20 @@ export function UsersManager() {
   const loadCatalog = useCallback(async () => {
     setCatalogLoading(true);
     try {
-      const [companyRows, branchRows, distributorRows] = await Promise.all([
+      const [companyRows, branchRows, distributorRows, serviceCenterRows] =
+        await Promise.all([
         fetchCompanies(),
         fetchBranches(),
         fetchDistributors(),
-      ]);
+        fetchServiceCenters(),
+        ]);
       const sortedCompanies = companyRows.sort((a, b) =>
         (a.businessName || "").localeCompare(b.businessName || "", "es"),
       );
       setCompanies(sortedCompanies);
       setBranches(sortBranches(branchRows, sortedCompanies));
       setDistributors(distributorRows);
+      setServiceCenters(serviceCenterRows);
     } catch (err) {
       const message = getUsersErrorMessage(err);
       setListError((prev) => prev ?? message);
@@ -168,8 +178,8 @@ export function UsersManager() {
   async function handleSubmit(values: UserFormValues) {
     const validationError =
       dialog === "create"
-        ? validateUserCreateForm(values, { distributors })
-        : validateUserEditForm(values, { distributors }, selected?.role);
+        ? validateUserCreateForm(values, { distributors, serviceCenters })
+        : validateUserEditForm(values, { distributors, serviceCenters });
 
     if (validationError) {
       setFormError(validationError);
@@ -178,40 +188,36 @@ export function UsersManager() {
 
     setSaving(true);
     setFormError(null);
-    const branchId = parseOptionalId(values.branchId);
-    const distributorId = parseOptionalId(values.distributorId);
-    const username = values.username.trim();
+    const branchId = parseRequiredId(values.branchId);
+    const name = values.name.trim();
+    const email = values.email.trim().toLowerCase();
 
     try {
       if (dialog === "create") {
         const created = await createUser({
-          username,
+          name,
+          email,
           password: values.password,
           role: values.role,
-          ...(branchId !== undefined && { branchId }),
-          ...(distributorId !== undefined && { distributorId }),
+          branchId,
         });
         toast.success(
-          `Usuario "${username}" creado. Ya puede iniciar sesión en el panel.`,
+          `Usuario "${name}" creado. Ya puede iniciar sesión en el panel.`,
           { href: userPath(created.id) },
         );
       } else if (selected) {
         const body: Parameters<typeof updateUser>[1] = {
-          username,
+          name,
+          email,
           role: values.role,
+          branchId,
           enabled: values.enabled,
         };
         if (values.password.trim()) {
           body.password = values.password;
         }
-        if (branchId !== undefined) {
-          body.branchId = branchId;
-        }
-        if (distributorId !== undefined) {
-          body.distributorId = distributorId;
-        }
         await updateUser(selected.id, body);
-        toast.success(`Usuario "${username}" actualizado.`, {
+        toast.success(`Usuario "${name}" actualizado.`, {
           href: userPath(selected.id),
         });
       }
@@ -227,7 +233,7 @@ export function UsersManager() {
   }
 
   async function handleDelete(user: UserResponse, fromDialog = false) {
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar al usuario "${user.username}"? Esta acción no se puede deshacer.`, destructive: true }))) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar al usuario "${displayUserName(user)}"? Esta acción no se puede deshacer.`, destructive: true }))) {
       return;
     }
     setDeletingId(user.id);
@@ -235,7 +241,7 @@ export function UsersManager() {
       await deleteUser(user.id);
       if (fromDialog) closeDialog();
       await loadUsers();
-      toast.success(`Usuario "${user.username}" eliminado.`);
+      toast.success(`Usuario "${displayUserName(user)}" eliminado.`);
     } catch (err) {
       const message = getUsersErrorMessage(err);
       setListError(message);
@@ -320,7 +326,7 @@ export function UsersManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por usuario, rol o sucursal…"
+              searchPlaceholder="Buscar por nombre, correo, rol o sucursal…"
               resultCount={filteredUsers.length}
               totalCount={users.length}
               filters={[
@@ -360,10 +366,10 @@ export function UsersManager() {
                   <table className="w-full min-w-[800px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <th className="px-5 py-3 font-medium">Usuario</th>
+                        <th className="px-5 py-3 font-medium">Nombre</th>
+                        <th className="px-5 py-3 font-medium">Correo</th>
                         <th className="px-5 py-3 font-medium">Rol</th>
                         <th className="px-5 py-3 font-medium">Sucursal</th>
-                        <th className="px-5 py-3 font-medium">Distribuidor</th>
                         <th className="px-5 py-3 font-medium">Estado</th>
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
@@ -377,18 +383,16 @@ export function UsersManager() {
                           href={userPath(user.id)}
                         >
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
-                            {user.username}
+                            {displayUserName(user)}
+                          </td>
+                          <td className="px-5 py-3.5 text-card-foreground">
+                            {user.email}
                           </td>
                           <td className="px-5 py-3.5">
                             <RoleBadge role={user.role} />
                           </td>
                           <td className="max-w-[220px] truncate px-5 py-3.5 text-card-foreground">
                             {branchLabelById(branches, companies, user.branchId)}
-                          </td>
-                          <td className="px-5 py-3.5 text-muted">
-                            {user.distributorId != null
-                              ? `#${user.distributorId}`
-                              : "—"}
                           </td>
                           <td className="px-5 py-3.5">
                             <span
@@ -406,13 +410,13 @@ export function UsersManager() {
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
                                 href={userPath(user.id)}
-                                label={`Ver usuario ${user.username}`}
+                                label={`Ver usuario ${displayUserName(user)}`}
                               />
                               <button
                                 type="button"
                                 onClick={() => openEdit(user)}
                                 className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                aria-label={`Editar ${user.username}`}
+                                aria-label={`Editar ${displayUserName(user)}`}
                               >
                                 <Pencil className="size-4" />
                               </button>
@@ -421,7 +425,7 @@ export function UsersManager() {
                                 onClick={() => handleDelete(user)}
                                 disabled={deletingId === user.id}
                                 className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                aria-label={`Eliminar ${user.username}`}
+                                aria-label={`Eliminar ${displayUserName(user)}`}
                               >
                                 {deletingId === user.id ? (
                                   <Loader2 className="size-4 animate-spin" />
@@ -449,6 +453,7 @@ export function UsersManager() {
         branches={branches}
         companies={companies}
         distributors={distributors}
+        serviceCenters={serviceCenters}
         branchesLoading={catalogLoading}
         open={dialog !== null}
         saving={saving}

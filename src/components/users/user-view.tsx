@@ -18,6 +18,7 @@ import { branchLabelById } from "@/lib/branches";
 import { fetchBranches } from "@/lib/branches-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
+import { fetchServiceCenters } from "@/lib/service-centers-api";
 import {
   deleteUser,
   fetchUserById,
@@ -28,13 +29,16 @@ import { validateUserEditForm } from "@/lib/user-form";
 import { branchPath, userPath } from "@/lib/resource-routes";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
+import type { ServiceCenterResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { UserResponse } from "@/types/user";
 
-function parseOptionalId(value: string): number | undefined {
-  if (!value.trim()) return undefined;
-  const n = Number(value);
-  return Number.isFinite(n) ? n : undefined;
+function parseRequiredId(value: string): number {
+  return Number(value);
+}
+
+function displayUserName(user: UserResponse): string {
+  return user.name?.trim() || user.username?.trim() || user.email;
 }
 
 export function UserView() {
@@ -48,6 +52,9 @@ export function UserView() {
   const [branches, setBranches] = useState<BranchResponse[]>([]);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
+  const [serviceCenters, setServiceCenters] = useState<ServiceCenterResponse[]>(
+    [],
+  );
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,12 +96,14 @@ export function UserView() {
       scope ? Promise.resolve(scope.companies) : fetchCompanies(),
       scope ? Promise.resolve(scope.branches) : fetchBranches(),
       fetchDistributors(),
+      fetchServiceCenters(),
     ])
-      .then(([companyRows, branchRows, distributorRows]) => {
+      .then(([companyRows, branchRows, distributorRows, serviceCenterRows]) => {
         if (cancelled) return;
         setCompanies(companyRows);
         setBranches(branchRows);
         setDistributors(distributorRows);
+        setServiceCenters(serviceCenterRows);
       })
       .finally(() => {
         if (!cancelled) setCatalogLoading(false);
@@ -109,8 +118,7 @@ export function UserView() {
 
     const validationError = validateUserEditForm(
       values,
-      { distributors },
-      user.role,
+      { distributors, serviceCenters },
     );
     if (validationError) {
       setFormError(validationError);
@@ -119,28 +127,24 @@ export function UserView() {
 
     setSaving(true);
     setFormError(null);
-    const branchId = parseOptionalId(values.branchId);
-    const distributorId = parseOptionalId(values.distributorId);
-    const username = values.username.trim();
+    const branchId = parseRequiredId(values.branchId);
+    const name = values.name.trim();
+    const email = values.email.trim().toLowerCase();
 
     try {
       const body: Parameters<typeof updateUser>[1] = {
-        username,
+        name,
+        email,
         role: values.role,
+        branchId,
         enabled: values.enabled,
       };
       if (values.password.trim()) {
         body.password = values.password;
       }
-      if (branchId !== undefined) {
-        body.branchId = branchId;
-      }
-      if (distributorId !== undefined) {
-        body.distributorId = distributorId;
-      }
       const updated = await updateUser(user.id, body);
       setUser(updated);
-      toast.success(`Usuario "${username}" actualizado.`, {
+      toast.success(`Usuario "${name}" actualizado.`, {
         href: userPath(updated.id),
       });
       setEditOpen(false);
@@ -155,14 +159,14 @@ export function UserView() {
 
   async function handleDelete() {
     if (!user) return;
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar al usuario "${user.username}"? Esta acción no se puede deshacer.`, destructive: true }))) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar al usuario "${displayUserName(user)}"? Esta acción no se puede deshacer.`, destructive: true }))) {
       return;
     }
 
     setDeleting(true);
     try {
       await deleteUser(user.id);
-      toast.success(`Usuario "${user.username}" eliminado.`);
+      toast.success(`Usuario "${displayUserName(user)}" eliminado.`);
       router.push("/users");
     } catch (err) {
       toast.error(getUsersErrorMessage(err));
@@ -181,7 +185,7 @@ export function UserView() {
       <ResourceViewShell
         backHref="/users"
         backLabel="Volver a usuarios"
-        title={user?.username ?? "Usuario"}
+        title={user ? displayUserName(user) : "Usuario"}
         loading={loading}
         error={error}
         actions={
@@ -200,7 +204,8 @@ export function UserView() {
         {user && (
           <DetailCard>
             <DetailField label="ID" value={String(user.id)} mono />
-            <DetailField label="Usuario" value={user.username} mono />
+            <DetailField label="Nombre" value={displayUserName(user)} />
+            <DetailField label="Correo" value={user.email} mono />
             <DetailField label="Rol" value={<RoleBadge role={user.role} />} />
             <DetailField
               label="Estado"
@@ -214,13 +219,6 @@ export function UserView() {
                 fullWidth
               />
             ) : null}
-            {user.distributorId != null ? (
-              <DetailField
-                label="Distribuidor (ID)"
-                value={String(user.distributorId)}
-                mono
-              />
-            ) : null}
           </DetailCard>
         )}
       </ResourceViewShell>
@@ -232,6 +230,7 @@ export function UserView() {
           branches={scopeBranches}
           companies={scopeCompanies}
           distributors={distributors}
+          serviceCenters={serviceCenters}
           branchesLoading={catalogLoading}
           open={editOpen}
           saving={saving}

@@ -10,26 +10,27 @@ export type Role = (typeof ROLES)[number];
 
 export type UserResponse = {
   id: number;
-  username: string;
+  name: string;
+  email: string;
+  username?: string;
   role: Role;
   branchId: number | null;
-  distributorId?: number | null;
   enabled: boolean;
 };
 
 export type UserRegistrationRequest = {
-  username: string;
+  name: string;
+  email: string;
   password: string;
   role: Role;
-  branchId?: number | null;
-  distributorId?: number | null;
+  branchId: number;
 };
 
 export type UserUpdateRequest = {
-  username?: string;
+  name?: string;
+  email?: string;
   password?: string;
   role?: Role;
   branchId?: number | null;
-  distributorId?: number | null;
   enabled?: boolean;
 };

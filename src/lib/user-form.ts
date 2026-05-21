@@ -1,24 +1,31 @@
-import { isUserRoleAssignable } from "@/lib/roles";
 import type { DistributorResponse } from "@/types/branch-role";
+import type { ServiceCenterResponse } from "@/types/branch-role";
 import type { Role } from "@/types/user";
 
 const MIN_PASSWORD_LENGTH = 6;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function roleRequiresBranch(role: Role): boolean {
-  return role !== "ADMIN";
+  return role === "DISTRIBUTOR" || role === "TECHNICIAN" || role === "SERVICE_CENTER";
 }
 
-export function roleRequiresDistributorId(role: Role): boolean {
-  return role === "DISTRIBUTOR";
-}
+type UserFormFields = {
+  name: string;
+  email: string;
+  password: string;
+  role: Role;
+  branchId: string;
+};
 
-export function findDistributorForBranch(
-  branchId: string,
-  distributors: DistributorResponse[],
-): DistributorResponse | undefined {
+type UserFormContext = {
+  distributors: DistributorResponse[];
+  serviceCenters: ServiceCenterResponse[];
+};
+
+function branchIdToNumber(branchId: string): number | null {
   const id = Number(branchId);
-  if (!Number.isFinite(id) || id <= 0) return undefined;
-  return distributors.find((d) => d.branchId === id);
+  if (!Number.isFinite(id) || id <= 0) return null;
+  return id;
 }
 
 export function branchIdsWithDistributorRole(
@@ -27,36 +34,43 @@ export function branchIdsWithDistributorRole(
   return new Set(distributors.map((d) => d.branchId));
 }
 
-type UserFormFields = {
-  username: string;
-  password: string;
-  role: Role;
-  branchId: string;
-  distributorId: string;
-};
+export function branchIdsWithServiceCenterRole(
+  serviceCenters: ServiceCenterResponse[],
+): Set<number> {
+  return new Set(serviceCenters.map((s) => s.branchId));
+}
 
-type UserFormContext = {
-  distributors: DistributorResponse[];
-};
+export function eligibleRolesForBranch(
+  branchId: string,
+  context: UserFormContext,
+): Role[] {
+  const id = branchIdToNumber(branchId);
+  if (!id) return [];
+  const roles: Role[] = [];
+  if (branchIdsWithDistributorRole(context.distributors).has(id)) {
+    roles.push("DISTRIBUTOR");
+  }
+  if (branchIdsWithServiceCenterRole(context.serviceCenters).has(id)) {
+    roles.push("SERVICE_CENTER", "TECHNICIAN");
+  }
+  return roles;
+}
 
-function validateDistributorBranchLink(
+function validateRoleByBranch(
   role: Role,
   branchId: string,
-  distributorId: string,
-  distributors: DistributorResponse[],
+  context: UserFormContext,
 ): string | null {
-  if (role !== "DISTRIBUTOR") return null;
-
-  const distributorOnBranch = findDistributorForBranch(branchId, distributors);
-  if (!distributorOnBranch) {
-    return "La sucursal debe tener rol de distribuidor (regístrala en Sucursales) para asignar un usuario distribuidor.";
+  if (!branchId.trim()) {
+    return "Selecciona una sucursal.";
   }
-
-  const selectedId = distributorId.trim();
-  if (selectedId && Number(selectedId) !== distributorOnBranch.id) {
-    return "El registro de distribuidor debe corresponder a la sucursal seleccionada.";
+  const eligible = eligibleRolesForBranch(branchId, context);
+  if (eligible.length === 0) {
+    return "La sucursal seleccionada no tiene roles operativos habilitados para usuarios.";
   }
-
+  if (!eligible.includes(role)) {
+    return "El rol seleccionado no está habilitado para la sucursal elegida.";
+  }
   return null;
 }
 
@@ -64,32 +78,23 @@ export function validateUserCreateForm(
   values: UserFormFields,
   context: UserFormContext,
 ): string | null {
-  const username = values.username.trim();
-  if (!username) return "El nombre de usuario es obligatorio.";
+  const name = values.name.trim();
+  if (!name) return "El nombre es obligatorio.";
 
-  if (!isUserRoleAssignable(values.role)) {
-    return "Ese rol no está disponible para asignación temporalmente.";
-  }
+  const email = values.email.trim().toLowerCase();
+  if (!email) return "El correo es obligatorio.";
+  if (!EMAIL_PATTERN.test(email)) return "El correo no tiene un formato válido.";
 
   if (values.password.length < MIN_PASSWORD_LENGTH) {
-    return `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
+    return `La clave debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
   }
 
-  if (roleRequiresBranch(values.role) && !values.branchId.trim()) {
-    return "Selecciona una sucursal para este rol.";
-  }
-
-  const distributorLinkError = validateDistributorBranchLink(
+  const roleError = validateRoleByBranch(
     values.role,
     values.branchId,
-    values.distributorId,
-    context.distributors,
+    context,
   );
-  if (distributorLinkError) return distributorLinkError;
-
-  if (roleRequiresDistributorId(values.role) && !values.distributorId.trim()) {
-    return "Selecciona el registro de distribuidor (distributorId).";
-  }
+  if (roleError) return roleError;
 
   return null;
 }
@@ -97,37 +102,27 @@ export function validateUserCreateForm(
 export function validateUserEditForm(
   values: UserFormFields,
   context: UserFormContext,
-  previousRole?: Role,
 ): string | null {
-  const username = values.username.trim();
-  if (!username) return "El nombre de usuario es obligatorio.";
+  const name = values.name.trim();
+  if (!name) return "El nombre es obligatorio.";
 
-  if (!isUserRoleAssignable(values.role, previousRole)) {
-    return "Ese rol no está disponible para asignación temporalmente.";
-  }
+  const email = values.email.trim().toLowerCase();
+  if (!email) return "El correo es obligatorio.";
+  if (!EMAIL_PATTERN.test(email)) return "El correo no tiene un formato válido.";
 
   if (
     values.password.trim().length > 0 &&
     values.password.length < MIN_PASSWORD_LENGTH
   ) {
-    return `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
+    return `La clave debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
   }
 
-  if (roleRequiresBranch(values.role) && !values.branchId.trim()) {
-    return "Selecciona una sucursal para este rol.";
-  }
-
-  const distributorLinkError = validateDistributorBranchLink(
+  const roleError = validateRoleByBranch(
     values.role,
     values.branchId,
-    values.distributorId,
-    context.distributors,
+    context,
   );
-  if (distributorLinkError) return distributorLinkError;
-
-  if (roleRequiresDistributorId(values.role) && !values.distributorId.trim()) {
-    return "Selecciona el registro de distribuidor (distributorId).";
-  }
+  if (roleError) return roleError;
 
   return null;
 }

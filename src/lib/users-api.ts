@@ -48,7 +48,7 @@ export function getUsersErrorMessage(error: unknown): string {
       return "Solo un administrador puede gestionar usuarios.";
     }
     if (error.status === 409) {
-      return "Ese nombre de usuario ya está en uso.";
+      return "Ese correo ya está en uso.";
     }
     if (error.status === 404) {
       return "Usuario o sucursal no encontrados.";

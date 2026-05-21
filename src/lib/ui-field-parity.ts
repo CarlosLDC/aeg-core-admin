@@ -168,6 +168,37 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
     ],
   },
   {
+    resource: "users",
+    formPath: "src/components/users/user-form-dialog.tsx",
+    viewPath: "src/components/users/user-view.tsx",
+    fields: [
+      {
+        formLabels: ["Nombre"],
+        viewLabels: ["Nombre"],
+        formBindings: ["form.name"],
+        viewBindings: ["displayUserName(user)"],
+      },
+      {
+        formLabels: ["Correo"],
+        viewLabels: ["Correo"],
+        formBindings: ["form.email"],
+        viewBindings: ["user.email"],
+      },
+      {
+        formLabels: ["Rol"],
+        viewLabels: ["Rol"],
+        formBindings: ["form.role"],
+        viewBindings: ["user.role"],
+      },
+      {
+        formLabels: ["Sucursal"],
+        viewLabels: ["Sucursal"],
+        formBindings: ["form.branchId"],
+        viewBindings: ["user.branchId"],
+      },
+    ],
+  },
+  {
     resource: "printers",
     formPath: "src/components/printers/printer-form-dialog.tsx",
     viewPath: "src/components/printers/printer-view.tsx",
