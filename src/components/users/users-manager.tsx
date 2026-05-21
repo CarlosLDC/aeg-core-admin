@@ -168,8 +168,8 @@ export function UsersManager() {
   async function handleSubmit(values: UserFormValues) {
     const validationError =
       dialog === "create"
-        ? validateUserCreateForm(values)
-        : validateUserEditForm(values, selected?.role);
+        ? validateUserCreateForm(values, { distributors })
+        : validateUserEditForm(values, { distributors }, selected?.role);
 
     if (validationError) {
       setFormError(validationError);

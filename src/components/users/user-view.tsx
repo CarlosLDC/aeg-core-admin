@@ -107,7 +107,11 @@ export function UserView() {
   async function handleSubmit(values: UserFormValues) {
     if (!user) return;
 
-    const validationError = validateUserEditForm(values, user.role);
+    const validationError = validateUserEditForm(
+      values,
+      { distributors },
+      user.role,
+    );
     if (validationError) {
       setFormError(validationError);
       return;
