@@ -5,6 +5,7 @@ export type TableSortState<Key extends string> = {
   direction: SortDirection;
 } | null;
 
+/** Cycles: unsorted → desc → asc → unsorted (other column starts at desc). */
 export function toggleTableSort<Key extends string>(
   current: TableSortState<Key>,
   key: Key,
@@ -12,10 +13,10 @@ export function toggleTableSort<Key extends string>(
   if (!current || current.key !== key) {
     return { key, direction: "desc" };
   }
-  return {
-    key,
-    direction: current.direction === "desc" ? "asc" : "desc",
-  };
+  if (current.direction === "desc") {
+    return { key, direction: "asc" };
+  }
+  return null;
 }
 
 export function sortTableRows<T, Key extends string>(
