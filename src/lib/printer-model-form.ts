@@ -3,9 +3,9 @@ import type { PrinterModelRequest } from "@/types/printer-model";
 export type PrinterModelFormValues = {
   brand: string;
   modelCode: string;
+  price: string;
   providencia: string;
   approvalDate: string;
-  price: string;
 };
 
 export function toPrinterModelRequest(
@@ -27,9 +27,9 @@ export function toPrinterModelRequest(
   return {
     brand,
     modelCode,
+    price,
     ...(providencia && { providencia }),
     ...(approvalDate && { approvalDate }),
-    price,
   };
 }
 

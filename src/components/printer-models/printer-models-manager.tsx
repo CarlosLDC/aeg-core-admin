@@ -13,6 +13,7 @@ import {
   TableCreatedAtCell,
   TableCreatedAtHeader,
 } from "@/components/ui/table-created-at";
+import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
 import {
   filterAllOption,
   uniqueFilterOptions,
@@ -295,9 +296,10 @@ export function PrinterModelsManager() {
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <th className="px-5 py-3 font-medium">Marca</th>
                         <th className="px-5 py-3 font-medium">Modelo</th>
+                        <th className="px-5 py-3 font-medium">Precio</th>
                         <th className="px-5 py-3 font-medium">Providencia</th>
                         <th className="px-5 py-3 font-medium">Aprobación</th>
-                        <th className="px-5 py-3 font-medium">Precio</th>
+                        {tableColumns.showId && <TableIdHeader />}
                         {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
@@ -318,6 +320,9 @@ export function PrinterModelsManager() {
                           <td className="px-5 py-3.5 font-mono text-card-foreground">
                             {model.modelCode}
                           </td>
+                          <td className="px-5 py-3.5 font-medium text-card-foreground">
+                            {formatPrinterModelPrice(model.price)}
+                          </td>
                           <td className="max-w-[180px] px-5 py-3.5 text-muted">
                             <TruncatedText maxClassName="max-w-[160px]">
                               {model.providencia || "—"}
@@ -326,9 +331,7 @@ export function PrinterModelsManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {formatPrinterModelDate(model.approvalDate)}
                           </td>
-                          <td className="px-5 py-3.5 font-medium text-card-foreground">
-                            {formatPrinterModelPrice(model.price)}
-                          </td>
+                          {tableColumns.showId && <TableIdCell value={model.id} />}
                           {tableColumns.showCreatedAt && (
                             <TableCreatedAtCell value={model.createdAt} />
                           )}

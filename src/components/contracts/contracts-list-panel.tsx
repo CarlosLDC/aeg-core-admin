@@ -14,6 +14,7 @@ import {
   TableCreatedAtCell,
   TableCreatedAtHeader,
 } from "@/components/ui/table-created-at";
+import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
 import { filterAllOption } from "@/lib/table-filter-options";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
@@ -390,6 +391,7 @@ export function ContractsListPanel({
                         <th className="px-5 py-3 font-medium">Vigencia</th>
                         <th className="px-5 py-3 font-medium">Estado</th>
                         <th className="px-5 py-3 font-medium">Documentos</th>
+                        {tableColumns.showId && <TableIdHeader />}
                         {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
@@ -452,6 +454,9 @@ export function ContractsListPanel({
                               </ul>
                             )}
                           </td>
+                          {tableColumns.showId && (
+                            <TableIdCell value={contract.id} />
+                          )}
                           {tableColumns.showCreatedAt && (
                             <TableCreatedAtCell value={contract.createdAt} />
                           )}

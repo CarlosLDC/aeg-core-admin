@@ -21,6 +21,7 @@ import {
   TableCreatedAtCell,
   TableCreatedAtHeader,
 } from "@/components/ui/table-created-at";
+import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
 import {
   filterAllOption,
   uniqueFilterOptions,
@@ -551,6 +552,7 @@ export function BranchesManager() {
                         <th className="px-5 py-3 font-medium">Contacto</th>
                         <th className="px-5 py-3 font-medium">Roles</th>
                         <th className="px-5 py-3 font-medium">Distribuidor</th>
+                        {tableColumns.showId && <TableIdHeader />}
                         {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
@@ -610,6 +612,9 @@ export function BranchesManager() {
                               )}
                             </TruncatedText>
                           </td>
+                          {tableColumns.showId && (
+                            <TableIdCell value={branch.id} />
+                          )}
                           {tableColumns.showCreatedAt && (
                             <TableCreatedAtCell value={branch.createdAt} />
                           )}

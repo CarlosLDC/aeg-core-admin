@@ -48,7 +48,7 @@ type DataTableToolbarProps = {
   onSearchChange: (value: string) => void;
   searchPlaceholder?: string;
   filters?: FilterSelect[];
-  /** Toggles de columnas meta (creado el, editado el, etc.). */
+  /** Toggles de columnas meta (ID, creado el, editado el, etc.). */
   columns?: ColumnToggle[];
   resultCount?: number;
   totalCount?: number;

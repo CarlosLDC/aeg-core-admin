@@ -72,11 +72,11 @@ export function useTableColumnVisibility(
   );
 
   const toolbarColumns = useMemo((): ColumnToggle[] => {
-    const ids: MetaColumnId[] = showUpdatedAt
-      ? ["createdAt", "updatedAt"]
-      : ["createdAt"];
+    const columnIds: MetaColumnId[] = showUpdatedAt
+      ? ["id", "createdAt", "updatedAt"]
+      : ["id", "createdAt"];
 
-    return ids.map((id) => ({
+    return columnIds.map((id) => ({
       id,
       label: META_COLUMN_LABELS[id],
       visible: isVisible(id),
@@ -85,6 +85,7 @@ export function useTableColumnVisibility(
   }, [isVisible, setColumnVisible, showUpdatedAt]);
 
   return {
+    showId: isVisible("id"),
     showCreatedAt: isVisible("createdAt"),
     showUpdatedAt: showUpdatedAt && isVisible("updatedAt"),
     toolbarColumns,

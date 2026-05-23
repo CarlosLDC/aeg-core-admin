@@ -12,6 +12,7 @@ import {
   TableCreatedAtCell,
   TableCreatedAtHeader,
 } from "@/components/ui/table-created-at";
+import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
 import { filterAllOption } from "@/lib/table-filter-options";
 import { technicalServicePath } from "@/lib/resource-routes";
 import { hrefForEmployee, hrefForPrinter } from "@/lib/table-foreign-hrefs";
@@ -328,6 +329,7 @@ export function TechnicalServicesManager() {
                         <th className="px-5 py-3 font-medium">Falla</th>
                         <th className="px-5 py-3 font-medium">Costo</th>
                         <th className="px-5 py-3 font-medium">Precinto</th>
+                        {tableColumns.showId && <TableIdHeader />}
                         {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
@@ -384,6 +386,7 @@ export function TechnicalServicesManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {row.sealTampered ? "Violentado" : "OK"}
                           </td>
+                          {tableColumns.showId && <TableIdCell value={row.id} />}
                           {tableColumns.showCreatedAt && (
                             <TableCreatedAtCell value={row.createdAt} />
                           )}

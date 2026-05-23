@@ -20,6 +20,7 @@ import {
   TableCreatedAtCell,
   TableCreatedAtHeader,
 } from "@/components/ui/table-created-at";
+import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
 import {
   filterAllOption,
   uniqueFilterOptions,
@@ -422,6 +423,7 @@ export function ClientsManager() {
                         <th className="px-5 py-3 font-medium">Ubicación</th>
                         <th className="px-5 py-3 font-medium">Teléfono</th>
                         <th className="px-5 py-3 font-medium">Correo</th>
+                        {tableColumns.showId && <TableIdHeader />}
                         {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                       </tr>
                     </thead>
@@ -454,6 +456,9 @@ export function ClientsManager() {
                               {row.email || "—"}
                             </TruncatedText>
                           </td>
+                          {tableColumns.showId && (
+                            <TableIdCell value={row.client.id} />
+                          )}
                           {tableColumns.showCreatedAt && (
                             <TableCreatedAtCell value={row.createdAt} />
                           )}

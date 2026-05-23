@@ -1,14 +1,16 @@
-export const META_COLUMN_IDS = ["createdAt", "updatedAt"] as const;
+export const META_COLUMN_IDS = ["id", "createdAt", "updatedAt"] as const;
 
 export type MetaColumnId = (typeof META_COLUMN_IDS)[number];
 
 export const META_COLUMN_LABELS: Record<MetaColumnId, string> = {
+  id: "ID",
   createdAt: "Creado el",
   updatedAt: "Editado el",
 };
 
 /** Ocultas por defecto en todas las tablas. */
 export const META_COLUMN_DEFAULT_VISIBLE: Record<MetaColumnId, boolean> = {
+  id: false,
   createdAt: false,
   updatedAt: false,
 };

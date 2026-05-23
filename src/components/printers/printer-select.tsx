@@ -6,6 +6,8 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 export type PrinterSelectOption = {
   id: number;
   label: string;
+  /** Serial fiscal; útil para mostrar en tablas sin el ID. */
+  serial?: string;
 };
 
 type PrinterSelectProps = {

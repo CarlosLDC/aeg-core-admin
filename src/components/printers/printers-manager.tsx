@@ -23,6 +23,7 @@ import {
   TableCreatedAtCell,
   TableCreatedAtHeader,
 } from "@/components/ui/table-created-at";
+import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
 import { filterAllOption } from "@/lib/table-filter-options";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
@@ -646,6 +647,7 @@ export function PrintersManager() {
                         <th className="px-5 py-3 font-medium">Precio</th>
                         <th className="px-5 py-3 font-medium">Pagada</th>
                         <th className="px-5 py-3 font-medium">Instalación</th>
+                        {tableColumns.showId && <TableIdHeader />}
                         {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
@@ -724,6 +726,9 @@ export function PrintersManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {formatPrinterDate(printer.installationDate)}
                           </td>
+                          {tableColumns.showId && (
+                            <TableIdCell value={printer.id} />
+                          )}
                           {tableColumns.showCreatedAt && (
                             <TableCreatedAtCell value={printer.createdAt} />
                           )}

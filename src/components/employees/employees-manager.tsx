@@ -14,6 +14,7 @@ import {
   TableCreatedAtCell,
   TableCreatedAtHeader,
 } from "@/components/ui/table-created-at";
+import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
 import { filterAllOption } from "@/lib/table-filter-options";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
@@ -530,6 +531,7 @@ export function EmployeesManager() {
                         <th className="px-5 py-3 font-medium">Rol</th>
                         <th className="px-5 py-3 font-medium">Sucursal</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
+                        {tableColumns.showId && <TableIdHeader />}
                         {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
@@ -572,6 +574,9 @@ export function EmployeesManager() {
                               {employee.phone || employee.email || "—"}
                             </TruncatedText>
                           </td>
+                          {tableColumns.showId && (
+                            <TableIdCell value={employee.id} />
+                          )}
                           {tableColumns.showCreatedAt && (
                             <TableCreatedAtCell value={employee.createdAt} />
                           )}

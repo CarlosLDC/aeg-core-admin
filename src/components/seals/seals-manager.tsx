@@ -101,6 +101,14 @@ export function SealsManager() {
     [printerOptions],
   );
 
+  const printerSerialById = useMemo(
+    () =>
+      new Map(
+        printerOptions.map((p) => [p.id, p.serial ?? p.label]),
+      ),
+    [printerOptions],
+  );
+
   const printerFilterOptions = useMemo(
     () => [
       filterAllOption("Todas las impresoras"),
@@ -128,6 +136,7 @@ export function SealsManager() {
         seal.id,
         seal.serial,
         seal.printerId,
+        printerSerialById.get(seal.printerId ?? -1),
         printerLabelById.get(seal.printerId ?? -1),
         seal.status,
         seal.color,
@@ -136,7 +145,15 @@ export function SealsManager() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [seals, search, statusFilter, colorFilter, printerFilter, printerLabelById]);
+  }, [
+    seals,
+    search,
+    statusFilter,
+    colorFilter,
+    printerFilter,
+    printerLabelById,
+    printerSerialById,
+  ]);
 
   const pagination = usePagination(filteredSeals);
 
@@ -187,6 +204,7 @@ export function SealsManager() {
           .map((p) => ({
             id: p.id,
             label: `#${p.id} · ${p.fiscalSerial}`,
+            serial: p.fiscalSerial,
           }))
           .sort((a, b) => a.label.localeCompare(b.label, "es")),
       );
@@ -259,7 +277,7 @@ export function SealsManager() {
 
   function getPrinterLabel(printerId: number | null): string {
     if (printerId == null) return "—";
-    return printerLabelById.get(printerId) ?? `Impresora #${printerId}`;
+    return printerSerialById.get(printerId) ?? "—";
   }
 
   function openCreate() {

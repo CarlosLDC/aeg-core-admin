@@ -21,9 +21,9 @@ type PrinterModelFormDialogProps = {
 const emptyForm: PrinterModelFormValues = {
   brand: "",
   modelCode: "",
+  price: "",
   providencia: "",
   approvalDate: "",
-  price: "",
 };
 
 function toDateInputValue(iso: string | undefined): string {
@@ -49,9 +49,9 @@ export function PrinterModelFormDialog({
       setForm({
         brand: model.brand,
         modelCode: model.modelCode,
+        price: String(model.price),
         providencia: model.providencia ?? "",
         approvalDate: toDateInputValue(model.approvalDate),
-        price: String(model.price),
       });
     } else {
       setForm(emptyForm);
@@ -141,6 +141,21 @@ export function PrinterModelFormDialog({
           </div>
 
           <label className="block">
+            <FieldLabel required>Precio</FieldLabel>
+            <input
+              type="number"
+              required
+              min={0}
+              step="0.01"
+              value={form.price}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, price: e.target.value }))
+              }
+              className={inputClass}
+            />
+          </label>
+
+          <label className="block">
             <FieldLabel>Providencia</FieldLabel>
             <input
               type="text"
@@ -152,33 +167,17 @@ export function PrinterModelFormDialog({
             />
           </label>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <FieldLabel>Fecha de aprobación</FieldLabel>
-              <input
-                type="date"
-                value={form.approvalDate}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, approvalDate: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-            <label className="block">
-              <FieldLabel required>Precio</FieldLabel>
-              <input
-                type="number"
-                required
-                min={0}
-                step="0.01"
-                value={form.price}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, price: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-          </div>
+          <label className="block">
+            <FieldLabel>Fecha de aprobación</FieldLabel>
+            <input
+              type="date"
+              value={form.approvalDate}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, approvalDate: e.target.value }))
+              }
+              className={inputClass}
+            />
+          </label>
 
           <FormDialogFooter
             mode={mode}

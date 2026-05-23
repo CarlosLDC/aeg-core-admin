@@ -158,6 +158,7 @@ export function PrinterModelView() {
             <DetailField label="ID" value={String(model.id)} mono />
             <DetailField label="Marca" value={model.brand} />
             <DetailField label="Modelo" value={model.modelCode} mono />
+            <DetailField label="Precio" value={formatMoney(model.price)} />
             <DetailField
               label="Providencia"
               value={model.providencia || "—"}
@@ -167,7 +168,6 @@ export function PrinterModelView() {
               label="Fecha aprobación"
               value={formatDate(model.approvalDate)}
             />
-            <DetailField label="Precio" value={formatMoney(model.price)} />
             <DetailField
               label="Registrado"
               value={formatDate(model.createdAt)}

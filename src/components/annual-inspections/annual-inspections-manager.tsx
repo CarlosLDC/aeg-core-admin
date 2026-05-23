@@ -12,6 +12,7 @@ import {
   TableCreatedAtCell,
   TableCreatedAtHeader,
 } from "@/components/ui/table-created-at";
+import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
 import { filterAllOption } from "@/lib/table-filter-options";
 import { annualInspectionPath } from "@/lib/resource-routes";
 import { hrefForEmployee, hrefForPrinter } from "@/lib/table-foreign-hrefs";
@@ -336,6 +337,7 @@ export function AnnualInspectionsManager() {
                         <th className="px-5 py-3 font-medium">Fecha</th>
                         <th className="px-5 py-3 font-medium">Precinto</th>
                         <th className="px-5 py-3 font-medium">Fotos</th>
+                        {tableColumns.showId && <TableIdHeader />}
                         {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
@@ -384,6 +386,7 @@ export function AnnualInspectionsManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {row.photoUrls?.length ?? 0}
                           </td>
+                          {tableColumns.showId && <TableIdCell value={row.id} />}
                           {tableColumns.showCreatedAt && (
                             <TableCreatedAtCell value={row.createdAt} />
                           )}

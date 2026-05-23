@@ -20,6 +20,7 @@ import {
   TableCreatedAtCell,
   TableCreatedAtHeader,
 } from "@/components/ui/table-created-at";
+import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
@@ -273,6 +274,7 @@ export function CompaniesManager() {
                         <th className="px-5 py-3 font-medium">Razón social</th>
                         <th className="px-5 py-3 font-medium">RIF</th>
                         <th className="px-5 py-3 font-medium">Contribuyente</th>
+                        {tableColumns.showId && <TableIdHeader />}
                         {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
@@ -299,6 +301,9 @@ export function CompaniesManager() {
                           <td className="px-5 py-3.5">
                             <ContributorBadge type={company.contributorType} />
                           </td>
+                          {tableColumns.showId && (
+                            <TableIdCell value={company.id} />
+                          )}
                           {tableColumns.showCreatedAt && (
                             <TableCreatedAtCell value={company.createdAt} />
                           )}

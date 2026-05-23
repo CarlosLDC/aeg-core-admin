@@ -14,6 +14,7 @@ import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { usePagination } from "@/hooks/use-pagination";
+import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
   canUpdateBranchRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
@@ -44,6 +45,7 @@ import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
+import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
 
 const TYPE_FILTER_OPTIONS = [
   { value: "all", label: "Todos los tipos" },
@@ -108,6 +110,7 @@ export function CompanyBranchesTable({
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const tableColumns = useTableColumnVisibility(`company-branches-${companyId}`);
 
   const loadBranches = useCallback(async () => {
     if (!scope || !catalogRoles) return;
@@ -333,6 +336,7 @@ export function CompanyBranchesTable({
                   options: stateFilterOptions,
                 },
               ]}
+              columns={tableColumns.toolbarColumns}
             />
             {filteredBranches.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted">
@@ -344,7 +348,7 @@ export function CompanyBranchesTable({
                   <table className="w-full min-w-[880px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <th className="px-5 py-3 font-medium">ID</th>
+                        {tableColumns.showId && <TableIdHeader />}
                         <th className="px-5 py-3 font-medium">Ubicación</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
                         <th className="px-5 py-3 font-medium">Roles</th>
@@ -360,7 +364,9 @@ export function CompanyBranchesTable({
                           key={branch.id}
                           href={branchPath(branch.id)}
                         >
-                          <td className="px-5 py-3.5 text-muted">{branch.id}</td>
+                          {tableColumns.showId && (
+                            <TableIdCell value={branch.id} />
+                          )}
                           <td className="max-w-[240px] px-5 py-3.5 text-card-foreground">
                             <TruncatedText maxClassName="max-w-[220px]">
                               {branch.address
