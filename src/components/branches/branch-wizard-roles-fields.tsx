@@ -1,6 +1,7 @@
 "use client";
 
 import { DistributorSelect } from "@/components/branches/distributor-select";
+import { FieldLabel } from "@/components/ui/field-label";
 import { HeadquartersSelectorFields } from "@/components/branches/headquarters-selector-fields";
 import type { BranchWizardValues } from "@/components/branches/branch-wizard-types";
 import type { BranchResponse } from "@/types/branch";
@@ -74,9 +75,7 @@ export function BranchWizardRolesFields({
 
       {form.isClient && (
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium">
-            Distribuidor del cliente
-          </span>
+          <FieldLabel>Distribuidor del cliente</FieldLabel>
           <DistributorSelect
             value={form.clientDistributorId}
             onChange={(clientDistributorId) =>

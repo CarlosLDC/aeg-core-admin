@@ -63,7 +63,6 @@ import {
   isPdfUrl,
 } from "@/lib/contract-documents";
 import { cn } from "@/lib/utils";
-import { TablePlaceholderRows } from "@/components/ui/table-placeholder-rows";
 import { TableScroll } from "@/components/ui/table-scroll";
 
 type PartyOption = { id: number; label: string };
@@ -470,10 +469,6 @@ export function ContractsListPanel({
                         </ClickableTableRow>
                       );
                       })}
-                      <TablePlaceholderRows
-                        count={pagination.placeholderRowCount}
-                        columnCount={6}
-                      />
                     </tbody>
                   </table>
                 </TableScroll>

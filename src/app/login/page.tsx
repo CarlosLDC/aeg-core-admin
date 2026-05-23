@@ -7,6 +7,7 @@ import { LoginAnimatedBackdrop } from "@/components/auth/login-animated-backdrop
 import { BrandLogo } from "@/components/brand/logo";
 import { getLoginErrorMessage, useAuth } from "@/context/auth-provider";
 import { getSafeRedirectPath } from "@/lib/safe-redirect";
+import { FieldLabel } from "@/components/ui/field-label";
 import { cn } from "@/lib/utils";
 
 function LoginForm() {
@@ -106,7 +107,7 @@ function LoginForm() {
             )}
 
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Usuario</span>
+              <FieldLabel required>Usuario</FieldLabel>
               <div className="relative">
                 <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
                 <input
@@ -123,9 +124,7 @@ function LoginForm() {
             </label>
 
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">
-                Contraseña
-              </span>
+              <FieldLabel required>Contraseña</FieldLabel>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
                 <input

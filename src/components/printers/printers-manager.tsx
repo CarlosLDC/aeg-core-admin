@@ -67,7 +67,6 @@ import type { PrinterModelResponse } from "@/types/printer-model";
 import type { PrinterResponse, PrinterStatus } from "@/types/printer";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
-import { TablePlaceholderRows } from "@/components/ui/table-placeholder-rows";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { printerPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
@@ -714,10 +713,6 @@ export function PrintersManager() {
                           </td>
                         </ClickableTableRow>
                       ))}
-                      <TablePlaceholderRows
-                        count={pagination.placeholderRowCount}
-                        columnCount={11}
-                      />
                     </tbody>
                   </table>
                 </TableScroll>

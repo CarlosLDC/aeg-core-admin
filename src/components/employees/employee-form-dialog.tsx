@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
+import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { BranchSelect } from "@/components/users/branch-select";
 import {
@@ -159,9 +160,9 @@ export function EmployeeFormDialog({
               Datos personales
             </legend>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">
+              <FieldLabel required={canEditProfile}>
                 Cédula / documento
-              </span>
+              </FieldLabel>
               <input
                 type="text"
                 required={canEditProfile}
@@ -175,7 +176,7 @@ export function EmployeeFormDialog({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block sm:col-span-2">
-                <span className="mb-1.5 block text-sm font-medium">Nombre</span>
+                <FieldLabel required={canEditProfile}>Nombre</FieldLabel>
                 <input
                   type="text"
                   required={canEditProfile}
@@ -188,7 +189,7 @@ export function EmployeeFormDialog({
               </label>
 
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Teléfono</span>
+                <FieldLabel required={canEditProfile}>Teléfono</FieldLabel>
                 <input
                   type="tel"
                   required={canEditProfile}
@@ -200,7 +201,7 @@ export function EmployeeFormDialog({
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Correo</span>
+                <FieldLabel required={canEditProfile}>Correo</FieldLabel>
                 <input
                   type="email"
                   required={canEditProfile}
@@ -219,7 +220,7 @@ export function EmployeeFormDialog({
               Asignación
             </legend>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Sucursal</span>
+              <FieldLabel required={!lockBranch}>Sucursal</FieldLabel>
               {lockBranch ? (
                 <p className="rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-sm text-muted">
                   Sucursal de tu distribuidora (personal interno)
@@ -239,7 +240,7 @@ export function EmployeeFormDialog({
             </label>
 
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Rol</span>
+              <FieldLabel required>Rol</FieldLabel>
               <select
                 value={form.role}
                 onChange={(e) =>

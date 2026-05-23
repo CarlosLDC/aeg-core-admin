@@ -53,7 +53,6 @@ import {
 import type { SealColor, SealResponse, SealStatus } from "@/types/seal";
 import { SEAL_COLORS, SEAL_STATUSES } from "@/types/seal";
 import { cn } from "@/lib/utils";
-import { TablePlaceholderRows } from "@/components/ui/table-placeholder-rows";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { sealPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
@@ -602,10 +601,6 @@ export function SealsManager() {
                           </td>
                         </ClickableTableRow>
                       ))}
-                      <TablePlaceholderRows
-                        count={pagination.placeholderRowCount}
-                        columnCount={7}
-                      />
                     </tbody>
                   </table>
                 </TableScroll>

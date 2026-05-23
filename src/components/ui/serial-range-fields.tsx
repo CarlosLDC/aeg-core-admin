@@ -9,6 +9,7 @@ import {
   type SerialRangeMode,
 } from "@/lib/serial-range";
 import { BATCH_FORM_INPUT_CLASS } from "@/components/ui/batch-form-dialog";
+import { FieldLabel } from "@/components/ui/field-label";
 import { cn } from "@/lib/utils";
 
 export type SerialRangeFormValues = {
@@ -126,9 +127,9 @@ export function SerialRangeFields({
         )}
       >
         <label className={cn("block", isFiscal && "sm:col-span-1")}>
-          <span className="mb-1.5 block text-sm font-medium">
+          <FieldLabel required>
             Prefijo {isFiscal ? "(3 letras)" : "(texto fijo)"}
-          </span>
+          </FieldLabel>
           <input
             type="text"
             required
@@ -152,7 +153,7 @@ export function SerialRangeFields({
           )}
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium">Número desde</span>
+          <FieldLabel required>Número desde</FieldLabel>
           <input
             type="number"
             required
@@ -165,7 +166,7 @@ export function SerialRangeFields({
           />
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium">Número hasta</span>
+          <FieldLabel required>Número hasta</FieldLabel>
           <input
             type="number"
             required
@@ -179,9 +180,7 @@ export function SerialRangeFields({
         </label>
         {!isFiscal && (
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              Cifras del número
-            </span>
+            <FieldLabel required>Cifras del número</FieldLabel>
             <input
               type="number"
               required

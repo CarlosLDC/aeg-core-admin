@@ -8,6 +8,7 @@ import {
   type CompanyResponse,
   type ContributorType,
 } from "@/types/company";
+import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { companyFormSchema } from "@/lib/schemas/company-form-schema";
@@ -128,9 +129,7 @@ export function CompanyFormDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              Razón social
-            </span>
+            <FieldLabel required>Razón social</FieldLabel>
             <input
               type="text"
               required
@@ -148,7 +147,7 @@ export function CompanyFormDialog({
           </label>
 
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">RIF</span>
+            <FieldLabel required>RIF</FieldLabel>
             <input
               type="text"
               required
@@ -167,9 +166,7 @@ export function CompanyFormDialog({
           </label>
 
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              Tipo de contribuyente
-            </span>
+            <FieldLabel required>Tipo de contribuyente</FieldLabel>
             <select
               value={form.contributorType}
               onChange={(e) =>

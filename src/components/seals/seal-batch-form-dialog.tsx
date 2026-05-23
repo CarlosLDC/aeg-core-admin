@@ -10,6 +10,7 @@ import {
   BatchFormStepSection,
   BATCH_FORM_INPUT_CLASS,
 } from "@/components/ui/batch-form-dialog";
+import { FieldLabel } from "@/components/ui/field-label";
 import {
   emptySerialRangeForm,
   SerialRangeFields,
@@ -92,7 +93,7 @@ export function SealBatchFormDialog({
         description="Color, estatus e impresora opcional se aplican a cada precinto generado. Si el estatus es «En impresora», asigna la impresora correspondiente."
       >
         <div className="block">
-          <span className="mb-1.5 block text-sm font-medium">Impresora (opcional)</span>
+          <FieldLabel>Impresora (opcional)</FieldLabel>
           {printerOptions.length > 0 ? (
             <PrinterSelect
               value={form.printerId}
@@ -118,7 +119,7 @@ export function SealBatchFormDialog({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Color</span>
+            <FieldLabel required>Color</FieldLabel>
             <select
               required
               value={form.color}
@@ -139,7 +140,7 @@ export function SealBatchFormDialog({
             </select>
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Estatus</span>
+            <FieldLabel required>Estatus</FieldLabel>
             <select
               required
               value={form.status}

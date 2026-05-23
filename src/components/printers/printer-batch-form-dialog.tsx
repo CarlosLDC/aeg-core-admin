@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { BooleanToggle } from "@/components/ui/boolean-toggle";
+import { FieldLabel } from "@/components/ui/field-label";
 import {
   BatchFormDialog,
   BatchFormStepSection,
@@ -137,7 +138,7 @@ export function PrinterBatchFormDialog({
         description="Modelo, estatus, distribuidor, cliente y demás campos se aplican a cada impresora del rango. Solo cambia el serial fiscal."
       >
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium">Modelo fiscal</span>
+          <FieldLabel required>Modelo fiscal</FieldLabel>
           {modelOptions.length > 0 ? (
             <select
               required
@@ -173,7 +174,7 @@ export function PrinterBatchFormDialog({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Estatus</span>
+            <FieldLabel required>Estatus</FieldLabel>
             <select
               required
               value={form.status}
@@ -194,9 +195,7 @@ export function PrinterBatchFormDialog({
             </select>
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              Tipo de dispositivo
-            </span>
+            <FieldLabel required>Tipo de dispositivo</FieldLabel>
             <select
               required
               value={form.deviceType}
@@ -220,9 +219,7 @@ export function PrinterBatchFormDialog({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              Precio venta final
-            </span>
+            <FieldLabel>Precio venta final</FieldLabel>
             <input
               type="number"
               min={0}
@@ -236,7 +233,7 @@ export function PrinterBatchFormDialog({
             />
           </label>
           <div className="block">
-            <span className="mb-1.5 block text-sm font-medium">Estado de pago</span>
+            <FieldLabel>Estado de pago</FieldLabel>
             <BooleanToggle
               value={form.paid}
               onChange={(paid) => setForm((f) => ({ ...f, paid }))}
@@ -249,7 +246,7 @@ export function PrinterBatchFormDialog({
         </div>
 
         <div className="block">
-          <span className="mb-1.5 block text-sm font-medium">Distribuidor</span>
+          <FieldLabel>Distribuidor</FieldLabel>
           <SearchableSelect
             value={form.distributorId}
             onChange={(distributorId) =>
@@ -264,7 +261,7 @@ export function PrinterBatchFormDialog({
         </div>
 
         <div className="block">
-          <span className="mb-1.5 block text-sm font-medium">Cliente</span>
+          <FieldLabel>Cliente</FieldLabel>
           <SearchableSelect
             value={form.clientId}
             onChange={(clientId) => setForm((f) => ({ ...f, clientId }))}
@@ -278,7 +275,7 @@ export function PrinterBatchFormDialog({
 
         {canPickSoftware && (
           <div className="block">
-            <span className="mb-1.5 block text-sm font-medium">Software</span>
+            <FieldLabel>Software</FieldLabel>
             <SearchableSelect
               value={form.softwareId}
               onChange={(softwareId) =>

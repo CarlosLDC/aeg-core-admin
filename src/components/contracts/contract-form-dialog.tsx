@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
+import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { ContractDocumentUpload } from "@/components/contracts/contract-document-upload";
 import { SearchableSelect } from "@/components/ui/searchable-select";
@@ -140,7 +141,7 @@ export function ContractFormDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">{partyLabel}</span>
+            <FieldLabel required>{partyLabel}</FieldLabel>
             <SearchableSelect
               value={form.partyId}
               onChange={(partyId) => setForm((f) => ({ ...f, partyId }))}
@@ -163,7 +164,7 @@ export function ContractFormDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Inicio</span>
+              <FieldLabel required>Inicio</FieldLabel>
               <input
                 type="date"
                 required
@@ -175,7 +176,7 @@ export function ContractFormDialog({
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Fin</span>
+              <FieldLabel required>Fin</FieldLabel>
               <input
                 type="date"
                 required
@@ -189,7 +190,7 @@ export function ContractFormDialog({
           </div>
 
           <div>
-            <span className="mb-1.5 block text-sm font-medium">Documentos</span>
+            <FieldLabel>Documentos</FieldLabel>
             <ContractDocumentUpload
               kind={kind}
               urls={form.photoUrls}

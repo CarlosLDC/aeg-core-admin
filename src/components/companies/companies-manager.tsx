@@ -38,7 +38,6 @@ import {
 } from "@/lib/companies-api";
 import { CONTRIBUTOR_TYPES, type CompanyResponse } from "@/types/company";
 import { cn } from "@/lib/utils";
-import { TablePlaceholderRows } from "@/components/ui/table-placeholder-rows";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { companyPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
@@ -327,10 +326,6 @@ export function CompaniesManager() {
                           </td>
                         </ClickableTableRow>
                       ))}
-                      <TablePlaceholderRows
-                        count={pagination.placeholderRowCount}
-                        columnCount={5}
-                      />
                     </tbody>
                   </table>
                 </TableScroll>

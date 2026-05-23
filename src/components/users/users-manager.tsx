@@ -41,7 +41,6 @@ import { usePagination } from "@/hooks/use-pagination";
 import { ROLE_LABELS } from "@/lib/roles";
 import { ROLES } from "@/types/user";
 import { cn } from "@/lib/utils";
-import { TablePlaceholderRows } from "@/components/ui/table-placeholder-rows";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { userPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
@@ -438,10 +437,6 @@ export function UsersManager() {
                           </td>
                         </ClickableTableRow>
                       ))}
-                      <TablePlaceholderRows
-                        count={pagination.placeholderRowCount}
-                        columnCount={6}
-                      />
                     </tbody>
                   </table>
                 </TableScroll>

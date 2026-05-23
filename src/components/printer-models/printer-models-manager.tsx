@@ -42,7 +42,6 @@ import {
 } from "@/lib/printer-models-api";
 import type { PrinterModelResponse } from "@/types/printer-model";
 import { cn } from "@/lib/utils";
-import { TablePlaceholderRows } from "@/components/ui/table-placeholder-rows";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { printerModelPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
@@ -358,10 +357,6 @@ export function PrinterModelsManager() {
                           </td>
                         </ClickableTableRow>
                       ))}
-                      <TablePlaceholderRows
-                        count={pagination.placeholderRowCount}
-                        columnCount={7}
-                      />
                     </tbody>
                   </table>
                 </TableScroll>

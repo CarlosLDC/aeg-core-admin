@@ -60,7 +60,6 @@ import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { EmployeeRequest } from "@/types/employee";
 import { cn } from "@/lib/utils";
-import { TablePlaceholderRows } from "@/components/ui/table-placeholder-rows";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { employeePath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
@@ -554,11 +553,15 @@ export function EmployeesManager() {
                               employee.branchId,
                             )}
                           </td>
-                          <td className="px-5 py-3.5 text-muted">
-                            <span className="block">{employee.phone}</span>
-                            <span className="block truncate text-xs">
-                              {employee.email}
-                            </span>
+                          <td
+                            className="max-w-[200px] truncate px-5 text-muted"
+                            title={
+                              [employee.phone, employee.email]
+                                .filter(Boolean)
+                                .join(" · ") || undefined
+                            }
+                          >
+                            {employee.phone || employee.email || "—"}
                           </td>
                           <TableCreatedAtCell value={employee.createdAt} />
                           <td className="px-5 py-3.5" data-row-click="ignore">
@@ -596,10 +599,6 @@ export function EmployeesManager() {
                           </td>
                         </ClickableTableRow>
                       ))}
-                      <TablePlaceholderRows
-                        count={pagination.placeholderRowCount}
-                        columnCount={7}
-                      />
                     </tbody>
                   </table>
                 </TableScroll>

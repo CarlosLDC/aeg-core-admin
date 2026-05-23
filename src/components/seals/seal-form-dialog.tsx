@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { sealFormSchema } from "@/lib/schemas/seal-form-schema";
@@ -125,7 +126,7 @@ export function SealFormDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Serial</span>
+            <FieldLabel required>Serial</FieldLabel>
             <input
               type="text"
               required
@@ -145,7 +146,7 @@ export function SealFormDialog({
           </label>
 
           <div className="block">
-            <span className="mb-1.5 block text-sm font-medium">Impresora</span>
+            <FieldLabel>Impresora</FieldLabel>
             {printerOptions.length > 0 ? (
               <PrinterSelect
                 value={form.printerId}
@@ -173,7 +174,7 @@ export function SealFormDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Color</span>
+              <FieldLabel required>Color</FieldLabel>
               <select
                 required
                 value={form.color}
@@ -194,7 +195,7 @@ export function SealFormDialog({
               </select>
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Estatus</span>
+              <FieldLabel required>Estatus</FieldLabel>
               <select
                 required
                 value={form.status}
@@ -218,9 +219,7 @@ export function SealFormDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">
-                Fecha de instalación
-              </span>
+              <FieldLabel>Fecha de instalación</FieldLabel>
               <input
                 type="datetime-local"
                 value={form.installationDate}
@@ -232,9 +231,7 @@ export function SealFormDialog({
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">
-                Fecha de retiro
-              </span>
+              <FieldLabel>Fecha de retiro</FieldLabel>
               <input
                 type="datetime-local"
                 value={form.removalDate}

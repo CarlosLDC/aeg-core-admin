@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { PhotoDocumentUpload } from "@/components/ui/photo-document-upload";
 import { SearchableSelect } from "@/components/ui/searchable-select";
@@ -118,7 +119,7 @@ export function AnnualInspectionFormDialog({
             </legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <span className="mb-1.5 block text-sm font-medium">Impresora</span>
+                <FieldLabel required>Impresora</FieldLabel>
                 {canLoadPrinters && printerOptions.length > 0 ? (
                   <SearchableSelect
                     value={form.printerId}
@@ -149,7 +150,7 @@ export function AnnualInspectionFormDialog({
               </div>
 
               <div>
-                <span className="mb-1.5 block text-sm font-medium">Empleado</span>
+                <FieldLabel required>Empleado</FieldLabel>
                 <SearchableSelect
                   value={form.employeeId}
                   onChange={(employeeId) =>
@@ -171,9 +172,7 @@ export function AnnualInspectionFormDialog({
             </legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">
-                  Fecha de inspección
-                </span>
+                <FieldLabel>Fecha de inspección</FieldLabel>
                 <input
                   type="date"
                   value={form.inspectionDate}
@@ -199,9 +198,7 @@ export function AnnualInspectionFormDialog({
             </div>
 
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">
-                Observaciones
-              </span>
+              <FieldLabel>Observaciones</FieldLabel>
               <textarea
                 rows={3}
                 value={form.notes}
@@ -219,7 +216,7 @@ export function AnnualInspectionFormDialog({
               Evidencia
             </legend>
             <div className="block">
-              <span className="mb-1.5 block text-sm font-medium">Fotos</span>
+              <FieldLabel required>Fotos</FieldLabel>
               <PhotoDocumentUpload
                 folder="annual-inspections"
                 urls={form.photoUrls}

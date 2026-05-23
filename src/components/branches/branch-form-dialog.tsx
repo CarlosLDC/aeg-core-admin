@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useId, useState } from "react";
 import { X } from "lucide-react";
+import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { CompanySelect } from "@/components/companies/company-select";
 import { DistributorSelect } from "@/components/branches/distributor-select";
@@ -199,7 +200,7 @@ export function BranchFormDialog({
             </legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block sm:col-span-2">
-                <span className="mb-1.5 block text-sm font-medium">Empresa</span>
+                <FieldLabel required>Empresa</FieldLabel>
                 <CompanySelect
                   value={form.companyId}
                   onChange={(companyId) =>
@@ -213,7 +214,7 @@ export function BranchFormDialog({
               </label>
 
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Ciudad</span>
+                <FieldLabel required>Ciudad</FieldLabel>
                 <input
                   type="text"
                   required
@@ -229,7 +230,7 @@ export function BranchFormDialog({
                 )}
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Estado</span>
+                <FieldLabel required>Estado</FieldLabel>
                 <input
                   type="text"
                   required
@@ -242,7 +243,7 @@ export function BranchFormDialog({
               </label>
 
               <label className="block sm:col-span-2">
-                <span className="mb-1.5 block text-sm font-medium">Dirección</span>
+                <FieldLabel>Dirección</FieldLabel>
                 <input
                   type="text"
                   value={form.address}
@@ -261,9 +262,7 @@ export function BranchFormDialog({
             </legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block sm:col-span-2">
-                <span className="mb-1.5 block text-sm font-medium">
-                  Nombre persona de contacto
-                </span>
+                <FieldLabel required>Nombre persona de contacto</FieldLabel>
                 <input
                   type="text"
                   required
@@ -283,7 +282,7 @@ export function BranchFormDialog({
               </label>
 
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Teléfono</span>
+                <FieldLabel>Teléfono</FieldLabel>
                 <input
                   type="tel"
                   value={form.phone}
@@ -294,7 +293,7 @@ export function BranchFormDialog({
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Email</span>
+                <FieldLabel>Email</FieldLabel>
                 <input
                   type="email"
                   value={form.email}
@@ -360,9 +359,7 @@ export function BranchFormDialog({
 
             {form.isClient && (
               <label className="block pt-1">
-                <span className="mb-1.5 block text-sm font-medium">
-                  Distribuidor del cliente
-                </span>
+                <FieldLabel>Distribuidor del cliente</FieldLabel>
                 <span className="mb-1.5 block text-xs text-muted">
                   Opcional. Referencia al registro de distribuidor, no a la
                   sucursal.

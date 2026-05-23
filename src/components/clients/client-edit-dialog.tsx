@@ -9,6 +9,7 @@ import {
   type ContributorType,
 } from "@/types/company";
 import type { BranchResponse } from "@/types/branch";
+import { FieldLabel } from "@/components/ui/field-label";
 import { cn } from "@/lib/utils";
 
 export type ClientEditValues = {
@@ -133,7 +134,7 @@ export function ClientEditDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Razón social</span>
+            <FieldLabel required>Razón social</FieldLabel>
             <input
               type="text"
               required
@@ -146,7 +147,7 @@ export function ClientEditDialog({
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">RIF</span>
+              <FieldLabel required>RIF</FieldLabel>
               <input
                 type="text"
                 required
@@ -158,9 +159,7 @@ export function ClientEditDialog({
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">
-                Tipo de contribuyente
-              </span>
+              <FieldLabel>Tipo de contribuyente</FieldLabel>
               <select
                 value={form.contributorType}
                 onChange={(e) =>
@@ -181,7 +180,7 @@ export function ClientEditDialog({
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Estado</span>
+              <FieldLabel required>Estado</FieldLabel>
               <input
                 type="text"
                 required
@@ -191,7 +190,7 @@ export function ClientEditDialog({
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Ciudad</span>
+              <FieldLabel required>Ciudad</FieldLabel>
               <input
                 type="text"
                 required
@@ -202,7 +201,7 @@ export function ClientEditDialog({
             </label>
           </div>
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Dirección</span>
+            <FieldLabel>Dirección</FieldLabel>
             <input
               type="text"
               value={form.address}
@@ -211,9 +210,7 @@ export function ClientEditDialog({
             />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              Persona de contacto
-            </span>
+            <FieldLabel required>Persona de contacto</FieldLabel>
             <input
               type="text"
               required
@@ -226,7 +223,7 @@ export function ClientEditDialog({
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Teléfono</span>
+              <FieldLabel>Teléfono</FieldLabel>
               <input
                 type="tel"
                 value={form.phone}
@@ -235,7 +232,7 @@ export function ClientEditDialog({
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Correo</span>
+              <FieldLabel>Correo</FieldLabel>
               <input
                 type="email"
                 value={form.email}

@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { PhotoDocumentUpload } from "@/components/ui/photo-document-upload";
 import { SearchableSelect } from "@/components/ui/searchable-select";
@@ -123,9 +124,7 @@ export function TechnicalServiceFormDialog({
             </legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <span className="mb-1.5 block text-sm font-medium">
-                  Impresora
-                </span>
+                <FieldLabel required>Impresora</FieldLabel>
                 {canLoadPrinters && printerOptions.length > 0 ? (
                   <SearchableSelect
                     value={form.printerId}
@@ -155,7 +154,7 @@ export function TechnicalServiceFormDialog({
                 )}
               </div>
               <div>
-                <span className="mb-1.5 block text-sm font-medium">Técnico</span>
+                <FieldLabel required>Técnico</FieldLabel>
                 <SearchableSelect
                   value={form.technicianId}
                   onChange={(technicianId) =>
@@ -169,9 +168,7 @@ export function TechnicalServiceFormDialog({
                 />
               </div>
               <div>
-                <span className="mb-1.5 block text-sm font-medium">
-                  Centro de servicio
-                </span>
+                <FieldLabel>Centro de servicio</FieldLabel>
                 <SearchableSelect
                   value={form.serviceCenterId}
                   onChange={(serviceCenterId) =>
@@ -184,9 +181,7 @@ export function TechnicalServiceFormDialog({
                 />
               </div>
               <div>
-                <span className="mb-1.5 block text-sm font-medium">
-                  Distribuidor
-                </span>
+                <FieldLabel>Distribuidor</FieldLabel>
                 <SearchableSelect
                   value={form.distributorId}
                   onChange={(distributorId) =>
@@ -207,7 +202,7 @@ export function TechnicalServiceFormDialog({
             </legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Inicio</span>
+                <FieldLabel required>Inicio</FieldLabel>
                 <input
                   type="datetime-local"
                   required
@@ -220,7 +215,7 @@ export function TechnicalServiceFormDialog({
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Fin</span>
+                <FieldLabel required>Fin</FieldLabel>
                 <input
                   type="datetime-local"
                   required
@@ -233,9 +228,7 @@ export function TechnicalServiceFormDialog({
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">
-                  Fecha solicitud
-                </span>
+                <FieldLabel required>Fecha solicitud</FieldLabel>
                 <input
                   type="date"
                   required
@@ -248,7 +241,7 @@ export function TechnicalServiceFormDialog({
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Costo</span>
+                <FieldLabel required>Costo</FieldLabel>
                 <input
                   type="number"
                   required
@@ -264,9 +257,7 @@ export function TechnicalServiceFormDialog({
               </label>
             </div>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">
-                Falla reportada
-              </span>
+              <FieldLabel required>Falla reportada</FieldLabel>
               <textarea
                 required
                 rows={2}
@@ -279,9 +270,7 @@ export function TechnicalServiceFormDialog({
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">
-                Observaciones
-              </span>
+              <FieldLabel>Observaciones</FieldLabel>
               <textarea
                 rows={2}
                 value={form.notes}
@@ -312,7 +301,7 @@ export function TechnicalServiceFormDialog({
             </legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Z inicial</span>
+                <FieldLabel required>Z inicial</FieldLabel>
                 <input
                   type="number"
                   required
@@ -326,7 +315,7 @@ export function TechnicalServiceFormDialog({
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Z final</span>
+                <FieldLabel required>Z final</FieldLabel>
                 <input
                   type="number"
                   required
@@ -340,9 +329,7 @@ export function TechnicalServiceFormDialog({
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">
-                  Fecha Z inicial
-                </span>
+                <FieldLabel required>Fecha Z inicial</FieldLabel>
                 <input
                   type="datetime-local"
                   required
@@ -355,9 +342,7 @@ export function TechnicalServiceFormDialog({
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">
-                  Fecha Z final
-                </span>
+                <FieldLabel required>Fecha Z final</FieldLabel>
                 <input
                   type="datetime-local"
                   required
@@ -378,7 +363,7 @@ export function TechnicalServiceFormDialog({
             </legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <span className="mb-1.5 block text-sm font-medium">Instalado</span>
+                <FieldLabel>Instalado</FieldLabel>
                 <SearchableSelect
                   value={form.installedSealId}
                   onChange={(installedSealId) =>
@@ -392,7 +377,7 @@ export function TechnicalServiceFormDialog({
                 />
               </div>
               <div>
-                <span className="mb-1.5 block text-sm font-medium">Retirado</span>
+                <FieldLabel>Retirado</FieldLabel>
                 <SearchableSelect
                   value={form.removedSealId}
                   onChange={(removedSealId) =>
@@ -409,7 +394,7 @@ export function TechnicalServiceFormDialog({
           </fieldset>
 
           <div className="block">
-            <span className="mb-1.5 block text-sm font-medium">Fotos</span>
+            <FieldLabel required>Fotos</FieldLabel>
             <PhotoDocumentUpload
               folder="technical-services"
               urls={form.photoUrls}

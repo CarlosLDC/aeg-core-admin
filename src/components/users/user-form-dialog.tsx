@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { formatBranchLabel } from "@/lib/branches";
 import { X } from "lucide-react";
+import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { BranchSelect } from "@/components/users/branch-select";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -195,7 +196,7 @@ export function UserFormDialog({
             </legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block sm:col-span-2">
-                <span className="mb-1.5 block text-sm font-medium">Nombre</span>
+                <FieldLabel required>Nombre</FieldLabel>
                 <input
                   type="text"
                   required
@@ -210,7 +211,7 @@ export function UserFormDialog({
               </label>
 
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Correo</span>
+                <FieldLabel required>Correo</FieldLabel>
                 <input
                   type="email"
                   required
@@ -225,12 +226,12 @@ export function UserFormDialog({
               </label>
 
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">
+                <FieldLabel required={mode === "create"}>
                   Clave
                   {mode === "edit" && (
                     <span className="font-normal text-muted"> (opcional)</span>
                   )}
-                </span>
+                </FieldLabel>
                 <PasswordInput
                   value={form.password}
                   onChange={(password) => setForm((f) => ({ ...f, password }))}
@@ -253,7 +254,7 @@ export function UserFormDialog({
             </legend>
             <div className="grid gap-4 sm:grid-cols-2 sm:items-start">
               <div className="min-w-0">
-                <span className="mb-1.5 block text-sm font-medium">Sucursal</span>
+                <FieldLabel required>Sucursal</FieldLabel>
                 <BranchSelect
                   value={form.branchId}
                   onChange={handleBranchChange}
@@ -271,7 +272,7 @@ export function UserFormDialog({
               </div>
 
               <div className="min-w-0">
-                <span className="mb-1.5 block text-sm font-medium">Rol</span>
+                <FieldLabel required>Rol</FieldLabel>
                 <div
                   className={cn(
                     "grid gap-2",

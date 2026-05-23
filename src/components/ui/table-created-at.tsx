@@ -24,7 +24,7 @@ export function TableCreatedAtCell({
   return (
     <td
       className={cn(
-        "whitespace-nowrap px-5 py-3.5 text-muted",
+        "whitespace-nowrap px-5 py-0 text-muted",
         className,
       )}
     >

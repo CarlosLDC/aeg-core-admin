@@ -60,7 +60,6 @@ import type { BranchWithRoles } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { DistributorResponse } from "@/types/branch-role";
 import { cn } from "@/lib/utils";
-import { TablePlaceholderRows } from "@/components/ui/table-placeholder-rows";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { branchPath, companyPath } from "@/lib/resource-routes";
@@ -568,33 +567,28 @@ export function BranchesManager() {
                               {companyNameById(companies, branch.companyId)}
                             </TruncatedText>
                           </td>
-                          <td className="px-5 py-3.5 text-card-foreground">
-                            <span className="font-medium">
-                              {branch.city}, {branch.state}
-                            </span>
-                            {branch.address && (
-                              <span className="mt-0.5 block truncate text-xs text-muted">
-                                {branch.address}
-                              </span>
-                            )}
+                          <td
+                            className="max-w-[220px] truncate px-5 text-card-foreground"
+                            title={
+                              branch.address
+                                ? `${branch.city}, ${branch.state} — ${branch.address}`
+                                : `${branch.city}, ${branch.state}`
+                            }
+                          >
+                            {branch.city}, {branch.state}
+                            {branch.address ? ` · ${branch.address}` : ""}
                           </td>
-                          <td className="px-5 py-3.5 text-muted">
-                            {branch.contactPersonName && (
-                              <span className="block font-medium text-card-foreground">
-                                {branch.contactPersonName}
-                              </span>
-                            )}
-                            {branch.phone && (
-                              <span className="block">{branch.phone}</span>
-                            )}
-                            {branch.email && (
-                              <span className="block truncate text-xs">
-                                {branch.email}
-                              </span>
-                            )}
-                            {!branch.contactPersonName &&
-                              !branch.phone &&
-                              !branch.email &&
+                          <td
+                            className="max-w-[200px] truncate px-5 text-muted"
+                            title={
+                              [branch.contactPersonName, branch.phone, branch.email]
+                                .filter(Boolean)
+                                .join(" · ") || undefined
+                            }
+                          >
+                            {branch.contactPersonName ||
+                              branch.phone ||
+                              branch.email ||
                               "—"}
                           </td>
                           <td className="px-5 py-3.5">
@@ -644,10 +638,6 @@ export function BranchesManager() {
                           </td>
                         </ClickableTableRow>
                       ))}
-                      <TablePlaceholderRows
-                        count={pagination.placeholderRowCount}
-                        columnCount={7}
-                      />
                     </tbody>
                   </table>
                 </TableScroll>

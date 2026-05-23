@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import { X } from "lucide-react";
+import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import {
@@ -203,9 +204,7 @@ export function PrinterFormDialog({
               )}
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block sm:col-span-2">
-                  <span className="mb-1.5 block text-sm font-medium">
-                    Modelo fiscal
-                  </span>
+                  <FieldLabel required>Modelo fiscal</FieldLabel>
                   {modelOptions.length > 0 ? (
                     <select
                       required
@@ -240,9 +239,7 @@ export function PrinterFormDialog({
                 </label>
 
                 <label className="block sm:col-span-2">
-                  <span className="mb-1.5 block text-sm font-medium">
-                    Serial fiscal
-                  </span>
+                  <FieldLabel required>Serial fiscal</FieldLabel>
                   <input
                     type="text"
                     required
@@ -277,7 +274,7 @@ export function PrinterFormDialog({
               </legend>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium">Estatus</span>
+                  <FieldLabel required>Estatus</FieldLabel>
                   <select
                     required
                     value={form.status}
@@ -298,9 +295,7 @@ export function PrinterFormDialog({
                   </select>
                 </label>
                 <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium">
-                    Tipo de dispositivo
-                  </span>
+                  <FieldLabel required>Tipo de dispositivo</FieldLabel>
                   <select
                     required
                     value={form.deviceType}
@@ -321,9 +316,7 @@ export function PrinterFormDialog({
                   </select>
                 </label>
                 <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium">
-                    Precio venta final
-                  </span>
+                  <FieldLabel>Precio venta final</FieldLabel>
                   <input
                     type="number"
                     min={0}
@@ -338,9 +331,7 @@ export function PrinterFormDialog({
                   />
                 </label>
                 <div className="block">
-                  <span className="mb-1.5 block text-sm font-medium">
-                    Estado de pago
-                  </span>
+                  <FieldLabel>Estado de pago</FieldLabel>
                   <BooleanToggle
                     value={form.paid}
                     onChange={(paid) => setForm((f) => ({ ...f, paid }))}
@@ -359,9 +350,7 @@ export function PrinterFormDialog({
               </legend>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="block">
-                  <span className="mb-1.5 block text-sm font-medium">
-                    Distribuidor
-                  </span>
+                  <FieldLabel>Distribuidor</FieldLabel>
                   <SearchableSelect
                     value={form.distributorId}
                     onChange={(distributorId) =>
@@ -376,7 +365,7 @@ export function PrinterFormDialog({
                   />
                 </div>
                 <div className="block">
-                  <span className="mb-1.5 block text-sm font-medium">Cliente</span>
+                  <FieldLabel>Cliente</FieldLabel>
                   <SearchableSelect
                     value={form.clientId}
                     onChange={(clientId) =>
@@ -392,9 +381,7 @@ export function PrinterFormDialog({
                 </div>
                 {canPickSoftware && (
                   <div className="block sm:col-span-2">
-                    <span className="mb-1.5 block text-sm font-medium">
-                      Software
-                    </span>
+                    <FieldLabel>Software</FieldLabel>
                     <SearchableSelect
                       value={form.softwareId}
                       onChange={(softwareId) =>
@@ -418,9 +405,7 @@ export function PrinterFormDialog({
               </legend>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium">
-                    Fecha de instalación
-                  </span>
+                  <FieldLabel>Fecha de instalación</FieldLabel>
                   <input
                     type="datetime-local"
                     value={form.installationDate}
@@ -435,9 +420,7 @@ export function PrinterFormDialog({
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium">
-                    Firmware
-                  </span>
+                  <FieldLabel>Firmware</FieldLabel>
                   <input
                     type="text"
                     value={form.versionFirmware}
@@ -450,9 +433,7 @@ export function PrinterFormDialog({
                   />
                 </label>
                 <label className="block sm:col-span-2">
-                  <span className="mb-1.5 block text-sm font-medium">
-                    Dirección MAC
-                  </span>
+                  <FieldLabel>Dirección MAC</FieldLabel>
                   <input
                     type="text"
                     value={form.macAddress}

@@ -40,7 +40,6 @@ import type { BranchWithRoles } from "@/types/branch";
 import type { ClientResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import { cn } from "@/lib/utils";
-import { TablePlaceholderRows } from "@/components/ui/table-placeholder-rows";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TruncatedText } from "@/components/ui/truncated-text";
@@ -449,10 +448,6 @@ export function ClientsManager() {
                           <TableCreatedAtCell value={row.createdAt} />
                         </ClickableTableRow>
                       ))}
-                      <TablePlaceholderRows
-                        count={pagination.placeholderRowCount}
-                        columnCount={6}
-                      />
                     </tbody>
                   </table>
                 </TableScroll>

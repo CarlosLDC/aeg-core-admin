@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import type { PrinterModelFormValues } from "@/lib/printer-model-form";
 import type { PrinterModelResponse } from "@/types/printer-model";
@@ -118,7 +119,7 @@ export function PrinterModelFormDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Marca</span>
+              <FieldLabel required>Marca</FieldLabel>
               <input
                 type="text"
                 required
@@ -130,9 +131,7 @@ export function PrinterModelFormDialog({
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">
-                Código de modelo
-              </span>
+              <FieldLabel required>Código de modelo</FieldLabel>
               <input
                 type="text"
                 required
@@ -146,7 +145,7 @@ export function PrinterModelFormDialog({
           </div>
 
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Providencia</span>
+            <FieldLabel>Providencia</FieldLabel>
             <input
               type="text"
               value={form.providencia}
@@ -159,9 +158,7 @@ export function PrinterModelFormDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">
-                Fecha de aprobación
-              </span>
+              <FieldLabel>Fecha de aprobación</FieldLabel>
               <input
                 type="date"
                 value={form.approvalDate}
@@ -172,7 +169,7 @@ export function PrinterModelFormDialog({
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Precio</span>
+              <FieldLabel required>Precio</FieldLabel>
               <input
                 type="number"
                 required
