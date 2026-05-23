@@ -68,6 +68,7 @@ import type { PrinterResponse, PrinterStatus } from "@/types/printer";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { TruncatedText } from "@/components/ui/truncated-text";
 import { printerPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
@@ -652,8 +653,10 @@ export function PrintersManager() {
                           <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
                             {printer.fiscalSerial}
                           </td>
-                          <td className="px-5 py-3.5 text-card-foreground">
-                            {getModelLabel(printer.modelId)}
+                          <td className="max-w-[160px] px-5 py-3.5 text-card-foreground">
+                            <TruncatedText maxClassName="max-w-[140px]">
+                              {getModelLabel(printer.modelId)}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5">
                             <PrinterStatusBadge status={printer.status} />
@@ -662,11 +665,15 @@ export function PrintersManager() {
                             {DEVICE_TYPE_LABELS[printer.deviceType] ??
                               printer.deviceType}
                           </td>
-                          <td className="max-w-[160px] truncate px-5 py-3.5 text-muted">
-                            {getDistributorLabel(printer.distributorId)}
+                          <td className="max-w-[160px] px-5 py-3.5 text-muted">
+                            <TruncatedText maxClassName="max-w-[140px]">
+                              {getDistributorLabel(printer.distributorId)}
+                            </TruncatedText>
                           </td>
-                          <td className="max-w-[160px] truncate px-5 py-3.5 text-muted">
-                            {getClientLabel(printer.clientId)}
+                          <td className="max-w-[160px] px-5 py-3.5 text-muted">
+                            <TruncatedText maxClassName="max-w-[140px]">
+                              {getClientLabel(printer.clientId)}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5 text-muted">
                             {formatPrinterPrice(printer.finalSalePrice)}

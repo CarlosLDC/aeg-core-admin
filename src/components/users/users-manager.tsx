@@ -42,6 +42,7 @@ import { ROLE_LABELS } from "@/lib/roles";
 import { ROLES } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { TruncatedText } from "@/components/ui/truncated-text";
 import { userPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
@@ -382,17 +383,23 @@ export function UsersManager() {
                           key={user.id}
                           href={userPath(user.id)}
                         >
-                          <td className="px-5 py-3.5 font-medium text-card-foreground">
-                            {displayUserName(user)}
+                          <td className="max-w-[200px] px-5 py-3.5">
+                            <TruncatedText maxClassName="max-w-[180px]">
+                              {displayUserName(user)}
+                            </TruncatedText>
                           </td>
-                          <td className="px-5 py-3.5 text-card-foreground">
-                            {user.email}
+                          <td className="max-w-[220px] px-5 py-3.5 text-card-foreground">
+                            <TruncatedText maxClassName="max-w-[200px]">
+                              {user.email}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5">
                             <RoleBadge role={user.role} />
                           </td>
-                          <td className="max-w-[220px] truncate px-5 py-3.5 text-card-foreground">
-                            {branchLabelById(branches, companies, user.branchId)}
+                          <td className="max-w-[220px] px-5 py-3.5 text-card-foreground">
+                            <TruncatedText maxClassName="max-w-[200px]">
+                              {branchLabelById(branches, companies, user.branchId)}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5">
                             <span

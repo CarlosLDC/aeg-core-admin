@@ -44,6 +44,7 @@ import {
 import type { TechnicalServiceResponse } from "@/types/technical-service";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { TruncatedText } from "@/components/ui/truncated-text";
 
 export function TechnicalServicesManager() {
   const toast = useToast();
@@ -335,13 +336,17 @@ export function TechnicalServicesManager() {
                           key={row.id}
                           href={technicalServicePath(row.id)}
                         >
-                          <td className="max-w-[140px] truncate px-5 py-3.5 font-mono text-card-foreground">
-                            {printerLabelById.get(String(row.printerId)) ??
-                              `#${row.printerId}`}
+                          <td className="max-w-[140px] px-5 py-3.5 font-mono text-card-foreground">
+                            <TruncatedText maxClassName="max-w-[120px]" mono>
+                              {printerLabelById.get(String(row.printerId)) ??
+                                `#${row.printerId}`}
+                            </TruncatedText>
                           </td>
-                          <td className="max-w-[160px] truncate px-5 py-3.5 text-muted">
-                            {technicianLabelById.get(String(row.technicianId)) ??
-                              `#${row.technicianId}`}
+                          <td className="max-w-[160px] px-5 py-3.5 text-muted">
+                            <TruncatedText maxClassName="max-w-[140px]">
+                              {technicianLabelById.get(String(row.technicianId)) ??
+                                `#${row.technicianId}`}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5 text-muted">
                             {formatDateTime(row.startAt)}
@@ -349,8 +354,10 @@ export function TechnicalServicesManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {formatDateTime(row.endAt)}
                           </td>
-                          <td className="max-w-[160px] truncate px-5 py-3.5 text-card-foreground">
-                            {row.reportedFailure}
+                          <td className="max-w-[160px] px-5 py-3.5 text-card-foreground">
+                            <TruncatedText maxClassName="max-w-[140px]">
+                              {row.reportedFailure || "—"}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5 text-muted">
                             {formatMoney(row.cost)}

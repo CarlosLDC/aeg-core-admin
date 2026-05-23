@@ -28,7 +28,10 @@ import {
   distributorContractPath,
   serviceCenterContractPath,
 } from "@/lib/resource-routes";
-import { ClickableTableRow } from "@/components/ui/clickable-table-row";
+import {
+  ClickableTableRow,
+  stopTableRowClick,
+} from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 import { usePagination } from "@/hooks/use-pagination";
 import {
@@ -64,6 +67,7 @@ import {
 } from "@/lib/contract-documents";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { TruncatedText } from "@/components/ui/truncated-text";
 
 type PartyOption = { id: number; label: string };
 
@@ -396,8 +400,10 @@ export function ContractsListPanel({
                           key={contract.id}
                           href={contractHref}
                         >
-                          <td className="max-w-[220px] truncate px-5 py-3.5 font-medium text-card-foreground">
-                            {getPartyLabel(contract)}
+                          <td className="max-w-[220px] px-5 py-3.5 font-medium text-card-foreground">
+                            <TruncatedText maxClassName="max-w-[200px]">
+                              {getPartyLabel(contract)}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5 text-card-foreground">
                             {formatContractDate(contract.startDate)} –{" "}
@@ -420,11 +426,15 @@ export function ContractsListPanel({
                                       href={contractDocumentViewUrl(url)}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="inline-flex max-w-[200px] items-center gap-1 truncate text-xs text-accent hover:underline"
-                                      title={contractDocumentLabel(url)}
+                                      onClick={stopTableRowClick}
+                                      className="inline-flex max-w-[200px] min-w-0 items-center gap-1 text-xs text-accent hover:underline"
                                     >
-                                      {isPdfUrl(url) ? "PDF" : "Imagen"}:{" "}
-                                      {contractDocumentLabel(url)}
+                                      <TruncatedText
+                                        maxClassName="max-w-[160px]"
+                                        className="text-accent"
+                                      >
+                                        {`${isPdfUrl(url) ? "PDF" : "Imagen"}: ${contractDocumentLabel(url)}`}
+                                      </TruncatedText>
                                       <ExternalLink className="size-3 shrink-0" />
                                     </a>
                                   </li>

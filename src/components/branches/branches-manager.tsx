@@ -567,40 +567,33 @@ export function BranchesManager() {
                               {companyNameById(companies, branch.companyId)}
                             </TruncatedText>
                           </td>
-                          <td
-                            className="max-w-[220px] truncate px-5 text-card-foreground"
-                            title={
-                              branch.address
+                          <td className="max-w-[220px] px-5 text-card-foreground">
+                            <TruncatedText maxClassName="max-w-[200px]">
+                              {branch.address
                                 ? `${branch.city}, ${branch.state} — ${branch.address}`
-                                : `${branch.city}, ${branch.state}`
-                            }
-                          >
-                            {branch.city}, {branch.state}
-                            {branch.address ? ` · ${branch.address}` : ""}
+                                : `${branch.city}, ${branch.state}`}
+                            </TruncatedText>
                           </td>
-                          <td
-                            className="max-w-[200px] truncate px-5 text-muted"
-                            title={
-                              [branch.contactPersonName, branch.phone, branch.email]
-                                .filter(Boolean)
-                                .join(" · ") || undefined
-                            }
-                          >
-                            {branch.contactPersonName ||
-                              branch.phone ||
-                              branch.email ||
-                              "—"}
+                          <td className="max-w-[200px] px-5 text-muted">
+                            <TruncatedText maxClassName="max-w-[180px]">
+                              {branch.contactPersonName ||
+                                branch.phone ||
+                                branch.email ||
+                                "—"}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5">
                             <BranchTypeBadges branch={branch} />
                           </td>
-                          <td className="max-w-[180px] truncate px-5 py-3.5 text-muted">
-                            {clientDistributorSummary(
-                              branch,
-                              distributors,
-                              branches,
-                              companies,
-                            )}
+                          <td className="max-w-[180px] px-5 py-3.5 text-muted">
+                            <TruncatedText maxClassName="max-w-[160px]">
+                              {clientDistributorSummary(
+                                branch,
+                                distributors,
+                                branches,
+                                companies,
+                              )}
+                            </TruncatedText>
                           </td>
                           <TableCreatedAtCell value={branch.createdAt} />
                           <td className="px-5 py-3.5" data-row-click="ignore">

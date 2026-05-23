@@ -8,12 +8,21 @@ type HoverTooltipProps = {
   label: string;
   children: React.ReactNode;
   className?: string;
+  /** Solo muestra la burbuja si el contenido está truncado por overflow. */
+  onlyWhenOverflow?: boolean;
 };
+
+function isContentOverflowing(anchor: HTMLElement): boolean {
+  const target =
+    anchor.querySelector<HTMLElement>("[data-truncate-measure]") ?? anchor;
+  return target.scrollWidth > target.clientWidth;
+}
 
 export function HoverTooltip({
   label,
   children,
   className,
+  onlyWhenOverflow = false,
 }: HoverTooltipProps) {
   const anchorRef = useRef<HTMLSpanElement>(null);
   const [open, setOpen] = useState(false);
@@ -30,7 +39,10 @@ export function HoverTooltip({
   }, []);
 
   function handleEnter() {
-    if (!label.trim()) return;
+    if (!label.trim() || label === "—") return;
+    const anchor = anchorRef.current;
+    if (!anchor) return;
+    if (onlyWhenOverflow && !isContentOverflowing(anchor)) return;
     updatePosition();
     setOpen(true);
   }

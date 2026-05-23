@@ -61,6 +61,7 @@ import type { CompanyResponse } from "@/types/company";
 import type { EmployeeRequest } from "@/types/employee";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { TruncatedText } from "@/components/ui/truncated-text";
 import { employeePath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
@@ -546,22 +547,19 @@ export function EmployeesManager() {
                           <td className="px-5 py-3.5">
                             <EmployeeRoleBadge employee={employee} />
                           </td>
-                          <td className="max-w-[200px] truncate px-5 py-3.5 text-card-foreground">
-                            {branchLabelById(
-                              displayBranches,
-                              companies,
-                              employee.branchId,
-                            )}
+                          <td className="max-w-[200px] px-5 py-3.5 text-card-foreground">
+                            <TruncatedText maxClassName="max-w-[180px]">
+                              {branchLabelById(
+                                displayBranches,
+                                companies,
+                                employee.branchId,
+                              )}
+                            </TruncatedText>
                           </td>
-                          <td
-                            className="max-w-[200px] truncate px-5 text-muted"
-                            title={
-                              [employee.phone, employee.email]
-                                .filter(Boolean)
-                                .join(" · ") || undefined
-                            }
-                          >
-                            {employee.phone || employee.email || "—"}
+                          <td className="max-w-[200px] px-5 text-muted">
+                            <TruncatedText maxClassName="max-w-[180px]">
+                              {employee.phone || employee.email || "—"}
+                            </TruncatedText>
                           </td>
                           <TableCreatedAtCell value={employee.createdAt} />
                           <td className="px-5 py-3.5" data-row-click="ignore">

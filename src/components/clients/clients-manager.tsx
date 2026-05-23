@@ -436,14 +436,20 @@ export function ClientsManager() {
                           <td className="px-5 py-3.5 font-mono text-muted">
                             {row.rif}
                           </td>
-                          <td className="px-5 py-3.5 text-muted">
-                            {row.city}, {row.state}
+                          <td className="max-w-[180px] px-5 py-3.5 text-muted">
+                            <TruncatedText maxClassName="max-w-[160px]">
+                              {`${row.city}, ${row.state}`}
+                            </TruncatedText>
                           </td>
-                          <td className="px-5 py-3.5 text-muted">
-                            {row.phone}
+                          <td className="max-w-[140px] px-5 py-3.5 text-muted">
+                            <TruncatedText maxClassName="max-w-[120px]">
+                              {row.phone || "—"}
+                            </TruncatedText>
                           </td>
-                          <td className="px-5 py-3.5 text-muted">
-                            {row.email}
+                          <td className="max-w-[200px] px-5 py-3.5 text-muted">
+                            <TruncatedText maxClassName="max-w-[180px]">
+                              {row.email || "—"}
+                            </TruncatedText>
                           </td>
                           <TableCreatedAtCell value={row.createdAt} />
                         </ClickableTableRow>

@@ -382,9 +382,12 @@ export function CompanyBranchesTable({
                               <span className="block">{branch.phone}</span>
                             )}
                             {branch.email && (
-                              <span className="block truncate text-xs">
+                              <TruncatedText
+                                maxClassName="max-w-[200px]"
+                                className="text-xs text-muted"
+                              >
                                 {branch.email}
-                              </span>
+                              </TruncatedText>
                             )}
                             {!branch.contactPersonName &&
                               !branch.phone &&
@@ -394,13 +397,15 @@ export function CompanyBranchesTable({
                           <td className="px-5 py-3.5">
                             <BranchTypeBadges branch={branch} />
                           </td>
-                          <td className="max-w-[180px] truncate px-5 py-3.5 text-muted">
-                            {clientDistributorSummary(
-                              branch,
-                              distributors,
-                              allBranches,
-                              companies,
-                            )}
+                          <td className="max-w-[180px] px-5 py-3.5 text-muted">
+                            <TruncatedText maxClassName="max-w-[160px]">
+                              {clientDistributorSummary(
+                                branch,
+                                distributors,
+                                allBranches,
+                                companies,
+                              )}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">

@@ -54,6 +54,7 @@ import type { SealColor, SealResponse, SealStatus } from "@/types/seal";
 import { SEAL_COLORS, SEAL_STATUSES } from "@/types/seal";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { TruncatedText } from "@/components/ui/truncated-text";
 import { sealPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
@@ -551,8 +552,10 @@ export function SealsManager() {
                           <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
                             {seal.serial}
                           </td>
-                          <td className="max-w-[180px] truncate px-5 py-3.5 text-muted">
-                            {getPrinterLabel(seal.printerId)}
+                          <td className="max-w-[180px] px-5 py-3.5 text-muted">
+                            <TruncatedText maxClassName="max-w-[160px]">
+                              {getPrinterLabel(seal.printerId)}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5">
                             <SealColorBadge color={seal.color} />

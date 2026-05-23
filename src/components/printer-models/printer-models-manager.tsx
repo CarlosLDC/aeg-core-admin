@@ -43,6 +43,7 @@ import {
 import type { PrinterModelResponse } from "@/types/printer-model";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { TruncatedText } from "@/components/ui/truncated-text";
 import { printerModelPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
@@ -306,14 +307,18 @@ export function PrinterModelsManager() {
                           key={model.id}
                           href={printerModelPath(model.id)}
                         >
-                          <td className="px-5 py-3.5 font-medium text-card-foreground">
-                            {model.brand}
+                          <td className="max-w-[140px] px-5 py-3.5">
+                            <TruncatedText maxClassName="max-w-[120px]">
+                              {model.brand}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5 font-mono text-card-foreground">
                             {model.modelCode}
                           </td>
-                          <td className="max-w-[180px] truncate px-5 py-3.5 text-muted">
-                            {model.providencia || "—"}
+                          <td className="max-w-[180px] px-5 py-3.5 text-muted">
+                            <TruncatedText maxClassName="max-w-[160px]">
+                              {model.providencia || "—"}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5 text-muted">
                             {formatPrinterModelDate(model.approvalDate)}

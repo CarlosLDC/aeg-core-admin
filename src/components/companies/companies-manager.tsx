@@ -39,6 +39,7 @@ import {
 import { CONTRIBUTOR_TYPES, type CompanyResponse } from "@/types/company";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { TruncatedText } from "@/components/ui/truncated-text";
 import { companyPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
@@ -281,8 +282,13 @@ export function CompaniesManager() {
                           key={company.id}
                           href={companyPath(company.id)}
                         >
-                          <td className="px-5 py-3.5 font-medium text-card-foreground">
-                            {company.businessName || "—"}
+                          <td className="max-w-[240px] px-5 py-3.5">
+                            <TruncatedText
+                              href={companyPath(company.id)}
+                              maxClassName="max-w-[220px]"
+                            >
+                              {company.businessName || "—"}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5 font-mono text-sm text-card-foreground">
                             {company.rif}

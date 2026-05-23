@@ -11,6 +11,7 @@ type TruncatedTextProps = {
   /** Ancho máximo del texto truncado (clase Tailwind, p. ej. max-w-[160px]). */
   maxClassName?: string;
   href?: string;
+  mono?: boolean;
 };
 
 export function TruncatedText({
@@ -18,19 +19,25 @@ export function TruncatedText({
   className,
   maxClassName = "max-w-[160px]",
   href,
+  mono,
 }: TruncatedTextProps) {
   const textClass = cn(
     "block min-w-0 truncate",
     maxClassName,
+    mono && "font-mono text-sm",
     className,
     href &&
       "font-medium text-card-foreground underline-offset-2 hover:text-accent hover:underline",
   );
 
-  const inner = <span className={textClass}>{children}</span>;
+  const inner = (
+    <span className={textClass} data-truncate-measure>
+      {children}
+    </span>
+  );
 
   return (
-    <HoverTooltip label={children}>
+    <HoverTooltip label={children} onlyWhenOverflow>
       {href ? (
         <Link href={href} onClick={stopTableRowClick} className="block min-w-0">
           {inner}

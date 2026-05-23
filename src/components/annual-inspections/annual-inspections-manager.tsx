@@ -44,6 +44,7 @@ import {
 import type { AnnualInspectionResponse } from "@/types/annual-inspection";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
+import { TruncatedText } from "@/components/ui/truncated-text";
 
 export function AnnualInspectionsManager() {
   const toast = useToast();
@@ -343,13 +344,17 @@ export function AnnualInspectionsManager() {
                           key={row.id}
                           href={annualInspectionPath(row.id)}
                         >
-                          <td className="max-w-[140px] truncate px-5 py-3.5 font-mono text-card-foreground">
-                            {printerLabelById.get(String(row.printerId)) ??
-                              `#${row.printerId}`}
+                          <td className="max-w-[140px] px-5 py-3.5 font-mono text-card-foreground">
+                            <TruncatedText maxClassName="max-w-[120px]" mono>
+                              {printerLabelById.get(String(row.printerId)) ??
+                                `#${row.printerId}`}
+                            </TruncatedText>
                           </td>
-                          <td className="max-w-[180px] truncate px-5 py-3.5 text-muted">
-                            {employeeLabelById.get(String(row.employeeId)) ??
-                              `#${row.employeeId}`}
+                          <td className="max-w-[180px] px-5 py-3.5 text-muted">
+                            <TruncatedText maxClassName="max-w-[160px]">
+                              {employeeLabelById.get(String(row.employeeId)) ??
+                                `#${row.employeeId}`}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5 text-muted">
                             {formatDate(row.inspectionDate)}
