@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { TechnicalServiceFormDialog } from "@/components/technical-services/technical-service-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import {
@@ -16,7 +16,7 @@ import { filterAllOption } from "@/lib/table-filter-options";
 import { technicalServicePath } from "@/lib/resource-routes";
 import { hrefForEmployee, hrefForPrinter } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
-import { ViewResourceLink } from "@/components/ui/view-resource-link";
+import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
@@ -388,41 +388,23 @@ export function TechnicalServicesManager() {
                             <TableCreatedAtCell value={row.createdAt} />
                           )}
                           <td className="px-5 py-3.5" data-row-click="ignore">
-                            <div className="flex justify-end gap-1">
-                              <ViewResourceLink
-                                href={technicalServicePath(row.id)}
-                                label={`Ver servicio técnico #${row.id}`}
-                              />
-                              {canModify && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setSelected(row);
-                                    setFormError(null);
-                                    setDialog("edit");
-                                  }}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                  aria-label={`Editar servicio #${row.id}`}
-                                >
-                                  <Pencil className="size-4" />
-                                </button>
-                              )}
-                              {canDelete && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDelete(row)}
-                                  disabled={deletingId === row.id}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                  aria-label={`Eliminar servicio #${row.id}`}
-                                >
-                                {deletingId === row.id ? (
-                                  <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                  <Trash2 className="size-4" />
-                                )}
-                              </button>
-                              )}
-                            </div>
+                            <TableRowActionsMenu
+                              viewHref={technicalServicePath(row.id)}
+                              viewLabel={`Ver servicio técnico #${row.id}`}
+                              onEdit={
+                                canModify
+                                  ? () => {
+                                      setSelected(row);
+                                      setFormError(null);
+                                      setDialog("edit");
+                                    }
+                                  : undefined
+                              }
+                              onDelete={
+                                canDelete ? () => handleDelete(row) : undefined
+                              }
+                              deleting={deletingId === row.id}
+                            />
                           </td>
                         </ClickableTableRow>
                       ))}
@@ -441,7 +423,6 @@ export function TechnicalServicesManager() {
         row={selected ?? undefined}
         open={dialog !== null}
         saving={saving}
-        deleting={Boolean(selected && deletingId === selected.id)}
         error={formError}
         catalogLoading={catalog.loading}
         canLoadPrinters={catalog.canLoadPrinters}
@@ -452,11 +433,6 @@ export function TechnicalServicesManager() {
         distributorOptions={catalog.distributorOptions}
         onClose={closeDialog}
         onSubmit={handleSubmit}
-        onDelete={
-          dialog === "edit" && selected
-            ? () => void handleDelete(selected, true)
-            : undefined
-        }
       />
     </div>
   );

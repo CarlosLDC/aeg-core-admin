@@ -33,8 +33,6 @@ type SealFormDialogProps = {
   printersLoading: boolean;
   onClose: () => void;
   onSubmit: (values: SealFormValues) => void;
-  onDelete?: () => void;
-  deleting?: boolean;
 };
 
 export function SealFormDialog({
@@ -47,8 +45,6 @@ export function SealFormDialog({
   printersLoading,
   onClose,
   onSubmit,
-  onDelete,
-  deleting = false,
 }: SealFormDialogProps) {
   const [form, setForm] = useState<SealFormValues>(emptySealForm());
   const [fieldErrors, setFieldErrors] = useState<
@@ -247,10 +243,8 @@ export function SealFormDialog({
           <FormDialogFooter
             mode={mode}
             saving={saving}
-            deleting={deleting}
             submitDisabled={printersLoading}
             onClose={onClose}
-            onDelete={onDelete}
           />
         </form>
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Layers, Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Layers, Loader2, Plus, RefreshCw } from "lucide-react";
 import {
   SealBatchFormDialog,
   type SealBatchSubmitPayload,
@@ -58,7 +58,7 @@ import { TruncatedText } from "@/components/ui/truncated-text";
 import { sealPath } from "@/lib/resource-routes";
 import { hrefForPrinter } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
-import { ViewResourceLink } from "@/components/ui/view-resource-link";
+import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
 export function SealsManager() {
   const toast = useToast();
@@ -578,37 +578,17 @@ export function SealsManager() {
                             {formatSealDate(seal.removalDate)}
                           </td>
                           <td className="px-5 py-3.5" data-row-click="ignore">
-                            <div className="flex justify-end gap-1">
-                              <ViewResourceLink
-                                href={sealPath(seal.id)}
-                                label={`Ver precinto ${seal.serial}`}
-                              />
-                              {canModify && (
-                                <button
-                                  type="button"
-                                  onClick={() => openEdit(seal)}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                  aria-label={`Editar ${seal.serial}`}
-                                >
-                                  <Pencil className="size-4" />
-                                </button>
-                              )}
-                              {canDelete && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDelete(seal)}
-                                  disabled={deletingId === seal.id}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                  aria-label={`Eliminar ${seal.serial}`}
-                                >
-                                  {deletingId === seal.id ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="size-4" />
-                                  )}
-                                </button>
-                              )}
-                            </div>
+                            <TableRowActionsMenu
+                              viewHref={sealPath(seal.id)}
+                              viewLabel={`Ver precinto ${seal.serial}`}
+                              onEdit={
+                                canModify ? () => openEdit(seal) : undefined
+                              }
+                              onDelete={
+                                canDelete ? () => handleDelete(seal) : undefined
+                              }
+                              deleting={deletingId === seal.id}
+                            />
                           </td>
                         </ClickableTableRow>
                       ))}
@@ -636,17 +616,11 @@ export function SealsManager() {
         seal={selected ?? undefined}
         open={dialog === "create" || dialog === "edit"}
         saving={saving}
-        deleting={Boolean(selected && deletingId === selected.id)}
         error={formError}
         printerOptions={printerOptions}
         printersLoading={printersLoading}
         onClose={closeDialog}
         onSubmit={handleSubmit}
-        onDelete={
-          dialog === "edit" && selected
-            ? () => void handleDelete(selected, true)
-            : undefined
-        }
       />
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
 import {
   BranchCreateWizardDialog,
@@ -66,7 +66,7 @@ import { TruncatedText } from "@/components/ui/truncated-text";
 import { branchPath, companyPath } from "@/lib/resource-routes";
 import { hrefForBranchClientDistributor } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
-import { ViewResourceLink } from "@/components/ui/view-resource-link";
+import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
 const TYPE_FILTER_OPTIONS = [
   { value: "all", label: "Todos los tipos" },
@@ -614,37 +614,19 @@ export function BranchesManager() {
                             <TableCreatedAtCell value={branch.createdAt} />
                           )}
                           <td className="px-5 py-3.5" data-row-click="ignore">
-                            <div className="flex justify-end gap-1">
-                              <ViewResourceLink
-                                href={branchPath(branch.id)}
-                                label={`Ver sucursal ${branch.city}, ${branch.state}`}
-                              />
-                              {canModify && (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => openEdit(branch)}
-                                    className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                    aria-label="Editar sucursal"
-                                  >
-                                    <Pencil className="size-4" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDelete(branch)}
-                                    disabled={deletingId === branch.id}
-                                    className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                    aria-label="Eliminar sucursal"
-                                  >
-                                    {deletingId === branch.id ? (
-                                      <Loader2 className="size-4 animate-spin" />
-                                    ) : (
-                                      <Trash2 className="size-4" />
-                                    )}
-                                  </button>
-                                </>
-                              )}
-                            </div>
+                            <TableRowActionsMenu
+                              viewHref={branchPath(branch.id)}
+                              viewLabel={`Ver sucursal ${branch.city}, ${branch.state}`}
+                              onEdit={
+                                canModify ? () => openEdit(branch) : undefined
+                              }
+                              onDelete={
+                                canModify
+                                  ? () => handleDelete(branch)
+                                  : undefined
+                              }
+                              deleting={deletingId === branch.id}
+                            />
                           </td>
                         </ClickableTableRow>
                       ))}
@@ -683,12 +665,6 @@ export function BranchesManager() {
         error={formError}
         onClose={closeDialog}
         onSubmit={handleSubmit}
-        deleting={Boolean(selected && deletingId === selected.id)}
-        onDelete={
-          selected && canModify
-            ? () => void handleDelete(selected, true)
-            : undefined
-        }
       />
     </div>
   );

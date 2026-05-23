@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { RoleBadge } from "@/components/users/role-badge";
 import {
   UserFormDialog,
@@ -47,7 +47,7 @@ import { TruncatedText } from "@/components/ui/truncated-text";
 import { userPath } from "@/lib/resource-routes";
 import { hrefForBranch } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
-import { ViewResourceLink } from "@/components/ui/view-resource-link";
+import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
 function parseRequiredId(value: string): number {
   return Number(value);
@@ -424,33 +424,13 @@ export function UsersManager() {
                             </span>
                           </td>
                           <td className="px-5 py-3.5" data-row-click="ignore">
-                            <div className="flex justify-end gap-1">
-                              <ViewResourceLink
-                                href={userPath(user.id)}
-                                label={`Ver usuario ${displayUserName(user)}`}
-                              />
-                              <button
-                                type="button"
-                                onClick={() => openEdit(user)}
-                                className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                aria-label={`Editar ${displayUserName(user)}`}
-                              >
-                                <Pencil className="size-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(user)}
-                                disabled={deletingId === user.id}
-                                className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                aria-label={`Eliminar ${displayUserName(user)}`}
-                              >
-                                {deletingId === user.id ? (
-                                  <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                  <Trash2 className="size-4" />
-                                )}
-                              </button>
-                            </div>
+                            <TableRowActionsMenu
+                              viewHref={userPath(user.id)}
+                              viewLabel={`Ver usuario ${displayUserName(user)}`}
+                              onEdit={() => openEdit(user)}
+                              onDelete={() => handleDelete(user)}
+                              deleting={deletingId === user.id}
+                            />
                           </td>
                         </ClickableTableRow>
                       ))}
@@ -477,12 +457,6 @@ export function UsersManager() {
         error={formError}
         onClose={closeDialog}
         onSubmit={handleSubmit}
-        deleting={Boolean(selected && deletingId === selected.id)}
-        onDelete={
-          dialog === "edit" && selected
-            ? () => void handleDelete(selected, true)
-            : undefined
-        }
       />
     </div>
   );

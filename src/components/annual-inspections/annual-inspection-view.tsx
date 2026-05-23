@@ -233,17 +233,15 @@ export function AnnualInspectionView() {
           row={inspection}
           open={editOpen}
           saving={saving}
-          deleting={deleting}
           error={formError}
           catalogLoading={catalog.loading}
           canLoadPrinters={catalog.canLoadPrinters}
           printerOptions={catalog.printerOptions}
           employeeOptions={catalog.employeeOptions}
           onClose={() => {
-            if (!saving && !deleting) setEditOpen(false);
+            if (!saving) setEditOpen(false);
           }}
           onSubmit={handleSubmit}
-          onDelete={() => void handleDelete()}
         />
       )}
     </>

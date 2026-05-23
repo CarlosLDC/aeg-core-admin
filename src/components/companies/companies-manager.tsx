@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { ContributorBadge } from "@/components/companies/contributor-badge";
 import {
   CompanyFormDialog,
@@ -43,7 +43,7 @@ import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { companyPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
-import { ViewResourceLink } from "@/components/ui/view-resource-link";
+import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
 export function CompaniesManager() {
   const toast = useToast();
@@ -303,37 +303,19 @@ export function CompaniesManager() {
                             <TableCreatedAtCell value={company.createdAt} />
                           )}
                           <td className="px-5 py-3.5" data-row-click="ignore">
-                            <div className="flex justify-end gap-1">
-                              <ViewResourceLink
-                                href={companyPath(company.id)}
-                                label={`Ver empresa ${company.businessName || company.rif}`}
-                              />
-                              {canModify && (
-                                <button
-                                  type="button"
-                                  onClick={() => openEdit(company)}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                  aria-label={`Editar ${company.businessName}`}
-                                >
-                                  <Pencil className="size-4" />
-                                </button>
-                              )}
-                              {canModify && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDelete(company)}
-                                  disabled={deletingId === company.id}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                  aria-label={`Eliminar ${company.businessName}`}
-                                >
-                                  {deletingId === company.id ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="size-4" />
-                                  )}
-                                </button>
-                              )}
-                            </div>
+                            <TableRowActionsMenu
+                              viewHref={companyPath(company.id)}
+                              viewLabel={`Ver empresa ${company.businessName || company.rif}`}
+                              onEdit={
+                                canModify ? () => openEdit(company) : undefined
+                              }
+                              onDelete={
+                                canModify
+                                  ? () => handleDelete(company)
+                                  : undefined
+                              }
+                              deleting={deletingId === company.id}
+                            />
                           </td>
                         </ClickableTableRow>
                       ))}
@@ -353,15 +335,9 @@ export function CompaniesManager() {
           company={selected ?? undefined}
           open={dialog !== null}
           saving={saving}
-          deleting={Boolean(selected && deletingId === selected.id)}
           error={formError}
           onClose={closeDialog}
           onSubmit={handleSubmit}
-          onDelete={
-            dialog === "edit" && selected && canModify
-              ? () => void handleDelete(selected, true)
-              : undefined
-          }
         />
       )}
     </div>

@@ -39,8 +39,6 @@ type BranchFormDialogProps = {
   error: string | null;
   onClose: () => void;
   onSubmit: (values: BranchFormValues) => void;
-  onDelete?: () => void;
-  deleting?: boolean;
 };
 
 const emptyForm: BranchFormValues = {
@@ -81,8 +79,6 @@ export function BranchFormDialog({
   error,
   onClose,
   onSubmit,
-  onDelete,
-  deleting = false,
 }: BranchFormDialogProps) {
   const titleId = useId();
   const [form, setForm] = useState<BranchFormValues>(emptyForm);
@@ -381,10 +377,8 @@ export function BranchFormDialog({
           <FormDialogFooter
             mode={mode}
             saving={saving}
-            deleting={deleting}
             submitDisabled={companiesLoading || !form.companyId}
             onClose={onClose}
-            onDelete={onDelete}
           />
         </form>
       </div>

@@ -287,15 +287,13 @@ export function SealView() {
           seal={seal}
           open={editOpen}
           saving={saving}
-          deleting={deleting}
           error={formError}
           printerOptions={printerOptions}
           printersLoading={printersLoading}
           onClose={() => {
-            if (!saving && !deleting) setEditOpen(false);
+            if (!saving) setEditOpen(false);
           }}
           onSubmit={handleSubmit}
-          onDelete={() => void handleDelete()}
         />
       )}
     </>

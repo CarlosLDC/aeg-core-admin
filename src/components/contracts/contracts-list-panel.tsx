@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ExternalLink, Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { ExternalLink, Loader2, Plus, RefreshCw } from "lucide-react";
 import { ContractFormDialog } from "@/components/contracts/contract-form-dialog";
 import { ContractStatusBadge } from "@/components/contracts/contract-status-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
@@ -32,7 +32,7 @@ import {
   ClickableTableRow,
   stopTableRowClick,
 } from "@/components/ui/clickable-table-row";
-import { ViewResourceLink } from "@/components/ui/view-resource-link";
+import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
@@ -456,37 +456,19 @@ export function ContractsListPanel({
                             <TableCreatedAtCell value={contract.createdAt} />
                           )}
                           <td className="px-5 py-3.5" data-row-click="ignore">
-                            <div className="flex justify-end gap-1">
-                              <ViewResourceLink
-                                href={contractHref}
-                                label={`Ver contrato #${contract.id}`}
-                              />
-                              {canModify && (
-                                <button
-                                  type="button"
-                                  onClick={() => openEdit(contract)}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                  aria-label="Editar contrato"
-                                >
-                                  <Pencil className="size-4" />
-                                </button>
-                              )}
-                              {canDelete && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDelete(contract)}
-                                  disabled={deletingId === contract.id}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                  aria-label="Eliminar contrato"
-                                >
-                                  {deletingId === contract.id ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="size-4" />
-                                  )}
-                                </button>
-                              )}
-                            </div>
+                            <TableRowActionsMenu
+                              viewHref={contractHref}
+                              viewLabel={`Ver contrato #${contract.id}`}
+                              onEdit={
+                                canModify ? () => openEdit(contract) : undefined
+                              }
+                              onDelete={
+                                canDelete
+                                  ? () => handleDelete(contract)
+                                  : undefined
+                              }
+                              deleting={deletingId === contract.id}
+                            />
                           </td>
                         </ClickableTableRow>
                       );
@@ -512,12 +494,6 @@ export function ContractsListPanel({
         error={formError}
         onClose={closeDialog}
         onSubmit={handleSubmit}
-        deleting={Boolean(selected && deletingId === selected.id)}
-        onDelete={
-          dialog === "edit" && selected
-            ? () => void handleDelete(selected, true)
-            : undefined
-        }
       />
     </div>
   );

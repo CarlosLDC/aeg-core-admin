@@ -481,7 +481,6 @@ export function PrinterView() {
           printer={printer}
           open={editOpen}
           saving={saving}
-          deleting={deleting}
           error={formError}
           modelOptions={modelOptions}
           softwareOptions={software}
@@ -493,10 +492,9 @@ export function PrinterView() {
           lockDistributor={lockDistributor}
           defaultDistributorId={distributorId}
           onClose={() => {
-            if (!saving && !deleting) setEditOpen(false);
+            if (!saving) setEditOpen(false);
           }}
           onSubmit={handleSubmit}
-          onDelete={() => void handleDelete()}
         />
       )}
     </>

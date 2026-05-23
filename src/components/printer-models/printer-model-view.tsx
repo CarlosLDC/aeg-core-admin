@@ -182,13 +182,11 @@ export function PrinterModelView() {
           model={model}
           open={editOpen}
           saving={saving}
-          deleting={deleting}
           error={formError}
           onClose={() => {
-            if (!saving && !deleting) setEditOpen(false);
+            if (!saving) setEditOpen(false);
           }}
           onSubmit={handleSubmit}
-          onDelete={() => void handleDelete()}
         />
       )}
     </>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Layers, Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Layers, Loader2, Plus, RefreshCw } from "lucide-react";
 import {
   PrinterBatchFormDialog,
   type PrinterBatchSubmitPayload,
@@ -77,7 +77,7 @@ import {
   hrefForPrinterModel,
 } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
-import { ViewResourceLink } from "@/components/ui/view-resource-link";
+import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
 function clientLabel(
   client: ClientResponse,
@@ -728,37 +728,19 @@ export function PrintersManager() {
                             <TableCreatedAtCell value={printer.createdAt} />
                           )}
                           <td className="px-5 py-3.5" data-row-click="ignore">
-                            <div className="flex justify-end gap-1">
-                              <ViewResourceLink
-                                href={printerPath(printer.id)}
-                                label={`Ver impresora ${printer.fiscalSerial}`}
-                              />
-                              {canModify && (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => openEdit(printer)}
-                                    className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                    aria-label={`Editar ${printer.fiscalSerial}`}
-                                  >
-                                    <Pencil className="size-4" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDelete(printer)}
-                                    disabled={deletingId === printer.id}
-                                    className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                    aria-label={`Eliminar ${printer.fiscalSerial}`}
-                                  >
-                                    {deletingId === printer.id ? (
-                                      <Loader2 className="size-4 animate-spin" />
-                                    ) : (
-                                      <Trash2 className="size-4" />
-                                    )}
-                                  </button>
-                                </>
-                              )}
-                            </div>
+                            <TableRowActionsMenu
+                              viewHref={printerPath(printer.id)}
+                              viewLabel={`Ver impresora ${printer.fiscalSerial}`}
+                              onEdit={
+                                canModify ? () => openEdit(printer) : undefined
+                              }
+                              onDelete={
+                                canModify
+                                  ? () => handleDelete(printer)
+                                  : undefined
+                              }
+                              deleting={deletingId === printer.id}
+                            />
                           </td>
                         </ClickableTableRow>
                       ))}
@@ -819,12 +801,6 @@ export function PrintersManager() {
         defaultDistributorId={distributorId}
         onClose={closeDialog}
         onSubmit={handleSubmit}
-        deleting={Boolean(selected && deletingId === selected.id)}
-        onDelete={
-          selected && canModify
-            ? () => void handleDelete(selected, true)
-            : undefined
-        }
       />
     </div>
   );

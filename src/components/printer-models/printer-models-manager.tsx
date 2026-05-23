@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { PrinterModelFormDialog } from "@/components/printer-models/printer-model-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import {
@@ -47,7 +47,7 @@ import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { printerModelPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
-import { ViewResourceLink } from "@/components/ui/view-resource-link";
+import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
 function modelLabel(model: PrinterModelResponse) {
   return `${model.brand} ${model.modelCode}`.trim();
@@ -333,37 +333,17 @@ export function PrinterModelsManager() {
                             <TableCreatedAtCell value={model.createdAt} />
                           )}
                           <td className="px-5 py-3.5" data-row-click="ignore">
-                            <div className="flex justify-end gap-1">
-                              <ViewResourceLink
-                                href={printerModelPath(model.id)}
-                                label={`Ver modelo ${modelLabel(model)}`}
-                              />
-                              {canModify && (
-                                <button
-                                  type="button"
-                                  onClick={() => openEdit(model)}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                  aria-label={`Editar ${modelLabel(model)}`}
-                                >
-                                  <Pencil className="size-4" />
-                                </button>
-                              )}
-                              {canDelete && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDelete(model)}
-                                  disabled={deletingId === model.id}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                  aria-label={`Eliminar ${modelLabel(model)}`}
-                                >
-                                  {deletingId === model.id ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="size-4" />
-                                  )}
-                                </button>
-                              )}
-                            </div>
+                            <TableRowActionsMenu
+                              viewHref={printerModelPath(model.id)}
+                              viewLabel={`Ver modelo ${modelLabel(model)}`}
+                              onEdit={
+                                canModify ? () => openEdit(model) : undefined
+                              }
+                              onDelete={
+                                canDelete ? () => handleDelete(model) : undefined
+                              }
+                              deleting={deletingId === model.id}
+                            />
                           </td>
                         </ClickableTableRow>
                       ))}
@@ -385,12 +365,6 @@ export function PrinterModelsManager() {
         error={formError}
         onClose={closeDialog}
         onSubmit={handleSubmit}
-        deleting={Boolean(selected && deletingId === selected.id)}
-        onDelete={
-          dialog === "edit" && selected
-            ? () => void handleDelete(selected, true)
-            : undefined
-        }
       />
     </div>
   );

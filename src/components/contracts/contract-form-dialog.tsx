@@ -25,8 +25,6 @@ type ContractFormDialogProps = {
   error: string | null;
   onClose: () => void;
   onSubmit: (values: ContractFormValues) => void;
-  onDelete?: () => void;
-  deleting?: boolean;
 };
 
 const emptyForm: ContractFormValues = {
@@ -57,8 +55,6 @@ export function ContractFormDialog({
   error,
   onClose,
   onSubmit,
-  onDelete,
-  deleting = false,
 }: ContractFormDialogProps) {
   const [form, setForm] = useState<ContractFormValues>(emptyForm);
 
@@ -202,7 +198,6 @@ export function ContractFormDialog({
           <FormDialogFooter
             mode={mode}
             saving={saving}
-            deleting={deleting}
             submitDisabled={
               catalogLoading ||
               !form.partyId ||
@@ -211,7 +206,6 @@ export function ContractFormDialog({
               form.photoUrls.length === 0
             }
             onClose={onClose}
-            onDelete={onDelete}
           />
         </form>
       </div>

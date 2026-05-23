@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { EmployeeFormDialog } from "@/components/employees/employee-form-dialog";
 import { EmployeeRoleBadge } from "@/components/employees/employee-role-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
@@ -66,7 +66,7 @@ import { TruncatedText } from "@/components/ui/truncated-text";
 import { employeePath } from "@/lib/resource-routes";
 import { hrefForBranch } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
-import { ViewResourceLink } from "@/components/ui/view-resource-link";
+import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
 function employeeLabel(employee: EmployeeWithRoles) {
   return `${employee.name} (${employee.nationalId})`;
@@ -576,37 +576,21 @@ export function EmployeesManager() {
                             <TableCreatedAtCell value={employee.createdAt} />
                           )}
                           <td className="px-5 py-3.5" data-row-click="ignore">
-                            <div className="flex justify-end gap-1">
-                              <ViewResourceLink
-                                href={employeePath(employee.id)}
-                                label={`Ver empleado ${employee.name}`}
-                              />
-                              {showActions && (
-                                <button
-                                  type="button"
-                                  onClick={() => openEdit(employee)}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
-                                  aria-label={`Editar ${employee.name}`}
-                                >
-                                  <Pencil className="size-4" />
-                                </button>
-                              )}
-                              {canModify && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDelete(employee)}
-                                  disabled={deletingId === employee.id}
-                                  className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                                  aria-label={`Eliminar ${employee.name}`}
-                                >
-                                  {deletingId === employee.id ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="size-4" />
-                                  )}
-                                </button>
-                              )}
-                            </div>
+                            <TableRowActionsMenu
+                              viewHref={employeePath(employee.id)}
+                              viewLabel={`Ver empleado ${employee.name}`}
+                              onEdit={
+                                showActions
+                                  ? () => openEdit(employee)
+                                  : undefined
+                              }
+                              onDelete={
+                                canModify
+                                  ? () => handleDelete(employee)
+                                  : undefined
+                              }
+                              deleting={deletingId === employee.id}
+                            />
                           </td>
                         </ClickableTableRow>
                       ))}
@@ -634,15 +618,9 @@ export function EmployeesManager() {
           lockBranch={isDistributor && staffBranches.length === 1}
           open={dialog !== null}
           saving={saving}
-          deleting={Boolean(selected && deletingId === selected.id)}
           error={formError}
           onClose={closeDialog}
           onSubmit={handleSubmit}
-          onDelete={
-            dialog === "edit" && selected && canModify
-              ? () => void handleDelete(selected, true)
-              : undefined
-          }
         />
       )}
     </div>

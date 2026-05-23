@@ -49,8 +49,6 @@ type PrinterFormDialogProps = {
   defaultDistributorId?: number | null;
   onClose: () => void;
   onSubmit: (values: PrinterFormValues) => void;
-  onDelete?: () => void;
-  deleting?: boolean;
 };
 
 export function PrinterFormDialog({
@@ -70,8 +68,6 @@ export function PrinterFormDialog({
   defaultDistributorId,
   onClose,
   onSubmit,
-  onDelete,
-  deleting = false,
 }: PrinterFormDialogProps) {
   const formId = useId();
   const titleId = useId();
@@ -456,10 +452,8 @@ export function PrinterFormDialog({
             <FormDialogFooter
               mode={mode}
               saving={saving}
-              deleting={deleting}
               submitDisabled={modelsLoading || catalogLoading}
               onClose={onClose}
-              onDelete={onDelete}
             />
           </div>
         </form>

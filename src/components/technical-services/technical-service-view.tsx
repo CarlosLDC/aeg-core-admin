@@ -298,7 +298,6 @@ export function TechnicalServiceView() {
           row={service}
           open={editOpen}
           saving={saving}
-          deleting={deleting}
           error={formError}
           catalogLoading={catalog.loading}
           canLoadPrinters={catalog.canLoadPrinters}
@@ -308,10 +307,9 @@ export function TechnicalServiceView() {
           serviceCenterOptions={catalog.serviceCenterOptions}
           distributorOptions={catalog.distributorOptions}
           onClose={() => {
-            if (!saving && !deleting) setEditOpen(false);
+            if (!saving) setEditOpen(false);
           }}
           onSubmit={handleSubmit}
-          onDelete={() => void handleDelete()}
         />
       )}
     </>

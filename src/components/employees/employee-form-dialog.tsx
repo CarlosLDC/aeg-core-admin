@@ -36,8 +36,6 @@ type EmployeeFormDialogProps = {
   error: string | null;
   onClose: () => void;
   onSubmit: (values: EmployeeFormValues) => void;
-  onDelete?: () => void;
-  deleting?: boolean;
 };
 
 const emptyForm: EmployeeFormValues = {
@@ -63,8 +61,6 @@ export function EmployeeFormDialog({
   error,
   onClose,
   onSubmit,
-  onDelete,
-  deleting = false,
 }: EmployeeFormDialogProps) {
   const [form, setForm] = useState<EmployeeFormValues>(emptyForm);
 
@@ -264,10 +260,8 @@ export function EmployeeFormDialog({
           <FormDialogFooter
             mode={mode}
             saving={saving}
-            deleting={deleting}
             submitDisabled={branchesLoading}
             onClose={onClose}
-            onDelete={onDelete}
           />
         </form>
       </div>

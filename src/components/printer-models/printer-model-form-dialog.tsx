@@ -16,8 +16,6 @@ type PrinterModelFormDialogProps = {
   error: string | null;
   onClose: () => void;
   onSubmit: (values: PrinterModelFormValues) => void;
-  onDelete?: () => void;
-  deleting?: boolean;
 };
 
 const emptyForm: PrinterModelFormValues = {
@@ -41,8 +39,6 @@ export function PrinterModelFormDialog({
   error,
   onClose,
   onSubmit,
-  onDelete,
-  deleting = false,
 }: PrinterModelFormDialogProps) {
   const [form, setForm] = useState<PrinterModelFormValues>(emptyForm);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -187,9 +183,7 @@ export function PrinterModelFormDialog({
           <FormDialogFooter
             mode={mode}
             saving={saving}
-            deleting={deleting}
             onClose={onClose}
-            onDelete={onDelete}
           />
         </form>
       </div>

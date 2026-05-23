@@ -30,8 +30,6 @@ type TechnicalServiceFormDialogProps = {
   distributorOptions: SearchableSelectOption[];
   onClose: () => void;
   onSubmit: (values: TechnicalServiceFormValues) => void;
-  onDelete?: () => void;
-  deleting?: boolean;
 };
 
 export function TechnicalServiceFormDialog({
@@ -49,8 +47,6 @@ export function TechnicalServiceFormDialog({
   distributorOptions,
   onClose,
   onSubmit,
-  onDelete,
-  deleting = false,
 }: TechnicalServiceFormDialogProps) {
   const [form, setForm] = useState<TechnicalServiceFormValues>(
     emptyTechnicalServiceForm(),
@@ -409,10 +405,8 @@ export function TechnicalServiceFormDialog({
           <FormDialogFooter
             mode={mode}
             saving={saving}
-            deleting={deleting}
             submitDisabled={catalogLoading || form.photoUrls.length === 0}
             onClose={onClose}
-            onDelete={onDelete}
           />
         </form>
       </div>

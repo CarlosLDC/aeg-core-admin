@@ -28,8 +28,6 @@ type CompanyFormDialogProps = {
   error: string | null;
   onClose: () => void;
   onSubmit: (values: CompanyFormValues) => void;
-  onDelete?: () => void;
-  deleting?: boolean;
 };
 
 const emptyForm: CompanyFormValues = {
@@ -46,8 +44,6 @@ export function CompanyFormDialog({
   error,
   onClose,
   onSubmit,
-  onDelete,
-  deleting = false,
 }: CompanyFormDialogProps) {
   const [form, setForm] = useState<CompanyFormValues>(emptyForm);
   const [fieldErrors, setFieldErrors] = useState<
@@ -188,9 +184,7 @@ export function CompanyFormDialog({
           <FormDialogFooter
             mode={mode}
             saving={saving}
-            deleting={deleting}
             onClose={onClose}
-            onDelete={onDelete}
           />
         </form>
       </div>

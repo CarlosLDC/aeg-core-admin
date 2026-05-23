@@ -39,8 +39,6 @@ type UserFormDialogProps = {
   error: string | null;
   onClose: () => void;
   onSubmit: (values: UserFormValues) => void;
-  onDelete?: () => void;
-  deleting?: boolean;
 };
 
 const emptyForm: UserFormValues = {
@@ -65,8 +63,6 @@ export function UserFormDialog({
   error,
   onClose,
   onSubmit,
-  onDelete,
-  deleting = false,
 }: UserFormDialogProps) {
   const [form, setForm] = useState<UserFormValues>(emptyForm);
 
@@ -348,10 +344,8 @@ export function UserFormDialog({
           <FormDialogFooter
             mode={mode}
             saving={saving}
-            deleting={deleting}
             submitDisabled={branchesLoading}
             onClose={onClose}
-            onDelete={onDelete}
             createLabel="Crear usuario"
           />
         </form>

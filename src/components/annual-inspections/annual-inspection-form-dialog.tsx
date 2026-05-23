@@ -27,8 +27,6 @@ type AnnualInspectionFormDialogProps = {
   employeeOptions: SearchableSelectOption[];
   onClose: () => void;
   onSubmit: (values: AnnualInspectionFormValues) => void;
-  onDelete?: () => void;
-  deleting?: boolean;
 };
 
 export function AnnualInspectionFormDialog({
@@ -43,8 +41,6 @@ export function AnnualInspectionFormDialog({
   employeeOptions,
   onClose,
   onSubmit,
-  onDelete,
-  deleting = false,
 }: AnnualInspectionFormDialogProps) {
   const [form, setForm] = useState<AnnualInspectionFormValues>(
     emptyAnnualInspectionForm(),
@@ -232,10 +228,8 @@ export function AnnualInspectionFormDialog({
           <FormDialogFooter
             mode={mode}
             saving={saving}
-            deleting={deleting}
             submitDisabled={catalogLoading || form.photoUrls.length === 0}
             onClose={onClose}
-            onDelete={onDelete}
           />
         </form>
       </div>
