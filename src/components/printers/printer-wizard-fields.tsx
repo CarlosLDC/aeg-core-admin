@@ -241,6 +241,7 @@ export function PrinterWizardFields({
               loading={catalogLoading}
               emptyLabel="Sin asignar"
               searchPlaceholder="Buscar distribuidor…"
+              modalTitle="Seleccionar distribuidor"
             />
           </div>
           <div className="block">
@@ -253,6 +254,7 @@ export function PrinterWizardFields({
               loading={catalogLoading}
               emptyLabel="Sin asignar"
               searchPlaceholder="Buscar cliente…"
+              modalTitle="Seleccionar cliente"
             />
           </div>
         </div>
@@ -269,6 +271,7 @@ export function PrinterWizardFields({
               loading={catalogLoading}
               emptyLabel="Sin asignar"
               searchPlaceholder="Buscar software…"
+              modalTitle="Seleccionar software"
             />
           </div>
         )}

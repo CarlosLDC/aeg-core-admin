@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
+import { SearchablePickerModal } from "@/components/ui/searchable-picker-modal";
 import { cn } from "@/lib/utils";
 
 export type SearchableSelectOption = {
@@ -9,6 +10,8 @@ export type SearchableSelectOption = {
   label: string;
   /** Texto extra para filtrar (p. ej. dirección, serial) */
   searchText?: string;
+  /** Línea secundaria bajo la etiqueta principal */
+  description?: string;
 };
 
 type SearchableSelectProps = {
@@ -19,6 +22,7 @@ type SearchableSelectProps = {
   loading?: boolean;
   emptyLabel?: string;
   searchPlaceholder?: string;
+  modalTitle?: string;
   required?: boolean;
   mono?: boolean;
 };
@@ -31,12 +35,12 @@ export function SearchableSelect({
   loading,
   emptyLabel = "Sin seleccionar",
   searchPlaceholder = "Buscar…",
+  modalTitle,
   required,
   mono,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const rootRef = useRef<HTMLDivElement>(null);
 
   const selected = options.find((opt) => opt.value === value);
 
@@ -44,27 +48,26 @@ export function SearchableSelect({
     const q = query.trim().toLowerCase();
     if (!q) return options;
     return options.filter((opt) => {
-      const haystack = `${opt.value} ${opt.label} ${opt.searchText ?? ""}`
+      const haystack = `${opt.value} ${opt.label} ${opt.searchText ?? ""} ${opt.description ?? ""}`
         .toLowerCase();
       return haystack.includes(q);
     });
   }, [options, query]);
 
-  useEffect(() => {
-    if (!open) return;
-    function onPointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
-  }, [open]);
+  function openPicker() {
+    if (disabled || loading) return;
+    setQuery("");
+    setOpen(true);
+  }
+
+  function closePicker() {
+    setOpen(false);
+    setQuery("");
+  }
 
   function pick(next: string) {
     onChange(next);
-    setOpen(false);
-    setQuery("");
+    closePicker();
   }
 
   const triggerLabel = loading
@@ -76,15 +79,16 @@ export function SearchableSelect({
         : `#${value}`;
 
   const showClear = !required;
+  const pickerTitle = modalTitle ?? searchPlaceholder.replace(/…$/, "");
 
   return (
-    <div ref={rootRef} className="relative">
+    <>
       <button
         type="button"
         disabled={disabled || loading}
-        onClick={() => setOpen((o) => !o)}
+        onClick={openPicker}
+        aria-haspopup="dialog"
         aria-expanded={open}
-        aria-haspopup="listbox"
         className={cn(
           "flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-left text-sm outline-none transition-shadow",
           "focus:border-accent focus:ring-2 focus:ring-ring/20",
@@ -94,82 +98,75 @@ export function SearchableSelect({
         <span className={cn("min-w-0 truncate", mono && "font-mono")}>
           {triggerLabel}
         </span>
-        <ChevronDown
-          className={cn(
-            "size-4 shrink-0 text-muted transition-transform",
-            open && "rotate-180",
-          )}
-        />
+        <ChevronDown className="size-4 shrink-0 text-muted" />
       </button>
 
-      {open && (
-        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
-          <div className="border-b border-border p-2">
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={searchPlaceholder}
-              className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-ring/30"
-              autoFocus
-            />
-          </div>
-
-          <ul
-            className="max-h-48 overflow-y-auto overscroll-contain py-1"
-            role="listbox"
-          >
-            {showClear && (
-              <li>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={value === ""}
-                  onClick={() => pick("")}
-                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-foreground/5"
-                >
-                  <span className="text-muted">{emptyLabel}</span>
-                  {value === "" && (
-                    <Check className="size-4 shrink-0 text-accent" />
-                  )}
-                </button>
-              </li>
-            )}
-            {filtered.length === 0 ? (
-              <li className="px-3 py-3 text-center text-xs text-muted">
-                Sin resultados
-              </li>
-            ) : (
-              filtered.map((opt) => {
-                const isSelected = value === opt.value;
-                return (
-                  <li key={opt.value}>
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={isSelected}
-                      onClick={() => pick(opt.value)}
-                      className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-foreground/5"
-                    >
+      <SearchablePickerModal
+        open={open}
+        onClose={closePicker}
+        title={pickerTitle}
+        searchPlaceholder={searchPlaceholder}
+        query={query}
+        onQueryChange={setQuery}
+      >
+        <ul role="listbox" className="py-1">
+          {showClear && (
+            <li>
+              <button
+                type="button"
+                role="option"
+                aria-selected={value === ""}
+                onClick={() => pick("")}
+                className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm hover:bg-foreground/5"
+              >
+                <span className="text-muted">{emptyLabel}</span>
+                {value === "" && (
+                  <Check className="size-4 shrink-0 text-accent" />
+                )}
+              </button>
+            </li>
+          )}
+          {filtered.length === 0 ? (
+            <li className="px-4 py-6 text-center text-sm text-muted">
+              Sin resultados
+            </li>
+          ) : (
+            filtered.map((opt) => {
+              const isSelected = value === opt.value;
+              return (
+                <li key={opt.value}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => pick(opt.value)}
+                    className="flex w-full items-start justify-between gap-2 px-4 py-2.5 text-left hover:bg-foreground/5"
+                  >
+                    <span className="min-w-0">
                       <span
                         className={cn(
-                          "min-w-0 truncate text-sm text-card-foreground",
+                          "block truncate text-sm text-card-foreground",
                           mono && "font-mono",
                         )}
                       >
                         {opt.label}
                       </span>
-                      {isSelected && (
-                        <Check className="size-4 shrink-0 text-accent" />
+                      {opt.description && (
+                        <span className="mt-0.5 block truncate text-xs text-muted">
+                          {opt.description}
+                        </span>
                       )}
-                    </button>
-                  </li>
-                );
-              })
-            )}
-          </ul>
-        </div>
-      )}
-    </div>
+                    </span>
+                    {isSelected && (
+                      <Check className="mt-0.5 size-4 shrink-0 text-accent" />
+                    )}
+                  </button>
+                </li>
+              );
+            })
+          )}
+        </ul>
+      </SearchablePickerModal>
+    </>
   );
 }

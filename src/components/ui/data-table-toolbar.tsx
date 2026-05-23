@@ -65,6 +65,7 @@ function TableFilterField({ filter }: { filter: FilterSelect }) {
           searchPlaceholder={
             filter.searchPlaceholder ?? `Buscar ${filter.label.toLowerCase()}…`
           }
+          modalTitle={filter.label}
         />
       ) : (
         <div className="relative">
