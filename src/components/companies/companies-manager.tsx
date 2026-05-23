@@ -1,14 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { Building2, Loader2, Plus, RefreshCw } from "lucide-react";
 import { ContributorBadge } from "@/components/companies/contributor-badge";
 import {
   CompanyFormDialog,
   type CompanyFormValues,
 } from "@/components/companies/company-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import {
   PageToolbar,
@@ -236,6 +236,7 @@ export function CompaniesManager() {
           </div>
         ) : companies.length === 0 ? (
           <EmptyState
+            icon={Building2}
             title={
               isDistributor
                 ? "No hay empresas de clientes visibles"
@@ -280,9 +281,7 @@ export function CompaniesManager() {
               columns={tableColumns.toolbarColumns}
             />
             {filteredCompanies.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted">
-                No hay resultados con los filtros aplicados.
-              </p>
+              <TableFilterEmptyState />
             ) : (
               <>
                 <TableScroll>

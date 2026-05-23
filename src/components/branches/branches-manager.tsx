@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { GitBranch, Loader2, Plus, RefreshCw } from "lucide-react";
 import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
 import {
   BranchCreateWizardDialog,
   type BranchWizardValues,
 } from "@/components/branches/branch-create-wizard-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import {
   PageToolbar,
   pageToolbarButtonClass,
@@ -549,9 +550,10 @@ export function BranchesManager() {
             Cargando sucursales…
           </div>
         ) : branches.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted">
-            No hay sucursales registradas.
-          </p>
+          <EmptyState
+            icon={GitBranch}
+            title="No hay sucursales registradas."
+          />
         ) : (
           <>
             <DataTableToolbar
@@ -591,9 +593,7 @@ export function BranchesManager() {
               columns={tableColumns.toolbarColumns}
             />
             {filteredBranches.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted">
-                No hay resultados con los filtros aplicados.
-              </p>
+              <TableFilterEmptyState />
             ) : (
               <>
                 <TableScroll>

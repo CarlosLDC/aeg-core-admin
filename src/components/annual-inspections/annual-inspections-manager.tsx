@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { ClipboardCheck, Loader2, Plus, RefreshCw } from "lucide-react";
 import { AnnualInspectionFormDialog } from "@/components/annual-inspections/annual-inspection-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import {
   PageToolbar,
   pageToolbarButtonClass,
@@ -320,9 +321,10 @@ export function AnnualInspectionsManager() {
             Cargando inspecciones…
           </div>
         ) : rows.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted">
-            No hay inspecciones anuales registradas.
-          </p>
+          <EmptyState
+            icon={ClipboardCheck}
+            title="No hay inspecciones anuales registradas."
+          />
         ) : (
           <>
             <DataTableToolbar
@@ -350,9 +352,7 @@ export function AnnualInspectionsManager() {
               columns={tableColumns.toolbarColumns}
             />
             {filteredRows.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted">
-                No hay resultados con los filtros aplicados.
-              </p>
+              <TableFilterEmptyState />
             ) : (
               <>
                 <TableScroll>

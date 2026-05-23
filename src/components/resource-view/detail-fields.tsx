@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import Link from "next/link";
+import { TruncatedText } from "@/components/ui/truncated-text";
 import { cn } from "@/lib/utils";
 
 type DetailSectionLayout = "default" | "quad";
@@ -11,7 +11,7 @@ const DetailSectionLayoutContext = createContext<DetailSectionLayout>("default")
 export function DetailCard({ children }: { children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-      <dl className="grid gap-4 sm:grid-cols-2">{children}</dl>
+      <dl className="grid min-w-0 gap-4 sm:grid-cols-2">{children}</dl>
     </div>
   );
 }
@@ -34,8 +34,8 @@ export function DetailSection({
         <dl
           className={cn(
             isQuad
-              ? "mt-4 grid grid-cols-4 gap-x-6 gap-y-5 content-start"
-              : "mt-4 grid gap-4 sm:grid-cols-2",
+              ? "mt-4 grid min-w-0 grid-cols-4 gap-x-6 gap-y-5 content-start"
+              : "mt-4 grid min-w-0 gap-4 sm:grid-cols-2",
           )}
         >
           {children}
@@ -65,28 +65,31 @@ export function DetailField({
   const layout = useContext(DetailSectionLayoutContext);
   const isQuad = layout === "quad";
 
+  const textValue =
+    typeof value === "string"
+      ? value
+      : typeof value === "number"
+        ? String(value)
+        : null;
+
   const content =
-    href && typeof value === "string" ? (
-      <Link
+    textValue != null ? (
+      <TruncatedText
         href={href}
-        className="font-medium text-accent underline-offset-2 hover:underline"
+        mono={mono}
+        maxClassName="max-w-full"
+        className="text-card-foreground"
       >
-        {value}
-      </Link>
+        {textValue}
+      </TruncatedText>
     ) : (
-      <span
-        className={cn(
-          "text-card-foreground",
-          mono && "font-mono text-sm",
-        )}
-      >
-        {value}
-      </span>
+      <span className="block min-w-0 max-w-full">{value}</span>
     );
 
   return (
     <div
       className={cn(
+        "min-w-0",
         isQuad
           ? span === 4
             ? "col-span-4"
@@ -97,7 +100,7 @@ export function DetailField({
       <dt className="text-xs font-medium uppercase tracking-wide text-muted">
         {label}
       </dt>
-      <dd className="mt-1 text-sm">{content}</dd>
+      <dd className="mt-1 min-w-0 text-sm">{content}</dd>
     </div>
   );
 }

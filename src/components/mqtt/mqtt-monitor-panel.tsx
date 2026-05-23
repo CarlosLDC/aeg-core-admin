@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Activity,
   Loader2,
+  MessageSquare,
   Plug,
   PlugZap,
   RadioTower,
@@ -15,6 +16,7 @@ import { useMqttMonitor } from "@/hooks/use-mqtt-monitor";
 import { getMqttErrorMessage } from "@/lib/mqtt-api";
 import { formatDateTime } from "@/lib/datetime-form";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { MqttInboundMessage, MqttMonitorStatus } from "@/types/mqtt";
 import type { MqttWsStatus } from "@/hooks/use-mqtt-monitor";
 
@@ -181,10 +183,13 @@ export function MqttMonitorPanel() {
             Cargando monitor…
           </div>
         ) : monitor.messages.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border px-4 py-10 text-center text-sm text-muted">
-            Aún no hay mensajes. Suscríbete a un tópico y publica o espera
-            telemetría de dispositivos IoT.
-          </p>
+          <EmptyState
+            compact
+            className="rounded-lg border border-dashed border-border py-10"
+            icon={MessageSquare}
+            title="Aún no hay mensajes."
+            description="Suscríbete a un tópico y publica o espera telemetría de dispositivos IoT."
+          />
         ) : (
           <MessagesTable messages={monitor.messages} />
         )}

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { TruncatedText } from "@/components/ui/truncated-text";
 
 type ResourceViewShellProps = {
   backHref: string;
@@ -35,10 +36,24 @@ export function ResourceViewShell({
       </Link>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h2 className="text-xl font-semibold text-card-foreground">{title}</h2>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl font-semibold text-card-foreground">
+            <TruncatedText
+              maxClassName="max-w-full"
+              className="text-xl font-semibold text-card-foreground"
+            >
+              {title}
+            </TruncatedText>
+          </h2>
           {subtitle ? (
-            <p className="mt-1 text-sm text-muted">{subtitle}</p>
+            <div className="mt-1 text-sm text-muted">
+              <TruncatedText
+                maxClassName="max-w-full"
+                className="text-sm text-muted"
+              >
+                {subtitle}
+              </TruncatedText>
+            </div>
           ) : null}
         </div>
         {actions ? <div className="shrink-0">{actions}</div> : null}

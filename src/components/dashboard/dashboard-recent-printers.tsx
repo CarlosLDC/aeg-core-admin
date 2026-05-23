@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Printer } from "lucide-react";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatPrinterPrice } from "@/lib/printer-form";
@@ -37,6 +37,7 @@ export function DashboardRecentPrinters({
       </div>
       {printers.length === 0 ? (
         <EmptyState
+          icon={Printer}
           title="Sin impresoras recientes"
           description="Registra equipos fiscales para verlos en este listado."
           action={

@@ -149,14 +149,20 @@ export function ContractsManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-1 rounded-lg border border-border bg-card p-1 sm:flex-row">
+      <div
+        className="inline-flex w-fit gap-0.5 rounded-lg border border-border bg-card p-0.5"
+        role="tablist"
+        aria-label="Tipo de contrato"
+      >
         <button
           type="button"
+          role="tab"
+          aria-selected={tab === "distributor"}
           onClick={() => setTab("distributor")}
           className={cn(
-            "rounded-md px-4 py-2.5 text-sm font-medium transition-colors sm:flex-1",
+            "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
             tab === "distributor"
-              ? "bg-accent text-accent-foreground"
+              ? "bg-accent text-accent-foreground shadow-sm"
               : "text-muted hover:text-foreground",
           )}
         >
@@ -164,11 +170,13 @@ export function ContractsManager() {
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={tab === "serviceCenter"}
           onClick={() => setTab("serviceCenter")}
           className={cn(
-            "rounded-md px-4 py-2.5 text-sm font-medium transition-colors sm:flex-1",
+            "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
             tab === "serviceCenter"
-              ? "bg-accent text-accent-foreground"
+              ? "bg-accent text-accent-foreground shadow-sm"
               : "text-muted hover:text-foreground",
           )}
         >

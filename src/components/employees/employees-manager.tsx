@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { Contact, Loader2, Plus, RefreshCw } from "lucide-react";
 import { EmployeeFormDialog } from "@/components/employees/employee-form-dialog";
 import { EmployeeRoleBadge } from "@/components/employees/employee-role-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import {
   PageToolbar,
   pageToolbarButtonClass,
@@ -491,9 +492,10 @@ export function EmployeesManager() {
             Cargando empleados…
           </div>
         ) : scopedEmployees.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted">
-            No hay empleados en las sucursales visibles.
-          </p>
+          <EmptyState
+            icon={Contact}
+            title="No hay empleados en las sucursales visibles."
+          />
         ) : (
           <>
             <DataTableToolbar
@@ -527,9 +529,7 @@ export function EmployeesManager() {
               columns={tableColumns.toolbarColumns}
             />
             {filteredEmployees.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted">
-                No hay resultados con los filtros aplicados.
-              </p>
+              <TableFilterEmptyState />
             ) : (
               <>
                 <TableScroll>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Layers, Loader2, Plus, RefreshCw } from "lucide-react";
+import { Layers, Loader2, Plus, RefreshCw, Stamp } from "lucide-react";
 import {
   SealBatchFormDialog,
   type SealBatchSubmitPayload,
@@ -12,6 +12,7 @@ import type { PrinterSelectOption } from "@/components/printers/printer-select";
 import { SealColorBadge } from "@/components/seals/seal-color-badge";
 import { SealStatusBadge } from "@/components/seals/seal-status-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import {
   PageToolbar,
   pageToolbarButtonClass,
@@ -512,9 +513,7 @@ export function SealsManager() {
             Cargando precintos…
           </div>
         ) : seals.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted">
-            No hay precintos registrados.
-          </p>
+          <EmptyState icon={Stamp} title="No hay precintos registrados." />
         ) : (
           <>
             <DataTableToolbar
@@ -562,9 +561,7 @@ export function SealsManager() {
               ]}
             />
             {filteredSeals.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted">
-                No hay resultados con los filtros aplicados.
-              </p>
+              <TableFilterEmptyState />
             ) : (
               <>
                 <TableScroll>

@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { ContactRound, Loader2, Plus, RefreshCw } from "lucide-react";
 import { ClientCreateDialog } from "@/components/clients/client-create-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import {
   PageToolbar,
@@ -383,6 +383,7 @@ export function ClientsManager() {
           </div>
         ) : clientListRows.length === 0 ? (
           <EmptyState
+            icon={ContactRound}
             title="Sin clientes registrados"
             action={
               canCreate ? (
@@ -417,9 +418,7 @@ export function ClientsManager() {
               columns={tableColumns.toolbarColumns}
             />
             {filtered.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted">
-                No hay resultados con los filtros aplicados.
-              </p>
+              <TableFilterEmptyState />
             ) : (
               <>
                 <TableScroll>

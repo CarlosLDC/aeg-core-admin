@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Layers, Loader2, Plus, RefreshCw } from "lucide-react";
+import { Layers, Loader2, Plus, Printer, RefreshCw } from "lucide-react";
 import {
   PrinterBatchFormDialog,
   type PrinterBatchSubmitPayload,
@@ -13,6 +13,7 @@ import {
 import { runSerialBatch } from "@/lib/batch-create";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import {
   PageToolbar,
   pageToolbarButtonClass,
@@ -595,11 +596,14 @@ export function PrintersManager() {
             Cargando impresoras…
           </div>
         ) : visiblePrinters.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted">
-            {isDistributor
-              ? "No hay impresoras asignadas a tu distribuidora."
-              : "No hay impresoras registradas."}
-          </p>
+          <EmptyState
+            icon={Printer}
+            title={
+              isDistributor
+                ? "No hay impresoras asignadas a tu distribuidora."
+                : "No hay impresoras registradas."
+            }
+          />
         ) : (
           <>
             <DataTableToolbar
@@ -641,9 +645,7 @@ export function PrintersManager() {
               columns={tableColumns.toolbarColumns}
             />
             {filteredPrinters.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted">
-                No hay resultados con los filtros aplicados.
-              </p>
+              <TableFilterEmptyState />
             ) : (
               <>
                 <TableScroll>

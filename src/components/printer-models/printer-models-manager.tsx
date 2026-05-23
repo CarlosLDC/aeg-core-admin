@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus, Printer, RefreshCw } from "lucide-react";
 import { PrinterModelFormDialog } from "@/components/printer-models/printer-model-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import {
   PageToolbar,
   pageToolbarButtonClass,
@@ -284,9 +285,10 @@ export function PrinterModelsManager() {
             Cargando modelos…
           </div>
         ) : models.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted">
-            No hay modelos de impresora registrados.
-          </p>
+          <EmptyState
+            icon={Printer}
+            title="No hay modelos de impresora registrados."
+          />
         ) : (
           <>
             <DataTableToolbar
@@ -307,9 +309,7 @@ export function PrinterModelsManager() {
               columns={tableColumns.toolbarColumns}
             />
             {filteredModels.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted">
-                No hay resultados con los filtros aplicados.
-              </p>
+              <TableFilterEmptyState />
             ) : (
               <>
                 <TableScroll>

@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ExternalLink, Loader2, Plus, RefreshCw } from "lucide-react";
+import { ExternalLink, FileText, Loader2, Plus, RefreshCw } from "lucide-react";
 import { ContractFormDialog } from "@/components/contracts/contract-form-dialog";
 import { ContractStatusBadge } from "@/components/contracts/contract-status-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import {
   PageToolbar,
   pageToolbarButtonClass,
@@ -348,6 +349,19 @@ export function ContractsListPanel({
         }
       />
 
+      {partyOptions.length === 0 && !catalogLoading && (
+        <p
+          role="status"
+          className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200"
+        >
+          Registra al menos un{" "}
+          {kind === "distributor"
+            ? "distribuidor en una sucursal"
+            : "centro de servicio en una sucursal"}{" "}
+          antes de crear contratos.
+        </p>
+      )}
+
       {listError && (
         <p
           role="alert"
@@ -364,9 +378,7 @@ export function ContractsListPanel({
             Cargando contratos…
           </div>
         ) : contracts.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted">
-            No hay contratos registrados.
-          </p>
+          <EmptyState icon={FileText} title="No hay contratos registrados." />
         ) : (
           <>
             <DataTableToolbar
@@ -392,9 +404,7 @@ export function ContractsListPanel({
               columns={tableColumns.toolbarColumns}
             />
             {filteredContracts.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted">
-                No hay resultados con los filtros aplicados.
-              </p>
+              <TableFilterEmptyState />
             ) : (
               <>
                 <TableScroll>

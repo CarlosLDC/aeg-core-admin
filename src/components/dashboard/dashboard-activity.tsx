@@ -1,9 +1,4 @@
-import {
-  Building2,
-  Contact,
-  Printer,
-  type LucideIcon,
-} from "lucide-react";
+import { Activity, Building2, Contact, Printer, type LucideIcon } from "lucide-react";
 import type { DashboardActivity } from "@/lib/dashboard-data";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
@@ -51,6 +46,7 @@ export function DashboardActivityList({
       {items.length === 0 ? (
         <EmptyState
           className="py-10"
+          icon={Activity}
           title="Sin movimientos recientes"
           description="Cuando se registren impresoras, empleados o sucursales aparecerán aquí."
         />

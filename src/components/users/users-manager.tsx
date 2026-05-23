@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Users } from "lucide-react";
 import { RoleBadge } from "@/components/users/role-badge";
 import {
   UserFormDialog,
@@ -29,6 +29,7 @@ import type { ServiceCenterResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { UserResponse } from "@/types/user";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import {
   PageToolbar,
   pageToolbarButtonClass,
@@ -311,20 +312,21 @@ export function UsersManager() {
             Cargando usuarios…
           </div>
         ) : users.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 py-16 px-6 text-center">
-            <p className="text-sm text-muted">
-              Aún no hay usuarios en el sistema.
-            </p>
-            <button
-              type="button"
-              onClick={openCreate}
-              disabled={!catalogReady}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
-            >
-              <Plus className="size-4" />
-              Crear primer usuario
-            </button>
-          </div>
+          <EmptyState
+            icon={Users}
+            title="Aún no hay usuarios en el sistema."
+            action={
+              <button
+                type="button"
+                onClick={openCreate}
+                disabled={!catalogReady}
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
+              >
+                <Plus className="size-4" />
+                Crear primer usuario
+              </button>
+            }
+          />
         ) : (
           <>
             <DataTableToolbar
@@ -361,9 +363,7 @@ export function UsersManager() {
               ]}
             />
             {filteredUsers.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted">
-                No hay resultados con los filtros aplicados.
-              </p>
+              <TableFilterEmptyState />
             ) : (
               <>
                 <TableScroll>
