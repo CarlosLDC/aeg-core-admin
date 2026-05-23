@@ -9,6 +9,21 @@ export function DetailCard({ children }: { children: React.ReactNode }) {
   );
 }
 
+export function DetailSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <h3 className="text-sm font-semibold text-card-foreground">{title}</h3>
+      <dl className="mt-4 grid gap-4 sm:grid-cols-2">{children}</dl>
+    </section>
+  );
+}
+
 export function DetailField({
   label,
   value,

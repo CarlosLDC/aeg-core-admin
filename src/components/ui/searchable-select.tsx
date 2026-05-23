@@ -44,15 +44,18 @@ export function SearchableSelect({
 
   const selected = options.find((opt) => opt.value === value);
 
+  const queryTrimmed = query.trim();
+  const hasSearchQuery = queryTrimmed.length > 0;
+
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return options;
+    if (!hasSearchQuery) return [];
+    const q = queryTrimmed.toLowerCase();
     return options.filter((opt) => {
       const haystack = `${opt.value} ${opt.label} ${opt.searchText ?? ""} ${opt.description ?? ""}`
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [options, query]);
+  }, [options, queryTrimmed, hasSearchQuery]);
 
   function openPicker() {
     if (disabled || loading) return;
@@ -126,7 +129,11 @@ export function SearchableSelect({
               </button>
             </li>
           )}
-          {filtered.length === 0 ? (
+          {!hasSearchQuery ? (
+            <li className="px-4 py-6 text-center text-sm text-muted">
+              Escribe en el buscador para ver opciones.
+            </li>
+          ) : filtered.length === 0 ? (
             <li className="px-4 py-6 text-center text-sm text-muted">
               Sin resultados
             </li>

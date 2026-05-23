@@ -6,7 +6,11 @@ import {
   PrinterFormDialog,
   type SelectOption,
 } from "@/components/printers/printer-form-dialog";
-import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
+import {
+  DetailField,
+  DetailSection,
+} from "@/components/resource-view/detail-fields";
+import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -29,7 +33,6 @@ import { fetchDistributors } from "@/lib/distributors-api";
 import { formatDate, formatMoney } from "@/lib/datetime-form";
 import {
   DEVICE_TYPE_LABELS,
-  PRINTER_STATUS_LABELS,
   printerModelLabel,
   toPrinterRequest,
   type PrinterFormValues,
@@ -323,79 +326,99 @@ export function PrinterView() {
         }
       >
         {printer && (
-          <DetailCard>
-            <DetailField label="ID" value={String(printer.id)} mono />
-            <DetailField
-              label="Serial fiscal"
-              value={printer.fiscalSerial}
-              mono
-            />
-            <DetailField
-              label="Modelo"
-              value={modelLabel}
-              href={model ? printerModelPath(model.id) : undefined}
-              fullWidth
-            />
-            <DetailField
-              label="Estatus"
-              value={PRINTER_STATUS_LABELS[printer.status]}
-            />
-            <DetailField
-              label="Tipo de equipo"
-              value={DEVICE_TYPE_LABELS[printer.deviceType]}
-            />
-            <DetailField
-              label="Distribuidor"
-              value={
-                printer.distributorId != null
-                  ? distributorLabelById.get(printer.distributorId) ??
-                    `#${printer.distributorId}`
-                  : "Sin asignar"
-              }
-              fullWidth
-            />
-            <DetailField
-              label="Cliente"
-              value={
-                printer.clientId != null
-                  ? clientLabelById.get(printer.clientId) ?? `#${printer.clientId}`
-                  : "Sin asignar"
-              }
-              fullWidth
-            />
-            <DetailField
-              label="Software"
-              value={
-                printer.softwareId != null
-                  ? softwareLabelById.get(printer.softwareId) ??
-                    `#${printer.softwareId}`
-                  : "Sin asignar"
-              }
-              fullWidth
-            />
-            <DetailField label="Pagada" value={printer.paid ? "Sí" : "No"} />
-            <DetailField
-              label="Precio venta"
-              value={formatMoney(printer.finalSalePrice)}
-            />
-            <DetailField
-              label="Instalación"
-              value={formatDate(printer.installationDate)}
-            />
-            <DetailField
-              label="Firmware"
-              value={printer.versionFirmware || "—"}
-            />
-            <DetailField
-              label="MAC"
-              value={printer.macAddress || "—"}
-              mono
-            />
-            <DetailField
-              label="Registrada"
-              value={formatDate(printer.createdAt)}
-            />
-          </DetailCard>
+          <div className="space-y-5">
+            <DetailSection title="Equipo fiscal">
+              <DetailField label="ID" value={String(printer.id)} mono />
+              <DetailField
+                label="Serial fiscal"
+                value={printer.fiscalSerial}
+                mono
+              />
+              <DetailField
+                label="Modelo"
+                value={modelLabel}
+                href={model ? printerModelPath(model.id) : undefined}
+                fullWidth
+              />
+            </DetailSection>
+
+            <DetailSection title="Estado operativo">
+              <DetailField
+                label="Estatus"
+                value={<PrinterStatusBadge status={printer.status} />}
+              />
+              <DetailField
+                label="Tipo de equipo"
+                value={DEVICE_TYPE_LABELS[printer.deviceType]}
+              />
+              <DetailField
+                label="Precio venta"
+                value={formatMoney(printer.finalSalePrice)}
+              />
+              <DetailField
+                label="Estado de pago"
+                value={printer.paid ? "Pagada" : "Pendiente"}
+              />
+            </DetailSection>
+
+            <DetailSection title="Asignación">
+              <DetailField
+                label="Distribuidor"
+                value={
+                  printer.distributorId != null
+                    ? distributorLabelById.get(printer.distributorId) ??
+                      `#${printer.distributorId}`
+                    : "Sin asignar"
+                }
+                fullWidth
+              />
+              <DetailField
+                label="Cliente"
+                value={
+                  printer.clientId != null
+                    ? clientLabelById.get(printer.clientId) ??
+                      `#${printer.clientId}`
+                    : "Sin asignar"
+                }
+                fullWidth
+              />
+              <DetailField
+                label="Software"
+                value={
+                  printer.softwareId != null
+                    ? softwareLabelById.get(printer.softwareId) ??
+                      `#${printer.softwareId}`
+                    : "Sin asignar"
+                }
+                fullWidth
+              />
+            </DetailSection>
+
+            <DetailSection title="Detalles técnicos">
+              <DetailField
+                label="Instalación"
+                value={formatDate(printer.installationDate)}
+              />
+              <DetailField
+                label="Firmware"
+                value={printer.versionFirmware || "—"}
+                mono
+              />
+              <DetailField
+                label="MAC"
+                value={printer.macAddress || "—"}
+                mono
+                fullWidth
+              />
+            </DetailSection>
+
+            <DetailSection title="Registro">
+              <DetailField
+                label="Registrada"
+                value={formatDate(printer.createdAt)}
+              />
+            </DetailSection>
+          </div>
         )}
       </ResourceViewShell>
 
