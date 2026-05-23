@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Activity,
   Loader2,
-  MessageSquare,
   Plug,
   PlugZap,
   RadioTower,
@@ -186,7 +185,6 @@ export function MqttMonitorPanel() {
           <EmptyState
             compact
             className="rounded-lg border border-dashed border-border py-10"
-            icon={MessageSquare}
             title="Aún no hay mensajes."
             description="Suscríbete a un tópico y publica o espera telemetría de dispositivos IoT."
           />

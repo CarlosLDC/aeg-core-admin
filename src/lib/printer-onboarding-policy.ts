@@ -13,18 +13,21 @@ const MAC_RE = /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/i;
 export function validatePrinterWizardSection(
   section: PrinterWizardStepSection,
   form: PrinterFormValues,
+  options?: { omitFiscalSerial?: boolean },
 ): string | null {
   if (section === "equipment") {
     const modelId = Number(form.modelId);
     if (!form.modelId.trim() || !Number.isFinite(modelId) || modelId <= 0) {
       return "Selecciona un modelo fiscal válido.";
     }
-    const fiscalSerial = form.fiscalSerial.trim().toUpperCase();
-    if (!fiscalSerial) {
-      return "Indica el serial fiscal.";
-    }
-    if (!FISCAL_SERIAL_RE.test(fiscalSerial)) {
-      return "El serial fiscal debe tener 3 letras y 7 dígitos (ej. ABC1234567).";
+    if (!options?.omitFiscalSerial) {
+      const fiscalSerial = form.fiscalSerial.trim().toUpperCase();
+      if (!fiscalSerial) {
+        return "Indica el serial fiscal.";
+      }
+      if (!FISCAL_SERIAL_RE.test(fiscalSerial)) {
+        return "El serial fiscal debe tener 3 letras y 7 dígitos (ej. ABC1234567).";
+      }
     }
     return null;
   }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BarChart2 } from "lucide-react";
 import type {
   MonthlyCount,
   PrinterStatusCount,
@@ -215,12 +214,7 @@ function MonthlyAreaChart({
   if (data.every((d) => d.count === 0)) {
     return (
       <div className="flex h-48 items-center justify-center rounded-lg border border-dashed border-border bg-foreground/[0.02]">
-        <EmptyState
-          compact
-          className="py-8"
-          icon={BarChart2}
-          title="Sin altas en los últimos meses"
-        />
+        <EmptyState compact className="py-8" title="Sin altas en los últimos meses" />
       </div>
     );
   }

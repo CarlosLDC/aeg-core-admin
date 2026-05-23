@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Layers, Loader2, Plus, RefreshCw, Stamp } from "lucide-react";
+import { Layers, Loader2, Plus, RefreshCw } from "lucide-react";
 import {
   SealBatchFormDialog,
   type SealBatchSubmitPayload,
@@ -513,7 +513,7 @@ export function SealsManager() {
             Cargando precintos…
           </div>
         ) : seals.length === 0 ? (
-          <EmptyState icon={Stamp} title="No hay precintos registrados." />
+          <EmptyState title="No hay precintos registrados." />
         ) : (
           <>
             <DataTableToolbar

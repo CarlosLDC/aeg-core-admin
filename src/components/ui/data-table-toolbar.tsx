@@ -167,18 +167,20 @@ function TableColumnsSection({ columns }: { columns: ColumnToggle[] }) {
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {columns.map((column) => (
-          <label
+          <button
             key={column.id}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm text-card-foreground transition-colors hover:bg-foreground/[0.03]"
+            type="button"
+            aria-pressed={column.visible}
+            onClick={() => column.onVisibleChange(!column.visible)}
+            className={cn(
+              "inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors",
+              column.visible
+                ? "border-accent/35 bg-accent/10 text-accent"
+                : "border-border bg-background text-muted hover:bg-foreground/5 hover:text-card-foreground",
+            )}
           >
-            <input
-              type="checkbox"
-              checked={column.visible}
-              onChange={(e) => column.onVisibleChange(e.target.checked)}
-              className="size-4 rounded border-border text-accent focus:ring-2 focus:ring-ring/20"
-            />
             {column.label}
-          </label>
+          </button>
         ))}
       </div>
     </section>

@@ -37,6 +37,7 @@ type WizardFieldsProps = {
   canPickSoftware: boolean;
   lockDistributor: boolean;
   fieldErrors: Partial<Record<keyof PrinterFormValues, string>>;
+  omitFiscalSerial?: boolean;
 };
 
 function toSearchableOptions(options: SelectOption[]): SearchableSelectOption[] {
@@ -60,6 +61,7 @@ export function PrinterWizardFields({
   canPickSoftware,
   lockDistributor,
   fieldErrors,
+  omitFiscalSerial = false,
   section,
 }: WizardFieldsProps & { section: PrinterWizardSection }) {
   const disabled = saving || modelsLoading || catalogLoading;
@@ -75,68 +77,72 @@ export function PrinterWizardFields({
             manualmente o solicita acceso al catálogo de modelos fiscales.
           </p>
         )}
-        <label className="block">
-          <FieldLabel required>Modelo fiscal</FieldLabel>
-          {modelOptions.length > 0 ? (
-            <select
-              required
-              value={form.modelId}
-              disabled={modelSelectDisabled}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, modelId: e.target.value }))
-              }
-              className={inputClass}
-            >
-              <option value="">Seleccionar modelo…</option>
-              {modelOptions.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              type="number"
-              required
-              min={1}
-              value={form.modelId}
-              disabled={disabled}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, modelId: e.target.value }))
-              }
-              className={inputClass}
-              placeholder="ID del modelo"
-            />
-          )}
-        </label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className={cn("block", omitFiscalSerial && "sm:col-span-2")}>
+            <FieldLabel required>Modelo fiscal</FieldLabel>
+            {modelOptions.length > 0 ? (
+              <select
+                required
+                value={form.modelId}
+                disabled={modelSelectDisabled}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, modelId: e.target.value }))
+                }
+                className={inputClass}
+              >
+                <option value="">Seleccionar modelo…</option>
+                {modelOptions.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="number"
+                required
+                min={1}
+                value={form.modelId}
+                disabled={disabled}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, modelId: e.target.value }))
+                }
+                className={inputClass}
+                placeholder="ID del modelo"
+              />
+            )}
+          </label>
 
-        <label className="block">
-          <FieldLabel required>Serial fiscal</FieldLabel>
-          <input
-            type="text"
-            required
-            maxLength={10}
-            value={form.fiscalSerial}
-            disabled={disabled}
-            onChange={(e) =>
-              setForm((f) => ({
-                ...f,
-                fiscalSerial: e.target.value.toUpperCase(),
-              }))
-            }
-            className={cn(inputClass, "font-mono uppercase")}
-            placeholder="ABC1234567"
-          />
-          {fieldErrors.fiscalSerial ? (
-            <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
-              {fieldErrors.fiscalSerial}
-            </span>
-          ) : (
-            <p className="mt-1 text-xs text-muted">
-              Formato: 3 letras y 7 dígitos (ej. ABC1234567).
-            </p>
-          )}
-        </label>
+          {!omitFiscalSerial ? (
+            <label className="block">
+              <FieldLabel required>Serial fiscal</FieldLabel>
+              <input
+                type="text"
+                required
+                maxLength={10}
+                value={form.fiscalSerial}
+                disabled={disabled}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    fiscalSerial: e.target.value.toUpperCase(),
+                  }))
+                }
+                className={cn(inputClass, "font-mono uppercase")}
+                placeholder="ABC1234567"
+              />
+              {fieldErrors.fiscalSerial ? (
+                <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
+                  {fieldErrors.fiscalSerial}
+                </span>
+              ) : (
+                <p className="mt-1 text-xs text-muted">
+                  Formato: 3 letras y 7 dígitos (ej. ABC1234567).
+                </p>
+              )}
+            </label>
+          ) : null}
+        </div>
       </fieldset>
     );
   }
@@ -304,22 +310,24 @@ export function PrinterWizardFields({
           />
         </label>
       </div>
-      <label className="block">
-        <FieldLabel>Dirección MAC</FieldLabel>
-        <input
-          type="text"
-          value={form.macAddress}
-          disabled={disabled}
-          onChange={(e) =>
-            setForm((f) => ({
-              ...f,
-              macAddress: e.target.value.toUpperCase(),
-            }))
-          }
-          className={cn(inputClass, "font-mono uppercase")}
-          placeholder="AA:BB:CC:DD:EE:FF"
-        />
-      </label>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block sm:col-span-2">
+          <FieldLabel>Dirección MAC</FieldLabel>
+          <input
+            type="text"
+            value={form.macAddress}
+            disabled={disabled}
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                macAddress: e.target.value.toUpperCase(),
+              }))
+            }
+            className={cn(inputClass, "font-mono uppercase")}
+            placeholder="AA:BB:CC:DD:EE:FF"
+          />
+        </label>
+      </div>
     </fieldset>
   );
 }

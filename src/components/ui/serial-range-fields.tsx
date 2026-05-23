@@ -78,13 +78,8 @@ export function SerialRangeFields({
         {isFiscal ? "Rango de seriales fiscales" : "Rango de seriales"}
       </legend>
 
-      <div
-        className={cn(
-          "grid gap-4",
-          isFiscal ? "sm:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-4",
-        )}
-      >
-        <label className={cn("block", isFiscal && "sm:col-span-1")}>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block">
           <FieldLabel required>
             Prefijo {isFiscal ? "(3 letras)" : ""}
           </FieldLabel>

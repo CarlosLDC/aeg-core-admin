@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Building2,
   Contact,
-  LayoutDashboard,
   MapPin,
   Printer,
   Users,
@@ -220,7 +219,6 @@ export function DashboardManager() {
         </>
       ) : !loadError ? (
         <EmptyState
-          icon={LayoutDashboard}
           title="No hay datos para mostrar"
           description="Cuando el API devuelva información de tu ámbito, el panel se completará automáticamente."
           action={

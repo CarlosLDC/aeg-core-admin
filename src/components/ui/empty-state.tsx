@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Inbox, SearchX } from "lucide-react";
+import { Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type EmptyStateProps = {
@@ -57,7 +57,6 @@ export function TableFilterEmptyState({ className }: { className?: string }) {
   return (
     <EmptyState
       compact
-      icon={SearchX}
       title="No hay resultados con los filtros aplicados."
       className={className}
     />

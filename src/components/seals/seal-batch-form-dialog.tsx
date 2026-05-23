@@ -1,10 +1,11 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { FormEvent, useEffect, useId, useState } from "react";
+import { Layers, Loader2, Stamp } from "lucide-react";
 import {
   BatchFormDialog,
   BATCH_FORM_INPUT_CLASS,
+  type BatchWizardStep,
 } from "@/components/ui/batch-form-dialog";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
@@ -35,6 +36,23 @@ type SealBatchFormDialogProps = {
   onSubmit: (payload: SealBatchSubmitPayload) => void;
 };
 
+type WizardStep = 1 | 2;
+
+const WIZARD_STEPS: (BatchWizardStep & { step: WizardStep })[] = [
+  {
+    step: 1,
+    label: "Rango",
+    icon: Layers,
+    subtitle: "Define el rango de seriales del lote.",
+  },
+  {
+    step: 2,
+    label: "Datos",
+    icon: Stamp,
+    subtitle: "Color y estatus comunes para todos los precintos.",
+  },
+];
+
 export function SealBatchFormDialog({
   open,
   saving,
@@ -43,7 +61,7 @@ export function SealBatchFormDialog({
   onClose,
   onSubmit,
 }: SealBatchFormDialogProps) {
-  type WizardStep = 1 | 2;
+  const formId = useId();
   const [range, setRange] = useState<SerialRangeFormValues>(emptySerialRangeForm());
   const [form, setForm] = useState<Omit<SealFormValues, "serial">>(emptySealForm());
   const [step, setStep] = useState<WizardStep>(1);
@@ -60,6 +78,24 @@ export function SealBatchFormDialog({
   const disabled = saving;
   const busy = saving;
   const displayError = stepError ?? error;
+  const lastStep = WIZARD_STEPS.length;
+
+  function goToStep(target: WizardStep) {
+    setStepError(null);
+    setStep(target);
+  }
+
+  function goNext() {
+    setStepError(null);
+    if (step < lastStep) {
+      setStep((step + 1) as WizardStep);
+    }
+  }
+
+  function goBack() {
+    setStepError(null);
+    setStep((s) => Math.max(1, s - 1) as WizardStep);
+  }
 
   function validateRange(): string | null {
     const serials = buildSerialRange(range, { mode: "seal" });
@@ -74,22 +110,18 @@ export function SealBatchFormDialog({
     return null;
   }
 
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (step === 1) {
-      const rangeError = validateRange();
-      if (rangeError) {
-        setStepError(rangeError);
-        return;
-      }
-      setStepError(null);
-      setStep(2);
+  function submitBatch() {
+    const rangeError = validateRange();
+    if (rangeError) {
+      setStepError(rangeError);
+      setStep(1);
       return;
     }
 
     const commonError = validateCommonData();
     if (commonError) {
       setStepError(commonError);
+      setStep(2);
       return;
     }
 
@@ -99,30 +131,39 @@ export function SealBatchFormDialog({
       setStep(1);
       return;
     }
+
     setStepError(null);
     onSubmit({ serials, base: form });
+  }
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (step < lastStep) {
+      goNext();
+      return;
+    }
+    submitBatch();
   }
 
   return (
     <BatchFormDialog
       open={open}
       title="Crear precintos por lote"
-      description={
-        step === 1
-          ? "Paso 1 de 2 · Define el rango de seriales del lote."
-          : "Paso 2 de 2 · Define color y estatus por defecto."
-      }
+      steps={WIZARD_STEPS}
+      activeStep={step}
+      onStepChange={(target) => goToStep(target as WizardStep)}
       error={displayError}
       progress={progress}
       busy={busy}
       submitDisabled={disabled}
+      formId={formId}
       onClose={onClose}
       onSubmit={handleSubmit}
       footer={
-        <div className="flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:justify-between [&_button]:w-full sm:[&_button]:w-auto">
+        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border px-4 py-4 sm:flex-row sm:justify-between sm:px-6 [&_button]:w-full sm:[&_button]:w-auto">
           <button
             type="button"
-            onClick={() => setStep((s) => Math.max(1, s - 1) as WizardStep)}
+            onClick={goBack}
             disabled={busy || step === 1}
             className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
           >
@@ -137,9 +178,10 @@ export function SealBatchFormDialog({
             >
               Cancelar
             </button>
-            {step === 1 ? (
+            {step < lastStep ? (
               <button
                 type="submit"
+                form={formId}
                 disabled={busy}
                 className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
               >
@@ -148,6 +190,7 @@ export function SealBatchFormDialog({
             ) : (
               <button
                 type="submit"
+                form={formId}
                 disabled={busy || disabled}
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-70"
               >
@@ -167,10 +210,8 @@ export function SealBatchFormDialog({
           disabled={disabled}
         />
       ) : (
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-card-foreground">
-            Datos comunes
-          </h3>
+        <fieldset className="space-y-4" disabled={disabled}>
+          <legend className="sr-only">Datos comunes del lote</legend>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <FieldLabel required>Color</FieldLabel>
@@ -215,7 +256,7 @@ export function SealBatchFormDialog({
               </select>
             </label>
           </div>
-        </div>
+        </fieldset>
       )}
     </BatchFormDialog>
   );

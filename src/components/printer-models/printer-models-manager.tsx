@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, Printer, RefreshCw } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { PrinterModelFormDialog } from "@/components/printer-models/printer-model-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
@@ -285,10 +285,7 @@ export function PrinterModelsManager() {
             Cargando modelos…
           </div>
         ) : models.length === 0 ? (
-          <EmptyState
-            icon={Printer}
-            title="No hay modelos de impresora registrados."
-          />
+          <EmptyState title="No hay modelos de impresora registrados." />
         ) : (
           <>
             <DataTableToolbar

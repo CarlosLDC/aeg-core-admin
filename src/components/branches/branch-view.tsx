@@ -1,13 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
 import {
   BranchCreateWizardDialog,
   type BranchWizardValues,
 } from "@/components/branches/branch-create-wizard-dialog";
-import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
+import {
+  DetailField,
+  DetailSection,
+} from "@/components/resource-view/detail-fields";
+import { DetailSectionsPager } from "@/components/resource-view/detail-sections-pager";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -231,6 +235,69 @@ export function BranchView() {
     ? companyNameById(companies, branch.companyId)
     : "";
   const title = branch ? `${branch.city}, ${branch.state}` : "Sucursal";
+  const detailSteps = useMemo(() => {
+    if (!branch) return [];
+
+    return [
+      {
+        id: "location",
+        label: "Ubicación",
+        content: (
+          <DetailSection title="Ubicación de la sucursal" layout="quad">
+            <DetailField label="ID" value={String(branch.id)} mono />
+            <DetailField
+              label="Empresa"
+              value={companyLabel}
+              href={companyPath(branch.companyId)}
+              span={4}
+            />
+            <DetailField label="Ciudad" value={branch.city} />
+            <DetailField label="Estado" value={branch.state} />
+            <DetailField
+              label="Dirección"
+              value={branch.address || "—"}
+              span={4}
+            />
+            <DetailField
+              label="Casa matriz"
+              value={branch.isHeadquarters ? "Sí" : "No"}
+            />
+          </DetailSection>
+        ),
+      },
+      {
+        id: "contact",
+        label: "Contacto",
+        content: (
+          <DetailSection title="Datos de contacto" layout="quad">
+            <DetailField
+              label="Persona de contacto"
+              value={branch.contactPersonName?.trim() || "—"}
+            />
+            <DetailField label="Teléfono" value={branch.phone || "—"} />
+            <DetailField label="Correo" value={branch.email || "—"} span={4} />
+          </DetailSection>
+        ),
+      },
+      {
+        id: "roles",
+        label: "Roles",
+        content: (
+          <DetailSection title="Roles operativos" layout="quad">
+            <DetailField
+              label="Roles"
+              value={<BranchTypeBadges branch={branch} />}
+              span={4}
+            />
+            <DetailField
+              label="Registrada"
+              value={formatDate(branch.createdAt)}
+            />
+          </DetailSection>
+        ),
+      },
+    ];
+  }, [branch, companyLabel]);
 
   return (
     <>
@@ -258,42 +325,7 @@ export function BranchView() {
           ) : undefined
         }
       >
-        {branch && (
-          <DetailCard>
-            <DetailField label="ID" value={String(branch.id)} mono />
-            <DetailField
-              label="Empresa"
-              value={companyLabel}
-              href={companyPath(branch.companyId)}
-              fullWidth
-            />
-            <DetailField label="Ciudad" value={branch.city} />
-            <DetailField label="Estado" value={branch.state} />
-            <DetailField
-              label="Dirección"
-              value={branch.address || "—"}
-              fullWidth
-            />
-            <DetailField
-              label="Persona de contacto"
-              value={branch.contactPersonName?.trim() || "—"}
-            />
-            <DetailField label="Teléfono" value={branch.phone || "—"} />
-            <DetailField label="Correo" value={branch.email || "—"} />
-            <DetailField
-              label="Casa matriz"
-              value={branch.isHeadquarters ? "Sí" : "No"}
-            />
-            <DetailField
-              label="Roles"
-              value={<BranchTypeBadges branch={branch} />}
-            />
-            <DetailField
-              label="Registrada"
-              value={formatDate(branch.createdAt)}
-            />
-          </DetailCard>
-        )}
+        {branch && <DetailSectionsPager key={branch.id} steps={detailSteps} />}
       </ResourceViewShell>
 
       {branch && editOpen && (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Building2, Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { ContributorBadge } from "@/components/companies/contributor-badge";
 import {
   CompanyFormDialog,
@@ -236,7 +236,6 @@ export function CompaniesManager() {
           </div>
         ) : companies.length === 0 ? (
           <EmptyState
-            icon={Building2}
             title={
               isDistributor
                 ? "No hay empresas de clientes visibles"

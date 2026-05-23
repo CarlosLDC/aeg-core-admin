@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Layers, Loader2, Plus, Printer, RefreshCw } from "lucide-react";
+import { Layers, Loader2, Plus, RefreshCw } from "lucide-react";
 import {
   PrinterBatchFormDialog,
   type PrinterBatchSubmitPayload,
@@ -597,7 +597,6 @@ export function PrintersManager() {
           </div>
         ) : visiblePrinters.length === 0 ? (
           <EmptyState
-            icon={Printer}
             title={
               isDistributor
                 ? "No hay impresoras asignadas a tu distribuidora."
@@ -819,7 +818,12 @@ export function PrintersManager() {
         progress={batchProgress}
         error={formError}
         modelOptions={modelOptions}
+        softwareOptions={software}
+        clientOptions={clientOptions}
+        distributorOptions={distributorOptions}
         modelsLoading={modelsLoading}
+        catalogLoading={catalogLoading}
+        canPickSoftware={user?.role === "ADMIN"}
         lockDistributor={lockDistributor}
         defaultDistributorId={distributorId}
         onClose={closeDialog}

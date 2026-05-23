@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw, Users } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { RoleBadge } from "@/components/users/role-badge";
 import {
   UserFormDialog,
@@ -313,7 +313,6 @@ export function UsersManager() {
           </div>
         ) : users.length === 0 ? (
           <EmptyState
-            icon={Users}
             title="Aún no hay usuarios en el sistema."
             action={
               <button

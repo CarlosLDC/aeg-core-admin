@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { GitBranch, Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
 import {
   BranchCreateWizardDialog,
@@ -435,7 +435,6 @@ export function CompanyBranchesTable({
           </div>
         ) : branches.length === 0 ? (
           <EmptyState
-            icon={GitBranch}
             title="Esta empresa no tiene sucursales registradas."
             action={
               canCreate ? (

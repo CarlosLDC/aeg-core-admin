@@ -8,6 +8,7 @@ import { CompanySelect } from "@/components/companies/company-select";
 import { DistributorSelect } from "@/components/branches/distributor-select";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { branchFormSchema } from "@/lib/schemas/branch-form-schema";
+import { cn } from "@/lib/utils";
 import type { BranchRoleFormState } from "@/lib/branch-roles";
 import type { BranchResponse, BranchWithRoles } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
@@ -316,7 +317,7 @@ export function BranchFormDialog({
               Cada rol crea un registro en su tabla (<code className="text-[11px]">branchId</code>
               ). El cliente puede vincularse a un distribuidor existente.
             </p>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-2">
               {(
                 [
                   ["isDistributor", "Distribuidor"],
@@ -324,41 +325,51 @@ export function BranchFormDialog({
                   ["isServiceCenter", "Centro de servicio"],
                 ] as const
               ).map(([key, label]) => (
-                <label
+                <button
                   key={key}
-                  className="flex cursor-pointer items-center gap-2 text-sm"
-                >
-                  <input
-                    type="checkbox"
-                    checked={form[key]}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        [key]: e.target.checked,
-                        ...(key === "isClient" && !e.target.checked
-                          ? { clientDistributorId: "" }
-                          : {}),
-                      }))
-                    }
-                    className="size-4 rounded border-border accent-accent"
-                  />
-                  <span>{label}</span>
-                </label>
-              ))}
-              <label className="flex cursor-pointer items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={form.isHeadquarters}
-                  onChange={(e) =>
+                  type="button"
+                  disabled={saving}
+                  aria-pressed={form[key]}
+                  onClick={() =>
                     setForm((f) => ({
                       ...f,
-                      isHeadquarters: e.target.checked,
+                      [key]: !f[key],
+                      ...(key === "isClient" && f[key]
+                        ? { clientDistributorId: "" }
+                        : {}),
                     }))
                   }
-                  className="size-4 rounded border-border accent-accent"
-                />
-                <span>Casa matriz</span>
-              </label>
+                  className={cn(
+                    "inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
+                    form[key]
+                      ? "border-accent/35 bg-accent/10 text-accent"
+                      : "border-border bg-background text-muted hover:bg-foreground/5 hover:text-card-foreground",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+              <button
+                type="button"
+                disabled={saving}
+                aria-pressed={form.isHeadquarters}
+                onClick={() =>
+                  setForm((f) => ({
+                    ...f,
+                    isHeadquarters: !f.isHeadquarters,
+                  }))
+                }
+                className={cn(
+                  "inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                  "disabled:cursor-not-allowed disabled:opacity-50",
+                  form.isHeadquarters
+                    ? "border-accent/35 bg-accent/10 text-accent"
+                    : "border-border bg-background text-muted hover:bg-foreground/5 hover:text-card-foreground",
+                )}
+              >
+                Casa matriz
+              </button>
             </div>
 
             {form.isClient && (

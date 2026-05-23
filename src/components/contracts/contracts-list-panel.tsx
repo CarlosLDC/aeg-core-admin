@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ExternalLink, FileText, Loader2, Plus, RefreshCw } from "lucide-react";
+import { ExternalLink, Loader2, Plus, RefreshCw } from "lucide-react";
 import { ContractFormDialog } from "@/components/contracts/contract-form-dialog";
 import { ContractStatusBadge } from "@/components/contracts/contract-status-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
@@ -378,7 +378,7 @@ export function ContractsListPanel({
             Cargando contratos…
           </div>
         ) : contracts.length === 0 ? (
-          <EmptyState icon={FileText} title="No hay contratos registrados." />
+          <EmptyState title="No hay contratos registrados." />
         ) : (
           <>
             <DataTableToolbar

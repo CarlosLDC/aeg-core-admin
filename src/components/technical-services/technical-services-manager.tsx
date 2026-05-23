@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw, Wrench } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { TechnicalServiceFormDialog } from "@/components/technical-services/technical-service-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
@@ -306,10 +306,7 @@ export function TechnicalServicesManager() {
             Cargando servicios…
           </div>
         ) : rows.length === 0 ? (
-          <EmptyState
-            icon={Wrench}
-            title="No hay servicios técnicos registrados."
-          />
+          <EmptyState title="No hay servicios técnicos registrados." />
         ) : (
           <>
             <DataTableToolbar

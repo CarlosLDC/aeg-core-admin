@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ContactRound, Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { ClientCreateDialog } from "@/components/clients/client-create-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
@@ -383,7 +383,6 @@ export function ClientsManager() {
           </div>
         ) : clientListRows.length === 0 ? (
           <EmptyState
-            icon={ContactRound}
             title="Sin clientes registrados"
             action={
               canCreate ? (

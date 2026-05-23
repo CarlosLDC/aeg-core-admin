@@ -4,6 +4,7 @@ import { DistributorSelect } from "@/components/branches/distributor-select";
 import { FieldLabel } from "@/components/ui/field-label";
 import { HeadquartersSelectorFields } from "@/components/branches/headquarters-selector-fields";
 import type { BranchWizardValues } from "@/components/branches/branch-wizard-types";
+import { cn } from "@/lib/utils";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -41,7 +42,7 @@ export function BranchWizardRolesFields({
       <p className="text-xs text-muted">
         Cada rol crea un registro vinculado a la sucursal.
       </p>
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-2">
         {(
           [
             ["isDistributor", "Distribuidor"],
@@ -49,27 +50,30 @@ export function BranchWizardRolesFields({
             ["isServiceCenter", "Centro de servicio"],
           ] as const
         ).map(([key, label]) => (
-          <label
+          <button
             key={key}
-            className="flex cursor-pointer items-center gap-2 text-sm"
+            type="button"
+            aria-pressed={form[key]}
+            disabled={saving}
+            onClick={() =>
+              setForm((f) => ({
+                ...f,
+                [key]: !f[key],
+                ...(key === "isClient" && f[key]
+                  ? { clientDistributorId: "" }
+                  : {}),
+              }))
+            }
+            className={cn(
+              "inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+              "disabled:cursor-not-allowed disabled:opacity-50",
+              form[key]
+                ? "border-accent/35 bg-accent/10 text-accent"
+                : "border-border bg-background text-muted hover:bg-foreground/5 hover:text-card-foreground",
+            )}
           >
-            <input
-              type="checkbox"
-              checked={form[key]}
-              disabled={saving}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  [key]: e.target.checked,
-                  ...(key === "isClient" && !e.target.checked
-                    ? { clientDistributorId: "" }
-                    : {}),
-                }))
-              }
-              className="size-4 rounded border-border accent-accent"
-            />
-            <span>{label}</span>
-          </label>
+            {label}
+          </button>
         ))}
       </div>
 

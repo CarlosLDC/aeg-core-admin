@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ClipboardCheck, Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { AnnualInspectionFormDialog } from "@/components/annual-inspections/annual-inspection-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
@@ -321,10 +321,7 @@ export function AnnualInspectionsManager() {
             Cargando inspecciones…
           </div>
         ) : rows.length === 0 ? (
-          <EmptyState
-            icon={ClipboardCheck}
-            title="No hay inspecciones anuales registradas."
-          />
+          <EmptyState title="No hay inspecciones anuales registradas." />
         ) : (
           <>
             <DataTableToolbar

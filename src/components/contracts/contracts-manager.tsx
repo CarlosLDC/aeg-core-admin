@@ -24,6 +24,7 @@ import {
   hrefForDistributor,
   hrefForServiceCenter,
 } from "@/lib/table-foreign-hrefs";
+import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
 import { cn } from "@/lib/utils";
 
 type Tab = "distributor" | "serviceCenter";
@@ -149,39 +150,43 @@ export function ContractsManager() {
 
   return (
     <div className="space-y-4">
-      <div
-        className="inline-flex w-fit gap-0.5 rounded-lg border border-border bg-card p-0.5"
-        role="tablist"
-        aria-label="Tipo de contrato"
-      >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "distributor"}
-          onClick={() => setTab("distributor")}
-          className={cn(
-            "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-            tab === "distributor"
-              ? "bg-accent text-accent-foreground shadow-sm"
-              : "text-muted hover:text-foreground",
-          )}
+      <div className="flex justify-center">
+        <div
+          className="inline-flex gap-1 rounded-lg border border-border bg-card p-1"
+          role="tablist"
+          aria-label="Tipo de contrato"
         >
-          Distribuidora
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "serviceCenter"}
-          onClick={() => setTab("serviceCenter")}
-          className={cn(
-            "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-            tab === "serviceCenter"
-              ? "bg-accent text-accent-foreground shadow-sm"
-              : "text-muted hover:text-foreground",
-          )}
-        >
-          Centro de servicio
-        </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "distributor"}
+            onClick={() => setTab("distributor")}
+            className={cn(
+              pageToolbarButtonClass,
+              "w-auto",
+              tab === "distributor"
+                ? "bg-accent text-accent-foreground"
+                : "text-muted hover:bg-foreground/5 hover:text-foreground",
+            )}
+          >
+            Distribuidora
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "serviceCenter"}
+            onClick={() => setTab("serviceCenter")}
+            className={cn(
+              pageToolbarButtonClass,
+              "w-auto",
+              tab === "serviceCenter"
+                ? "bg-accent text-accent-foreground"
+                : "text-muted hover:bg-foreground/5 hover:text-foreground",
+            )}
+          >
+            Centro de servicio
+          </button>
+        </div>
       </div>
 
       {tab === "distributor" ? (
