@@ -4,7 +4,6 @@ import { FormEvent, useEffect, useId, useState } from "react";
 import { Camera, ClipboardCheck, Link2, Loader2, X } from "lucide-react";
 import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
-import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { PhotoDocumentUpload } from "@/components/ui/photo-document-upload";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
@@ -44,7 +43,7 @@ export function AnnualInspectionFormDialog({
   onSubmit,
 }: AnnualInspectionFormDialogProps) {
   const formId = useId();
-  const isCreateWizard = mode === "create";
+  const isWizard = true;
   type WizardStep = 1 | 2 | 3;
   const [step, setStep] = useState<WizardStep>(1);
   const [stepError, setStepError] = useState<string | null>(null);
@@ -125,11 +124,6 @@ export function AnnualInspectionFormDialog({
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-
-    if (!isCreateWizard) {
-      onSubmit(form);
-      return;
-    }
 
     const currentError = validateStep(step);
     if (currentError) {
@@ -307,7 +301,7 @@ export function AnnualInspectionFormDialog({
                 : "Editar inspección anual"}
             </h2>
             <p className="mt-1 text-sm text-muted">
-              {isCreateWizard
+              {isWizard
                 ? stepSubtitle(step)
                 : "Documenta la revisión anual con datos técnicos y evidencia."}
             </p>
@@ -321,7 +315,7 @@ export function AnnualInspectionFormDialog({
           </button>
         </div>
 
-          {isCreateWizard && (
+          {isWizard && (
             <nav className="mt-4 flex gap-1" aria-label="Pasos del registro">
               {FORM_STEPS.map(({ step: wizardStep, label }) => {
                 const Icon = STEP_ICONS[wizardStep];
@@ -364,71 +358,56 @@ export function AnnualInspectionFormDialog({
           )}
 
           <form id={formId} onSubmit={handleSubmit} className="space-y-5">
-            {isCreateWizard ? (
-              renderWizardSection()
-            ) : (
-              <>
-                {assignmentSection}
-                {resultSection}
-                {evidenceSection}
-              </>
-            )}
+            {renderWizardSection()}
           </form>
         </div>
 
         <div className="shrink-0 border-t border-border px-4 py-4 sm:px-6">
-          {isCreateWizard ? (
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between [&_button]:w-full sm:[&_button]:w-auto">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between [&_button]:w-full sm:[&_button]:w-auto">
+            <button
+              type="button"
+              onClick={goBack}
+              disabled={saving || step === 1}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
+            >
+              Atras
+            </button>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
               <button
                 type="button"
-                onClick={goBack}
-                disabled={saving || step === 1}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
+                onClick={onClose}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5"
               >
-                Atras
+                Cancelar
               </button>
-              <div className="flex flex-col-reverse gap-2 sm:flex-row">
+              {step < 3 ? (
                 <button
-                  type="button"
-                  onClick={onClose}
-                  className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5"
+                  type="submit"
+                  form={formId}
+                  disabled={saving}
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
                 >
-                  Cancelar
+                  Siguiente
                 </button>
-                {step < 3 ? (
-                  <button
-                    type="submit"
-                    form={formId}
-                    disabled={saving}
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
-                  >
-                    Siguiente
-                  </button>
-                ) : (
-                  <button
-                    type="submit"
-                    form={formId}
-                    disabled={saving || catalogLoading}
-                    className={cn(
-                      "flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
-                      (saving || catalogLoading) &&
-                        "cursor-not-allowed opacity-70",
-                    )}
-                  >
-                    {saving && <Loader2 className="size-4 animate-spin" />}
-                    Crear inspeccion anual
-                  </button>
-                )}
-              </div>
+              ) : (
+                <button
+                  type="submit"
+                  form={formId}
+                  disabled={saving || catalogLoading}
+                  className={cn(
+                    "flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
+                    (saving || catalogLoading) &&
+                      "cursor-not-allowed opacity-70",
+                  )}
+                >
+                  {saving && <Loader2 className="size-4 animate-spin" />}
+                  {mode === "create"
+                    ? "Crear inspeccion anual"
+                    : "Guardar inspeccion anual"}
+                </button>
+              )}
             </div>
-          ) : (
-            <FormDialogFooter
-              mode={mode}
-              saving={saving}
-              submitDisabled={catalogLoading || form.photoUrls.length === 0}
-              onClose={onClose}
-            />
-          )}
+          </div>
         </div>
       </div>
     </div>

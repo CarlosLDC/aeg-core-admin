@@ -549,6 +549,7 @@ export function CompanyBranchesTable({
         mode={selected ? "edit" : "create"}
         branch={selected ?? undefined}
         companies={companyOptions}
+        lockedCompanyId={companyId}
         branches={allBranches}
         distributors={distributors}
         companiesLoading={scopeLoading}

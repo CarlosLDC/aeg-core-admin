@@ -31,6 +31,7 @@ type BranchFormDialogProps = {
   mode: "create" | "edit";
   branch?: BranchWithRoles;
   companies: CompanyResponse[];
+  lockedCompanyId?: number;
   branches: BranchResponse[];
   distributors: DistributorResponse[];
   companiesLoading: boolean;
@@ -71,6 +72,7 @@ export function BranchFormDialog({
   mode,
   branch,
   companies,
+  lockedCompanyId,
   branches,
   distributors,
   companiesLoading,
@@ -86,13 +88,16 @@ export function BranchFormDialog({
     Partial<Record<keyof BranchFormValues, string>>
   >({});
 
+  const forcedCompanyId =
+    lockedCompanyId != null ? String(lockedCompanyId) : null;
+
   useEffect(() => {
     if (!open) return;
     setFieldErrors({});
     if (mode === "edit" && branch) {
       const roles = rolesFromBranch(branch);
       setForm({
-        companyId: String(branch.companyId),
+        companyId: forcedCompanyId ?? String(branch.companyId),
         city: branch.city,
         state: branch.state,
         address: branch.address ?? "",
@@ -106,9 +111,12 @@ export function BranchFormDialog({
         isHeadquarters: Boolean(branch.isHeadquarters),
       });
     } else {
-      setForm(emptyForm);
+      setForm((prev) => ({
+        ...emptyForm,
+        companyId: forcedCompanyId ?? prev.companyId,
+      }));
     }
-  }, [open, mode, branch]);
+  }, [open, mode, branch, forcedCompanyId]);
 
   if (!open) return null;
 
@@ -116,7 +124,7 @@ export function BranchFormDialog({
     e.preventDefault();
     const parsed = branchFormSchema.safeParse({
       ...form,
-      companyId: form.companyId.trim(),
+      companyId: (forcedCompanyId ?? form.companyId).trim(),
       city: form.city.trim(),
       state: form.state.trim(),
       address: form.address.trim(),
@@ -198,13 +206,13 @@ export function BranchFormDialog({
               <label className="block sm:col-span-2">
                 <FieldLabel required>Empresa</FieldLabel>
                 <CompanySelect
-                  value={form.companyId}
+                  value={forcedCompanyId ?? form.companyId}
                   onChange={(companyId) =>
                     setForm((f) => ({ ...f, companyId }))
                   }
                   companies={companies}
                   loading={companiesLoading}
-                  disabled={companiesLoading}
+                  disabled={companiesLoading || forcedCompanyId != null}
                   required
                 />
               </label>
