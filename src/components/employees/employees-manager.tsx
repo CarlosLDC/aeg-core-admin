@@ -60,6 +60,7 @@ import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { EmployeeRequest } from "@/types/employee";
 import { cn } from "@/lib/utils";
+import { TablePlaceholderRows } from "@/components/ui/table-placeholder-rows";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { employeePath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
@@ -595,6 +596,10 @@ export function EmployeesManager() {
                           </td>
                         </ClickableTableRow>
                       ))}
+                      <TablePlaceholderRows
+                        count={pagination.placeholderRowCount}
+                        columnCount={7}
+                      />
                     </tbody>
                   </table>
                 </TableScroll>

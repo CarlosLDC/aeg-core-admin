@@ -43,6 +43,7 @@ import {
 } from "@/lib/annual-inspections-api";
 import type { AnnualInspectionResponse } from "@/types/annual-inspection";
 import { cn } from "@/lib/utils";
+import { TablePlaceholderRows } from "@/components/ui/table-placeholder-rows";
 import { TableScroll } from "@/components/ui/table-scroll";
 
 export function AnnualInspectionsManager() {
@@ -400,6 +401,10 @@ export function AnnualInspectionsManager() {
                           </td>
                         </ClickableTableRow>
                       ))}
+                      <TablePlaceholderRows
+                        count={pagination.placeholderRowCount}
+                        columnCount={7}
+                      />
                     </tbody>
                   </table>
                 </TableScroll>

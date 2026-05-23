@@ -43,6 +43,7 @@ import {
 } from "@/lib/technical-services-api";
 import type { TechnicalServiceResponse } from "@/types/technical-service";
 import { cn } from "@/lib/utils";
+import { TablePlaceholderRows } from "@/components/ui/table-placeholder-rows";
 import { TableScroll } from "@/components/ui/table-scroll";
 
 export function TechnicalServicesManager() {
@@ -398,6 +399,10 @@ export function TechnicalServicesManager() {
                           </td>
                         </ClickableTableRow>
                       ))}
+                      <TablePlaceholderRows
+                        count={pagination.placeholderRowCount}
+                        columnCount={9}
+                      />
                     </tbody>
                   </table>
                 </TableScroll>

@@ -28,6 +28,8 @@ export function usePagination<T>(
     return items.slice(start, start + pageSize);
   }, [items, page, pageSize]);
 
+  const placeholderRowCount = Math.max(0, pageSize - paginatedItems.length);
+
   const startIndex = totalItems === 0 ? 0 : (page - 1) * pageSize + 1;
   const endIndex = Math.min(page * pageSize, totalItems);
 
@@ -41,6 +43,7 @@ export function usePagination<T>(
     startIndex,
     endIndex,
     paginatedItems,
+    placeholderRowCount,
   };
 }
 

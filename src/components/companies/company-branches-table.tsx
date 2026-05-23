@@ -39,6 +39,7 @@ import type { BranchWithRoles } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { DistributorResponse } from "@/types/branch-role";
 import { cn } from "@/lib/utils";
+import { TablePlaceholderRows } from "@/components/ui/table-placeholder-rows";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
@@ -437,6 +438,10 @@ export function CompanyBranchesTable({
                           </td>
                         </ClickableTableRow>
                       ))}
+                      <TablePlaceholderRows
+                        count={pagination.placeholderRowCount}
+                        columnCount={6}
+                      />
                     </tbody>
                   </table>
                 </TableScroll>
