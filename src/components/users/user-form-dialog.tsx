@@ -251,8 +251,8 @@ export function UserFormDialog({
             <legend className="px-1 text-sm font-semibold text-card-foreground">
               Asignación operativa
             </legend>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block">
+            <div className="grid gap-4 sm:grid-cols-2 sm:items-start">
+              <div className="min-w-0">
                 <span className="mb-1.5 block text-sm font-medium">Sucursal</span>
                 <BranchSelect
                   value={form.branchId}
@@ -262,22 +262,20 @@ export function UserFormDialog({
                   loading={branchesLoading}
                   disabled={branchesLoading}
                 />
-                {selectedBranchDetail && (
-                  <p
-                    className="mt-1.5 truncate text-xs text-muted"
-                    title={selectedBranchDetail}
-                  >
-                    {selectedBranchDetail}
-                  </p>
-                )}
-              </label>
+                <p
+                  className="mt-1.5 line-clamp-2 min-h-[2.5rem] text-xs text-muted"
+                  title={selectedBranchDetail ?? undefined}
+                >
+                  {selectedBranchDetail ?? "\u00a0"}
+                </p>
+              </div>
 
-              <label className="block">
+              <div className="min-w-0">
                 <span className="mb-1.5 block text-sm font-medium">Rol</span>
                 <div
                   className={cn(
-                    "grid gap-2 rounded-lg border border-border p-2",
-                    availableRoles.length > 2 ? "sm:grid-cols-2" : "grid-cols-1",
+                    "grid gap-2",
+                    availableRoles.length > 1 && "sm:grid-cols-2",
                     (!form.branchId || availableRoles.length === 0) &&
                       "opacity-70",
                   )}
@@ -285,7 +283,7 @@ export function UserFormDialog({
                   aria-label="Roles disponibles para la sucursal"
                 >
                   {availableRoles.length === 0 ? (
-                    <p className="px-2 py-1 text-xs text-muted">
+                    <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted">
                       Selecciona una sucursal para ver roles disponibles.
                     </p>
                   ) : (
@@ -298,7 +296,7 @@ export function UserFormDialog({
                           onClick={() => handleRoleChange(role)}
                           aria-pressed={selected}
                           className={cn(
-                            "rounded-md border px-3 py-2 text-left text-sm transition-colors",
+                            "min-h-[2.75rem] rounded-lg border px-3 py-2 text-left text-sm transition-colors",
                             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
                             selected
                               ? "border-accent/40 bg-accent/10 text-card-foreground"
@@ -316,12 +314,7 @@ export function UserFormDialog({
                     })
                   )}
                 </div>
-                {availableRoles.length > 0 && (
-                  <p className="mt-1.5 text-xs text-muted">
-                    {ROLE_DESCRIPTIONS[form.role]}
-                  </p>
-                )}
-              </label>
+              </div>
             </div>
 
             {branchesForRole.length === 0 && (
