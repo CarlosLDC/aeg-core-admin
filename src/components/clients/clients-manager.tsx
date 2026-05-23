@@ -15,6 +15,13 @@ import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
+import {
+  compareDateValues,
+  compareNumberValues,
+  sortTableRows,
+  toggleTableSort,
+  type TableSortState,
+} from "@/lib/table-sort";
 import { useDistributorId } from "@/hooks/use-distributor-id";
 import {
   TableCreatedAtCell,
@@ -57,6 +64,8 @@ type ClientListRow = {
   email: string;
   createdAt: string;
 };
+
+type ClientSortKey = "id" | "createdAt";
 
 function buildClientListRows(
   clients: ClientResponse[],
@@ -118,6 +127,7 @@ export function ClientsManager() {
   const tableColumns = useTableColumnVisibility("clients");
   const [search, setSearch] = useState("");
   const [stateFilter, setStateFilter] = useState("all");
+  const [sort, setSort] = useState<TableSortState<ClientSortKey>>(null);
 
   const loadClients = useCallback(async () => {
     if (!scope) return;
@@ -219,7 +229,16 @@ export function ClientsManager() {
     });
   }, [clientListRows, search, stateFilter]);
 
-  const pagination = usePagination(filtered);
+  const sorted = useMemo(
+    () =>
+      sortTableRows(filtered, sort, {
+        id: (a, b) => compareNumberValues(a.client.id, b.client.id),
+        createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
+      }),
+    [filtered, sort],
+  );
+
+  const pagination = usePagination(sorted);
 
   async function handleCreate(
     values: ClientOnboardingValues,
@@ -423,8 +442,26 @@ export function ClientsManager() {
                         <th className="px-5 py-3 font-medium">Ubicación</th>
                         <th className="px-5 py-3 font-medium">Teléfono</th>
                         <th className="px-5 py-3 font-medium">Correo</th>
-                        {tableColumns.showId && <TableIdHeader />}
-                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
+                        {tableColumns.showId && (
+                          <TableIdHeader
+                            sortDirection={sort?.key === "id" ? sort.direction : null}
+                            onSortToggle={() =>
+                              setSort((current) => toggleTableSort(current, "id"))
+                            }
+                          />
+                        )}
+                        {tableColumns.showCreatedAt && (
+                          <TableCreatedAtHeader
+                            sortDirection={
+                              sort?.key === "createdAt" ? sort.direction : null
+                            }
+                            onSortToggle={() =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              )
+                            }
+                          />
+                        )}
                       </tr>
                     </thead>
                     <tbody>

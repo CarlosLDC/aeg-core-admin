@@ -37,6 +37,13 @@ import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
+  compareDateValues,
+  compareNumberValues,
+  sortTableRows,
+  toggleTableSort,
+  type TableSortState,
+} from "@/lib/table-sort";
+import {
   contractStatus,
   formatContractDate,
   toDistributorContractBody,
@@ -70,6 +77,7 @@ import {
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
+import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 
 type PartyOption = { id: number; label: string };
 
@@ -84,6 +92,8 @@ type ContractsListPanelProps = {
     contract: DistributorContractResponse | ServiceCenterContractResponse,
   ) => string | undefined;
 };
+
+type ContractSortKey = "validity" | "id" | "createdAt";
 
 function partyIdFromContract(
   kind: ContractKind,
@@ -122,6 +132,7 @@ export function ContractsListPanel({
   const tableColumns = useTableColumnVisibility(`contracts-${kind}`);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sort, setSort] = useState<TableSortState<ContractSortKey>>(null);
 
   const getErrorMessage =
     kind === "distributor"
@@ -148,7 +159,21 @@ export function ContractsListPanel({
     });
   }, [contracts, search, statusFilter, kind, getPartyLabel]);
 
-  const pagination = usePagination(filteredContracts);
+  const sortedContracts = useMemo(
+    () =>
+      sortTableRows(filteredContracts, sort, {
+        validity: (a, b) => {
+          const byStart = compareDateValues(a.startDate, b.startDate);
+          if (byStart !== 0) return byStart;
+          return compareDateValues(a.endDate, b.endDate);
+        },
+        id: (a, b) => compareNumberValues(a.id, b.id),
+        createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
+      }),
+    [filteredContracts, sort],
+  );
+
+  const pagination = usePagination(sortedContracts);
 
   const loadContracts = useCallback(async () => {
     setLoading(true);
@@ -388,11 +413,37 @@ export function ContractsListPanel({
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <th className="px-5 py-3 font-medium">{partyColumn}</th>
-                        <th className="px-5 py-3 font-medium">Vigencia</th>
+                        <SortableTableHeader
+                          label="Vigencia"
+                          sortDirection={sort?.key === "validity" ? sort.direction : null}
+                          onToggle={() =>
+                            setSort((current) =>
+                              toggleTableSort(current, "validity"),
+                            )
+                          }
+                        />
                         <th className="px-5 py-3 font-medium">Estado</th>
                         <th className="px-5 py-3 font-medium">Documentos</th>
-                        {tableColumns.showId && <TableIdHeader />}
-                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
+                        {tableColumns.showId && (
+                          <TableIdHeader
+                            sortDirection={sort?.key === "id" ? sort.direction : null}
+                            onSortToggle={() =>
+                              setSort((current) => toggleTableSort(current, "id"))
+                            }
+                          />
+                        )}
+                        {tableColumns.showCreatedAt && (
+                          <TableCreatedAtHeader
+                            sortDirection={
+                              sort?.key === "createdAt" ? sort.direction : null
+                            }
+                            onSortToggle={() =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              )
+                            }
+                          />
+                        )}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>

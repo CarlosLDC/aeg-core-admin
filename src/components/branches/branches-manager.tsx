@@ -40,6 +40,13 @@ import { useConfirm } from "@/context/confirm-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
+  compareDateValues,
+  compareNumberValues,
+  sortTableRows,
+  toggleTableSort,
+  type TableSortState,
+} from "@/lib/table-sort";
+import {
   deleteBranchRoles,
   distributorLabel,
   mergeBranchesWithRoles,
@@ -75,6 +82,8 @@ const TYPE_FILTER_OPTIONS = [
   { value: "distributor", label: "Distribuidor" },
   { value: "serviceCenter", label: "Centro de servicio" },
 ] as const;
+
+type BranchSortKey = "id" | "createdAt";
 
 function toRoleFormState(values: BranchFormValues) {
   return {
@@ -136,6 +145,7 @@ export function BranchesManager() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
   const [companyFilter, setCompanyFilter] = useState("all");
+  const [sort, setSort] = useState<TableSortState<BranchSortKey>>(null);
 
   const stateFilterOptions = useMemo(
     () => [
@@ -198,7 +208,16 @@ export function BranchesManager() {
     distributors,
   ]);
 
-  const pagination = usePagination(filteredBranches);
+  const sortedBranches = useMemo(
+    () =>
+      sortTableRows(filteredBranches, sort, {
+        id: (a, b) => compareNumberValues(a.id, b.id),
+        createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
+      }),
+    [filteredBranches, sort],
+  );
+
+  const pagination = usePagination(sortedBranches);
 
   const loadBranches = useCallback(async () => {
     if (!scope || !catalogRoles) return;
@@ -552,8 +571,26 @@ export function BranchesManager() {
                         <th className="px-5 py-3 font-medium">Contacto</th>
                         <th className="px-5 py-3 font-medium">Roles</th>
                         <th className="px-5 py-3 font-medium">Distribuidor</th>
-                        {tableColumns.showId && <TableIdHeader />}
-                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
+                        {tableColumns.showId && (
+                          <TableIdHeader
+                            sortDirection={sort?.key === "id" ? sort.direction : null}
+                            onSortToggle={() =>
+                              setSort((current) => toggleTableSort(current, "id"))
+                            }
+                          />
+                        )}
+                        {tableColumns.showCreatedAt && (
+                          <TableCreatedAtHeader
+                            sortDirection={
+                              sort?.key === "createdAt" ? sort.direction : null
+                            }
+                            onSortToggle={() =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              )
+                            }
+                          />
+                        )}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>

@@ -34,6 +34,13 @@ import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { formatDate } from "@/lib/datetime-form";
 import {
+  compareDateValues,
+  compareNumberValues,
+  sortTableRows,
+  toggleTableSort,
+  type TableSortState,
+} from "@/lib/table-sort";
+import {
   toAnnualInspectionRequest,
   type AnnualInspectionFormValues,
 } from "@/lib/annual-inspection-form";
@@ -48,6 +55,13 @@ import type { AnnualInspectionResponse } from "@/types/annual-inspection";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
+import { SortableTableHeader } from "@/components/ui/sortable-table-header";
+
+type AnnualInspectionSortKey =
+  | "inspectionDate"
+  | "photoCount"
+  | "id"
+  | "createdAt";
 
 export function AnnualInspectionsManager() {
   const toast = useToast();
@@ -72,6 +86,7 @@ export function AnnualInspectionsManager() {
   const [search, setSearch] = useState("");
   const [printerFilter, setPrinterFilter] = useState("all");
   const [employeeFilter, setEmployeeFilter] = useState("all");
+  const [sort, setSort] = useState<TableSortState<AnnualInspectionSortKey>>(null);
 
   const printerLabelById = useMemo(
     () => new Map(catalog.printerOptions.map((p) => [p.value, p.label])),
@@ -130,7 +145,20 @@ export function AnnualInspectionsManager() {
     employeeLabelById,
   ]);
 
-  const pagination = usePagination(filteredRows);
+  const sortedRows = useMemo(
+    () =>
+      sortTableRows(filteredRows, sort, {
+        inspectionDate: (a, b) =>
+          compareDateValues(a.inspectionDate, b.inspectionDate),
+        photoCount: (a, b) =>
+          compareNumberValues(a.photoUrls?.length ?? 0, b.photoUrls?.length ?? 0),
+        id: (a, b) => compareNumberValues(a.id, b.id),
+        createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
+      }),
+    [filteredRows, sort],
+  );
+
+  const pagination = usePagination(sortedRows);
 
   const loadRows = useCallback(async () => {
     setLoading(true);
@@ -334,11 +362,49 @@ export function AnnualInspectionsManager() {
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <th className="px-5 py-3 font-medium">Impresora</th>
                         <th className="px-5 py-3 font-medium">Empleado</th>
-                        <th className="px-5 py-3 font-medium">Fecha</th>
+                        <SortableTableHeader
+                          label="Fecha"
+                          sortDirection={
+                            sort?.key === "inspectionDate" ? sort.direction : null
+                          }
+                          onToggle={() =>
+                            setSort((current) =>
+                              toggleTableSort(current, "inspectionDate"),
+                            )
+                          }
+                        />
                         <th className="px-5 py-3 font-medium">Precinto</th>
-                        <th className="px-5 py-3 font-medium">Fotos</th>
-                        {tableColumns.showId && <TableIdHeader />}
-                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
+                        <SortableTableHeader
+                          label="Fotos"
+                          sortDirection={
+                            sort?.key === "photoCount" ? sort.direction : null
+                          }
+                          onToggle={() =>
+                            setSort((current) =>
+                              toggleTableSort(current, "photoCount"),
+                            )
+                          }
+                        />
+                        {tableColumns.showId && (
+                          <TableIdHeader
+                            sortDirection={sort?.key === "id" ? sort.direction : null}
+                            onSortToggle={() =>
+                              setSort((current) => toggleTableSort(current, "id"))
+                            }
+                          />
+                        )}
+                        {tableColumns.showCreatedAt && (
+                          <TableCreatedAtHeader
+                            sortDirection={
+                              sort?.key === "createdAt" ? sort.direction : null
+                            }
+                            onSortToggle={() =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              )
+                            }
+                          />
+                        )}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>

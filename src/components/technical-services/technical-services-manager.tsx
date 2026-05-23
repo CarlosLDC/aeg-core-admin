@@ -32,6 +32,13 @@ import { useFieldOperationsCatalog } from "@/hooks/use-field-operations-catalog"
 import { filterTechnicalServicesInScope } from "@/lib/scope-filters";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
+import {
+  compareDateValues,
+  compareNumberValues,
+  sortTableRows,
+  toggleTableSort,
+  type TableSortState,
+} from "@/lib/table-sort";
 import { formatDateTime, formatMoney } from "@/lib/datetime-form";
 import {
   toTechnicalServiceRequest,
@@ -48,6 +55,9 @@ import type { TechnicalServiceResponse } from "@/types/technical-service";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
+import { SortableTableHeader } from "@/components/ui/sortable-table-header";
+
+type TechnicalServiceSortKey = "startAt" | "endAt" | "cost" | "id" | "createdAt";
 
 export function TechnicalServicesManager() {
   const toast = useToast();
@@ -72,6 +82,7 @@ export function TechnicalServicesManager() {
   const [search, setSearch] = useState("");
   const [printerFilter, setPrinterFilter] = useState("all");
   const [technicianFilter, setTechnicianFilter] = useState("all");
+  const [sort, setSort] = useState<TableSortState<TechnicalServiceSortKey>>(null);
 
   const printerLabelById = useMemo(
     () => new Map(catalog.printerOptions.map((p) => [p.value, p.label])),
@@ -130,7 +141,19 @@ export function TechnicalServicesManager() {
     technicianLabelById,
   ]);
 
-  const pagination = usePagination(filteredRows);
+  const sortedRows = useMemo(
+    () =>
+      sortTableRows(filteredRows, sort, {
+        startAt: (a, b) => compareDateValues(a.startAt, b.startAt),
+        endAt: (a, b) => compareDateValues(a.endAt, b.endAt),
+        cost: (a, b) => compareNumberValues(a.cost, b.cost),
+        id: (a, b) => compareNumberValues(a.id, b.id),
+        createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
+      }),
+    [filteredRows, sort],
+  );
+
+  const pagination = usePagination(sortedRows);
 
   const loadRows = useCallback(async () => {
     setLoading(true);
@@ -324,13 +347,49 @@ export function TechnicalServicesManager() {
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <th className="px-5 py-3 font-medium">Impresora</th>
                         <th className="px-5 py-3 font-medium">Técnico</th>
-                        <th className="px-5 py-3 font-medium">Inicio</th>
-                        <th className="px-5 py-3 font-medium">Fin</th>
+                        <SortableTableHeader
+                          label="Inicio"
+                          sortDirection={sort?.key === "startAt" ? sort.direction : null}
+                          onToggle={() =>
+                            setSort((current) => toggleTableSort(current, "startAt"))
+                          }
+                        />
+                        <SortableTableHeader
+                          label="Fin"
+                          sortDirection={sort?.key === "endAt" ? sort.direction : null}
+                          onToggle={() =>
+                            setSort((current) => toggleTableSort(current, "endAt"))
+                          }
+                        />
                         <th className="px-5 py-3 font-medium">Falla</th>
-                        <th className="px-5 py-3 font-medium">Costo</th>
+                        <SortableTableHeader
+                          label="Costo"
+                          sortDirection={sort?.key === "cost" ? sort.direction : null}
+                          onToggle={() =>
+                            setSort((current) => toggleTableSort(current, "cost"))
+                          }
+                        />
                         <th className="px-5 py-3 font-medium">Precinto</th>
-                        {tableColumns.showId && <TableIdHeader />}
-                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
+                        {tableColumns.showId && (
+                          <TableIdHeader
+                            sortDirection={sort?.key === "id" ? sort.direction : null}
+                            onSortToggle={() =>
+                              setSort((current) => toggleTableSort(current, "id"))
+                            }
+                          />
+                        )}
+                        {tableColumns.showCreatedAt && (
+                          <TableCreatedAtHeader
+                            sortDirection={
+                              sort?.key === "createdAt" ? sort.direction : null
+                            }
+                            onSortToggle={() =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              )
+                            }
+                          />
+                        )}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>

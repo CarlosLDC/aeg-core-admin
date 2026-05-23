@@ -1,6 +1,27 @@
+import type { SortDirection } from "@/lib/table-sort";
 import { cn } from "@/lib/utils";
+import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 
-export function TableIdHeader({ className }: { className?: string }) {
+export function TableIdHeader({
+  className,
+  sortDirection = null,
+  onSortToggle,
+}: {
+  className?: string;
+  sortDirection?: SortDirection | null;
+  onSortToggle?: () => void;
+}) {
+  if (onSortToggle) {
+    return (
+      <SortableTableHeader
+        label="ID"
+        sortDirection={sortDirection}
+        onToggle={onSortToggle}
+        className={className}
+      />
+    );
+  }
+
   return (
     <th
       className={cn(

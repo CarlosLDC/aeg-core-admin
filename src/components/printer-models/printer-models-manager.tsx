@@ -30,6 +30,13 @@ import { forbiddenMessage } from "@/lib/permissions/messages";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
+  compareDateValues,
+  compareNumberValues,
+  sortTableRows,
+  toggleTableSort,
+  type TableSortState,
+} from "@/lib/table-sort";
+import {
   formatPrinterModelDate,
   formatPrinterModelPrice,
   toPrinterModelRequest,
@@ -49,6 +56,9 @@ import { TruncatedText } from "@/components/ui/truncated-text";
 import { printerModelPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
+import { SortableTableHeader } from "@/components/ui/sortable-table-header";
+
+type PrinterModelSortKey = "price" | "approvalDate" | "id" | "createdAt";
 
 function modelLabel(model: PrinterModelResponse) {
   return `${model.brand} ${model.modelCode}`.trim();
@@ -72,6 +82,7 @@ export function PrinterModelsManager() {
   const tableColumns = useTableColumnVisibility("printer-models");
   const [search, setSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState("all");
+  const [sort, setSort] = useState<TableSortState<PrinterModelSortKey>>(null);
 
   const brandFilterOptions = useMemo(
     () => [
@@ -100,7 +111,19 @@ export function PrinterModelsManager() {
     });
   }, [models, search, brandFilter]);
 
-  const pagination = usePagination(filteredModels);
+  const sortedModels = useMemo(
+    () =>
+      sortTableRows(filteredModels, sort, {
+        price: (a, b) => compareNumberValues(a.price, b.price),
+        approvalDate: (a, b) =>
+          compareDateValues(a.approvalDate, b.approvalDate),
+        id: (a, b) => compareNumberValues(a.id, b.id),
+        createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
+      }),
+    [filteredModels, sort],
+  );
+
+  const pagination = usePagination(sortedModels);
 
   const loadModels = useCallback(async () => {
     setLoading(true);
@@ -296,11 +319,45 @@ export function PrinterModelsManager() {
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <th className="px-5 py-3 font-medium">Marca</th>
                         <th className="px-5 py-3 font-medium">Modelo</th>
-                        <th className="px-5 py-3 font-medium">Precio</th>
+                        <SortableTableHeader
+                          label="Precio"
+                          sortDirection={sort?.key === "price" ? sort.direction : null}
+                          onToggle={() =>
+                            setSort((current) => toggleTableSort(current, "price"))
+                          }
+                        />
                         <th className="px-5 py-3 font-medium">Providencia</th>
-                        <th className="px-5 py-3 font-medium">Aprobación</th>
-                        {tableColumns.showId && <TableIdHeader />}
-                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
+                        <SortableTableHeader
+                          label="Aprobación"
+                          sortDirection={
+                            sort?.key === "approvalDate" ? sort.direction : null
+                          }
+                          onToggle={() =>
+                            setSort((current) =>
+                              toggleTableSort(current, "approvalDate"),
+                            )
+                          }
+                        />
+                        {tableColumns.showId && (
+                          <TableIdHeader
+                            sortDirection={sort?.key === "id" ? sort.direction : null}
+                            onSortToggle={() =>
+                              setSort((current) => toggleTableSort(current, "id"))
+                            }
+                          />
+                        )}
+                        {tableColumns.showCreatedAt && (
+                          <TableCreatedAtHeader
+                            sortDirection={
+                              sort?.key === "createdAt" ? sort.direction : null
+                            }
+                            onSortToggle={() =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              )
+                            }
+                          />
+                        )}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>

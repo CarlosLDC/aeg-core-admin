@@ -23,6 +23,13 @@ import { useConfirm } from "@/context/confirm-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
+  compareDateValues,
+  compareNumberValues,
+  sortTableRows,
+  toggleTableSort,
+  type TableSortState,
+} from "@/lib/table-sort";
+import {
   canAssignEmployeeRoles,
   canCreateEmployeeRecord,
   canUpdateEmployeeRecord,
@@ -69,6 +76,8 @@ import { hrefForBranch } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
+type EmployeeSortKey = "id" | "createdAt";
+
 function employeeLabel(employee: EmployeeWithRoles) {
   return `${employee.name} (${employee.nationalId})`;
 }
@@ -113,6 +122,7 @@ export function EmployeesManager() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [branchFilter, setBranchFilter] = useState("all");
+  const [sort, setSort] = useState<TableSortState<EmployeeSortKey>>(null);
 
   const roleFilterOptions = useMemo(() => {
     const base = user ? uiRolesForUser(user.role) : EMPLOYEE_UI_ROLES;
@@ -224,7 +234,16 @@ export function EmployeesManager() {
     companies,
   ]);
 
-  const pagination = usePagination(filteredEmployees);
+  const sortedEmployees = useMemo(
+    () =>
+      sortTableRows(filteredEmployees, sort, {
+        id: (a, b) => compareNumberValues(a.id, b.id),
+        createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
+      }),
+    [filteredEmployees, sort],
+  );
+
+  const pagination = usePagination(sortedEmployees);
 
   const loadEmployees = useCallback(async () => {
     if (!user) {
@@ -531,8 +550,26 @@ export function EmployeesManager() {
                         <th className="px-5 py-3 font-medium">Rol</th>
                         <th className="px-5 py-3 font-medium">Sucursal</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
-                        {tableColumns.showId && <TableIdHeader />}
-                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
+                        {tableColumns.showId && (
+                          <TableIdHeader
+                            sortDirection={sort?.key === "id" ? sort.direction : null}
+                            onSortToggle={() =>
+                              setSort((current) => toggleTableSort(current, "id"))
+                            }
+                          />
+                        )}
+                        {tableColumns.showCreatedAt && (
+                          <TableCreatedAtHeader
+                            sortDirection={
+                              sort?.key === "createdAt" ? sort.direction : null
+                            }
+                            onSortToggle={() =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              )
+                            }
+                          />
+                        )}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>

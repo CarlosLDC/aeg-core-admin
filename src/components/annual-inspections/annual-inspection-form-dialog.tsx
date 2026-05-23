@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useId, useState } from "react";
 import { Camera, ClipboardCheck, Link2, Loader2, X } from "lucide-react";
+import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { PhotoDocumentUpload } from "@/components/ui/photo-document-upload";
@@ -228,18 +229,19 @@ export function AnnualInspectionFormDialog({
             className={inputClass}
           />
         </label>
-        <label className="flex items-center gap-2 rounded-lg border border-border bg-foreground/[0.02] px-3 py-2">
-          <input
-            type="checkbox"
-            checked={form.sealTampered}
-            disabled={disabled}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, sealTampered: e.target.checked }))
+        <div className="block">
+          <FieldLabel>Precinto violentado</FieldLabel>
+          <BooleanToggle
+            value={form.sealTampered}
+            onChange={(sealTampered) =>
+              setForm((f) => ({ ...f, sealTampered }))
             }
-            className="size-4 rounded border-border"
+            disabled={disabled}
+            falseLabel="Intacto"
+            trueLabel="Violentado"
+            ariaLabel="Estado del precinto"
           />
-          <span className="text-sm font-medium">Precinto violentado</span>
-        </label>
+        </div>
       </div>
 
       <label className="block">

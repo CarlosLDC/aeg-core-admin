@@ -37,6 +37,12 @@ import { applyScopedFieldCatalog } from "@/lib/scope-filters";
 import { usePagination } from "@/hooks/use-pagination";
 import { fetchPrinters } from "@/lib/printers-api";
 import {
+  compareDateValues,
+  sortTableRows,
+  toggleTableSort,
+  type TableSortState,
+} from "@/lib/table-sort";
+import {
   formatSealDate,
   SEAL_COLOR_LABELS,
   SEAL_STATUS_LABELS,
@@ -55,10 +61,13 @@ import { SEAL_COLORS, SEAL_STATUSES } from "@/types/seal";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
+import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 import { sealPath } from "@/lib/resource-routes";
 import { hrefForPrinter } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
+
+type SealSortKey = "installationDate" | "removalDate";
 
 export function SealsManager() {
   const toast = useToast();
@@ -95,6 +104,7 @@ export function SealsManager() {
   const [statusFilter, setStatusFilter] = useState<SealStatus | "all">("all");
   const [colorFilter, setColorFilter] = useState<SealColor | "all">("all");
   const [printerFilter, setPrinterFilter] = useState("all");
+  const [sort, setSort] = useState<TableSortState<SealSortKey>>(null);
 
   const printerLabelById = useMemo(
     () => new Map(printerOptions.map((p) => [p.id, p.label])),
@@ -155,7 +165,17 @@ export function SealsManager() {
     printerSerialById,
   ]);
 
-  const pagination = usePagination(filteredSeals);
+  const sortedSeals = useMemo(
+    () =>
+      sortTableRows(filteredSeals, sort, {
+        installationDate: (a, b) =>
+          compareDateValues(a.installationDate, b.installationDate),
+        removalDate: (a, b) => compareDateValues(a.removalDate, b.removalDate),
+      }),
+    [filteredSeals, sort],
+  );
+
+  const pagination = usePagination(sortedSeals);
 
   const loadPrinters = useCallback(async () => {
     if (!user || !canLoadPrinters) {
@@ -555,8 +575,30 @@ export function SealsManager() {
                         <th className="px-5 py-3 font-medium">Impresora</th>
                         <th className="px-5 py-3 font-medium">Color</th>
                         <th className="px-5 py-3 font-medium">Estatus</th>
-                        <th className="px-5 py-3 font-medium">Instalación</th>
-                        <th className="px-5 py-3 font-medium">Retiro</th>
+                        <SortableTableHeader
+                          label="Instalación"
+                          sortDirection={
+                            sort?.key === "installationDate"
+                              ? sort.direction
+                              : null
+                          }
+                          onToggle={() =>
+                            setSort((current) =>
+                              toggleTableSort(current, "installationDate"),
+                            )
+                          }
+                        />
+                        <SortableTableHeader
+                          label="Retiro"
+                          sortDirection={
+                            sort?.key === "removalDate" ? sort.direction : null
+                          }
+                          onToggle={() =>
+                            setSort((current) =>
+                              toggleTableSort(current, "removalDate"),
+                            )
+                          }
+                        />
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>

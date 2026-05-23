@@ -36,6 +36,13 @@ import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
+import {
+  compareDateValues,
+  compareNumberValues,
+  sortTableRows,
+  toggleTableSort,
+  type TableSortState,
+} from "@/lib/table-sort";
 import { distributorLabel } from "@/lib/branch-roles";
 import { formatBranchShort } from "@/lib/branches";
 import { fetchBranches } from "@/lib/branches-api";
@@ -71,6 +78,7 @@ import { PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
+import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 import { printerPath } from "@/lib/resource-routes";
 import {
   hrefForClient,
@@ -79,6 +87,8 @@ import {
 } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
+
+type PrinterSortKey = "price" | "installationDate" | "id" | "createdAt";
 
 function clientLabel(
   client: ClientResponse,
@@ -133,6 +143,7 @@ export function PrintersManager() {
   );
   const [modelFilter, setModelFilter] = useState("all");
   const [paidFilter, setPaidFilter] = useState("all");
+  const [sort, setSort] = useState<TableSortState<PrinterSortKey>>(null);
 
   useEffect(() => {
     if (!isDistributor) {
@@ -226,7 +237,19 @@ export function PrintersManager() {
     });
   }, [visiblePrinters, search, statusFilter, modelFilter, paidFilter, modelById]);
 
-  const pagination = usePagination(filteredPrinters);
+  const sortedPrinters = useMemo(
+    () =>
+      sortTableRows(filteredPrinters, sort, {
+        price: (a, b) => compareNumberValues(a.finalSalePrice, b.finalSalePrice),
+        installationDate: (a, b) =>
+          compareDateValues(a.installationDate, b.installationDate),
+        id: (a, b) => compareNumberValues(a.id, b.id),
+        createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
+      }),
+    [filteredPrinters, sort],
+  );
+
+  const pagination = usePagination(sortedPrinters);
 
   const modelOptions = useMemo<SelectOption[]>(
     () =>
@@ -644,11 +667,45 @@ export function PrintersManager() {
                         <th className="px-5 py-3 font-medium">Tipo</th>
                         <th className="px-5 py-3 font-medium">Distribuidor</th>
                         <th className="px-5 py-3 font-medium">Cliente</th>
-                        <th className="px-5 py-3 font-medium">Precio</th>
+                        <SortableTableHeader
+                          label="Precio"
+                          sortDirection={sort?.key === "price" ? sort.direction : null}
+                          onToggle={() =>
+                            setSort((current) => toggleTableSort(current, "price"))
+                          }
+                        />
                         <th className="px-5 py-3 font-medium">Pagada</th>
-                        <th className="px-5 py-3 font-medium">Instalación</th>
-                        {tableColumns.showId && <TableIdHeader />}
-                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
+                        <SortableTableHeader
+                          label="Instalación"
+                          sortDirection={
+                            sort?.key === "installationDate" ? sort.direction : null
+                          }
+                          onToggle={() =>
+                            setSort((current) =>
+                              toggleTableSort(current, "installationDate"),
+                            )
+                          }
+                        />
+                        {tableColumns.showId && (
+                          <TableIdHeader
+                            sortDirection={sort?.key === "id" ? sort.direction : null}
+                            onSortToggle={() =>
+                              setSort((current) => toggleTableSort(current, "id"))
+                            }
+                          />
+                        )}
+                        {tableColumns.showCreatedAt && (
+                          <TableCreatedAtHeader
+                            sortDirection={
+                              sort?.key === "createdAt" ? sort.direction : null
+                            }
+                            onSortToggle={() =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              )
+                            }
+                          />
+                        )}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>

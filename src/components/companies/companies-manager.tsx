@@ -26,6 +26,13 @@ import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
+import {
+  compareDateValues,
+  compareNumberValues,
+  sortTableRows,
+  toggleTableSort,
+  type TableSortState,
+} from "@/lib/table-sort";
 import { CONTRIBUTOR_LABELS } from "@/lib/contributor-types";
 import {
   canCreateCatalogRecord,
@@ -46,6 +53,8 @@ import { companyPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
+type CompanySortKey = "id" | "createdAt";
+
 export function CompaniesManager() {
   const toast = useToast();
   const confirm = useConfirm();
@@ -62,6 +71,7 @@ export function CompaniesManager() {
   const tableColumns = useTableColumnVisibility("companies");
   const [search, setSearch] = useState("");
   const [contributorFilter, setContributorFilter] = useState("all");
+  const [sort, setSort] = useState<TableSortState<CompanySortKey>>(null);
 
   const canCreate = user ? canCreateCatalogRecord(user.role) : false;
   const canModify = user ? canUpdateCompanyRecord(user.role) : false;
@@ -93,7 +103,16 @@ export function CompaniesManager() {
     });
   }, [companies, search, contributorFilter]);
 
-  const pagination = usePagination(filteredCompanies);
+  const sortedCompanies = useMemo(
+    () =>
+      sortTableRows(filteredCompanies, sort, {
+        id: (a, b) => compareNumberValues(a.id, b.id),
+        createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
+      }),
+    [filteredCompanies, sort],
+  );
+
+  const pagination = usePagination(sortedCompanies);
 
   const reload = useCallback(async () => {
     await refresh();
@@ -274,8 +293,26 @@ export function CompaniesManager() {
                         <th className="px-5 py-3 font-medium">Razón social</th>
                         <th className="px-5 py-3 font-medium">RIF</th>
                         <th className="px-5 py-3 font-medium">Contribuyente</th>
-                        {tableColumns.showId && <TableIdHeader />}
-                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
+                        {tableColumns.showId && (
+                          <TableIdHeader
+                            sortDirection={sort?.key === "id" ? sort.direction : null}
+                            onSortToggle={() =>
+                              setSort((current) => toggleTableSort(current, "id"))
+                            }
+                          />
+                        )}
+                        {tableColumns.showCreatedAt && (
+                          <TableCreatedAtHeader
+                            sortDirection={
+                              sort?.key === "createdAt" ? sort.direction : null
+                            }
+                            onSortToggle={() =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              )
+                            }
+                          />
+                        )}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
