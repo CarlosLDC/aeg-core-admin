@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Columns3, Filter, Search, X } from "lucide-react";
+import {
+  ChevronDown,
+  Columns3,
+  Filter,
+  RotateCcw,
+  Search,
+  X,
+} from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { FILTER_ALL } from "@/lib/table-filter-options";
 import { cn } from "@/lib/utils";
@@ -52,6 +59,10 @@ function countActiveFilters(filters: FilterSelect[], search: string): number {
   let count = filters.filter((f) => f.value !== FILTER_ALL).length;
   if (search.trim()) count += 1;
   return count;
+}
+
+function countActiveFilterFields(filters: FilterSelect[]): number {
+  return filters.filter((f) => f.value !== FILTER_ALL).length;
 }
 
 function countVisibleOptionalColumns(columns: ColumnToggle[]): number {
@@ -105,20 +116,60 @@ function TableFilterField({ filter }: { filter: FilterSelect }) {
 }
 
 function TableColumnsSection({ columns }: { columns: ColumnToggle[] }) {
+  const visibleCount = countVisibleOptionalColumns(columns);
+
+  function setAllColumnsVisible(visible: boolean) {
+    for (const column of columns) {
+      if (column.visible !== visible) {
+        column.onVisibleChange(visible);
+      }
+    }
+  }
+
   return (
-    <section aria-labelledby="table-columns-heading">
-      <h3
-        id="table-columns-heading"
-        className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted"
-      >
-        <Columns3 className="size-3.5" aria-hidden />
-        Columnas visibles
-      </h3>
-      <div className="flex flex-wrap gap-x-5 gap-y-2">
+    <section
+      aria-labelledby="table-columns-heading"
+      className="rounded-lg border border-border bg-card p-3 sm:p-4"
+    >
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3
+          id="table-columns-heading"
+          className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted"
+        >
+          <Columns3 className="size-3.5" aria-hidden />
+          Columnas visibles
+        </h3>
+        <span className="text-xs text-muted">
+          {visibleCount} de {columns.length}
+        </span>
+      </div>
+
+      <p className="mb-3 text-xs text-muted">
+        Activa solo las columnas de soporte que quieras ver en la tabla.
+      </p>
+
+      <div className="mb-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setAllColumnsVisible(true)}
+          className="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
+        >
+          Mostrar todas
+        </button>
+        <button
+          type="button"
+          onClick={() => setAllColumnsVisible(false)}
+          className="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
+        >
+          Ocultar todas
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {columns.map((column) => (
           <label
             key={column.id}
-            className="inline-flex cursor-pointer items-center gap-2 text-sm text-card-foreground"
+            className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm text-card-foreground transition-colors hover:bg-foreground/[0.03]"
           >
             <input
               type="checkbox"
@@ -146,6 +197,7 @@ export function DataTableToolbar({
 }: DataTableToolbarProps) {
   const [panelOpen, setPanelOpen] = useState(false);
   const activeCount = countActiveFilters(filters, search);
+  const activeFilterFields = countActiveFilterFields(filters);
   const hasActiveFilters = activeCount > 0;
   const visibleOptionalColumns = countVisibleOptionalColumns(columns);
   const hasPanel = filters.length > 0 || columns.length > 0;
@@ -199,19 +251,30 @@ export function DataTableToolbar({
               Filtros
               {activeCount > 0 && (
                 <span className="flex size-5 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-accent-foreground">
-                  {activeCount}
+                  {activeFilterFields}
                 </span>
               )}
             </button>
 
-            {hasActiveFilters && filters.length > 0 && (
+            {columns.length > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-muted">
+                <Columns3 className="size-3.5" aria-hidden />
+                {visibleOptionalColumns}/{columns.length}
+              </span>
+            )}
+
+            {hasActiveFilters && (
               <button
                 type="button"
                 onClick={clearFilters}
                 className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
               >
-                <X className="size-4" aria-hidden />
-                Limpiar
+                {filters.length > 0 ? (
+                  <X className="size-4" aria-hidden />
+                ) : (
+                  <RotateCcw className="size-4" aria-hidden />
+                )}
+                Limpiar filtros
               </button>
             )}
           </>
@@ -221,16 +284,26 @@ export function DataTableToolbar({
       {panelOpen && hasPanel && (
         <div className="space-y-4 border-t border-border bg-foreground/[0.02] px-4 py-3 sm:px-5">
           {filters.length > 0 && (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filters.map((filter) => (
-                <TableFilterField key={filter.id} filter={filter} />
-              ))}
-            </div>
+            <section
+              aria-labelledby="table-filters-heading"
+              className="rounded-lg border border-border bg-card p-3 sm:p-4"
+            >
+              <h3
+                id="table-filters-heading"
+                className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted"
+              >
+                <Filter className="size-3.5" aria-hidden />
+                Filtros de datos
+              </h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filters.map((filter) => (
+                  <TableFilterField key={filter.id} filter={filter} />
+                ))}
+              </div>
+            </section>
           )}
           {columns.length > 0 && (
-            <TableColumnsSection
-              columns={columns}
-            />
+            <TableColumnsSection columns={columns} />
           )}
         </div>
       )}

@@ -8,9 +8,6 @@ type DetailSectionLayout = "default" | "quad";
 
 const DetailSectionLayoutContext = createContext<DetailSectionLayout>("default");
 
-/** Altura mínima compartida por cards en el pager de detalle. */
-export const DETAIL_PAGER_CARD_MIN_H = "min-h-[280px]";
-
 export function DetailCard({ children }: { children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
@@ -32,17 +29,12 @@ export function DetailSection({
 
   return (
     <DetailSectionLayoutContext.Provider value={layout}>
-      <section
-        className={cn(
-          "rounded-xl border border-border bg-card p-5 shadow-sm",
-          isQuad && cn("flex h-full flex-col", DETAIL_PAGER_CARD_MIN_H),
-        )}
-      >
+      <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <h3 className="text-sm font-semibold text-card-foreground">{title}</h3>
         <dl
           className={cn(
             isQuad
-              ? "mt-4 grid flex-1 grid-cols-4 gap-x-6 gap-y-6 content-start"
+              ? "mt-4 grid grid-cols-4 gap-x-6 gap-y-5 content-start"
               : "mt-4 grid gap-4 sm:grid-cols-2",
           )}
         >
@@ -108,11 +100,4 @@ export function DetailField({
       <dd className="mt-1 text-sm">{content}</dd>
     </div>
   );
-}
-
-/** Celda vacía para mantener la rejilla 2×2 en layout `quad`. */
-export function DetailGridSpacer() {
-  const layout = useContext(DetailSectionLayoutContext);
-  if (layout !== "quad") return null;
-  return <div className="col-span-2" aria-hidden />;
 }

@@ -8,7 +8,6 @@ import {
 } from "@/components/printers/printer-form-dialog";
 import {
   DetailField,
-  DetailGridSpacer,
   DetailSection,
 } from "@/components/resource-view/detail-fields";
 import {
@@ -351,7 +350,6 @@ export function PrinterView() {
                   : "Sin asignar"
               }
             />
-            <DetailGridSpacer />
           </DetailSection>
         ),
       },
@@ -374,7 +372,6 @@ export function PrinterView() {
               label="Registrada"
               value={formatDate(printer.createdAt)}
             />
-            <DetailGridSpacer />
           </DetailSection>
         ),
       },

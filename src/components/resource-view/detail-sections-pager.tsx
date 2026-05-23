@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DETAIL_PAGER_CARD_MIN_H } from "@/components/resource-view/detail-fields";
 import { cn } from "@/lib/utils";
 
 export type DetailPagerStep = {
@@ -96,12 +95,7 @@ export function DetailSectionsPager({
         </div>
       )}
 
-      <div
-        className={cn(
-          "flex items-center gap-3 sm:gap-4",
-          showNav && DETAIL_PAGER_CARD_MIN_H,
-        )}
-      >
+      <div className="flex items-center gap-3 sm:gap-4">
         {showNav ? (
           <button
             type="button"
@@ -115,20 +109,17 @@ export function DetailSectionsPager({
         ) : null}
 
         <div
-          className="min-h-0 min-w-0 flex-1 self-stretch overflow-hidden"
+          className="min-w-0 flex-1 overflow-hidden"
           role="tabpanel"
           id={`detail-panel-${current.id}`}
           aria-labelledby={`detail-tab-${current.id}`}
         >
           <div
-            className={cn(
-              "flex h-full transition-transform duration-200 ease-out motion-reduce:transition-none",
-              showNav && DETAIL_PAGER_CARD_MIN_H,
-            )}
+            className="flex transition-transform duration-200 ease-out motion-reduce:transition-none"
             style={{ transform: `translateX(-${safeIndex * 100}%)` }}
           >
             {steps.map((step) => (
-              <div key={step.id} className="h-full w-full shrink-0">
+              <div key={step.id} className="w-full shrink-0">
                 {step.content}
               </div>
             ))}
