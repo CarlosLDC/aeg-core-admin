@@ -6,6 +6,7 @@ import {
   PrinterBatchFormDialog,
   type PrinterBatchSubmitPayload,
 } from "@/components/printers/printer-batch-form-dialog";
+import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import {
   PrinterFormDialog,
   type SelectOption,
@@ -740,10 +741,27 @@ export function PrintersManager() {
         onSubmit={(payload) => void handleBatchSubmit(payload)}
       />
 
+      <PrinterCreateWizardDialog
+        open={dialog === "create"}
+        saving={saving}
+        error={formError}
+        modelOptions={modelOptions}
+        softwareOptions={software}
+        clientOptions={clientOptions}
+        distributorOptions={distributorOptions}
+        modelsLoading={modelsLoading}
+        catalogLoading={catalogLoading}
+        canPickSoftware={user?.role === "ADMIN"}
+        lockDistributor={lockDistributor}
+        defaultDistributorId={distributorId}
+        onClose={closeDialog}
+        onSubmit={handleSubmit}
+      />
+
       <PrinterFormDialog
-        mode={dialog === "create" ? "create" : "edit"}
+        mode="edit"
         printer={selected ?? undefined}
-        open={dialog === "create" || dialog === "edit"}
+        open={dialog === "edit"}
         saving={saving}
         error={formError}
         modelOptions={modelOptions}
@@ -759,7 +777,7 @@ export function PrintersManager() {
         onSubmit={handleSubmit}
         deleting={Boolean(selected && deletingId === selected.id)}
         onDelete={
-          dialog === "edit" && selected && canModify
+          selected && canModify
             ? () => void handleDelete(selected, true)
             : undefined
         }

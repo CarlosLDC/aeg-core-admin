@@ -200,7 +200,10 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
   },
   {
     resource: "printers",
-    formPath: "src/components/printers/printer-form-dialog.tsx",
+    formPath: [
+      "src/components/printers/printer-form-dialog.tsx",
+      "src/components/printers/printer-wizard-fields.tsx",
+    ],
     viewPath: "src/components/printers/printer-view.tsx",
     fields: [
       {
