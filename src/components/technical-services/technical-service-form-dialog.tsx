@@ -1,7 +1,15 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { FormEvent, useEffect, useId, useState } from "react";
+import {
+  Camera,
+  ClipboardList,
+  FileText,
+  Link2,
+  Loader2,
+  ShieldAlert,
+  X,
+} from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { PhotoDocumentUpload } from "@/components/ui/photo-document-upload";
@@ -32,6 +40,46 @@ type TechnicalServiceFormDialogProps = {
   onSubmit: (values: TechnicalServiceFormValues) => void;
 };
 
+type WizardStep = 1 | 2 | 3 | 4 | 5;
+type WizardSection = "assignment" | "visit" | "zReports" | "seals" | "evidence";
+
+const FORM_STEPS: { step: WizardStep; section: WizardSection; label: string }[] = [
+  { step: 1, section: "assignment", label: "Asignacion" },
+  { step: 2, section: "visit", label: "Visita" },
+  { step: 3, section: "zReports", label: "Reportes Z" },
+  { step: 4, section: "seals", label: "Precintos" },
+  { step: 5, section: "evidence", label: "Evidencia" },
+];
+
+const STEP_ICONS = {
+  1: Link2,
+  2: ClipboardList,
+  3: FileText,
+  4: ShieldAlert,
+  5: Camera,
+} as const;
+
+function stepSubtitle(step: WizardStep): string {
+  switch (step) {
+    case 1:
+      return "Selecciona impresora, tecnico y responsables del servicio.";
+    case 2:
+      return "Registra tiempos, solicitud, costo y falla reportada.";
+    case 3:
+      return "Completa los reportes Z inicial y final.";
+    case 4:
+      return "Asocia precintos instalados o retirados.";
+    case 5:
+      return "Adjunta evidencia fotografica del servicio.";
+    default:
+      return "";
+  }
+}
+
+function hasValue(value: string): boolean {
+  return value.trim().length > 0;
+}
+
 export function TechnicalServiceFormDialog({
   mode,
   row,
@@ -48,6 +96,10 @@ export function TechnicalServiceFormDialog({
   onClose,
   onSubmit,
 }: TechnicalServiceFormDialogProps) {
+  const formId = useId();
+  const isCreateWizard = mode === "create";
+  const [step, setStep] = useState<WizardStep>(1);
+  const [stepError, setStepError] = useState<string | null>(null);
   const [form, setForm] = useState<TechnicalServiceFormValues>(
     emptyTechnicalServiceForm(),
   );
@@ -59,19 +111,411 @@ export function TechnicalServiceFormDialog({
         ? technicalServiceToFormValues(row)
         : emptyTechnicalServiceForm(),
     );
+    setStep(1);
+    setStepError(null);
   }, [open, mode, row]);
 
   if (!open) return null;
-
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    onSubmit(form);
-  }
 
   const inputClass =
     "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
   const disabled = saving || catalogLoading;
   const sectionClass = "space-y-4 rounded-lg border border-border p-4";
+  const displayError = stepError ?? error;
+
+  function validateStep(targetStep: WizardStep): string | null {
+    if (targetStep === 1) {
+      if (!hasValue(form.printerId)) return "Selecciona una impresora.";
+      if (!hasValue(form.technicianId)) return "Selecciona un tecnico.";
+      return null;
+    }
+
+    if (targetStep === 2) {
+      if (!hasValue(form.startAt)) return "Indica la fecha de inicio.";
+      if (!hasValue(form.endAt)) return "Indica la fecha de fin.";
+      if (!hasValue(form.requestDate)) {
+        return "Indica la fecha de solicitud.";
+      }
+      if (!hasValue(form.cost)) return "Indica el costo del servicio.";
+      if (!hasValue(form.reportedFailure)) {
+        return "Describe la falla reportada.";
+      }
+      return null;
+    }
+
+    if (targetStep === 3) {
+      if (!hasValue(form.initialZReport)) {
+        return "Indica el reporte Z inicial.";
+      }
+      if (!hasValue(form.finalZReport)) return "Indica el reporte Z final.";
+      if (!hasValue(form.initialZDate)) {
+        return "Indica la fecha del Z inicial.";
+      }
+      if (!hasValue(form.finalZDate)) return "Indica la fecha del Z final.";
+      return null;
+    }
+
+    if (targetStep === 5 && form.photoUrls.length === 0) {
+      return "Se requiere al menos una foto.";
+    }
+
+    return null;
+  }
+
+  function goToStep(target: WizardStep) {
+    setStepError(null);
+    setStep(target);
+  }
+
+  function goBack() {
+    setStepError(null);
+    setStep((current) => Math.max(1, current - 1) as WizardStep);
+  }
+
+  function handleCreateStepSubmit(e: FormEvent) {
+    e.preventDefault();
+
+    if (!isCreateWizard) {
+      onSubmit(form);
+      return;
+    }
+
+    const currentError = validateStep(step);
+    if (currentError) {
+      setStepError(currentError);
+      return;
+    }
+
+    if (step < 5) {
+      setStepError(null);
+      setStep((current) => (current + 1) as WizardStep);
+      return;
+    }
+
+    for (const { step: checkStep } of FORM_STEPS) {
+      const checkError = validateStep(checkStep);
+      if (checkError) {
+        setStepError(checkError);
+        setStep(checkStep);
+        return;
+      }
+    }
+
+    setStepError(null);
+    onSubmit(form);
+  }
+
+  const assignmentSection = (
+    <fieldset className={sectionClass}>
+      <legend className="px-1 text-sm font-semibold text-card-foreground">
+        Asignacion
+      </legend>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <FieldLabel required>Impresora</FieldLabel>
+          {canLoadPrinters && printerOptions.length > 0 ? (
+            <SearchableSelect
+              value={form.printerId}
+              onChange={(printerId) =>
+                setForm((f) => ({ ...f, printerId }))
+              }
+              options={printerOptions}
+              disabled={disabled}
+              loading={catalogLoading}
+              required
+              mono
+              searchPlaceholder="Buscar por serial..."
+            />
+          ) : (
+            <input
+              type="number"
+              required
+              min={1}
+              value={form.printerId}
+              disabled={disabled}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, printerId: e.target.value }))
+              }
+              className={inputClass}
+              placeholder="ID de impresora"
+            />
+          )}
+        </div>
+        <div>
+          <FieldLabel required>Tecnico</FieldLabel>
+          <SearchableSelect
+            value={form.technicianId}
+            onChange={(technicianId) =>
+              setForm((f) => ({ ...f, technicianId }))
+            }
+            options={technicianOptions}
+            disabled={disabled}
+            loading={catalogLoading}
+            required
+            searchPlaceholder="Buscar tecnico..."
+          />
+        </div>
+        <div>
+          <FieldLabel>Centro de servicio</FieldLabel>
+          <SearchableSelect
+            value={form.serviceCenterId}
+            onChange={(serviceCenterId) =>
+              setForm((f) => ({ ...f, serviceCenterId }))
+            }
+            options={serviceCenterOptions}
+            disabled={disabled}
+            loading={catalogLoading}
+            searchPlaceholder="Buscar centro..."
+          />
+        </div>
+        <div>
+          <FieldLabel>Distribuidor</FieldLabel>
+          <SearchableSelect
+            value={form.distributorId}
+            onChange={(distributorId) =>
+              setForm((f) => ({ ...f, distributorId }))
+            }
+            options={distributorOptions}
+            disabled={disabled}
+            loading={catalogLoading}
+            searchPlaceholder="Buscar distribuidor..."
+          />
+        </div>
+      </div>
+    </fieldset>
+  );
+
+  const visitSection = (
+    <fieldset className={sectionClass}>
+      <legend className="px-1 text-sm font-semibold text-card-foreground">
+        Visita
+      </legend>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block">
+          <FieldLabel required>Inicio</FieldLabel>
+          <input
+            type="datetime-local"
+            required
+            value={form.startAt}
+            disabled={disabled}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, startAt: e.target.value }))
+            }
+            className={inputClass}
+          />
+        </label>
+        <label className="block">
+          <FieldLabel required>Fin</FieldLabel>
+          <input
+            type="datetime-local"
+            required
+            value={form.endAt}
+            disabled={disabled}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, endAt: e.target.value }))
+            }
+            className={inputClass}
+          />
+        </label>
+        <label className="block">
+          <FieldLabel required>Fecha solicitud</FieldLabel>
+          <input
+            type="date"
+            required
+            value={form.requestDate}
+            disabled={disabled}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, requestDate: e.target.value }))
+            }
+            className={inputClass}
+          />
+        </label>
+        <label className="block">
+          <FieldLabel required>Costo</FieldLabel>
+          <input
+            type="number"
+            required
+            min={0}
+            step="0.01"
+            value={form.cost}
+            disabled={disabled}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, cost: e.target.value }))
+            }
+            className={inputClass}
+          />
+        </label>
+      </div>
+      <label className="block">
+        <FieldLabel required>Falla reportada</FieldLabel>
+        <textarea
+          required
+          rows={2}
+          value={form.reportedFailure}
+          disabled={disabled}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, reportedFailure: e.target.value }))
+          }
+          className={inputClass}
+        />
+      </label>
+      <label className="block">
+        <FieldLabel>Observaciones</FieldLabel>
+        <textarea
+          rows={2}
+          value={form.notes}
+          disabled={disabled}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, notes: e.target.value }))
+          }
+          className={inputClass}
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={form.sealTampered}
+          disabled={disabled}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, sealTampered: e.target.checked }))
+          }
+          className="size-4 rounded border-border"
+        />
+        <span className="text-sm font-medium">Precinto violentado</span>
+      </label>
+    </fieldset>
+  );
+
+  const zReportsSection = (
+    <fieldset className={sectionClass}>
+      <legend className="px-1 text-sm font-semibold text-card-foreground">
+        Reportes Z
+      </legend>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block">
+          <FieldLabel required>Z inicial</FieldLabel>
+          <input
+            type="number"
+            required
+            min={0}
+            value={form.initialZReport}
+            disabled={disabled}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, initialZReport: e.target.value }))
+            }
+            className={inputClass}
+          />
+        </label>
+        <label className="block">
+          <FieldLabel required>Z final</FieldLabel>
+          <input
+            type="number"
+            required
+            min={0}
+            value={form.finalZReport}
+            disabled={disabled}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, finalZReport: e.target.value }))
+            }
+            className={inputClass}
+          />
+        </label>
+        <label className="block">
+          <FieldLabel required>Fecha Z inicial</FieldLabel>
+          <input
+            type="datetime-local"
+            required
+            value={form.initialZDate}
+            disabled={disabled}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, initialZDate: e.target.value }))
+            }
+            className={inputClass}
+          />
+        </label>
+        <label className="block">
+          <FieldLabel required>Fecha Z final</FieldLabel>
+          <input
+            type="datetime-local"
+            required
+            value={form.finalZDate}
+            disabled={disabled}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, finalZDate: e.target.value }))
+            }
+            className={inputClass}
+          />
+        </label>
+      </div>
+    </fieldset>
+  );
+
+  const sealsSection = (
+    <fieldset className={sectionClass}>
+      <legend className="px-1 text-sm font-semibold text-card-foreground">
+        Precintos
+      </legend>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <FieldLabel>Instalado</FieldLabel>
+          <SearchableSelect
+            value={form.installedSealId}
+            onChange={(installedSealId) =>
+              setForm((f) => ({ ...f, installedSealId }))
+            }
+            options={sealOptions}
+            disabled={disabled}
+            loading={catalogLoading}
+            searchPlaceholder="Buscar precinto..."
+            mono
+          />
+        </div>
+        <div>
+          <FieldLabel>Retirado</FieldLabel>
+          <SearchableSelect
+            value={form.removedSealId}
+            onChange={(removedSealId) =>
+              setForm((f) => ({ ...f, removedSealId }))
+            }
+            options={sealOptions}
+            disabled={disabled}
+            loading={catalogLoading}
+            searchPlaceholder="Buscar precinto..."
+            mono
+          />
+        </div>
+      </div>
+    </fieldset>
+  );
+
+  const evidenceSection = (
+    <fieldset className={sectionClass}>
+      <legend className="px-1 text-sm font-semibold text-card-foreground">
+        Evidencia
+      </legend>
+      <div className="block">
+        <FieldLabel required>Fotos</FieldLabel>
+        <PhotoDocumentUpload
+          folder="technical-services"
+          urls={form.photoUrls}
+          onChange={(photoUrls) => setForm((f) => ({ ...f, photoUrls }))}
+          disabled={disabled}
+          ariaLabel="Subir fotos del servicio tecnico"
+          addLabel="Anadir fotos"
+          requiredHint="Se requiere al menos una foto."
+        />
+      </div>
+    </fieldset>
+  );
+
+  function renderWizardSection() {
+    const currentSection = FORM_STEPS.find((item) => item.step === step)?.section;
+    if (currentSection === "assignment") return assignmentSection;
+    if (currentSection === "visit") return visitSection;
+    if (currentSection === "zReports") return zReportsSection;
+    if (currentSection === "seals") return sealsSection;
+    return evidenceSection;
+  }
 
   return (
     <div
@@ -85,330 +529,138 @@ export function TechnicalServiceFormDialog({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-card-foreground">
-              {mode === "create" ? "Nuevo servicio técnico" : "Editar servicio técnico"}
-            </h2>
-            <p className="mt-1 text-sm text-muted">
-              Visita de servicio con reportes Z, precintos y evidencia fotográfica.
-            </p>
+      <div className="relative flex max-h-[min(92vh,100dvh)] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+        <div className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-card-foreground">
+                {mode === "create" ? "Nuevo servicio tecnico" : "Editar servicio tecnico"}
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                {isCreateWizard
+                  ? stepSubtitle(step)
+                  : "Visita de servicio con reportes Z, precintos y evidencia fotografica."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg p-1.5 text-muted hover:bg-foreground/5"
+            >
+              <X className="size-5" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-muted hover:bg-foreground/5"
-          >
-            <X className="size-5" />
-          </button>
+
+          {isCreateWizard && (
+            <nav className="mt-4 flex gap-1" aria-label="Pasos del registro">
+              {FORM_STEPS.map(({ step: wizardStep, label }) => {
+                const Icon = STEP_ICONS[wizardStep];
+                const isActive = step === wizardStep;
+                const isDone = step > wizardStep;
+                return (
+                  <button
+                    key={wizardStep}
+                    type="button"
+                    disabled={saving}
+                    onClick={() => goToStep(wizardStep)}
+                    className={cn(
+                      "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2 text-center transition-colors",
+                      "hover:bg-foreground/5 disabled:opacity-50",
+                      isActive && "bg-accent/10 text-accent",
+                      isDone && !isActive && "text-card-foreground",
+                      !isActive && !isDone && "text-muted",
+                    )}
+                    aria-current={isActive ? "step" : undefined}
+                  >
+                    <Icon className="size-4 shrink-0" aria-hidden />
+                    <span className="text-[11px] font-medium leading-tight sm:text-xs">
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
+          )}
         </div>
 
-        {error && (
-          <p
-            role="alert"
-            className="mb-4 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
-          >
-            {error}
-          </p>
-        )}
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+          {displayError && (
+            <p
+              role="alert"
+              className="mb-4 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
+            >
+              {displayError}
+            </p>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <fieldset className={sectionClass}>
-            <legend className="px-1 text-sm font-semibold text-card-foreground">
-              Asignación
-            </legend>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <FieldLabel required>Impresora</FieldLabel>
-                {canLoadPrinters && printerOptions.length > 0 ? (
-                  <SearchableSelect
-                    value={form.printerId}
-                    onChange={(printerId) =>
-                      setForm((f) => ({ ...f, printerId }))
-                    }
-                    options={printerOptions}
-                    disabled={disabled}
-                    loading={catalogLoading}
-                    required
-                    mono
-                    searchPlaceholder="Buscar por serial…"
-                  />
+          <form id={formId} onSubmit={handleCreateStepSubmit} className="space-y-5">
+            {isCreateWizard ? (
+              renderWizardSection()
+            ) : (
+              <>
+                {assignmentSection}
+                {visitSection}
+                {zReportsSection}
+                {sealsSection}
+                {evidenceSection}
+              </>
+            )}
+          </form>
+        </div>
+
+        <div className="shrink-0 border-t border-border px-4 py-4 sm:px-6">
+          {isCreateWizard ? (
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between [&_button]:w-full sm:[&_button]:w-auto">
+              <button
+                type="button"
+                onClick={goBack}
+                disabled={saving || step === 1}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
+              >
+                Atras
+              </button>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5"
+                >
+                  Cancelar
+                </button>
+                {step < 5 ? (
+                  <button
+                    type="submit"
+                    form={formId}
+                    disabled={saving}
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
+                  >
+                    Siguiente
+                  </button>
                 ) : (
-                  <input
-                    type="number"
-                    required
-                    min={1}
-                    value={form.printerId}
-                    disabled={disabled}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, printerId: e.target.value }))
-                    }
-                    className={inputClass}
-                    placeholder="ID de impresora"
-                  />
+                  <button
+                    type="submit"
+                    form={formId}
+                    disabled={saving || catalogLoading}
+                    className={cn(
+                      "flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
+                      (saving || catalogLoading) && "cursor-not-allowed opacity-70",
+                    )}
+                  >
+                    {saving && <Loader2 className="size-4 animate-spin" />}
+                    Crear servicio tecnico
+                  </button>
                 )}
               </div>
-              <div>
-                <FieldLabel required>Técnico</FieldLabel>
-                <SearchableSelect
-                  value={form.technicianId}
-                  onChange={(technicianId) =>
-                    setForm((f) => ({ ...f, technicianId }))
-                  }
-                  options={technicianOptions}
-                  disabled={disabled}
-                  loading={catalogLoading}
-                  required
-                  searchPlaceholder="Buscar técnico…"
-                />
-              </div>
-              <div>
-                <FieldLabel>Centro de servicio</FieldLabel>
-                <SearchableSelect
-                  value={form.serviceCenterId}
-                  onChange={(serviceCenterId) =>
-                    setForm((f) => ({ ...f, serviceCenterId }))
-                  }
-                  options={serviceCenterOptions}
-                  disabled={disabled}
-                  loading={catalogLoading}
-                  searchPlaceholder="Buscar centro…"
-                />
-              </div>
-              <div>
-                <FieldLabel>Distribuidor</FieldLabel>
-                <SearchableSelect
-                  value={form.distributorId}
-                  onChange={(distributorId) =>
-                    setForm((f) => ({ ...f, distributorId }))
-                  }
-                  options={distributorOptions}
-                  disabled={disabled}
-                  loading={catalogLoading}
-                  searchPlaceholder="Buscar distribuidor…"
-                />
-              </div>
             </div>
-          </fieldset>
-
-          <fieldset className={sectionClass}>
-            <legend className="px-1 text-sm font-semibold text-card-foreground">
-              Visita
-            </legend>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <FieldLabel required>Inicio</FieldLabel>
-                <input
-                  type="datetime-local"
-                  required
-                  value={form.startAt}
-                  disabled={disabled}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, startAt: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
-              <label className="block">
-                <FieldLabel required>Fin</FieldLabel>
-                <input
-                  type="datetime-local"
-                  required
-                  value={form.endAt}
-                  disabled={disabled}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, endAt: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
-              <label className="block">
-                <FieldLabel required>Fecha solicitud</FieldLabel>
-                <input
-                  type="date"
-                  required
-                  value={form.requestDate}
-                  disabled={disabled}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, requestDate: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
-              <label className="block">
-                <FieldLabel required>Costo</FieldLabel>
-                <input
-                  type="number"
-                  required
-                  min={0}
-                  step="0.01"
-                  value={form.cost}
-                  disabled={disabled}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, cost: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
-            </div>
-            <label className="block">
-              <FieldLabel required>Falla reportada</FieldLabel>
-              <textarea
-                required
-                rows={2}
-                value={form.reportedFailure}
-                disabled={disabled}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, reportedFailure: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-            <label className="block">
-              <FieldLabel>Observaciones</FieldLabel>
-              <textarea
-                rows={2}
-                value={form.notes}
-                disabled={disabled}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, notes: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.sealTampered}
-                disabled={disabled}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, sealTampered: e.target.checked }))
-                }
-                className="size-4 rounded border-border"
-              />
-              <span className="text-sm font-medium">Precinto violentado</span>
-            </label>
-          </fieldset>
-
-          <fieldset className={sectionClass}>
-            <legend className="px-1 text-sm font-semibold text-card-foreground">
-              Reportes Z
-            </legend>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <FieldLabel required>Z inicial</FieldLabel>
-                <input
-                  type="number"
-                  required
-                  min={0}
-                  value={form.initialZReport}
-                  disabled={disabled}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, initialZReport: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
-              <label className="block">
-                <FieldLabel required>Z final</FieldLabel>
-                <input
-                  type="number"
-                  required
-                  min={0}
-                  value={form.finalZReport}
-                  disabled={disabled}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, finalZReport: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
-              <label className="block">
-                <FieldLabel required>Fecha Z inicial</FieldLabel>
-                <input
-                  type="datetime-local"
-                  required
-                  value={form.initialZDate}
-                  disabled={disabled}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, initialZDate: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
-              <label className="block">
-                <FieldLabel required>Fecha Z final</FieldLabel>
-                <input
-                  type="datetime-local"
-                  required
-                  value={form.finalZDate}
-                  disabled={disabled}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, finalZDate: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset className={sectionClass}>
-            <legend className="px-1 text-sm font-semibold text-card-foreground">
-              Precintos
-            </legend>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <FieldLabel>Instalado</FieldLabel>
-                <SearchableSelect
-                  value={form.installedSealId}
-                  onChange={(installedSealId) =>
-                    setForm((f) => ({ ...f, installedSealId }))
-                  }
-                  options={sealOptions}
-                  disabled={disabled}
-                  loading={catalogLoading}
-                  searchPlaceholder="Buscar precinto…"
-                  mono
-                />
-              </div>
-              <div>
-                <FieldLabel>Retirado</FieldLabel>
-                <SearchableSelect
-                  value={form.removedSealId}
-                  onChange={(removedSealId) =>
-                    setForm((f) => ({ ...f, removedSealId }))
-                  }
-                  options={sealOptions}
-                  disabled={disabled}
-                  loading={catalogLoading}
-                  searchPlaceholder="Buscar precinto…"
-                  mono
-                />
-              </div>
-            </div>
-          </fieldset>
-
-          <div className="block">
-            <FieldLabel required>Fotos</FieldLabel>
-            <PhotoDocumentUpload
-              folder="technical-services"
-              urls={form.photoUrls}
-              onChange={(photoUrls) => setForm((f) => ({ ...f, photoUrls }))}
-              disabled={disabled}
-              ariaLabel="Subir fotos del servicio técnico"
-              addLabel="Añadir fotos"
-              requiredHint="Se requiere al menos una foto."
+          ) : (
+            <FormDialogFooter
+              mode={mode}
+              saving={saving}
+              submitDisabled={catalogLoading || form.photoUrls.length === 0}
+              onClose={onClose}
             />
-          </div>
-
-          <FormDialogFooter
-            mode={mode}
-            saving={saving}
-            submitDisabled={catalogLoading || form.photoUrls.length === 0}
-            onClose={onClose}
-          />
-        </form>
+          )}
+        </div>
       </div>
     </div>
   );

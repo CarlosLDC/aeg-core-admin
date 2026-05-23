@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { FormEvent, useEffect, useId, useState } from "react";
+import { Camera, ClipboardCheck, Link2, Loader2, X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { PhotoDocumentUpload } from "@/components/ui/photo-document-upload";
@@ -42,6 +42,11 @@ export function AnnualInspectionFormDialog({
   onClose,
   onSubmit,
 }: AnnualInspectionFormDialogProps) {
+  const formId = useId();
+  const isCreateWizard = mode === "create";
+  type WizardStep = 1 | 2 | 3;
+  const [step, setStep] = useState<WizardStep>(1);
+  const [stepError, setStepError] = useState<string | null>(null);
   const [form, setForm] = useState<AnnualInspectionFormValues>(
     emptyAnnualInspectionForm(),
   );
@@ -53,18 +58,230 @@ export function AnnualInspectionFormDialog({
         ? annualInspectionToFormValues(row)
         : emptyAnnualInspectionForm(),
     );
+    setStep(1);
+    setStepError(null);
   }, [open, mode, row]);
 
   if (!open) return null;
 
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    onSubmit(form);
-  }
-
   const inputClass =
     "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
   const disabled = saving || catalogLoading;
+  const displayError = stepError ?? error;
+
+  const FORM_STEPS: { step: WizardStep; label: string }[] = [
+    { step: 1, label: "Asignacion" },
+    { step: 2, label: "Resultado" },
+    { step: 3, label: "Evidencia" },
+  ];
+
+  const STEP_ICONS = {
+    1: Link2,
+    2: ClipboardCheck,
+    3: Camera,
+  } as const;
+
+  function stepSubtitle(targetStep: WizardStep): string {
+    switch (targetStep) {
+      case 1:
+        return "Selecciona impresora y empleado responsable.";
+      case 2:
+        return "Registra el resultado y observaciones de la revision.";
+      case 3:
+        return "Adjunta la evidencia fotografica de la inspeccion.";
+      default:
+        return "";
+    }
+  }
+
+  function hasValue(value: string): boolean {
+    return value.trim().length > 0;
+  }
+
+  function validateStep(targetStep: WizardStep): string | null {
+    if (targetStep === 1) {
+      if (!hasValue(form.printerId)) return "Selecciona una impresora.";
+      if (!hasValue(form.employeeId)) return "Selecciona un empleado.";
+      return null;
+    }
+
+    if (targetStep === 3 && form.photoUrls.length === 0) {
+      return "Se requiere al menos una foto.";
+    }
+
+    return null;
+  }
+
+  function goToStep(target: WizardStep) {
+    setStepError(null);
+    setStep(target);
+  }
+
+  function goBack() {
+    setStepError(null);
+    setStep((current) => Math.max(1, current - 1) as WizardStep);
+  }
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+
+    if (!isCreateWizard) {
+      onSubmit(form);
+      return;
+    }
+
+    const currentError = validateStep(step);
+    if (currentError) {
+      setStepError(currentError);
+      return;
+    }
+
+    if (step < 3) {
+      setStepError(null);
+      setStep((current) => (current + 1) as WizardStep);
+      return;
+    }
+
+    for (const { step: checkStep } of FORM_STEPS) {
+      const checkError = validateStep(checkStep);
+      if (checkError) {
+        setStepError(checkError);
+        setStep(checkStep);
+        return;
+      }
+    }
+
+    setStepError(null);
+    onSubmit(form);
+  }
+
+  const assignmentSection = (
+    <fieldset className="space-y-4 rounded-xl border border-border p-4">
+      <legend className="px-1 text-sm font-semibold text-card-foreground">
+        Asignacion
+      </legend>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <FieldLabel required>Impresora</FieldLabel>
+          {canLoadPrinters && printerOptions.length > 0 ? (
+            <SearchableSelect
+              value={form.printerId}
+              onChange={(printerId) =>
+                setForm((f) => ({ ...f, printerId }))
+              }
+              options={printerOptions}
+              disabled={disabled}
+              loading={catalogLoading}
+              required
+              mono
+              searchPlaceholder="Buscar por serial..."
+            />
+          ) : (
+            <input
+              type="number"
+              required
+              min={1}
+              value={form.printerId}
+              disabled={disabled}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, printerId: e.target.value }))
+              }
+              className={inputClass}
+              placeholder="ID de impresora"
+            />
+          )}
+        </div>
+
+        <div>
+          <FieldLabel required>Empleado</FieldLabel>
+          <SearchableSelect
+            value={form.employeeId}
+            onChange={(employeeId) =>
+              setForm((f) => ({ ...f, employeeId }))
+            }
+            options={employeeOptions}
+            disabled={disabled}
+            loading={catalogLoading}
+            required
+            searchPlaceholder="Buscar empleado..."
+          />
+        </div>
+      </div>
+    </fieldset>
+  );
+
+  const resultSection = (
+    <fieldset className="space-y-4 rounded-xl border border-border p-4">
+      <legend className="px-1 text-sm font-semibold text-card-foreground">
+        Resultado de inspeccion
+      </legend>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block">
+          <FieldLabel>Fecha de inspeccion</FieldLabel>
+          <input
+            type="date"
+            value={form.inspectionDate}
+            disabled={disabled}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, inspectionDate: e.target.value }))
+            }
+            className={inputClass}
+          />
+        </label>
+        <label className="flex items-center gap-2 rounded-lg border border-border bg-foreground/[0.02] px-3 py-2">
+          <input
+            type="checkbox"
+            checked={form.sealTampered}
+            disabled={disabled}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, sealTampered: e.target.checked }))
+            }
+            className="size-4 rounded border-border"
+          />
+          <span className="text-sm font-medium">Precinto violentado</span>
+        </label>
+      </div>
+
+      <label className="block">
+        <FieldLabel>Observaciones</FieldLabel>
+        <textarea
+          rows={3}
+          value={form.notes}
+          disabled={disabled}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, notes: e.target.value }))
+          }
+          className={inputClass}
+        />
+      </label>
+    </fieldset>
+  );
+
+  const evidenceSection = (
+    <fieldset className="space-y-3 rounded-xl border border-border p-4">
+      <legend className="px-1 text-sm font-semibold text-card-foreground">
+        Evidencia
+      </legend>
+      <div className="block">
+        <FieldLabel required>Fotos</FieldLabel>
+        <PhotoDocumentUpload
+          folder="annual-inspections"
+          urls={form.photoUrls}
+          onChange={(photoUrls) => setForm((f) => ({ ...f, photoUrls }))}
+          disabled={disabled}
+          ariaLabel="Subir fotos de la inspeccion anual"
+          addLabel="Anadir fotos"
+          requiredHint="Se requiere al menos una foto."
+        />
+      </div>
+    </fieldset>
+  );
+
+  function renderWizardSection() {
+    if (step === 1) return assignmentSection;
+    if (step === 2) return resultSection;
+    return evidenceSection;
+  }
 
   return (
     <div
@@ -78,8 +295,9 @@ export function AnnualInspectionFormDialog({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
-        <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="relative flex max-h-[min(92vh,100dvh)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+        <div className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
+          <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-card-foreground">
               {mode === "create"
@@ -87,7 +305,9 @@ export function AnnualInspectionFormDialog({
                 : "Editar inspección anual"}
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Documenta la revisión anual con datos técnicos y evidencia.
+              {isCreateWizard
+                ? stepSubtitle(step)
+                : "Documenta la revisión anual con datos técnicos y evidencia."}
             </p>
           </div>
           <button
@@ -99,139 +319,115 @@ export function AnnualInspectionFormDialog({
           </button>
         </div>
 
-        {error && (
-          <p
-            role="alert"
-            className="mb-4 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
-          >
-            {error}
-          </p>
-        )}
+          {isCreateWizard && (
+            <nav className="mt-4 flex gap-1" aria-label="Pasos del registro">
+              {FORM_STEPS.map(({ step: wizardStep, label }) => {
+                const Icon = STEP_ICONS[wizardStep];
+                const isActive = step === wizardStep;
+                const isDone = step > wizardStep;
+                return (
+                  <button
+                    key={wizardStep}
+                    type="button"
+                    disabled={saving}
+                    onClick={() => goToStep(wizardStep)}
+                    className={cn(
+                      "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2 text-center transition-colors",
+                      "hover:bg-foreground/5 disabled:opacity-50",
+                      isActive && "bg-accent/10 text-accent",
+                      isDone && !isActive && "text-card-foreground",
+                      !isActive && !isDone && "text-muted",
+                    )}
+                    aria-current={isActive ? "step" : undefined}
+                  >
+                    <Icon className="size-4 shrink-0" aria-hidden />
+                    <span className="text-[11px] font-medium leading-tight sm:text-xs">
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
+          )}
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <fieldset className="space-y-4 rounded-xl border border-border p-4">
-            <legend className="px-1 text-sm font-semibold text-card-foreground">
-              Asignación
-            </legend>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <FieldLabel required>Impresora</FieldLabel>
-                {canLoadPrinters && printerOptions.length > 0 ? (
-                  <SearchableSelect
-                    value={form.printerId}
-                    onChange={(printerId) =>
-                      setForm((f) => ({ ...f, printerId }))
-                    }
-                    options={printerOptions}
-                    disabled={disabled}
-                    loading={catalogLoading}
-                    required
-                    mono
-                    searchPlaceholder="Buscar por serial…"
-                  />
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+          {displayError && (
+            <p
+              role="alert"
+              className="mb-4 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
+            >
+              {displayError}
+            </p>
+          )}
+
+          <form id={formId} onSubmit={handleSubmit} className="space-y-5">
+            {isCreateWizard ? (
+              renderWizardSection()
+            ) : (
+              <>
+                {assignmentSection}
+                {resultSection}
+                {evidenceSection}
+              </>
+            )}
+          </form>
+        </div>
+
+        <div className="shrink-0 border-t border-border px-4 py-4 sm:px-6">
+          {isCreateWizard ? (
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between [&_button]:w-full sm:[&_button]:w-auto">
+              <button
+                type="button"
+                onClick={goBack}
+                disabled={saving || step === 1}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
+              >
+                Atras
+              </button>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5"
+                >
+                  Cancelar
+                </button>
+                {step < 3 ? (
+                  <button
+                    type="submit"
+                    form={formId}
+                    disabled={saving}
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
+                  >
+                    Siguiente
+                  </button>
                 ) : (
-                  <input
-                    type="number"
-                    required
-                    min={1}
-                    value={form.printerId}
-                    disabled={disabled}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, printerId: e.target.value }))
-                    }
-                    className={inputClass}
-                    placeholder="ID de impresora"
-                  />
+                  <button
+                    type="submit"
+                    form={formId}
+                    disabled={saving || catalogLoading}
+                    className={cn(
+                      "flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
+                      (saving || catalogLoading) &&
+                        "cursor-not-allowed opacity-70",
+                    )}
+                  >
+                    {saving && <Loader2 className="size-4 animate-spin" />}
+                    Crear inspeccion anual
+                  </button>
                 )}
               </div>
-
-              <div>
-                <FieldLabel required>Empleado</FieldLabel>
-                <SearchableSelect
-                  value={form.employeeId}
-                  onChange={(employeeId) =>
-                    setForm((f) => ({ ...f, employeeId }))
-                  }
-                  options={employeeOptions}
-                  disabled={disabled}
-                  loading={catalogLoading}
-                  required
-                  searchPlaceholder="Buscar empleado…"
-                />
-              </div>
             </div>
-          </fieldset>
-
-          <fieldset className="space-y-4 rounded-xl border border-border p-4">
-            <legend className="px-1 text-sm font-semibold text-card-foreground">
-              Resultado de inspección
-            </legend>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <FieldLabel>Fecha de inspección</FieldLabel>
-                <input
-                  type="date"
-                  value={form.inspectionDate}
-                  disabled={disabled}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, inspectionDate: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
-              <label className="flex items-center gap-2 rounded-lg border border-border bg-foreground/[0.02] px-3 py-2">
-                <input
-                  type="checkbox"
-                  checked={form.sealTampered}
-                  disabled={disabled}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, sealTampered: e.target.checked }))
-                  }
-                  className="size-4 rounded border-border"
-                />
-                <span className="text-sm font-medium">Precinto violentado</span>
-              </label>
-            </div>
-
-            <label className="block">
-              <FieldLabel>Observaciones</FieldLabel>
-              <textarea
-                rows={3}
-                value={form.notes}
-                disabled={disabled}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, notes: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-          </fieldset>
-
-          <fieldset className="space-y-3 rounded-xl border border-border p-4">
-            <legend className="px-1 text-sm font-semibold text-card-foreground">
-              Evidencia
-            </legend>
-            <div className="block">
-              <FieldLabel required>Fotos</FieldLabel>
-              <PhotoDocumentUpload
-                folder="annual-inspections"
-                urls={form.photoUrls}
-                onChange={(photoUrls) => setForm((f) => ({ ...f, photoUrls }))}
-                disabled={disabled}
-                ariaLabel="Subir fotos de la inspección anual"
-                addLabel="Añadir fotos"
-                requiredHint="Se requiere al menos una foto."
-              />
-            </div>
-          </fieldset>
-
-          <FormDialogFooter
-            mode={mode}
-            saving={saving}
-            submitDisabled={catalogLoading || form.photoUrls.length === 0}
-            onClose={onClose}
-          />
-        </form>
+          ) : (
+            <FormDialogFooter
+              mode={mode}
+              saving={saving}
+              submitDisabled={catalogLoading || form.photoUrls.length === 0}
+              onClose={onClose}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
