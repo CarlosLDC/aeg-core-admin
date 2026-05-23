@@ -25,6 +25,7 @@ import {
   hrefForServiceCenter,
 } from "@/lib/table-foreign-hrefs";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
+import { tabToggleClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 type Tab = "distributor" | "serviceCenter";
@@ -161,12 +162,10 @@ export function ContractsManager() {
             role="tab"
             aria-selected={tab === "distributor"}
             onClick={() => setTab("distributor")}
-            className={cn(
-              pageToolbarButtonClass,
-              "w-auto",
-              tab === "distributor"
-                ? "bg-accent text-accent-foreground"
-                : "text-muted hover:bg-foreground/5 hover:text-foreground",
+            className={tabToggleClass(
+              tab === "distributor",
+              "distributor",
+              cn(pageToolbarButtonClass, "w-auto"),
             )}
           >
             Distribuidora
@@ -176,12 +175,10 @@ export function ContractsManager() {
             role="tab"
             aria-selected={tab === "serviceCenter"}
             onClick={() => setTab("serviceCenter")}
-            className={cn(
-              pageToolbarButtonClass,
-              "w-auto",
-              tab === "serviceCenter"
-                ? "bg-accent text-accent-foreground"
-                : "text-muted hover:bg-foreground/5 hover:text-foreground",
+            className={tabToggleClass(
+              tab === "serviceCenter",
+              "serviceCenter",
+              cn(pageToolbarButtonClass, "w-auto"),
             )}
           >
             Centro de servicio

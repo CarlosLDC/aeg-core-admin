@@ -8,7 +8,7 @@ import {
   CompanyFormDialog,
   type CompanyFormValues,
 } from "@/components/companies/company-form-dialog";
-import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
+import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -197,28 +197,27 @@ export function CompanyView() {
             </div>
 
             {detailPanel === "company" ? (
-            <DetailCard>
-              <DetailField label="ID" value={String(company.id)} mono />
-              <DetailField label="RIF" value={company.rif} mono />
-              <DetailField
-                label="Razón social"
-                value={company.businessName || "—"}
-                fullWidth
-              />
-              <DetailField
-                label="Tipo de contribuyente"
-                value={<ContributorBadge type={company.contributorType} />}
-              />
-              <DetailField
-                label="Registrada"
-                value={formatDate(company.createdAt)}
-              />
-            </DetailCard>
+              <DetailSection title="Empresa" layout="quad">
+                <DetailField label="ID" value={String(company.id)} mono />
+                <DetailField label="RIF" value={company.rif} mono />
+                <DetailField
+                  label="Razón social"
+                  value={company.businessName || "—"}
+                />
+                <DetailField
+                  label="Tipo de contribuyente"
+                  value={<ContributorBadge type={company.contributorType} />}
+                />
+                <DetailField
+                  label="Registrada"
+                  value={formatDate(company.createdAt)}
+                />
+              </DetailSection>
             ) : (
-            <CompanyBranchesTable
-              companyId={company.id}
-              companies={scope?.companies ?? [company]}
-            />
+              <CompanyBranchesTable
+                companyId={company.id}
+                companies={scope?.companies ?? [company]}
+              />
             )}
           </div>
         )}

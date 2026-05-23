@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SealFormDialog } from "@/components/seals/seal-form-dialog";
-import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
+import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -248,7 +248,7 @@ export function SealView() {
         }
       >
         {seal && (
-          <DetailCard>
+          <DetailSection title="Precinto" layout="quad">
             <DetailField label="ID" value={String(seal.id)} mono />
             <DetailField label="Serial" value={seal.serial} mono />
             <DetailField
@@ -277,7 +277,7 @@ export function SealView() {
               label="Registrado"
               value={formatDate(seal.createdAt)}
             />
-          </DetailCard>
+          </DetailSection>
         )}
       </ResourceViewShell>
 

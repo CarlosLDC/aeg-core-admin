@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ClientEditDialog, type ClientEditValues } from "@/components/clients/client-edit-dialog";
 import { ContributorBadge } from "@/components/companies/contributor-badge";
-import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
+import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -152,53 +152,52 @@ export function ClientView() {
         }
       >
         {client && (
-          <DetailCard>
-            <DetailField label="ID cliente" value={String(client.id)} mono />
-            <DetailField label="ID sucursal" value={String(client.branchId)} mono />
-            <DetailField label="RIF" value={rif} mono />
-            <DetailField
-              label="Razón social"
-              value={businessName}
-              fullWidth
-            />
-            <DetailField
-              label="Tipo de contribuyente"
-              value={
-                company ? <ContributorBadge type={company.contributorType} /> : "—"
-              }
-            />
-            <DetailField label="Estado" value={state} />
-            <DetailField label="Ciudad" value={city} />
-            <DetailField
-              label="Dirección"
-              value={branch?.address?.trim() || "—"}
-              fullWidth
-            />
-            <DetailField
-              label="Persona de contacto"
-              value={branch?.contactPersonName?.trim() || "—"}
-            />
-            <DetailField
-              label="Teléfono"
-              value={
-                client.branchPhone?.trim() || branch?.phone?.trim() || "—"
-              }
-            />
-            <DetailField
-              label="Correo"
-              value={
-                client.branchEmail?.trim() || branch?.email?.trim() || "—"
-              }
-            />
-            <DetailField
-              label="Casa matriz"
-              value={branch?.isHeadquarters ? "Sí" : "No"}
-            />
-            <DetailField
-              label="Registrado"
-              value={formatDate(branch?.createdAt ?? client.createdAt)}
-            />
-          </DetailCard>
+          <div className="space-y-4">
+            <DetailSection title="Cliente" layout="quad">
+              <DetailField label="ID cliente" value={String(client.id)} mono />
+              <DetailField label="ID sucursal" value={String(client.branchId)} mono />
+              <DetailField label="RIF" value={rif} mono />
+              <DetailField label="Razón social" value={businessName} />
+              <DetailField
+                label="Tipo de contribuyente"
+                value={
+                  company ? <ContributorBadge type={company.contributorType} /> : "—"
+                }
+              />
+              <DetailField
+                label="Registrado"
+                value={formatDate(branch?.createdAt ?? client.createdAt)}
+              />
+            </DetailSection>
+            <DetailSection title="Ubicación y contacto" layout="quad">
+              <DetailField label="Estado" value={state} />
+              <DetailField label="Ciudad" value={city} />
+              <DetailField
+                label="Dirección"
+                value={branch?.address?.trim() || "—"}
+              />
+              <DetailField
+                label="Persona de contacto"
+                value={branch?.contactPersonName?.trim() || "—"}
+              />
+              <DetailField
+                label="Teléfono"
+                value={
+                  client.branchPhone?.trim() || branch?.phone?.trim() || "—"
+                }
+              />
+              <DetailField
+                label="Correo"
+                value={
+                  client.branchEmail?.trim() || branch?.email?.trim() || "—"
+                }
+              />
+              <DetailField
+                label="Casa matriz"
+                value={branch?.isHeadquarters ? "Sí" : "No"}
+              />
+            </DetailSection>
+          </div>
         )}
       </ResourceViewShell>
       {client && branch && company && editOpen && (

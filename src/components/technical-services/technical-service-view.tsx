@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TechnicalServiceFormDialog } from "@/components/technical-services/technical-service-form-dialog";
-import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
+import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -175,98 +175,112 @@ export function TechnicalServiceView() {
       >
         {service && (
           <>
-            <DetailCard>
-              <DetailField label="ID" value={String(service.id)} mono />
-              <DetailField
-                label="Impresora"
-                value={optionLabel(catalog.printerOptions, service.printerId, "—")}
-                href={printerPath(service.printerId)}
-                fullWidth
-              />
-              <DetailField
-                label="Técnico"
-                value={optionLabel(
-                  catalog.technicianOptions,
-                  service.technicianId,
-                  "—",
-                )}
-                fullWidth
-              />
-              <DetailField
-                label="Centro de servicio"
-                value={optionLabel(
-                  catalog.serviceCenterOptions,
-                  service.serviceCenterId,
-                  "Sin asignar",
-                )}
-                fullWidth
-              />
-              <DetailField
-                label="Distribuidor"
-                value={optionLabel(
-                  catalog.distributorOptions,
-                  service.distributorId,
-                  "Sin asignar",
-                )}
-                fullWidth
-              />
-              <DetailField
-                label="Falla reportada"
-                value={service.reportedFailure}
-                fullWidth
-              />
-              <DetailField
-                label="Precinto violado"
-                value={service.sealTampered ? "Sí" : "No"}
-              />
-              <DetailField label="Costo" value={formatMoney(service.cost)} />
-              <DetailField
-                label="Inicio"
-                value={formatDateTime(service.startAt)}
-              />
-              <DetailField label="Fin" value={formatDateTime(service.endAt)} />
-              <DetailField
-                label="Z inicial"
-                value={String(service.initialZReport)}
-                mono
-              />
-              <DetailField
-                label="Fecha Z inicial"
-                value={formatDateTime(service.initialZDate)}
-              />
-              <DetailField
-                label="Z final"
-                value={String(service.finalZReport)}
-                mono
-              />
-              <DetailField
-                label="Fecha Z final"
-                value={formatDateTime(service.finalZDate)}
-              />
-              <DetailField
-                label="Solicitud"
-                value={formatDate(service.requestDate)}
-              />
-              {service.installedSealId != null ? (
+            <div className="space-y-4">
+              <DetailSection title="Servicio técnico" layout="quad">
+                <DetailField label="ID" value={String(service.id)} mono />
+                <DetailField
+                  label="Impresora"
+                  value={optionLabel(catalog.printerOptions, service.printerId, "—")}
+                  href={printerPath(service.printerId)}
+                />
+                <DetailField
+                  label="Técnico"
+                  value={optionLabel(
+                    catalog.technicianOptions,
+                    service.technicianId,
+                    "—",
+                  )}
+                />
+                <DetailField
+                  label="Centro de servicio"
+                  value={optionLabel(
+                    catalog.serviceCenterOptions,
+                    service.serviceCenterId,
+                    "Sin asignar",
+                  )}
+                />
+                <DetailField
+                  label="Distribuidor"
+                  value={optionLabel(
+                    catalog.distributorOptions,
+                    service.distributorId,
+                    "Sin asignar",
+                  )}
+                />
+                <DetailField
+                  label="Falla reportada"
+                  value={service.reportedFailure}
+                />
+                <DetailField
+                  label="Precinto violado"
+                  value={service.sealTampered ? "Sí" : "No"}
+                />
+                <DetailField label="Costo" value={formatMoney(service.cost)} />
+                <DetailField
+                  label="Solicitud"
+                  value={formatDate(service.requestDate)}
+                />
+                <DetailField
+                  label="Inicio"
+                  value={formatDateTime(service.startAt)}
+                />
+                <DetailField label="Fin" value={formatDateTime(service.endAt)} />
+                <DetailField
+                  label="Registrado"
+                  value={formatDate(service.createdAt)}
+                />
+              </DetailSection>
+              <DetailSection title="Reportes y cierre" layout="quad">
+                <DetailField
+                  label="Z inicial"
+                  value={String(service.initialZReport)}
+                  mono
+                />
+                <DetailField
+                  label="Fecha Z inicial"
+                  value={formatDateTime(service.initialZDate)}
+                />
+                <DetailField
+                  label="Z final"
+                  value={String(service.finalZReport)}
+                  mono
+                />
+                <DetailField
+                  label="Fecha Z final"
+                  value={formatDateTime(service.finalZDate)}
+                />
                 <DetailField
                   label="Precinto instalado"
-                  value={`#${service.installedSealId}`}
-                  href={sealPath(service.installedSealId)}
+                  value={
+                    service.installedSealId != null
+                      ? `#${service.installedSealId}`
+                      : "—"
+                  }
+                  href={
+                    service.installedSealId != null
+                      ? sealPath(service.installedSealId)
+                      : undefined
+                  }
                 />
-              ) : null}
-              {service.removedSealId != null ? (
                 <DetailField
                   label="Precinto retirado"
-                  value={`#${service.removedSealId}`}
-                  href={sealPath(service.removedSealId)}
+                  value={
+                    service.removedSealId != null
+                      ? `#${service.removedSealId}`
+                      : "—"
+                  }
+                  href={
+                    service.removedSealId != null
+                      ? sealPath(service.removedSealId)
+                      : undefined
+                  }
                 />
-              ) : null}
-              <DetailField
-                label="Notas"
-                value={service.notes || "—"}
-                fullWidth
-              />
-            </DetailCard>
+                <DetailField
+                  label="Notas"
+                  value={service.notes || "—"}
+                />
+              </DetailSection>
+            </div>
             {service.photoUrls.length > 0 && (
               <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
                 <h3 className="text-sm font-medium text-card-foreground">

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PrinterModelFormDialog } from "@/components/printer-models/printer-model-form-dialog";
-import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
+import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -154,7 +154,7 @@ export function PrinterModelView() {
         }
       >
         {model && (
-          <DetailCard>
+          <DetailSection title="Modelo fiscal" layout="quad">
             <DetailField label="ID" value={String(model.id)} mono />
             <DetailField label="Marca" value={model.brand} />
             <DetailField label="Modelo" value={model.modelCode} mono />
@@ -162,7 +162,6 @@ export function PrinterModelView() {
             <DetailField
               label="Providencia"
               value={model.providencia || "—"}
-              fullWidth
             />
             <DetailField
               label="Fecha aprobación"
@@ -172,7 +171,7 @@ export function PrinterModelView() {
               label="Registrado"
               value={formatDate(model.createdAt)}
             />
-          </DetailCard>
+          </DetailSection>
         )}
       </ResourceViewShell>
 

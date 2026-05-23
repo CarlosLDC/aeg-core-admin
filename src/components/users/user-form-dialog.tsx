@@ -9,6 +9,10 @@ import { BranchSelect } from "@/components/users/branch-select";
 import { PasswordInput } from "@/components/ui/password-input";
 import { ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/roles";
 import {
+  toggleButtonClass,
+  USER_ROLE_TOGGLE_TONE,
+} from "@/lib/toggle-button-styles";
+import {
   eligibleRolesForBranch,
 } from "@/lib/user-form";
 import type { DistributorResponse } from "@/types/branch-role";
@@ -295,9 +299,10 @@ export function UserFormDialog({
                           className={cn(
                             "min-h-[2.75rem] rounded-lg border px-3 py-2 text-left text-sm transition-colors",
                             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
-                            selected
-                              ? "border-accent/40 bg-accent/10 text-card-foreground"
-                              : "border-border bg-background text-muted hover:bg-muted/25 hover:text-card-foreground",
+                            toggleButtonClass(selected, USER_ROLE_TOGGLE_TONE[role], {
+                              className:
+                                "inline-flex min-h-[2.75rem] flex-col items-start rounded-lg px-3 py-2 text-left",
+                            }),
                           )}
                         >
                           <span className="block font-medium text-card-foreground">

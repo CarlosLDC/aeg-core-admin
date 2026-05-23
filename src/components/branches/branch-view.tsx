@@ -240,24 +240,32 @@ export function BranchView() {
 
     return [
       {
-        id: "location",
-        label: "Ubicación",
+        id: "branch",
+        label: "Sucursal",
         content: (
-          <DetailSection title="Ubicación de la sucursal" layout="quad">
+          <DetailSection title="Sucursal" layout="quad">
             <DetailField label="ID" value={String(branch.id)} mono />
             <DetailField
               label="Empresa"
               value={companyLabel}
               href={companyPath(branch.companyId)}
-              span={4}
             />
+            <DetailField label="ID empresa" value={String(branch.companyId)} mono />
+            <DetailField
+              label="Registrada"
+              value={formatDate(branch.createdAt)}
+            />
+          </DetailSection>
+        ),
+      },
+      {
+        id: "location",
+        label: "Ubicación",
+        content: (
+          <DetailSection title="Ubicación de la sucursal" layout="quad">
             <DetailField label="Ciudad" value={branch.city} />
             <DetailField label="Estado" value={branch.state} />
-            <DetailField
-              label="Dirección"
-              value={branch.address || "—"}
-              span={4}
-            />
+            <DetailField label="Dirección" value={branch.address || "—"} />
             <DetailField
               label="Casa matriz"
               value={branch.isHeadquarters ? "Sí" : "No"}
@@ -269,29 +277,24 @@ export function BranchView() {
         id: "contact",
         label: "Contacto",
         content: (
-          <DetailSection title="Datos de contacto" layout="quad">
+          <DetailSection title="Contacto de la sucursal" layout="quad">
             <DetailField
               label="Persona de contacto"
               value={branch.contactPersonName?.trim() || "—"}
             />
             <DetailField label="Teléfono" value={branch.phone || "—"} />
-            <DetailField label="Correo" value={branch.email || "—"} span={4} />
+            <DetailField label="Correo" value={branch.email || "—"} />
           </DetailSection>
         ),
       },
       {
-        id: "roles",
-        label: "Roles",
+        id: "operations",
+        label: "Operación",
         content: (
-          <DetailSection title="Roles operativos" layout="quad">
+          <DetailSection title="Datos operativos" layout="quad">
             <DetailField
               label="Roles"
               value={<BranchTypeBadges branch={branch} />}
-              span={4}
-            />
-            <DetailField
-              label="Registrada"
-              value={formatDate(branch.createdAt)}
             />
           </DetailSection>
         ),

@@ -1,6 +1,13 @@
 "use client";
 
 import { Building2, Crown } from "lucide-react";
+import {
+  toggleCardAccentClass,
+  toggleCardActiveClass,
+  toggleCardBarClass,
+  toggleCardDotClass,
+  TOGGLE_CARD_INACTIVE,
+} from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 type HeadquartersSelectorFieldsProps = {
@@ -8,6 +15,9 @@ type HeadquartersSelectorFieldsProps = {
   disabled?: boolean;
   onChange: (value: boolean) => void;
 };
+
+const HQ_YES_TONE = "emerald" as const;
+const HQ_NO_TONE = "slate" as const;
 
 export function HeadquartersSelectorFields({
   isHeadquarters,
@@ -32,8 +42,11 @@ export function HeadquartersSelectorFields({
             className={cn(
               "absolute bottom-1 top-1 w-[calc(50%-0.375rem)] rounded-xl border transition-all duration-200",
               isHeadquarters
-                ? "translate-x-0 border-accent/30 bg-accent/5"
-                : "translate-x-[calc(100%+0.75rem)] border-border/70 bg-muted/25",
+                ? cn("translate-x-0", toggleCardActiveClass(HQ_YES_TONE))
+                : cn(
+                    "translate-x-[calc(100%+0.75rem)]",
+                    toggleCardActiveClass(HQ_NO_TONE),
+                  ),
             )}
           />
         </div>
@@ -46,8 +59,8 @@ export function HeadquartersSelectorFields({
             "group relative z-10 overflow-hidden rounded-xl border px-4 py-3 text-left transition-all duration-200",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
             isHeadquarters
-              ? "border-accent/35 bg-accent/5 shadow-[0_0_0_1px_rgba(99,102,241,0.15)]"
-              : "border-border bg-background hover:border-border/80 hover:bg-muted/20",
+              ? toggleCardActiveClass(HQ_YES_TONE)
+              : TOGGLE_CARD_INACTIVE,
             disabled && "cursor-not-allowed opacity-60",
           )}
           aria-pressed={isHeadquarters}
@@ -56,7 +69,7 @@ export function HeadquartersSelectorFields({
             className={cn(
               "pointer-events-none absolute inset-x-4 bottom-2 h-0.5 rounded-full transition-all duration-200 sm:hidden",
               isHeadquarters
-                ? "bg-accent/70"
+                ? toggleCardBarClass(HQ_YES_TONE)
                 : "bg-transparent",
             )}
           />
@@ -64,14 +77,14 @@ export function HeadquartersSelectorFields({
             <Crown
               className={cn(
                 "size-4 text-muted transition-colors",
-                isHeadquarters && "text-accent",
+                isHeadquarters && toggleCardAccentClass(HQ_YES_TONE),
               )}
             />
             <span className="text-sm font-semibold">Sí, es matriz</span>
             <span
               className={cn(
                 "ml-auto size-2 rounded-full transition-colors",
-                isHeadquarters ? "bg-accent/80" : "bg-transparent",
+                isHeadquarters ? toggleCardDotClass(HQ_YES_TONE) : "bg-transparent",
               )}
             />
           </div>
@@ -87,8 +100,8 @@ export function HeadquartersSelectorFields({
             "group relative z-10 overflow-hidden rounded-xl border px-4 py-3 text-left transition-all duration-200",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
             !isHeadquarters
-              ? "border-accent/35 bg-accent/5 shadow-[0_0_0_1px_rgba(99,102,241,0.15)]"
-              : "border-border bg-background hover:border-border/80 hover:bg-muted/20",
+              ? toggleCardActiveClass(HQ_NO_TONE)
+              : TOGGLE_CARD_INACTIVE,
             disabled && "cursor-not-allowed opacity-60",
           )}
           aria-pressed={!isHeadquarters}
@@ -97,7 +110,7 @@ export function HeadquartersSelectorFields({
             className={cn(
               "pointer-events-none absolute inset-x-4 bottom-2 h-0.5 rounded-full transition-all duration-200 sm:hidden",
               !isHeadquarters
-                ? "bg-accent/70"
+                ? toggleCardBarClass(HQ_NO_TONE)
                 : "bg-transparent",
             )}
           />
@@ -105,14 +118,14 @@ export function HeadquartersSelectorFields({
             <Building2
               className={cn(
                 "size-4 text-muted transition-colors",
-                !isHeadquarters && "text-accent",
+                !isHeadquarters && toggleCardAccentClass(HQ_NO_TONE),
               )}
             />
             <span className="text-sm font-semibold">No, es sucursal</span>
             <span
               className={cn(
                 "ml-auto size-2 rounded-full transition-colors",
-                !isHeadquarters ? "bg-accent/80" : "bg-transparent",
+                !isHeadquarters ? toggleCardDotClass(HQ_NO_TONE) : "bg-transparent",
               )}
             />
           </div>

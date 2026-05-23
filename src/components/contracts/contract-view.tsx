@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ContractFormDialog } from "@/components/contracts/contract-form-dialog";
 import { ContractStatusBadge } from "@/components/contracts/contract-status-badge";
-import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
+import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -282,12 +282,11 @@ export function ContractView({ kind }: ContractViewProps) {
       >
         {contract && (
           <>
-            <DetailCard>
+            <DetailSection title="Contrato" layout="quad">
               <DetailField label="ID" value={String(contract.id)} mono />
               <DetailField
                 label={isDistributor ? "Distribuidora" : "Centro de servicio"}
                 value={partyLabel}
-                fullWidth
               />
               <DetailField
                 label="Vigencia"
@@ -306,7 +305,7 @@ export function ContractView({ kind }: ContractViewProps) {
                 label="Registrado"
                 value={formatDate(contract.createdAt)}
               />
-            </DetailCard>
+            </DetailSection>
             {contract.photoUrls.length > 0 && (
               <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
                 <h3 className="text-sm font-medium text-card-foreground">

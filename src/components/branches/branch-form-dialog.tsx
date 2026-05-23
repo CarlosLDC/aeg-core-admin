@@ -8,7 +8,10 @@ import { CompanySelect } from "@/components/companies/company-select";
 import { DistributorSelect } from "@/components/branches/distributor-select";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { branchFormSchema } from "@/lib/schemas/branch-form-schema";
-import { cn } from "@/lib/utils";
+import {
+  BRANCH_ROLE_TOGGLE_TONE,
+  toggleButtonClass,
+} from "@/lib/toggle-button-styles";
 import type { BranchRoleFormState } from "@/lib/branch-roles";
 import type { BranchResponse, BranchWithRoles } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
@@ -339,13 +342,9 @@ export function BranchFormDialog({
                         : {}),
                     }))
                   }
-                  className={cn(
-                    "inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-                    "disabled:cursor-not-allowed disabled:opacity-50",
-                    form[key]
-                      ? "border-accent/35 bg-accent/10 text-accent"
-                      : "border-border bg-background text-muted hover:bg-foreground/5 hover:text-card-foreground",
-                  )}
+                  className={toggleButtonClass(form[key], BRANCH_ROLE_TOGGLE_TONE[key], {
+                    disabled: saving,
+                  })}
                 >
                   {label}
                 </button>
@@ -360,12 +359,10 @@ export function BranchFormDialog({
                     isHeadquarters: !f.isHeadquarters,
                   }))
                 }
-                className={cn(
-                  "inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-                  "disabled:cursor-not-allowed disabled:opacity-50",
-                  form.isHeadquarters
-                    ? "border-accent/35 bg-accent/10 text-accent"
-                    : "border-border bg-background text-muted hover:bg-foreground/5 hover:text-card-foreground",
+                className={toggleButtonClass(
+                  form.isHeadquarters,
+                  BRANCH_ROLE_TOGGLE_TONE.isHeadquarters,
+                  { disabled: saving },
                 )}
               >
                 Casa matriz

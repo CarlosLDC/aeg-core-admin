@@ -4,7 +4,10 @@ import { DistributorSelect } from "@/components/branches/distributor-select";
 import { FieldLabel } from "@/components/ui/field-label";
 import { HeadquartersSelectorFields } from "@/components/branches/headquarters-selector-fields";
 import type { BranchWizardValues } from "@/components/branches/branch-wizard-types";
-import { cn } from "@/lib/utils";
+import {
+  BRANCH_ROLE_TOGGLE_TONE,
+  toggleButtonClass,
+} from "@/lib/toggle-button-styles";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -64,13 +67,9 @@ export function BranchWizardRolesFields({
                   : {}),
               }))
             }
-            className={cn(
-              "inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-              "disabled:cursor-not-allowed disabled:opacity-50",
-              form[key]
-                ? "border-accent/35 bg-accent/10 text-accent"
-                : "border-border bg-background text-muted hover:bg-foreground/5 hover:text-card-foreground",
-            )}
+            className={toggleButtonClass(form[key], BRANCH_ROLE_TOGGLE_TONE[key], {
+              disabled: saving,
+            })}
           >
             {label}
           </button>

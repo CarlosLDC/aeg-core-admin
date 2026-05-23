@@ -7,7 +7,7 @@ import {
   UserFormDialog,
   type UserFormValues,
 } from "@/components/users/user-form-dialog";
-import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
+import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useCompanyScope } from "@/context/company-scope-provider";
@@ -19,6 +19,7 @@ import { fetchBranches } from "@/lib/branches-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
+import { formatDate } from "@/lib/datetime-form";
 import {
   deleteUser,
   fetchUserById,
@@ -179,6 +180,8 @@ export function UserView() {
     user?.branchId != null
       ? branchLabelById(scopeBranches, scopeCompanies, user.branchId)
       : "—";
+  const userCreatedAt = (user as (UserResponse & { createdAt?: string }) | null)
+    ?.createdAt;
 
   return (
     <>
@@ -202,7 +205,7 @@ export function UserView() {
         }
       >
         {user && (
-          <DetailCard>
+          <DetailSection title="Usuario" layout="quad">
             <DetailField label="ID" value={String(user.id)} mono />
             <DetailField label="Nombre" value={displayUserName(user)} />
             <DetailField label="Correo" value={user.email} mono />
@@ -211,15 +214,18 @@ export function UserView() {
               label="Estado"
               value={user.enabled ? "Activo" : "Deshabilitado"}
             />
-            {user.branchId != null ? (
-              <DetailField
-                label="Sucursal"
-                value={branchLabel}
-                href={branchPath(user.branchId)}
-                fullWidth
-              />
-            ) : null}
-          </DetailCard>
+            <DetailField label="Registrado" value={formatDate(userCreatedAt)} />
+            <DetailField
+              label="Sucursal"
+              value={branchLabel}
+              href={user.branchId != null ? branchPath(user.branchId) : undefined}
+            />
+            <DetailField
+              label="ID sucursal"
+              value={user.branchId != null ? String(user.branchId) : "—"}
+              mono
+            />
+          </DetailSection>
         )}
       </ResourceViewShell>
 

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnnualInspectionFormDialog } from "@/components/annual-inspections/annual-inspection-form-dialog";
-import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
+import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -172,7 +172,7 @@ export function AnnualInspectionView() {
       >
         {inspection && (
           <>
-            <DetailCard>
+            <DetailSection title="Inspección anual" layout="quad">
               <DetailField label="ID" value={String(inspection.id)} mono />
               <DetailField
                 label="Impresora"
@@ -195,13 +195,12 @@ export function AnnualInspectionView() {
               <DetailField
                 label="Notas"
                 value={inspection.notes || "—"}
-                fullWidth
               />
               <DetailField
                 label="Registrada"
                 value={formatDate(inspection.createdAt)}
               />
-            </DetailCard>
+            </DetailSection>
             {inspection.photoUrls.length > 0 && (
               <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
                 <h3 className="text-sm font-medium text-card-foreground">

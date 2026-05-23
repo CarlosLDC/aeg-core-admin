@@ -11,6 +11,11 @@ import {
 } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { FILTER_ALL } from "@/lib/table-filter-options";
+import {
+  META_COLUMN_TOGGLE_TONE,
+  toggleButtonClass,
+  toggleToneByIndex,
+} from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 export type FilterSelectOption = {
@@ -166,22 +171,23 @@ function TableColumnsSection({ columns }: { columns: ColumnToggle[] }) {
       </div>
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {columns.map((column) => (
+        {columns.map((column, index) => {
+          const tone =
+            META_COLUMN_TOGGLE_TONE[column.id] ?? toggleToneByIndex(index);
+          return (
           <button
             key={column.id}
             type="button"
             aria-pressed={column.visible}
             onClick={() => column.onVisibleChange(!column.visible)}
-            className={cn(
-              "inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors",
-              column.visible
-                ? "border-accent/35 bg-accent/10 text-accent"
-                : "border-border bg-background text-muted hover:bg-foreground/5 hover:text-card-foreground",
-            )}
+            className={toggleButtonClass(column.visible, tone, {
+              className: "rounded-md",
+            })}
           >
             {column.label}
           </button>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
