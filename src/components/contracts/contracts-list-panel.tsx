@@ -348,16 +348,6 @@ export function ContractsListPanel({
         }
       />
 
-      {partyOptions.length === 0 && !catalogLoading && (
-        <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-          Registra al menos un{" "}
-          {kind === "distributor"
-            ? "distribuidor en una sucursal"
-            : "centro de servicio en una sucursal"}{" "}
-          antes de crear contratos.
-        </p>
-      )}
-
       {listError && (
         <p
           role="alert"

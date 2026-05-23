@@ -149,11 +149,6 @@ export function ContractsManager() {
 
   return (
     <div className="space-y-4">
-      <p className="min-w-0 text-sm text-muted">
-        Contratos con distribuidoras o centros de servicio. Solo un
-        administrador puede gestionarlos.
-      </p>
-
       <div className="flex flex-col gap-1 rounded-lg border border-border bg-card p-1 sm:flex-row">
         <button
           type="button"

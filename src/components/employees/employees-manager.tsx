@@ -475,14 +475,6 @@ export function EmployeesManager() {
         }
       />
 
-      {!branchesReadyForCreate && catalogReady && distributorBranchesReady && (
-        <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-          {isDistributor
-            ? "Tu usuario no tiene una sucursal de distribuidora vinculada. Contacta a un administrador."
-            : "Registra al menos una sucursal antes de dar de alta empleados."}
-        </p>
-      )}
-
       {listError && (
         <p
           role="alert"

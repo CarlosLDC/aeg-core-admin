@@ -533,13 +533,6 @@ export function BranchesManager() {
         }
       />
 
-      {canCreate && companies.length === 0 && !companiesLoading && (
-        <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-          Puedes crear la empresa desde el asistente al registrar una sucursal
-          (escaneo SENIAT o datos manuales).
-        </p>
-      )}
-
       {listError && (
         <p
           role="alert"

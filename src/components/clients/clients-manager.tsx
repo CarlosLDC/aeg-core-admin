@@ -367,16 +367,6 @@ export function ClientsManager() {
         }
       />
 
-      {distributorId == null && !loading && !scopeLoading && (
-        <p
-          role="alert"
-          className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200"
-        >
-          Tu usuario no tiene una distribuidora vinculada. Contacta a un
-          administrador para que te asigne una en tu cuenta.
-        </p>
-      )}
-
       {listError && (
         <ErrorState
           message={listError}
