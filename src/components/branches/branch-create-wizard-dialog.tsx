@@ -188,35 +188,15 @@ export function BranchCreateWizardDialog({
     return validateOnboardingSection(section, form);
   }
 
+  function goToStep(target: 1 | 2 | 3 | 4) {
+    setStepError(null);
+    setStep(target);
+  }
+
   function goNext() {
-    if (step === 1) {
-      const err = validateSection("fiscal");
-      if (err) {
-        setStepError(err);
-        return;
-      }
-      setStepError(null);
-      setStep(2);
-      return;
-    }
-    if (step === 2) {
-      const err = validateSection("location");
-      if (err) {
-        setStepError(err);
-        return;
-      }
-      setStepError(null);
-      setStep(3);
-      return;
-    }
-    if (step === 3) {
-      const err = validateSection("contact");
-      if (err) {
-        setStepError(err);
-        return;
-      }
-      setStepError(null);
-      setStep(4);
+    setStepError(null);
+    if (step < 4) {
+      setStep((step + 1) as WizardStep);
     }
   }
 
@@ -319,13 +299,15 @@ export function BranchCreateWizardDialog({
                 const Icon = STEP_ICONS[s];
                 const isActive = step === s;
                 const isDone = step > s;
-                const skipFiscal = resuming && s === 1;
                 return (
-                  <div
+                  <button
                     key={s}
+                    type="button"
+                    disabled={saving}
+                    onClick={() => goToStep(s)}
                     className={cn(
                       "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2 text-center transition-colors",
-                      skipFiscal && "opacity-50",
+                      "hover:bg-foreground/5 disabled:opacity-50",
                       isActive && "bg-accent/10 text-accent",
                       isDone && !isActive && "text-card-foreground",
                       !isActive && !isDone && "text-muted",
@@ -336,7 +318,7 @@ export function BranchCreateWizardDialog({
                     <span className="text-[11px] font-medium leading-tight sm:text-xs">
                       {label}
                     </span>
-                  </div>
+                  </button>
                 );
               })}
             </nav>
