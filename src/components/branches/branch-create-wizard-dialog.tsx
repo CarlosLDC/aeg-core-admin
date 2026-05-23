@@ -33,9 +33,11 @@ import { cn } from "@/lib/utils";
 export type { BranchWizardValues } from "@/components/branches/branch-wizard-types";
 
 type BranchCreateWizardDialogProps = {
+  mode?: "create" | "edit";
   open: boolean;
   saving: boolean;
   error: string | null;
+  initialValues?: BranchWizardValues | null;
   resumeCompanyId?: number | null;
   companies: CompanyResponse[];
   branches: BranchResponse[];
@@ -92,9 +94,11 @@ function mergeClientPatch(
 }
 
 export function BranchCreateWizardDialog({
+  mode = "create",
   open,
   saving,
   error,
+  initialValues = null,
   resumeCompanyId = null,
   companies,
   branches,
@@ -110,11 +114,16 @@ export function BranchCreateWizardDialog({
   const [aiFields, setAiFields] = useState<Set<SeniatLockableField>>(new Set());
   const [stepError, setStepError] = useState<string | null>(null);
 
-  const resuming = resumeCompanyId != null;
+  const isEdit = mode === "edit";
+  const resuming = !isEdit && resumeCompanyId != null;
 
   useEffect(() => {
     if (!open) return;
-    if (resumeCompanyId != null) {
+    if (isEdit && initialValues) {
+      setForm(initialValues);
+      setStep(1);
+      setInputMode("manual");
+    } else if (resumeCompanyId != null) {
       const company = companies.find((c) => c.id === resumeCompanyId);
       setForm({
         ...emptyBranchWizardForm(),
@@ -132,7 +141,7 @@ export function BranchCreateWizardDialog({
     }
     setAiFields(new Set());
     setStepError(null);
-  }, [open, resumeCompanyId, companies]);
+  }, [open, isEdit, initialValues, resumeCompanyId, companies]);
 
   if (!open) return null;
 
@@ -203,7 +212,7 @@ export function BranchCreateWizardDialog({
   function goBack() {
     setStepError(null);
     if (step === 1) {
-      if (resuming) return;
+      if (resuming || isEdit) return;
       setStep(0);
       return;
     }
@@ -275,7 +284,7 @@ export function BranchCreateWizardDialog({
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-lg font-semibold text-card-foreground">
-                Nueva sucursal
+                {isEdit ? "Editar sucursal" : "Nueva sucursal"}
               </h2>
               <p className="mt-1 text-sm text-muted">
                 {stepSubtitle(step, resuming)}
@@ -333,7 +342,7 @@ export function BranchCreateWizardDialog({
             </p>
           )}
 
-          {step === 0 ? (
+          {step === 0 && !isEdit ? (
             <SeniatDocumentScan
               variant="client"
               analyzeOnSelect
@@ -428,7 +437,7 @@ export function BranchCreateWizardDialog({
                     )}
                   >
                     {saving && <Loader2 className="size-4 animate-spin" />}
-                    Crear sucursal
+                    {isEdit ? "Guardar sucursal" : "Crear sucursal"}
                   </button>
                 )}
               </div>

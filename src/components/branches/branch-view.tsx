@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
 import {
-  BranchFormDialog,
-  type BranchFormValues,
-} from "@/components/branches/branch-form-dialog";
+  BranchCreateWizardDialog,
+  type BranchWizardValues,
+} from "@/components/branches/branch-create-wizard-dialog";
 import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
@@ -42,12 +42,70 @@ import type { BranchWithRoles } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 
+type BranchFormValues = {
+  companyId: string;
+  city: string;
+  state: string;
+  address: string;
+  contactPersonName: string;
+  phone: string;
+  email: string;
+  isClient: boolean;
+  isDistributor: boolean;
+  isServiceCenter: boolean;
+  clientDistributorId: string;
+  isHeadquarters: boolean;
+};
+
 function toRoleFormState(values: BranchFormValues) {
   return {
     isClient: values.isClient,
     isDistributor: values.isDistributor,
     isServiceCenter: values.isServiceCenter,
     clientDistributorId: values.clientDistributorId,
+  };
+}
+
+function toBranchFormValues(values: BranchWizardValues): BranchFormValues {
+  return {
+    companyId: values.linkedCompanyId != null ? String(values.linkedCompanyId) : "",
+    city: values.city,
+    state: values.state,
+    address: values.address,
+    contactPersonName: values.contactPersonName,
+    phone: values.phone,
+    email: values.email,
+    isClient: values.isClient,
+    isDistributor: values.isDistributor,
+    isServiceCenter: values.isServiceCenter,
+    clientDistributorId: values.clientDistributorId,
+    isHeadquarters: values.isHeadquarters,
+  };
+}
+
+function branchToWizardValues(
+  branch: BranchWithRoles,
+  companies: CompanyResponse[],
+): BranchWizardValues {
+  const company = companies.find((row) => row.id === branch.companyId);
+  return {
+    rif: company?.rif ?? "",
+    businessName: company?.businessName ?? "",
+    contributorType: company?.contributorType ?? "ordinario",
+    linkedCompanyId: branch.companyId,
+    city: branch.city,
+    state: branch.state,
+    address: branch.address ?? "",
+    contactPersonName: branch.contactPersonName ?? "",
+    phone: branch.phone ?? "",
+    email: branch.email ?? "",
+    isClient: Boolean(branch.client),
+    isDistributor: Boolean(branch.distributor),
+    isServiceCenter: Boolean(branch.serviceCenter),
+    clientDistributorId: branch.client?.distributorId
+      ? String(branch.client.distributorId)
+      : "",
+    isHeadquarters: Boolean(branch.isHeadquarters),
   };
 }
 
@@ -108,7 +166,7 @@ export function BranchView() {
     void load();
   }, [load]);
 
-  async function handleSubmit(values: BranchFormValues) {
+  async function handleSubmit(values: BranchWizardValues) {
     if (!branch || !canModify) {
       setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
@@ -116,8 +174,9 @@ export function BranchView() {
 
     setSaving(true);
     setFormError(null);
-    const body = toBranchRequest(values);
-    const roles = toRoleFormState(values);
+    const formValues = toBranchFormValues(values);
+    const body = toBranchRequest(formValues);
+    const roles = toRoleFormState(formValues);
     const label = `${values.city}, ${values.state}`;
 
     try {
@@ -238,9 +297,9 @@ export function BranchView() {
       </ResourceViewShell>
 
       {branch && editOpen && (
-        <BranchFormDialog
+        <BranchCreateWizardDialog
           mode="edit"
-          branch={branch}
+          initialValues={branchToWizardValues(branch, companies)}
           companies={companies}
           branches={branches}
           distributors={distributors}

@@ -2,10 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  PrinterFormDialog,
-  type SelectOption,
-} from "@/components/printers/printer-form-dialog";
+import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
+import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import {
   DetailField,
   DetailSection,
@@ -40,6 +38,7 @@ import { formatDate, formatMoney } from "@/lib/datetime-form";
 import {
   DEVICE_TYPE_LABELS,
   printerModelLabel,
+  printerToFormValues,
   toPrinterRequest,
   type PrinterFormValues,
 } from "@/lib/printer-form";
@@ -476,12 +475,12 @@ export function PrinterView() {
       </ResourceViewShell>
 
       {printer && editOpen && (
-        <PrinterFormDialog
+        <PrinterCreateWizardDialog
           mode="edit"
-          printer={printer}
           open={editOpen}
           saving={saving}
           error={formError}
+          initialValues={printerToFormValues(printer)}
           modelOptions={modelOptions}
           softwareOptions={software}
           clientOptions={clientOptions}

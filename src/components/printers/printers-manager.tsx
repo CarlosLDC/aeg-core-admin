@@ -8,7 +8,6 @@ import {
 } from "@/components/printers/printer-batch-form-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import {
-  PrinterFormDialog,
   type SelectOption,
 } from "@/components/printers/printer-form-dialog";
 import { runSerialBatch } from "@/lib/batch-create";
@@ -53,6 +52,7 @@ import {
   formatPrinterDate,
   formatPrinterPrice,
   printerModelLabel,
+  printerToFormValues,
   PRINTER_STATUS_LABELS,
   toPrinterRequest,
   type PrinterFormValues,
@@ -851,12 +851,21 @@ export function PrintersManager() {
         onSubmit={handleSubmit}
       />
 
-      <PrinterFormDialog
+      <PrinterCreateWizardDialog
         mode="edit"
-        printer={selected ?? undefined}
         open={dialog === "edit"}
         saving={saving}
         error={formError}
+        initialValues={
+          selected
+            ? printerToFormValues(selected, {
+                distributorId:
+                  lockDistributor && distributorId != null
+                    ? String(distributorId)
+                    : undefined,
+              })
+            : null
+        }
         modelOptions={modelOptions}
         softwareOptions={software}
         clientOptions={clientOptions}

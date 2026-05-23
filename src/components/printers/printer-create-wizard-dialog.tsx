@@ -16,9 +16,11 @@ import { printerFormSchema } from "@/lib/schemas/printer-form-schema";
 import { cn } from "@/lib/utils";
 
 type PrinterCreateWizardDialogProps = {
+  mode?: "create" | "edit";
   open: boolean;
   saving: boolean;
   error: string | null;
+  initialValues?: PrinterFormValues | null;
   modelOptions: SelectOption[];
   softwareOptions: SelectOption[];
   clientOptions: SelectOption[];
@@ -68,9 +70,11 @@ function stepSubtitle(step: WizardStep): string {
 }
 
 export function PrinterCreateWizardDialog({
+  mode = "create",
   open,
   saving,
   error,
+  initialValues = null,
   modelOptions,
   softwareOptions,
   clientOptions,
@@ -97,13 +101,13 @@ export function PrinterCreateWizardDialog({
     setStepError(null);
     setFieldErrors({});
     setForm({
-      ...emptyPrinterForm(),
+      ...emptyPrinterForm(initialValues ?? undefined),
       distributorId:
         lockDistributor && defaultDistributorId != null
           ? String(defaultDistributorId)
-          : "",
+          : (initialValues?.distributorId ?? ""),
     });
-  }, [open, lockDistributor, defaultDistributorId]);
+  }, [open, initialValues, lockDistributor, defaultDistributorId]);
 
   if (!open) return null;
 
@@ -213,7 +217,7 @@ export function PrinterCreateWizardDialog({
                 id="printer-create-wizard-title"
                 className="text-lg font-semibold text-card-foreground"
               >
-                Nueva impresora
+                {mode === "create" ? "Nueva impresora" : "Editar impresora"}
               </h2>
               <p className="mt-1 text-sm text-muted">{stepSubtitle(step)}</p>
             </div>
@@ -326,7 +330,7 @@ export function PrinterCreateWizardDialog({
                 )}
               >
                 {saving && <Loader2 className="size-4 animate-spin" />}
-                Crear impresora
+                {mode === "create" ? "Crear impresora" : "Guardar impresora"}
               </button>
             )}
           </div>

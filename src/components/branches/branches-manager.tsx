@@ -7,10 +7,6 @@ import {
   BranchCreateWizardDialog,
   type BranchWizardValues,
 } from "@/components/branches/branch-create-wizard-dialog";
-import {
-  BranchFormDialog,
-  type BranchFormValues,
-} from "@/components/branches/branch-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import {
   PageToolbar,
@@ -93,6 +89,64 @@ function toRoleFormState(values: BranchFormValues) {
   };
 }
 
+type BranchFormValues = {
+  companyId: string;
+  city: string;
+  state: string;
+  address: string;
+  contactPersonName: string;
+  phone: string;
+  email: string;
+  isClient: boolean;
+  isDistributor: boolean;
+  isServiceCenter: boolean;
+  clientDistributorId: string;
+  isHeadquarters: boolean;
+};
+
+function toBranchFormValues(values: BranchWizardValues): BranchFormValues {
+  return {
+    companyId: values.linkedCompanyId != null ? String(values.linkedCompanyId) : "",
+    city: values.city,
+    state: values.state,
+    address: values.address,
+    contactPersonName: values.contactPersonName,
+    phone: values.phone,
+    email: values.email,
+    isClient: values.isClient,
+    isDistributor: values.isDistributor,
+    isServiceCenter: values.isServiceCenter,
+    clientDistributorId: values.clientDistributorId,
+    isHeadquarters: values.isHeadquarters,
+  };
+}
+
+function branchToWizardValues(
+  branch: BranchWithRoles,
+  companies: CompanyResponse[],
+): BranchWizardValues {
+  const company = companies.find((row) => row.id === branch.companyId);
+  return {
+    rif: company?.rif ?? "",
+    businessName: company?.businessName ?? "",
+    contributorType: company?.contributorType ?? "ordinario",
+    linkedCompanyId: branch.companyId,
+    city: branch.city,
+    state: branch.state,
+    address: branch.address ?? "",
+    contactPersonName: branch.contactPersonName ?? "",
+    phone: branch.phone ?? "",
+    email: branch.email ?? "",
+    isClient: Boolean(branch.client),
+    isDistributor: Boolean(branch.distributor),
+    isServiceCenter: Boolean(branch.serviceCenter),
+    clientDistributorId: branch.client?.distributorId
+      ? String(branch.client.distributorId)
+      : "",
+    isHeadquarters: Boolean(branch.isHeadquarters),
+  };
+}
+
 function branchSummary(branch: BranchWithRoles, companies: CompanyResponse[]) {
   return formatBranchShort(branch, companies);
 }
@@ -131,10 +185,10 @@ export function BranchesManager() {
   const companiesLoading = scopeLoading;
   const [listError, setListError] = useState<string | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardMode, setWizardMode] = useState<"create" | "edit">("create");
   const [wizardResumeCompanyId, setWizardResumeCompanyId] = useState<
     number | null
   >(null);
-  const [dialog, setDialog] = useState<"edit" | null>(null);
   const [selected, setSelected] = useState<BranchWithRoles | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -300,6 +354,7 @@ export function BranchesManager() {
   function openCreate() {
     setSelected(null);
     setFormError(null);
+    setWizardMode("create");
     setWizardResumeCompanyId(null);
     setWizardOpen(true);
   }
@@ -313,111 +368,98 @@ export function BranchesManager() {
   function openEdit(branch: BranchWithRoles) {
     setSelected(branch);
     setFormError(null);
-    setDialog("edit");
+    setWizardMode("edit");
+    setWizardResumeCompanyId(null);
+    setWizardOpen(true);
   }
 
-  function closeDialog() {
-    setDialog(null);
+  function closeEditWizard() {
+    setWizardOpen(false);
     setSelected(null);
     setFormError(null);
   }
 
   async function handleWizardSubmit(values: BranchWizardValues) {
-    if (!canCreate) {
-      setFormError(CATALOG_CREATE_FORBIDDEN_MESSAGE);
-      return;
-    }
-
     setSaving(true);
     setFormError(null);
-
-    const onboardingValues: ClientOnboardingValues = {
-      rif: values.rif,
-      businessName: values.businessName,
-      contributorType: values.contributorType,
-      linkedCompanyId: values.linkedCompanyId,
-      city: values.city,
-      state: values.state,
-      address: values.address,
-      contactPersonName: values.contactPersonName,
-      phone: values.phone,
-      email: values.email,
-      isHeadquarters: values.isHeadquarters,
-    };
-
     try {
-      const result = await createClientOnboarding({
-        values: onboardingValues,
-        companies,
-        resumeCompanyId: wizardResumeCompanyId,
-        roles: {
-          isClient: values.isClient,
-          isDistributor: values.isDistributor,
-          isServiceCenter: values.isServiceCenter,
-          clientDistributorId: values.clientDistributorId,
-        },
-      });
+      if (wizardMode === "create") {
+        if (!canCreate) {
+          setFormError(CATALOG_CREATE_FORBIDDEN_MESSAGE);
+          return;
+        }
+        const onboardingValues: ClientOnboardingValues = {
+          rif: values.rif,
+          businessName: values.businessName,
+          contributorType: values.contributorType,
+          linkedCompanyId: values.linkedCompanyId,
+          city: values.city,
+          state: values.state,
+          address: values.address,
+          contactPersonName: values.contactPersonName,
+          phone: values.phone,
+          email: values.email,
+          isHeadquarters: values.isHeadquarters,
+        };
 
-      toast.success(
-        result.companyCreated
-          ? `Empresa "${result.companyLabel}" y sucursal "${result.branchLabel}" creadas correctamente.`
-          : result.companyLinkedExisting
-            ? `Sucursal "${result.branchLabel}" añadida a la empresa existente "${result.companyLabel}".`
-            : `Sucursal "${result.branchLabel}" creada correctamente.`,
-        { href: branchPath(result.branch.id) },
-      );
-      closeWizard();
-      invalidateCatalogRoles();
-      await refreshScope();
-    } catch (err) {
-      const message = getCatalogErrorMessage(err);
+        const result = await createClientOnboarding({
+          values: onboardingValues,
+          companies,
+          resumeCompanyId: wizardResumeCompanyId,
+          roles: {
+            isClient: values.isClient,
+            isDistributor: values.isDistributor,
+            isServiceCenter: values.isServiceCenter,
+            clientDistributorId: values.clientDistributorId,
+          },
+        });
 
-      const resumeId =
-        err instanceof Error
-          ? (err as Error & { resumeCompanyId?: number }).resumeCompanyId
-          : undefined;
-      if (resumeId != null && wizardResumeCompanyId == null) {
-        setWizardResumeCompanyId(resumeId);
-        invalidateCatalogRoles();
-      await refreshScope();
-        const partial = `La empresa se creó, pero la sucursal no: ${message}. Revisa los datos de ubicación y pulsa «Crear sucursal» de nuevo (la empresa ya está vinculada).`;
-        setFormError(partial);
-        toast.error(partial);
+        toast.success(
+          result.companyCreated
+            ? `Empresa "${result.companyLabel}" y sucursal "${result.branchLabel}" creadas correctamente.`
+            : result.companyLinkedExisting
+              ? `Sucursal "${result.branchLabel}" añadida a la empresa existente "${result.companyLabel}".`
+              : `Sucursal "${result.branchLabel}" creada correctamente.`,
+          { href: branchPath(result.branch.id) },
+        );
+        closeWizard();
       } else {
-        setFormError(message);
-        toast.error(message);
-      }
-    } finally {
-      setSaving(false);
-    }
-  }
+        if (!selected || !canModify) {
+          setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+          return;
+        }
+        const formValues = toBranchFormValues(values);
+        const body = toBranchRequest(formValues);
+        const roles = toRoleFormState(formValues);
+        const label = `${values.city}, ${values.state}`;
 
-  async function handleSubmit(values: BranchFormValues) {
-    if (!canModify) {
-      setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
-      return;
-    }
-
-    setSaving(true);
-    setFormError(null);
-    const body = toBranchRequest(values);
-    const roles = toRoleFormState(values);
-    const label = `${values.city}, ${values.state}`;
-
-    try {
-      if (selected) {
         await updateBranch(selected.id, body);
         await syncBranchRoles(selected.id, selected, roles);
         toast.success(`Sucursal "${label}" actualizada.`, {
           href: branchPath(selected.id),
         });
+        closeEditWizard();
       }
-      closeDialog();
+
       invalidateCatalogRoles();
       await refreshScope();
     } catch (err) {
-      const message =
-        getCatalogErrorMessage(err);
+      const message = getCatalogErrorMessage(err);
+      if (wizardMode === "create") {
+        const resumeId =
+          err instanceof Error
+            ? (err as Error & { resumeCompanyId?: number }).resumeCompanyId
+            : undefined;
+        if (resumeId != null && wizardResumeCompanyId == null) {
+          setWizardResumeCompanyId(resumeId);
+          invalidateCatalogRoles();
+          await refreshScope();
+          const partial = `La empresa se creó, pero la sucursal no: ${message}. Revisa los datos de ubicación y pulsa «Crear sucursal» de nuevo (la empresa ya está vinculada).`;
+          setFormError(partial);
+          toast.error(partial);
+          return;
+        }
+      }
       setFormError(message);
       toast.error(message);
     } finally {
@@ -438,7 +480,7 @@ export function BranchesManager() {
     try {
       await deleteBranchRoles(branch);
       await deleteBranch(branch.id);
-      if (fromDialog) closeDialog();
+      if (fromDialog) closeEditWizard();
       await loadBranches();
       toast.success(`Sucursal "${label}" eliminada.`);
     } catch (err) {
@@ -689,29 +731,21 @@ export function BranchesManager() {
 
       <BranchCreateWizardDialog
         open={wizardOpen}
+        mode={wizardMode}
         saving={saving}
         error={formError}
-        resumeCompanyId={wizardResumeCompanyId}
+        initialValues={
+          wizardMode === "edit" && selected
+            ? branchToWizardValues(selected, companies)
+            : null
+        }
+        resumeCompanyId={wizardMode === "create" ? wizardResumeCompanyId : null}
         companies={companies}
         branches={branches}
         distributors={distributors}
         companiesLoading={companiesLoading}
-        onClose={closeWizard}
+        onClose={wizardMode === "create" ? closeWizard : closeEditWizard}
         onSubmit={handleWizardSubmit}
-      />
-
-      <BranchFormDialog
-        mode="edit"
-        branch={selected ?? undefined}
-        companies={companies}
-        branches={branches}
-        distributors={distributors}
-        companiesLoading={companiesLoading}
-        open={dialog === "edit"}
-        saving={saving}
-        error={formError}
-        onClose={closeDialog}
-        onSubmit={handleSubmit}
       />
     </div>
   );

@@ -4,9 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
 import {
-  BranchFormDialog,
-  type BranchFormValues,
-} from "@/components/branches/branch-form-dialog";
+  BranchCreateWizardDialog,
+  type BranchWizardValues,
+} from "@/components/branches/branch-create-wizard-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
@@ -67,12 +67,70 @@ const TYPE_FILTER_OPTIONS = [
 
 type CompanyBranchSortKey = "id";
 
+type BranchFormValues = {
+  companyId: string;
+  city: string;
+  state: string;
+  address: string;
+  contactPersonName: string;
+  phone: string;
+  email: string;
+  isClient: boolean;
+  isDistributor: boolean;
+  isServiceCenter: boolean;
+  clientDistributorId: string;
+  isHeadquarters: boolean;
+};
+
 function toRoleFormState(values: BranchFormValues) {
   return {
     isClient: values.isClient,
     isDistributor: values.isDistributor,
     isServiceCenter: values.isServiceCenter,
     clientDistributorId: values.clientDistributorId,
+  };
+}
+
+function toBranchFormValues(values: BranchWizardValues): BranchFormValues {
+  return {
+    companyId: values.linkedCompanyId != null ? String(values.linkedCompanyId) : "",
+    city: values.city,
+    state: values.state,
+    address: values.address,
+    contactPersonName: values.contactPersonName,
+    phone: values.phone,
+    email: values.email,
+    isClient: values.isClient,
+    isDistributor: values.isDistributor,
+    isServiceCenter: values.isServiceCenter,
+    clientDistributorId: values.clientDistributorId,
+    isHeadquarters: values.isHeadquarters,
+  };
+}
+
+function branchToWizardValues(
+  branch: BranchWithRoles,
+  companies: CompanyResponse[],
+): BranchWizardValues {
+  const company = companies.find((row) => row.id === branch.companyId);
+  return {
+    rif: company?.rif ?? "",
+    businessName: company?.businessName ?? "",
+    contributorType: company?.contributorType ?? "ordinario",
+    linkedCompanyId: branch.companyId,
+    city: branch.city,
+    state: branch.state,
+    address: branch.address ?? "",
+    contactPersonName: branch.contactPersonName ?? "",
+    phone: branch.phone ?? "",
+    email: branch.email ?? "",
+    isClient: Boolean(branch.client),
+    isDistributor: Boolean(branch.distributor),
+    isServiceCenter: Boolean(branch.serviceCenter),
+    clientDistributorId: branch.client?.distributorId
+      ? String(branch.client.distributorId)
+      : "",
+    isHeadquarters: Boolean(branch.isHeadquarters),
   };
 }
 
@@ -246,7 +304,7 @@ export function CompanyBranchesTable({
     setFormError(null);
   }
 
-  async function handleSubmit(values: BranchFormValues) {
+  async function handleSubmit(values: BranchWizardValues) {
     const isCreate = !selected;
     if (isCreate && !canCreate) {
       setFormError(CATALOG_CREATE_FORBIDDEN_MESSAGE);
@@ -258,11 +316,12 @@ export function CompanyBranchesTable({
     }
     setSaving(true);
     setFormError(null);
+    const formValues = toBranchFormValues(values);
     const body = toBranchRequest({
-      ...values,
+      ...formValues,
       companyId: String(companyId),
     });
-    const roles = toRoleFormState(values);
+    const roles = toRoleFormState(formValues);
     const label = `${values.city}, ${values.state}`;
 
     try {
@@ -545,17 +604,19 @@ export function CompanyBranchesTable({
         )}
       </div>
 
-      <BranchFormDialog
+      <BranchCreateWizardDialog
         mode={selected ? "edit" : "create"}
-        branch={selected ?? undefined}
-        companies={companyOptions}
-        lockedCompanyId={companyId}
-        branches={allBranches}
-        distributors={distributors}
-        companiesLoading={scopeLoading}
         open={dialogOpen}
         saving={saving}
         error={formError}
+        initialValues={
+          selected ? branchToWizardValues(selected, companyOptions) : null
+        }
+        resumeCompanyId={selected ? null : companyId}
+        companies={companyOptions}
+        branches={allBranches}
+        distributors={distributors}
+        companiesLoading={scopeLoading}
         onClose={closeDialog}
         onSubmit={handleSubmit}
       />
