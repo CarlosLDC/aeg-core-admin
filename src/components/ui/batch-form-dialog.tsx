@@ -18,6 +18,7 @@ type BatchFormDialogProps = {
   onClose: () => void;
   onSubmit: (e: FormEvent) => void;
   children: ReactNode;
+  footer?: ReactNode;
 };
 
 export function BatchFormDialog({
@@ -31,6 +32,7 @@ export function BatchFormDialog({
   onClose,
   onSubmit,
   children,
+  footer,
 }: BatchFormDialogProps) {
   if (!open) return null;
 
@@ -109,11 +111,13 @@ export function BatchFormDialog({
           <div className="space-y-5 rounded-xl border border-border bg-background/60 p-4 sm:p-5">
             {children}
           </div>
-          <BatchFormDialogFooter
-            busy={busy}
-            submitDisabled={submitDisabled}
-            onClose={onClose}
-          />
+          {footer ?? (
+            <BatchFormDialogFooter
+              busy={busy}
+              submitDisabled={submitDisabled}
+              onClose={onClose}
+            />
+          )}
         </form>
       </div>
     </div>
