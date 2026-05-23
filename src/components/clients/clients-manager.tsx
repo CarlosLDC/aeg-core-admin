@@ -24,10 +24,9 @@ import {
 } from "@/lib/table-sort";
 import { useDistributorId } from "@/hooks/use-distributor-id";
 import {
-  TableCreatedAtCell,
-  TableCreatedAtHeader,
-} from "@/components/ui/table-created-at";
-import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
+  TableRowMetaCells,
+  TableRowMetaHeaders,
+} from "@/components/ui/table-meta-column-slots";
 import {
   filterAllOption,
   uniqueFilterOptions,
@@ -437,31 +436,32 @@ export function ClientsManager() {
                   <table className="w-full min-w-[720px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+                        <TableRowMetaHeaders
+                          showId={tableColumns.showId}
+                          showCreatedAt={tableColumns.showCreatedAt}
+                          idSort={{
+                            sortDirection:
+                              sort?.key === "id" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "id"),
+                              ),
+                          }}
+                          createdAtSort={{
+                            sortDirection:
+                              sort?.key === "createdAt" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              ),
+                          }}
+                        >
                         <th className="px-5 py-3 font-medium">Cliente</th>
                         <th className="px-5 py-3 font-medium">RIF</th>
                         <th className="px-5 py-3 font-medium">Ubicación</th>
                         <th className="px-5 py-3 font-medium">Teléfono</th>
                         <th className="px-5 py-3 font-medium">Correo</th>
-                        {tableColumns.showId && (
-                          <TableIdHeader
-                            sortDirection={sort?.key === "id" ? sort.direction : null}
-                            onSortToggle={() =>
-                              setSort((current) => toggleTableSort(current, "id"))
-                            }
-                          />
-                        )}
-                        {tableColumns.showCreatedAt && (
-                          <TableCreatedAtHeader
-                            sortDirection={
-                              sort?.key === "createdAt" ? sort.direction : null
-                            }
-                            onSortToggle={() =>
-                              setSort((current) =>
-                                toggleTableSort(current, "createdAt"),
-                              )
-                            }
-                          />
-                        )}
+                        </TableRowMetaHeaders>
                       </tr>
                     </thead>
                     <tbody>
@@ -470,6 +470,12 @@ export function ClientsManager() {
                           key={row.key}
                           href={clientPath(row.client.id)}
                         >
+                          <TableRowMetaCells
+                            showId={tableColumns.showId}
+                            showCreatedAt={tableColumns.showCreatedAt}
+                            id={row.client.id}
+                            createdAt={row.createdAt}
+                          >
                           <td className="max-w-[220px] px-5 py-3.5 font-medium text-card-foreground">
                             <TruncatedText maxClassName="max-w-[200px]">
                               {row.businessName}
@@ -493,12 +499,7 @@ export function ClientsManager() {
                               {row.email || "—"}
                             </TruncatedText>
                           </td>
-                          {tableColumns.showId && (
-                            <TableIdCell value={row.client.id} />
-                          )}
-                          {tableColumns.showCreatedAt && (
-                            <TableCreatedAtCell value={row.createdAt} />
-                          )}
+                          </TableRowMetaCells>
                         </ClickableTableRow>
                       ))}
                     </tbody>

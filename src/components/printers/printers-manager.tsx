@@ -20,10 +20,9 @@ import {
 } from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
 import {
-  TableCreatedAtCell,
-  TableCreatedAtHeader,
-} from "@/components/ui/table-created-at";
-import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
+  TableRowMetaCells,
+  TableRowMetaHeaders,
+} from "@/components/ui/table-meta-column-slots";
 import { filterAllOption } from "@/lib/table-filter-options";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
@@ -661,6 +660,31 @@ export function PrintersManager() {
                   <table className="w-full min-w-[1100px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+                        <TableRowMetaHeaders
+                          showId={tableColumns.showId}
+                          showCreatedAt={tableColumns.showCreatedAt}
+                          idSort={{
+                            sortDirection:
+                              sort?.key === "id" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "id"),
+                              ),
+                          }}
+                          createdAtSort={{
+                            sortDirection:
+                              sort?.key === "createdAt" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              ),
+                          }}
+                          actions={
+                            <th className="px-5 py-3 font-medium text-right">
+                              Acciones
+                            </th>
+                          }
+                        >
                         <th className="px-5 py-3 font-medium">Serial</th>
                         <th className="px-5 py-3 font-medium">Modelo</th>
                         <th className="px-5 py-3 font-medium">Estatus</th>
@@ -686,29 +710,7 @@ export function PrintersManager() {
                             )
                           }
                         />
-                        {tableColumns.showId && (
-                          <TableIdHeader
-                            sortDirection={sort?.key === "id" ? sort.direction : null}
-                            onSortToggle={() =>
-                              setSort((current) => toggleTableSort(current, "id"))
-                            }
-                          />
-                        )}
-                        {tableColumns.showCreatedAt && (
-                          <TableCreatedAtHeader
-                            sortDirection={
-                              sort?.key === "createdAt" ? sort.direction : null
-                            }
-                            onSortToggle={() =>
-                              setSort((current) =>
-                                toggleTableSort(current, "createdAt"),
-                              )
-                            }
-                          />
-                        )}
-                        <th className="px-5 py-3 font-medium text-right">
-                          Acciones
-                        </th>
+                        </TableRowMetaHeaders>
                       </tr>
                     </thead>
                     <tbody>
@@ -717,6 +719,29 @@ export function PrintersManager() {
                           key={printer.id}
                           href={printerPath(printer.id)}
                         >
+                          <TableRowMetaCells
+                            showId={tableColumns.showId}
+                            showCreatedAt={tableColumns.showCreatedAt}
+                            id={printer.id}
+                            createdAt={printer.createdAt}
+                            actions={
+                              <td className="px-5 py-3.5" data-row-click="ignore">
+                                <TableRowActionsMenu
+                                  viewHref={printerPath(printer.id)}
+                                  viewLabel={`Ver impresora ${printer.fiscalSerial}`}
+                                  onEdit={
+                                    canModify ? () => openEdit(printer) : undefined
+                                  }
+                                  onDelete={
+                                    canModify
+                                      ? () => handleDelete(printer)
+                                      : undefined
+                                  }
+                                  deleting={deletingId === printer.id}
+                                />
+                              </td>
+                            }
+                          >
                           <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
                             {printer.fiscalSerial}
                           </td>
@@ -783,27 +808,7 @@ export function PrintersManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {formatPrinterDate(printer.installationDate)}
                           </td>
-                          {tableColumns.showId && (
-                            <TableIdCell value={printer.id} />
-                          )}
-                          {tableColumns.showCreatedAt && (
-                            <TableCreatedAtCell value={printer.createdAt} />
-                          )}
-                          <td className="px-5 py-3.5" data-row-click="ignore">
-                            <TableRowActionsMenu
-                              viewHref={printerPath(printer.id)}
-                              viewLabel={`Ver impresora ${printer.fiscalSerial}`}
-                              onEdit={
-                                canModify ? () => openEdit(printer) : undefined
-                              }
-                              onDelete={
-                                canModify
-                                  ? () => handleDelete(printer)
-                                  : undefined
-                              }
-                              deleting={deletingId === printer.id}
-                            />
-                          </td>
+                          </TableRowMetaCells>
                         </ClickableTableRow>
                       ))}
                     </tbody>

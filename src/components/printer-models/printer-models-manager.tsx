@@ -10,10 +10,9 @@ import {
 } from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
 import {
-  TableCreatedAtCell,
-  TableCreatedAtHeader,
-} from "@/components/ui/table-created-at";
-import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
+  TableRowMetaCells,
+  TableRowMetaHeaders,
+} from "@/components/ui/table-meta-column-slots";
 import {
   filterAllOption,
   uniqueFilterOptions,
@@ -317,6 +316,31 @@ export function PrinterModelsManager() {
                   <table className="w-full min-w-[880px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+                        <TableRowMetaHeaders
+                          showId={tableColumns.showId}
+                          showCreatedAt={tableColumns.showCreatedAt}
+                          idSort={{
+                            sortDirection:
+                              sort?.key === "id" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "id"),
+                              ),
+                          }}
+                          createdAtSort={{
+                            sortDirection:
+                              sort?.key === "createdAt" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              ),
+                          }}
+                          actions={
+                            <th className="px-5 py-3 font-medium text-right">
+                              Acciones
+                            </th>
+                          }
+                        >
                         <th className="px-5 py-3 font-medium">Marca</th>
                         <th className="px-5 py-3 font-medium">Modelo</th>
                         <SortableTableHeader
@@ -338,29 +362,7 @@ export function PrinterModelsManager() {
                             )
                           }
                         />
-                        {tableColumns.showId && (
-                          <TableIdHeader
-                            sortDirection={sort?.key === "id" ? sort.direction : null}
-                            onSortToggle={() =>
-                              setSort((current) => toggleTableSort(current, "id"))
-                            }
-                          />
-                        )}
-                        {tableColumns.showCreatedAt && (
-                          <TableCreatedAtHeader
-                            sortDirection={
-                              sort?.key === "createdAt" ? sort.direction : null
-                            }
-                            onSortToggle={() =>
-                              setSort((current) =>
-                                toggleTableSort(current, "createdAt"),
-                              )
-                            }
-                          />
-                        )}
-                        <th className="px-5 py-3 font-medium text-right">
-                          Acciones
-                        </th>
+                        </TableRowMetaHeaders>
                       </tr>
                     </thead>
                     <tbody>
@@ -369,6 +371,27 @@ export function PrinterModelsManager() {
                           key={model.id}
                           href={printerModelPath(model.id)}
                         >
+                          <TableRowMetaCells
+                            showId={tableColumns.showId}
+                            showCreatedAt={tableColumns.showCreatedAt}
+                            id={model.id}
+                            createdAt={model.createdAt}
+                            actions={
+                              <td className="px-5 py-3.5" data-row-click="ignore">
+                                <TableRowActionsMenu
+                                  viewHref={printerModelPath(model.id)}
+                                  viewLabel={`Ver modelo ${modelLabel(model)}`}
+                                  onEdit={
+                                    canModify ? () => openEdit(model) : undefined
+                                  }
+                                  onDelete={
+                                    canDelete ? () => handleDelete(model) : undefined
+                                  }
+                                  deleting={deletingId === model.id}
+                                />
+                              </td>
+                            }
+                          >
                           <td className="max-w-[140px] px-5 py-3.5">
                             <TruncatedText maxClassName="max-w-[120px]">
                               {model.brand}
@@ -388,23 +411,7 @@ export function PrinterModelsManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {formatPrinterModelDate(model.approvalDate)}
                           </td>
-                          {tableColumns.showId && <TableIdCell value={model.id} />}
-                          {tableColumns.showCreatedAt && (
-                            <TableCreatedAtCell value={model.createdAt} />
-                          )}
-                          <td className="px-5 py-3.5" data-row-click="ignore">
-                            <TableRowActionsMenu
-                              viewHref={printerModelPath(model.id)}
-                              viewLabel={`Ver modelo ${modelLabel(model)}`}
-                              onEdit={
-                                canModify ? () => openEdit(model) : undefined
-                              }
-                              onDelete={
-                                canDelete ? () => handleDelete(model) : undefined
-                              }
-                              deleting={deletingId === model.id}
-                            />
-                          </td>
+                          </TableRowMetaCells>
                         </ClickableTableRow>
                       ))}
                     </tbody>

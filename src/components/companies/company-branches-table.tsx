@@ -53,7 +53,10 @@ import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
-import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
+import {
+  TableRowMetaCells,
+  TableRowMetaHeaders,
+} from "@/components/ui/table-meta-column-slots";
 
 const TYPE_FILTER_OPTIONS = [
   { value: "all", label: "Todos los tipos" },
@@ -426,21 +429,26 @@ export function CompanyBranchesTable({
                   <table className="w-full min-w-[880px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        {tableColumns.showId && (
-                          <TableIdHeader
-                            sortDirection={sort?.key === "id" ? sort.direction : null}
-                            onSortToggle={() =>
-                              setSort((current) => toggleTableSort(current, "id"))
-                            }
-                          />
-                        )}
+                        <TableRowMetaHeaders
+                          showId={tableColumns.showId}
+                          showCreatedAt={false}
+                          idSort={{
+                            sortDirection:
+                              sort?.key === "id" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) => toggleTableSort(current, "id")),
+                          }}
+                          actions={
+                            <th className="px-5 py-3 font-medium text-right">
+                              Acciones
+                            </th>
+                          }
+                        >
                         <th className="px-5 py-3 font-medium">Ubicación</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
                         <th className="px-5 py-3 font-medium">Roles</th>
                         <th className="px-5 py-3 font-medium">Distribuidor</th>
-                        <th className="px-5 py-3 font-medium text-right">
-                          Acciones
-                        </th>
+                        </TableRowMetaHeaders>
                       </tr>
                     </thead>
                     <tbody>
@@ -449,9 +457,28 @@ export function CompanyBranchesTable({
                           key={branch.id}
                           href={branchPath(branch.id)}
                         >
-                          {tableColumns.showId && (
-                            <TableIdCell value={branch.id} />
-                          )}
+                          <TableRowMetaCells
+                            showId={tableColumns.showId}
+                            showCreatedAt={false}
+                            id={branch.id}
+                            actions={
+                              <td className="px-5 py-3.5" data-row-click="ignore">
+                                <TableRowActionsMenu
+                                  viewHref={branchPath(branch.id)}
+                                  viewLabel={`Ver sucursal ${branch.city}, ${branch.state}`}
+                                  onEdit={
+                                    canModify ? () => openEdit(branch) : undefined
+                                  }
+                                  onDelete={
+                                    canModify
+                                      ? () => void handleDelete(branch)
+                                      : undefined
+                                  }
+                                  deleting={deletingId === branch.id}
+                                />
+                              </td>
+                            }
+                          >
                           <td className="max-w-[240px] px-5 py-3.5 text-card-foreground">
                             <TruncatedText maxClassName="max-w-[220px]">
                               {branch.address
@@ -505,21 +532,7 @@ export function CompanyBranchesTable({
                               )}
                             </TruncatedText>
                           </td>
-                          <td className="px-5 py-3.5" data-row-click="ignore">
-                            <TableRowActionsMenu
-                              viewHref={branchPath(branch.id)}
-                              viewLabel={`Ver sucursal ${branch.city}, ${branch.state}`}
-                              onEdit={
-                                canModify ? () => openEdit(branch) : undefined
-                              }
-                              onDelete={
-                                canModify
-                                  ? () => void handleDelete(branch)
-                                  : undefined
-                              }
-                              deleting={deletingId === branch.id}
-                            />
-                          </td>
+                          </TableRowMetaCells>
                         </ClickableTableRow>
                       ))}
                     </tbody>

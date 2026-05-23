@@ -18,10 +18,9 @@ import {
 } from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
 import {
-  TableCreatedAtCell,
-  TableCreatedAtHeader,
-} from "@/components/ui/table-created-at";
-import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
+  TableRowMetaCells,
+  TableRowMetaHeaders,
+} from "@/components/ui/table-meta-column-slots";
 import {
   filterAllOption,
   uniqueFilterOptions,
@@ -566,34 +565,37 @@ export function BranchesManager() {
                   <table className="w-full min-w-[1040px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+                        <TableRowMetaHeaders
+                          showId={tableColumns.showId}
+                          showCreatedAt={tableColumns.showCreatedAt}
+                          idSort={{
+                            sortDirection:
+                              sort?.key === "id" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "id"),
+                              ),
+                          }}
+                          createdAtSort={{
+                            sortDirection:
+                              sort?.key === "createdAt" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              ),
+                          }}
+                          actions={
+                            <th className="px-5 py-3 font-medium text-right">
+                              Acciones
+                            </th>
+                          }
+                        >
                         <th className="px-5 py-3 font-medium">Empresa</th>
                         <th className="px-5 py-3 font-medium">Ubicación</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
                         <th className="px-5 py-3 font-medium">Roles</th>
                         <th className="px-5 py-3 font-medium">Distribuidor</th>
-                        {tableColumns.showId && (
-                          <TableIdHeader
-                            sortDirection={sort?.key === "id" ? sort.direction : null}
-                            onSortToggle={() =>
-                              setSort((current) => toggleTableSort(current, "id"))
-                            }
-                          />
-                        )}
-                        {tableColumns.showCreatedAt && (
-                          <TableCreatedAtHeader
-                            sortDirection={
-                              sort?.key === "createdAt" ? sort.direction : null
-                            }
-                            onSortToggle={() =>
-                              setSort((current) =>
-                                toggleTableSort(current, "createdAt"),
-                              )
-                            }
-                          />
-                        )}
-                        <th className="px-5 py-3 font-medium text-right">
-                          Acciones
-                        </th>
+                        </TableRowMetaHeaders>
                       </tr>
                     </thead>
                     <tbody>
@@ -602,6 +604,29 @@ export function BranchesManager() {
                           key={branch.id}
                           href={branchPath(branch.id)}
                         >
+                          <TableRowMetaCells
+                            showId={tableColumns.showId}
+                            showCreatedAt={tableColumns.showCreatedAt}
+                            id={branch.id}
+                            createdAt={branch.createdAt}
+                            actions={
+                              <td className="px-5 py-3.5" data-row-click="ignore">
+                                <TableRowActionsMenu
+                                  viewHref={branchPath(branch.id)}
+                                  viewLabel={`Ver sucursal ${branch.city}, ${branch.state}`}
+                                  onEdit={
+                                    canModify ? () => openEdit(branch) : undefined
+                                  }
+                                  onDelete={
+                                    canModify
+                                      ? () => handleDelete(branch)
+                                      : undefined
+                                  }
+                                  deleting={deletingId === branch.id}
+                                />
+                              </td>
+                            }
+                          >
                           <td className="max-w-[200px] px-5 py-3.5">
                             <TruncatedText
                               href={companyPath(branch.companyId)}
@@ -649,27 +674,7 @@ export function BranchesManager() {
                               )}
                             </TruncatedText>
                           </td>
-                          {tableColumns.showId && (
-                            <TableIdCell value={branch.id} />
-                          )}
-                          {tableColumns.showCreatedAt && (
-                            <TableCreatedAtCell value={branch.createdAt} />
-                          )}
-                          <td className="px-5 py-3.5" data-row-click="ignore">
-                            <TableRowActionsMenu
-                              viewHref={branchPath(branch.id)}
-                              viewLabel={`Ver sucursal ${branch.city}, ${branch.state}`}
-                              onEdit={
-                                canModify ? () => openEdit(branch) : undefined
-                              }
-                              onDelete={
-                                canModify
-                                  ? () => handleDelete(branch)
-                                  : undefined
-                              }
-                              deleting={deletingId === branch.id}
-                            />
-                          </td>
+                          </TableRowMetaCells>
                         </ClickableTableRow>
                       ))}
                     </tbody>

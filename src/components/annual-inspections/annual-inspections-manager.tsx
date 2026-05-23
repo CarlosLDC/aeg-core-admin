@@ -9,10 +9,9 @@ import {
   pageToolbarButtonClass,
 } from "@/components/ui/page-toolbar";
 import {
-  TableCreatedAtCell,
-  TableCreatedAtHeader,
-} from "@/components/ui/table-created-at";
-import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
+  TableRowMetaCells,
+  TableRowMetaHeaders,
+} from "@/components/ui/table-meta-column-slots";
 import { filterAllOption } from "@/lib/table-filter-options";
 import { annualInspectionPath } from "@/lib/resource-routes";
 import { hrefForEmployee, hrefForPrinter } from "@/lib/table-foreign-hrefs";
@@ -360,6 +359,31 @@ export function AnnualInspectionsManager() {
                   <table className="w-full min-w-[900px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+                        <TableRowMetaHeaders
+                          showId={tableColumns.showId}
+                          showCreatedAt={tableColumns.showCreatedAt}
+                          idSort={{
+                            sortDirection:
+                              sort?.key === "id" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "id"),
+                              ),
+                          }}
+                          createdAtSort={{
+                            sortDirection:
+                              sort?.key === "createdAt" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              ),
+                          }}
+                          actions={
+                            <th className="px-5 py-3 font-medium text-right">
+                              Acciones
+                            </th>
+                          }
+                        >
                         <th className="px-5 py-3 font-medium">Impresora</th>
                         <th className="px-5 py-3 font-medium">Empleado</th>
                         <SortableTableHeader
@@ -385,29 +409,7 @@ export function AnnualInspectionsManager() {
                             )
                           }
                         />
-                        {tableColumns.showId && (
-                          <TableIdHeader
-                            sortDirection={sort?.key === "id" ? sort.direction : null}
-                            onSortToggle={() =>
-                              setSort((current) => toggleTableSort(current, "id"))
-                            }
-                          />
-                        )}
-                        {tableColumns.showCreatedAt && (
-                          <TableCreatedAtHeader
-                            sortDirection={
-                              sort?.key === "createdAt" ? sort.direction : null
-                            }
-                            onSortToggle={() =>
-                              setSort((current) =>
-                                toggleTableSort(current, "createdAt"),
-                              )
-                            }
-                          />
-                        )}
-                        <th className="px-5 py-3 font-medium text-right">
-                          Acciones
-                        </th>
+                        </TableRowMetaHeaders>
                       </tr>
                     </thead>
                     <tbody>
@@ -416,6 +418,33 @@ export function AnnualInspectionsManager() {
                           key={row.id}
                           href={annualInspectionPath(row.id)}
                         >
+                          <TableRowMetaCells
+                            showId={tableColumns.showId}
+                            showCreatedAt={tableColumns.showCreatedAt}
+                            id={row.id}
+                            createdAt={row.createdAt}
+                            actions={
+                              <td className="px-5 py-3.5" data-row-click="ignore">
+                                <TableRowActionsMenu
+                                  viewHref={annualInspectionPath(row.id)}
+                                  viewLabel={`Ver inspección #${row.id}`}
+                                  onEdit={
+                                    canModify
+                                      ? () => {
+                                          setSelected(row);
+                                          setFormError(null);
+                                          setDialog("edit");
+                                        }
+                                      : undefined
+                                  }
+                                  onDelete={
+                                    canDelete ? () => handleDelete(row) : undefined
+                                  }
+                                  deleting={deletingId === row.id}
+                                />
+                              </td>
+                            }
+                          >
                           <td className="max-w-[140px] px-5 py-3.5 font-mono text-card-foreground">
                             <TruncatedText
                               href={
@@ -452,29 +481,7 @@ export function AnnualInspectionsManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {row.photoUrls?.length ?? 0}
                           </td>
-                          {tableColumns.showId && <TableIdCell value={row.id} />}
-                          {tableColumns.showCreatedAt && (
-                            <TableCreatedAtCell value={row.createdAt} />
-                          )}
-                          <td className="px-5 py-3.5" data-row-click="ignore">
-                            <TableRowActionsMenu
-                              viewHref={annualInspectionPath(row.id)}
-                              viewLabel={`Ver inspección #${row.id}`}
-                              onEdit={
-                                canModify
-                                  ? () => {
-                                      setSelected(row);
-                                      setFormError(null);
-                                      setDialog("edit");
-                                    }
-                                  : undefined
-                              }
-                              onDelete={
-                                canDelete ? () => handleDelete(row) : undefined
-                              }
-                              deleting={deletingId === row.id}
-                            />
-                          </td>
+                          </TableRowMetaCells>
                         </ClickableTableRow>
                       ))}
                     </tbody>

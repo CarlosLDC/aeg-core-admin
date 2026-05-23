@@ -11,10 +11,9 @@ import {
 } from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
 import {
-  TableCreatedAtCell,
-  TableCreatedAtHeader,
-} from "@/components/ui/table-created-at";
-import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
+  TableRowMetaCells,
+  TableRowMetaHeaders,
+} from "@/components/ui/table-meta-column-slots";
 import { filterAllOption } from "@/lib/table-filter-options";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
@@ -545,34 +544,37 @@ export function EmployeesManager() {
                   <table className="w-full min-w-[960px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+                        <TableRowMetaHeaders
+                          showId={tableColumns.showId}
+                          showCreatedAt={tableColumns.showCreatedAt}
+                          idSort={{
+                            sortDirection:
+                              sort?.key === "id" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "id"),
+                              ),
+                          }}
+                          createdAtSort={{
+                            sortDirection:
+                              sort?.key === "createdAt" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              ),
+                          }}
+                          actions={
+                            <th className="px-5 py-3 font-medium text-right">
+                              Acciones
+                            </th>
+                          }
+                        >
                         <th className="px-5 py-3 font-medium">Nombre</th>
                         <th className="px-5 py-3 font-medium">Cédula</th>
                         <th className="px-5 py-3 font-medium">Rol</th>
                         <th className="px-5 py-3 font-medium">Sucursal</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
-                        {tableColumns.showId && (
-                          <TableIdHeader
-                            sortDirection={sort?.key === "id" ? sort.direction : null}
-                            onSortToggle={() =>
-                              setSort((current) => toggleTableSort(current, "id"))
-                            }
-                          />
-                        )}
-                        {tableColumns.showCreatedAt && (
-                          <TableCreatedAtHeader
-                            sortDirection={
-                              sort?.key === "createdAt" ? sort.direction : null
-                            }
-                            onSortToggle={() =>
-                              setSort((current) =>
-                                toggleTableSort(current, "createdAt"),
-                              )
-                            }
-                          />
-                        )}
-                        <th className="px-5 py-3 font-medium text-right">
-                          Acciones
-                        </th>
+                        </TableRowMetaHeaders>
                       </tr>
                     </thead>
                     <tbody>
@@ -581,6 +583,31 @@ export function EmployeesManager() {
                           key={employee.id}
                           href={employeePath(employee.id)}
                         >
+                          <TableRowMetaCells
+                            showId={tableColumns.showId}
+                            showCreatedAt={tableColumns.showCreatedAt}
+                            id={employee.id}
+                            createdAt={employee.createdAt}
+                            actions={
+                              <td className="px-5 py-3.5" data-row-click="ignore">
+                                <TableRowActionsMenu
+                                  viewHref={employeePath(employee.id)}
+                                  viewLabel={`Ver empleado ${employee.name}`}
+                                  onEdit={
+                                    showActions
+                                      ? () => openEdit(employee)
+                                      : undefined
+                                  }
+                                  onDelete={
+                                    canModify
+                                      ? () => handleDelete(employee)
+                                      : undefined
+                                  }
+                                  deleting={deletingId === employee.id}
+                                />
+                              </td>
+                            }
+                          >
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
                             {employee.name}
                           </td>
@@ -611,29 +638,7 @@ export function EmployeesManager() {
                               {employee.phone || employee.email || "—"}
                             </TruncatedText>
                           </td>
-                          {tableColumns.showId && (
-                            <TableIdCell value={employee.id} />
-                          )}
-                          {tableColumns.showCreatedAt && (
-                            <TableCreatedAtCell value={employee.createdAt} />
-                          )}
-                          <td className="px-5 py-3.5" data-row-click="ignore">
-                            <TableRowActionsMenu
-                              viewHref={employeePath(employee.id)}
-                              viewLabel={`Ver empleado ${employee.name}`}
-                              onEdit={
-                                showActions
-                                  ? () => openEdit(employee)
-                                  : undefined
-                              }
-                              onDelete={
-                                canModify
-                                  ? () => handleDelete(employee)
-                                  : undefined
-                              }
-                              deleting={deletingId === employee.id}
-                            />
-                          </td>
+                          </TableRowMetaCells>
                         </ClickableTableRow>
                       ))}
                     </tbody>

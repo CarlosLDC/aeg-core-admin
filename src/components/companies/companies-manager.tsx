@@ -17,10 +17,9 @@ import {
 import { useConfirm } from "@/context/confirm-provider";
 import { TablePagination } from "@/components/ui/table-pagination";
 import {
-  TableCreatedAtCell,
-  TableCreatedAtHeader,
-} from "@/components/ui/table-created-at";
-import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
+  TableRowMetaCells,
+  TableRowMetaHeaders,
+} from "@/components/ui/table-meta-column-slots";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
@@ -290,32 +289,35 @@ export function CompaniesManager() {
                   <table className="w-full min-w-[720px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+                        <TableRowMetaHeaders
+                          showId={tableColumns.showId}
+                          showCreatedAt={tableColumns.showCreatedAt}
+                          idSort={{
+                            sortDirection:
+                              sort?.key === "id" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "id"),
+                              ),
+                          }}
+                          createdAtSort={{
+                            sortDirection:
+                              sort?.key === "createdAt" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              ),
+                          }}
+                          actions={
+                            <th className="px-5 py-3 font-medium text-right">
+                              Acciones
+                            </th>
+                          }
+                        >
                         <th className="px-5 py-3 font-medium">Razón social</th>
                         <th className="px-5 py-3 font-medium">RIF</th>
                         <th className="px-5 py-3 font-medium">Contribuyente</th>
-                        {tableColumns.showId && (
-                          <TableIdHeader
-                            sortDirection={sort?.key === "id" ? sort.direction : null}
-                            onSortToggle={() =>
-                              setSort((current) => toggleTableSort(current, "id"))
-                            }
-                          />
-                        )}
-                        {tableColumns.showCreatedAt && (
-                          <TableCreatedAtHeader
-                            sortDirection={
-                              sort?.key === "createdAt" ? sort.direction : null
-                            }
-                            onSortToggle={() =>
-                              setSort((current) =>
-                                toggleTableSort(current, "createdAt"),
-                              )
-                            }
-                          />
-                        )}
-                        <th className="px-5 py-3 font-medium text-right">
-                          Acciones
-                        </th>
+                        </TableRowMetaHeaders>
                       </tr>
                     </thead>
                     <tbody>
@@ -324,6 +326,29 @@ export function CompaniesManager() {
                           key={company.id}
                           href={companyPath(company.id)}
                         >
+                          <TableRowMetaCells
+                            showId={tableColumns.showId}
+                            showCreatedAt={tableColumns.showCreatedAt}
+                            id={company.id}
+                            createdAt={company.createdAt}
+                            actions={
+                              <td className="px-5 py-3.5" data-row-click="ignore">
+                                <TableRowActionsMenu
+                                  viewHref={companyPath(company.id)}
+                                  viewLabel={`Ver empresa ${company.businessName || company.rif}`}
+                                  onEdit={
+                                    canModify ? () => openEdit(company) : undefined
+                                  }
+                                  onDelete={
+                                    canModify
+                                      ? () => handleDelete(company)
+                                      : undefined
+                                  }
+                                  deleting={deletingId === company.id}
+                                />
+                              </td>
+                            }
+                          >
                           <td className="max-w-[240px] px-5 py-3.5">
                             <TruncatedText
                               href={companyPath(company.id)}
@@ -338,27 +363,7 @@ export function CompaniesManager() {
                           <td className="px-5 py-3.5">
                             <ContributorBadge type={company.contributorType} />
                           </td>
-                          {tableColumns.showId && (
-                            <TableIdCell value={company.id} />
-                          )}
-                          {tableColumns.showCreatedAt && (
-                            <TableCreatedAtCell value={company.createdAt} />
-                          )}
-                          <td className="px-5 py-3.5" data-row-click="ignore">
-                            <TableRowActionsMenu
-                              viewHref={companyPath(company.id)}
-                              viewLabel={`Ver empresa ${company.businessName || company.rif}`}
-                              onEdit={
-                                canModify ? () => openEdit(company) : undefined
-                              }
-                              onDelete={
-                                canModify
-                                  ? () => handleDelete(company)
-                                  : undefined
-                              }
-                              deleting={deletingId === company.id}
-                            />
-                          </td>
+                          </TableRowMetaCells>
                         </ClickableTableRow>
                       ))}
                     </tbody>

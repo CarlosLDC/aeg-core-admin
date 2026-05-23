@@ -11,10 +11,9 @@ import {
 } from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
 import {
-  TableCreatedAtCell,
-  TableCreatedAtHeader,
-} from "@/components/ui/table-created-at";
-import { TableIdCell, TableIdHeader } from "@/components/ui/table-id";
+  TableRowMetaCells,
+  TableRowMetaHeaders,
+} from "@/components/ui/table-meta-column-slots";
 import { filterAllOption } from "@/lib/table-filter-options";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
@@ -412,6 +411,31 @@ export function ContractsListPanel({
                   <table className="w-full min-w-[920px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+                        <TableRowMetaHeaders
+                          showId={tableColumns.showId}
+                          showCreatedAt={tableColumns.showCreatedAt}
+                          idSort={{
+                            sortDirection:
+                              sort?.key === "id" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "id"),
+                              ),
+                          }}
+                          createdAtSort={{
+                            sortDirection:
+                              sort?.key === "createdAt" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              ),
+                          }}
+                          actions={
+                            <th className="px-5 py-3 font-medium text-right">
+                              Acciones
+                            </th>
+                          }
+                        >
                         <th className="px-5 py-3 font-medium">{partyColumn}</th>
                         <SortableTableHeader
                           label="Vigencia"
@@ -424,29 +448,7 @@ export function ContractsListPanel({
                         />
                         <th className="px-5 py-3 font-medium">Estado</th>
                         <th className="px-5 py-3 font-medium">Documentos</th>
-                        {tableColumns.showId && (
-                          <TableIdHeader
-                            sortDirection={sort?.key === "id" ? sort.direction : null}
-                            onSortToggle={() =>
-                              setSort((current) => toggleTableSort(current, "id"))
-                            }
-                          />
-                        )}
-                        {tableColumns.showCreatedAt && (
-                          <TableCreatedAtHeader
-                            sortDirection={
-                              sort?.key === "createdAt" ? sort.direction : null
-                            }
-                            onSortToggle={() =>
-                              setSort((current) =>
-                                toggleTableSort(current, "createdAt"),
-                              )
-                            }
-                          />
-                        )}
-                        <th className="px-5 py-3 font-medium text-right">
-                          Acciones
-                        </th>
+                        </TableRowMetaHeaders>
                       </tr>
                     </thead>
                     <tbody>
@@ -460,6 +462,29 @@ export function ContractsListPanel({
                           key={contract.id}
                           href={contractHref}
                         >
+                          <TableRowMetaCells
+                            showId={tableColumns.showId}
+                            showCreatedAt={tableColumns.showCreatedAt}
+                            id={contract.id}
+                            createdAt={contract.createdAt}
+                            actions={
+                              <td className="px-5 py-3.5" data-row-click="ignore">
+                                <TableRowActionsMenu
+                                  viewHref={contractHref}
+                                  viewLabel={`Ver contrato #${contract.id}`}
+                                  onEdit={
+                                    canModify ? () => openEdit(contract) : undefined
+                                  }
+                                  onDelete={
+                                    canDelete
+                                      ? () => handleDelete(contract)
+                                      : undefined
+                                  }
+                                  deleting={deletingId === contract.id}
+                                />
+                              </td>
+                            }
+                          >
                           <td className="max-w-[220px] px-5 py-3.5 font-medium text-card-foreground">
                             <TruncatedText
                               href={getPartyHref?.(contract)}
@@ -505,27 +530,7 @@ export function ContractsListPanel({
                               </ul>
                             )}
                           </td>
-                          {tableColumns.showId && (
-                            <TableIdCell value={contract.id} />
-                          )}
-                          {tableColumns.showCreatedAt && (
-                            <TableCreatedAtCell value={contract.createdAt} />
-                          )}
-                          <td className="px-5 py-3.5" data-row-click="ignore">
-                            <TableRowActionsMenu
-                              viewHref={contractHref}
-                              viewLabel={`Ver contrato #${contract.id}`}
-                              onEdit={
-                                canModify ? () => openEdit(contract) : undefined
-                              }
-                              onDelete={
-                                canDelete
-                                  ? () => handleDelete(contract)
-                                  : undefined
-                              }
-                              deleting={deletingId === contract.id}
-                            />
-                          </td>
+                          </TableRowMetaCells>
                         </ClickableTableRow>
                       );
                       })}
