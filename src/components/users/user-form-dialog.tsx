@@ -252,7 +252,7 @@ export function UserFormDialog({
             <legend className="px-1 text-sm font-semibold text-card-foreground">
               Asignación operativa
             </legend>
-            <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 md:items-start">
               <div className="min-w-0">
                 <FieldLabel required>Sucursal</FieldLabel>
                 <BranchSelect

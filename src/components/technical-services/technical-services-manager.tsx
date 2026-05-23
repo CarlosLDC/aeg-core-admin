@@ -438,7 +438,7 @@ export function TechnicalServicesManager() {
                               mono
                             >
                               {printerLabelById.get(String(row.printerId)) ??
-                                `#${row.printerId}`}
+                                "—"}
                             </TruncatedText>
                           </td>
                           <td className="max-w-[160px] px-5 py-3.5 text-muted">
@@ -451,7 +451,7 @@ export function TechnicalServicesManager() {
                               maxClassName="max-w-[140px]"
                             >
                               {technicianLabelById.get(String(row.technicianId)) ??
-                                `#${row.technicianId}`}
+                                "—"}
                             </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5 text-muted">

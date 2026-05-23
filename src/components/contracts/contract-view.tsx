@@ -99,7 +99,7 @@ export function ContractView({ kind }: ContractViewProps) {
       return distributors
         .map((d) => ({
           id: d.id,
-          label: `#${d.id} · ${distributorLabel(d, branches, companies)}`,
+          label: distributorLabel(d, branches, companies),
         }))
         .sort((a, b) => a.label.localeCompare(b.label, "es"));
     }
@@ -108,8 +108,8 @@ export function ContractView({ kind }: ContractViewProps) {
         const branch = branches.find((b) => b.id === sc.branchId);
         const label = branch
           ? formatBranchShort(branch, companies)
-          : `Centro #${sc.id}`;
-        return { id: sc.id, label: `#${sc.id} · ${label}` };
+          : "Centro de servicio desconocido";
+        return { id: sc.id, label };
       })
       .sort((a, b) => a.label.localeCompare(b.label, "es"));
   }, [isDistributor, distributors, serviceCenters, branches, companies]);
@@ -119,7 +119,7 @@ export function ContractView({ kind }: ContractViewProps) {
     const partyId = isDistributor
       ? (contract as DistributorContractResponse).distributorId
       : (contract as ServiceCenterContractResponse).serviceCenterId;
-    return partyOptions.find((p) => p.id === partyId)?.label ?? `#${partyId}`;
+    return partyOptions.find((p) => p.id === partyId)?.label ?? "—";
   }, [contract, isDistributor, partyOptions]);
 
   const load = useCallback(async () => {
@@ -251,8 +251,8 @@ export function ContractView({ kind }: ContractViewProps) {
   }
 
   const title = isDistributor
-    ? `Contrato distribuidor #${id ?? ""}`
-    : `Contrato centro de servicio #${id ?? ""}`;
+    ? "Contrato distribuidor"
+    : "Contrato centro de servicio";
 
   return (
     <>

@@ -145,7 +145,7 @@ function clientDistributorSummary(
   const distributor = distributors.find(
     (d) => d.id === branch.client?.distributorId,
   );
-  if (!distributor) return `Distribuidor #${branch.client.distributorId}`;
+  if (!distributor) return "Distribuidor desconocido";
   return distributorLabel(distributor, branches, companies);
 }
 

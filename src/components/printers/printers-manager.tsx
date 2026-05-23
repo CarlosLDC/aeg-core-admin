@@ -96,7 +96,7 @@ function clientLabel(
   companies: CompanyResponse[],
 ): string {
   const branch = branches.find((b) => b.id === client.branchId);
-  if (!branch) return `Cliente #${client.id}`;
+  if (!branch) return "Cliente desconocido";
   return formatBranchShort(branch, companies);
 }
 
@@ -257,7 +257,7 @@ export function PrintersManager() {
         .sort((a, b) =>
           printerModelLabel(a).localeCompare(printerModelLabel(b), "es"),
         )
-        .map((m) => ({ id: m.id, label: `#${m.id} · ${printerModelLabel(m)}` })),
+        .map((m) => ({ id: m.id, label: printerModelLabel(m) })),
     [visibleModels],
   );
 
@@ -274,7 +274,7 @@ export function PrintersManager() {
     return rows
       .map((d) => ({
         id: d.id,
-        label: `#${d.id} · ${distributorLabel(d, branches, companies)}`,
+        label: distributorLabel(d, branches, companies),
       }))
       .sort((a, b) => a.label.localeCompare(b.label, "es"));
   }, [distributors, branches, companies, lockDistributor, distributorId]);
@@ -284,7 +284,7 @@ export function PrintersManager() {
       scopedClients
         .map((c) => ({
           id: c.id,
-          label: `#${c.id} · ${clientLabel(c, branches, companies)}`,
+          label: clientLabel(c, branches, companies),
         }))
         .sort((a, b) => a.label.localeCompare(b.label, "es")),
     [scopedClients, branches, companies],
@@ -360,20 +360,20 @@ export function PrintersManager() {
 
   function getModelLabel(modelId: number): string {
     const model = modelById.get(modelId);
-    return model ? printerModelLabel(model) : `Modelo #${modelId}`;
+    return model ? printerModelLabel(model) : "Modelo desconocido";
   }
 
   function getDistributorLabel(distributorId: number | null): string {
     if (distributorId == null) return "—";
     const d = distributors.find((x) => x.id === distributorId);
-    if (!d) return `#${distributorId}`;
+    if (!d) return "—";
     return distributorLabel(d, branches, companies);
   }
 
   function getClientLabel(clientId: number | null): string {
     if (clientId == null) return "—";
     const c = clients.find((x) => x.id === clientId);
-    if (!c) return `#${clientId}`;
+    if (!c) return "—";
     return clientLabel(c, branches, companies);
   }
 

@@ -32,7 +32,7 @@ export function DistributorIdSelect({
     () =>
       distributors.map((distributor) => ({
         value: String(distributor.id),
-        label: `#${distributor.id} · ${distributorLabel(distributor, branches, companies)}`,
+        label: distributorLabel(distributor, branches, companies),
         searchText: `${distributor.id} ${distributorLabel(distributor, branches, companies)}`,
       })),
     [distributors, branches, companies],

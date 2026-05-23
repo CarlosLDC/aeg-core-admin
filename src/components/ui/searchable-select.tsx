@@ -79,7 +79,7 @@ export function SearchableSelect({
       ? emptyLabel
       : selected
         ? selected.label
-        : `#${value}`;
+        : "—";
 
   const showClear = !required;
   const pickerTitle = modalTitle ?? searchPlaceholder.replace(/…$/, "");

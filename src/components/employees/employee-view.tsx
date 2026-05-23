@@ -210,6 +210,10 @@ export function EmployeeView() {
         content: (
           <DetailSection title="Identidad del empleado">
             <DetailField label="ID" value={String(employee.id)} mono />
+            <DetailField
+              label="Registrado"
+              value={formatDate(employee.createdAt)}
+            />
             <DetailField label="Nombre" value={employee.name} />
             <DetailField label="Cédula" value={employee.nationalId} mono />
             <DetailField
@@ -237,10 +241,6 @@ export function EmployeeView() {
               label="ID sucursal"
               value={String(employee.branchId)}
               mono
-            />
-            <DetailField
-              label="Registrado"
-              value={formatDate(employee.createdAt)}
             />
           </DetailSection>
         ),

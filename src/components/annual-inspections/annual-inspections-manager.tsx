@@ -453,7 +453,7 @@ export function AnnualInspectionsManager() {
                               mono
                             >
                               {printerLabelById.get(String(row.printerId)) ??
-                                `#${row.printerId}`}
+                                "—"}
                             </TruncatedText>
                           </td>
                           <td className="max-w-[180px] px-5 py-3.5 text-muted">
@@ -466,7 +466,7 @@ export function AnnualInspectionsManager() {
                               maxClassName="max-w-[160px]"
                             >
                               {employeeLabelById.get(String(row.employeeId)) ??
-                                `#${row.employeeId}`}
+                                "—"}
                             </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5 text-muted">

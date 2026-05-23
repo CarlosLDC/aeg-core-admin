@@ -17,7 +17,7 @@ export function printerSelectOptions(
   return printers
     .map((p) => ({
       value: String(p.id),
-      label: `#${p.id} · ${p.fiscalSerial}`,
+      label: p.fiscalSerial,
       searchText: p.fiscalSerial,
     }))
     .sort((a, b) => a.label.localeCompare(b.label, "es"));
@@ -27,7 +27,7 @@ export function sealSelectOptions(seals: SealResponse[]): SearchableSelectOption
   return seals
     .map((s) => ({
       value: String(s.id),
-      label: `#${s.id} · ${s.serial}`,
+      label: s.serial,
       searchText: s.serial,
     }))
     .sort((a, b) => a.label.localeCompare(b.label, "es"));
@@ -43,10 +43,10 @@ export function technicianSelectOptions(
       const emp = empById.get(t.employeeId);
       const name = emp
         ? `${emp.name} · ${emp.nationalId}`
-        : `Empleado #${t.employeeId}`;
+        : "Empleado desconocido";
       return {
         value: String(t.id),
-        label: `Técnico #${t.id} · ${name}`,
+        label: name,
         searchText: name,
       };
     })
@@ -59,7 +59,7 @@ export function employeeSelectOptions(
   return employees
     .map((e) => ({
       value: String(e.id),
-      label: `#${e.id} · ${e.name} · ${e.nationalId}`,
+      label: `${e.name} · ${e.nationalId}`,
       searchText: `${e.name} ${e.nationalId} ${e.email}`,
     }))
     .sort((a, b) => a.label.localeCompare(b.label, "es"));
@@ -74,8 +74,8 @@ export function serviceCenterSelectOptions(
     .map((sc) => {
       const branch = branches.find((b) => b.id === sc.branchId);
       const label = branch
-        ? `#${sc.id} · ${formatBranchShort(branch, companies)}`
-        : `#${sc.id} · Sucursal #${sc.branchId}`;
+        ? formatBranchShort(branch, companies)
+        : "Sucursal desconocida";
       return { value: String(sc.id), label, searchText: label };
     })
     .sort((a, b) => a.label.localeCompare(b.label, "es"));
@@ -90,8 +90,8 @@ export function distributorSelectOptions(
     .map((d) => {
       const branch = branches.find((b) => b.id === d.branchId);
       const label = branch
-        ? `#${d.id} · ${formatBranchShort(branch, companies)}`
-        : `#${d.id} · Sucursal #${d.branchId}`;
+        ? formatBranchShort(branch, companies)
+        : "Sucursal desconocida";
       return { value: String(d.id), label, searchText: label };
     })
     .sort((a, b) => a.label.localeCompare(b.label, "es"));

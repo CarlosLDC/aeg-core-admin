@@ -141,7 +141,7 @@ export function DetailSectionsPager({
 
       {showNav && (
         <p className="text-center text-xs text-muted" aria-live="polite">
-          {safeIndex + 1} de {stepCount} · {current.label}
+          {current.label}
         </p>
       )}
     </div>

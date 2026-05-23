@@ -28,6 +28,7 @@ import {
   updateAnnualInspection,
 } from "@/lib/annual-inspections-api";
 import { formatDate } from "@/lib/datetime-form";
+import { catalogOptionLabel } from "@/lib/record-labels";
 import {
   annualInspectionPath,
   employeePath,
@@ -150,7 +151,7 @@ export function AnnualInspectionView() {
       <ResourceViewShell
         backHref="/annual-inspections"
         backLabel="Volver a inspecciones"
-        title={`Inspección anual #${id ?? ""}`}
+        title="Inspección anual"
         loading={loading}
         error={error}
         actions={
@@ -176,12 +177,20 @@ export function AnnualInspectionView() {
               <DetailField label="ID" value={String(inspection.id)} mono />
               <DetailField
                 label="Impresora"
-                value={`#${inspection.printerId}`}
+                value={catalogOptionLabel(
+                  catalog.printerOptions,
+                  inspection.printerId,
+                  "—",
+                )}
                 href={printerPath(inspection.printerId)}
               />
               <DetailField
                 label="Empleado"
-                value={`#${inspection.employeeId}`}
+                value={catalogOptionLabel(
+                  catalog.employeeOptions,
+                  inspection.employeeId,
+                  "—",
+                )}
                 href={employeePath(inspection.employeeId)}
               />
               <DetailField

@@ -28,17 +28,9 @@ import {
   getTechnicalServicesErrorMessage,
   updateTechnicalService,
 } from "@/lib/technical-services-api";
+import { catalogOptionLabel } from "@/lib/record-labels";
 import { printerPath, sealPath, technicalServicePath } from "@/lib/resource-routes";
 import type { TechnicalServiceResponse } from "@/types/technical-service";
-
-function optionLabel(
-  options: Array<{ value: string; label: string }>,
-  id: number | null | undefined,
-  fallback: string,
-): string {
-  if (id == null) return fallback;
-  return options.find((opt) => Number(opt.value) === id)?.label ?? `#${id}`;
-}
 
 export function TechnicalServiceView() {
   const id = useResourceId();
@@ -153,7 +145,7 @@ export function TechnicalServiceView() {
       <ResourceViewShell
         backHref="/technical-services"
         backLabel="Volver a servicios técnicos"
-        title={`Servicio técnico #${id ?? ""}`}
+        title="Servicio técnico"
         loading={loading}
         error={error}
         actions={
@@ -180,12 +172,12 @@ export function TechnicalServiceView() {
                 <DetailField label="ID" value={String(service.id)} mono />
                 <DetailField
                   label="Impresora"
-                  value={optionLabel(catalog.printerOptions, service.printerId, "—")}
+                  value={catalogOptionLabel(catalog.printerOptions, service.printerId, "—")}
                   href={printerPath(service.printerId)}
                 />
                 <DetailField
                   label="Técnico"
-                  value={optionLabel(
+                  value={catalogOptionLabel(
                     catalog.technicianOptions,
                     service.technicianId,
                     "—",
@@ -193,7 +185,7 @@ export function TechnicalServiceView() {
                 />
                 <DetailField
                   label="Centro de servicio"
-                  value={optionLabel(
+                  value={catalogOptionLabel(
                     catalog.serviceCenterOptions,
                     service.serviceCenterId,
                     "Sin asignar",
@@ -201,7 +193,7 @@ export function TechnicalServiceView() {
                 />
                 <DetailField
                   label="Distribuidor"
-                  value={optionLabel(
+                  value={catalogOptionLabel(
                     catalog.distributorOptions,
                     service.distributorId,
                     "Sin asignar",
@@ -251,11 +243,11 @@ export function TechnicalServiceView() {
                 />
                 <DetailField
                   label="Precinto instalado"
-                  value={
-                    service.installedSealId != null
-                      ? `#${service.installedSealId}`
-                      : "—"
-                  }
+                  value={catalogOptionLabel(
+                    catalog.sealOptions,
+                    service.installedSealId,
+                    "—",
+                  )}
                   href={
                     service.installedSealId != null
                       ? sealPath(service.installedSealId)
@@ -264,11 +256,11 @@ export function TechnicalServiceView() {
                 />
                 <DetailField
                   label="Precinto retirado"
-                  value={
-                    service.removedSealId != null
-                      ? `#${service.removedSealId}`
-                      : "—"
-                  }
+                  value={catalogOptionLabel(
+                    catalog.sealOptions,
+                    service.removedSealId,
+                    "—",
+                  )}
                   href={
                     service.removedSealId != null
                       ? sealPath(service.removedSealId)

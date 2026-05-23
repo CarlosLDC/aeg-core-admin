@@ -155,23 +155,23 @@ export function EmployeeFormDialog({
             <legend className="px-1 text-sm font-semibold text-card-foreground">
               Datos personales
             </legend>
-            <label className="block">
-              <FieldLabel required={canEditProfile}>
-                Cédula / documento
-              </FieldLabel>
-              <input
-                type="text"
-                required={canEditProfile}
-                value={form.nationalId}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, nationalId: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block sm:col-span-2">
+              <label className="block min-w-0">
+                <FieldLabel required={canEditProfile}>
+                  Cédula / documento
+                </FieldLabel>
+                <input
+                  type="text"
+                  required={canEditProfile}
+                  value={form.nationalId}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, nationalId: e.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
+
+              <label className="block min-w-0">
                 <FieldLabel required={canEditProfile}>Nombre</FieldLabel>
                 <input
                   type="text"
@@ -184,7 +184,7 @@ export function EmployeeFormDialog({
                 />
               </label>
 
-              <label className="block">
+              <label className="block min-w-0">
                 <FieldLabel required={canEditProfile}>Teléfono</FieldLabel>
                 <input
                   type="tel"
@@ -196,7 +196,7 @@ export function EmployeeFormDialog({
                   className={inputClass}
                 />
               </label>
-              <label className="block">
+              <label className="block min-w-0">
                 <FieldLabel required={canEditProfile}>Correo</FieldLabel>
                 <input
                   type="email"
@@ -215,46 +215,48 @@ export function EmployeeFormDialog({
             <legend className="px-1 text-sm font-semibold text-card-foreground">
               Asignación
             </legend>
-            <label className="block">
-              <FieldLabel required={!lockBranch}>Sucursal</FieldLabel>
-              {lockBranch ? (
-                <p className="rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-sm text-muted">
-                  Sucursal de tu distribuidora (personal interno)
-                </p>
-              ) : (
-                <BranchSelect
-                  value={form.branchId}
-                  onChange={(branchId) =>
-                    setForm((f) => ({ ...f, branchId }))
-                  }
-                  branches={branches}
-                  companies={companies}
-                  loading={branchesLoading}
-                  disabled={disabledProfile || branches.length === 0}
-                />
-              )}
-            </label>
+            <div className="grid gap-4 md:grid-cols-2 md:items-start">
+              <div className="min-w-0">
+                <FieldLabel required={!lockBranch}>Sucursal</FieldLabel>
+                {lockBranch ? (
+                  <p className="rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-sm text-muted">
+                    Sucursal de tu distribuidora (personal interno)
+                  </p>
+                ) : (
+                  <BranchSelect
+                    value={form.branchId}
+                    onChange={(branchId) =>
+                      setForm((f) => ({ ...f, branchId }))
+                    }
+                    branches={branches}
+                    companies={companies}
+                    loading={branchesLoading}
+                    disabled={disabledProfile || branches.length === 0}
+                  />
+                )}
+              </div>
 
-            <label className="block">
-              <FieldLabel required>Rol</FieldLabel>
-              <select
-                value={form.role}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    role: e.target.value as EmployeeUiRole,
-                  }))
-                }
-                disabled={!canEditRole || saving}
-                className={inputClass}
-              >
-                {roleOptions.map((role) => (
-                  <option key={role} value={role}>
-                    {EMPLOYEE_UI_ROLE_LABELS[role]}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <label className="block min-w-0">
+                <FieldLabel required>Rol</FieldLabel>
+                <select
+                  value={form.role}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      role: e.target.value as EmployeeUiRole,
+                    }))
+                  }
+                  disabled={!canEditRole || saving}
+                  className={inputClass}
+                >
+                  {roleOptions.map((role) => (
+                    <option key={role} value={role}>
+                      {EMPLOYEE_UI_ROLE_LABELS[role]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </fieldset>
 
           <FormDialogFooter

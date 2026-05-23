@@ -148,7 +148,7 @@ export function SealView() {
             scoped.printers
               .map((p) => ({
                 id: p.id,
-                label: `#${p.id} · ${p.fiscalSerial}`,
+                label: p.fiscalSerial,
               }))
               .sort((a, b) => a.label.localeCompare(b.label, "es")),
           );
@@ -219,7 +219,7 @@ export function SealView() {
 
   const printerLabel =
     seal?.printerId != null
-      ? printerLabelById.get(seal.printerId) ?? `#${seal.printerId}`
+      ? printerLabelById.get(seal.printerId) ?? "—"
       : "Sin asignar";
 
   return (

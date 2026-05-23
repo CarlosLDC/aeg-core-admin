@@ -62,7 +62,7 @@ export function distributorLabel(
   companies: CompanyResponse[],
 ): string {
   const branch = branches.find((b) => b.id === distributor.branchId);
-  if (!branch) return `Distribuidor #${distributor.id}`;
+  if (!branch) return "Distribuidor desconocido";
   return formatBranchShort(branch, companies);
 }
 

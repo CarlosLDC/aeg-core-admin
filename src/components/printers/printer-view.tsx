@@ -64,7 +64,7 @@ function clientLabel(
   companies: CompanyResponse[],
 ): string {
   const branch = branches.find((b) => b.id === client.branchId);
-  if (!branch) return `Cliente #${client.id}`;
+  if (!branch) return "Cliente desconocido";
   return formatBranchShort(branch, companies);
 }
 
@@ -168,7 +168,7 @@ export function PrinterView() {
         setSoftware(
           softwareRows.map((s) => ({
             id: s.id,
-            label: `#${s.id} · ${s.name}`,
+            label: s.name,
           })),
         );
         setCompanies(companyRows);
@@ -193,7 +193,7 @@ export function PrinterView() {
         .sort((a, b) =>
           printerModelLabel(a).localeCompare(printerModelLabel(b), "es"),
         )
-        .map((m) => ({ id: m.id, label: `#${m.id} · ${printerModelLabel(m)}` })),
+        .map((m) => ({ id: m.id, label: printerModelLabel(m) })),
     [models],
   );
 
@@ -205,7 +205,7 @@ export function PrinterView() {
     return rows
       .map((d) => ({
         id: d.id,
-        label: `#${d.id} · ${distributorLabel(d, branches, companies)}`,
+        label: distributorLabel(d, branches, companies),
       }))
       .sort((a, b) => a.label.localeCompare(b.label, "es"));
   }, [distributors, branches, companies, lockDistributor, distributorId]);
@@ -218,7 +218,7 @@ export function PrinterView() {
     return scopedClients
       .map((c) => ({
         id: c.id,
-        label: `#${c.id} · ${clientLabel(c, branches, companies)}`,
+        label: clientLabel(c, branches, companies),
       }))
       .sort((a, b) => a.label.localeCompare(b.label, "es"));
   }, [clients, branches, companies, lockDistributor, distributorId]);
@@ -229,7 +229,7 @@ export function PrinterView() {
   const modelLabel = model
     ? `${model.brand} ${model.modelCode}`
     : printer
-      ? `Modelo #${printer.modelId}`
+      ? "Modelo desconocido"
       : "";
 
   const distributorLabelById = useMemo(
@@ -258,6 +258,10 @@ export function PrinterView() {
         content: (
           <DetailSection title="Equipo fiscal" layout="quad">
             <DetailField label="ID" value={String(printer.id)} mono />
+            <DetailField
+              label="Registrada"
+              value={formatDate(printer.createdAt)}
+            />
             <DetailField
               label="Serial fiscal"
               value={printer.fiscalSerial}
@@ -313,7 +317,7 @@ export function PrinterView() {
               value={
                 printer.distributorId != null
                   ? distributorLabelById.get(printer.distributorId) ??
-                    `#${printer.distributorId}`
+                    "—"
                   : "Sin asignar"
               }
               href={
@@ -331,7 +335,7 @@ export function PrinterView() {
               value={
                 printer.clientId != null
                   ? clientLabelById.get(printer.clientId) ??
-                    `#${printer.clientId}`
+                    "—"
                   : "Sin asignar"
               }
               href={
@@ -345,7 +349,7 @@ export function PrinterView() {
               value={
                 printer.softwareId != null
                   ? softwareLabelById.get(printer.softwareId) ??
-                    `#${printer.softwareId}`
+                    "—"
                   : "Sin asignar"
               }
             />
@@ -366,10 +370,6 @@ export function PrinterView() {
               label="MAC"
               value={printer.macAddress || "—"}
               mono
-            />
-            <DetailField
-              label="Registrada"
-              value={formatDate(printer.createdAt)}
             />
           </DetailSection>
         ),

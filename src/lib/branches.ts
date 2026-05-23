@@ -6,7 +6,7 @@ export function companyNameById(
   companyId: number,
 ): string {
   const company = companies.find((c) => c.id === companyId);
-  return company?.businessName?.trim() || `Empresa #${companyId}`;
+  return company?.businessName?.trim() || "Empresa desconocida";
 }
 
 /** Texto para búsqueda: razón social y RIF de la empresa */
@@ -15,7 +15,7 @@ export function companySearchTextById(
   companyId: number,
 ): string {
   const company = companies.find((c) => c.id === companyId);
-  if (!company) return `Empresa #${companyId}`;
+  if (!company) return "Empresa desconocida";
   return [company.businessName, company.rif].filter(Boolean).join(" ");
 }
 
@@ -25,7 +25,7 @@ export function formatBranchLabel(
 ): string {
   const company = companyNameById(companies, branch.companyId);
   const location = [branch.city, branch.state].filter(Boolean).join(", ");
-  const base = location ? `${company} · ${location}` : `${company} · Sucursal #${branch.id}`;
+  const base = location ? `${company} · ${location}` : company;
   return branch.address ? `${base} — ${branch.address}` : base;
 }
 
@@ -35,7 +35,7 @@ export function formatBranchShort(
 ): string {
   const company = companyNameById(companies, branch.companyId);
   const location = [branch.city, branch.state].filter(Boolean).join(", ");
-  return location ? `${company} · ${location}` : `${company} · #${branch.id}`;
+  return location ? `${company} · ${location}` : company;
 }
 
 export function branchLabelById(
@@ -45,6 +45,6 @@ export function branchLabelById(
 ): string {
   if (branchId == null) return "—";
   const branch = branches.find((b) => b.id === branchId);
-  if (!branch) return `Sucursal #${branchId}`;
+  if (!branch) return "Sucursal desconocida";
   return formatBranchShort(branch, companies);
 }

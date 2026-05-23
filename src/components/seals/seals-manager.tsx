@@ -224,7 +224,7 @@ export function SealsManager() {
         scoped.printers
           .map((p) => ({
             id: p.id,
-            label: `#${p.id} · ${p.fiscalSerial}`,
+            label: p.fiscalSerial,
             serial: p.fiscalSerial,
           }))
           .sort((a, b) => a.label.localeCompare(b.label, "es")),

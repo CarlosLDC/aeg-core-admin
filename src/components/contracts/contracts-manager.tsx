@@ -74,7 +74,7 @@ export function ContractsManager() {
       distributors
         .map((d) => ({
           id: d.id,
-          label: `#${d.id} · ${distributorLabel(d, branches, companies)}`,
+          label: distributorLabel(d, branches, companies),
         }))
         .sort((a, b) => a.label.localeCompare(b.label, "es")),
     [distributors, branches, companies],
@@ -87,8 +87,8 @@ export function ContractsManager() {
           const branch = branches.find((b) => b.id === sc.branchId);
           const label = branch
             ? formatBranchShort(branch, companies)
-            : `Sucursal #${sc.branchId}`;
-          return { id: sc.id, label: `#${sc.id} · ${label}` };
+            : "Sucursal desconocida";
+          return { id: sc.id, label };
         })
         .sort((a, b) => a.label.localeCompare(b.label, "es")),
     [serviceCenters, branches, companies],
@@ -101,7 +101,7 @@ export function ContractsManager() {
           x.id === (contract as DistributorContractResponse).distributorId,
       );
       if (!d) {
-        return `Distribuidor #${(contract as DistributorContractResponse).distributorId}`;
+        return "Distribuidor desconocido";
       }
       return distributorLabel(d, branches, companies);
     },
@@ -115,12 +115,12 @@ export function ContractsManager() {
           x.id === (contract as ServiceCenterContractResponse).serviceCenterId,
       );
       if (!sc) {
-        return `Centro #${(contract as ServiceCenterContractResponse).serviceCenterId}`;
+        return "Centro de servicio desconocido";
       }
       const branch = branches.find((b) => b.id === sc.branchId);
       return branch
         ? formatBranchShort(branch, companies)
-        : `Centro #${sc.id}`;
+        : "Centro de servicio desconocido";
     },
     [serviceCenters, branches, companies],
   );
