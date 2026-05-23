@@ -1,11 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { RouteAccessGuard } from "@/components/auth/route-access-guard";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { cn } from "@/lib/utils";
+
+const SIDEBAR_COLLAPSED_KEY = "aeg-admin-sidebar-collapsed";
+
+/** Survives AdminShell remounts on client-side route changes. */
+let sidebarCollapsedMemory: boolean | null = null;
+
+function readCollapsedPreference(): boolean {
+  if (sidebarCollapsedMemory !== null) return sidebarCollapsedMemory;
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+    const value = raw === "1";
+    sidebarCollapsedMemory = value;
+    return value;
+  } catch {
+    return false;
+  }
+}
+
+function persistCollapsedPreference(collapsed: boolean) {
+  sidebarCollapsedMemory = collapsed;
+  try {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0");
+  } catch {
+    /* private mode / quota */
+  }
+}
+
+function initialCollapsedState(): boolean {
+  return sidebarCollapsedMemory ?? false;
+}
 
 type AdminShellProps = {
   title: string;
@@ -14,8 +45,21 @@ type AdminShellProps = {
 };
 
 export function AdminShell({ title, description, children }: AdminShellProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(initialCollapsedState);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  useLayoutEffect(() => {
+    const preferred = readCollapsedPreference();
+    setCollapsed((current) => (current === preferred ? current : preferred));
+  }, []);
+
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed((current) => {
+      const next = !current;
+      persistCollapsedPreference(next);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -50,7 +94,7 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
 
         <Sidebar
           collapsed={collapsed}
-          onToggle={() => setCollapsed((c) => !c)}
+          onToggle={toggleCollapsed}
           mobileOpen={mobileOpen}
           onMobileClose={() => setMobileOpen(false)}
         />
