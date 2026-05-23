@@ -2,12 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import {
-  PrinterSelect,
-  type PrinterSelectOption,
-} from "@/components/printers/printer-select";
-import {
   BatchFormDialog,
-  BatchFormStepSection,
   BATCH_FORM_INPUT_CLASS,
 } from "@/components/ui/batch-form-dialog";
 import { FieldLabel } from "@/components/ui/field-label";
@@ -35,8 +30,6 @@ type SealBatchFormDialogProps = {
   saving: boolean;
   progress: { done: number; total: number } | null;
   error: string | null;
-  printerOptions: PrinterSelectOption[];
-  printersLoading: boolean;
   onClose: () => void;
   onSubmit: (payload: SealBatchSubmitPayload) => void;
 };
@@ -46,8 +39,6 @@ export function SealBatchFormDialog({
   saving,
   progress,
   error,
-  printerOptions,
-  printersLoading,
   onClose,
   onSubmit,
 }: SealBatchFormDialogProps) {
@@ -60,7 +51,7 @@ export function SealBatchFormDialog({
     setForm(emptySealForm());
   }, [open]);
 
-  const disabled = saving || printersLoading;
+  const disabled = saving;
   const busy = saving;
 
   function handleSubmit(e: FormEvent) {
@@ -88,80 +79,50 @@ export function SealBatchFormDialog({
         disabled={disabled}
       />
 
-      <BatchFormStepSection
-        title="Mismos valores para todo el lote"
-        description="Color, estatus e impresora opcional se aplican a cada precinto generado. Si el estatus es «En impresora», asigna la impresora correspondiente."
-      >
-        <div className="block">
-          <FieldLabel>Impresora (opcional)</FieldLabel>
-          {printerOptions.length > 0 ? (
-            <PrinterSelect
-              value={form.printerId}
-              onChange={(printerId) => setForm((f) => ({ ...f, printerId }))}
-              options={printerOptions}
-              disabled={disabled}
-              loading={printersLoading}
-            />
-          ) : (
-            <input
-              type="number"
-              min={1}
-              value={form.printerId}
-              disabled={disabled}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, printerId: e.target.value }))
-              }
-              className={BATCH_FORM_INPUT_CLASS}
-              placeholder="ID de impresora"
-            />
-          )}
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block">
-            <FieldLabel required>Color</FieldLabel>
-            <select
-              required
-              value={form.color}
-              disabled={disabled}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  color: e.target.value as SealFormValues["color"],
-                }))
-              }
-              className={BATCH_FORM_INPUT_CLASS}
-            >
-              {SEAL_COLORS.map((color) => (
-                <option key={color} value={color}>
-                  {SEAL_COLOR_LABELS[color]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block">
-            <FieldLabel required>Estatus</FieldLabel>
-            <select
-              required
-              value={form.status}
-              disabled={disabled}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  status: e.target.value as SealFormValues["status"],
-                }))
-              }
-              className={BATCH_FORM_INPUT_CLASS}
-            >
-              {SEAL_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {SEAL_STATUS_LABELS[status]}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </BatchFormStepSection>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block">
+          <FieldLabel required>Color</FieldLabel>
+          <select
+            required
+            value={form.color}
+            disabled={disabled}
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                color: e.target.value as SealFormValues["color"],
+              }))
+            }
+            className={BATCH_FORM_INPUT_CLASS}
+          >
+            {SEAL_COLORS.map((color) => (
+              <option key={color} value={color}>
+                {SEAL_COLOR_LABELS[color]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <FieldLabel required>Estatus</FieldLabel>
+          <select
+            required
+            value={form.status}
+            disabled={disabled}
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                status: e.target.value as SealFormValues["status"],
+              }))
+            }
+            className={BATCH_FORM_INPUT_CLASS}
+          >
+            {SEAL_STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {SEAL_STATUS_LABELS[status]}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
     </BatchFormDialog>
   );
 }

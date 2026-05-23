@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import {
   buildSerialRange,
-  describeSerialRangePreview,
   FISCAL_SERIAL_DIGIT_COUNT,
   FISCAL_SERIAL_LETTER_COUNT,
   type SerialRangeMode,
@@ -57,14 +56,13 @@ export function SerialRangeFields({
       { mode },
     );
     if (typeof built === "string") {
-      return { error: built, count: 0, first: "", last: "", sample: "" };
+      return { error: built, count: 0, first: "", last: "" };
     }
     return {
       error: null,
       count: built.length,
       first: built[0] ?? "",
       last: built[built.length - 1] ?? "",
-      sample: describeSerialRangePreview(built),
     };
   }, [mode, values]);
 
@@ -75,50 +73,10 @@ export function SerialRangeFields({
   const isFiscal = mode === "fiscal";
 
   return (
-    <div className="space-y-4 rounded-lg border border-accent/30 bg-accent/5 p-4 sm:p-5">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-wide text-accent">
-          Paso 1 · Seriales
-        </p>
-        <h3 className="mt-1 text-sm font-semibold text-card-foreground">
-          {isFiscal ? "Rango de seriales fiscales" : "Rango de seriales del precinto"}
-        </h3>
-        <p className="mt-2 text-sm text-muted leading-relaxed">
-          {isFiscal ? (
-            <>
-              Todas las impresoras del lote comparten modelo, distribuidor y demás
-              datos; solo cambia el <strong className="font-medium text-foreground">serial fiscal</strong>.
-              Usa un prefijo de 3 letras y un tramo numérico de 7 dígitos.
-            </>
-          ) : (
-            <>
-              Todos los precintos del lote tendrán el mismo color, estatus e
-              impresora; solo cambia el <strong className="font-medium text-foreground">serial</strong>.
-              Indica un prefijo (texto fijo) y los números consecutivos que quieres
-              generar.
-            </>
-          )}
-        </p>
-        <p className="mt-2 rounded-md bg-background/80 px-3 py-2 font-mono text-xs text-muted">
-          {isFiscal ? (
-            <>
-              Ejemplo: prefijo <span className="text-foreground">ABC</span>, desde{" "}
-              <span className="text-foreground">1</span> hasta{" "}
-              <span className="text-foreground">100</span> →{" "}
-              <span className="text-foreground">ABC0000001</span> …{" "}
-              <span className="text-foreground">ABC0000100</span>
-            </>
-          ) : (
-            <>
-              Ejemplo: prefijo <span className="text-foreground">SN-</span>, desde{" "}
-              <span className="text-foreground">1</span> hasta{" "}
-              <span className="text-foreground">100</span>, 7 cifras →{" "}
-              <span className="text-foreground">SN-0000001</span> …{" "}
-              <span className="text-foreground">SN-0000100</span>
-            </>
-          )}
-        </p>
-      </div>
+    <fieldset className="space-y-4" disabled={disabled}>
+      <legend className="sr-only">
+        {isFiscal ? "Rango de seriales fiscales" : "Rango de seriales"}
+      </legend>
 
       <div
         className={cn(
@@ -128,7 +86,7 @@ export function SerialRangeFields({
       >
         <label className={cn("block", isFiscal && "sm:col-span-1")}>
           <FieldLabel required>
-            Prefijo {isFiscal ? "(3 letras)" : "(texto fijo)"}
+            Prefijo {isFiscal ? "(3 letras)" : ""}
           </FieldLabel>
           <input
             type="text"
@@ -146,14 +104,9 @@ export function SerialRangeFields({
             className={cn(BATCH_FORM_INPUT_CLASS, isFiscal && "uppercase", "font-mono")}
             placeholder={isFiscal ? "ABC" : "SN-"}
           />
-          {!isFiscal && (
-            <span className="mt-1 block text-xs text-muted">
-              Puede incluir guiones u otros caracteres.
-            </span>
-          )}
         </label>
         <label className="block">
-          <FieldLabel required>Número desde</FieldLabel>
+          <FieldLabel required>Desde</FieldLabel>
           <input
             type="number"
             required
@@ -162,11 +115,10 @@ export function SerialRangeFields({
             disabled={disabled}
             onChange={(e) => patch({ from: e.target.value })}
             className={cn(BATCH_FORM_INPUT_CLASS, "font-mono")}
-            placeholder="1"
           />
         </label>
         <label className="block">
-          <FieldLabel required>Número hasta</FieldLabel>
+          <FieldLabel required>Hasta</FieldLabel>
           <input
             type="number"
             required
@@ -175,12 +127,11 @@ export function SerialRangeFields({
             disabled={disabled}
             onChange={(e) => patch({ to: e.target.value })}
             className={cn(BATCH_FORM_INPUT_CLASS, "font-mono")}
-            placeholder="100"
           />
         </label>
         {!isFiscal && (
           <label className="block">
-            <FieldLabel required>Cifras del número</FieldLabel>
+            <FieldLabel required>Cifras</FieldLabel>
             <input
               type="number"
               required
@@ -191,20 +142,17 @@ export function SerialRangeFields({
               onChange={(e) => patch({ digitLength: e.target.value })}
               className={cn(BATCH_FORM_INPUT_CLASS, "font-mono")}
             />
-            <span className="mt-1 block text-xs text-muted">
-              Ceros a la izquierda (habitual: 7).
-            </span>
           </label>
         )}
       </div>
 
       {preview && (
-        <div
+        <p
           className={cn(
-            "rounded-lg border px-3 py-3 text-sm",
+            "text-sm",
             preview.error
-              ? "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300"
-              : "border-border bg-card text-card-foreground",
+              ? "text-rose-700 dark:text-rose-300"
+              : "text-muted",
           )}
           role={preview.error ? "alert" : "status"}
         >
@@ -212,21 +160,18 @@ export function SerialRangeFields({
             preview.error
           ) : (
             <>
-              <p className="font-medium">
-                Se crearán{" "}
-                <span className="font-semibold text-accent">{preview.count}</span>{" "}
-                {isFiscal ? "impresora" : "precinto"}
-                {preview.count === 1 ? "" : "s"}
-              </p>
-              <p className="mt-1.5 font-mono text-xs text-muted">
-                Primero: <span className="text-foreground">{preview.first}</span>
-                {" · "}
-                Último: <span className="text-foreground">{preview.last}</span>
-              </p>
+              <span className="font-medium text-card-foreground">
+                {preview.count}
+              </span>{" "}
+              {isFiscal ? "impresora" : "precinto"}
+              {preview.count === 1 ? "" : "s"} ·{" "}
+              <span className="font-mono text-xs text-card-foreground">
+                {preview.first} … {preview.last}
+              </span>
             </>
           )}
-        </div>
+        </p>
       )}
-    </div>
+    </fieldset>
   );
 }

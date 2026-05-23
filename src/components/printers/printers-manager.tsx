@@ -736,12 +736,7 @@ export function PrintersManager() {
         progress={batchProgress}
         error={formError}
         modelOptions={modelOptions}
-        softwareOptions={software}
-        clientOptions={clientOptions}
-        distributorOptions={distributorOptions}
         modelsLoading={modelsLoading}
-        catalogLoading={catalogLoading}
-        canPickSoftware={user?.role === "ADMIN"}
         lockDistributor={lockDistributor}
         defaultDistributorId={distributorId}
         onClose={closeDialog}

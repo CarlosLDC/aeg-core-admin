@@ -619,8 +619,6 @@ export function SealsManager() {
         saving={saving}
         progress={batchProgress}
         error={formError}
-        printerOptions={printerOptions}
-        printersLoading={printersLoading}
         onClose={closeDialog}
         onSubmit={(payload) => void handleBatchSubmit(payload)}
       />
