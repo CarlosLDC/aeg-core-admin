@@ -2,13 +2,9 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { Loader2, X } from "lucide-react";
-import { CONTRIBUTOR_LABELS } from "@/lib/contributor-types";
-import {
-  CONTRIBUTOR_TYPES,
-  type CompanyResponse,
-  type ContributorType,
-} from "@/types/company";
+import { ContributorTypeToggle } from "@/components/companies/contributor-type-toggle";
 import type { BranchResponse } from "@/types/branch";
+import { type CompanyResponse, type ContributorType } from "@/types/company";
 import { FieldLabel } from "@/components/ui/field-label";
 import { cn } from "@/lib/utils";
 
@@ -158,25 +154,12 @@ export function ClientEditDialog({
                 className={cn(inputClass, "font-mono uppercase")}
               />
             </label>
-            <label className="block">
-              <FieldLabel>Tipo de contribuyente</FieldLabel>
-              <select
-                value={form.contributorType}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    contributorType: e.target.value as ContributorType,
-                  }))
-                }
-                className={inputClass}
-              >
-                {CONTRIBUTOR_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {CONTRIBUTOR_LABELS[type]} ({type})
-                  </option>
-                ))}
-              </select>
-            </label>
+            <ContributorTypeToggle
+              value={form.contributorType}
+              onChange={(contributorType) =>
+                setForm((f) => ({ ...f, contributorType }))
+              }
+            />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">

@@ -5,6 +5,7 @@ import { formatBranchLabel } from "@/lib/branches";
 import { X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
+import { RoleBadge } from "@/components/users/role-badge";
 import { BranchSelect } from "@/components/users/branch-select";
 import { PasswordInput } from "@/components/ui/password-input";
 import { ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/roles";
@@ -20,7 +21,6 @@ import type { ServiceCenterResponse } from "@/types/branch-role";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { Role, UserResponse } from "@/types/user";
-import { cn } from "@/lib/utils";
 export type UserFormValues = {
   name: string;
   email: string;
@@ -252,7 +252,7 @@ export function UserFormDialog({
             <legend className="px-1 text-sm font-semibold text-card-foreground">
               Asignación operativa
             </legend>
-            <div className="grid gap-4 sm:grid-cols-2 sm:items-start">
+            <div className="space-y-4">
               <div className="min-w-0">
                 <FieldLabel required>Sucursal</FieldLabel>
                 <BranchSelect
@@ -263,59 +263,61 @@ export function UserFormDialog({
                   loading={branchesLoading}
                   disabled={branchesLoading}
                 />
-                <p
-                  className="mt-1.5 line-clamp-2 min-h-[2.5rem] text-xs text-muted"
-                  title={selectedBranchDetail ?? undefined}
-                >
-                  {selectedBranchDetail ?? "\u00a0"}
-                </p>
+                {selectedBranchDetail ? (
+                  <p
+                    className="mt-1.5 truncate text-xs text-muted"
+                    title={selectedBranchDetail}
+                  >
+                    {selectedBranchDetail}
+                  </p>
+                ) : null}
               </div>
 
               <div className="min-w-0">
                 <FieldLabel required>Rol</FieldLabel>
-                <div
-                  className={cn(
-                    "grid gap-2",
-                    availableRoles.length > 1 && "sm:grid-cols-2",
-                    (!form.branchId || availableRoles.length === 0) &&
-                      "opacity-70",
-                  )}
-                  role="group"
-                  aria-label="Roles disponibles para la sucursal"
-                >
-                  {availableRoles.length === 0 ? (
-                    <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted">
-                      Selecciona una sucursal para ver roles disponibles.
+                {availableRoles.length === 0 ? (
+                  <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted">
+                    Selecciona una sucursal para ver roles disponibles.
+                  </p>
+                ) : availableRoles.length === 1 ? (
+                  <>
+                    <div className="flex h-10 w-full items-center rounded-lg border border-border bg-foreground/[0.03] px-3">
+                      <RoleBadge role={availableRoles[0]!} />
+                    </div>
+                    <p className="mt-1.5 text-xs text-muted">
+                      {ROLE_DESCRIPTIONS[availableRoles[0]!]}
                     </p>
-                  ) : (
-                    availableRoles.map((role) => {
-                      const selected = form.role === role;
-                      return (
-                        <button
-                          key={role}
-                          type="button"
-                          onClick={() => handleRoleChange(role)}
-                          aria-pressed={selected}
-                          className={cn(
-                            "min-h-[2.75rem] rounded-lg border px-3 py-2 text-left text-sm transition-colors",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
-                            toggleButtonClass(selected, USER_ROLE_TOGGLE_TONE[role], {
-                              className:
-                                "inline-flex min-h-[2.75rem] flex-col items-start rounded-lg px-3 py-2 text-left",
-                            }),
-                          )}
-                        >
-                          <span className="block font-medium text-card-foreground">
+                  </>
+                ) : (
+                  <>
+                    <div
+                      className="flex flex-wrap gap-2"
+                      role="group"
+                      aria-label="Roles disponibles para la sucursal"
+                    >
+                      {availableRoles.map((role) => {
+                        const selected = form.role === role;
+                        return (
+                          <button
+                            key={role}
+                            type="button"
+                            onClick={() => handleRoleChange(role)}
+                            aria-pressed={selected}
+                            className={toggleButtonClass(
+                              selected,
+                              USER_ROLE_TOGGLE_TONE[role],
+                            )}
+                          >
                             {ROLE_LABELS[role]}
-                          </span>
-                          <span className="mt-0.5 block text-xs text-muted">
-                            {ROLE_DESCRIPTIONS[role]}
-                          </span>
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-1.5 text-xs text-muted">
+                      {ROLE_DESCRIPTIONS[form.role]}
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 

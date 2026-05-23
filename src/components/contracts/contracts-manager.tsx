@@ -25,7 +25,7 @@ import {
   hrefForServiceCenter,
 } from "@/lib/table-foreign-hrefs";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
-import { tabToggleClass } from "@/lib/toggle-button-styles";
+import { filterTabToggleClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 type Tab = "distributor" | "serviceCenter";
@@ -162,9 +162,8 @@ export function ContractsManager() {
             role="tab"
             aria-selected={tab === "distributor"}
             onClick={() => setTab("distributor")}
-            className={tabToggleClass(
+            className={filterTabToggleClass(
               tab === "distributor",
-              "distributor",
               cn(pageToolbarButtonClass, "w-auto"),
             )}
           >
@@ -175,9 +174,8 @@ export function ContractsManager() {
             role="tab"
             aria-selected={tab === "serviceCenter"}
             onClick={() => setTab("serviceCenter")}
-            className={tabToggleClass(
+            className={filterTabToggleClass(
               tab === "serviceCenter",
-              "serviceCenter",
               cn(pageToolbarButtonClass, "w-auto"),
             )}
           >

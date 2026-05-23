@@ -1,17 +1,13 @@
 "use client";
 
-import { CONTRIBUTOR_LABELS } from "@/lib/contributor-types";
+import { ContributorTypeToggle } from "@/components/companies/contributor-type-toggle";
+import { FieldLabel } from "@/components/ui/field-label";
+import type { ClientOnboardingValues } from "@/lib/client-onboarding";
 import {
   isFieldLockedByAi,
   type SeniatLockableField,
 } from "@/lib/seniat-ai-fields";
-import {
-  CONTRIBUTOR_TYPES,
-  type CompanyResponse,
-  type ContributorType,
-} from "@/types/company";
-import type { ClientOnboardingValues } from "@/lib/client-onboarding";
-import { FieldLabel } from "@/components/ui/field-label";
+import type { CompanyResponse } from "@/types/company";
 import { cn } from "@/lib/utils";
 
 export const clientFormInputClass =
@@ -110,29 +106,16 @@ export function ClientFormFields({
           />
         </label>
 
-        <label className="block">
-          <FieldLabel>Tipo de contribuyente</FieldLabel>
-          <select
-            value={form.contributorType}
-            disabled={
-              saving ||
-              fieldLocked("contributorType", inputMode, aiFields, companyLocked)
-            }
-            onChange={(e) =>
-              setForm((f) => ({
-                ...f,
-                contributorType: e.target.value as ContributorType,
-              }))
-            }
-            className={clientFormInputClass}
-          >
-            {CONTRIBUTOR_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {CONTRIBUTOR_LABELS[type]} ({type})
-              </option>
-            ))}
-          </select>
-        </label>
+        <ContributorTypeToggle
+          value={form.contributorType}
+          disabled={
+            saving ||
+            fieldLocked("contributorType", inputMode, aiFields, companyLocked)
+          }
+          onChange={(contributorType) =>
+            setForm((f) => ({ ...f, contributorType }))
+          }
+        />
       </fieldset>
     );
   }

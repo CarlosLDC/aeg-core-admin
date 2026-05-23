@@ -84,17 +84,6 @@ const TOGGLE_CARD_BAR: Record<ToggleTone, string> = {
   slate: "bg-slate-500/70",
 };
 
-const TOGGLE_TONE_SEQUENCE: ToggleTone[] = [
-  "indigo",
-  "teal",
-  "violet",
-  "amber",
-  "emerald",
-  "sky",
-  "rose",
-  "orange",
-];
-
 export const TOGGLE_BUTTON_INACTIVE =
   "border-border bg-background text-muted hover:bg-foreground/5 hover:text-card-foreground";
 
@@ -103,6 +92,13 @@ export const TOGGLE_BUTTON_BASE =
 
 export const TOGGLE_BUTTON_DISABLED =
   "disabled:cursor-not-allowed disabled:opacity-50";
+
+/** Active state for filter/toolbar toggles (site primary). */
+export const TOGGLE_BUTTON_PRIMARY_ACTIVE =
+  "border-accent/35 bg-accent/10 text-accent";
+
+export const TOGGLE_TAB_PRIMARY_ACTIVE =
+  "bg-accent text-accent-foreground shadow-sm";
 
 export const TOGGLE_CARD_INACTIVE =
   "border-border bg-background hover:border-border/80 hover:bg-muted/20";
@@ -121,19 +117,25 @@ export const USER_ROLE_TOGGLE_TONE: Record<Role, ToggleTone> = {
   SERVICE_CENTER: "amber",
 };
 
-export const META_COLUMN_TOGGLE_TONE: Record<string, ToggleTone> = {
-  id: "indigo",
-  createdAt: "teal",
-  updatedAt: "rose",
-};
+export function filterToggleButtonClass(
+  active: boolean,
+  options?: { className?: string; disabled?: boolean },
+): string {
+  return cn(
+    TOGGLE_BUTTON_BASE,
+    options?.disabled && TOGGLE_BUTTON_DISABLED,
+    active ? TOGGLE_BUTTON_PRIMARY_ACTIVE : TOGGLE_BUTTON_INACTIVE,
+    options?.className,
+  );
+}
 
-export const CONTRACT_TAB_ACTIVE: Record<string, string> = {
-  distributor: "bg-violet-600 text-white shadow-sm",
-  serviceCenter: "bg-amber-600 text-white shadow-sm",
-};
-
-export function toggleToneByIndex(index: number): ToggleTone {
-  return TOGGLE_TONE_SEQUENCE[index % TOGGLE_TONE_SEQUENCE.length];
+export function filterTabToggleClass(active: boolean, baseClass: string): string {
+  return cn(
+    baseClass,
+    active
+      ? TOGGLE_TAB_PRIMARY_ACTIVE
+      : "text-muted hover:bg-foreground/5 hover:text-foreground",
+  );
 }
 
 export function toggleButtonClass(
@@ -163,17 +165,4 @@ export function toggleCardDotClass(tone: ToggleTone): string {
 
 export function toggleCardBarClass(tone: ToggleTone): string {
   return TOGGLE_CARD_BAR[tone];
-}
-
-export function tabToggleClass(
-  active: boolean,
-  tabKey: keyof typeof CONTRACT_TAB_ACTIVE,
-  baseClass: string,
-): string {
-  return cn(
-    baseClass,
-    active
-      ? CONTRACT_TAB_ACTIVE[tabKey]
-      : "text-muted hover:bg-foreground/5 hover:text-foreground",
-  );
 }

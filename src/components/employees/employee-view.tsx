@@ -1,12 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { EmployeeRoleBadge } from "@/components/employees/employee-role-badge";
 import {
-  EmployeeFormDialog,
-} from "@/components/employees/employee-form-dialog";
-import { DetailCard, DetailField } from "@/components/resource-view/detail-fields";
+  EmployeeCreateWizardDialog,
+} from "@/components/employees/employee-create-wizard-dialog";
+import {
+  DetailField,
+  DetailSection,
+} from "@/components/resource-view/detail-fields";
+import { DetailSectionsPager } from "@/components/resource-view/detail-sections-pager";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -197,6 +201,62 @@ export function EmployeeView() {
   const branchLabel = employee
     ? branchLabelById(formBranches, companies, employee.branchId)
     : "";
+  const detailSteps = useMemo(() => {
+    if (!employee) return [];
+    return [
+      {
+        id: "identity",
+        label: "Perfil",
+        content: (
+          <DetailSection title="Identidad del empleado">
+            <DetailField label="ID" value={String(employee.id)} mono />
+            <DetailField label="Nombre" value={employee.name} />
+            <DetailField label="Cédula" value={employee.nationalId} mono />
+            <DetailField
+              label="Tipo"
+              value={TYPE_LABELS[employee.type] ?? employee.type}
+            />
+          </DetailSection>
+        ),
+      },
+      {
+        id: "assignment",
+        label: "Asignación",
+        content: (
+          <DetailSection title="Asignación operativa">
+            <DetailField
+              label="Rol"
+              value={<EmployeeRoleBadge employee={employee} />}
+            />
+            <DetailField
+              label="Sucursal"
+              value={branchLabel}
+              href={branchPath(employee.branchId)}
+            />
+            <DetailField
+              label="ID sucursal"
+              value={String(employee.branchId)}
+              mono
+            />
+            <DetailField
+              label="Registrado"
+              value={formatDate(employee.createdAt)}
+            />
+          </DetailSection>
+        ),
+      },
+      {
+        id: "contact",
+        label: "Contacto",
+        content: (
+          <DetailSection title="Datos de contacto">
+            <DetailField label="Teléfono" value={employee.phone || "—"} />
+            <DetailField label="Correo" value={employee.email || "—"} />
+          </DetailSection>
+        ),
+      },
+    ];
+  }, [employee, branchLabel]);
 
   return (
     <>
@@ -224,37 +284,11 @@ export function EmployeeView() {
           ) : undefined
         }
       >
-        {employee && (
-          <DetailCard>
-            <DetailField label="ID" value={String(employee.id)} mono />
-            <DetailField label="Nombre" value={employee.name} fullWidth />
-            <DetailField label="Cédula" value={employee.nationalId} mono />
-            <DetailField
-              label="Tipo"
-              value={TYPE_LABELS[employee.type] ?? employee.type}
-            />
-            <DetailField
-              label="Rol"
-              value={<EmployeeRoleBadge employee={employee} />}
-            />
-            <DetailField
-              label="Sucursal"
-              value={branchLabel}
-              href={branchPath(employee.branchId)}
-              fullWidth
-            />
-            <DetailField label="Teléfono" value={employee.phone || "—"} />
-            <DetailField label="Correo" value={employee.email || "—"} />
-            <DetailField
-              label="Registrado"
-              value={formatDate(employee.createdAt)}
-            />
-          </DetailCard>
-        )}
+        {employee && <DetailSectionsPager key={employee.id} steps={detailSteps} />}
       </ResourceViewShell>
 
       {employee && editOpen && user && (
-        <EmployeeFormDialog
+        <EmployeeCreateWizardDialog
           mode="edit"
           employee={employee}
           userRole={userRole}

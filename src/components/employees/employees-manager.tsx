@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Plus, RefreshCw } from "lucide-react";
-import { EmployeeFormDialog } from "@/components/employees/employee-form-dialog";
+import { EmployeeCreateWizardDialog } from "@/components/employees/employee-create-wizard-dialog";
 import { EmployeeRoleBadge } from "@/components/employees/employee-role-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
@@ -641,7 +641,7 @@ export function EmployeesManager() {
       </div>
 
       {dialog !== null && user && (
-        <EmployeeFormDialog
+        <EmployeeCreateWizardDialog
           mode={dialog === "create" ? "create" : "edit"}
           employee={selected ?? undefined}
           userRole={user.role}
