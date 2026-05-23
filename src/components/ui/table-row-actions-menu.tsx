@@ -32,48 +32,16 @@ function countMenuItems(hasEdit: boolean, hasDelete: boolean): number {
   return 1 + (hasEdit ? 1 : 0) + (hasDelete ? 1 : 0);
 }
 
-function isLastTableRow(trigger: HTMLElement): boolean {
-  const row = trigger.closest("tr");
-  const tbody = row?.parentElement;
-  if (!row || !tbody || tbody.tagName !== "TBODY") return false;
-  return row === tbody.lastElementChild;
-}
-
-function ancestorClipsOverflow(element: HTMLElement): boolean {
-  const { overflow, overflowX, overflowY } = getComputedStyle(element);
-  return (
-    overflow === "hidden" ||
-    overflowX === "hidden" ||
-    overflowY === "hidden" ||
-    overflowY === "auto" ||
-    overflowY === "scroll"
-  );
-}
-
-function getVisibleSpace(
+/** Menu is portaled with fixed positioning — use viewport space, not table/card clips. */
+function getViewportSpace(
   trigger: HTMLElement,
   direction: "above" | "below",
 ): number {
   const rect = trigger.getBoundingClientRect();
-  let limitTop = 0;
-  let limitBottom = window.innerHeight;
-
-  let el = trigger.parentElement;
-  while (el && el !== document.body) {
-    if (ancestorClipsOverflow(el)) {
-      const bounds = el.getBoundingClientRect();
-      limitTop = Math.max(limitTop, bounds.top);
-      limitBottom = Math.min(limitBottom, bounds.bottom);
-    }
-    el = el.parentElement;
+  if (direction === "below") {
+    return Math.max(0, window.innerHeight - VIEWPORT_PADDING_PX - rect.bottom);
   }
-
-  limitTop = Math.max(limitTop, VIEWPORT_PADDING_PX);
-  limitBottom = Math.min(limitBottom, window.innerHeight - VIEWPORT_PADDING_PX);
-
-  return direction === "below"
-    ? Math.max(0, limitBottom - rect.bottom)
-    : Math.max(0, rect.top - limitTop);
+  return Math.max(0, rect.top - VIEWPORT_PADDING_PX);
 }
 
 function shouldOpenMenuUp(
@@ -81,14 +49,12 @@ function shouldOpenMenuUp(
   menuHeight: number,
 ): boolean {
   const needed = menuHeight + MENU_GAP_PX;
-  const spaceBelow = getVisibleSpace(trigger, "below");
-  const spaceAbove = getVisibleSpace(trigger, "above");
-  const lastRow = isLastTableRow(trigger);
+  const spaceBelow = getViewportSpace(trigger, "below");
+  const spaceAbove = getViewportSpace(trigger, "above");
 
-  if (lastRow && spaceAbove >= needed) return true;
   if (spaceBelow >= needed) return false;
   if (spaceAbove >= needed) return true;
-  return spaceAbove >= spaceBelow;
+  return spaceAbove > spaceBelow;
 }
 
 function computeMenuCoords(
