@@ -65,6 +65,7 @@ export function SealBatchFormDialog({
     <BatchFormDialog
       open={open}
       title="Crear precintos por lote"
+      description="Genera varios precintos consecutivos en una sola operación."
       error={error}
       progress={progress}
       busy={busy}
@@ -79,7 +80,11 @@ export function SealBatchFormDialog({
         disabled={disabled}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-card-foreground">
+          Datos comunes
+        </h3>
+        <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <FieldLabel required>Color</FieldLabel>
           <select
@@ -122,6 +127,7 @@ export function SealBatchFormDialog({
             ))}
           </select>
         </label>
+        </div>
       </div>
     </BatchFormDialog>
   );

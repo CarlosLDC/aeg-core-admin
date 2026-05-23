@@ -74,7 +74,7 @@ export function SerialRangeFields({
 
   return (
     <fieldset className="space-y-4" disabled={disabled}>
-      <legend className="sr-only">
+      <legend className="text-sm font-semibold text-card-foreground">
         {isFiscal ? "Rango de seriales fiscales" : "Rango de seriales"}
       </legend>
 
@@ -147,12 +147,12 @@ export function SerialRangeFields({
       </div>
 
       {preview && (
-        <p
+        <div
           className={cn(
-            "text-sm",
+            "rounded-lg border px-3 py-2 text-sm",
             preview.error
-              ? "text-rose-700 dark:text-rose-300"
-              : "text-muted",
+              ? "border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300"
+              : "border-border bg-background/70 text-muted",
           )}
           role={preview.error ? "alert" : "status"}
         >
@@ -164,13 +164,13 @@ export function SerialRangeFields({
                 {preview.count}
               </span>{" "}
               {isFiscal ? "impresora" : "precinto"}
-              {preview.count === 1 ? "" : "s"} ·{" "}
+              {preview.count === 1 ? "" : "s"} a crear ·{" "}
               <span className="font-mono text-xs text-card-foreground">
                 {preview.first} … {preview.last}
               </span>
             </>
           )}
-        </p>
+        </div>
       )}
     </fieldset>
   );

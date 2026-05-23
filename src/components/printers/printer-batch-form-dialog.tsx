@@ -76,6 +76,7 @@ export function PrinterBatchFormDialog({
     <BatchFormDialog
       open={open}
       title="Crear impresoras por lote"
+      description="Genera varias impresoras consecutivas en una sola operación."
       error={error}
       progress={progress}
       busy={busy}
@@ -90,40 +91,45 @@ export function PrinterBatchFormDialog({
         disabled={disabled}
       />
 
-      <label className="block">
-        <FieldLabel required>Modelo fiscal</FieldLabel>
-        {modelOptions.length > 0 ? (
-          <select
-            required
-            value={form.modelId}
-            disabled={disabled}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, modelId: e.target.value }))
-            }
-            className={BATCH_FORM_INPUT_CLASS}
-          >
-            <option value="">Seleccionar…</option>
-            {modelOptions.map((opt) => (
-              <option key={opt.id} value={opt.id}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <input
-            type="number"
-            required
-            min={1}
-            value={form.modelId}
-            disabled={disabled}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, modelId: e.target.value }))
-            }
-            className={BATCH_FORM_INPUT_CLASS}
-            placeholder="ID del modelo"
-          />
-        )}
-      </label>
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-card-foreground">
+          Datos comunes
+        </h3>
+        <label className="block">
+          <FieldLabel required>Modelo fiscal</FieldLabel>
+          {modelOptions.length > 0 ? (
+            <select
+              required
+              value={form.modelId}
+              disabled={disabled}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, modelId: e.target.value }))
+              }
+              className={BATCH_FORM_INPUT_CLASS}
+            >
+              <option value="">Seleccionar...</option>
+              {modelOptions.map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="number"
+              required
+              min={1}
+              value={form.modelId}
+              disabled={disabled}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, modelId: e.target.value }))
+              }
+              className={BATCH_FORM_INPUT_CLASS}
+              placeholder="ID del modelo"
+            />
+          )}
+        </label>
+      </div>
     </BatchFormDialog>
   );
 }
