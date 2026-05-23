@@ -20,6 +20,7 @@ import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { usePagination } from "@/hooks/use-pagination";
+import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
   canAssignEmployeeRoles,
   canCreateEmployeeRecord,
@@ -107,6 +108,7 @@ export function EmployeesManager() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const tableColumns = useTableColumnVisibility("employees");
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [branchFilter, setBranchFilter] = useState("all");
@@ -511,6 +513,7 @@ export function EmployeesManager() {
                   options: branchFilterOptions,
                 },
               ]}
+              columns={tableColumns.toolbarColumns}
             />
             {filteredEmployees.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted">
@@ -527,7 +530,7 @@ export function EmployeesManager() {
                         <th className="px-5 py-3 font-medium">Rol</th>
                         <th className="px-5 py-3 font-medium">Sucursal</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
-                        <TableCreatedAtHeader />
+                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -550,7 +553,11 @@ export function EmployeesManager() {
                           </td>
                           <td className="max-w-[200px] px-5 py-3.5 text-card-foreground">
                             <TruncatedText
-                              href={hrefForBranch(employee.branchId)}
+                              href={
+                                user
+                                  ? hrefForBranch(employee.branchId, user.role)
+                                  : undefined
+                              }
                               maxClassName="max-w-[180px]"
                             >
                               {branchLabelById(
@@ -565,7 +572,9 @@ export function EmployeesManager() {
                               {employee.phone || employee.email || "—"}
                             </TruncatedText>
                           </td>
-                          <TableCreatedAtCell value={employee.createdAt} />
+                          {tableColumns.showCreatedAt && (
+                            <TableCreatedAtCell value={employee.createdAt} />
+                          )}
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink

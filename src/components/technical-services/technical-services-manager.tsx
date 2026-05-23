@@ -30,6 +30,7 @@ import { forbiddenMessage } from "@/lib/permissions/messages";
 import { useFieldOperationsCatalog } from "@/hooks/use-field-operations-catalog";
 import { filterTechnicalServicesInScope } from "@/lib/scope-filters";
 import { usePagination } from "@/hooks/use-pagination";
+import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { formatDateTime, formatMoney } from "@/lib/datetime-form";
 import {
   toTechnicalServiceRequest,
@@ -66,6 +67,7 @@ export function TechnicalServicesManager() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const tableColumns = useTableColumnVisibility("technical-services");
   const [search, setSearch] = useState("");
   const [printerFilter, setPrinterFilter] = useState("all");
   const [technicianFilter, setTechnicianFilter] = useState("all");
@@ -307,6 +309,7 @@ export function TechnicalServicesManager() {
                   options: technicianFilterOptions,
                 },
               ]}
+              columns={tableColumns.toolbarColumns}
             />
             {filteredRows.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted">
@@ -325,7 +328,7 @@ export function TechnicalServicesManager() {
                         <th className="px-5 py-3 font-medium">Falla</th>
                         <th className="px-5 py-3 font-medium">Costo</th>
                         <th className="px-5 py-3 font-medium">Precinto</th>
-                        <TableCreatedAtHeader />
+                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -339,7 +342,11 @@ export function TechnicalServicesManager() {
                         >
                           <td className="max-w-[140px] px-5 py-3.5 font-mono text-card-foreground">
                             <TruncatedText
-                              href={hrefForPrinter(row.printerId)}
+                              href={
+                                user
+                                  ? hrefForPrinter(row.printerId, user.role)
+                                  : undefined
+                              }
                               maxClassName="max-w-[120px]"
                               mono
                             >
@@ -349,7 +356,11 @@ export function TechnicalServicesManager() {
                           </td>
                           <td className="max-w-[160px] px-5 py-3.5 text-muted">
                             <TruncatedText
-                              href={hrefForEmployee(row.technicianId)}
+                              href={
+                                user
+                                  ? hrefForEmployee(row.technicianId, user.role)
+                                  : undefined
+                              }
                               maxClassName="max-w-[140px]"
                             >
                               {technicianLabelById.get(String(row.technicianId)) ??
@@ -373,7 +384,9 @@ export function TechnicalServicesManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {row.sealTampered ? "Violentado" : "OK"}
                           </td>
-                          <TableCreatedAtCell value={row.createdAt} />
+                          {tableColumns.showCreatedAt && (
+                            <TableCreatedAtCell value={row.createdAt} />
+                          )}
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink

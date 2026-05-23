@@ -24,6 +24,7 @@ import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
+import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { CONTRIBUTOR_LABELS } from "@/lib/contributor-types";
 import {
   canCreateCatalogRecord,
@@ -57,6 +58,7 @@ export function CompaniesManager() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const tableColumns = useTableColumnVisibility("companies");
   const [search, setSearch] = useState("");
   const [contributorFilter, setContributorFilter] = useState("all");
 
@@ -256,6 +258,7 @@ export function CompaniesManager() {
                   ],
                 },
               ]}
+              columns={tableColumns.toolbarColumns}
             />
             {filteredCompanies.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted">
@@ -270,7 +273,7 @@ export function CompaniesManager() {
                         <th className="px-5 py-3 font-medium">Razón social</th>
                         <th className="px-5 py-3 font-medium">RIF</th>
                         <th className="px-5 py-3 font-medium">Contribuyente</th>
-                        <TableCreatedAtHeader />
+                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -296,7 +299,9 @@ export function CompaniesManager() {
                           <td className="px-5 py-3.5">
                             <ContributorBadge type={company.contributorType} />
                           </td>
-                          <TableCreatedAtCell value={company.createdAt} />
+                          {tableColumns.showCreatedAt && (
+                            <TableCreatedAtCell value={company.createdAt} />
+                          )}
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink

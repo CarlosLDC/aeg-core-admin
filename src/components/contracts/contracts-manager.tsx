@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ContractsListPanel } from "@/components/contracts/contracts-list-panel";
+import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { distributorLabel } from "@/lib/branch-roles";
 import { formatBranchShort } from "@/lib/branches";
@@ -28,6 +29,7 @@ import { cn } from "@/lib/utils";
 type Tab = "distributor" | "serviceCenter";
 
 export function ContractsManager() {
+  const { user } = useAuth();
   const { scope, loading: scopeLoading } = useCompanyScope();
   const [tab, setTab] = useState<Tab>("distributor");
   const [branches, setBranches] = useState<BranchResponse[]>([]);
@@ -123,20 +125,26 @@ export function ContractsManager() {
 
   const getDistributorHref = useCallback(
     (contract: DistributorContractResponse | ServiceCenterContractResponse) =>
-      hrefForDistributor(
-        (contract as DistributorContractResponse).distributorId,
-        distributors,
-      ),
-    [distributors],
+      user
+        ? hrefForDistributor(
+            (contract as DistributorContractResponse).distributorId,
+            distributors,
+            user.role,
+          )
+        : undefined,
+    [distributors, user],
   );
 
   const getServiceCenterHref = useCallback(
     (contract: DistributorContractResponse | ServiceCenterContractResponse) =>
-      hrefForServiceCenter(
-        (contract as ServiceCenterContractResponse).serviceCenterId,
-        serviceCenters,
-      ),
-    [serviceCenters],
+      user
+        ? hrefForServiceCenter(
+            (contract as ServiceCenterContractResponse).serviceCenterId,
+            serviceCenters,
+            user.role,
+          )
+        : undefined,
+    [serviceCenters, user],
   );
 
   return (

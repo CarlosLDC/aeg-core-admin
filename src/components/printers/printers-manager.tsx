@@ -34,6 +34,7 @@ import {
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { usePagination } from "@/hooks/use-pagination";
+import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { distributorLabel } from "@/lib/branch-roles";
 import { formatBranchShort } from "@/lib/branches";
 import { fetchBranches } from "@/lib/branches-api";
@@ -124,6 +125,7 @@ export function PrintersManager() {
   } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const tableColumns = useTableColumnVisibility("printers");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<PrinterStatus | "all">(
     "all",
@@ -623,6 +625,7 @@ export function PrintersManager() {
                   options: paidFilterOptions,
                 },
               ]}
+              columns={tableColumns.toolbarColumns}
             />
             {filteredPrinters.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted">
@@ -643,7 +646,7 @@ export function PrintersManager() {
                         <th className="px-5 py-3 font-medium">Precio</th>
                         <th className="px-5 py-3 font-medium">Pagada</th>
                         <th className="px-5 py-3 font-medium">Instalación</th>
-                        <TableCreatedAtHeader />
+                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -660,7 +663,14 @@ export function PrintersManager() {
                           </td>
                           <td className="max-w-[160px] px-5 py-3.5 text-card-foreground">
                             <TruncatedText
-                              href={hrefForPrinterModel(printer.modelId)}
+                              href={
+                                user
+                                  ? hrefForPrinterModel(
+                                      printer.modelId,
+                                      user.role,
+                                    )
+                                  : undefined
+                              }
                               maxClassName="max-w-[140px]"
                             >
                               {getModelLabel(printer.modelId)}
@@ -675,10 +685,15 @@ export function PrintersManager() {
                           </td>
                           <td className="max-w-[160px] px-5 py-3.5 text-muted">
                             <TruncatedText
-                              href={hrefForDistributor(
-                                printer.distributorId,
-                                distributors,
-                              )}
+                              href={
+                                user
+                                  ? hrefForDistributor(
+                                      printer.distributorId,
+                                      distributors,
+                                      user.role,
+                                    )
+                                  : undefined
+                              }
                               maxClassName="max-w-[140px]"
                             >
                               {getDistributorLabel(printer.distributorId)}
@@ -686,7 +701,15 @@ export function PrintersManager() {
                           </td>
                           <td className="max-w-[160px] px-5 py-3.5 text-muted">
                             <TruncatedText
-                              href={hrefForClient(printer.clientId)}
+                              href={
+                                user
+                                  ? hrefForClient(
+                                      printer.clientId,
+                                      clients,
+                                      user.role,
+                                    )
+                                  : undefined
+                              }
                               maxClassName="max-w-[140px]"
                             >
                               {getClientLabel(printer.clientId)}
@@ -701,7 +724,9 @@ export function PrintersManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {formatPrinterDate(printer.installationDate)}
                           </td>
-                          <TableCreatedAtCell value={printer.createdAt} />
+                          {tableColumns.showCreatedAt && (
+                            <TableCreatedAtCell value={printer.createdAt} />
+                          )}
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink

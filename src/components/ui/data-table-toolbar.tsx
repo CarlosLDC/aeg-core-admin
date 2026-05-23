@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Filter, Search, X } from "lucide-react";
+import { ChevronDown, Columns3, Filter, Search, X } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { FILTER_ALL } from "@/lib/table-filter-options";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,13 @@ export type FilterSelect = {
   searchPlaceholder?: string;
 };
 
+export type ColumnToggle = {
+  id: string;
+  label: string;
+  visible: boolean;
+  onVisibleChange: (visible: boolean) => void;
+};
+
 const searchInputClass =
   "w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-ring/20";
 
@@ -34,6 +41,8 @@ type DataTableToolbarProps = {
   onSearchChange: (value: string) => void;
   searchPlaceholder?: string;
   filters?: FilterSelect[];
+  /** Toggles de columnas meta (creado el, editado el, etc.). */
+  columns?: ColumnToggle[];
   resultCount?: number;
   totalCount?: number;
   className?: string;
@@ -43,6 +52,10 @@ function countActiveFilters(filters: FilterSelect[], search: string): number {
   let count = filters.filter((f) => f.value !== FILTER_ALL).length;
   if (search.trim()) count += 1;
   return count;
+}
+
+function countVisibleOptionalColumns(columns: ColumnToggle[]): number {
+  return columns.filter((c) => c.visible).length;
 }
 
 function TableFilterField({ filter }: { filter: FilterSelect }) {
@@ -91,18 +104,51 @@ function TableFilterField({ filter }: { filter: FilterSelect }) {
   );
 }
 
+function TableColumnsSection({ columns }: { columns: ColumnToggle[] }) {
+  return (
+    <section aria-labelledby="table-columns-heading">
+      <h3
+        id="table-columns-heading"
+        className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted"
+      >
+        <Columns3 className="size-3.5" aria-hidden />
+        Columnas visibles
+      </h3>
+      <div className="flex flex-wrap gap-x-5 gap-y-2">
+        {columns.map((column) => (
+          <label
+            key={column.id}
+            className="inline-flex cursor-pointer items-center gap-2 text-sm text-card-foreground"
+          >
+            <input
+              type="checkbox"
+              checked={column.visible}
+              onChange={(e) => column.onVisibleChange(e.target.checked)}
+              className="size-4 rounded border-border text-accent focus:ring-2 focus:ring-ring/20"
+            />
+            {column.label}
+          </label>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function DataTableToolbar({
   search,
   onSearchChange,
   searchPlaceholder = "Buscar…",
   filters = [],
+  columns = [],
   resultCount,
   totalCount,
   className,
 }: DataTableToolbarProps) {
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const activeCount = countActiveFilters(filters, search);
   const hasActiveFilters = activeCount > 0;
+  const visibleOptionalColumns = countVisibleOptionalColumns(columns);
+  const hasPanel = filters.length > 0 || columns.length > 0;
 
   const showCount =
     resultCount !== undefined &&
@@ -136,15 +182,15 @@ export function DataTableToolbar({
           />
         </label>
 
-        {filters.length > 0 && (
+        {hasPanel && (
           <>
             <button
               type="button"
-              onClick={() => setFiltersOpen((open) => !open)}
-              aria-expanded={filtersOpen}
+              onClick={() => setPanelOpen((open) => !open)}
+              aria-expanded={panelOpen}
               className={cn(
                 "inline-flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-                filtersOpen || activeCount > 0
+                panelOpen || activeCount > 0 || visibleOptionalColumns > 0
                   ? "border-accent/40 bg-accent/10 text-accent"
                   : "border-border bg-card text-foreground hover:bg-foreground/5",
               )}
@@ -158,7 +204,7 @@ export function DataTableToolbar({
               )}
             </button>
 
-            {hasActiveFilters && (
+            {hasActiveFilters && filters.length > 0 && (
               <button
                 type="button"
                 onClick={clearFilters}
@@ -172,13 +218,20 @@ export function DataTableToolbar({
         )}
       </div>
 
-      {filtersOpen && filters.length > 0 && (
-        <div className="border-t border-border bg-foreground/[0.02] px-4 py-3 sm:px-5">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filters.map((filter) => (
-              <TableFilterField key={filter.id} filter={filter} />
-            ))}
-          </div>
+      {panelOpen && hasPanel && (
+        <div className="space-y-4 border-t border-border bg-foreground/[0.02] px-4 py-3 sm:px-5">
+          {filters.length > 0 && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filters.map((filter) => (
+                <TableFilterField key={filter.id} filter={filter} />
+              ))}
+            </div>
+          )}
+          {columns.length > 0 && (
+            <TableColumnsSection
+              columns={columns}
+            />
+          )}
         </div>
       )}
 

@@ -361,17 +361,12 @@ export function CompanyBranchesTable({
                           href={branchPath(branch.id)}
                         >
                           <td className="px-5 py-3.5 text-muted">{branch.id}</td>
-                          <td className="px-5 py-3.5 text-card-foreground">
-                            <span className="font-medium">
-                              {branch.city}, {branch.state}
-                            </span>
-                            {branch.address && (
-                              <TruncatedText
-                                maxClassName="max-w-[240px] mt-0.5 block text-xs text-muted"
-                              >
-                                {branch.address}
-                              </TruncatedText>
-                            )}
+                          <td className="max-w-[240px] px-5 py-3.5 text-card-foreground">
+                            <TruncatedText maxClassName="max-w-[220px]">
+                              {branch.address
+                                ? `${branch.city}, ${branch.state} — ${branch.address}`
+                                : `${branch.city}, ${branch.state}`}
+                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5 text-muted">
                             {branch.contactPersonName && (
@@ -400,10 +395,15 @@ export function CompanyBranchesTable({
                           </td>
                           <td className="max-w-[180px] px-5 py-3.5 text-muted">
                             <TruncatedText
-                              href={hrefForBranchClientDistributor(
-                                branch,
-                                distributors,
-                              )}
+                              href={
+                                user
+                                  ? hrefForBranchClientDistributor(
+                                      branch,
+                                      distributors,
+                                      user.role,
+                                    )
+                                  : undefined
+                              }
                               maxClassName="max-w-[160px]"
                             >
                               {clientDistributorSummary(

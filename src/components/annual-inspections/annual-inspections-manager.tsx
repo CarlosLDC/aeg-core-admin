@@ -30,6 +30,7 @@ import { forbiddenMessage } from "@/lib/permissions/messages";
 import { useFieldOperationsCatalog } from "@/hooks/use-field-operations-catalog";
 import { filterAnnualInspectionsInScope } from "@/lib/scope-filters";
 import { usePagination } from "@/hooks/use-pagination";
+import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { formatDate } from "@/lib/datetime-form";
 import {
   toAnnualInspectionRequest,
@@ -66,6 +67,7 @@ export function AnnualInspectionsManager() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const tableColumns = useTableColumnVisibility("annual-inspections");
   const [search, setSearch] = useState("");
   const [printerFilter, setPrinterFilter] = useState("all");
   const [employeeFilter, setEmployeeFilter] = useState("all");
@@ -317,6 +319,7 @@ export function AnnualInspectionsManager() {
                   options: employeeFilterOptions,
                 },
               ]}
+              columns={tableColumns.toolbarColumns}
             />
             {filteredRows.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted">
@@ -333,7 +336,7 @@ export function AnnualInspectionsManager() {
                         <th className="px-5 py-3 font-medium">Fecha</th>
                         <th className="px-5 py-3 font-medium">Precinto</th>
                         <th className="px-5 py-3 font-medium">Fotos</th>
-                        <TableCreatedAtHeader />
+                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -347,7 +350,11 @@ export function AnnualInspectionsManager() {
                         >
                           <td className="max-w-[140px] px-5 py-3.5 font-mono text-card-foreground">
                             <TruncatedText
-                              href={hrefForPrinter(row.printerId)}
+                              href={
+                                user
+                                  ? hrefForPrinter(row.printerId, user.role)
+                                  : undefined
+                              }
                               maxClassName="max-w-[120px]"
                               mono
                             >
@@ -357,7 +364,11 @@ export function AnnualInspectionsManager() {
                           </td>
                           <td className="max-w-[180px] px-5 py-3.5 text-muted">
                             <TruncatedText
-                              href={hrefForEmployee(row.employeeId)}
+                              href={
+                                user
+                                  ? hrefForEmployee(row.employeeId, user.role)
+                                  : undefined
+                              }
                               maxClassName="max-w-[160px]"
                             >
                               {employeeLabelById.get(String(row.employeeId)) ??
@@ -373,7 +384,9 @@ export function AnnualInspectionsManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {row.photoUrls?.length ?? 0}
                           </td>
-                          <TableCreatedAtCell value={row.createdAt} />
+                          {tableColumns.showCreatedAt && (
+                            <TableCreatedAtCell value={row.createdAt} />
+                          )}
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink

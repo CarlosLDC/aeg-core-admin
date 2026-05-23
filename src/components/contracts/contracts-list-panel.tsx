@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 import { usePagination } from "@/hooks/use-pagination";
+import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
   contractStatus,
   formatContractDate,
@@ -117,6 +118,7 @@ export function ContractsListPanel({
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const tableColumns = useTableColumnVisibility(`contracts-${kind}`);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -372,6 +374,7 @@ export function ContractsListPanel({
                   ],
                 },
               ]}
+              columns={tableColumns.toolbarColumns}
             />
             {filteredContracts.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted">
@@ -387,7 +390,7 @@ export function ContractsListPanel({
                         <th className="px-5 py-3 font-medium">Vigencia</th>
                         <th className="px-5 py-3 font-medium">Estado</th>
                         <th className="px-5 py-3 font-medium">Documentos</th>
-                        <TableCreatedAtHeader />
+                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -449,7 +452,9 @@ export function ContractsListPanel({
                               </ul>
                             )}
                           </td>
-                          <TableCreatedAtCell value={contract.createdAt} />
+                          {tableColumns.showCreatedAt && (
+                            <TableCreatedAtCell value={contract.createdAt} />
+                          )}
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink

@@ -14,6 +14,7 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
+import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { useDistributorId } from "@/hooks/use-distributor-id";
 import {
   TableCreatedAtCell,
@@ -113,6 +114,7 @@ export function ClientsManager() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [resumeBranchId, setResumeBranchId] = useState<number | null>(null);
+  const tableColumns = useTableColumnVisibility("clients");
   const [search, setSearch] = useState("");
   const [stateFilter, setStateFilter] = useState("all");
 
@@ -403,6 +405,7 @@ export function ClientsManager() {
                   options: stateFilterOptions,
                 },
               ]}
+              columns={tableColumns.toolbarColumns}
             />
             {filtered.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted">
@@ -419,7 +422,7 @@ export function ClientsManager() {
                         <th className="px-5 py-3 font-medium">Ubicación</th>
                         <th className="px-5 py-3 font-medium">Teléfono</th>
                         <th className="px-5 py-3 font-medium">Correo</th>
-                        <TableCreatedAtHeader />
+                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                       </tr>
                     </thead>
                     <tbody>
@@ -451,7 +454,9 @@ export function ClientsManager() {
                               {row.email || "—"}
                             </TruncatedText>
                           </td>
-                          <TableCreatedAtCell value={row.createdAt} />
+                          {tableColumns.showCreatedAt && (
+                            <TableCreatedAtCell value={row.createdAt} />
+                          )}
                         </ClickableTableRow>
                       ))}
                     </tbody>

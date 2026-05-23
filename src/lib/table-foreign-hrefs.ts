@@ -1,3 +1,4 @@
+import { canAccessRoute } from "@/lib/permissions/routes";
 import {
   branchPath,
   clientPath,
@@ -8,64 +9,115 @@ import {
 } from "@/lib/resource-routes";
 import type { BranchWithRoles } from "@/types/branch";
 import type {
+  ClientResponse,
   DistributorResponse,
   ServiceCenterResponse,
 } from "@/types/branch-role";
+import type { Role } from "@/types/user";
 
-export function hrefForPrinterModel(modelId: number): string {
-  return printerModelPath(modelId);
+function hrefIfAccessible(
+  role: Role,
+  path: string | undefined,
+): string | undefined {
+  if (!path) return undefined;
+  return canAccessRoute(role, path) ? path : undefined;
+}
+
+function hrefFirstAccessible(
+  role: Role,
+  paths: Array<string | undefined>,
+): string | undefined {
+  for (const path of paths) {
+    const href = hrefIfAccessible(role, path);
+    if (href) return href;
+  }
+  return undefined;
+}
+
+export function hrefForPrinterModel(modelId: number, role: Role): string | undefined {
+  return hrefIfAccessible(role, printerModelPath(modelId));
 }
 
 export function hrefForPrinter(
   printerId: number | null | undefined,
+  role: Role,
 ): string | undefined {
-  return printerId != null ? printerPath(printerId) : undefined;
+  return hrefIfAccessible(
+    role,
+    printerId != null ? printerPath(printerId) : undefined,
+  );
 }
 
+/** Distribuidor: detalle de cliente; admin/técnico: sucursal del cliente. */
 export function hrefForClient(
   clientId: number | null | undefined,
+  clients: ClientResponse[],
+  role: Role,
 ): string | undefined {
-  return clientId != null ? clientPath(clientId) : undefined;
+  if (clientId == null) return undefined;
+  const client = clients.find((c) => c.id === clientId);
+  if (!client) return undefined;
+  return hrefFirstAccessible(role, [
+    clientPath(client.id),
+    branchPath(client.branchId),
+  ]);
 }
 
 export function hrefForBranch(
   branchId: number | null | undefined,
+  role: Role,
 ): string | undefined {
-  return branchId != null ? branchPath(branchId) : undefined;
+  return hrefIfAccessible(
+    role,
+    branchId != null ? branchPath(branchId) : undefined,
+  );
 }
 
 export function hrefForEmployee(
   employeeId: number | null | undefined,
+  role: Role,
 ): string | undefined {
-  return employeeId != null ? employeePath(employeeId) : undefined;
+  return hrefIfAccessible(
+    role,
+    employeeId != null ? employeePath(employeeId) : undefined,
+  );
 }
 
 export function hrefForSeal(
   sealId: number | null | undefined,
+  role: Role,
 ): string | undefined {
-  return sealId != null ? sealPath(sealId) : undefined;
+  return hrefIfAccessible(
+    role,
+    sealId != null ? sealPath(sealId) : undefined,
+  );
 }
 
 export function hrefForDistributor(
   distributorId: number | null | undefined,
   distributors: DistributorResponse[],
+  role: Role,
 ): string | undefined {
   if (distributorId == null) return undefined;
   const distributor = distributors.find((d) => d.id === distributorId);
-  return distributor ? branchPath(distributor.branchId) : undefined;
+  if (!distributor) return undefined;
+  return hrefIfAccessible(role, branchPath(distributor.branchId));
 }
 
 export function hrefForBranchClientDistributor(
   branch: BranchWithRoles,
   distributors: DistributorResponse[],
+  role: Role,
 ): string | undefined {
-  return hrefForDistributor(branch.client?.distributorId, distributors);
+  return hrefForDistributor(branch.client?.distributorId, distributors, role);
 }
 
 export function hrefForServiceCenter(
   serviceCenterId: number,
   serviceCenters: ServiceCenterResponse[],
+  role: Role,
 ): string | undefined {
   const serviceCenter = serviceCenters.find((sc) => sc.id === serviceCenterId);
-  return serviceCenter ? branchPath(serviceCenter.branchId) : undefined;
+  if (!serviceCenter) return undefined;
+  return hrefIfAccessible(role, branchPath(serviceCenter.branchId));
 }

@@ -37,6 +37,7 @@ import { canBrowseOtherCompanies } from "@/lib/company-scope";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { usePagination } from "@/hooks/use-pagination";
+import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
   deleteBranchRoles,
   distributorLabel,
@@ -129,6 +130,7 @@ export function BranchesManager() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const tableColumns = useTableColumnVisibility("branches");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
@@ -532,6 +534,7 @@ export function BranchesManager() {
                   searchPlaceholder: "Buscar empresa o RIF…",
                 },
               ]}
+              columns={tableColumns.toolbarColumns}
             />
             {filteredBranches.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted">
@@ -548,7 +551,7 @@ export function BranchesManager() {
                         <th className="px-5 py-3 font-medium">Contacto</th>
                         <th className="px-5 py-3 font-medium">Roles</th>
                         <th className="px-5 py-3 font-medium">Distribuidor</th>
-                        <TableCreatedAtHeader />
+                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -588,10 +591,15 @@ export function BranchesManager() {
                           </td>
                           <td className="max-w-[180px] px-5 py-3.5 text-muted">
                             <TruncatedText
-                              href={hrefForBranchClientDistributor(
-                                branch,
-                                distributors,
-                              )}
+                              href={
+                                user
+                                  ? hrefForBranchClientDistributor(
+                                      branch,
+                                      distributors,
+                                      user.role,
+                                    )
+                                  : undefined
+                              }
                               maxClassName="max-w-[160px]"
                             >
                               {clientDistributorSummary(
@@ -602,7 +610,9 @@ export function BranchesManager() {
                               )}
                             </TruncatedText>
                           </td>
-                          <TableCreatedAtCell value={branch.createdAt} />
+                          {tableColumns.showCreatedAt && (
+                            <TableCreatedAtCell value={branch.createdAt} />
+                          )}
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink

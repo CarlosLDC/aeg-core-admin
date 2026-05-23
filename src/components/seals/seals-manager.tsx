@@ -555,7 +555,11 @@ export function SealsManager() {
                           </td>
                           <td className="max-w-[180px] px-5 py-3.5 text-muted">
                             <TruncatedText
-                              href={hrefForPrinter(seal.printerId)}
+                              href={
+                                user
+                                  ? hrefForPrinter(seal.printerId, user.role)
+                                  : undefined
+                              }
                               maxClassName="max-w-[160px]"
                             >
                               {getPrinterLabel(seal.printerId)}

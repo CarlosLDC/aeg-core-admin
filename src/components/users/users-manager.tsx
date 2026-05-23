@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { filterAllOption } from "@/lib/table-filter-options";
+import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { usePagination } from "@/hooks/use-pagination";
@@ -73,6 +74,7 @@ function sortBranches(
 }
 
 export function UsersManager() {
+  const { user } = useAuth();
   const toast = useToast();
   const confirm = useConfirm();
   const [users, setUsers] = useState<UserResponse[]>([]);
@@ -399,7 +401,11 @@ export function UsersManager() {
                           </td>
                           <td className="max-w-[220px] px-5 py-3.5 text-card-foreground">
                             <TruncatedText
-                              href={hrefForBranch(user.branchId)}
+                              href={
+                                user
+                                  ? hrefForBranch(user.branchId, user.role)
+                                  : undefined
+                              }
                               maxClassName="max-w-[200px]"
                             >
                               {branchLabelById(branches, companies, user.branchId)}

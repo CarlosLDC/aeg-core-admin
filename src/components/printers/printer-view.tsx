@@ -269,7 +269,9 @@ export function PrinterView() {
               label="Modelo"
               value={modelLabel}
               href={
-                model ? hrefForPrinterModel(model.id) : undefined
+                user && model
+                  ? hrefForPrinterModel(model.id, user.role)
+                  : undefined
               }
             />
             <DetailField
@@ -316,7 +318,15 @@ export function PrinterView() {
                     `#${printer.distributorId}`
                   : "Sin asignar"
               }
-              href={hrefForDistributor(printer.distributorId, distributors)}
+              href={
+                user
+                  ? hrefForDistributor(
+                      printer.distributorId,
+                      distributors,
+                      user.role,
+                    )
+                  : undefined
+              }
             />
             <DetailField
               label="Cliente"
@@ -326,7 +336,11 @@ export function PrinterView() {
                     `#${printer.clientId}`
                   : "Sin asignar"
               }
-              href={hrefForClient(printer.clientId)}
+              href={
+                user
+                  ? hrefForClient(printer.clientId, clients, user.role)
+                  : undefined
+              }
             />
             <DetailField
               label="Software"
@@ -369,7 +383,9 @@ export function PrinterView() {
     printer,
     model,
     modelLabel,
+    user,
     distributors,
+    clients,
     distributorLabelById,
     clientLabelById,
     softwareLabelById,

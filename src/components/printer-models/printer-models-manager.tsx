@@ -27,6 +27,7 @@ import {
 } from "@/lib/api-permissions";
 import { forbiddenMessage } from "@/lib/permissions/messages";
 import { usePagination } from "@/hooks/use-pagination";
+import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
   formatPrinterModelDate,
   formatPrinterModelPrice,
@@ -67,6 +68,7 @@ export function PrinterModelsManager() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const tableColumns = useTableColumnVisibility("printer-models");
   const [search, setSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState("all");
 
@@ -279,6 +281,7 @@ export function PrinterModelsManager() {
                   options: brandFilterOptions,
                 },
               ]}
+              columns={tableColumns.toolbarColumns}
             />
             {filteredModels.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted">
@@ -295,7 +298,7 @@ export function PrinterModelsManager() {
                         <th className="px-5 py-3 font-medium">Providencia</th>
                         <th className="px-5 py-3 font-medium">Aprobación</th>
                         <th className="px-5 py-3 font-medium">Precio</th>
-                        <TableCreatedAtHeader />
+                        {tableColumns.showCreatedAt && <TableCreatedAtHeader />}
                         <th className="px-5 py-3 font-medium text-right">
                           Acciones
                         </th>
@@ -326,7 +329,9 @@ export function PrinterModelsManager() {
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
                             {formatPrinterModelPrice(model.price)}
                           </td>
-                          <TableCreatedAtCell value={model.createdAt} />
+                          {tableColumns.showCreatedAt && (
+                            <TableCreatedAtCell value={model.createdAt} />
+                          )}
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <div className="flex justify-end gap-1">
                               <ViewResourceLink
