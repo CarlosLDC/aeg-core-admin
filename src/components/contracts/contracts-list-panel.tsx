@@ -78,6 +78,9 @@ type ContractsListPanelProps = {
   getPartyLabel: (
     contract: DistributorContractResponse | ServiceCenterContractResponse,
   ) => string;
+  getPartyHref?: (
+    contract: DistributorContractResponse | ServiceCenterContractResponse,
+  ) => string | undefined;
 };
 
 function partyIdFromContract(
@@ -94,6 +97,7 @@ export function ContractsListPanel({
   partyOptions,
   catalogLoading,
   getPartyLabel,
+  getPartyHref,
 }: ContractsListPanelProps) {
   const toast = useToast();
   const confirm = useConfirm();
@@ -401,7 +405,10 @@ export function ContractsListPanel({
                           href={contractHref}
                         >
                           <td className="max-w-[220px] px-5 py-3.5 font-medium text-card-foreground">
-                            <TruncatedText maxClassName="max-w-[200px]">
+                            <TruncatedText
+                              href={getPartyHref?.(contract)}
+                              maxClassName="max-w-[200px]"
+                            >
                               {getPartyLabel(contract)}
                             </TruncatedText>
                           </td>

@@ -70,6 +70,11 @@ import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { printerPath } from "@/lib/resource-routes";
+import {
+  hrefForClient,
+  hrefForDistributor,
+  hrefForPrinterModel,
+} from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
@@ -654,7 +659,10 @@ export function PrintersManager() {
                             {printer.fiscalSerial}
                           </td>
                           <td className="max-w-[160px] px-5 py-3.5 text-card-foreground">
-                            <TruncatedText maxClassName="max-w-[140px]">
+                            <TruncatedText
+                              href={hrefForPrinterModel(printer.modelId)}
+                              maxClassName="max-w-[140px]"
+                            >
                               {getModelLabel(printer.modelId)}
                             </TruncatedText>
                           </td>
@@ -666,12 +674,21 @@ export function PrintersManager() {
                               printer.deviceType}
                           </td>
                           <td className="max-w-[160px] px-5 py-3.5 text-muted">
-                            <TruncatedText maxClassName="max-w-[140px]">
+                            <TruncatedText
+                              href={hrefForDistributor(
+                                printer.distributorId,
+                                distributors,
+                              )}
+                              maxClassName="max-w-[140px]"
+                            >
                               {getDistributorLabel(printer.distributorId)}
                             </TruncatedText>
                           </td>
                           <td className="max-w-[160px] px-5 py-3.5 text-muted">
-                            <TruncatedText maxClassName="max-w-[140px]">
+                            <TruncatedText
+                              href={hrefForClient(printer.clientId)}
+                              maxClassName="max-w-[140px]"
+                            >
                               {getClientLabel(printer.clientId)}
                             </TruncatedText>
                           </td>

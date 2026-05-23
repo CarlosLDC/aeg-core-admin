@@ -19,6 +19,10 @@ import type {
   DistributorResponse,
   ServiceCenterResponse,
 } from "@/types/branch-role";
+import {
+  hrefForDistributor,
+  hrefForServiceCenter,
+} from "@/lib/table-foreign-hrefs";
 import { cn } from "@/lib/utils";
 
 type Tab = "distributor" | "serviceCenter";
@@ -117,6 +121,24 @@ export function ContractsManager() {
     [serviceCenters, branches, companies],
   );
 
+  const getDistributorHref = useCallback(
+    (contract: DistributorContractResponse | ServiceCenterContractResponse) =>
+      hrefForDistributor(
+        (contract as DistributorContractResponse).distributorId,
+        distributors,
+      ),
+    [distributors],
+  );
+
+  const getServiceCenterHref = useCallback(
+    (contract: DistributorContractResponse | ServiceCenterContractResponse) =>
+      hrefForServiceCenter(
+        (contract as ServiceCenterContractResponse).serviceCenterId,
+        serviceCenters,
+      ),
+    [serviceCenters],
+  );
+
   return (
     <div className="space-y-4">
       <p className="min-w-0 text-sm text-muted">
@@ -157,6 +179,7 @@ export function ContractsManager() {
           partyOptions={distributorOptions}
           catalogLoading={catalogLoading || scopeLoading}
           getPartyLabel={getDistributorLabel}
+          getPartyHref={getDistributorHref}
         />
       ) : (
         <ContractsListPanel
@@ -164,6 +187,7 @@ export function ContractsManager() {
           partyOptions={serviceCenterOptions}
           catalogLoading={catalogLoading || scopeLoading}
           getPartyLabel={getServiceCenterLabel}
+          getPartyHref={getServiceCenterHref}
         />
       )}
     </div>

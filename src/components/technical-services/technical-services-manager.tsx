@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table-created-at";
 import { filterAllOption } from "@/lib/table-filter-options";
 import { technicalServicePath } from "@/lib/resource-routes";
+import { hrefForEmployee, hrefForPrinter } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 import { TablePagination } from "@/components/ui/table-pagination";
@@ -337,13 +338,20 @@ export function TechnicalServicesManager() {
                           href={technicalServicePath(row.id)}
                         >
                           <td className="max-w-[140px] px-5 py-3.5 font-mono text-card-foreground">
-                            <TruncatedText maxClassName="max-w-[120px]" mono>
+                            <TruncatedText
+                              href={hrefForPrinter(row.printerId)}
+                              maxClassName="max-w-[120px]"
+                              mono
+                            >
                               {printerLabelById.get(String(row.printerId)) ??
                                 `#${row.printerId}`}
                             </TruncatedText>
                           </td>
                           <td className="max-w-[160px] px-5 py-3.5 text-muted">
-                            <TruncatedText maxClassName="max-w-[140px]">
+                            <TruncatedText
+                              href={hrefForEmployee(row.technicianId)}
+                              maxClassName="max-w-[140px]"
+                            >
                               {technicianLabelById.get(String(row.technicianId)) ??
                                 `#${row.technicianId}`}
                             </TruncatedText>

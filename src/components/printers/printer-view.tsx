@@ -8,8 +8,14 @@ import {
 } from "@/components/printers/printer-form-dialog";
 import {
   DetailField,
+  DetailGridSpacer,
   DetailSection,
 } from "@/components/resource-view/detail-fields";
+import {
+  hrefForClient,
+  hrefForDistributor,
+  hrefForPrinterModel,
+} from "@/lib/table-foreign-hrefs";
 import { DetailSectionsPager } from "@/components/resource-view/detail-sections-pager";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
@@ -47,7 +53,7 @@ import {
 } from "@/lib/printers-api";
 import { fetchAuthMe } from "@/lib/auth-me-api";
 import { fetchSoftware } from "@/lib/software-api";
-import { printerModelPath, printerPath } from "@/lib/resource-routes";
+import { printerPath } from "@/lib/resource-routes";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -252,7 +258,7 @@ export function PrinterView() {
         id: "equipment",
         label: "Equipo",
         content: (
-          <DetailSection title="Equipo fiscal">
+          <DetailSection title="Equipo fiscal" layout="quad">
             <DetailField label="ID" value={String(printer.id)} mono />
             <DetailField
               label="Serial fiscal"
@@ -262,8 +268,13 @@ export function PrinterView() {
             <DetailField
               label="Modelo"
               value={modelLabel}
-              href={model ? printerModelPath(model.id) : undefined}
-              fullWidth
+              href={
+                model ? hrefForPrinterModel(model.id) : undefined
+              }
+            />
+            <DetailField
+              label="Tipo de equipo"
+              value={DEVICE_TYPE_LABELS[printer.deviceType]}
             />
           </DetailSection>
         ),
@@ -272,14 +283,10 @@ export function PrinterView() {
         id: "operation",
         label: "Estado",
         content: (
-          <DetailSection title="Estado operativo">
+          <DetailSection title="Estado operativo" layout="quad">
             <DetailField
               label="Estatus"
               value={<PrinterStatusBadge status={printer.status} />}
-            />
-            <DetailField
-              label="Tipo de equipo"
-              value={DEVICE_TYPE_LABELS[printer.deviceType]}
             />
             <DetailField
               label="Precio venta"
@@ -289,6 +296,10 @@ export function PrinterView() {
               label="Estado de pago"
               value={printer.paid ? "Pagada" : "Pendiente"}
             />
+            <DetailField
+              label="Instalación"
+              value={formatDate(printer.installationDate)}
+            />
           </DetailSection>
         ),
       },
@@ -296,7 +307,7 @@ export function PrinterView() {
         id: "assignment",
         label: "Asignación",
         content: (
-          <DetailSection title="Asignación">
+          <DetailSection title="Asignación" layout="quad">
             <DetailField
               label="Distribuidor"
               value={
@@ -305,7 +316,7 @@ export function PrinterView() {
                     `#${printer.distributorId}`
                   : "Sin asignar"
               }
-              fullWidth
+              href={hrefForDistributor(printer.distributorId, distributors)}
             />
             <DetailField
               label="Cliente"
@@ -315,7 +326,7 @@ export function PrinterView() {
                     `#${printer.clientId}`
                   : "Sin asignar"
               }
-              fullWidth
+              href={hrefForClient(printer.clientId)}
             />
             <DetailField
               label="Software"
@@ -325,8 +336,8 @@ export function PrinterView() {
                     `#${printer.softwareId}`
                   : "Sin asignar"
               }
-              fullWidth
             />
+            <DetailGridSpacer />
           </DetailSection>
         ),
       },
@@ -334,11 +345,7 @@ export function PrinterView() {
         id: "technical",
         label: "Detalles",
         content: (
-          <DetailSection title="Detalles técnicos">
-            <DetailField
-              label="Instalación"
-              value={formatDate(printer.installationDate)}
-            />
+          <DetailSection title="Detalles técnicos" layout="quad">
             <DetailField
               label="Firmware"
               value={printer.versionFirmware || "—"}
@@ -348,20 +355,12 @@ export function PrinterView() {
               label="MAC"
               value={printer.macAddress || "—"}
               mono
-              fullWidth
             />
-          </DetailSection>
-        ),
-      },
-      {
-        id: "record",
-        label: "Registro",
-        content: (
-          <DetailSection title="Registro">
             <DetailField
               label="Registrada"
               value={formatDate(printer.createdAt)}
             />
+            <DetailGridSpacer />
           </DetailSection>
         ),
       },
@@ -370,6 +369,7 @@ export function PrinterView() {
     printer,
     model,
     modelLabel,
+    distributors,
     distributorLabelById,
     clientLabelById,
     softwareLabelById,

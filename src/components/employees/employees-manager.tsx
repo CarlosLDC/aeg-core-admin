@@ -63,6 +63,7 @@ import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { employeePath } from "@/lib/resource-routes";
+import { hrefForBranch } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
@@ -548,7 +549,10 @@ export function EmployeesManager() {
                             <EmployeeRoleBadge employee={employee} />
                           </td>
                           <td className="max-w-[200px] px-5 py-3.5 text-card-foreground">
-                            <TruncatedText maxClassName="max-w-[180px]">
+                            <TruncatedText
+                              href={hrefForBranch(employee.branchId)}
+                              maxClassName="max-w-[180px]"
+                            >
                               {branchLabelById(
                                 displayBranches,
                                 companies,

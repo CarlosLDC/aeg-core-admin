@@ -31,6 +31,7 @@ import { toBranchRequest } from "@/lib/branch-request";
 import { invalidateCatalogRoles } from "@/lib/catalog-roles-cache";
 import { deleteBranch, updateBranch } from "@/lib/branches-api";
 import { branchPath } from "@/lib/resource-routes";
+import { hrefForBranchClientDistributor } from "@/lib/table-foreign-hrefs";
 import {
   filterAllOption,
   uniqueFilterOptions,
@@ -398,7 +399,13 @@ export function CompanyBranchesTable({
                             <BranchTypeBadges branch={branch} />
                           </td>
                           <td className="max-w-[180px] px-5 py-3.5 text-muted">
-                            <TruncatedText maxClassName="max-w-[160px]">
+                            <TruncatedText
+                              href={hrefForBranchClientDistributor(
+                                branch,
+                                distributors,
+                              )}
+                              maxClassName="max-w-[160px]"
+                            >
                               {clientDistributorSummary(
                                 branch,
                                 distributors,

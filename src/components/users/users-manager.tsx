@@ -44,6 +44,7 @@ import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { userPath } from "@/lib/resource-routes";
+import { hrefForBranch } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
@@ -397,7 +398,10 @@ export function UsersManager() {
                             <RoleBadge role={user.role} />
                           </td>
                           <td className="max-w-[220px] px-5 py-3.5 text-card-foreground">
-                            <TruncatedText maxClassName="max-w-[200px]">
+                            <TruncatedText
+                              href={hrefForBranch(user.branchId)}
+                              maxClassName="max-w-[200px]"
+                            >
                               {branchLabelById(branches, companies, user.branchId)}
                             </TruncatedText>
                           </td>

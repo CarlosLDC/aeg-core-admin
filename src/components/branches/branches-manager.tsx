@@ -63,6 +63,7 @@ import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { branchPath, companyPath } from "@/lib/resource-routes";
+import { hrefForBranchClientDistributor } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { ViewResourceLink } from "@/components/ui/view-resource-link";
 
@@ -586,7 +587,13 @@ export function BranchesManager() {
                             <BranchTypeBadges branch={branch} />
                           </td>
                           <td className="max-w-[180px] px-5 py-3.5 text-muted">
-                            <TruncatedText maxClassName="max-w-[160px]">
+                            <TruncatedText
+                              href={hrefForBranchClientDistributor(
+                                branch,
+                                distributors,
+                              )}
+                              maxClassName="max-w-[160px]"
+                            >
                               {clientDistributorSummary(
                                 branch,
                                 distributors,
