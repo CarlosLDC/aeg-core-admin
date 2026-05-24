@@ -59,10 +59,6 @@ import { TruncatedText } from "@/components/ui/truncated-text";
 import { userPath } from "@/lib/resource-routes";
 import { hrefForBranch } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
-import {
-  TableActionsCell,
-  TableActionsHeader,
-} from "@/components/ui/table-actions-column";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
 function parseRequiredId(value: string): number {
@@ -410,7 +406,11 @@ export function UsersManager() {
                                 toggleTableSort(current, "id"),
                               ),
                           }}
-                          actions={<TableActionsHeader />}
+                          actions={
+                            <th className="px-5 py-3 font-medium text-right">
+                              Acciones
+                            </th>
+                          }
                         >
                           <th className="px-5 py-3 font-medium">Nombre</th>
                           <th className="px-5 py-3 font-medium">Correo</th>
@@ -431,7 +431,7 @@ export function UsersManager() {
                             showCreatedAt={false}
                             id={user.id}
                             actions={
-                              <TableActionsCell>
+                              <td className="px-5 py-3.5" data-row-click="ignore">
                                 <TableRowActionsMenu
                                   viewHref={userPath(user.id)}
                                   viewLabel={`Ver usuario ${displayUserName(user)}`}
@@ -439,7 +439,7 @@ export function UsersManager() {
                                   onDelete={() => void handleDelete(user)}
                                   deleting={deletingId === user.id}
                                 />
-                              </TableActionsCell>
+                              </td>
                             }
                           >
                           <td className="max-w-[200px] px-5 py-3.5">

@@ -17,10 +17,6 @@ import { filterAllOption } from "@/lib/table-filter-options";
 import { annualInspectionPath } from "@/lib/resource-routes";
 import { hrefForEmployee, hrefForPrinter } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
-import {
-  TableActionsCell,
-  TableActionsHeader,
-} from "@/components/ui/table-actions-column";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
@@ -379,7 +375,11 @@ export function AnnualInspectionsManager() {
                                 toggleTableSort(current, "createdAt"),
                               ),
                           }}
-                          actions={<TableActionsHeader />}
+                          actions={
+                            <th className="px-5 py-3 font-medium text-right">
+                              Acciones
+                            </th>
+                          }
                         >
                         <th className="px-5 py-3 font-medium">Impresora</th>
                         <th className="px-5 py-3 font-medium">Empleado</th>
@@ -421,7 +421,7 @@ export function AnnualInspectionsManager() {
                             id={row.id}
                             createdAt={row.createdAt}
                             actions={
-                              <TableActionsCell>
+                              <td className="px-5 py-3.5" data-row-click="ignore">
                                 <TableRowActionsMenu
                                   viewHref={annualInspectionPath(row.id)}
                                   viewLabel={`Ver inspección #${row.id}`}
@@ -439,7 +439,7 @@ export function AnnualInspectionsManager() {
                                   }
                                   deleting={deletingId === row.id}
                                 />
-                              </TableActionsCell>
+                              </td>
                             }
                           >
                           <td className="max-w-[140px] px-5 py-3.5 font-mono text-card-foreground">

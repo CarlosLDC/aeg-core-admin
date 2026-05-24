@@ -25,7 +25,7 @@ export function ClickableTableRow({
     <tr
       {...props}
       className={cn(
-        "group h-14 cursor-pointer border-b border-border last:border-0 hover:bg-foreground/[0.04]",
+        "h-14 cursor-pointer border-b border-border last:border-0 hover:bg-foreground/[0.04]",
         className,
       )}
       onClick={(e) => {

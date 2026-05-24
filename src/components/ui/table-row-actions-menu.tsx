@@ -210,7 +210,7 @@ export function TableRowActionsMenu({
     ) : null;
 
   return (
-    <div ref={rootRef} className="relative flex justify-center">
+    <div ref={rootRef} className="relative flex justify-end">
       <button
         ref={triggerRef}
         type="button"

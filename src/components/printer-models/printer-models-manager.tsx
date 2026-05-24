@@ -55,10 +55,6 @@ import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { printerModelPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
-import {
-  TableActionsCell,
-  TableActionsHeader,
-} from "@/components/ui/table-actions-column";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 
@@ -336,7 +332,11 @@ export function PrinterModelsManager() {
                                 toggleTableSort(current, "createdAt"),
                               ),
                           }}
-                          actions={<TableActionsHeader />}
+                          actions={
+                            <th className="px-5 py-3 font-medium text-right">
+                              Acciones
+                            </th>
+                          }
                         >
                         <th className="px-5 py-3 font-medium">Marca</th>
                         <th className="px-5 py-3 font-medium">Modelo</th>
@@ -374,7 +374,7 @@ export function PrinterModelsManager() {
                             id={model.id}
                             createdAt={model.createdAt}
                             actions={
-                              <TableActionsCell>
+                              <td className="px-5 py-3.5" data-row-click="ignore">
                                 <TableRowActionsMenu
                                   viewHref={printerModelPath(model.id)}
                                   viewLabel={`Ver modelo ${modelLabel(model)}`}
@@ -386,7 +386,7 @@ export function PrinterModelsManager() {
                                   }
                                   deleting={deletingId === model.id}
                                 />
-                              </TableActionsCell>
+                              </td>
                             }
                           >
                           <td className="max-w-[140px] px-5 py-3.5">
