@@ -165,6 +165,8 @@ export async function syncEmployeeRoles(
       createdAt: "",
       type: "administrativo",
       branchId: 0,
+      reviewStatus: "ACTIVE",
+      activeModificationRequestId: null,
     } satisfies EmployeeResponse);
 
   if (roles.isTechnician && !prev.technician) {

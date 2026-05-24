@@ -37,6 +37,8 @@ import {
 import {
   deleteEmployee,
   getEmployeesErrorMessage,
+  requestEmployeeDelete,
+  requestEmployeeUpdate,
   updateEmployee,
 } from "@/lib/employees-api";
 import { formatDate } from "@/lib/datetime-form";
@@ -52,6 +54,7 @@ export function EmployeeView() {
   const { scope, refresh } = useCompanyScope();
   const canModify = user ? canUpdateEmployeeRecord(user.role) : false;
   const canDelete = user ? canDeleteEmployeeRecord(user.role) : false;
+  const canRequestReview = user?.role === "DISTRIBUTOR";
   const userRole = (user?.role ?? "ADMIN") as Role;
   const isDistributor = user?.role === "DISTRIBUTOR";
   const distributorId = useDistributorId();
@@ -117,7 +120,15 @@ export function EmployeeView() {
   }, [load, isDistributor, staffBranchesLoading]);
 
   async function handleSubmit(values: EmployeeFormValues) {
-    if (!employee || !canModify) {
+    if (!employee) {
+      setFormError("Empleado no encontrado.");
+      return;
+    }
+    if (employee.reviewStatus === "PENDING_REVIEW") {
+      setFormError("Este empleado tiene una solicitud pendiente de aprobación.");
+      return;
+    }
+    if (!canModify && !canRequestReview) {
       setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
@@ -143,12 +154,21 @@ export function EmployeeView() {
     const label = payload.request.name;
 
     try {
-      await updateEmployee(employee.id, payload.request);
-      await syncEmployeeRoles(employee.id, employee, payload.tableRoles);
+      if (canRequestReview) {
+        await requestEmployeeUpdate(employee.id, payload.request);
+      } else {
+        await updateEmployee(employee.id, payload.request);
+        await syncEmployeeRoles(employee.id, employee, payload.tableRoles);
+      }
       await load();
-      toast.success(`Empleado "${label}" actualizado.`, {
+      toast.success(
+        canRequestReview
+          ? `Solicitud de actualización para "${label}" enviada a revisión.`
+          : `Empleado "${label}" actualizado.`,
+        {
         href: employeePath(employee.id),
-      });
+      },
+      );
       setEditOpen(false);
       await refresh();
     } catch (err) {
@@ -162,22 +182,45 @@ export function EmployeeView() {
   }
 
   async function handleDelete() {
-    if (!employee || !canDelete) {
+    if (!employee) {
+      toast.error("Empleado no encontrado.");
+      return;
+    }
+    if (employee.reviewStatus === "PENDING_REVIEW") {
+      toast.error("Este empleado ya tiene una solicitud pendiente de aprobación.");
+      return;
+    }
+    if (!canDelete && !canRequestReview) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
     const label = employee.name;
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar al empleado "${label}"? Puede afectar técnicos o inspecciones vinculadas.`, destructive: true }))) {
+    const message = canRequestReview
+      ? `¿Solicitar eliminación para "${label}"? Un administrador debe aprobar la solicitud.`
+      : `¿Eliminar al empleado "${label}"? Puede afectar técnicos o inspecciones vinculadas.`;
+    if (!(await confirm({ title: "Confirmar", message, destructive: true }))) {
       return;
     }
 
     setDeleting(true);
     try {
-      await deleteEmployeeRoles(employee);
-      await deleteEmployee(employee.id);
+      if (canRequestReview) {
+        await requestEmployeeDelete(employee.id);
+      } else {
+        await deleteEmployeeRoles(employee);
+        await deleteEmployee(employee.id);
+      }
       await refresh();
-      toast.success(`Empleado "${label}" eliminado.`);
-      router.push("/employees");
+      toast.success(
+        canRequestReview
+          ? `Solicitud de eliminación para "${label}" enviada a revisión.`
+          : `Empleado "${label}" eliminado.`,
+      );
+      if (!canRequestReview) {
+        router.push("/employees");
+      } else {
+        await load();
+      }
     } catch (err) {
       const message =
         getEmployeesErrorMessage(err) || getEmployeeRolesErrorMessage(err);
@@ -190,6 +233,7 @@ export function EmployeeView() {
   const branchLabel = employee
     ? branchLabelById(formBranches, companies, employee.branchId)
     : "—";
+  const pendingReview = employee?.reviewStatus === "PENDING_REVIEW";
 
   return (
     <>
@@ -203,45 +247,61 @@ export function EmployeeView() {
           employee ? (
             <ResourceViewActions
               onEdit={
-                canModify
+                (canModify || canRequestReview) && !pendingReview
                   ? () => {
                       setFormError(null);
                       setEditOpen(true);
                     }
                   : undefined
               }
-              onDelete={canDelete ? () => void handleDelete() : undefined}
+              onDelete={
+                (canDelete || canRequestReview) && !pendingReview
+                  ? () => void handleDelete()
+                  : undefined
+              }
               deleting={deleting}
             />
           ) : undefined
         }
       >
         {employee && (
-          <DetailSection title="Empleado" layout="quad">
-            <DetailField label="ID" value={String(employee.id)} mono />
-            <DetailField label="Nombre" value={employee.name} />
-            <DetailField label="Cédula" value={employee.nationalId} mono />
-            <DetailField
-              label="Rol"
-              value={<EmployeeRoleBadge employee={employee} />}
-            />
-            <DetailField label="Teléfono" value={employee.phone || "—"} />
-            <DetailField label="Correo" value={employee.email || "—"} />
-            <DetailField
-              label="Registrado"
-              value={formatDate(employee.createdAt)}
-            />
-            <DetailField
-              label="Sucursal"
-              value={branchLabel}
-              href={branchPath(employee.branchId)}
-            />
-            <DetailField
-              label="ID sucursal"
-              value={String(employee.branchId)}
-              mono
-            />
-          </DetailSection>
+          <div className="space-y-4">
+            {pendingReview && (
+              <p
+                role="status"
+                className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200"
+              >
+                Este empleado está en revisión. No se permiten nuevas ediciones ni
+                eliminaciones hasta que un administrador apruebe o rechace la
+                solicitud.
+              </p>
+            )}
+            <DetailSection title="Empleado" layout="quad">
+              <DetailField label="ID" value={String(employee.id)} mono />
+              <DetailField label="Nombre" value={employee.name} />
+              <DetailField label="Cédula" value={employee.nationalId} mono />
+              <DetailField
+                label="Rol"
+                value={<EmployeeRoleBadge employee={employee} />}
+              />
+              <DetailField label="Teléfono" value={employee.phone || "—"} />
+              <DetailField label="Correo" value={employee.email || "—"} />
+              <DetailField
+                label="Registrado"
+                value={formatDate(employee.createdAt)}
+              />
+              <DetailField
+                label="Sucursal"
+                value={branchLabel}
+                href={branchPath(employee.branchId)}
+              />
+              <DetailField
+                label="ID sucursal"
+                value={String(employee.branchId)}
+                mono
+              />
+            </DetailSection>
+          </div>
         )}
       </ResourceViewShell>
 

@@ -63,6 +63,8 @@ import {
   deleteEmployee,
   fetchEmployees,
   getEmployeesErrorMessage,
+  requestEmployeeDelete,
+  requestEmployeeUpdate,
   updateEmployee,
 } from "@/lib/employees-api";
 import type { BranchResponse } from "@/types/branch";
@@ -80,6 +82,10 @@ type EmployeeSortKey = "id" | "createdAt";
 
 function employeeLabel(employee: EmployeeWithRoles) {
   return `${employee.name} (${employee.nationalId})`;
+}
+
+function isPendingReview(employee: EmployeeWithRoles): boolean {
+  return employee.reviewStatus === "PENDING_REVIEW";
 }
 
 export function EmployeesManager() {
@@ -106,7 +112,8 @@ export function EmployeesManager() {
   const canCreate = user ? canCreateEmployeeRecord(user.role) : false;
   const canModify = user ? canUpdateEmployeeRecord(user.role) : false;
   const canEditRoles = user ? canAssignEmployeeRoles(user.role) : false;
-  const showActions = canModify || canEditRoles;
+  const canRequestReview = user?.role === "DISTRIBUTOR";
+  const showActions = canModify || canEditRoles || canRequestReview;
 
   const [employees, setEmployees] = useState<EmployeeWithRoles[]>([]);
   const [branches, setBranches] = useState<BranchResponse[]>([]);
@@ -304,6 +311,11 @@ export function EmployeesManager() {
   }
 
   async function handleSubmit(values: EmployeeFormValues) {
+    if (dialog === "edit" && selected && isPendingReview(selected)) {
+      setFormError("Este empleado tiene una solicitud pendiente de aprobación.");
+      return;
+    }
+
     const editingRolesOnly = dialog === "edit" && !canModify && canEditRoles;
 
     if (dialog === "edit" && !canModify && !canEditRoles) {
@@ -378,16 +390,28 @@ export function EmployeesManager() {
           href: employeePath(created.id),
         });
       } else if (selected) {
-        if (body && canModify) {
-          await updateEmployee(selected.id, body);
+        if (canRequestReview) {
+          if (!body) {
+            setFormError("No se pudo generar la solicitud de actualización.");
+            return;
+          }
+          await requestEmployeeUpdate(selected.id, body);
+          toast.success(
+            `Solicitud de actualización para "${label}" enviada a revisión.`,
+            { href: employeePath(selected.id) },
+          );
+        } else {
+          if (body && canModify) {
+            await updateEmployee(selected.id, body);
+          }
+          await syncEmployeeRoles(selected.id, selected, tableRoles);
+          toast.success(
+            editingRolesOnly
+              ? `Rol de "${label}" actualizado.`
+              : `Empleado "${label}" actualizado.`,
+            { href: employeePath(selected.id) },
+          );
         }
-        await syncEmployeeRoles(selected.id, selected, tableRoles);
-        toast.success(
-          editingRolesOnly
-            ? `Rol de "${label}" actualizado.`
-            : `Empleado "${label}" actualizado.`,
-          { href: employeePath(selected.id) },
-        );
       }
       closeDialog();
       await loadEmployees();
@@ -402,25 +426,40 @@ export function EmployeesManager() {
   }
 
   async function handleDelete(employee: EmployeeWithRoles, fromDialog = false) {
-    if (!canModify) {
+    if (!canModify && !canRequestReview) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
+    if (isPendingReview(employee)) {
+      toast.error("Este empleado ya tiene una solicitud pendiente de aprobación.");
+      return;
+    }
     const label = employeeLabel(employee);
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar al empleado "${label}"? Puede afectar técnicos o inspecciones vinculadas.`, destructive: true }))) {
+    const message = canRequestReview
+      ? `¿Solicitar eliminación para "${label}"? Un administrador debe aprobar la solicitud.`
+      : `¿Eliminar al empleado "${label}"? Puede afectar técnicos o inspecciones vinculadas.`;
+    if (!(await confirm({ title: "Confirmar", message, destructive: true }))) {
       return;
     }
     setDeletingId(employee.id);
     try {
-      await deleteEmployeeRoles(employee);
-      await deleteEmployee(employee.id);
+      if (canRequestReview) {
+        await requestEmployeeDelete(employee.id);
+      } else {
+        await deleteEmployeeRoles(employee);
+        await deleteEmployee(employee.id);
+      }
       if (fromDialog) closeDialog();
       await loadEmployees();
-      toast.success(`Empleado "${label}" eliminado.`);
+      toast.success(
+        canRequestReview
+          ? `Solicitud de eliminación para "${label}" enviada a revisión.`
+          : `Empleado "${label}" eliminado.`,
+      );
     } catch (err) {
-      const message = getEmployeesErrorMessage(err);
-      setListError(message);
-      toast.error(message);
+      const errorMessage = getEmployeesErrorMessage(err);
+      setListError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setDeletingId(null);
     }
@@ -556,12 +595,13 @@ export function EmployeesManager() {
                                   viewHref={employeePath(employee.id)}
                                   viewLabel={`Ver empleado ${employee.name}`}
                                   onEdit={
-                                    showActions
+                                    showActions && !isPendingReview(employee)
                                       ? () => openEdit(employee)
                                       : undefined
                                   }
                                   onDelete={
-                                    canModify
+                                    (canModify || canRequestReview) &&
+                                    !isPendingReview(employee)
                                       ? () => handleDelete(employee)
                                       : undefined
                                   }
@@ -571,7 +611,14 @@ export function EmployeesManager() {
                             }
                           >
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
-                            {employee.name}
+                            <div className="space-y-1">
+                              <span>{employee.name}</span>
+                              {isPendingReview(employee) && (
+                                <p className="text-xs font-normal text-amber-700 dark:text-amber-300">
+                                  En revisión por administrador
+                                </p>
+                              )}
+                            </div>
                           </td>
                           <td className="px-5 py-3.5 font-mono text-card-foreground">
                             {employee.nationalId}

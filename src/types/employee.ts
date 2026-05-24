@@ -7,6 +7,8 @@ export const EMPLOYEE_TYPES = [
 
 export type EmployeeType = (typeof EMPLOYEE_TYPES)[number];
 
+export type EmployeeReviewStatus = "ACTIVE" | "PENDING_REVIEW";
+
 export type EmployeeResponse = {
   id: number;
   nationalId: string;
@@ -16,6 +18,8 @@ export type EmployeeResponse = {
   createdAt: string;
   type: EmployeeType;
   branchId: number;
+  reviewStatus: EmployeeReviewStatus;
+  activeModificationRequestId: number | null;
 };
 
 export type EmployeeRequest = {

@@ -113,6 +113,12 @@ export const navSections: NavSection[] = [
     items: [
       { title: "Usuarios", href: "/users", icon: Users, roles: ["ADMIN"] },
       {
+        title: "Revisión empleados",
+        href: "/employees/reviews",
+        icon: Contact,
+        roles: ["ADMIN"],
+      },
+      {
         title: "Pruebas MQTT",
         href: "/mqtt-tests",
         icon: Radio,

@@ -69,7 +69,8 @@ export function EmployeeFormDialog({
   const [form, setForm] = useState<EmployeeFormValues>(emptyForm);
 
   const roleOptions = useMemo(() => uiRolesForUser(userRole), [userRole]);
-  const canEditProfile = mode === "create" || userRole === "ADMIN";
+  const canEditProfile =
+    mode === "create" || userRole === "ADMIN" || userRole === "DISTRIBUTOR";
   const canEditRole = canEditProfile || roleOptions.length > 0;
 
   useEffect(() => {

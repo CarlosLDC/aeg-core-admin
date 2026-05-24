@@ -4,6 +4,7 @@ import { ApiError } from "@/types/auth";
 import type { EmployeeRequest, EmployeeResponse } from "@/types/employee";
 
 const BASE = "/api/employees";
+const MOD_REQUESTS_BASE = "/api/employee-modification-requests";
 
 export async function fetchEmployees(): Promise<EmployeeResponse[]> {
   return apiFetch<EmployeeResponse[]>(BASE);
@@ -36,6 +37,23 @@ export async function deleteEmployee(id: number): Promise<void> {
   return apiFetch<void>(`${BASE}/${id}`, { method: "DELETE" });
 }
 
+export async function requestEmployeeUpdate(
+  employeeId: number,
+  proposedData: EmployeeRequest,
+): Promise<void> {
+  return apiFetch<void>(`${MOD_REQUESTS_BASE}/update`, {
+    method: "POST",
+    body: JSON.stringify({ employeeId, proposedData }),
+  });
+}
+
+export async function requestEmployeeDelete(employeeId: number): Promise<void> {
+  return apiFetch<void>(`${MOD_REQUESTS_BASE}/delete`, {
+    method: "POST",
+    body: JSON.stringify({ employeeId }),
+  });
+}
+
 export function getEmployeesErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 403) {
@@ -50,6 +68,9 @@ export function getEmployeesErrorMessage(error: unknown): string {
     if (error.status === 409 || error.status === 400) {
       if (/nationalId|cedula/i.test(error.message)) {
         return "Ya existe un empleado con esa cédula o documento.";
+      }
+      if (/pending|pendiente|review/i.test(error.message)) {
+        return "El empleado ya tiene una solicitud pendiente de aprobación.";
       }
     }
     return error.message;
