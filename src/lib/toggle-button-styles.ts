@@ -123,6 +123,32 @@ export const EMPLOYEE_UI_ROLE_TOGGLE_TONE: Record<EmployeeUiRole, ToggleTone> = 
   tecnico: "emerald",
 };
 
+export const SEGMENTED_TOGGLE_NEUTRAL_ACTIVE =
+  "bg-card text-card-foreground shadow-sm ring-1 ring-border/60";
+
+const SEGMENTED_TOGGLE_TONE_ACTIVE: Record<ToggleTone, string> = {
+  violet:
+    "bg-violet-500/15 text-violet-800 shadow-sm ring-1 ring-violet-500/25 dark:text-violet-200",
+  sky: "bg-sky-500/15 text-sky-800 shadow-sm ring-1 ring-sky-500/25 dark:text-sky-200",
+  amber:
+    "bg-amber-500/15 text-amber-800 shadow-sm ring-1 ring-amber-500/25 dark:text-amber-200",
+  emerald:
+    "bg-emerald-500/15 text-emerald-800 shadow-sm ring-1 ring-emerald-500/25 dark:text-emerald-200",
+  rose: "bg-rose-500/15 text-rose-800 shadow-sm ring-1 ring-rose-500/25 dark:text-rose-200",
+  teal: "bg-teal-500/15 text-teal-800 shadow-sm ring-1 ring-teal-500/25 dark:text-teal-200",
+  indigo:
+    "bg-indigo-500/15 text-indigo-800 shadow-sm ring-1 ring-indigo-500/25 dark:text-indigo-200",
+  orange:
+    "bg-orange-500/15 text-orange-800 shadow-sm ring-1 ring-orange-500/25 dark:text-orange-200",
+  slate:
+    "bg-slate-500/15 text-slate-800 shadow-sm ring-1 ring-slate-500/25 dark:text-slate-200",
+};
+
+export function segmentedToggleActiveClass(tone?: ToggleTone): string {
+  if (!tone) return SEGMENTED_TOGGLE_NEUTRAL_ACTIVE;
+  return SEGMENTED_TOGGLE_TONE_ACTIVE[tone];
+}
+
 export function filterToggleButtonClass(
   active: boolean,
   options?: { className?: string; disabled?: boolean },

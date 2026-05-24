@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 
 type BooleanToggleProps = {
   value: boolean;
@@ -23,43 +23,16 @@ export function BooleanToggle({
   className,
 }: BooleanToggleProps) {
   return (
-    <div
-      role="group"
-      aria-label={ariaLabel ?? `${falseLabel} o ${trueLabel}`}
-      className={cn(
-        "flex h-10 w-full rounded-lg border border-border bg-foreground/[0.03] p-1",
-        disabled && "pointer-events-none opacity-60",
-        className,
-      )}
-    >
-      <button
-        type="button"
-        disabled={disabled}
-        aria-pressed={!value}
-        onClick={() => onChange(false)}
-        className={cn(
-          "flex h-full flex-1 items-center justify-center rounded-md px-3 text-sm font-medium transition-all",
-          !value
-            ? "bg-card text-card-foreground shadow-sm ring-1 ring-border/60"
-            : "text-muted hover:text-foreground",
-        )}
-      >
-        {falseLabel}
-      </button>
-      <button
-        type="button"
-        disabled={disabled}
-        aria-pressed={value}
-        onClick={() => onChange(true)}
-        className={cn(
-          "flex h-full flex-1 items-center justify-center rounded-md px-3 text-sm font-medium transition-all",
-          value
-            ? "bg-teal-500/15 text-teal-800 shadow-sm ring-1 ring-teal-500/25 dark:text-teal-200"
-            : "text-muted hover:text-foreground",
-        )}
-      >
-        {trueLabel}
-      </button>
-    </div>
+    <SegmentedToggle
+      value={value ? "true" : "false"}
+      onChange={(next) => onChange(next === "true")}
+      disabled={disabled}
+      ariaLabel={ariaLabel ?? `${falseLabel} o ${trueLabel}`}
+      className={className}
+      options={[
+        { value: "false", label: falseLabel },
+        { value: "true", label: trueLabel, tone: "teal" },
+      ]}
+    />
   );
 }

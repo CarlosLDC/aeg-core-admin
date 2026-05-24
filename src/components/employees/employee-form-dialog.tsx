@@ -16,9 +16,9 @@ import {
   employeeToFormValues,
   type EmployeeFormValues,
 } from "@/lib/employee-form";
+import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import {
   EMPLOYEE_UI_ROLE_TOGGLE_TONE,
-  toggleButtonClass,
 } from "@/lib/toggle-button-styles";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
@@ -169,7 +169,7 @@ export function EmployeeFormDialog({
               Identidad y contacto
             </legend>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block sm:col-span-2">
+              <label className="block">
                 <FieldLabel required={canEditProfile}>Nombre</FieldLabel>
                 <input
                   type="text"
@@ -213,7 +213,7 @@ export function EmployeeFormDialog({
                 />
               </label>
 
-              <label className="block sm:col-span-2">
+              <label className="block">
                 <FieldLabel required={canEditProfile}>Correo</FieldLabel>
                 <input
                   type="email"
@@ -273,31 +273,17 @@ export function EmployeeFormDialog({
                     </span>
                   </div>
                 ) : (
-                  <div
-                    className="flex flex-wrap gap-2"
-                    role="group"
-                    aria-label="Roles disponibles para el empleado"
-                  >
-                    {roleOptions.map((role) => {
-                      const selected = form.role === role;
-                      return (
-                        <button
-                          key={role}
-                          type="button"
-                          onClick={() => handleRoleChange(role)}
-                          aria-pressed={selected}
-                          disabled={!canEditRole || saving}
-                          className={toggleButtonClass(
-                            selected,
-                            EMPLOYEE_UI_ROLE_TOGGLE_TONE[role],
-                            { disabled: !canEditRole || saving },
-                          )}
-                        >
-                          {EMPLOYEE_UI_ROLE_LABELS[role]}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <SegmentedToggle
+                    value={form.role}
+                    onChange={handleRoleChange}
+                    disabled={!canEditRole || saving}
+                    ariaLabel="Roles disponibles para el empleado"
+                    options={roleOptions.map((role) => ({
+                      value: role,
+                      label: EMPLOYEE_UI_ROLE_LABELS[role],
+                      tone: EMPLOYEE_UI_ROLE_TOGGLE_TONE[role],
+                    }))}
+                  />
                 )}
               </div>
             </div>

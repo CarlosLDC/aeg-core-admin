@@ -4,12 +4,12 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
+import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { RoleBadge } from "@/components/users/role-badge";
 import { BranchSelect } from "@/components/users/branch-select";
 import { PasswordInput } from "@/components/ui/password-input";
 import { ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/roles";
 import {
-  toggleButtonClass,
   USER_ROLE_TOGGLE_TONE,
 } from "@/lib/toggle-button-styles";
 import {
@@ -254,24 +254,23 @@ export function UserFormDialog({
               <legend className="px-1 text-sm font-semibold text-card-foreground">
                 Tipo de acceso
               </legend>
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Tipo de acceso">
-                <button
-                  type="button"
-                  onClick={() => handleAdminToggle(false)}
-                  aria-pressed={!isAdminUser}
-                  className={toggleButtonClass(!isAdminUser, USER_ROLE_TOGGLE_TONE.DISTRIBUTOR)}
-                >
-                  Usuario operativo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleAdminToggle(true)}
-                  aria-pressed={isAdminUser}
-                  className={toggleButtonClass(isAdminUser, USER_ROLE_TOGGLE_TONE.ADMIN)}
-                >
-                  Administrador
-                </button>
-              </div>
+              <SegmentedToggle
+                value={isAdminUser ? "admin" : "operativo"}
+                onChange={(next) => handleAdminToggle(next === "admin")}
+                ariaLabel="Tipo de acceso"
+                options={[
+                  {
+                    value: "operativo",
+                    label: "Usuario operativo",
+                    tone: USER_ROLE_TOGGLE_TONE.DISTRIBUTOR,
+                  },
+                  {
+                    value: "admin",
+                    label: "Administrador",
+                    tone: USER_ROLE_TOGGLE_TONE.ADMIN,
+                  },
+                ]}
+              />
               <p className="text-xs text-muted">
                 {isAdminUser
                   ? ROLE_DESCRIPTIONS.ADMIN
@@ -309,29 +308,16 @@ export function UserFormDialog({
                       <RoleBadge role={availableRoles[0]!} />
                     </div>
                   ) : (
-                    <div
-                      className="flex flex-wrap gap-2"
-                      role="group"
-                      aria-label="Roles disponibles para la sucursal"
-                    >
-                      {availableRoles.map((role) => {
-                        const selected = form.role === role;
-                        return (
-                          <button
-                            key={role}
-                            type="button"
-                            onClick={() => handleRoleChange(role)}
-                            aria-pressed={selected}
-                            className={toggleButtonClass(
-                              selected,
-                              USER_ROLE_TOGGLE_TONE[role],
-                            )}
-                          >
-                            {ROLE_LABELS[role]}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <SegmentedToggle
+                      value={form.role}
+                      onChange={handleRoleChange}
+                      ariaLabel="Roles disponibles para la sucursal"
+                      options={availableRoles.map((role) => ({
+                        value: role,
+                        label: ROLE_LABELS[role],
+                        tone: USER_ROLE_TOGGLE_TONE[role],
+                      }))}
+                    />
                   )}
                 </div>
               </div>
