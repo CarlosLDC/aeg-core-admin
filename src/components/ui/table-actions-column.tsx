@@ -3,20 +3,19 @@ import { cn } from "@/lib/utils";
 
 export const tableActionsHeaderClass = cn(
   "sticky right-0 z-20 min-w-[5.5rem]",
-  "bg-foreground/[0.02] px-5 py-3 font-medium text-right",
-  "shadow-[-6px_0_12px_-6px_rgba(0,0,0,0.06)]",
-  "dark:shadow-[-6px_0_12px_-6px_rgba(0,0,0,0.28)]",
+  "bg-card px-4 py-3 font-medium text-center",
 );
 
 export const tableActionsCellClass = cn(
-  "sticky right-0 z-10 min-w-[5.5rem] bg-card px-5 py-3.5",
-  "shadow-[-6px_0_12px_-6px_rgba(0,0,0,0.06)]",
-  "group-hover:bg-foreground/[0.04]",
-  "dark:shadow-[-6px_0_12px_-6px_rgba(0,0,0,0.28)]",
+  "sticky right-0 z-10 min-w-[5.5rem] bg-card px-4 py-3.5",
 );
 
 export function TableActionsHeader() {
-  return <th className={tableActionsHeaderClass}>Acciones</th>;
+  return (
+    <th className={tableActionsHeaderClass} data-actions-column="header">
+      Acciones
+    </th>
+  );
 }
 
 type TableActionsCellProps = {
@@ -29,6 +28,7 @@ export function TableActionsCell({ children, className }: TableActionsCellProps)
     <td
       className={cn(tableActionsCellClass, className)}
       data-row-click="ignore"
+      data-actions-column="cell"
     >
       {children}
     </td>
