@@ -20,6 +20,7 @@ import {
   rejectEmployeeModificationRequest,
 } from "@/lib/employee-modification-requests-api";
 import { formatDate } from "@/lib/datetime-form";
+import { formatResourceId } from "@/lib/format-resource-id";
 import { formatOperationalRole } from "@/lib/employee-roles";
 import type {
   ModificationRequestDetailResponse,
@@ -175,10 +176,10 @@ export function EmployeeModificationRequestView() {
         label: "Metadatos",
         content: (
           <DetailSection title="Metadatos" layout="quad">
-            <DetailField label="Solicitud" value={`#${row.id}`} mono />
+            <DetailField label="Solicitud" value={formatResourceId(row.id)} mono />
             <DetailField
               label="Empleado"
-              value={`#${row.employeeId}`}
+              value={formatResourceId(row.employeeId)}
               href={employeePath(row.employeeId)}
               mono
             />
@@ -234,7 +235,7 @@ export function EmployeeModificationRequestView() {
     <ResourceViewShell
       backHref="/employees/reviews"
       backLabel="Volver a solicitudes"
-      title={row ? `Solicitud #${row.id}` : "Solicitud de modificación"}
+      title={row ? `Solicitud ${formatResourceId(row.id)}` : "Solicitud de modificación"}
       subtitle={row ? STATUS_LABELS[row.status] : undefined}
       loading={loading}
       error={error}
@@ -265,10 +266,10 @@ export function EmployeeModificationRequestView() {
                 Verifica que no existan dependencias activas antes de aprobar.
               </p>
               <DetailSection title="Metadatos" layout="quad">
-                <DetailField label="Solicitud" value={`#${row.id}`} mono />
+                <DetailField label="Solicitud" value={formatResourceId(row.id)} mono />
                 <DetailField
                   label="Empleado"
-                  value={`#${row.employeeId}`}
+                  value={formatResourceId(row.employeeId)}
                   href={employeePath(row.employeeId)}
                   mono
                 />

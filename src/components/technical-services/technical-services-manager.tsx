@@ -235,7 +235,7 @@ export function TechnicalServicesManager() {
       toast.error(forbiddenMessage("delete", "technicalServices"));
       return;
     }
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el servicio técnico #${row.id}?`, destructive: true }))) return;
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el servicio técnico ${row.id}?`, destructive: true }))) return;
     setDeletingId(row.id);
     try {
       await deleteTechnicalService(row.id);
@@ -392,7 +392,7 @@ export function TechnicalServicesManager() {
                               <td className="px-5 py-3.5" data-row-click="ignore">
                                 <TableRowActionsMenu
                                   viewHref={technicalServicePath(row.id)}
-                                  viewLabel={`Ver servicio técnico #${row.id}`}
+                                  viewLabel={`Ver servicio técnico ${row.id}`}
                                   onEdit={
                                     canModify
                                       ? () => {

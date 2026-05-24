@@ -250,7 +250,7 @@ export function AnnualInspectionsManager() {
       toast.error(forbiddenMessage("delete", "annualInspections"));
       return;
     }
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la inspección #${row.id}?`, destructive: true }))) return;
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la inspección ${row.id}?`, destructive: true }))) return;
     setDeletingId(row.id);
     try {
       await deleteAnnualInspection(row.id);
@@ -407,7 +407,7 @@ export function AnnualInspectionsManager() {
                               <td className="px-5 py-3.5" data-row-click="ignore">
                                 <TableRowActionsMenu
                                   viewHref={annualInspectionPath(row.id)}
-                                  viewLabel={`Ver inspección #${row.id}`}
+                                  viewLabel={`Ver inspección ${row.id}`}
                                   onEdit={
                                     canModify
                                       ? () => {

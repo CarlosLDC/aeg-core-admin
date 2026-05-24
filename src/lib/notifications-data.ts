@@ -148,7 +148,7 @@ export async function loadNotifications(options: {
   }
 
   for (const b of scopedBranches) {
-    const label = b.city?.trim() || b.address?.trim() || `sucursal #${b.id}`;
+    const label = b.city?.trim() || b.address?.trim() || `sucursal ${b.id}`;
     pushNotification(items, {
       id: `branch-${b.id}`,
       kind: "branch",
@@ -291,7 +291,7 @@ export async function loadNotifications(options: {
         id: `distributor-contract-${c.id}`,
         kind: "contract",
         title: "Contrato de distribuidora",
-        message: `Contrato #${c.id} (${status === "active" ? "vigente" : status}).`,
+        message: `Contrato ${c.id} (${status === "active" ? "vigente" : status}).`,
         href: "/contracts",
         createdAt: c.createdAt,
       });
@@ -302,7 +302,7 @@ export async function loadNotifications(options: {
         id: `service-center-contract-${c.id}`,
         kind: "contract",
         title: "Contrato de centro de servicio",
-        message: `Contrato #${c.id} (${status === "active" ? "vigente" : status}).`,
+        message: `Contrato ${c.id} (${status === "active" ? "vigente" : status}).`,
         href: "/contracts",
         createdAt: c.createdAt,
       });

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import { TablePagination } from "@/components/ui/table-pagination";
@@ -197,16 +198,16 @@ export function EmployeeModificationRequestsManager() {
                     </thead>
                     <tbody>
                       {pagination.paginatedItems.map((row) => (
-                        <tr
+                        <ClickableTableRow
                           key={row.id}
-                          className="border-b border-border/70 transition-colors hover:bg-foreground/[0.02]"
+                          href={`/employees/reviews/${row.id}`}
                         >
                           <td className="px-5 py-3.5 font-mono">
                             <Link
                               href={`/employees/reviews/${row.id}`}
                               className="text-accent hover:underline"
                             >
-                              #{row.id}
+                              {row.id}
                             </Link>
                           </td>
                           <td className="px-5 py-3.5">
@@ -239,7 +240,7 @@ export function EmployeeModificationRequestsManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {formatDate(row.createdAt)}
                           </td>
-                        </tr>
+                        </ClickableTableRow>
                       ))}
                     </tbody>
                   </table>

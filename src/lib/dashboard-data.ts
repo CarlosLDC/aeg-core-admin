@@ -196,7 +196,7 @@ function buildActivity(
     })),
     ...branches.map((b) => ({
       id: `branch-${b.id}`,
-      label: `Sucursal #${b.id} en ${b.city || "sin ciudad"}`,
+      label: `Sucursal ${b.id} en ${b.city || "sin ciudad"}`,
       time: formatRelativeTime(b.createdAt),
       sortKey: new Date(b.createdAt).getTime() || 0,
     })),

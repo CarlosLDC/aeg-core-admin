@@ -289,7 +289,7 @@ export function ContractsListPanel({
       return;
     }
     const label = getPartyLabel(contract);
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el contrato #${contract.id} (${label})? Esta acción no se puede deshacer.`, destructive: true }))) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el contrato ${contract.id} (${label})? Esta acción no se puede deshacer.`, destructive: true }))) {
       return;
     }
     setDeletingId(contract.id);
@@ -457,7 +457,7 @@ export function ContractsListPanel({
                               <td className="px-5 py-3.5" data-row-click="ignore">
                                 <TableRowActionsMenu
                                   viewHref={contractHref}
-                                  viewLabel={`Ver contrato #${contract.id}`}
+                                  viewLabel={`Ver contrato ${contract.id}`}
                                   onEdit={
                                     canModify ? () => openEdit(contract) : undefined
                                   }

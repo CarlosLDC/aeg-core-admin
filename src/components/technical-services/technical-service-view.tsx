@@ -124,7 +124,7 @@ export function TechnicalServiceView() {
       toast.error(forbiddenMessage("delete", "technicalServices"));
       return;
     }
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el servicio técnico #${service.id}?`, destructive: true }))) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el servicio técnico ${service.id}?`, destructive: true }))) {
       return;
     }
 
