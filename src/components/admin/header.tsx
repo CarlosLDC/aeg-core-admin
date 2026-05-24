@@ -48,7 +48,7 @@ export function Header({ title, description, onMenuClick }: HeaderProps) {
             </div>
             <div className="hidden min-w-0 sm:block">
               <p className="max-w-[120px] truncate text-sm font-medium text-foreground lg:max-w-[140px]">
-                {user?.username ?? "—"}
+                {user?.displayName ?? "—"}
               </p>
               <p className="truncate text-xs text-muted">
                 {user?.role ? ROLE_LABELS[user.role] : "Conectado"}

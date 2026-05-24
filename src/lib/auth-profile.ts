@@ -3,6 +3,7 @@ import {
   getStoredProfile,
   setStoredProfile,
 } from "@/lib/auth-profile-storage";
+import { isRemembered } from "@/lib/auth-storage";
 import {
   getBranchIdFromToken,
   getDistributorIdFromToken,
@@ -15,10 +16,26 @@ import { ROLES, type Role } from "@/types/user";
 
 export type UserProfile = {
   username: string;
+  name: string | null;
+  email: string;
   role: Role;
   branchId: number | null;
   distributorId: number | null;
 };
+
+function profileFromMe(
+  username: string,
+  me: Awaited<ReturnType<typeof fetchAuthMe>>,
+): Pick<UserProfile, "name" | "email" | "role" | "branchId" | "distributorId"> {
+  const email = me.email?.trim() || me.username?.trim() || username;
+  return {
+    name: me.name?.trim() || null,
+    email,
+    role: me.role,
+    branchId: me.branchId ?? null,
+    distributorId: me.distributorId ?? null,
+  };
+}
 
 export async function resolveAndStoreUserProfile(
   token: string,
@@ -32,16 +49,19 @@ export async function resolveAndStoreUserProfile(
   let role = getRoleFromToken(token);
   let branchId = getBranchIdFromToken(token);
   let distributorId = getDistributorIdFromToken(token);
+  let name: string | null = null;
+  let email = username;
 
-  if (!role || (role === "DISTRIBUTOR" && distributorId == null)) {
-    try {
-      const me = await fetchAuthMe();
-      role = role ?? me.role;
-      branchId = branchId ?? me.branchId;
-      distributorId = distributorId ?? me.distributorId ?? null;
-    } catch {
-      /* /api/auth/me no disponible */
-    }
+  try {
+    const me = await fetchAuthMe();
+    const fromMe = profileFromMe(username, me);
+    role = role ?? fromMe.role;
+    branchId = branchId ?? fromMe.branchId;
+    distributorId = distributorId ?? fromMe.distributorId;
+    name = fromMe.name;
+    email = fromMe.email;
+  } catch {
+    /* /api/auth/me no disponible */
   }
 
   if (!role || !ROLES.includes(role)) {
@@ -53,6 +73,8 @@ export async function resolveAndStoreUserProfile(
 
   const profile: UserProfile = {
     username,
+    name,
+    email,
     role,
     branchId: branchId ?? null,
     distributorId: distributorId ?? null,
@@ -63,6 +85,7 @@ export async function resolveAndStoreUserProfile(
       role: profile.role,
       branchId: profile.branchId,
       distributorId: profile.distributorId,
+      name: profile.name,
     },
     remember,
   );
@@ -79,11 +102,47 @@ export function getProfileFromStorage(
 
   return {
     username,
+    name: stored?.name ?? null,
+    email: username,
     role,
     branchId: stored?.branchId ?? getBranchIdFromToken(token) ?? null,
     distributorId:
       stored?.distributorId ?? getDistributorIdFromToken(token) ?? null,
   };
+}
+
+export async function refreshUserProfileFromApi(
+  username: string,
+  token: string,
+): Promise<UserProfile | null> {
+  const current = getProfileFromStorage(username, token);
+  if (!current) return null;
+
+  try {
+    const me = await fetchAuthMe();
+    const fromMe = profileFromMe(username, me);
+    const profile: UserProfile = {
+      username,
+      name: fromMe.name,
+      email: fromMe.email,
+      role: fromMe.role ?? current.role,
+      branchId: fromMe.branchId ?? current.branchId,
+      distributorId: fromMe.distributorId ?? current.distributorId,
+    };
+
+    setStoredProfile(
+      {
+        role: profile.role,
+        branchId: profile.branchId,
+        distributorId: profile.distributorId,
+        name: profile.name,
+      },
+      isRemembered(),
+    );
+    return profile;
+  } catch {
+    return current;
+  }
 }
 
 export function clearUserProfile() {

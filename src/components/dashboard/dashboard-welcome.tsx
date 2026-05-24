@@ -9,7 +9,7 @@ import type { Role } from "@/types/user";
 import { cn } from "@/lib/utils";
 
 type DashboardWelcomeProps = {
-  username: string;
+  displayName: string;
   role: Role;
   snapshot: DashboardSnapshot;
   onRefresh: () => void;
@@ -31,7 +31,7 @@ const ROLE_CONTEXT: Record<Role, string> = {
 };
 
 export function DashboardWelcome({
-  username,
+  displayName,
   role,
   snapshot,
   onRefresh,
@@ -58,7 +58,7 @@ export function DashboardWelcome({
       <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-medium text-muted">
-            {greetingForHour()}, {username}
+            {greetingForHour()}, {displayName}
           </p>
           <h2 className="mt-1 text-xl font-semibold tracking-tight text-card-foreground sm:text-2xl">
             Panel de control

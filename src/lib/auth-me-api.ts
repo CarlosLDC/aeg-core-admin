@@ -3,6 +3,8 @@ import type { Role } from "@/types/user";
 
 export type AuthMeResponse = {
   id: number;
+  name: string;
+  email: string;
   username: string;
   role: Role;
   branchId: number | null;

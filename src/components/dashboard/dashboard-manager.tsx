@@ -114,7 +114,7 @@ export function DashboardManager() {
     <div className="space-y-6 sm:space-y-8">
       {showWelcome && (
         <DashboardWelcome
-          username={user.username}
+          displayName={user.displayName}
           role={user.role}
           snapshot={snapshot}
           onRefresh={load}

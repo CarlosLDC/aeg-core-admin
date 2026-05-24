@@ -4,6 +4,7 @@ export type StoredUserProfile = {
   role: Role;
   branchId: number | null;
   distributorId: number | null;
+  name: string | null;
 };
 
 const PROFILE_KEY = "aeg-user-profile";
@@ -29,6 +30,7 @@ export function getStoredProfile(): StoredUserProfile | null {
       role: parsed.role,
       branchId: parsed.branchId ?? null,
       distributorId: parsed.distributorId ?? null,
+      name: typeof parsed.name === "string" ? parsed.name : null,
     };
   } catch {
     return null;

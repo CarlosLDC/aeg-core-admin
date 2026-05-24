@@ -11,14 +11,21 @@ import {
 import { useRouter } from "next/navigation";
 import { getSession, login as loginRequest, logout as logoutSession } from "@/lib/auth";
 import { isRemembered } from "@/lib/auth-storage";
+import { refreshUserProfileFromApi } from "@/lib/auth-profile";
 import { setSessionCookie } from "@/lib/session-cookie";
-import { getInitials } from "@/lib/jwt";
+import {
+  initialsFromUserDisplay,
+  resolveUserDisplayName,
+} from "@/lib/user-display";
 import type { LoginRequest } from "@/types/auth";
 import { getLoginErrorMessage } from "@/lib/auth";
 import type { Role } from "@/types/user";
 
 type AuthUser = {
   username: string;
+  name: string | null;
+  email: string;
+  displayName: string;
   initials: string;
   role: Role;
   branchId: number | null;
@@ -34,38 +41,64 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function toAuthUser(session: NonNullable<ReturnType<typeof getSession>>): AuthUser {
+  const displayName = resolveUserDisplayName({
+    name: session.name,
+    email: session.email,
+    username: session.username,
+  });
+
+  return {
+    username: session.username,
+    name: session.name,
+    email: session.email,
+    displayName,
+    initials: initialsFromUserDisplay({
+      name: session.name,
+      email: session.email,
+      username: session.username,
+    }),
+    role: session.role,
+    branchId: session.branchId,
+    distributorId: session.distributorId,
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const syncSession = useCallback(() => {
+  const syncSession = useCallback(async () => {
     const session = getSession();
     if (!session) {
       setUser(null);
       return;
     }
-    setUser({
-      username: session.username,
-      initials: getInitials(session.username),
-      role: session.role,
-      branchId: session.branchId,
-      distributorId: session.distributorId,
-    });
+
+    const profile =
+      session.name?.trim()
+        ? session
+        : (await refreshUserProfileFromApi(session.username, session.token)) ??
+          session;
+
+    setUser(toAuthUser({ ...profile, token: session.token }));
   }, []);
 
   useEffect(() => {
-    syncSession();
-    if (getSession()) {
-      setSessionCookie(isRemembered());
-    }
-    setIsLoading(false);
+    void (async () => {
+      await syncSession();
+      if (getSession()) {
+        setSessionCookie(isRemembered());
+      }
+      setIsLoading(false);
+    })();
   }, [syncSession]);
 
   const login = useCallback(
     async (credentials: LoginRequest, remember: boolean) => {
       await loginRequest(credentials, remember);
-      syncSession();
+      await syncSession();
     },
     [syncSession],
   );
