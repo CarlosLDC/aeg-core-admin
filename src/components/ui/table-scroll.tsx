@@ -14,20 +14,21 @@ export function TableScroll({
   showScrollHint = true,
 }: TableScrollProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [actionsOverlap, setActionsOverlap] = useState(false);
+  const [actionsSticky, setActionsSticky] = useState(false);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const updateOverlap = () => {
-      setActionsOverlap(el.scrollLeft > 0);
+    const updateSticky = () => {
+      setActionsSticky(el.scrollWidth > el.clientWidth + 1);
     };
-    updateOverlap();
-    el.addEventListener("scroll", updateOverlap, { passive: true });
-    window.addEventListener("resize", updateOverlap);
+    updateSticky();
+    window.addEventListener("resize", updateSticky);
+    const observer = new ResizeObserver(updateSticky);
+    observer.observe(el);
     return () => {
-      el.removeEventListener("scroll", updateOverlap);
-      window.removeEventListener("resize", updateOverlap);
+      observer.disconnect();
+      window.removeEventListener("resize", updateSticky);
     };
   }, []);
 
@@ -35,7 +36,7 @@ export function TableScroll({
     <div className={cn("relative", className)}>
       <div
         ref={scrollRef}
-        data-actions-overlap={actionsOverlap ? "true" : "false"}
+        data-actions-sticky={actionsSticky ? "true" : "false"}
         className={cn(
           "overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]",
           "[&_th]:px-3 [&_th]:py-2.5 [&_th]:sm:px-5",
@@ -43,8 +44,10 @@ export function TableScroll({
           "[&_tbody_td]:!py-0 [&_tbody_td]:align-middle [&_tbody_td]:px-3 [&_tbody_td]:sm:px-5",
           "[&_tbody_td:not([data-row-click=ignore])]:overflow-hidden [&_tbody_td:not([data-row-click=ignore])]:whitespace-nowrap",
           "[&_[data-actions-column]]:shadow-none",
-          "data-[actions-overlap=true]:[&_[data-actions-column]]:shadow-[-6px_0_12px_-6px_rgba(0,0,0,0.15)]",
-          "data-[actions-overlap=true]:dark:[&_[data-actions-column]]:shadow-[-6px_0_12px_-6px_rgba(0,0,0,0.35)]",
+          "data-[actions-sticky=false]:[&_[data-actions-column]]:!static",
+          "data-[actions-sticky=false]:[&_[data-actions-column]]:!right-auto",
+          "data-[actions-sticky=true]:[&_[data-actions-column]]:shadow-[-6px_0_12px_-6px_rgba(0,0,0,0.15)]",
+          "data-[actions-sticky=true]:dark:[&_[data-actions-column]]:shadow-[-6px_0_12px_-6px_rgba(0,0,0,0.35)]",
         )}
       >
         {children}
