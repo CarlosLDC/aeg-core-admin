@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { EmployeeRoleBadge } from "@/components/employees/employee-role-badge";
 import {
@@ -238,6 +239,11 @@ export function EmployeeView() {
     ? branchLabelById(formBranches, companies, employee.branchId)
     : "—";
   const pendingReview = employee?.reviewStatus === "PENDING_REVIEW";
+  const isAdmin = user?.role === "ADMIN";
+  const reviewHref =
+    employee?.activeModificationRequestId != null
+      ? `/employees/reviews/${employee.activeModificationRequestId}`
+      : "/employees/reviews";
 
   return (
     <>
@@ -273,11 +279,21 @@ export function EmployeeView() {
             {pendingReview && (
               <p
                 role="status"
-                className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200"
+                className="flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200"
               >
-                Este empleado está en revisión. No se permiten nuevas ediciones ni
-                eliminaciones hasta que un administrador apruebe o rechace la
-                solicitud.
+                <span>
+                  {isAdmin
+                    ? "En revisión: ediciones bloqueadas."
+                    : "En revisión: espera la decisión del administrador."}
+                </span>
+                {isAdmin && (
+                  <Link
+                    href={reviewHref}
+                    className="shrink-0 font-medium text-accent hover:underline"
+                  >
+                    Ver solicitud
+                  </Link>
+                )}
               </p>
             )}
             <DetailSection title="Empleado" layout="quad">

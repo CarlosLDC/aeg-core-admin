@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
+import {
+  DetailSectionsPager,
+  type DetailPagerStep,
+} from "@/components/resource-view/detail-sections-pager";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useConfirm } from "@/context/confirm-provider";
@@ -17,10 +21,6 @@ import {
 } from "@/lib/employee-modification-requests-api";
 import { formatDate } from "@/lib/datetime-form";
 import { formatOperationalRole } from "@/lib/employee-roles";
-import { fetchAnnualInspections } from "@/lib/annual-inspections-api";
-import { fetchDistributorPersons } from "@/lib/distributor-persons-api";
-import { fetchTechnicalServices } from "@/lib/technical-services-api";
-import { fetchTechnicians } from "@/lib/technicians-api";
 import type {
   ModificationRequestDetailResponse,
   ModificationRequestStatus,
@@ -42,13 +42,6 @@ function formatAfterValue(
   return text || "—";
 }
 
-type DeletionImpact = {
-  annualInspectionCount: number;
-  technicalServiceCount: number;
-  hasTechnicianRole: boolean;
-  hasDistributorRole: boolean;
-};
-
 export function EmployeeModificationRequestView() {
   const id = useResourceId();
   const toast = useToast();
@@ -57,9 +50,6 @@ export function EmployeeModificationRequestView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [deletionImpact, setDeletionImpact] = useState<DeletionImpact | null>(null);
-  const [deletionImpactLoading, setDeletionImpactLoading] = useState(false);
-  const [deletionImpactError, setDeletionImpactError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (id == null) {
@@ -81,51 +71,6 @@ export function EmployeeModificationRequestView() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  const loadDeletionImpact = useCallback(async (employeeId: number) => {
-    setDeletionImpactLoading(true);
-    setDeletionImpactError(null);
-    try {
-      const [annualInspections, technicians, technicalServices, distributorPersons] =
-        await Promise.all([
-          fetchAnnualInspections(),
-          fetchTechnicians(),
-          fetchTechnicalServices(),
-          fetchDistributorPersons(),
-        ]);
-      const technician = technicians.find((t) => t.employeeId === employeeId);
-      const distributorPerson = distributorPersons.find(
-        (d) => d.employeeId === employeeId,
-      );
-      setDeletionImpact({
-        annualInspectionCount: annualInspections.filter(
-          (row) => row.employeeId === employeeId,
-        ).length,
-        technicalServiceCount: technician
-          ? technicalServices.filter((row) => row.technicianId === technician.id).length
-          : 0,
-        hasTechnicianRole: Boolean(technician),
-        hasDistributorRole: Boolean(distributorPerson),
-      });
-    } catch {
-      setDeletionImpactError(
-        "No se pudo cargar el impacto de eliminación. Verifica manualmente antes de aprobar.",
-      );
-      setDeletionImpact(null);
-    } finally {
-      setDeletionImpactLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!row || row.actionType !== "DELETE") {
-      setDeletionImpact(null);
-      setDeletionImpactError(null);
-      setDeletionImpactLoading(false);
-      return;
-    }
-    void loadDeletionImpact(row.employeeId);
-  }, [loadDeletionImpact, row]);
 
   const canReview = row?.status === "PENDING";
 
@@ -222,6 +167,69 @@ export function EmployeeModificationRequestView() {
     ];
   }, [row]);
 
+  const detailSteps = useMemo<DetailPagerStep[]>(() => {
+    if (!row || row.actionType !== "UPDATE") return [];
+    return [
+      {
+        id: "metadata",
+        label: "Metadatos",
+        content: (
+          <DetailSection title="Metadatos" layout="quad">
+            <DetailField label="Solicitud" value={`#${row.id}`} mono />
+            <DetailField
+              label="Empleado"
+              value={`#${row.employeeId}`}
+              href={employeePath(row.employeeId)}
+              mono
+            />
+            <DetailField label="Acción" value={row.actionType} />
+            <DetailField label="Estado" value={STATUS_LABELS[row.status]} />
+            <DetailField label="Solicitado por" value={row.requestedByName} />
+            <DetailField label="Fecha" value={formatDate(row.createdAt)} />
+          </DetailSection>
+        ),
+      },
+      {
+        id: "comparison",
+        label: "Comparación",
+        content: (
+          <div className="space-y-4">
+            {!row.proposedData && (
+              <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
+                Esta solicitud no guardó los datos propuestos (registro antiguo o
+                error del servidor). Recházala y vuelve a enviarla tras actualizar
+                el backend.
+              </p>
+            )}
+            <DetailSection title="Comparación Antes vs Después">
+              {comparison.map((field) => (
+                <DetailField
+                  key={field.label}
+                  label={field.label}
+                  value={
+                    <div className="space-y-1 text-sm">
+                      <p>
+                        <span className="text-muted">Antes:</span> {field.before}
+                      </p>
+                      <p>
+                        <span className="text-muted">Después:</span> {field.after}
+                      </p>
+                    </div>
+                  }
+                  href={
+                    field.label === "Sucursal" && row.currentEmployeeSnapshot?.branchId
+                      ? branchPath(row.currentEmployeeSnapshot.branchId)
+                      : undefined
+                  }
+                />
+              ))}
+            </DetailSection>
+          </div>
+        ),
+      },
+    ];
+  }, [comparison, row]);
+
   return (
     <ResourceViewShell
       backHref="/employees/reviews"
@@ -250,111 +258,28 @@ export function EmployeeModificationRequestView() {
               Procesando solicitud…
             </div>
           )}
-
-          <DetailSection title="Metadatos" layout="quad">
-            <DetailField label="Solicitud" value={`#${row.id}`} mono />
-            <DetailField
-              label="Empleado"
-              value={`#${row.employeeId}`}
-              href={employeePath(row.employeeId)}
-              mono
-            />
-            <DetailField label="Acción" value={row.actionType} />
-            <DetailField label="Estado" value={STATUS_LABELS[row.status]} />
-            <DetailField label="Solicitado por" value={row.requestedByName} />
-            <DetailField label="Fecha" value={formatDate(row.createdAt)} />
-          </DetailSection>
-
-          {row.actionType === "UPDATE" && !row.proposedData && (
-            <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
-              Esta solicitud no guardó los datos propuestos (registro antiguo o
-              error del servidor). Recházala y vuelve a enviarla tras actualizar
-              el backend.
-            </p>
-          )}
-
           {row.actionType === "DELETE" ? (
             <>
               <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
                 Esta acción eliminará el empleado y su rol operativo asociado.
-                Revisa los posibles impactos antes de aprobar.
+                Verifica que no existan dependencias activas antes de aprobar.
               </p>
-              {deletionImpactError && (
-                <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300">
-                  {deletionImpactError}
-                </p>
-              )}
-              <DetailSection title="Impacto de eliminación" layout="quad">
+              <DetailSection title="Metadatos" layout="quad">
+                <DetailField label="Solicitud" value={`#${row.id}`} mono />
                 <DetailField
-                  label="Inspecciones anuales asociadas"
-                  value={
-                    deletionImpactLoading
-                      ? "Calculando…"
-                      : String(deletionImpact?.annualInspectionCount ?? "—")
-                  }
+                  label="Empleado"
+                  value={`#${row.employeeId}`}
+                  href={employeePath(row.employeeId)}
+                  mono
                 />
-                <DetailField
-                  label="Servicios técnicos como técnico"
-                  value={
-                    deletionImpactLoading
-                      ? "Calculando…"
-                      : String(deletionImpact?.technicalServiceCount ?? "—")
-                  }
-                />
-                <DetailField
-                  label="Rol técnico actual"
-                  value={
-                    deletionImpactLoading
-                      ? "Calculando…"
-                      : deletionImpact?.hasTechnicianRole
-                        ? "Sí"
-                        : "No"
-                  }
-                />
-                <DetailField
-                  label="Rol distribuidor actual"
-                  value={
-                    deletionImpactLoading
-                      ? "Calculando…"
-                      : deletionImpact?.hasDistributorRole
-                        ? "Sí"
-                        : "No"
-                  }
-                />
+                <DetailField label="Acción" value={row.actionType} />
+                <DetailField label="Estado" value={STATUS_LABELS[row.status]} />
+                <DetailField label="Solicitado por" value={row.requestedByName} />
+                <DetailField label="Fecha" value={formatDate(row.createdAt)} />
               </DetailSection>
-              {!deletionImpactLoading &&
-                deletionImpact &&
-                deletionImpact.annualInspectionCount > 0 && (
-                  <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300">
-                    Este empleado tiene inspecciones anuales asociadas. El backend
-                    bloqueará la aprobación de la eliminación hasta resolverlas.
-                  </p>
-                )}
             </>
           ) : (
-            <DetailSection title="Comparación Antes vs Después">
-              {comparison.map((field) => (
-                <DetailField
-                  key={field.label}
-                  label={field.label}
-                  value={
-                    <div className="space-y-1 text-sm">
-                      <p>
-                        <span className="text-muted">Antes:</span> {field.before}
-                      </p>
-                      <p>
-                        <span className="text-muted">Después:</span> {field.after}
-                      </p>
-                    </div>
-                  }
-                  href={
-                    field.label === "Sucursal" && row.currentEmployeeSnapshot?.branchId
-                      ? branchPath(row.currentEmployeeSnapshot.branchId)
-                      : undefined
-                  }
-                />
-              ))}
-            </DetailSection>
+            <DetailSectionsPager key={row.id} steps={detailSteps} />
           )}
         </div>
       )}
