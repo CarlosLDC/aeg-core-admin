@@ -48,7 +48,13 @@ function isContributorType(value: unknown): value is ContributorType {
   return value === "ordinario" || value === "especial" || value === "formal";
 }
 
-export function ClientModificationRequestView() {
+type ClientModificationRequestViewProps = {
+  backHref?: string;
+};
+
+export function ClientModificationRequestView({
+  backHref = "/clients/reviews",
+}: ClientModificationRequestViewProps) {
   const id = useResourceId();
   const toast = useToast();
   const confirm = useConfirm();
@@ -255,7 +261,7 @@ export function ClientModificationRequestView() {
 
   return (
     <ResourceViewShell
-      backHref="/clients/reviews"
+      backHref={backHref}
       backLabel="Volver a solicitudes"
       title={row ? `Solicitud ${formatResourceId(row.id)}` : "Solicitud de modificación"}
       subtitle={row ? STATUS_LABELS[row.status] : undefined}

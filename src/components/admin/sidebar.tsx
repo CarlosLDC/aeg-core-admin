@@ -289,11 +289,9 @@ export function Sidebar({
                     isActive={isNavItemActive(item, pathname, navItems)}
                     isCollapsed={isCollapsed && !isMobileDrawer}
                     badgeCount={
-                      item.href === "/employees/reviews"
-                        ? pendingReviewCount
-                        : item.href === "/clients/reviews"
-                          ? pendingClientReviewCount
-                          : undefined
+                      item.href === "/reviews"
+                        ? pendingReviewCount + pendingClientReviewCount
+                        : undefined
                     }
                     onBeforeNavigate={persistNavScroll}
                     onNavigate={onMobileClose}

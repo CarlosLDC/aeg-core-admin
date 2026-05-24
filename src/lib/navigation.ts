@@ -112,15 +112,9 @@ export const navSections: NavSection[] = [
     items: [
       { title: "Usuarios", href: "/users", icon: Users, roles: ["ADMIN"] },
       {
-        title: "Revisión empleados",
-        href: "/employees/reviews",
-        icon: Contact,
-        roles: ["ADMIN"],
-      },
-      {
-        title: "Revisión clientes",
-        href: "/clients/reviews",
-        icon: UserRound,
+        title: "Revisiones",
+        href: "/reviews",
+        icon: ClipboardCheck,
         roles: ["ADMIN"],
       },
       {

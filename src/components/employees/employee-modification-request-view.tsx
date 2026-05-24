@@ -43,7 +43,13 @@ function formatAfterValue(
   return text || "—";
 }
 
-export function EmployeeModificationRequestView() {
+type EmployeeModificationRequestViewProps = {
+  backHref?: string;
+};
+
+export function EmployeeModificationRequestView({
+  backHref = "/employees/reviews",
+}: EmployeeModificationRequestViewProps) {
   const id = useResourceId();
   const toast = useToast();
   const confirm = useConfirm();
@@ -233,7 +239,7 @@ export function EmployeeModificationRequestView() {
 
   return (
     <ResourceViewShell
-      backHref="/employees/reviews"
+      backHref={backHref}
       backLabel="Volver a solicitudes"
       title={row ? `Solicitud ${formatResourceId(row.id)}` : "Solicitud de modificación"}
       subtitle={row ? STATUS_LABELS[row.status] : undefined}
