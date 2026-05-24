@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { ClientCreateDialog } from "@/components/clients/client-create-dialog";
+import {
+  ClientEditDialog,
+  type ClientEditValues,
+} from "@/components/clients/client-edit-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
@@ -11,8 +15,15 @@ import {
   pageToolbarButtonClass,
 } from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
+import { useConfirm } from "@/context/confirm-provider";
 import { useToast } from "@/context/toast-provider";
+import {
+  canUpdateBranchRecord,
+  canUpdateCompanyRecord,
+  CATALOG_MODIFY_FORBIDDEN_MESSAGE,
+} from "@/lib/api-permissions";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
@@ -40,8 +51,20 @@ import {
   distributorClientRoles,
   type ClientOnboardingValues,
 } from "@/lib/client-onboarding";
-import { fetchClientByBranchId, fetchClients } from "@/lib/clients-api";
+import {
+  fetchClientByBranchId,
+  fetchClients,
+  getClientsErrorMessage,
+  requestClientDelete,
+  requestClientUpdate,
+} from "@/lib/clients-api";
+import { toClientModificationProposedData } from "@/lib/client-form";
 import { getCatalogErrorMessage } from "@/lib/api-error-message";
+import {
+  getCompaniesErrorMessage,
+  updateCompany,
+} from "@/lib/companies-api";
+import { updateBranch } from "@/lib/branches-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
 import { branchPath, clientPath } from "@/lib/resource-routes";
@@ -51,6 +74,7 @@ import type { CompanyResponse } from "@/types/company";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
+import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { TruncatedText } from "@/components/ui/truncated-text";
 type ClientListRow = {
   key: number;
@@ -66,6 +90,14 @@ type ClientListRow = {
 };
 
 type ClientSortKey = "id" | "createdAt";
+
+function isPendingReview(client: ClientResponse): boolean {
+  return client.reviewStatus === "PENDING_REVIEW";
+}
+
+function clientLabel(row: ClientListRow): string {
+  return `${row.businessName} (${row.rif})`;
+}
 
 function buildClientListRows(
   clients: ClientResponse[],
@@ -108,6 +140,13 @@ function buildClientListRows(
 
 export function ClientsManager() {
   const toast = useToast();
+  const confirm = useConfirm();
+  const { user } = useAuth();
+  const canEditCompany = user ? canUpdateCompanyRecord(user.role) : false;
+  const canEditBranch = user ? canUpdateBranchRecord(user.role) : false;
+  const canRequestReview = user?.role === "DISTRIBUTOR";
+  const canModify = canEditCompany && canEditBranch;
+  const showActions = canModify || canRequestReview;
   const {
     scope,
     loading: scopeLoading,
@@ -121,7 +160,10 @@ export function ClientsManager() {
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [selected, setSelected] = useState<ClientListRow | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [resumeBranchId, setResumeBranchId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("clients");
@@ -331,6 +373,135 @@ export function ClientsManager() {
 
   const canCreate = distributorId != null;
 
+  function openEdit(row: ClientListRow) {
+    if (!row.branch) {
+      toast.error("No se encontró la sucursal asociada a este cliente.");
+      return;
+    }
+    const company = companies.find((c) => c.id === row.branch?.companyId);
+    if (!company) {
+      toast.error("No se encontró la empresa asociada a este cliente.");
+      return;
+    }
+    setSelected(row);
+    setFormError(null);
+    setEditOpen(true);
+  }
+
+  function closeEditDialog() {
+    setEditOpen(false);
+    setSelected(null);
+    setFormError(null);
+  }
+
+  async function handleEdit(values: ClientEditValues) {
+    if (!selected?.branch) {
+      setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+      return;
+    }
+    const company = companies.find((c) => c.id === selected.branch?.companyId);
+    if (!company) {
+      setFormError("No se encontró la empresa asociada a este cliente.");
+      return;
+    }
+    if (isPendingReview(selected.client)) {
+      setFormError("Este cliente tiene una solicitud pendiente de aprobación.");
+      return;
+    }
+
+    setSaving(true);
+    setFormError(null);
+    const label = clientLabel(selected);
+
+    try {
+      if (canRequestReview) {
+        await requestClientUpdate(
+          selected.client.id,
+          toClientModificationProposedData(values, selected.client.distributorId),
+        );
+        closeEditDialog();
+        await loadClients();
+        toast.success(`Solicitud de actualización para "${label}" enviada a revisión.`, {
+          href: clientPath(selected.client.id),
+        });
+        return;
+      }
+      if (!canModify) {
+        setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+        return;
+      }
+      await Promise.all([
+        updateCompany(company.id, {
+          businessName: values.businessName,
+          rif: values.rif,
+          contributorType: values.contributorType,
+        }),
+        updateBranch(selected.branch.id, {
+          companyId: company.id,
+          city: values.city,
+          state: values.state,
+          address: values.address || undefined,
+          contactPersonName: values.contactPersonName.trim() || undefined,
+          phone: values.phone || undefined,
+          email: values.email || undefined,
+        }),
+      ]);
+      closeEditDialog();
+      await loadClients();
+      toast.success(`Cliente "${label}" actualizado.`, {
+        href: clientPath(selected.client.id),
+      });
+    } catch (err) {
+      const message =
+        getCompaniesErrorMessage(err) || getClientsErrorMessage(err);
+      setFormError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete(row: ClientListRow, fromDialog = false) {
+    if (!canModify && !canRequestReview) {
+      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+      return;
+    }
+    if (isPendingReview(row.client)) {
+      toast.error("Este cliente ya tiene una solicitud pendiente de aprobación.");
+      return;
+    }
+    const label = clientLabel(row);
+    const message = canRequestReview
+      ? `¿Solicitar eliminación para "${label}"? Un administrador debe aprobar la solicitud.`
+      : `¿Eliminar el cliente "${label}"?`;
+    if (!(await confirm({ title: "Confirmar", message, destructive: true }))) {
+      return;
+    }
+    setDeletingId(row.client.id);
+    try {
+      if (canRequestReview) {
+        await requestClientDelete(row.client.id);
+      } else {
+        toast.error("La eliminación directa de clientes no está disponible.");
+        return;
+      }
+      if (fromDialog) closeEditDialog();
+      await loadClients();
+      toast.success(`Solicitud de eliminación para "${label}" enviada a revisión.`);
+    } catch (err) {
+      const errorMessage = getClientsErrorMessage(err);
+      setListError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  const selectedCompany =
+    selected?.branch != null
+      ? companies.find((c) => c.id === selected.branch?.companyId)
+      : undefined;
+
   return (
     <div className="space-y-4">
       <PageToolbar
@@ -432,6 +603,13 @@ export function ClientsManager() {
                                 toggleTableSort(current, "createdAt"),
                               ),
                           }}
+                          actions={
+                            showActions ? (
+                              <th className="px-5 py-3 font-medium text-right">
+                                Acciones
+                              </th>
+                            ) : undefined
+                          }
                         >
                         <th className="px-5 py-3 font-medium">Cliente</th>
                         <th className="px-5 py-3 font-medium">RIF</th>
@@ -452,11 +630,44 @@ export function ClientsManager() {
                             showCreatedAt={tableColumns.showCreatedAt}
                             id={row.client.id}
                             createdAt={row.createdAt}
+                            actions={
+                              showActions ? (
+                                <td className="px-5 py-3.5" data-row-click="ignore">
+                                  <TableRowActionsMenu
+                                    viewHref={clientPath(row.client.id)}
+                                    viewLabel={`Ver cliente ${row.businessName}`}
+                                    onEdit={
+                                      !isPendingReview(row.client)
+                                        ? () => openEdit(row)
+                                        : undefined
+                                    }
+                                    onDelete={
+                                      !isPendingReview(row.client)
+                                        ? () => void handleDelete(row)
+                                        : undefined
+                                    }
+                                    deleteLabel={
+                                      canRequestReview
+                                        ? "Solicitar eliminación"
+                                        : undefined
+                                    }
+                                    deleting={deletingId === row.client.id}
+                                  />
+                                </td>
+                              ) : undefined
+                            }
                           >
                           <td className="max-w-[220px] px-5 py-3.5 font-medium text-card-foreground">
-                            <TruncatedText maxClassName="max-w-[200px]">
-                              {row.businessName}
-                            </TruncatedText>
+                            <div className="space-y-1">
+                              <TruncatedText maxClassName="max-w-[200px]">
+                                {row.businessName}
+                              </TruncatedText>
+                              {isPendingReview(row.client) && (
+                                <p className="text-xs font-normal text-amber-700 dark:text-amber-300">
+                                  En revisión por administrador
+                                </p>
+                              )}
+                            </div>
                           </td>
                           <td className="px-5 py-3.5 font-mono text-muted">
                             {row.rif}
@@ -500,6 +711,20 @@ export function ClientsManager() {
         }}
         onSubmit={(values) => void handleCreate(values)}
       />
+
+      {selected?.branch && selectedCompany && editOpen ? (
+        <ClientEditDialog
+          open={editOpen}
+          saving={saving}
+          error={formError}
+          company={selectedCompany}
+          branch={selected.branch}
+          onClose={() => {
+            if (!saving) closeEditDialog();
+          }}
+          onSubmit={(values) => void handleEdit(values)}
+        />
+      ) : null}
     </div>
   );
 }
