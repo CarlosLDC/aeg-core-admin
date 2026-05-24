@@ -155,10 +155,7 @@ export function AnnualInspectionFormDialog({
   }
 
   const assignmentSection = (
-    <fieldset className="space-y-4 rounded-xl border border-border p-4">
-      <legend className="px-1 text-sm font-semibold text-card-foreground">
-        Asignacion
-      </legend>
+    <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <FieldLabel required>Impresora</FieldLabel>
@@ -206,14 +203,11 @@ export function AnnualInspectionFormDialog({
           />
         </div>
       </div>
-    </fieldset>
+    </div>
   );
 
   const resultSection = (
-    <fieldset className="space-y-4 rounded-xl border border-border p-4">
-      <legend className="px-1 text-sm font-semibold text-card-foreground">
-        Resultado de inspeccion
-      </legend>
+    <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <FieldLabel>Fecha de inspeccion</FieldLabel>
@@ -256,14 +250,11 @@ export function AnnualInspectionFormDialog({
           className={formFieldTextareaClass}
         />
       </label>
-    </fieldset>
+    </div>
   );
 
   const evidenceSection = (
-    <fieldset className="space-y-3 rounded-xl border border-border p-4">
-      <legend className="px-1 text-sm font-semibold text-card-foreground">
-        Evidencia
-      </legend>
+    <div className="space-y-3">
       <div className="block">
         <FieldLabel required>Fotos</FieldLabel>
         <PhotoDocumentUpload
@@ -276,7 +267,7 @@ export function AnnualInspectionFormDialog({
           requiredHint="Se requiere al menos una foto."
         />
       </div>
-    </fieldset>
+    </div>
   );
 
   function renderWizardSection() {

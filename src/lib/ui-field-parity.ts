@@ -38,8 +38,8 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
     formPath: "src/components/companies/company-form-dialog.tsx",
     viewPath: "src/components/companies/company-view.tsx",
     fields: [
-      { formLabels: ["Razón social"], viewLabels: ["Razón social"] },
       { formLabels: ["RIF"], viewLabels: ["RIF"] },
+      { formLabels: ["Razón social"], viewLabels: ["Razón social"] },
       {
         formLabels: ["Tipo de contribuyente"],
         viewLabels: ["Tipo de contribuyente"],

@@ -131,7 +131,7 @@ export function CompanyView() {
     }
   }
 
-  const title = company?.businessName || company?.rif || "Empresa";
+  const title = company?.rif || company?.businessName || "Empresa";
 
   return (
     <>
@@ -139,7 +139,7 @@ export function CompanyView() {
         backHref={isDistributor ? "/clients" : "/companies"}
         backLabel={isDistributor ? "Volver a clientes" : "Volver a empresas"}
         title={title}
-        subtitle={company?.rif}
+        subtitle={company?.businessName || undefined}
         loading={loading}
         error={error}
         actions={
@@ -198,12 +198,12 @@ export function CompanyView() {
 
             {detailPanel === "company" ? (
               <DetailSection title="Empresa" layout="quad">
-                <DetailField label="ID" value={String(company.id)} mono />
                 <DetailField label="RIF" value={company.rif} mono />
                 <DetailField
                   label="Razón social"
                   value={company.businessName || "—"}
                 />
+                <DetailField label="ID" value={String(company.id)} mono />
                 <DetailField
                   label="Tipo de contribuyente"
                   value={<ContributorBadge type={company.contributorType} />}

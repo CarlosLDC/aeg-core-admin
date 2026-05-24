@@ -259,7 +259,7 @@ export function CompaniesManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por razón social o RIF…"
+              searchPlaceholder="Buscar por RIF o razón social…"
               resultCount={filteredCompanies.length}
               totalCount={companies.length}
               filters={[
@@ -312,8 +312,8 @@ export function CompaniesManager() {
                             </th>
                           }
                         >
-                        <th className="px-5 py-3 font-medium">Razón social</th>
                         <th className="px-5 py-3 font-medium">RIF</th>
+                        <th className="px-5 py-3 font-medium">Razón social</th>
                         <th className="px-5 py-3 font-medium">Contribuyente</th>
                         </TableRowMetaHeaders>
                       </tr>
@@ -347,6 +347,9 @@ export function CompaniesManager() {
                               </td>
                             }
                           >
+                          <td className="px-5 py-3.5 font-mono text-sm text-card-foreground">
+                            {company.rif}
+                          </td>
                           <td className="max-w-[240px] px-5 py-3.5">
                             <TruncatedText
                               href={companyPath(company.id)}
@@ -354,9 +357,6 @@ export function CompaniesManager() {
                             >
                               {company.businessName || "—"}
                             </TruncatedText>
-                          </td>
-                          <td className="px-5 py-3.5 font-mono text-sm text-card-foreground">
-                            {company.rif}
                           </td>
                           <td className="px-5 py-3.5">
                             <ContributorBadge type={company.contributorType} />

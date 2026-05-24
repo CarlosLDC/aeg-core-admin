@@ -121,24 +121,6 @@ export function CompanyFormDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block">
-            <FieldLabel required>Razón social</FieldLabel>
-            <input
-              type="text"
-              required
-              value={form.businessName}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, businessName: e.target.value }))
-              }
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20"
-            />
-            {fieldErrors.businessName ? (
-              <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
-                {fieldErrors.businessName}
-              </span>
-            ) : null}
-          </label>
-
-          <label className="block">
             <FieldLabel required>RIF</FieldLabel>
             <input
               type="text"
@@ -153,6 +135,24 @@ export function CompanyFormDialog({
             {fieldErrors.rif ? (
               <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
                 {fieldErrors.rif}
+              </span>
+            ) : null}
+          </label>
+
+          <label className="block">
+            <FieldLabel required>Razón social</FieldLabel>
+            <input
+              type="text"
+              required
+              value={form.businessName}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, businessName: e.target.value }))
+              }
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20"
+            />
+            {fieldErrors.businessName ? (
+              <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
+                {fieldErrors.businessName}
               </span>
             ) : null}
           </label>

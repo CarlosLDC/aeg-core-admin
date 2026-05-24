@@ -121,7 +121,7 @@ export function TechnicalServiceFormDialog({
   const inputClass =
     "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
   const disabled = saving || catalogLoading;
-  const sectionClass = "space-y-4 rounded-lg border border-border p-4";
+  const sectionClass = "space-y-4";
   const displayError = stepError ?? error;
 
   function validateStep(targetStep: WizardStep): string | null {
@@ -202,10 +202,7 @@ export function TechnicalServiceFormDialog({
   }
 
   const assignmentSection = (
-    <fieldset className={sectionClass}>
-      <legend className="px-1 text-sm font-semibold text-card-foreground">
-        Asignacion
-      </legend>
+    <div className={sectionClass}>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <FieldLabel required>Impresora</FieldLabel>
@@ -278,14 +275,11 @@ export function TechnicalServiceFormDialog({
           />
         </div>
       </div>
-    </fieldset>
+    </div>
   );
 
   const visitSection = (
-    <fieldset className={sectionClass}>
-      <legend className="px-1 text-sm font-semibold text-card-foreground">
-        Visita
-      </legend>
+    <div className={sectionClass}>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <FieldLabel required>Inicio</FieldLabel>
@@ -382,14 +376,11 @@ export function TechnicalServiceFormDialog({
           ariaLabel="Estado del precinto"
         />
       </div>
-    </fieldset>
+    </div>
   );
 
   const zReportsSection = (
-    <fieldset className={sectionClass}>
-      <legend className="px-1 text-sm font-semibold text-card-foreground">
-        Reportes Z
-      </legend>
+    <div className={sectionClass}>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <FieldLabel required>Z inicial</FieldLabel>
@@ -446,14 +437,11 @@ export function TechnicalServiceFormDialog({
           />
         </label>
       </div>
-    </fieldset>
+    </div>
   );
 
   const sealsSection = (
-    <fieldset className={sectionClass}>
-      <legend className="px-1 text-sm font-semibold text-card-foreground">
-        Precintos
-      </legend>
+    <div className={sectionClass}>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <FieldLabel>Instalado</FieldLabel>
@@ -484,14 +472,11 @@ export function TechnicalServiceFormDialog({
           />
         </div>
       </div>
-    </fieldset>
+    </div>
   );
 
   const evidenceSection = (
-    <fieldset className={sectionClass}>
-      <legend className="px-1 text-sm font-semibold text-card-foreground">
-        Evidencia
-      </legend>
+    <div className={sectionClass}>
       <div className="block">
         <FieldLabel required>Fotos</FieldLabel>
         <PhotoDocumentUpload
@@ -504,7 +489,7 @@ export function TechnicalServiceFormDialog({
           requiredHint="Se requiere al menos una foto."
         />
       </div>
-    </fieldset>
+    </div>
   );
 
   function renderWizardSection() {
