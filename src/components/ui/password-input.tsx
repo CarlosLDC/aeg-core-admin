@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 
 type PasswordInputProps = {
   id?: string;
@@ -38,10 +39,7 @@ export function PasswordInput({
         autoComplete={autoComplete}
         required={required}
         disabled={disabled}
-        className={cn(
-          "w-full rounded-lg border border-border bg-background py-2 pl-3 pr-11 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60",
-          className,
-        )}
+        className={cn(formFieldInputClass, "pr-11", className)}
       />
       <button
         type="button"

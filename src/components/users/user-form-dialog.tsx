@@ -11,6 +11,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/roles";
 import {
   USER_ROLE_TOGGLE_TONE,
+  formFieldInputClass,
 } from "@/lib/toggle-button-styles";
 import {
   eligibleRolesForBranch,
@@ -212,7 +213,7 @@ export function UserFormDialog({
                     setForm((f) => ({ ...f, name: e.target.value }))
                   }
                   placeholder="Ej. María Pérez"
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20"
+                  className={formFieldInputClass}
                 />
               </label>
 
@@ -227,7 +228,7 @@ export function UserFormDialog({
                     setForm((f) => ({ ...f, email: e.target.value }))
                   }
                   placeholder="nombre@empresa.com"
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20"
+                  className={formFieldInputClass}
                 />
               </label>
 

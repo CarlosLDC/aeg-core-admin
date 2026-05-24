@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import {
+  formFieldSegmentedToggleShellClass,
   segmentedToggleActiveClass,
   type ToggleTone,
 } from "@/lib/toggle-button-styles";
@@ -34,7 +35,7 @@ export function SegmentedToggle<T extends string>({
       role="group"
       aria-label={ariaLabel}
       className={cn(
-        "flex h-10 w-full rounded-lg border border-border bg-foreground/[0.03] p-1",
+        formFieldSegmentedToggleShellClass,
         disabled && "pointer-events-none opacity-60",
         className,
       )}

@@ -123,6 +123,16 @@ export const EMPLOYEE_UI_ROLE_TOGGLE_TONE: Record<EmployeeUiRole, ToggleTone> = 
   tecnico: "emerald",
 };
 
+export const PRINTER_PAID_TOGGLE_TONE = {
+  false: "amber",
+  true: "emerald",
+} as const satisfies Record<"false" | "true", ToggleTone>;
+
+export const SEAL_TAMPERED_TOGGLE_TONE = {
+  false: "emerald",
+  true: "rose",
+} as const satisfies Record<"false" | "true", ToggleTone>;
+
 export const SEGMENTED_TOGGLE_NEUTRAL_ACTIVE =
   "bg-card text-card-foreground shadow-sm ring-1 ring-border/60";
 
@@ -148,6 +158,17 @@ export function segmentedToggleActiveClass(tone?: ToggleTone): string {
   if (!tone) return SEGMENTED_TOGGLE_NEUTRAL_ACTIVE;
   return SEGMENTED_TOGGLE_TONE_ACTIVE[tone];
 }
+
+export const FORM_FIELD_HEIGHT_CLASS = "h-10";
+
+export const formFieldInputClass = `${FORM_FIELD_HEIGHT_CLASS} w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60`;
+
+export const formFieldTextareaClass =
+  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60";
+
+export const formFieldSelectTriggerClass = `flex ${FORM_FIELD_HEIGHT_CLASS} w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 text-left text-sm outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60`;
+
+export const formFieldSegmentedToggleShellClass = `flex ${FORM_FIELD_HEIGHT_CLASS} w-full rounded-lg border border-border bg-foreground/[0.03] p-1`;
 
 export function filterToggleButtonClass(
   active: boolean,

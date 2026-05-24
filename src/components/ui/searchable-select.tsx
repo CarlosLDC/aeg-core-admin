@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { SearchablePickerModal } from "@/components/ui/searchable-picker-modal";
+import { formFieldSelectTriggerClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 export type SearchableSelectOption = {
@@ -92,11 +93,7 @@ export function SearchableSelect({
         onClick={openPicker}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className={cn(
-          "flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-left text-sm outline-none transition-shadow",
-          "focus:border-accent focus:ring-2 focus:ring-ring/20",
-          "disabled:cursor-not-allowed disabled:opacity-60",
-        )}
+        className={cn(formFieldSelectTriggerClass, mono && "font-mono")}
       >
         <span className={cn("min-w-0 truncate", mono && "font-mono")}>
           {triggerLabel}

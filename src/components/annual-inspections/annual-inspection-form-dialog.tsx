@@ -8,6 +8,11 @@ import { PhotoDocumentUpload } from "@/components/ui/photo-document-upload";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 import {
+  formFieldInputClass,
+  formFieldTextareaClass,
+  SEAL_TAMPERED_TOGGLE_TONE,
+} from "@/lib/toggle-button-styles";
+import {
   annualInspectionToFormValues,
   emptyAnnualInspectionForm,
   type AnnualInspectionFormValues,
@@ -64,8 +69,7 @@ export function AnnualInspectionFormDialog({
 
   if (!open) return null;
 
-  const inputClass =
-    "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
+  const inputClass = formFieldInputClass;
   const disabled = saving || catalogLoading;
   const displayError = stepError ?? error;
 
@@ -233,6 +237,8 @@ export function AnnualInspectionFormDialog({
             disabled={disabled}
             falseLabel="Intacto"
             trueLabel="Violentado"
+            falseTone={SEAL_TAMPERED_TOGGLE_TONE.false}
+            trueTone={SEAL_TAMPERED_TOGGLE_TONE.true}
             ariaLabel="Estado del precinto"
           />
         </div>
@@ -247,7 +253,7 @@ export function AnnualInspectionFormDialog({
           onChange={(e) =>
             setForm((f) => ({ ...f, notes: e.target.value }))
           }
-          className={inputClass}
+          className={formFieldTextareaClass}
         />
       </label>
     </fieldset>

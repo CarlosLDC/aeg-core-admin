@@ -19,6 +19,7 @@ import {
 import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import {
   EMPLOYEE_UI_ROLE_TOGGLE_TONE,
+  formFieldInputClass,
 } from "@/lib/toggle-button-styles";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
@@ -107,8 +108,7 @@ export function EmployeeFormDialog({
     setForm((f) => ({ ...f, role }));
   }
 
-  const inputClass =
-    "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
+  const inputClass = formFieldInputClass;
   const disabledProfile = !canEditProfile || saving || branchesLoading;
 
   return (

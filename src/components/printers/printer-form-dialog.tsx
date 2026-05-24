@@ -6,6 +6,10 @@ import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import {
+  formFieldInputClass,
+  PRINTER_PAID_TOGGLE_TONE,
+} from "@/lib/toggle-button-styles";
+import {
   SearchableSelect,
   type SearchableSelectOption,
 } from "@/components/ui/searchable-select";
@@ -127,8 +131,7 @@ export function PrinterFormDialog({
     onSubmit(form);
   }
 
-  const inputClass =
-    "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
+  const inputClass = formFieldInputClass;
   const disabled = saving || modelsLoading || catalogLoading;
   const modelSelectDisabled = disabled || modelOptions.length === 0;
 
@@ -334,6 +337,8 @@ export function PrinterFormDialog({
                     disabled={disabled}
                     falseLabel="Pendiente"
                     trueLabel="Pagada"
+                    falseTone={PRINTER_PAID_TOGGLE_TONE.false}
+                    trueTone={PRINTER_PAID_TOGGLE_TONE.true}
                     ariaLabel="Estado de pago de la impresora"
                   />
                 </div>

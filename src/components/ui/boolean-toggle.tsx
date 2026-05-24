@@ -1,6 +1,7 @@
 "use client";
 
 import { SegmentedToggle } from "@/components/ui/segmented-toggle";
+import type { ToggleTone } from "@/lib/toggle-button-styles";
 
 type BooleanToggleProps = {
   value: boolean;
@@ -8,6 +9,8 @@ type BooleanToggleProps = {
   disabled?: boolean;
   falseLabel?: string;
   trueLabel?: string;
+  falseTone?: ToggleTone;
+  trueTone?: ToggleTone;
   /** Etiqueta accesible del grupo */
   ariaLabel?: string;
   className?: string;
@@ -19,6 +22,8 @@ export function BooleanToggle({
   disabled,
   falseLabel = "No",
   trueLabel = "Sí",
+  falseTone,
+  trueTone = "teal",
   ariaLabel,
   className,
 }: BooleanToggleProps) {
@@ -30,8 +35,8 @@ export function BooleanToggle({
       ariaLabel={ariaLabel ?? `${falseLabel} o ${trueLabel}`}
       className={className}
       options={[
-        { value: "false", label: falseLabel },
-        { value: "true", label: trueLabel, tone: "teal" },
+        { value: "false", label: falseLabel, tone: falseTone },
+        { value: "true", label: trueLabel, tone: trueTone },
       ]}
     />
   );

@@ -15,6 +15,7 @@ import { FieldLabel } from "@/components/ui/field-label";
 import { PhotoDocumentUpload } from "@/components/ui/photo-document-upload";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
+import { SEAL_TAMPERED_TOGGLE_TONE } from "@/lib/toggle-button-styles";
 import {
   emptyTechnicalServiceForm,
   technicalServiceToFormValues,
@@ -376,6 +377,8 @@ export function TechnicalServiceFormDialog({
           disabled={disabled}
           falseLabel="Intacto"
           trueLabel="Violentado"
+          falseTone={SEAL_TAMPERED_TOGGLE_TONE.false}
+          trueTone={SEAL_TAMPERED_TOGGLE_TONE.true}
           ariaLabel="Estado del precinto"
         />
       </div>
