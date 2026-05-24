@@ -16,6 +16,7 @@ import {
   rejectEmployeeModificationRequest,
 } from "@/lib/employee-modification-requests-api";
 import { formatDate } from "@/lib/datetime-form";
+import { formatOperationalRole } from "@/lib/employee-roles";
 import type {
   ModificationRequestDetailResponse,
   ModificationRequestStatus,
@@ -26,6 +27,16 @@ const STATUS_LABELS: Record<ModificationRequestStatus, string> = {
   APPROVED: "Aprobada",
   REJECTED: "Rechazada",
 };
+
+function formatAfterValue(
+  value: string | number | undefined | null,
+  actionType: ModificationRequestDetailResponse["actionType"],
+): string {
+  if (actionType === "DELETE") return "Eliminar";
+  if (value == null) return "—";
+  const text = String(value).trim();
+  return text || "—";
+}
 
 export function EmployeeModificationRequestView() {
   const id = useResourceId();
@@ -101,29 +112,43 @@ export function EmployeeModificationRequestView() {
       {
         label: "Nombre",
         before: current?.name ?? "—",
-        after: proposed?.name ?? (row.actionType === "DELETE" ? "Eliminar" : "—"),
+        after: formatAfterValue(proposed?.name, row.actionType),
       },
       {
         label: "Cédula",
         before: current?.nationalId ?? "—",
-        after:
-          proposed?.nationalId ??
-          (row.actionType === "DELETE" ? "Eliminar" : "—"),
+        after: formatAfterValue(proposed?.nationalId, row.actionType),
       },
       {
         label: "Teléfono",
         before: current?.phone ?? "—",
-        after: proposed?.phone ?? (row.actionType === "DELETE" ? "Eliminar" : "—"),
+        after: formatAfterValue(proposed?.phone, row.actionType),
       },
       {
         label: "Correo",
         before: current?.email ?? "—",
-        after: proposed?.email ?? (row.actionType === "DELETE" ? "Eliminar" : "—"),
+        after: formatAfterValue(proposed?.email, row.actionType),
       },
       {
-        label: "Tipo",
+        label: "Rol",
+        before: formatOperationalRole({
+          isTechnician: current?.isTechnician,
+          isDistributorPerson: current?.isDistributorPerson,
+          type: current?.type,
+        }),
+        after:
+          row.actionType === "DELETE"
+            ? "Eliminar"
+            : formatOperationalRole({
+                isTechnician: proposed?.isTechnician,
+                isDistributorPerson: proposed?.isDistributorPerson,
+                type: proposed?.type,
+              }),
+      },
+      {
+        label: "Tipo (empleado)",
         before: current?.type ?? "—",
-        after: proposed?.type ?? (row.actionType === "DELETE" ? "Eliminar" : "—"),
+        after: formatAfterValue(proposed?.type, row.actionType),
       },
       {
         label: "Sucursal",
@@ -180,6 +205,14 @@ export function EmployeeModificationRequestView() {
             <DetailField label="Solicitado por" value={row.requestedByName} />
             <DetailField label="Fecha" value={formatDate(row.createdAt)} />
           </DetailSection>
+
+          {row.actionType === "UPDATE" && !row.proposedData && (
+            <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
+              Esta solicitud no guardó los datos propuestos (registro antiguo o
+              error del servidor). Recházala y vuelve a enviarla tras actualizar
+              el backend.
+            </p>
+          )}
 
           <DetailSection title="Comparación Antes vs Después">
             {comparison.map((field) => (

@@ -57,6 +57,17 @@ export function uiRolesForUser(role: Role): EmployeeUiRole[] {
   });
 }
 
+export function formatOperationalRole(flags: {
+  isTechnician?: boolean;
+  isDistributorPerson?: boolean;
+  type?: string;
+}): string {
+  if (flags.isTechnician) return "Técnico";
+  if (flags.isDistributorPerson) return "Distribuidor";
+  if (flags.type === "tecnico") return "Técnico";
+  return "Distribuidor";
+}
+
 export function resolveEmployeeUiRole(employee: EmployeeWithRoles): EmployeeUiRole {
   if (employee.technician || employee.type === "tecnico") return "tecnico";
   return "distribuidor";

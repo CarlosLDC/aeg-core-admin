@@ -5,6 +5,8 @@ import {
   type EmployeeWithRoles,
 } from "@/lib/employee-roles";
 import type { EmployeeRequest } from "@/types/employee";
+import type { EmployeeModificationProposedData } from "@/types/employee-modification-request";
+import type { EmployeeRoleFormState } from "@/lib/employee-roles";
 
 export type EmployeeFormValues = {
   nationalId: string;
@@ -57,6 +59,17 @@ export function toEmployeePayload(
       branchId,
     },
     tableRoles,
+  };
+}
+
+export function toModificationProposedData(
+  request: EmployeeRequest,
+  tableRoles: EmployeeRoleFormState,
+): EmployeeModificationProposedData {
+  return {
+    ...request,
+    isTechnician: tableRoles.isTechnician,
+    isDistributorPerson: tableRoles.isDistributorPerson,
   };
 }
 

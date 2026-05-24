@@ -25,6 +25,7 @@ import { assertEmployeeInScope } from "@/lib/permissions/scope-access";
 import { branchLabelById } from "@/lib/branches";
 import {
   toEmployeePayload,
+  toModificationProposedData,
   type EmployeeFormValues,
 } from "@/lib/employee-form";
 import {
@@ -155,7 +156,10 @@ export function EmployeeView() {
 
     try {
       if (canRequestReview) {
-        await requestEmployeeUpdate(employee.id, payload.request);
+        await requestEmployeeUpdate(
+          employee.id,
+          toModificationProposedData(payload.request, payload.tableRoles),
+        );
       } else {
         await updateEmployee(employee.id, payload.request);
         await syncEmployeeRoles(employee.id, employee, payload.tableRoles);

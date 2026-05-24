@@ -2,6 +2,7 @@ import { apiFetch } from "@/lib/api";
 import { getCatalogForbiddenMessage } from "@/lib/api-permissions";
 import { ApiError } from "@/types/auth";
 import type { EmployeeRequest, EmployeeResponse } from "@/types/employee";
+import type { EmployeeModificationProposedData } from "@/types/employee-modification-request";
 
 const BASE = "/api/employees";
 const MOD_REQUESTS_BASE = "/api/employee-modification-requests";
@@ -39,7 +40,7 @@ export async function deleteEmployee(id: number): Promise<void> {
 
 export async function requestEmployeeUpdate(
   employeeId: number,
-  proposedData: EmployeeRequest,
+  proposedData: EmployeeModificationProposedData,
 ): Promise<void> {
   return apiFetch<void>(`${MOD_REQUESTS_BASE}/update`, {
     method: "POST",

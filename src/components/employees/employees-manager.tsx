@@ -41,6 +41,7 @@ import { useDistributorIdState } from "@/hooks/use-distributor-id";
 import { useDistributorStaffBranches } from "@/hooks/use-distributor-staff-branches";
 import {
   toEmployeePayload,
+  toModificationProposedData,
   type EmployeeFormValues,
 } from "@/lib/employee-form";
 import {
@@ -316,7 +317,8 @@ export function EmployeesManager() {
       return;
     }
 
-    const editingRolesOnly = dialog === "edit" && !canModify && canEditRoles;
+    const editingRolesOnly =
+      dialog === "edit" && !canModify && canEditRoles && !canRequestReview;
 
     if (dialog === "edit" && !canModify && !canEditRoles) {
       setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
@@ -395,7 +397,10 @@ export function EmployeesManager() {
             setFormError("No se pudo generar la solicitud de actualización.");
             return;
           }
-          await requestEmployeeUpdate(selected.id, body);
+          await requestEmployeeUpdate(
+            selected.id,
+            toModificationProposedData(body, tableRoles),
+          );
           toast.success(
             `Solicitud de actualización para "${label}" enviada a revisión.`,
             { href: employeePath(selected.id) },

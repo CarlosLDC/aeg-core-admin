@@ -1,7 +1,7 @@
 import { apiFetch } from "@/lib/api";
 import { ApiError } from "@/types/auth";
-import type { EmployeeRequest } from "@/types/employee";
 import type {
+  EmployeeModificationProposedData,
   ModificationRequestDetailResponse,
   ModificationRequestListItemResponse,
   ModificationRequestStatus,
@@ -11,24 +11,46 @@ const BASE = "/api/employee-modification-requests";
 
 type RawModificationRequestDetailResponse = Omit<
   ModificationRequestDetailResponse,
-  "proposedData"
+  "proposedData" | "currentEmployeeSnapshot"
 > & {
-  proposedData: unknown;
+  proposedData?: unknown;
+  proposed_data?: unknown;
+  currentEmployeeSnapshot?: ModificationRequestDetailResponse["currentEmployeeSnapshot"];
+  current_employee_snapshot?: ModificationRequestDetailResponse["currentEmployeeSnapshot"];
 };
 
-function normalizeProposedData(raw: unknown): Partial<EmployeeRequest> | null {
-  if (raw == null) return null;
-
-  let candidate: unknown = raw;
-  if (typeof raw === "string") {
-    try {
-      candidate = JSON.parse(raw);
-    } catch {
-      return null;
+function unwrapJsonValue(raw: unknown): unknown {
+  let candidate = raw;
+  for (let depth = 0; depth < 4; depth += 1) {
+    if (candidate == null) return null;
+    if (typeof candidate === "string") {
+      const trimmed = candidate.trim();
+      if (!trimmed) return null;
+      try {
+        candidate = JSON.parse(trimmed);
+        continue;
+      } catch {
+        return null;
+      }
     }
+    if (typeof candidate === "object" && !Array.isArray(candidate)) {
+      const obj = candidate as Record<string, unknown>;
+      const nested = obj.proposedData ?? obj.proposed_data;
+      if (nested != null && nested !== candidate) {
+        candidate = nested;
+        continue;
+      }
+    }
+    break;
   }
+  return candidate;
+}
 
-  if (candidate == null || typeof candidate !== "object") {
+function normalizeProposedData(
+  raw: unknown,
+): Partial<EmployeeModificationProposedData> | null {
+  const candidate = unwrapJsonValue(raw);
+  if (candidate == null || typeof candidate !== "object" || Array.isArray(candidate)) {
     return null;
   }
 
@@ -39,23 +61,72 @@ function normalizeProposedData(raw: unknown): Partial<EmployeeRequest> | null {
       ? undefined
       : Number(rawBranchId);
 
+  const isTechnician = obj.isTechnician ?? obj.is_technician;
+  const isDistributorPerson = obj.isDistributorPerson ?? obj.is_distributor_person;
+
+  const nationalId = String(obj.nationalId ?? obj.national_id ?? "").trim();
+  const name = String(obj.name ?? obj.nombre ?? "").trim();
+  const phone = String(obj.phone ?? obj.telefono ?? "").trim();
+  const email = String(obj.email ?? obj.correo ?? "").trim();
+  const type = (obj.type ?? obj.tipo) as EmployeeModificationProposedData["type"];
+
+  if (!nationalId && !name && !phone && !email && type == null && branchId == null) {
+    return null;
+  }
+
   return {
-    nationalId: (obj.nationalId ?? obj.national_id ?? "") as string,
-    name: (obj.name ?? obj.nombre ?? "") as string,
-    phone: (obj.phone ?? obj.telefono ?? "") as string,
-    email: (obj.email ?? obj.correo ?? "") as string,
-    type: (obj.type ?? obj.tipo) as EmployeeRequest["type"],
+    nationalId: nationalId || undefined,
+    name: name || undefined,
+    phone: phone || undefined,
+    email: email || undefined,
+    type,
     branchId: Number.isFinite(branchId) ? branchId : undefined,
+    isTechnician:
+      typeof isTechnician === "boolean"
+        ? isTechnician
+        : isTechnician === "true"
+          ? true
+          : isTechnician === "false"
+            ? false
+            : undefined,
+    isDistributorPerson:
+      typeof isDistributorPerson === "boolean"
+        ? isDistributorPerson
+        : isDistributorPerson === "true"
+          ? true
+          : isDistributorPerson === "false"
+            ? false
+            : undefined,
+  };
+}
+
+function normalizeSnapshot(
+  raw: RawModificationRequestDetailResponse,
+): ModificationRequestDetailResponse["currentEmployeeSnapshot"] {
+  const snapshot = raw.currentEmployeeSnapshot ?? raw.current_employee_snapshot;
+  if (!snapshot) return null;
+
+  return {
+    ...snapshot,
+    isTechnician: snapshot.isTechnician ?? false,
+    isDistributorPerson: snapshot.isDistributorPerson ?? false,
   };
 }
 
 function normalizeDetail(
   raw: RawModificationRequestDetailResponse,
 ): ModificationRequestDetailResponse {
-  const proposedData = normalizeProposedData(raw.proposedData);
+  const proposedData = normalizeProposedData(raw.proposedData ?? raw.proposed_data);
   return {
-    ...raw,
+    id: raw.id,
+    employeeId: raw.employeeId,
+    actionType: raw.actionType,
+    status: raw.status,
     proposedData,
+    currentEmployeeSnapshot: normalizeSnapshot(raw),
+    requestedById: raw.requestedById,
+    requestedByName: raw.requestedByName,
+    createdAt: raw.createdAt,
   };
 }
 
@@ -80,7 +151,7 @@ export async function approveEmployeeModificationRequest(
   const raw = await apiFetch<RawModificationRequestDetailResponse>(
     `${BASE}/${id}/approve`,
     {
-    method: "POST",
+      method: "POST",
     },
   );
   return normalizeDetail(raw);
@@ -92,7 +163,7 @@ export async function rejectEmployeeModificationRequest(
   const raw = await apiFetch<RawModificationRequestDetailResponse>(
     `${BASE}/${id}/reject`,
     {
-    method: "POST",
+      method: "POST",
     },
   );
   return normalizeDetail(raw);

@@ -16,6 +16,13 @@ export type EmployeeSnapshotResponse = {
   type: EmployeeType;
   branchId: number;
   reviewStatus: EmployeeReviewStatus;
+  isTechnician: boolean;
+  isDistributorPerson: boolean;
+};
+
+export type EmployeeModificationProposedData = EmployeeRequest & {
+  isTechnician?: boolean;
+  isDistributorPerson?: boolean;
 };
 
 export type ModificationRequestListItemResponse = {
@@ -34,7 +41,7 @@ export type ModificationRequestDetailResponse = {
   employeeId: number;
   actionType: ModificationActionType;
   status: ModificationRequestStatus;
-  proposedData: Partial<EmployeeRequest> | null;
+  proposedData: Partial<EmployeeModificationProposedData> | null;
   currentEmployeeSnapshot: EmployeeSnapshotResponse | null;
   requestedById: number;
   requestedByName: string;
