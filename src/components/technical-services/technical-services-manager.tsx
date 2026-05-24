@@ -17,6 +17,10 @@ import { filterAllOption } from "@/lib/table-filter-options";
 import { technicalServicePath } from "@/lib/resource-routes";
 import { hrefForEmployee, hrefForPrinter } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
+import {
+  TableActionsCell,
+  TableActionsHeader,
+} from "@/components/ui/table-actions-column";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/context/auth-provider";
@@ -360,11 +364,7 @@ export function TechnicalServicesManager() {
                                 toggleTableSort(current, "createdAt"),
                               ),
                           }}
-                          actions={
-                            <th className="px-5 py-3 font-medium text-right">
-                              Acciones
-                            </th>
-                          }
+                          actions={<TableActionsHeader />}
                         >
                         <th className="px-5 py-3 font-medium">Impresora</th>
                         <th className="px-5 py-3 font-medium">Técnico</th>
@@ -406,7 +406,7 @@ export function TechnicalServicesManager() {
                             id={row.id}
                             createdAt={row.createdAt}
                             actions={
-                              <td className="px-5 py-3.5" data-row-click="ignore">
+                              <TableActionsCell>
                                 <TableRowActionsMenu
                                   viewHref={technicalServicePath(row.id)}
                                   viewLabel={`Ver servicio técnico #${row.id}`}
@@ -424,7 +424,7 @@ export function TechnicalServicesManager() {
                                   }
                                   deleting={deletingId === row.id}
                                 />
-                              </td>
+                              </TableActionsCell>
                             }
                           >
                           <td className="max-w-[140px] px-5 py-3.5 font-mono text-card-foreground">

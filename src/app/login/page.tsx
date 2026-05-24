@@ -107,7 +107,7 @@ function LoginForm() {
             )}
 
             <label className="block">
-              <FieldLabel required>Usuario</FieldLabel>
+              <FieldLabel>Usuario</FieldLabel>
               <div className="relative">
                 <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
                 <input
@@ -124,7 +124,7 @@ function LoginForm() {
             </label>
 
             <label className="block">
-              <FieldLabel required>Contraseña</FieldLabel>
+              <FieldLabel>Contraseña</FieldLabel>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
                 <input

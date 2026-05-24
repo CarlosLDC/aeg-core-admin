@@ -74,6 +74,10 @@ import { TruncatedText } from "@/components/ui/truncated-text";
 import { employeePath } from "@/lib/resource-routes";
 import { hrefForBranch } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
+import {
+  TableActionsCell,
+  TableActionsHeader,
+} from "@/components/ui/table-actions-column";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
 type EmployeeSortKey = "id" | "createdAt";
@@ -548,11 +552,7 @@ export function EmployeesManager() {
                                 toggleTableSort(current, "createdAt"),
                               ),
                           }}
-                          actions={
-                            <th className="px-5 py-3 font-medium text-right">
-                              Acciones
-                            </th>
-                          }
+                          actions={<TableActionsHeader />}
                         >
                         <th className="px-5 py-3 font-medium">Nombre</th>
                         <th className="px-5 py-3 font-medium">Cédula</th>
@@ -574,7 +574,7 @@ export function EmployeesManager() {
                             id={employee.id}
                             createdAt={employee.createdAt}
                             actions={
-                              <td className="px-5 py-3.5" data-row-click="ignore">
+                              <TableActionsCell>
                                 <TableRowActionsMenu
                                   viewHref={employeePath(employee.id)}
                                   viewLabel={`Ver empleado ${employee.name}`}
@@ -590,7 +590,7 @@ export function EmployeesManager() {
                                   }
                                   deleting={deletingId === employee.id}
                                 />
-                              </td>
+                              </TableActionsCell>
                             }
                           >
                           <td className="px-5 py-3.5 font-medium text-card-foreground">

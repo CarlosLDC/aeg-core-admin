@@ -33,6 +33,10 @@ import {
   ClickableTableRow,
   stopTableRowClick,
 } from "@/components/ui/clickable-table-row";
+import {
+  TableActionsCell,
+  TableActionsHeader,
+} from "@/components/ui/table-actions-column";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
@@ -430,11 +434,7 @@ export function ContractsListPanel({
                                 toggleTableSort(current, "createdAt"),
                               ),
                           }}
-                          actions={
-                            <th className="px-5 py-3 font-medium text-right">
-                              Acciones
-                            </th>
-                          }
+                          actions={<TableActionsHeader />}
                         >
                         <th className="px-5 py-3 font-medium">{partyColumn}</th>
                         <SortableTableHeader
@@ -468,7 +468,7 @@ export function ContractsListPanel({
                             id={contract.id}
                             createdAt={contract.createdAt}
                             actions={
-                              <td className="px-5 py-3.5" data-row-click="ignore">
+                              <TableActionsCell>
                                 <TableRowActionsMenu
                                   viewHref={contractHref}
                                   viewLabel={`Ver contrato #${contract.id}`}
@@ -482,7 +482,7 @@ export function ContractsListPanel({
                                   }
                                   deleting={deletingId === contract.id}
                                 />
-                              </td>
+                              </TableActionsCell>
                             }
                           >
                           <td className="max-w-[220px] px-5 py-3.5 font-medium text-card-foreground">

@@ -86,6 +86,10 @@ import {
   hrefForPrinterModel,
 } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
+import {
+  TableActionsCell,
+  TableActionsHeader,
+} from "@/components/ui/table-actions-column";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
 type PrinterSortKey = "price" | "installationDate" | "id" | "createdAt";
@@ -670,11 +674,7 @@ export function PrintersManager() {
                                 toggleTableSort(current, "createdAt"),
                               ),
                           }}
-                          actions={
-                            <th className="px-5 py-3 font-medium text-right">
-                              Acciones
-                            </th>
-                          }
+                          actions={<TableActionsHeader />}
                         >
                         <th className="px-5 py-3 font-medium">Serial</th>
                         <th className="px-5 py-3 font-medium">Modelo</th>
@@ -716,7 +716,7 @@ export function PrintersManager() {
                             id={printer.id}
                             createdAt={printer.createdAt}
                             actions={
-                              <td className="px-5 py-3.5" data-row-click="ignore">
+                              <TableActionsCell>
                                 <TableRowActionsMenu
                                   viewHref={printerPath(printer.id)}
                                   viewLabel={`Ver impresora ${printer.fiscalSerial}`}
@@ -730,7 +730,7 @@ export function PrintersManager() {
                                   }
                                   deleting={deletingId === printer.id}
                                 />
-                              </td>
+                              </TableActionsCell>
                             }
                           >
                           <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">

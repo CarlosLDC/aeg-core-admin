@@ -28,7 +28,7 @@ export function TableScroll({
       </div>
       {showScrollHint && (
         <div
-          className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-card to-transparent sm:hidden"
+          className="pointer-events-none absolute inset-y-0 right-[5.5rem] w-6 bg-gradient-to-l from-card to-transparent sm:hidden"
           aria-hidden
         />
       )}

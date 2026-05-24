@@ -72,6 +72,10 @@ import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 import { sealPath } from "@/lib/resource-routes";
 import { hrefForPrinter } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
+import {
+  TableActionsCell,
+  TableActionsHeader,
+} from "@/components/ui/table-actions-column";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
 type SealSortKey = "id" | "createdAt" | "installationDate" | "removalDate";
@@ -597,11 +601,7 @@ export function SealsManager() {
                                 toggleTableSort(current, "createdAt"),
                               ),
                           }}
-                          actions={
-                            <th className="px-5 py-3 font-medium text-right">
-                              Acciones
-                            </th>
-                          }
+                          actions={<TableActionsHeader />}
                         >
                           <th className="px-5 py-3 font-medium">Serial</th>
                           <th className="px-5 py-3 font-medium">Impresora</th>
@@ -646,7 +646,7 @@ export function SealsManager() {
                             id={seal.id}
                             createdAt={seal.createdAt}
                             actions={
-                              <td className="px-5 py-3.5" data-row-click="ignore">
+                              <TableActionsCell>
                                 <TableRowActionsMenu
                                   viewHref={sealPath(seal.id)}
                                   viewLabel={`Ver precinto ${seal.serial}`}
@@ -658,7 +658,7 @@ export function SealsManager() {
                                   }
                                   deleting={deletingId === seal.id}
                                 />
-                              </td>
+                              </TableActionsCell>
                             }
                           >
                           <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
