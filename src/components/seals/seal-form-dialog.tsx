@@ -125,7 +125,7 @@ export function SealFormDialog({
             <legend className="px-1 text-sm font-semibold text-card-foreground">
               Identificación
             </legend>
-            <label className="block sm:max-w-md">
+            <label className="block">
               <FieldLabel required>Serial</FieldLabel>
               <input
                 type="text"

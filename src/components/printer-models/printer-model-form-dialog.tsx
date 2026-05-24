@@ -142,7 +142,7 @@ export function PrinterModelFormDialog({
                 />
               </label>
             </div>
-            <label className="block sm:max-w-xs">
+            <label className="block">
               <FieldLabel required>Precio</FieldLabel>
               <input
                 type="number"
