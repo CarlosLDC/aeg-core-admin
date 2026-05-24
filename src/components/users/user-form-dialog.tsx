@@ -241,11 +241,6 @@ export function UserFormDialog({
                 />
               </label>
             </div>
-            {mode === "create" && (
-              <p className="text-xs text-muted">
-                Esta será la clave para iniciar sesión.
-              </p>
-            )}
           </fieldset>
 
           <fieldset className="space-y-4 rounded-xl border border-border p-4">
@@ -325,11 +320,6 @@ export function UserFormDialog({
               <p className="text-xs text-amber-700 dark:text-amber-300">
                 No hay sucursales con roles operativos habilitados. Asigna rol de
                 distribuidor o centro de servicio en Sucursales.
-              </p>
-            )}
-            {!form.branchId && (
-              <p className="text-xs text-amber-700 dark:text-amber-300">
-                La sucursal es obligatoria.
               </p>
             )}
           </fieldset>

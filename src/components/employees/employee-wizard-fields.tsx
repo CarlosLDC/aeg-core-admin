@@ -119,8 +119,13 @@ export function EmployeeWizardFields({
         <div className="block">
           <FieldLabel required={!lockBranch}>Sucursal</FieldLabel>
           {lockBranch ? (
-            <p className="rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-sm text-muted">
-              Sucursal de tu distribuidora (personal interno)
+            <p
+              className="flex h-10 items-center rounded-lg border border-border bg-foreground/[0.02] px-3 text-sm text-muted"
+              title="Sucursal de tu distribuidora (personal interno)"
+            >
+              <span className="block truncate">
+                Sucursal de tu distribuidora (personal interno)
+              </span>
             </p>
           ) : (
             <BranchSelect

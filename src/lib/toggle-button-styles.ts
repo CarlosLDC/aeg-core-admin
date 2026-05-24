@@ -104,7 +104,7 @@ export const TOGGLE_CARD_INACTIVE =
   "border-border bg-background hover:border-border/80 hover:bg-muted/20";
 
 export const BRANCH_ROLE_TOGGLE_TONE = {
-  isDistributor: "violet",
+  isDistributor: "rose",
   isClient: "sky",
   isServiceCenter: "amber",
   isHeadquarters: "emerald",
@@ -112,7 +112,7 @@ export const BRANCH_ROLE_TOGGLE_TONE = {
 
 export const USER_ROLE_TOGGLE_TONE: Record<Role, ToggleTone> = {
   ADMIN: "violet",
-  DISTRIBUTOR: "sky",
+  DISTRIBUTOR: "rose",
   TECHNICIAN: "emerald",
   SERVICE_CENTER: "amber",
 };

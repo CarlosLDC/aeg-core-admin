@@ -1,21 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { ClientEditDialog, type ClientEditValues } from "@/components/clients/client-edit-dialog";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ClientEditDialog,
+  type ClientEditValues,
+} from "@/components/clients/client-edit-dialog";
 import { ContributorBadge } from "@/components/companies/contributor-badge";
 import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
+import { DetailSectionsPager } from "@/components/resource-view/detail-sections-pager";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
-import { canUpdateBranchRecord, canUpdateCompanyRecord, CATALOG_MODIFY_FORBIDDEN_MESSAGE } from "@/lib/api-permissions";
-import { fetchBranchById } from "@/lib/branches-api";
+import {
+  canUpdateBranchRecord,
+  canUpdateCompanyRecord,
+  CATALOG_MODIFY_FORBIDDEN_MESSAGE,
+} from "@/lib/api-permissions";
+import { fetchBranchById, updateBranch } from "@/lib/branches-api";
 import {
   fetchClientById,
   getClientsErrorMessage,
 } from "@/lib/clients-api";
-import { fetchCompanyById, getCompaniesErrorMessage, updateCompany } from "@/lib/companies-api";
-import { updateBranch } from "@/lib/branches-api";
+import {
+  fetchCompanyById,
+  getCompaniesErrorMessage,
+  updateCompany,
+} from "@/lib/companies-api";
 import { formatDate } from "@/lib/datetime-form";
 import { useResourceId } from "@/hooks/use-resource-id";
 import type { BranchResponse } from "@/types/branch";
@@ -93,6 +104,73 @@ export function ClientView() {
   const state = client?.branchState?.trim() || branch?.state || "—";
   const title = businessName !== "Cliente" ? businessName : `${city}, ${state}`;
 
+  const detailSteps = useMemo(() => {
+    if (!client) return [];
+
+    return [
+      {
+        id: "client",
+        label: "Cliente",
+        content: (
+          <DetailSection title="Cliente" layout="quad">
+            <DetailField label="ID" value={String(client.id)} mono />
+            <DetailField
+              label="Registrado"
+              value={formatDate(branch?.createdAt ?? client.createdAt)}
+            />
+            <DetailField label="ID sucursal" value={String(client.branchId)} mono />
+            <DetailField label="RIF" value={rif} mono />
+          </DetailSection>
+        ),
+      },
+      {
+        id: "company",
+        label: "Empresa",
+        content: (
+          <DetailSection title="Empresa" layout="quad">
+            <DetailField label="Razón social" value={businessName} />
+            <DetailField
+              label="Tipo de contribuyente"
+              value={
+                company ? <ContributorBadge type={company.contributorType} /> : "—"
+              }
+            />
+          </DetailSection>
+        ),
+      },
+      {
+        id: "location",
+        label: "Ubicación",
+        content: (
+          <DetailSection title="Ubicación y contacto" layout="quad">
+            <DetailField label="Estado" value={state} />
+            <DetailField label="Ciudad" value={city} />
+            <DetailField
+              label="Dirección"
+              value={branch?.address?.trim() || "—"}
+            />
+            <DetailField
+              label="Persona de contacto"
+              value={branch?.contactPersonName?.trim() || "—"}
+            />
+            <DetailField
+              label="Teléfono"
+              value={client.branchPhone?.trim() || branch?.phone?.trim() || "—"}
+            />
+            <DetailField
+              label="Correo"
+              value={client.branchEmail?.trim() || branch?.email?.trim() || "—"}
+            />
+            <DetailField
+              label="Casa matriz"
+              value={branch?.isHeadquarters ? "Sí" : "No"}
+            />
+          </DetailSection>
+        ),
+      },
+    ];
+  }, [client, branch, company, businessName, rif, city, state]);
+
   async function handleEdit(values: ClientEditValues) {
     if (!client || !branch || !company || !canEditCompany || !canEditBranch) {
       setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
@@ -151,56 +229,9 @@ export function ClientView() {
           ) : undefined
         }
       >
-        {client && (
-          <div className="space-y-4">
-            <DetailSection title="Cliente" layout="quad">
-              <DetailField label="ID cliente" value={String(client.id)} mono />
-              <DetailField label="ID sucursal" value={String(client.branchId)} mono />
-              <DetailField label="RIF" value={rif} mono />
-              <DetailField label="Razón social" value={businessName} />
-              <DetailField
-                label="Tipo de contribuyente"
-                value={
-                  company ? <ContributorBadge type={company.contributorType} /> : "—"
-                }
-              />
-              <DetailField
-                label="Registrado"
-                value={formatDate(branch?.createdAt ?? client.createdAt)}
-              />
-            </DetailSection>
-            <DetailSection title="Ubicación y contacto" layout="quad">
-              <DetailField label="Estado" value={state} />
-              <DetailField label="Ciudad" value={city} />
-              <DetailField
-                label="Dirección"
-                value={branch?.address?.trim() || "—"}
-              />
-              <DetailField
-                label="Persona de contacto"
-                value={branch?.contactPersonName?.trim() || "—"}
-              />
-              <DetailField
-                label="Teléfono"
-                value={
-                  client.branchPhone?.trim() || branch?.phone?.trim() || "—"
-                }
-              />
-              <DetailField
-                label="Correo"
-                value={
-                  client.branchEmail?.trim() || branch?.email?.trim() || "—"
-                }
-              />
-              <DetailField
-                label="Casa matriz"
-                value={branch?.isHeadquarters ? "Sí" : "No"}
-              />
-            </DetailSection>
-          </div>
-        )}
+        {client ? <DetailSectionsPager key={client.id} steps={detailSteps} /> : null}
       </ResourceViewShell>
-      {client && branch && company && editOpen && (
+      {client && branch && company && editOpen ? (
         <ClientEditDialog
           open={editOpen}
           saving={saving}
@@ -212,7 +243,7 @@ export function ClientView() {
           }}
           onSubmit={handleEdit}
         />
-      )}
+      ) : null}
     </>
   );
 }

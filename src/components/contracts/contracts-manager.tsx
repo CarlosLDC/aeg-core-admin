@@ -24,9 +24,10 @@ import {
   hrefForDistributor,
   hrefForServiceCenter,
 } from "@/lib/table-foreign-hrefs";
-import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
 import { filterTabToggleClass } from "@/lib/toggle-button-styles";
-import { cn } from "@/lib/utils";
+
+const contractTabButtonClass =
+  "inline-flex min-h-10 min-w-0 flex-1 items-center justify-center rounded-lg px-2 py-2 text-center text-xs font-medium transition-colors sm:flex-none sm:px-4 sm:text-sm sm:whitespace-nowrap";
 
 type Tab = "distributor" | "serviceCenter";
 
@@ -151,9 +152,9 @@ export function ContractsManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-center">
+      <div className="flex w-full justify-center">
         <div
-          className="inline-flex gap-1 rounded-lg border border-border bg-card p-1"
+          className="flex w-full max-w-md gap-1 rounded-lg border border-border bg-card p-1 sm:inline-flex sm:w-auto sm:max-w-none"
           role="tablist"
           aria-label="Tipo de contrato"
         >
@@ -164,7 +165,7 @@ export function ContractsManager() {
             onClick={() => setTab("distributor")}
             className={filterTabToggleClass(
               tab === "distributor",
-              cn(pageToolbarButtonClass, "w-auto"),
+              contractTabButtonClass,
             )}
           >
             Distribuidora
@@ -176,7 +177,7 @@ export function ContractsManager() {
             onClick={() => setTab("serviceCenter")}
             className={filterTabToggleClass(
               tab === "serviceCenter",
-              cn(pageToolbarButtonClass, "w-auto"),
+              contractTabButtonClass,
             )}
           >
             Centro de servicio
