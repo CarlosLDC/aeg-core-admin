@@ -269,7 +269,7 @@ export function UserFormDialog({
                   aria-pressed={isAdminUser}
                   className={toggleButtonClass(isAdminUser, USER_ROLE_TOGGLE_TONE.ADMIN)}
                 >
-                  Administrado
+                  Administrador
                 </button>
               </div>
               <p className="text-xs text-muted">

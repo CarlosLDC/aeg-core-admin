@@ -7,6 +7,7 @@ import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { BranchSelect } from "@/components/users/branch-select";
 import {
   EMPLOYEE_UI_ROLE_LABELS,
+  EMPLOYEE_UI_ROLE_STYLES,
   uiRolesForUser,
   type EmployeeUiRole,
   type EmployeeWithRoles,
@@ -15,6 +16,10 @@ import {
   employeeToFormValues,
   type EmployeeFormValues,
 } from "@/lib/employee-form";
+import {
+  EMPLOYEE_UI_ROLE_TOGGLE_TONE,
+  toggleButtonClass,
+} from "@/lib/toggle-button-styles";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { Role } from "@/types/user";
@@ -27,9 +32,7 @@ type EmployeeFormDialogProps = {
   branches: BranchResponse[];
   companies: CompanyResponse[];
   branchesLoading: boolean;
-  /** Sucursal por defecto al crear (p. ej. sucursal de la distribuidora). */
   defaultBranchId?: string;
-  /** Impide cambiar sucursal (distribuidor con una sola sucursal propia). */
   lockBranch?: boolean;
   open: boolean;
   saving: boolean;
@@ -100,6 +103,10 @@ export function EmployeeFormDialog({
     onSubmit(form);
   }
 
+  function handleRoleChange(role: EmployeeUiRole) {
+    setForm((f) => ({ ...f, role }));
+  }
+
   const inputClass =
     "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
   const disabledProfile = !canEditProfile || saving || branchesLoading;
@@ -109,6 +116,7 @@ export function EmployeeFormDialog({
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="employee-form-title"
     >
       <button
         type="button"
@@ -116,14 +124,19 @@ export function EmployeeFormDialog({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
+      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-card-foreground">
+            <h2
+              id="employee-form-title"
+              className="text-lg font-semibold text-card-foreground"
+            >
               {mode === "create" ? "Nuevo empleado" : "Editar empleado"}
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Completa identidad, contacto y asignación operativa del empleado.
+              {mode === "create"
+                ? "Define identidad, contacto y asignación operativa del empleado."
+                : "Actualiza identidad, contacto y asignación operativa."}
             </p>
           </div>
           <button
@@ -148,15 +161,30 @@ export function EmployeeFormDialog({
           <fieldset
             disabled={disabledProfile}
             className={cn(
-              "rounded-xl border border-border p-3",
+              "space-y-4 rounded-xl border border-border p-4",
               disabledProfile && "opacity-80",
             )}
           >
-            <legend className="mb-2 px-1 text-sm font-semibold text-card-foreground">
-              Datos personales
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Identidad y contacto
             </legend>
-            <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-              <label className="block min-w-0">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block sm:col-span-2">
+                <FieldLabel required={canEditProfile}>Nombre</FieldLabel>
+                <input
+                  type="text"
+                  required={canEditProfile}
+                  autoComplete="name"
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, name: e.target.value }))
+                  }
+                  placeholder="Ej. María Pérez"
+                  className={inputClass}
+                />
+              </label>
+
+              <label className="block">
                 <FieldLabel required={canEditProfile}>
                   Cédula / documento
                 </FieldLabel>
@@ -171,24 +199,12 @@ export function EmployeeFormDialog({
                 />
               </label>
 
-              <label className="block min-w-0">
-                <FieldLabel required={canEditProfile}>Nombre</FieldLabel>
-                <input
-                  type="text"
-                  required={canEditProfile}
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, name: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
-
-              <label className="block min-w-0">
+              <label className="block">
                 <FieldLabel required={canEditProfile}>Teléfono</FieldLabel>
                 <input
                   type="tel"
                   required={canEditProfile}
+                  autoComplete="tel"
                   value={form.phone}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, phone: e.target.value }))
@@ -196,30 +212,33 @@ export function EmployeeFormDialog({
                   className={inputClass}
                 />
               </label>
-              <label className="block min-w-0">
+
+              <label className="block sm:col-span-2">
                 <FieldLabel required={canEditProfile}>Correo</FieldLabel>
                 <input
                   type="email"
                   required={canEditProfile}
+                  autoComplete="email"
                   value={form.email}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, email: e.target.value }))
                   }
+                  placeholder="nombre@empresa.com"
                   className={inputClass}
                 />
               </label>
             </div>
           </fieldset>
 
-          <fieldset className="rounded-xl border border-border p-3">
-            <legend className="mb-2 px-1 text-sm font-semibold text-card-foreground">
-              Asignación
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Asignación operativa
             </legend>
-            <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2 md:items-start">
+            <div className="grid gap-4 md:grid-cols-2 md:items-start">
               <div className="min-w-0">
                 <FieldLabel required={!lockBranch}>Sucursal</FieldLabel>
                 {lockBranch ? (
-                  <p className="rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-sm text-muted">
+                  <p className="flex h-10 items-center rounded-lg border border-border bg-foreground/[0.03] px-3 text-sm text-muted">
                     Sucursal de tu distribuidora (personal interno)
                   </p>
                 ) : (
@@ -236,26 +255,51 @@ export function EmployeeFormDialog({
                 )}
               </div>
 
-              <label className="block min-w-0">
+              <div className="min-w-0">
                 <FieldLabel required>Rol</FieldLabel>
-                <select
-                  value={form.role}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      role: e.target.value as EmployeeUiRole,
-                    }))
-                  }
-                  disabled={!canEditRole || saving}
-                  className={inputClass}
-                >
-                  {roleOptions.map((role) => (
-                    <option key={role} value={role}>
-                      {EMPLOYEE_UI_ROLE_LABELS[role]}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                {roleOptions.length === 0 ? (
+                  <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted">
+                    No tienes permisos para asignar roles operativos.
+                  </p>
+                ) : roleOptions.length === 1 ? (
+                  <div className="flex h-10 w-full items-center rounded-lg border border-border bg-foreground/[0.03] px-3">
+                    <span
+                      className={cn(
+                        "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
+                        EMPLOYEE_UI_ROLE_STYLES[roleOptions[0]!],
+                      )}
+                    >
+                      {EMPLOYEE_UI_ROLE_LABELS[roleOptions[0]!]}
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    className="flex flex-wrap gap-2"
+                    role="group"
+                    aria-label="Roles disponibles para el empleado"
+                  >
+                    {roleOptions.map((role) => {
+                      const selected = form.role === role;
+                      return (
+                        <button
+                          key={role}
+                          type="button"
+                          onClick={() => handleRoleChange(role)}
+                          aria-pressed={selected}
+                          disabled={!canEditRole || saving}
+                          className={toggleButtonClass(
+                            selected,
+                            EMPLOYEE_UI_ROLE_TOGGLE_TONE[role],
+                            { disabled: !canEditRole || saving },
+                          )}
+                        >
+                          {EMPLOYEE_UI_ROLE_LABELS[role]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </fieldset>
 
@@ -264,6 +308,7 @@ export function EmployeeFormDialog({
             saving={saving}
             submitDisabled={branchesLoading}
             onClose={onClose}
+            createLabel="Crear empleado"
           />
         </form>
       </div>
