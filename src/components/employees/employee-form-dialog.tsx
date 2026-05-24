@@ -148,14 +148,14 @@ export function EmployeeFormDialog({
           <fieldset
             disabled={disabledProfile}
             className={cn(
-              "space-y-4 rounded-xl border border-border p-4",
+              "rounded-xl border border-border p-3",
               disabledProfile && "opacity-80",
             )}
           >
-            <legend className="px-1 text-sm font-semibold text-card-foreground">
+            <legend className="mb-2 px-1 text-sm font-semibold text-card-foreground">
               Datos personales
             </legend>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
               <label className="block min-w-0">
                 <FieldLabel required={canEditProfile}>
                   Cédula / documento
@@ -211,11 +211,11 @@ export function EmployeeFormDialog({
             </div>
           </fieldset>
 
-          <fieldset className="space-y-4 rounded-xl border border-border p-4">
-            <legend className="px-1 text-sm font-semibold text-card-foreground">
+          <fieldset className="rounded-xl border border-border p-3">
+            <legend className="mb-2 px-1 text-sm font-semibold text-card-foreground">
               Asignación
             </legend>
-            <div className="grid gap-4 md:grid-cols-2 md:items-start">
+            <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2 md:items-start">
               <div className="min-w-0">
                 <FieldLabel required={!lockBranch}>Sucursal</FieldLabel>
                 {lockBranch ? (

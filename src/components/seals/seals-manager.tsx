@@ -18,7 +18,12 @@ import {
   pageToolbarButtonClass,
 } from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
+import {
+  TableRowMetaCells,
+  TableRowMetaHeaders,
+} from "@/components/ui/table-meta-column-slots";
 import { filterAllOption } from "@/lib/table-filter-options";
+import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
@@ -39,6 +44,7 @@ import { usePagination } from "@/hooks/use-pagination";
 import { fetchPrinters } from "@/lib/printers-api";
 import {
   compareDateValues,
+  compareNumberValues,
   sortTableRows,
   toggleTableSort,
   type TableSortState,
@@ -68,7 +74,7 @@ import { hrefForPrinter } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
-type SealSortKey = "installationDate" | "removalDate";
+type SealSortKey = "id" | "createdAt" | "installationDate" | "removalDate";
 
 export function SealsManager() {
   const toast = useToast();
@@ -105,6 +111,7 @@ export function SealsManager() {
   const [statusFilter, setStatusFilter] = useState<SealStatus | "all">("all");
   const [colorFilter, setColorFilter] = useState<SealColor | "all">("all");
   const [printerFilter, setPrinterFilter] = useState("all");
+  const tableColumns = useTableColumnVisibility("seals");
   const [sort, setSort] = useState<TableSortState<SealSortKey>>(null);
 
   const printerLabelById = useMemo(
@@ -169,6 +176,8 @@ export function SealsManager() {
   const sortedSeals = useMemo(
     () =>
       sortTableRows(filteredSeals, sort, {
+        id: (a, b) => compareNumberValues(a.id, b.id),
+        createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
         installationDate: (a, b) =>
           compareDateValues(a.installationDate, b.installationDate),
         removalDate: (a, b) => compareDateValues(a.removalDate, b.removalDate),
@@ -559,6 +568,7 @@ export function SealsManager() {
                   options: printerFilterOptions,
                 },
               ]}
+              columns={tableColumns.toolbarColumns}
             />
             {filteredSeals.length === 0 ? (
               <TableFilterEmptyState />
@@ -568,37 +578,60 @@ export function SealsManager() {
                   <table className="w-full min-w-[960px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <th className="px-5 py-3 font-medium">Serial</th>
-                        <th className="px-5 py-3 font-medium">Impresora</th>
-                        <th className="px-5 py-3 font-medium">Color</th>
-                        <th className="px-5 py-3 font-medium">Estatus</th>
-                        <SortableTableHeader
-                          label="Instalación"
-                          sortDirection={
-                            sort?.key === "installationDate"
-                              ? sort.direction
-                              : null
+                        <TableRowMetaHeaders
+                          showId={tableColumns.showId}
+                          showCreatedAt={tableColumns.showCreatedAt}
+                          idSort={{
+                            sortDirection:
+                              sort?.key === "id" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "id"),
+                              ),
+                          }}
+                          createdAtSort={{
+                            sortDirection:
+                              sort?.key === "createdAt" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              ),
+                          }}
+                          actions={
+                            <th className="px-5 py-3 font-medium text-right">
+                              Acciones
+                            </th>
                           }
-                          onToggle={() =>
-                            setSort((current) =>
-                              toggleTableSort(current, "installationDate"),
-                            )
-                          }
-                        />
-                        <SortableTableHeader
-                          label="Retiro"
-                          sortDirection={
-                            sort?.key === "removalDate" ? sort.direction : null
-                          }
-                          onToggle={() =>
-                            setSort((current) =>
-                              toggleTableSort(current, "removalDate"),
-                            )
-                          }
-                        />
-                        <th className="px-5 py-3 font-medium text-right">
-                          Acciones
-                        </th>
+                        >
+                          <th className="px-5 py-3 font-medium">Serial</th>
+                          <th className="px-5 py-3 font-medium">Impresora</th>
+                          <th className="px-5 py-3 font-medium">Color</th>
+                          <th className="px-5 py-3 font-medium">Estatus</th>
+                          <SortableTableHeader
+                            label="Instalación"
+                            sortDirection={
+                              sort?.key === "installationDate"
+                                ? sort.direction
+                                : null
+                            }
+                            onToggle={() =>
+                              setSort((current) =>
+                                toggleTableSort(current, "installationDate"),
+                              )
+                            }
+                          />
+                          <SortableTableHeader
+                            label="Retiro"
+                            sortDirection={
+                              sort?.key === "removalDate" ? sort.direction : null
+                            }
+                            onToggle={() =>
+                              setSort((current) =>
+                                toggleTableSort(current, "removalDate"),
+                              )
+                            }
+                          />
+                        </TableRowMetaHeaders>
                       </tr>
                     </thead>
                     <tbody>
@@ -607,6 +640,27 @@ export function SealsManager() {
                           key={seal.id}
                           href={sealPath(seal.id)}
                         >
+                          <TableRowMetaCells
+                            showId={tableColumns.showId}
+                            showCreatedAt={tableColumns.showCreatedAt}
+                            id={seal.id}
+                            createdAt={seal.createdAt}
+                            actions={
+                              <td className="px-5 py-3.5" data-row-click="ignore">
+                                <TableRowActionsMenu
+                                  viewHref={sealPath(seal.id)}
+                                  viewLabel={`Ver precinto ${seal.serial}`}
+                                  onEdit={
+                                    canModify ? () => openEdit(seal) : undefined
+                                  }
+                                  onDelete={
+                                    canDelete ? () => handleDelete(seal) : undefined
+                                  }
+                                  deleting={deletingId === seal.id}
+                                />
+                              </td>
+                            }
+                          >
                           <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
                             {seal.serial}
                           </td>
@@ -634,19 +688,7 @@ export function SealsManager() {
                           <td className="px-5 py-3.5 text-muted">
                             {formatSealDate(seal.removalDate)}
                           </td>
-                          <td className="px-5 py-3.5" data-row-click="ignore">
-                            <TableRowActionsMenu
-                              viewHref={sealPath(seal.id)}
-                              viewLabel={`Ver precinto ${seal.serial}`}
-                              onEdit={
-                                canModify ? () => openEdit(seal) : undefined
-                              }
-                              onDelete={
-                                canDelete ? () => handleDelete(seal) : undefined
-                              }
-                              deleting={deletingId === seal.id}
-                            />
-                          </td>
+                          </TableRowMetaCells>
                         </ClickableTableRow>
                       ))}
                     </tbody>

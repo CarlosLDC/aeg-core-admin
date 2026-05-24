@@ -28,6 +28,7 @@ import type { ClientOnboardingValues } from "@/lib/client-onboarding";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
+import { normalizeStateName } from "@/lib/state-label";
 import { cn } from "@/lib/utils";
 
 export type { BranchWizardValues } from "@/components/branches/branch-wizard-types";
@@ -246,7 +247,7 @@ export function BranchCreateWizardDialog({
       ...form,
       rif,
       businessName: form.businessName.trim(),
-      state: form.state.trim(),
+      state: normalizeStateName(form.state),
       city: form.city.trim(),
       address: form.address.trim(),
       contactPersonName: form.contactPersonName.trim(),

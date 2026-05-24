@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
+import { normalizeStateName } from "@/lib/state-label";
 import { CONTRIBUTOR_TYPES, type ContributorType } from "@/types/company";
 
 export const SENIAT_EXTRACT_MAX_BYTES = 8 * 1024 * 1024;
@@ -98,7 +99,7 @@ export function parseSeniatExtractJson(text: string): SeniatExtractResult {
     rif,
     businessName: data.businessName.trim(),
     contributorType: mapContributorType(data.contributorType),
-    state: data.state.trim(),
+    state: normalizeStateName(data.state),
     city: data.city.trim(),
     address: data.address.trim(),
     phone: data.phone?.trim() || null,

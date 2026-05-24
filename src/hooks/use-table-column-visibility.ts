@@ -34,6 +34,8 @@ function resolveVisible(
 type UseTableColumnVisibilityOptions = {
   /** Mostrar toggle de «Editado el» cuando el recurso expone updatedAt. */
   showUpdatedAt?: boolean;
+  /** Toggle de «Creado el» (false si el API no expone createdAt). */
+  includeCreatedAt?: boolean;
 };
 
 export function useTableColumnVisibility(
@@ -41,7 +43,7 @@ export function useTableColumnVisibility(
   options: UseTableColumnVisibilityOptions = {},
 ) {
   const storageKey = storageKeyForTable(tableId);
-  const { showUpdatedAt = false } = options;
+  const { showUpdatedAt = false, includeCreatedAt = true } = options;
 
   const [stored, setStored] = useState<VisibilityState>(() =>
     readStoredVisibility(storageKey),
@@ -72,9 +74,11 @@ export function useTableColumnVisibility(
   );
 
   const toolbarColumns = useMemo((): ColumnToggle[] => {
-    const columnIds: MetaColumnId[] = showUpdatedAt
-      ? ["id", "createdAt", "updatedAt"]
-      : ["id", "createdAt"];
+    const columnIds: MetaColumnId[] = [
+      "id",
+      ...(includeCreatedAt ? (["createdAt"] as const) : []),
+      ...(showUpdatedAt ? (["updatedAt"] as const) : []),
+    ];
 
     return columnIds.map((id) => ({
       id,
@@ -82,7 +86,7 @@ export function useTableColumnVisibility(
       visible: isVisible(id),
       onVisibleChange: (visible) => setColumnVisible(id, visible),
     }));
-  }, [isVisible, setColumnVisible, showUpdatedAt]);
+  }, [isVisible, setColumnVisible, showUpdatedAt, includeCreatedAt]);
 
   return {
     showId: isVisible("id"),

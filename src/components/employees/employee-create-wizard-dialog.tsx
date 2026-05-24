@@ -1,13 +1,13 @@
 "use client";
 
-import { FormEvent, type ComponentType, useEffect, useId, useMemo, useState } from "react";
+import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import { Link2, Loader2, UserRound, X } from "lucide-react";
-import { BranchSelect } from "@/components/users/branch-select";
-import { FieldLabel } from "@/components/ui/field-label";
 import {
-  EMPLOYEE_UI_ROLE_LABELS,
+  EmployeeWizardFields,
+  type EmployeeWizardSection,
+} from "@/components/employees/employee-wizard-fields";
+import {
   uiRolesForUser,
-  type EmployeeUiRole,
   type EmployeeWithRoles,
 } from "@/lib/employee-roles";
 import {
@@ -39,23 +39,17 @@ type WizardStep = 1 | 2;
 
 const FORM_STEPS: {
   step: WizardStep;
+  section: EmployeeWizardSection;
   label: string;
-  icon: ComponentType<{ className?: string }>;
-  subtitle: string;
 }[] = [
-  {
-    step: 1,
-    label: "Perfil",
-    icon: UserRound,
-    subtitle: "Cédula, nombre y datos de contacto del empleado.",
-  },
-  {
-    step: 2,
-    label: "Asignación",
-    icon: Link2,
-    subtitle: "Sucursal y rol operativo para este empleado.",
-  },
+  { step: 1, section: "profile", label: "Perfil" },
+  { step: 2, section: "assignment", label: "Asignación" },
 ];
+
+const STEP_ICONS = {
+  1: UserRound,
+  2: Link2,
+} as const;
 
 const emptyForm: EmployeeFormValues = {
   nationalId: "",
@@ -65,6 +59,17 @@ const emptyForm: EmployeeFormValues = {
   branchId: "",
   role: "administrativo",
 };
+
+function stepSubtitle(step: WizardStep): string {
+  switch (step) {
+    case 1:
+      return "Cédula, nombre y datos de contacto del empleado.";
+    case 2:
+      return "Sucursal y rol operativo para este empleado.";
+    default:
+      return "";
+  }
+}
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -93,7 +98,6 @@ export function EmployeeCreateWizardDialog({
   const roleOptions = useMemo(() => uiRolesForUser(userRole), [userRole]);
   const canEditProfile = mode === "create" || userRole === "ADMIN";
   const canEditRole = canEditProfile || roleOptions.length > 0;
-  const disabledProfile = !canEditProfile || saving || branchesLoading;
 
   useEffect(() => {
     if (!open) return;
@@ -126,9 +130,6 @@ export function EmployeeCreateWizardDialog({
 
   const currentStep = FORM_STEPS.find((s) => s.step === step)!;
   const displayError = stepError ?? error;
-  const selectedBranchDetail = form.branchId
-    ? branches.find((b) => String(b.id) === form.branchId)
-    : null;
 
   function goToStep(target: WizardStep) {
     setStepError(null);
@@ -151,7 +152,9 @@ export function EmployeeCreateWizardDialog({
     if (!form.name.trim()) return "El nombre es obligatorio.";
     if (!form.phone.trim()) return "El teléfono es obligatorio.";
     if (!form.email.trim()) return "El correo es obligatorio.";
-    if (!isValidEmail(form.email.trim())) return "El correo no tiene un formato válido.";
+    if (!isValidEmail(form.email.trim())) {
+      return "El correo no tiene un formato válido.";
+    }
     return null;
   }
 
@@ -159,6 +162,23 @@ export function EmployeeCreateWizardDialog({
     if (!form.branchId.trim()) return "Selecciona la sucursal del empleado.";
     if (!canEditRole) return "No tienes permisos para editar el rol.";
     return null;
+  }
+
+  function submitRegistration() {
+    const profileError = validateProfile();
+    if (profileError) {
+      setStepError(profileError);
+      setStep(1);
+      return;
+    }
+    const assignmentError = validateAssignment();
+    if (assignmentError) {
+      setStepError(assignmentError);
+      setStep(2);
+      return;
+    }
+    setStepError(null);
+    onSubmit(form);
   }
 
   function handleFormSubmit(e: FormEvent) {
@@ -172,18 +192,8 @@ export function EmployeeCreateWizardDialog({
       goNext();
       return;
     }
-
-    const assignmentError = validateAssignment();
-    if (assignmentError) {
-      setStepError(assignmentError);
-      return;
-    }
-    setStepError(null);
-    onSubmit(form);
+    submitRegistration();
   }
-
-  const inputClass =
-    "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
 
   return (
     <div
@@ -208,7 +218,7 @@ export function EmployeeCreateWizardDialog({
               >
                 {mode === "create" ? "Nuevo empleado" : "Editar empleado"}
               </h2>
-              <p className="mt-1 text-sm text-muted">{currentStep.subtitle}</p>
+              <p className="mt-1 text-sm text-muted">{stepSubtitle(step)}</p>
             </div>
             <button
               type="button"
@@ -219,8 +229,9 @@ export function EmployeeCreateWizardDialog({
             </button>
           </div>
 
-          <nav className="mt-4 flex gap-1" aria-label="Pasos del empleado">
-            {FORM_STEPS.map(({ step: s, label, icon: Icon }) => {
+          <nav className="mt-4 flex gap-1" aria-label="Pasos del registro">
+            {FORM_STEPS.map(({ step: s, label }) => {
+              const Icon = STEP_ICONS[s];
               const isActive = step === s;
               const isDone = step > s;
               return (
@@ -249,7 +260,11 @@ export function EmployeeCreateWizardDialog({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-          <form id={formId} onSubmit={handleFormSubmit} className="flex h-full flex-col">
+          <form
+            id={formId}
+            onSubmit={handleFormSubmit}
+            className="flex h-full flex-col"
+          >
             {displayError ? (
               <p
                 role="alert"
@@ -259,135 +274,19 @@ export function EmployeeCreateWizardDialog({
               </p>
             ) : null}
 
-            {step === 1 ? (
-              <fieldset
-                disabled={disabledProfile}
-                className={cn(
-                  "space-y-4 rounded-xl border border-border p-4",
-                  disabledProfile && "opacity-80",
-                )}
-              >
-                <legend className="px-1 text-sm font-semibold text-card-foreground">
-                  Datos personales
-                </legend>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="block min-w-0">
-                    <FieldLabel required={canEditProfile}>
-                      Cédula / documento
-                    </FieldLabel>
-                    <input
-                      type="text"
-                      required={canEditProfile}
-                      value={form.nationalId}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, nationalId: e.target.value }))
-                      }
-                      className={inputClass}
-                    />
-                  </label>
-
-                  <label className="block min-w-0">
-                    <FieldLabel required={canEditProfile}>Nombre</FieldLabel>
-                    <input
-                      type="text"
-                      required={canEditProfile}
-                      value={form.name}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, name: e.target.value }))
-                      }
-                      className={inputClass}
-                    />
-                  </label>
-
-                  <label className="block min-w-0">
-                    <FieldLabel required={canEditProfile}>Teléfono</FieldLabel>
-                    <input
-                      type="tel"
-                      required={canEditProfile}
-                      value={form.phone}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, phone: e.target.value }))
-                      }
-                      className={inputClass}
-                    />
-                  </label>
-                  <label className="block min-w-0">
-                    <FieldLabel required={canEditProfile}>Correo</FieldLabel>
-                    <input
-                      type="email"
-                      required={canEditProfile}
-                      value={form.email}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, email: e.target.value }))
-                      }
-                      className={inputClass}
-                    />
-                  </label>
-                </div>
-              </fieldset>
-            ) : (
-              <fieldset className="space-y-4 rounded-xl border border-border p-4">
-                <legend className="px-1 text-sm font-semibold text-card-foreground">
-                  Asignación
-                </legend>
-                <div className="grid gap-4 md:grid-cols-2 md:items-start">
-                  <div className="min-w-0">
-                    <FieldLabel required={!lockBranch}>Sucursal</FieldLabel>
-                    {lockBranch ? (
-                      <p className="rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-sm text-muted">
-                        Sucursal de tu distribuidora (personal interno)
-                      </p>
-                    ) : (
-                      <BranchSelect
-                        value={form.branchId}
-                        onChange={(branchId) =>
-                          setForm((f) => ({ ...f, branchId }))
-                        }
-                        branches={branches}
-                        companies={companies}
-                        loading={branchesLoading}
-                        disabled={disabledProfile || branches.length === 0}
-                      />
-                    )}
-                    {!lockBranch ? (
-                      <p
-                        className="mt-1.5 line-clamp-2 min-h-[2.5rem] text-xs text-muted"
-                        title={
-                          selectedBranchDetail
-                            ? `${selectedBranchDetail.city}, ${selectedBranchDetail.state}`
-                            : undefined
-                        }
-                      >
-                        {selectedBranchDetail
-                          ? `${selectedBranchDetail.city}, ${selectedBranchDetail.state}`
-                          : "\u00A0"}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <label className="block min-w-0">
-                    <FieldLabel required>Rol</FieldLabel>
-                    <select
-                      value={form.role}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          role: e.target.value as EmployeeUiRole,
-                        }))
-                      }
-                      disabled={!canEditRole || saving}
-                      className={inputClass}
-                    >
-                      {roleOptions.map((role) => (
-                        <option key={role} value={role}>
-                          {EMPLOYEE_UI_ROLE_LABELS[role]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              </fieldset>
-            )}
+            <EmployeeWizardFields
+              section={currentStep.section}
+              form={form}
+              setForm={setForm}
+              saving={saving}
+              branchesLoading={branchesLoading}
+              branches={branches}
+              companies={companies}
+              roleOptions={roleOptions}
+              canEditProfile={canEditProfile}
+              canEditRole={canEditRole}
+              lockBranch={lockBranch}
+            />
           </form>
         </div>
 
@@ -437,4 +336,3 @@ export function EmployeeCreateWizardDialog({
     </div>
   );
 }
-

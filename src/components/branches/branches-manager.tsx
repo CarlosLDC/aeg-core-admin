@@ -21,7 +21,9 @@ import {
 import {
   filterAllOption,
   uniqueFilterOptions,
+  uniqueStateFilterOptions,
 } from "@/lib/table-filter-options";
+import { statesMatch } from "@/lib/state-label";
 import { useAuth } from "@/context/auth-provider";
 import {
   canCreateBranchRecord,
@@ -204,7 +206,7 @@ export function BranchesManager() {
   const stateFilterOptions = useMemo(
     () => [
       filterAllOption("Todos los estados"),
-      ...uniqueFilterOptions(branches.map((b) => b.state)),
+      ...uniqueStateFilterOptions(branches.map((b) => b.state)),
     ],
     [branches],
   );
@@ -229,7 +231,9 @@ export function BranchesManager() {
       if (typeFilter === "serviceCenter" && !branch.serviceCenter) {
         return false;
       }
-      if (stateFilter !== "all" && branch.state !== stateFilter) return false;
+      if (stateFilter !== "all" && !statesMatch(branch.state, stateFilter)) {
+        return false;
+      }
       if (
         companyFilter !== "all" &&
         branch.companyId !== Number(companyFilter)
@@ -576,6 +580,8 @@ export function BranchesManager() {
                   value: stateFilter,
                   onChange: setStateFilter,
                   options: stateFilterOptions,
+                  searchable: true,
+                  searchPlaceholder: "Buscar estado…",
                 },
                 {
                   id: "company",

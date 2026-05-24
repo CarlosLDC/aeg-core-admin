@@ -35,7 +35,18 @@ import {
   pageToolbarButtonClass,
 } from "@/components/ui/page-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
+import {
+  TableRowMetaCells,
+  TableRowMetaHeaders,
+} from "@/components/ui/table-meta-column-slots";
 import { filterAllOption } from "@/lib/table-filter-options";
+import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
+import {
+  compareNumberValues,
+  sortTableRows,
+  toggleTableSort,
+  type TableSortState,
+} from "@/lib/table-sort";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
@@ -57,6 +68,8 @@ function parseRequiredId(value: string): number {
 function displayUserName(user: UserResponse): string {
   return user.name?.trim() || user.username?.trim() || user.email;
 }
+
+type UserSortKey = "id";
 
 function sortBranches(
   branches: BranchResponse[],
@@ -96,6 +109,10 @@ export function UsersManager() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const tableColumns = useTableColumnVisibility("users", {
+    includeCreatedAt: false,
+  });
+  const [sort, setSort] = useState<TableSortState<UserSortKey>>(null);
 
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -111,7 +128,15 @@ export function UsersManager() {
     });
   }, [users, search, roleFilter, statusFilter, branches, companies]);
 
-  const pagination = usePagination(filteredUsers);
+  const sortedUsers = useMemo(
+    () =>
+      sortTableRows(filteredUsers, sort, {
+        id: (a, b) => compareNumberValues(a.id, b.id),
+      }),
+    [filteredUsers, sort],
+  );
+
+  const pagination = usePagination(sortedUsers);
 
   const loadCatalog = useCallback(async () => {
     setCatalogLoading(true);
@@ -360,6 +385,7 @@ export function UsersManager() {
                   ],
                 },
               ]}
+              columns={tableColumns.toolbarColumns}
             />
             {filteredUsers.length === 0 ? (
               <TableFilterEmptyState />
@@ -369,14 +395,29 @@ export function UsersManager() {
                   <table className="w-full min-w-[800px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <th className="px-5 py-3 font-medium">Nombre</th>
-                        <th className="px-5 py-3 font-medium">Correo</th>
-                        <th className="px-5 py-3 font-medium">Rol</th>
-                        <th className="px-5 py-3 font-medium">Sucursal</th>
-                        <th className="px-5 py-3 font-medium">Estado</th>
-                        <th className="px-5 py-3 font-medium text-right">
-                          Acciones
-                        </th>
+                        <TableRowMetaHeaders
+                          showId={tableColumns.showId}
+                          showCreatedAt={false}
+                          idSort={{
+                            sortDirection:
+                              sort?.key === "id" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "id"),
+                              ),
+                          }}
+                          actions={
+                            <th className="px-5 py-3 font-medium text-right">
+                              Acciones
+                            </th>
+                          }
+                        >
+                          <th className="px-5 py-3 font-medium">Nombre</th>
+                          <th className="px-5 py-3 font-medium">Correo</th>
+                          <th className="px-5 py-3 font-medium">Rol</th>
+                          <th className="px-5 py-3 font-medium">Sucursal</th>
+                          <th className="px-5 py-3 font-medium">Estado</th>
+                        </TableRowMetaHeaders>
                       </tr>
                     </thead>
                     <tbody>
@@ -385,6 +426,22 @@ export function UsersManager() {
                           key={user.id}
                           href={userPath(user.id)}
                         >
+                          <TableRowMetaCells
+                            showId={tableColumns.showId}
+                            showCreatedAt={false}
+                            id={user.id}
+                            actions={
+                              <td className="px-5 py-3.5" data-row-click="ignore">
+                                <TableRowActionsMenu
+                                  viewHref={userPath(user.id)}
+                                  viewLabel={`Ver usuario ${displayUserName(user)}`}
+                                  onEdit={() => openEdit(user)}
+                                  onDelete={() => void handleDelete(user)}
+                                  deleting={deletingId === user.id}
+                                />
+                              </td>
+                            }
+                          >
                           <td className="max-w-[200px] px-5 py-3.5">
                             <TruncatedText maxClassName="max-w-[180px]">
                               {displayUserName(user)}
@@ -422,15 +479,7 @@ export function UsersManager() {
                               {user.enabled ? "Activo" : "Inactivo"}
                             </span>
                           </td>
-                          <td className="px-5 py-3.5" data-row-click="ignore">
-                            <TableRowActionsMenu
-                              viewHref={userPath(user.id)}
-                              viewLabel={`Ver usuario ${displayUserName(user)}`}
-                              onEdit={() => openEdit(user)}
-                              onDelete={() => handleDelete(user)}
-                              deleting={deletingId === user.id}
-                            />
-                          </td>
+                          </TableRowMetaCells>
                         </ClickableTableRow>
                       ))}
                     </tbody>

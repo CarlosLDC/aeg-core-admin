@@ -6,6 +6,7 @@ import { ContributorTypeToggle } from "@/components/companies/contributor-type-t
 import type { BranchResponse } from "@/types/branch";
 import { type CompanyResponse, type ContributorType } from "@/types/company";
 import { FieldLabel } from "@/components/ui/field-label";
+import { normalizeStateName } from "@/lib/state-label";
 import { cn } from "@/lib/utils";
 
 export type ClientEditValues = {
@@ -77,7 +78,7 @@ export function ClientEditDialog({
       businessName: form.businessName.trim(),
       rif: form.rif.trim().toUpperCase(),
       city: form.city.trim(),
-      state: form.state.trim(),
+      state: normalizeStateName(form.state),
       address: form.address.trim(),
       contactPersonName: form.contactPersonName.trim(),
       phone: form.phone.trim(),

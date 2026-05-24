@@ -78,7 +78,12 @@ export function SerialRangeFields({
         {isFiscal ? "Rango de seriales fiscales" : "Rango de seriales"}
       </legend>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div
+        className={cn(
+          "grid gap-4",
+          isFiscal ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2",
+        )}
+      >
         <label className="block">
           <FieldLabel required>
             Prefijo {isFiscal ? "(3 letras)" : ""}
@@ -100,6 +105,24 @@ export function SerialRangeFields({
             placeholder={isFiscal ? "ABC" : "SN-"}
           />
         </label>
+        {!isFiscal && (
+          <label className="block">
+            <FieldLabel required>Cifras</FieldLabel>
+            <input
+              type="number"
+              required
+              min={1}
+              max={12}
+              value={values.digitLength}
+              disabled={disabled}
+              onChange={(e) => patch({ digitLength: e.target.value })}
+              className={cn(BATCH_FORM_INPUT_CLASS, "font-mono")}
+            />
+          </label>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block">
           <FieldLabel required>Desde</FieldLabel>
           <input
@@ -124,21 +147,6 @@ export function SerialRangeFields({
             className={cn(BATCH_FORM_INPUT_CLASS, "font-mono")}
           />
         </label>
-        {!isFiscal && (
-          <label className="block">
-            <FieldLabel required>Cifras</FieldLabel>
-            <input
-              type="number"
-              required
-              min={1}
-              max={12}
-              value={values.digitLength}
-              disabled={disabled}
-              onChange={(e) => patch({ digitLength: e.target.value })}
-              className={cn(BATCH_FORM_INPUT_CLASS, "font-mono")}
-            />
-          </label>
-        )}
       </div>
 
       {preview && (

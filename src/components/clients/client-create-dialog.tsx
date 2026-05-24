@@ -9,6 +9,7 @@ import {
 } from "@/components/clients/client-form-fields";
 import { SeniatDocumentScan } from "@/components/seniat/seniat-document-scan";
 import type { ClientOnboardingValues } from "@/lib/client-onboarding";
+import { normalizeStateName } from "@/lib/state-label";
 import {
   collectAiFilledFields,
   type SeniatLockableField,
@@ -197,7 +198,7 @@ export function ClientCreateDialog({
       ...form,
       rif,
       businessName: form.businessName.trim(),
-      state: form.state.trim(),
+      state: normalizeStateName(form.state),
       city: form.city.trim(),
       address: form.address.trim(),
       contactPersonName: form.contactPersonName.trim(),

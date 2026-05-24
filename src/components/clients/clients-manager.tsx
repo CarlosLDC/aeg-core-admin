@@ -29,8 +29,9 @@ import {
 } from "@/components/ui/table-meta-column-slots";
 import {
   filterAllOption,
-  uniqueFilterOptions,
+  uniqueStateFilterOptions,
 } from "@/lib/table-filter-options";
+import { statesMatch } from "@/lib/state-label";
 import { mergeBranchesWithRoles } from "@/lib/branch-roles";
 import { fetchBranchById, fetchBranches } from "@/lib/branches-api";
 import { companyNameById } from "@/lib/branches";
@@ -203,7 +204,7 @@ export function ClientsManager() {
   const stateFilterOptions = useMemo(
     () => [
       filterAllOption("Todos los estados"),
-      ...uniqueFilterOptions(clientListRows.map((r) => r.state)),
+      ...uniqueStateFilterOptions(clientListRows.map((r) => r.state)),
     ],
     [clientListRows],
   );
@@ -211,7 +212,9 @@ export function ClientsManager() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return clientListRows.filter((row) => {
-      if (stateFilter !== "all" && row.state !== stateFilter) return false;
+      if (stateFilter !== "all" && !statesMatch(row.state, stateFilter)) {
+        return false;
+      }
       if (!q) return true;
       const haystack = [
         row.businessName,
@@ -412,6 +415,8 @@ export function ClientsManager() {
                   value: stateFilter,
                   onChange: setStateFilter,
                   options: stateFilterOptions,
+                  searchable: true,
+                  searchPlaceholder: "Buscar estado…",
                 },
               ]}
               columns={tableColumns.toolbarColumns}

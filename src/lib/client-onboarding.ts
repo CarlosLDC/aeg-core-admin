@@ -1,4 +1,5 @@
 import { mergeBranchesWithRoles, syncBranchRoles } from "@/lib/branch-roles";
+import { normalizeStateName } from "@/lib/state-label";
 import {
   isDistributorClientOnlyRoles,
   linkDistributorClientToBranch,
@@ -155,7 +156,7 @@ export async function createClientOnboarding(
         created = await createBranch({
           companyId,
           city: values.city.trim(),
-          state: values.state.trim(),
+          state: normalizeStateName(values.state),
           address: values.address.trim() || undefined,
           contactPersonName: values.contactPersonName.trim(),
           phone: values.phone.trim() || undefined,

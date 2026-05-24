@@ -17,6 +17,7 @@ import { useConfirm } from "@/context/confirm-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
+  compareDateValues,
   compareNumberValues,
   sortTableRows,
   toggleTableSort,
@@ -44,8 +45,9 @@ import { branchPath } from "@/lib/resource-routes";
 import { hrefForBranchClientDistributor } from "@/lib/table-foreign-hrefs";
 import {
   filterAllOption,
-  uniqueFilterOptions,
+  uniqueStateFilterOptions,
 } from "@/lib/table-filter-options";
+import { statesMatch } from "@/lib/state-label";
 import type { BranchWithRoles } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { DistributorResponse } from "@/types/branch-role";
@@ -66,7 +68,7 @@ const TYPE_FILTER_OPTIONS = [
   { value: "serviceCenter", label: "Centro de servicio" },
 ] as const;
 
-type CompanyBranchSortKey = "id";
+type CompanyBranchSortKey = "id" | "createdAt";
 
 type BranchFormValues = {
   companyId: string;
@@ -238,7 +240,7 @@ export function CompanyBranchesTable({
   const stateFilterOptions = useMemo(
     () => [
       filterAllOption("Todos los estados"),
-      ...uniqueFilterOptions(branches.map((b) => b.state)),
+      ...uniqueStateFilterOptions(branches.map((b) => b.state)),
     ],
     [branches],
   );
@@ -273,6 +275,7 @@ export function CompanyBranchesTable({
     () =>
       sortTableRows(filteredBranches, sort, {
         id: (a, b) => compareNumberValues(a.id, b.id),
+        createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
       }),
     [filteredBranches, sort],
   );
@@ -475,6 +478,8 @@ export function CompanyBranchesTable({
                   value: stateFilter,
                   onChange: setStateFilter,
                   options: stateFilterOptions,
+                  searchable: true,
+                  searchPlaceholder: "Buscar estado…",
                 },
               ]}
               columns={tableColumns.toolbarColumns}
@@ -489,12 +494,20 @@ export function CompanyBranchesTable({
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <TableRowMetaHeaders
                           showId={tableColumns.showId}
-                          showCreatedAt={false}
+                          showCreatedAt={tableColumns.showCreatedAt}
                           idSort={{
                             sortDirection:
                               sort?.key === "id" ? sort.direction : null,
                             onSortToggle: () =>
                               setSort((current) => toggleTableSort(current, "id")),
+                          }}
+                          createdAtSort={{
+                            sortDirection:
+                              sort?.key === "createdAt" ? sort.direction : null,
+                            onSortToggle: () =>
+                              setSort((current) =>
+                                toggleTableSort(current, "createdAt"),
+                              ),
                           }}
                           actions={
                             <th className="px-5 py-3 font-medium text-right">
@@ -517,8 +530,9 @@ export function CompanyBranchesTable({
                         >
                           <TableRowMetaCells
                             showId={tableColumns.showId}
-                            showCreatedAt={false}
+                            showCreatedAt={tableColumns.showCreatedAt}
                             id={branch.id}
+                            createdAt={branch.createdAt}
                             actions={
                               <td className="px-5 py-3.5" data-row-click="ignore">
                                 <TableRowActionsMenu
