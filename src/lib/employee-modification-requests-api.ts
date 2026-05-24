@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api";
 import { ApiError } from "@/types/auth";
+import type { EmployeeRequest } from "@/types/employee";
 import type {
   ModificationRequestDetailResponse,
   ModificationRequestListItemResponse,
@@ -7,6 +8,56 @@ import type {
 } from "@/types/employee-modification-request";
 
 const BASE = "/api/employee-modification-requests";
+
+type RawModificationRequestDetailResponse = Omit<
+  ModificationRequestDetailResponse,
+  "proposedData"
+> & {
+  proposedData: unknown;
+};
+
+function normalizeProposedData(raw: unknown): Partial<EmployeeRequest> | null {
+  if (raw == null) return null;
+
+  let candidate: unknown = raw;
+  if (typeof raw === "string") {
+    try {
+      candidate = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  if (candidate == null || typeof candidate !== "object") {
+    return null;
+  }
+
+  const obj = candidate as Record<string, unknown>;
+  const rawBranchId = obj.branchId ?? obj.branch_id ?? obj.id_sucursal;
+  const branchId =
+    rawBranchId == null || rawBranchId === ""
+      ? undefined
+      : Number(rawBranchId);
+
+  return {
+    nationalId: (obj.nationalId ?? obj.national_id ?? "") as string,
+    name: (obj.name ?? obj.nombre ?? "") as string,
+    phone: (obj.phone ?? obj.telefono ?? "") as string,
+    email: (obj.email ?? obj.correo ?? "") as string,
+    type: (obj.type ?? obj.tipo) as EmployeeRequest["type"],
+    branchId: Number.isFinite(branchId) ? branchId : undefined,
+  };
+}
+
+function normalizeDetail(
+  raw: RawModificationRequestDetailResponse,
+): ModificationRequestDetailResponse {
+  const proposedData = normalizeProposedData(raw.proposedData);
+  return {
+    ...raw,
+    proposedData,
+  };
+}
 
 export async function fetchEmployeeModificationRequests(
   status: ModificationRequestStatus = "PENDING",
@@ -19,23 +70,32 @@ export async function fetchEmployeeModificationRequests(
 export async function fetchEmployeeModificationRequestById(
   id: number,
 ): Promise<ModificationRequestDetailResponse> {
-  return apiFetch<ModificationRequestDetailResponse>(`${BASE}/${id}`);
+  const raw = await apiFetch<RawModificationRequestDetailResponse>(`${BASE}/${id}`);
+  return normalizeDetail(raw);
 }
 
 export async function approveEmployeeModificationRequest(
   id: number,
 ): Promise<ModificationRequestDetailResponse> {
-  return apiFetch<ModificationRequestDetailResponse>(`${BASE}/${id}/approve`, {
+  const raw = await apiFetch<RawModificationRequestDetailResponse>(
+    `${BASE}/${id}/approve`,
+    {
     method: "POST",
-  });
+    },
+  );
+  return normalizeDetail(raw);
 }
 
 export async function rejectEmployeeModificationRequest(
   id: number,
 ): Promise<ModificationRequestDetailResponse> {
-  return apiFetch<ModificationRequestDetailResponse>(`${BASE}/${id}/reject`, {
+  const raw = await apiFetch<RawModificationRequestDetailResponse>(
+    `${BASE}/${id}/reject`,
+    {
     method: "POST",
-  });
+    },
+  );
+  return normalizeDetail(raw);
 }
 
 export function getEmployeeModificationRequestsErrorMessage(error: unknown): string {

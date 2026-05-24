@@ -1,4 +1,8 @@
-import type { EmployeeRequest, EmployeeReviewStatus, EmployeeType } from "@/types/employee";
+import type {
+  EmployeeRequest,
+  EmployeeReviewStatus,
+  EmployeeType,
+} from "@/types/employee";
 
 export type ModificationActionType = "UPDATE" | "DELETE";
 export type ModificationRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
@@ -30,7 +34,7 @@ export type ModificationRequestDetailResponse = {
   employeeId: number;
   actionType: ModificationActionType;
   status: ModificationRequestStatus;
-  proposedData: EmployeeRequest | null;
+  proposedData: Partial<EmployeeRequest> | null;
   currentEmployeeSnapshot: EmployeeSnapshotResponse | null;
   requestedById: number;
   requestedByName: string;
