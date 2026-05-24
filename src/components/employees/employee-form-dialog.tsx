@@ -44,7 +44,7 @@ const emptyForm: EmployeeFormValues = {
   phone: "",
   email: "",
   branchId: "",
-  role: "administrativo",
+  role: "distribuidor",
 };
 
 export function EmployeeFormDialog({
@@ -75,12 +75,12 @@ export function EmployeeFormDialog({
       setForm(
         roleOptions.includes(values.role)
           ? values
-          : { ...values, role: roleOptions[0] ?? "administrativo" },
+          : { ...values, role: roleOptions[0] ?? "distribuidor" },
       );
     } else {
       setForm({
         ...emptyForm,
-        role: roleOptions[0] ?? "administrativo",
+        role: roleOptions[0] ?? "distribuidor",
         branchId: defaultBranchId,
       });
     }

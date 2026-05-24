@@ -164,7 +164,7 @@ export function PrinterModelView() {
               value={model.providencia || "—"}
             />
             <DetailField
-              label="Fecha aprobación"
+              label="Fecha de homologación"
               value={formatDate(model.approvalDate)}
             />
             <DetailField

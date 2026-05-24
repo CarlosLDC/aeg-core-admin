@@ -155,29 +155,31 @@ export function PrinterModelFormDialog({
             />
           </label>
 
-          <label className="block">
-            <FieldLabel>Providencia</FieldLabel>
-            <input
-              type="text"
-              value={form.providencia}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, providencia: e.target.value }))
-              }
-              className={inputClass}
-            />
-          </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <FieldLabel>Providencia</FieldLabel>
+              <input
+                type="text"
+                value={form.providencia}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, providencia: e.target.value }))
+                }
+                className={inputClass}
+              />
+            </label>
 
-          <label className="block">
-            <FieldLabel>Fecha de aprobación</FieldLabel>
-            <input
-              type="date"
-              value={form.approvalDate}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, approvalDate: e.target.value }))
-              }
-              className={inputClass}
-            />
-          </label>
+            <label className="block">
+              <FieldLabel>Fecha de homologación</FieldLabel>
+              <input
+                type="date"
+                value={form.approvalDate}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, approvalDate: e.target.value }))
+                }
+                className={inputClass}
+              />
+            </label>
+          </div>
 
           <FormDialogFooter
             mode={mode}

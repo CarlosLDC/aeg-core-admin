@@ -22,36 +22,19 @@ export type EmployeeWithRoles = EmployeeResponse & {
   distributorPerson?: DistributorPersonResponse;
 };
 
-/** Rol único en UI — combina categoría laboral y registros en tablas. */
-export type EmployeeUiRole =
-  | "administrativo"
-  | "vendedor"
-  | "gerente"
-  | "tecnico_operativo"
-  | "persona_distribuidor";
+/** Rol operativo en UI — solo distribuidor o técnico. */
+export type EmployeeUiRole = "distribuidor" | "tecnico";
 
-export const EMPLOYEE_UI_ROLES: EmployeeUiRole[] = [
-  "administrativo",
-  "vendedor",
-  "gerente",
-  "tecnico_operativo",
-  "persona_distribuidor",
-];
+export const EMPLOYEE_UI_ROLES: EmployeeUiRole[] = ["distribuidor", "tecnico"];
 
 export const EMPLOYEE_UI_ROLE_LABELS: Record<EmployeeUiRole, string> = {
-  administrativo: "Administrativo",
-  vendedor: "Vendedor",
-  gerente: "Gerente",
-  tecnico_operativo: "Técnico",
-  persona_distribuidor: "Persona distribuidor",
+  distribuidor: "Distribuidor",
+  tecnico: "Técnico",
 };
 
 export const EMPLOYEE_UI_ROLE_STYLES: Record<EmployeeUiRole, string> = {
-  administrativo: "bg-slate-500/10 text-slate-700 dark:text-slate-300",
-  vendedor: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
-  gerente: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
-  tecnico_operativo: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  persona_distribuidor: "bg-amber-500/10 text-amber-800 dark:text-amber-200",
+  distribuidor: "bg-amber-500/10 text-amber-800 dark:text-amber-200",
+  tecnico: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
 };
 
 export type EmployeeRoleFormState = {
@@ -69,54 +52,30 @@ export function canAssignDistributorPersonRole(role: Role): boolean {
 
 export function uiRolesForUser(role: Role): EmployeeUiRole[] {
   return EMPLOYEE_UI_ROLES.filter((uiRole) => {
-    if (uiRole === "tecnico_operativo") return canAssignTechnicianRole(role);
-    if (uiRole === "persona_distribuidor") {
-      return canAssignDistributorPersonRole(role);
-    }
-    return true;
+    if (uiRole === "tecnico") return canAssignTechnicianRole(role);
+    return canAssignDistributorPersonRole(role);
   });
 }
 
 export function resolveEmployeeUiRole(employee: EmployeeWithRoles): EmployeeUiRole {
-  if (employee.distributorPerson) return "persona_distribuidor";
-  if (employee.technician) return "tecnico_operativo";
-  if (employee.type === "vendedor") return "vendedor";
-  if (employee.type === "gerente") return "gerente";
-  if (employee.type === "tecnico") return "tecnico_operativo";
-  return "administrativo";
+  if (employee.technician || employee.type === "tecnico") return "tecnico";
+  return "distribuidor";
 }
 
 export function uiRoleToBackend(uiRole: EmployeeUiRole): {
   type: EmployeeType;
   tableRoles: EmployeeRoleFormState;
 } {
-  switch (uiRole) {
-    case "tecnico_operativo":
-      return {
-        type: "tecnico",
-        tableRoles: { isTechnician: true, isDistributorPerson: false },
-      };
-    case "persona_distribuidor":
-      return {
-        type: "administrativo",
-        tableRoles: { isTechnician: false, isDistributorPerson: true },
-      };
-    case "vendedor":
-      return {
-        type: "vendedor",
-        tableRoles: { isTechnician: false, isDistributorPerson: false },
-      };
-    case "gerente":
-      return {
-        type: "gerente",
-        tableRoles: { isTechnician: false, isDistributorPerson: false },
-      };
-    default:
-      return {
-        type: "administrativo",
-        tableRoles: { isTechnician: false, isDistributorPerson: false },
-      };
+  if (uiRole === "tecnico") {
+    return {
+      type: "tecnico",
+      tableRoles: { isTechnician: true, isDistributorPerson: false },
+    };
   }
+  return {
+    type: "administrativo",
+    tableRoles: { isTechnician: false, isDistributorPerson: true },
+  };
 }
 
 /** Distribuidores no pueden listar técnicos (403 en GET /api/technicians). */

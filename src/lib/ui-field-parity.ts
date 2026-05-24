@@ -443,7 +443,7 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
       { formLabels: ["Marca"], viewLabels: ["Marca"] },
       { formLabels: ["Código de modelo"], viewLabels: ["Modelo"] },
       { formLabels: ["Providencia"], viewLabels: ["Providencia"] },
-      { formLabels: ["Fecha de aprobación"], viewLabels: ["Fecha aprobación"] },
+      { formLabels: ["Fecha de homologación"], viewLabels: ["Fecha de homologación"] },
       { formLabels: ["Precio"], viewLabels: ["Precio"] },
     ],
   },

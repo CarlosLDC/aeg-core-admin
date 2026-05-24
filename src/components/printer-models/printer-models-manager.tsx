@@ -349,7 +349,7 @@ export function PrinterModelsManager() {
                         />
                         <th className="px-5 py-3 font-medium">Providencia</th>
                         <SortableTableHeader
-                          label="Aprobación"
+                          label="Homologación"
                           sortDirection={
                             sort?.key === "approvalDate" ? sort.direction : null
                           }

@@ -315,21 +315,17 @@ export function EmployeesManager() {
       return;
     }
 
-    if (
-      values.role === "tecnico_operativo" &&
-      user &&
-      !canAssignTechnicianRole(user.role)
-    ) {
+    if (values.role === "tecnico" && user && !canAssignTechnicianRole(user.role)) {
       setFormError("No tienes permiso para asignar el rol técnico.");
       return;
     }
 
     if (
-      values.role === "persona_distribuidor" &&
+      values.role === "distribuidor" &&
       user &&
       !canAssignDistributorPersonRole(user.role)
     ) {
-      setFormError("No tienes permiso para asignar persona distribuidor.");
+      setFormError("No tienes permiso para asignar el rol distribuidor.");
       return;
     }
 
