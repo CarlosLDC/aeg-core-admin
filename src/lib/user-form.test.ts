@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   eligibleRolesForBranch,
+  resolveUserBranchId,
   validateUserCreateForm,
+  validateUserEditForm,
 } from "@/lib/user-form";
 
 const distributors = [
@@ -49,6 +51,37 @@ describe("validateUserCreateForm branch role eligibility", () => {
         password: "secret1",
         role: "TECHNICIAN",
         branchId: "20",
+      },
+      { distributors, serviceCenters },
+    );
+    expect(error).toBeNull();
+  });
+
+  it("accepts ADMIN without branch", () => {
+    const error = validateUserCreateForm(
+      {
+        name: "Administrador",
+        email: "admin@aeg.local",
+        password: "secret1",
+        role: "ADMIN",
+        branchId: "",
+      },
+      { distributors, serviceCenters },
+    );
+    expect(error).toBeNull();
+    expect(resolveUserBranchId("ADMIN", "")).toBeNull();
+  });
+});
+
+describe("validateUserEditForm", () => {
+  it("accepts ADMIN without branch", () => {
+    const error = validateUserEditForm(
+      {
+        name: "Administrador",
+        email: "admin@aeg.local",
+        password: "",
+        role: "ADMIN",
+        branchId: "",
       },
       { distributors, serviceCenters },
     );

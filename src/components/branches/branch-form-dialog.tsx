@@ -324,8 +324,8 @@ export function BranchFormDialog({
               {(
                 [
                   ["isDistributor", "Distribuidor"],
-                  ["isClient", "Cliente"],
                   ["isServiceCenter", "Centro de servicio"],
+                  ["isClient", "Cliente"],
                 ] as const
               ).map(([key, label]) => (
                 <button

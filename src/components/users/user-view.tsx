@@ -26,17 +26,13 @@ import {
   getUsersErrorMessage,
   updateUser,
 } from "@/lib/users-api";
-import { validateUserEditForm } from "@/lib/user-form";
+import { validateUserEditForm, resolveUserBranchId } from "@/lib/user-form";
 import { branchPath, userPath } from "@/lib/resource-routes";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
 import type { ServiceCenterResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { UserResponse } from "@/types/user";
-
-function parseRequiredId(value: string): number {
-  return Number(value);
-}
 
 function displayUserName(user: UserResponse): string {
   return user.name?.trim() || user.username?.trim() || user.email;
@@ -128,7 +124,7 @@ export function UserView() {
 
     setSaving(true);
     setFormError(null);
-    const branchId = parseRequiredId(values.branchId);
+    const branchId = resolveUserBranchId(values.role, values.branchId);
     const name = values.name.trim();
     const email = values.email.trim().toLowerCase();
 

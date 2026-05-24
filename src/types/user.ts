@@ -23,7 +23,7 @@ export type UserRegistrationRequest = {
   email: string;
   password: string;
   role: Role;
-  branchId: number;
+  branchId: number | null;
 };
 
 export type UserUpdateRequest = {

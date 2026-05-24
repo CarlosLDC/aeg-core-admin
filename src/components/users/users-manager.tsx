@@ -22,6 +22,7 @@ import {
 import {
   validateUserCreateForm,
   validateUserEditForm,
+  resolveUserBranchId,
 } from "@/lib/user-form";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
@@ -60,10 +61,6 @@ import { userPath } from "@/lib/resource-routes";
 import { hrefForBranch } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
-
-function parseRequiredId(value: string): number {
-  return Number(value);
-}
 
 function displayUserName(user: UserResponse): string {
   return user.name?.trim() || user.username?.trim() || user.email;
@@ -218,7 +215,7 @@ export function UsersManager() {
 
     setSaving(true);
     setFormError(null);
-    const branchId = parseRequiredId(values.branchId);
+    const branchId = resolveUserBranchId(values.role, values.branchId);
     const name = values.name.trim();
     const email = values.email.trim().toLowerCase();
 

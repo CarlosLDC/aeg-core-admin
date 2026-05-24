@@ -28,6 +28,11 @@ function branchIdToNumber(branchId: string): number | null {
   return id;
 }
 
+export function resolveUserBranchId(role: Role, branchId: string): number | null {
+  if (!roleRequiresBranch(role)) return null;
+  return branchIdToNumber(branchId);
+}
+
 export function branchIdsWithDistributorRole(
   distributors: DistributorResponse[],
 ): Set<number> {
@@ -61,6 +66,8 @@ function validateRoleByBranch(
   branchId: string,
   context: UserFormContext,
 ): string | null {
+  if (!roleRequiresBranch(role)) return null;
+
   if (!branchId.trim()) {
     return "Selecciona una sucursal.";
   }
