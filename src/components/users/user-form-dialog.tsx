@@ -69,6 +69,7 @@ export function UserFormDialog({
   onSubmit,
 }: UserFormDialogProps) {
   const [form, setForm] = useState<UserFormValues>(emptyForm);
+  const isAdminUser = form.role === "ADMIN";
 
   const selectedBranchDetail = useMemo(() => {
     if (!form.branchId) return null;
@@ -112,6 +113,18 @@ export function UserFormDialog({
 
   function handleRoleChange(role: Role) {
     setForm((f) => ({ ...f, role }));
+  }
+
+  function handleAdminToggle(admin: boolean) {
+    setForm((f) => {
+      if (admin) {
+        return { ...f, role: "ADMIN", branchId: "" };
+      }
+      return {
+        ...f,
+        role: f.role === "ADMIN" ? "DISTRIBUTOR" : f.role,
+      };
+    });
   }
 
   useEffect(() => {
@@ -243,86 +256,119 @@ export function UserFormDialog({
             </div>
           </fieldset>
 
-          <fieldset className="space-y-4 rounded-xl border border-border p-4">
-            <legend className="px-1 text-sm font-semibold text-card-foreground">
-              Asignación operativa
-            </legend>
-            <div className="grid gap-4 md:grid-cols-2 md:items-start">
-              <div className="min-w-0">
-                <FieldLabel required>Sucursal</FieldLabel>
-                <BranchSelect
-                  value={form.branchId}
-                  onChange={handleBranchChange}
-                  branches={branchesForRole}
-                  companies={companies}
-                  loading={branchesLoading}
-                  disabled={branchesLoading}
-                />
-                {selectedBranchDetail ? (
-                  <p
-                    className="mt-1.5 truncate text-xs text-muted"
-                    title={selectedBranchDetail}
-                  >
-                    {selectedBranchDetail}
-                  </p>
-                ) : null}
+          {mode === "create" && (
+            <fieldset className="space-y-4 rounded-xl border border-border p-4">
+              <legend className="px-1 text-sm font-semibold text-card-foreground">
+                Tipo de acceso
+              </legend>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="¿Será administrador?">
+                <button
+                  type="button"
+                  onClick={() => handleAdminToggle(true)}
+                  aria-pressed={isAdminUser}
+                  className={toggleButtonClass(isAdminUser, USER_ROLE_TOGGLE_TONE.ADMIN)}
+                >
+                  Sí, será admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAdminToggle(false)}
+                  aria-pressed={!isAdminUser}
+                  className={toggleButtonClass(!isAdminUser, USER_ROLE_TOGGLE_TONE.DISTRIBUTOR)}
+                >
+                  No, usuario operativo
+                </button>
               </div>
-
-              <div className="min-w-0">
-                <FieldLabel required>Rol</FieldLabel>
-                {availableRoles.length === 0 ? (
-                  <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted">
-                    Selecciona una sucursal para ver roles disponibles.
-                  </p>
-                ) : availableRoles.length === 1 ? (
-                  <>
-                    <div className="flex h-10 w-full items-center rounded-lg border border-border bg-foreground/[0.03] px-3">
-                      <RoleBadge role={availableRoles[0]!} />
-                    </div>
-                    <p className="mt-1.5 text-xs text-muted">
-                      {ROLE_DESCRIPTIONS[availableRoles[0]!]}
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <div
-                      className="flex flex-wrap gap-2"
-                      role="group"
-                      aria-label="Roles disponibles para la sucursal"
-                    >
-                      {availableRoles.map((role) => {
-                        const selected = form.role === role;
-                        return (
-                          <button
-                            key={role}
-                            type="button"
-                            onClick={() => handleRoleChange(role)}
-                            aria-pressed={selected}
-                            className={toggleButtonClass(
-                              selected,
-                              USER_ROLE_TOGGLE_TONE[role],
-                            )}
-                          >
-                            {ROLE_LABELS[role]}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="mt-1.5 text-xs text-muted">
-                      {ROLE_DESCRIPTIONS[form.role]}
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {branchesForRole.length === 0 && (
-              <p className="text-xs text-amber-700 dark:text-amber-300">
-                No hay sucursales con roles operativos habilitados. Asigna rol de
-                distribuidor o centro de servicio en Sucursales.
+              <p className="text-xs text-muted">
+                {isAdminUser
+                  ? ROLE_DESCRIPTIONS.ADMIN
+                  : "Requiere sucursal y rol operativo."}
               </p>
-            )}
-          </fieldset>
+            </fieldset>
+          )}
+
+          {!isAdminUser && (
+            <fieldset className="space-y-4 rounded-xl border border-border p-4">
+              <legend className="px-1 text-sm font-semibold text-card-foreground">
+                Asignación operativa
+              </legend>
+              <div className="grid gap-4 md:grid-cols-2 md:items-start">
+                <div className="min-w-0">
+                  <FieldLabel required>Sucursal</FieldLabel>
+                  <BranchSelect
+                    value={form.branchId}
+                    onChange={handleBranchChange}
+                    branches={branchesForRole}
+                    companies={companies}
+                    loading={branchesLoading}
+                    disabled={branchesLoading}
+                  />
+                  {selectedBranchDetail ? (
+                    <p
+                      className="mt-1.5 truncate text-xs text-muted"
+                      title={selectedBranchDetail}
+                    >
+                      {selectedBranchDetail}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="min-w-0">
+                  <FieldLabel required>Rol</FieldLabel>
+                  {availableRoles.length === 0 ? (
+                    <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted">
+                      Selecciona una sucursal para ver roles disponibles.
+                    </p>
+                  ) : availableRoles.length === 1 ? (
+                    <>
+                      <div className="flex h-10 w-full items-center rounded-lg border border-border bg-foreground/[0.03] px-3">
+                        <RoleBadge role={availableRoles[0]!} />
+                      </div>
+                      <p className="mt-1.5 text-xs text-muted">
+                        {ROLE_DESCRIPTIONS[availableRoles[0]!]}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div
+                        className="flex flex-wrap gap-2"
+                        role="group"
+                        aria-label="Roles disponibles para la sucursal"
+                      >
+                        {availableRoles.map((role) => {
+                          const selected = form.role === role;
+                          return (
+                            <button
+                              key={role}
+                              type="button"
+                              onClick={() => handleRoleChange(role)}
+                              aria-pressed={selected}
+                              className={toggleButtonClass(
+                                selected,
+                                USER_ROLE_TOGGLE_TONE[role],
+                              )}
+                            >
+                              {ROLE_LABELS[role]}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="mt-1.5 text-xs text-muted">
+                        {ROLE_DESCRIPTIONS[form.role]}
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {branchesForRole.length === 0 && (
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  No hay sucursales con roles operativos habilitados. Asigna rol de
+                  distribuidor o centro de servicio en Sucursales.
+                </p>
+              )}
+            </fieldset>
+          )}
 
           {mode === "edit" && (
             <label className="flex cursor-pointer items-center gap-2 text-sm">
@@ -341,7 +387,7 @@ export function UserFormDialog({
           <FormDialogFooter
             mode={mode}
             saving={saving}
-            submitDisabled={branchesLoading}
+            submitDisabled={!isAdminUser && branchesLoading}
             onClose={onClose}
             createLabel="Crear usuario"
           />
