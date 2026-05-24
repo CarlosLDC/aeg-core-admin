@@ -92,7 +92,7 @@ export function SealFormDialog({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
+      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-card-foreground">
@@ -120,125 +120,140 @@ export function SealFormDialog({
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block">
-            <FieldLabel required>Serial</FieldLabel>
-            <input
-              type="text"
-              required
-              value={form.serial}
-              disabled={disabled}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, serial: e.target.value }))
-              }
-              className={cn(inputClass, "font-mono")}
-              placeholder="SN-001"
-            />
-            {fieldErrors.serial ? (
-              <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
-                {fieldErrors.serial}
-              </span>
-            ) : null}
-          </label>
-
-          <div className="block">
-            <FieldLabel>Impresora</FieldLabel>
-            {printerOptions.length > 0 ? (
-              <PrinterSelect
-                value={form.printerId}
-                onChange={(printerId) =>
-                  setForm((f) => ({ ...f, printerId }))
-                }
-                options={printerOptions}
-                disabled={disabled}
-                loading={printersLoading}
-              />
-            ) : (
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Identificación
+            </legend>
+            <label className="block sm:max-w-md">
+              <FieldLabel required>Serial</FieldLabel>
               <input
-                type="number"
-                min={1}
-                value={form.printerId}
-                disabled={disabled}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, printerId: e.target.value }))
-                }
-                className={inputClass}
-                placeholder="ID de impresora (opcional)"
-              />
-            )}
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <FieldLabel required>Color</FieldLabel>
-              <select
+                type="text"
                 required
-                value={form.color}
+                value={form.serial}
                 disabled={disabled}
                 onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    color: e.target.value as SealFormValues["color"],
-                  }))
+                  setForm((f) => ({ ...f, serial: e.target.value }))
                 }
-                className={inputClass}
-              >
-                {SEAL_COLORS.map((color) => (
-                  <option key={color} value={color}>
-                    {SEAL_COLOR_LABELS[color]}
-                  </option>
-                ))}
-              </select>
+                className={cn(inputClass, "font-mono")}
+                placeholder="SN-001"
+              />
+              {fieldErrors.serial ? (
+                <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
+                  {fieldErrors.serial}
+                </span>
+              ) : null}
             </label>
-            <label className="block">
-              <FieldLabel required>Estatus</FieldLabel>
-              <select
-                required
-                value={form.status}
-                disabled={disabled}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    status: e.target.value as SealFormValues["status"],
-                  }))
-                }
-                className={inputClass}
-              >
-                {SEAL_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {SEAL_STATUS_LABELS[status]}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+          </fieldset>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <FieldLabel>Fecha de instalación</FieldLabel>
-              <input
-                type="datetime-local"
-                value={form.installationDate}
-                disabled={disabled}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, installationDate: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-            <label className="block">
-              <FieldLabel>Fecha de retiro</FieldLabel>
-              <input
-                type="datetime-local"
-                value={form.removalDate}
-                disabled={disabled}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, removalDate: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-          </div>
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Asignación y estado
+            </legend>
+            <div className="block">
+              <FieldLabel>Impresora</FieldLabel>
+              {printerOptions.length > 0 ? (
+                <PrinterSelect
+                  value={form.printerId}
+                  onChange={(printerId) =>
+                    setForm((f) => ({ ...f, printerId }))
+                  }
+                  options={printerOptions}
+                  disabled={disabled}
+                  loading={printersLoading}
+                />
+              ) : (
+                <input
+                  type="number"
+                  min={1}
+                  value={form.printerId}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, printerId: e.target.value }))
+                  }
+                  className={inputClass}
+                  placeholder="ID de impresora (opcional)"
+                />
+              )}
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <FieldLabel required>Color</FieldLabel>
+                <select
+                  required
+                  value={form.color}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      color: e.target.value as SealFormValues["color"],
+                    }))
+                  }
+                  className={inputClass}
+                >
+                  {SEAL_COLORS.map((color) => (
+                    <option key={color} value={color}>
+                      {SEAL_COLOR_LABELS[color]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <FieldLabel required>Estatus</FieldLabel>
+                <select
+                  required
+                  value={form.status}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      status: e.target.value as SealFormValues["status"],
+                    }))
+                  }
+                  className={inputClass}
+                >
+                  {SEAL_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {SEAL_STATUS_LABELS[status]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Fechas operativas
+            </legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <FieldLabel>Fecha de instalación</FieldLabel>
+                <input
+                  type="datetime-local"
+                  value={form.installationDate}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, installationDate: e.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
+              <label className="block">
+                <FieldLabel>Fecha de retiro</FieldLabel>
+                <input
+                  type="datetime-local"
+                  value={form.removalDate}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, removalDate: e.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
+            </div>
+          </fieldset>
 
           <FormDialogFooter
             mode={mode}

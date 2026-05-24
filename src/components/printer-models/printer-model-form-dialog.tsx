@@ -6,7 +6,6 @@ import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import type { PrinterModelFormValues } from "@/lib/printer-model-form";
 import type { PrinterModelResponse } from "@/types/printer-model";
-import { cn } from "@/lib/utils";
 
 type PrinterModelFormDialogProps = {
   mode: "create" | "edit";
@@ -82,7 +81,7 @@ export function PrinterModelFormDialog({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
+      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-card-foreground">
@@ -112,74 +111,83 @@ export function PrinterModelFormDialog({
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <FieldLabel required>Marca</FieldLabel>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Identificación del modelo
+            </legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <FieldLabel required>Marca</FieldLabel>
+                <input
+                  type="text"
+                  required
+                  value={form.brand}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, brand: e.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
+              <label className="block">
+                <FieldLabel required>Código de modelo</FieldLabel>
+                <input
+                  type="text"
+                  required
+                  value={form.modelCode}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, modelCode: e.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
+            </div>
+            <label className="block sm:max-w-xs">
+              <FieldLabel required>Precio</FieldLabel>
               <input
-                type="text"
+                type="number"
                 required
-                value={form.brand}
+                min={0}
+                step="0.01"
+                value={form.price}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, brand: e.target.value }))
+                  setForm((f) => ({ ...f, price: e.target.value }))
                 }
                 className={inputClass}
               />
             </label>
-            <label className="block">
-              <FieldLabel required>Código de modelo</FieldLabel>
-              <input
-                type="text"
-                required
-                value={form.modelCode}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, modelCode: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-          </div>
+          </fieldset>
 
-          <label className="block">
-            <FieldLabel required>Precio</FieldLabel>
-            <input
-              type="number"
-              required
-              min={0}
-              step="0.01"
-              value={form.price}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, price: e.target.value }))
-              }
-              className={inputClass}
-            />
-          </label>
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Homologación
+            </legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <FieldLabel>Providencia</FieldLabel>
+                <input
+                  type="text"
+                  value={form.providencia}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, providencia: e.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <FieldLabel>Providencia</FieldLabel>
-              <input
-                type="text"
-                value={form.providencia}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, providencia: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-
-            <label className="block">
-              <FieldLabel>Fecha de homologación</FieldLabel>
-              <input
-                type="date"
-                value={form.approvalDate}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, approvalDate: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
-          </div>
+              <label className="block">
+                <FieldLabel>Fecha de homologación</FieldLabel>
+                <input
+                  type="date"
+                  value={form.approvalDate}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, approvalDate: e.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
+            </div>
+          </fieldset>
 
           <FormDialogFooter
             mode={mode}

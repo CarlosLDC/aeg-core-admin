@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { formatBranchLabel } from "@/lib/branches";
 import { X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
@@ -70,12 +69,6 @@ export function UserFormDialog({
 }: UserFormDialogProps) {
   const [form, setForm] = useState<UserFormValues>(emptyForm);
   const isAdminUser = form.role === "ADMIN";
-
-  const selectedBranchDetail = useMemo(() => {
-    if (!form.branchId) return null;
-    const branch = branches.find((b) => String(b.id) === form.branchId);
-    return branch ? formatBranchLabel(branch, companies) : null;
-  }, [form.branchId, branches, companies]);
 
   const availableRoles = useMemo(
     () =>
@@ -261,22 +254,22 @@ export function UserFormDialog({
               <legend className="px-1 text-sm font-semibold text-card-foreground">
                 Tipo de acceso
               </legend>
-              <div className="flex flex-wrap gap-2" role="group" aria-label="¿Será administrador?">
-                <button
-                  type="button"
-                  onClick={() => handleAdminToggle(true)}
-                  aria-pressed={isAdminUser}
-                  className={toggleButtonClass(isAdminUser, USER_ROLE_TOGGLE_TONE.ADMIN)}
-                >
-                  Sí, será admin
-                </button>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Tipo de acceso">
                 <button
                   type="button"
                   onClick={() => handleAdminToggle(false)}
                   aria-pressed={!isAdminUser}
                   className={toggleButtonClass(!isAdminUser, USER_ROLE_TOGGLE_TONE.DISTRIBUTOR)}
                 >
-                  No, usuario operativo
+                  Usuario operativo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAdminToggle(true)}
+                  aria-pressed={isAdminUser}
+                  className={toggleButtonClass(isAdminUser, USER_ROLE_TOGGLE_TONE.ADMIN)}
+                >
+                  Administrado
                 </button>
               </div>
               <p className="text-xs text-muted">
@@ -303,14 +296,6 @@ export function UserFormDialog({
                     loading={branchesLoading}
                     disabled={branchesLoading}
                   />
-                  {selectedBranchDetail ? (
-                    <p
-                      className="mt-1.5 truncate text-xs text-muted"
-                      title={selectedBranchDetail}
-                    >
-                      {selectedBranchDetail}
-                    </p>
-                  ) : null}
                 </div>
 
                 <div className="min-w-0">
@@ -320,43 +305,33 @@ export function UserFormDialog({
                       Selecciona una sucursal para ver roles disponibles.
                     </p>
                   ) : availableRoles.length === 1 ? (
-                    <>
-                      <div className="flex h-10 w-full items-center rounded-lg border border-border bg-foreground/[0.03] px-3">
-                        <RoleBadge role={availableRoles[0]!} />
-                      </div>
-                      <p className="mt-1.5 text-xs text-muted">
-                        {ROLE_DESCRIPTIONS[availableRoles[0]!]}
-                      </p>
-                    </>
+                    <div className="flex h-10 w-full items-center rounded-lg border border-border bg-foreground/[0.03] px-3">
+                      <RoleBadge role={availableRoles[0]!} />
+                    </div>
                   ) : (
-                    <>
-                      <div
-                        className="flex flex-wrap gap-2"
-                        role="group"
-                        aria-label="Roles disponibles para la sucursal"
-                      >
-                        {availableRoles.map((role) => {
-                          const selected = form.role === role;
-                          return (
-                            <button
-                              key={role}
-                              type="button"
-                              onClick={() => handleRoleChange(role)}
-                              aria-pressed={selected}
-                              className={toggleButtonClass(
-                                selected,
-                                USER_ROLE_TOGGLE_TONE[role],
-                              )}
-                            >
-                              {ROLE_LABELS[role]}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <p className="mt-1.5 text-xs text-muted">
-                        {ROLE_DESCRIPTIONS[form.role]}
-                      </p>
-                    </>
+                    <div
+                      className="flex flex-wrap gap-2"
+                      role="group"
+                      aria-label="Roles disponibles para la sucursal"
+                    >
+                      {availableRoles.map((role) => {
+                        const selected = form.role === role;
+                        return (
+                          <button
+                            key={role}
+                            type="button"
+                            onClick={() => handleRoleChange(role)}
+                            aria-pressed={selected}
+                            className={toggleButtonClass(
+                              selected,
+                              USER_ROLE_TOGGLE_TONE[role],
+                            )}
+                          >
+                            {ROLE_LABELS[role]}
+                          </button>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
               </div>
