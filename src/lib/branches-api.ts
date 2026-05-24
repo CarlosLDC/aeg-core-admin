@@ -67,6 +67,9 @@ export function getBranchesErrorMessage(error: unknown): string {
     if (error.status === 404) {
       return "Sucursal o empresa no encontrada.";
     }
+    if (error.status === 409) {
+      return error.message;
+    }
     return error.message;
   }
   return getCatalogErrorMessage(error);

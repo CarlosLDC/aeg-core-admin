@@ -48,6 +48,9 @@ export function getUsersErrorMessage(error: unknown): string {
       return "Solo un administrador puede gestionar usuarios.";
     }
     if (error.status === 409) {
+      if (error.message.includes("solicitudes de modificación")) {
+        return error.message;
+      }
       return "Ese correo ya está en uso.";
     }
     if (error.status === 404) {
