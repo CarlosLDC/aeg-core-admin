@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useId, useState } from "react";
 import {
   Camera,
+  ClipboardCheck,
   ClipboardList,
   FileText,
   Link2,
@@ -41,24 +42,34 @@ type TechnicalServiceFormDialogProps = {
   onSubmit: (values: TechnicalServiceFormValues) => void;
 };
 
-type WizardStep = 1 | 2 | 3 | 4 | 5;
-type WizardSection = "assignment" | "visit" | "zReports" | "seals" | "evidence";
+type WizardStep = 1 | 2 | 3 | 4 | 5 | 6;
+type WizardSection =
+  | "assignment"
+  | "visit"
+  | "outcome"
+  | "zReports"
+  | "seals"
+  | "evidence";
 
 const FORM_STEPS: { step: WizardStep; section: WizardSection; label: string }[] = [
   { step: 1, section: "assignment", label: "Asignacion" },
   { step: 2, section: "visit", label: "Visita" },
-  { step: 3, section: "zReports", label: "Reportes Z" },
-  { step: 4, section: "seals", label: "Precintos" },
-  { step: 5, section: "evidence", label: "Evidencia" },
+  { step: 3, section: "outcome", label: "Resultado" },
+  { step: 4, section: "zReports", label: "Reportes Z" },
+  { step: 5, section: "seals", label: "Precintos" },
+  { step: 6, section: "evidence", label: "Evidencia" },
 ];
 
 const STEP_ICONS = {
   1: Link2,
   2: ClipboardList,
-  3: FileText,
-  4: ShieldAlert,
-  5: Camera,
+  3: ClipboardCheck,
+  4: FileText,
+  5: ShieldAlert,
+  6: Camera,
 } as const;
+
+const LAST_WIZARD_STEP: WizardStep = 6;
 
 function stepSubtitle(step: WizardStep): string {
   switch (step) {
@@ -67,10 +78,12 @@ function stepSubtitle(step: WizardStep): string {
     case 2:
       return "Registra tiempos, solicitud, costo y falla reportada.";
     case 3:
-      return "Completa los reportes Z inicial y final.";
+      return "Indica observaciones y si el precinto fue violentado.";
     case 4:
-      return "Asocia precintos instalados o retirados.";
+      return "Completa los reportes Z inicial y final.";
     case 5:
+      return "Asocia precintos instalados o retirados.";
+    case 6:
       return "Adjunta evidencia fotografica del servicio.";
     default:
       return "";
@@ -144,7 +157,7 @@ export function TechnicalServiceFormDialog({
       return null;
     }
 
-    if (targetStep === 3) {
+    if (targetStep === 4) {
       if (!hasValue(form.initialZReport)) {
         return "Indica el reporte Z inicial.";
       }
@@ -156,7 +169,7 @@ export function TechnicalServiceFormDialog({
       return null;
     }
 
-    if (targetStep === 5 && form.photoUrls.length === 0) {
+    if (targetStep === LAST_WIZARD_STEP && form.photoUrls.length === 0) {
       return "Se requiere al menos una foto.";
     }
 
@@ -182,7 +195,7 @@ export function TechnicalServiceFormDialog({
       return;
     }
 
-    if (step < 5) {
+    if (step < LAST_WIZARD_STEP) {
       setStepError(null);
       setStep((current) => (current + 1) as WizardStep);
       return;
@@ -349,10 +362,15 @@ export function TechnicalServiceFormDialog({
           className={inputClass}
         />
       </label>
+    </div>
+  );
+
+  const outcomeSection = (
+    <div className={sectionClass}>
       <label className="block">
         <FieldLabel>Observaciones</FieldLabel>
         <textarea
-          rows={2}
+          rows={3}
           value={form.notes}
           disabled={disabled}
           onChange={(e) =>
@@ -496,6 +514,7 @@ export function TechnicalServiceFormDialog({
     const currentSection = FORM_STEPS.find((item) => item.step === step)?.section;
     if (currentSection === "assignment") return assignmentSection;
     if (currentSection === "visit") return visitSection;
+    if (currentSection === "outcome") return outcomeSection;
     if (currentSection === "zReports") return zReportsSection;
     if (currentSection === "seals") return sealsSection;
     return evidenceSection;
@@ -600,7 +619,7 @@ export function TechnicalServiceFormDialog({
               >
                 Cancelar
               </button>
-              {step < 5 ? (
+              {step < LAST_WIZARD_STEP ? (
                 <button
                   type="submit"
                   form={formId}
