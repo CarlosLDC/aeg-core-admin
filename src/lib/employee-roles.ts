@@ -65,7 +65,14 @@ export function formatOperationalRole(flags: {
   if (flags.isTechnician) return "Técnico";
   if (flags.isDistributorPerson) return "Distribuidor";
   if (flags.type === "tecnico") return "Técnico";
-  return "Distribuidor";
+  if (
+    flags.type === "administrativo" ||
+    flags.type === "vendedor" ||
+    flags.type === "gerente"
+  ) {
+    return "Distribuidor";
+  }
+  return "—";
 }
 
 export function resolveEmployeeUiRole(employee: EmployeeWithRoles): EmployeeUiRole {
