@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Users,
   Settings,
-  Shield,
   MapPin,
   Printer,
   FileDigit,
@@ -130,12 +129,6 @@ export const navSections: NavSection[] = [
         icon: Settings,
         roles: ["ADMIN"],
       },
-      {
-        title: "Permisos",
-        href: "/settings/permissions",
-        icon: Shield,
-        roles: ["ADMIN"],
-      },
     ],
   },
 ];
@@ -168,7 +161,7 @@ export function navItemMatchesPath(item: NavItem, pathname: string): boolean {
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
-/** Longest matching href wins (e.g. /settings/permissions over /settings). */
+/** Longest matching href wins (e.g. nested routes under /settings). */
 export function activeNavHref(
   pathname: string,
   items: NavItem[],

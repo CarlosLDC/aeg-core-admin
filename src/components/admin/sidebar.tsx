@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
@@ -12,6 +12,12 @@ import {
   type NavItem,
 } from "@/lib/navigation";
 import { useAuth } from "@/context/auth-provider";
+import { fetchEmployeeModificationRequests } from "@/lib/employee-modification-requests-api";
+import {
+  DEFAULT_POLL_INTERVAL_MS,
+  DEFAULT_RETRY_DELAYS_MS,
+  sleep,
+} from "@/lib/polling";
 import { cn } from "@/lib/utils";
 
 const SIDEBAR_NAV_SCROLL_KEY = "aeg-admin-sidebar-nav-scroll";
@@ -52,12 +58,14 @@ function NavRow({
   item,
   isActive,
   isCollapsed,
+  badgeCount,
   onNavigate,
   onBeforeNavigate,
 }: {
   item: NavItem;
   isActive: boolean;
   isCollapsed: boolean;
+  badgeCount?: number;
   onNavigate?: () => void;
   onBeforeNavigate?: () => void;
 }) {
@@ -104,7 +112,12 @@ function NavRow({
         )}
       />
       {!isCollapsed && <span>{item.title}</span>}
-      {isActive && !isCollapsed && (
+      {!isCollapsed && badgeCount != null && badgeCount > 0 && (
+        <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[11px] font-semibold text-amber-200">
+          {badgeCount}
+        </span>
+      )}
+      {isActive && !isCollapsed && !(badgeCount != null && badgeCount > 0) && (
         <span className="ml-auto size-1.5 rounded-full bg-accent" />
       )}
     </Link>
@@ -124,6 +137,7 @@ export function Sidebar({
   const sections = user ? navSectionsForRole(user.role) : [];
   const navItems = user ? navItemsForRole(user.role) : [];
   const navRef = useRef<HTMLElement>(null);
+  const [pendingReviewCount, setPendingReviewCount] = useState(0);
 
   const persistNavScroll = useCallback(() => {
     const el = navRef.current;
@@ -145,6 +159,60 @@ export function Sidebar({
     el.addEventListener("scroll", onScroll, { passive: true });
     return () => el.removeEventListener("scroll", onScroll);
   }, [sections.length]);
+
+  useEffect(() => {
+    if (user?.role !== "ADMIN") {
+      setPendingReviewCount(0);
+      return;
+    }
+    let cancelled = false;
+    let running = false;
+
+    const loadPending = async () => {
+      try {
+        const pending = await fetchEmployeeModificationRequests("PENDING");
+        if (!cancelled) setPendingReviewCount(pending.length);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const pollPending = async () => {
+      if (cancelled || running || document.visibilityState !== "visible") return;
+      running = true;
+      try {
+        let ok = await loadPending();
+        if (ok) return;
+        for (const delay of DEFAULT_RETRY_DELAYS_MS) {
+          if (cancelled || document.visibilityState !== "visible") return;
+          await sleep(delay);
+          if (cancelled || document.visibilityState !== "visible") return;
+          ok = await loadPending();
+          if (ok) return;
+        }
+      } finally {
+        running = false;
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void pollPending();
+      }
+    };
+
+    void pollPending();
+    const intervalId = window.setInterval(() => {
+      void pollPending();
+    }, DEFAULT_POLL_INTERVAL_MS);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.clearInterval(intervalId);
+    };
+  }, [pathname, user?.role]);
 
   return (
     <aside
@@ -215,6 +283,9 @@ export function Sidebar({
                     item={item}
                     isActive={isNavItemActive(item, pathname, navItems)}
                     isCollapsed={isCollapsed && !isMobileDrawer}
+                    badgeCount={
+                      item.href === "/employees/reviews" ? pendingReviewCount : undefined
+                    }
                     onBeforeNavigate={persistNavScroll}
                     onNavigate={onMobileClose}
                   />

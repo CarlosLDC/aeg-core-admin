@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
@@ -12,6 +12,11 @@ import {
   fetchEmployeeModificationRequests,
   getEmployeeModificationRequestsErrorMessage,
 } from "@/lib/employee-modification-requests-api";
+import {
+  DEFAULT_POLL_INTERVAL_MS,
+  DEFAULT_RETRY_DELAYS_MS,
+  sleep,
+} from "@/lib/polling";
 import { employeePath } from "@/lib/resource-routes";
 import type {
   ModificationRequestListItemResponse,
@@ -38,33 +43,82 @@ export function EmployeeModificationRequestsManager() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ModificationRequestStatus | "all">(
-    "PENDING",
+    "all",
   );
+  const userChangedStatusFilter = useRef(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const load = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
     try {
-      const data =
-        statusFilter === "all"
-          ? [
-              ...(await fetchEmployeeModificationRequests("PENDING")),
-              ...(await fetchEmployeeModificationRequests("APPROVED")),
-              ...(await fetchEmployeeModificationRequests("REJECTED")),
-            ]
-          : await fetchEmployeeModificationRequests(statusFilter);
+      const data = [
+        ...(await fetchEmployeeModificationRequests("PENDING")),
+        ...(await fetchEmployeeModificationRequests("APPROVED")),
+        ...(await fetchEmployeeModificationRequests("REJECTED")),
+      ];
+      const pendingCount = data.filter((row) => row.status === "PENDING").length;
+      if (!userChangedStatusFilter.current) {
+        setStatusFilter(pendingCount > 0 ? "PENDING" : "all");
+      }
       setRows(data.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)));
+      if (!silent) setError(null);
+      return true;
     } catch (err) {
+      if (silent) return false;
       const message = getEmployeeModificationRequestsErrorMessage(err);
       setError(message);
       toast.error(message);
+      return false;
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  }, [statusFilter, toast]);
+  }, [toast]);
 
   useEffect(() => {
     void load();
+  }, [load]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let running = false;
+
+    const pollOnce = async () => {
+      if (cancelled || running || document.visibilityState !== "visible") return;
+      running = true;
+      try {
+        let ok = await load({ silent: true });
+        if (ok) return;
+        for (const delay of DEFAULT_RETRY_DELAYS_MS) {
+          if (cancelled || document.visibilityState !== "visible") return;
+          await sleep(delay);
+          if (cancelled || document.visibilityState !== "visible") return;
+          ok = await load({ silent: true });
+          if (ok) return;
+        }
+      } finally {
+        running = false;
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void pollOnce();
+      }
+    };
+
+    const intervalId = window.setInterval(() => {
+      void pollOnce();
+    }, DEFAULT_POLL_INTERVAL_MS);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.clearInterval(intervalId);
+    };
   }, [load]);
 
   const filtered = useMemo(() => {
@@ -112,8 +166,10 @@ export function EmployeeModificationRequestsManager() {
                   id: "status",
                   label: "Estado",
                   value: statusFilter,
-                  onChange: (value) =>
-                    setStatusFilter(value as ModificationRequestStatus | "all"),
+                  onChange: (value) => {
+                    userChangedStatusFilter.current = true;
+                    setStatusFilter(value as ModificationRequestStatus | "all");
+                  },
                   options: [
                     { value: "all", label: "Todos" },
                     { value: "PENDING", label: "Pendientes" },

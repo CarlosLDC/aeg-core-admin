@@ -9,18 +9,15 @@ import {
 describe("activeNavHref", () => {
   const adminItems = navItemsForRole("ADMIN");
 
-  it("highlights only permissions on /settings/permissions", () => {
-    expect(activeNavHref("/settings/permissions", adminItems)).toBe(
-      "/settings/permissions",
-    );
-    const permissions = adminItems.find((i) => i.href === "/settings/permissions")!;
+  it("highlights settings on /settings/permissions (not in main nav)", () => {
+    expect(activeNavHref("/settings/permissions", adminItems)).toBe("/settings");
     const settings = adminItems.find((i) => i.href === "/settings")!;
-    expect(isNavItemActive(permissions, "/settings/permissions", adminItems)).toBe(
+    expect(isNavItemActive(settings, "/settings/permissions", adminItems)).toBe(
       true,
     );
-    expect(isNavItemActive(settings, "/settings/permissions", adminItems)).toBe(
-      false,
-    );
+    expect(
+      adminItems.some((i) => i.href === "/settings/permissions"),
+    ).toBe(false);
   });
 
   it("highlights settings on /settings only", () => {
