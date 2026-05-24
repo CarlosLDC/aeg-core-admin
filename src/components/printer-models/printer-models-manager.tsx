@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { PrinterModelFormDialog } from "@/components/printer-models/printer-model-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
@@ -239,33 +239,19 @@ export function PrinterModelsManager() {
     <div className="space-y-4">
       <PageToolbar
         actions={
-          <>
+          canCreate ? (
             <button
               type="button"
-              onClick={loadModels}
-              disabled={loading}
+              onClick={openCreate}
               className={cn(
                 pageToolbarButtonClass,
-                "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
+                "bg-accent text-accent-foreground",
               )}
             >
-              <RefreshCw className={cn("size-4", loading && "animate-spin")} />
-              Actualizar
+              <Plus className="size-4" />
+              Nuevo modelo
             </button>
-            {canCreate && (
-              <button
-                type="button"
-                onClick={openCreate}
-                className={cn(
-                  pageToolbarButtonClass,
-                  "bg-accent text-accent-foreground",
-                )}
-              >
-                <Plus className="size-4" />
-                Nuevo modelo
-              </button>
-            )}
-          </>
+          ) : undefined
         }
       />
 

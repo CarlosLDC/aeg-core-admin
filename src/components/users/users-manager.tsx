@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { RoleBadge } from "@/components/users/role-badge";
 import {
   UserFormDialog,
@@ -284,25 +284,7 @@ export function UsersManager() {
     <div className="space-y-4">
       <PageToolbar
         actions={
-          <>
-            <button
-              type="button"
-              onClick={refreshAll}
-              disabled={loading || catalogLoading}
-              className={cn(
-                pageToolbarButtonClass,
-                "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
-              )}
-            >
-              <RefreshCw
-                className={cn(
-                  "size-4",
-                  (loading || catalogLoading) && "animate-spin",
-                )}
-              />
-              Actualizar
-            </button>
-            <button
+          <button
               type="button"
               onClick={openCreate}
               disabled={!catalogReady}
@@ -314,7 +296,6 @@ export function UsersManager() {
               <Plus className="size-4" />
               Nuevo usuario
             </button>
-          </>
         }
       />
 

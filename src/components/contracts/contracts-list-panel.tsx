@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ExternalLink, Loader2, Plus, RefreshCw } from "lucide-react";
+import { ExternalLink, Loader2, Plus } from "lucide-react";
 import { ContractFormDialog } from "@/components/contracts/contract-form-dialog";
 import { ContractStatusBadge } from "@/components/contracts/contract-status-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
@@ -318,34 +318,20 @@ export function ContractsListPanel({
     <div className="space-y-4">
       <PageToolbar
         actions={
-          <>
+          canCreate ? (
             <button
               type="button"
-              onClick={loadContracts}
-              disabled={loading}
+              onClick={openCreate}
+              disabled={catalogLoading || partyOptions.length === 0}
               className={cn(
                 pageToolbarButtonClass,
-                "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
+                "bg-accent text-accent-foreground disabled:opacity-50",
               )}
             >
-              <RefreshCw className={cn("size-4", loading && "animate-spin")} />
-              Actualizar
+              <Plus className="size-4" />
+              Nuevo contrato
             </button>
-            {canCreate && (
-              <button
-                type="button"
-                onClick={openCreate}
-                disabled={catalogLoading || partyOptions.length === 0}
-                className={cn(
-                  pageToolbarButtonClass,
-                  "bg-accent text-accent-foreground disabled:opacity-50",
-                )}
-              >
-                <Plus className="size-4" />
-                Nuevo contrato
-              </button>
-            )}
-          </>
+          ) : undefined
         }
       />
 

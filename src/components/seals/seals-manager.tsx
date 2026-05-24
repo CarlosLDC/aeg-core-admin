@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Layers, Loader2, Plus, RefreshCw } from "lucide-react";
+import { Layers, Loader2, Plus } from "lucide-react";
 import {
   SealBatchFormDialog,
   type SealBatchSubmitPayload,
@@ -460,27 +460,11 @@ export function SealsManager() {
     <div className="space-y-4">
       <PageToolbar
         actions={
-          <>
-            <button
-            type="button"
-            onClick={() => {
-              loadSeals();
-              loadPrinters();
-            }}
-            disabled={loading}
-              className={cn(
-                pageToolbarButtonClass,
-                "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
-              )}
-            >
-              <RefreshCw className={cn("size-4", loading && "animate-spin")} />
-              Actualizar
-            </button>
-            {canCreate && (
-              <>
-                <button
-                  type="button"
-                  onClick={openBatchCreate}
+          canCreate ? (
+            <>
+              <button
+                type="button"
+                onClick={openBatchCreate}
                   className={cn(
                     pageToolbarButtonClass,
                     "border border-border bg-card text-foreground hover:bg-foreground/5",
@@ -501,8 +485,7 @@ export function SealsManager() {
                   Nuevo precinto
                 </button>
               </>
-            )}
-          </>
+          ) : undefined
         }
       />
 

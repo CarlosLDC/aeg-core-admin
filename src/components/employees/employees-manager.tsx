@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { EmployeeFormDialog } from "@/components/employees/employee-form-dialog";
 import { EmployeeRoleBadge } from "@/components/employees/employee-role-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
@@ -276,10 +276,6 @@ export function EmployeesManager() {
     }
   }, [toast, user]);
 
-  const refreshAll = useCallback(async () => {
-    await Promise.all([refreshScope(), loadEmployees()]);
-  }, [refreshScope, loadEmployees]);
-
   useEffect(() => {
     if (authLoading || scopeLoading) return;
     if (!scope || !user) {
@@ -436,39 +432,20 @@ export function EmployeesManager() {
     <div className="space-y-4">
       <PageToolbar
         actions={
-          <>
+          canCreate ? (
             <button
               type="button"
-              onClick={refreshAll}
-              disabled={loading || scopeLoading || authLoading}
+              onClick={openCreate}
+              disabled={!catalogReady || !branchesReadyForCreate}
               className={cn(
                 pageToolbarButtonClass,
-                "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
+                "bg-accent text-accent-foreground disabled:opacity-50",
               )}
             >
-              <RefreshCw
-                className={cn(
-                  "size-4",
-                  (loading || scopeLoading) && "animate-spin",
-                )}
-              />
-              Actualizar
+              <Plus className="size-4" />
+              Nuevo empleado
             </button>
-            {canCreate && (
-              <button
-                type="button"
-                onClick={openCreate}
-                disabled={!catalogReady || !branchesReadyForCreate}
-                className={cn(
-                  pageToolbarButtonClass,
-                  "bg-accent text-accent-foreground disabled:opacity-50",
-                )}
-              >
-                <Plus className="size-4" />
-                Nuevo empleado
-              </button>
-            )}
-          </>
+          ) : undefined
         }
       />
 

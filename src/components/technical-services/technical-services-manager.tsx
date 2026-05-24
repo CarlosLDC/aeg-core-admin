@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { TechnicalServiceFormDialog } from "@/components/technical-services/technical-service-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
@@ -253,40 +253,23 @@ export function TechnicalServicesManager() {
     <div className="space-y-4">
       <PageToolbar
         actions={
-          <>
+          canCreate ? (
             <button
               type="button"
               onClick={() => {
-                loadRows();
-                catalog.refresh();
+                setSelected(null);
+                setFormError(null);
+                setDialog("create");
               }}
-              disabled={loading}
               className={cn(
                 pageToolbarButtonClass,
-                "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
+                "bg-accent text-accent-foreground",
               )}
             >
-              <RefreshCw className={cn("size-4", loading && "animate-spin")} />
-              Actualizar
+              <Plus className="size-4" />
+              Nuevo servicio
             </button>
-            {canCreate && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelected(null);
-                  setFormError(null);
-                  setDialog("create");
-                }}
-                className={cn(
-                  pageToolbarButtonClass,
-                  "bg-accent text-accent-foreground",
-                )}
-              >
-                <Plus className="size-4" />
-                Nuevo servicio
-              </button>
-            )}
-          </>
+          ) : undefined
         }
       />
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
 import {
   BranchCreateWizardDialog,
@@ -393,20 +393,6 @@ export function CompanyBranchesTable({
           Sucursales de la empresa
         </h3>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <button
-            type="button"
-            onClick={() => void loadBranches()}
-            disabled={loading || scopeLoading}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50 sm:w-auto"
-          >
-            <RefreshCw
-              className={cn(
-                "size-4",
-                (loading || scopeLoading) && "animate-spin",
-              )}
-            />
-            Actualizar
-          </button>
           {canCreate && (
             <button
               type="button"

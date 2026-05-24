@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
 import {
   BranchCreateWizardDialog,
@@ -326,10 +326,6 @@ export function BranchesManager() {
     }
   }, [scope, catalogRoles, toast]);
 
-  const refreshAll = useCallback(async () => {
-    await refreshScope();
-  }, [refreshScope]);
-
   useEffect(() => {
     if (scopeLoading) return;
 
@@ -502,39 +498,20 @@ export function BranchesManager() {
     <div className="space-y-4">
       <PageToolbar
         actions={
-          <>
+          canCreate ? (
             <button
               type="button"
-              onClick={refreshAll}
-              disabled={loading || companiesLoading}
+              onClick={openCreate}
+              disabled={companiesLoading}
               className={cn(
                 pageToolbarButtonClass,
-                "border border-border bg-card text-foreground hover:bg-foreground/5 disabled:opacity-50",
+                "bg-accent text-accent-foreground disabled:opacity-50",
               )}
             >
-              <RefreshCw
-                className={cn(
-                  "size-4",
-                  (loading || companiesLoading) && "animate-spin",
-                )}
-              />
-              Actualizar
+              <Plus className="size-4" />
+              Nueva sucursal
             </button>
-            {canCreate && (
-              <button
-                type="button"
-                onClick={openCreate}
-                disabled={companiesLoading}
-                className={cn(
-                  pageToolbarButtonClass,
-                  "bg-accent text-accent-foreground disabled:opacity-50",
-                )}
-              >
-                <Plus className="size-4" />
-                Nueva sucursal
-              </button>
-            )}
-          </>
+          ) : undefined
         }
       />
 
