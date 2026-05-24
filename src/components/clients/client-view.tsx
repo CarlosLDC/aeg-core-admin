@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   ClientEditDialog,
   type ClientEditValues,
@@ -10,6 +11,7 @@ import { DetailField, DetailSection } from "@/components/resource-view/detail-fi
 import { DetailSectionsPager } from "@/components/resource-view/detail-sections-pager";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
+import { useConfirm } from "@/context/confirm-provider";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
 import {
@@ -21,7 +23,10 @@ import { fetchBranchById, updateBranch } from "@/lib/branches-api";
 import {
   fetchClientById,
   getClientsErrorMessage,
+  requestClientDelete,
+  requestClientUpdate,
 } from "@/lib/clients-api";
+import { toClientModificationProposedData } from "@/lib/client-form";
 import {
   fetchCompanyById,
   getCompaniesErrorMessage,
@@ -37,6 +42,7 @@ export function ClientView() {
   const id = useResourceId();
   const { user } = useAuth();
   const toast = useToast();
+  const confirm = useConfirm();
   const [client, setClient] = useState<ClientResponse | null>(null);
   const [branch, setBranch] = useState<BranchResponse | null>(null);
   const [company, setCompany] = useState<CompanyResponse | null>(null);
@@ -44,9 +50,11 @@ export function ClientView() {
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const canEditCompany = user ? canUpdateCompanyRecord(user.role) : false;
   const canEditBranch = user ? canUpdateBranchRecord(user.role) : false;
+  const canRequestReview = user?.role === "DISTRIBUTOR";
 
   const load = useCallback(async () => {
     if (id == null) {
@@ -172,13 +180,27 @@ export function ClientView() {
   }, [client, branch, company, businessName, rif, city, state]);
 
   async function handleEdit(values: ClientEditValues) {
-    if (!client || !branch || !company || !canEditCompany || !canEditBranch) {
+    if (!client || !branch || !company) {
       setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
     setSaving(true);
     setFormError(null);
     try {
+      if (canRequestReview) {
+        await requestClientUpdate(
+          client.id,
+          toClientModificationProposedData(values, client.distributorId),
+        );
+        setEditOpen(false);
+        await load();
+        toast.success("Solicitud de actualización enviada a revisión.");
+        return;
+      }
+      if (!canEditCompany || !canEditBranch) {
+        setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+        return;
+      }
       const [updatedCompany, updatedBranch] = await Promise.all([
         updateCompany(company.id, {
           businessName: values.businessName,
@@ -209,6 +231,34 @@ export function ClientView() {
     }
   }
 
+  async function handleDelete() {
+    if (!client || !canRequestReview) return;
+    const accepted = await confirm({
+      title: "Solicitar eliminación",
+      message:
+        "¿Deseas enviar la solicitud de eliminación de este cliente para revisión?",
+      destructive: true,
+    });
+    if (!accepted) return;
+    setDeleting(true);
+    try {
+      await requestClientDelete(client.id);
+      await load();
+      toast.success("Solicitud de eliminación enviada a revisión.");
+    } catch (err) {
+      toast.error(getClientsErrorMessage(err));
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const pendingReview = client?.reviewStatus === "PENDING_REVIEW";
+  const isAdmin = user?.role === "ADMIN";
+  const reviewHref =
+    client?.activeModificationRequestId != null
+      ? `/clients/reviews/${client.activeModificationRequestId}`
+      : "/clients/reviews";
+
   return (
     <>
       <ResourceViewShell
@@ -219,17 +269,52 @@ export function ClientView() {
         loading={loading}
         error={error}
         actions={
-          client && branch && company && canEditCompany && canEditBranch ? (
+          client ? (
             <ResourceViewActions
-              onEdit={() => {
-                setFormError(null);
-                setEditOpen(true);
-              }}
+              onEdit={
+                (canRequestReview || (canEditCompany && canEditBranch)) &&
+                !pendingReview
+                  ? () => {
+                      setFormError(null);
+                      setEditOpen(true);
+                    }
+                  : undefined
+              }
+              onDelete={
+                canRequestReview && !pendingReview
+                  ? () => void handleDelete()
+                  : undefined
+              }
+              deleting={saving || deleting}
             />
           ) : undefined
         }
       >
-        {client ? <DetailSectionsPager key={client.id} steps={detailSteps} /> : null}
+        {client ? (
+          <div className="space-y-4">
+            {pendingReview && (
+              <p
+                role="status"
+                className="flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200"
+              >
+                <span>
+                  {isAdmin
+                    ? "En revisión: ediciones bloqueadas."
+                    : "En revisión: espera la decisión del administrador."}
+                </span>
+                {isAdmin && (
+                  <Link
+                    href={reviewHref}
+                    className="shrink-0 font-medium text-accent hover:underline"
+                  >
+                    Ver solicitud
+                  </Link>
+                )}
+              </p>
+            )}
+            <DetailSectionsPager key={client.id} steps={detailSteps} />
+          </div>
+        ) : null}
       </ResourceViewShell>
       {client && branch && company && editOpen ? (
         <ClientEditDialog

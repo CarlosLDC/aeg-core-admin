@@ -118,6 +118,12 @@ export const navSections: NavSection[] = [
         roles: ["ADMIN"],
       },
       {
+        title: "Revisión clientes",
+        href: "/clients/reviews",
+        icon: UserRound,
+        roles: ["ADMIN"],
+      },
+      {
         title: "Pruebas MQTT",
         href: "/mqtt-tests",
         icon: Radio,

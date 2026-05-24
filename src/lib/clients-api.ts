@@ -1,10 +1,12 @@
 import { apiFetch } from "@/lib/api";
 import { getCatalogErrorMessage } from "@/lib/api-error-message";
 import { getCatalogForbiddenMessage } from "@/lib/api-permissions";
+import type { ClientModificationProposedData } from "@/types/client-modification-request";
 import { ApiError } from "@/types/auth";
 import type { ClientRequest, ClientResponse } from "@/types/branch-role";
 
 const BASE = "/api/clients";
+const MOD_BASE = "/api/client-modification-requests";
 
 export async function fetchClients(): Promise<ClientResponse[]> {
   return apiFetch<ClientResponse[]>(BASE);
@@ -46,6 +48,23 @@ export async function updateClient(
 
 export async function deleteClient(id: number): Promise<void> {
   return apiFetch<void>(`${BASE}/${id}`, { method: "DELETE" });
+}
+
+export async function requestClientUpdate(
+  clientId: number,
+  proposedData: ClientModificationProposedData,
+): Promise<void> {
+  await apiFetch(`${MOD_BASE}/update`, {
+    method: "POST",
+    body: JSON.stringify({ clientId, proposedData }),
+  });
+}
+
+export async function requestClientDelete(clientId: number): Promise<void> {
+  await apiFetch(`${MOD_BASE}/delete`, {
+    method: "POST",
+    body: JSON.stringify({ clientId }),
+  });
 }
 
 export function getClientsErrorMessage(error: unknown): string {

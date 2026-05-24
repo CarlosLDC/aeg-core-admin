@@ -12,6 +12,7 @@ import {
   type NavItem,
 } from "@/lib/navigation";
 import { useAuth } from "@/context/auth-provider";
+import { fetchClientModificationRequests } from "@/lib/client-modification-requests-api";
 import { fetchEmployeeModificationRequests } from "@/lib/employee-modification-requests-api";
 import {
   DEFAULT_POLL_INTERVAL_MS,
@@ -138,6 +139,7 @@ export function Sidebar({
   const navItems = user ? navItemsForRole(user.role) : [];
   const navRef = useRef<HTMLElement>(null);
   const [pendingReviewCount, setPendingReviewCount] = useState(0);
+  const [pendingClientReviewCount, setPendingClientReviewCount] = useState(0);
 
   const persistNavScroll = useCallback(() => {
     const el = navRef.current;
@@ -163,6 +165,7 @@ export function Sidebar({
   useEffect(() => {
     if (user?.role !== "ADMIN") {
       setPendingReviewCount(0);
+      setPendingClientReviewCount(0);
       return;
     }
     let cancelled = false;
@@ -171,7 +174,9 @@ export function Sidebar({
     const loadPending = async () => {
       try {
         const pending = await fetchEmployeeModificationRequests("PENDING");
+        const pendingClients = await fetchClientModificationRequests("PENDING");
         if (!cancelled) setPendingReviewCount(pending.length);
+        if (!cancelled) setPendingClientReviewCount(pendingClients.length);
         return true;
       } catch {
         return false;
@@ -284,7 +289,11 @@ export function Sidebar({
                     isActive={isNavItemActive(item, pathname, navItems)}
                     isCollapsed={isCollapsed && !isMobileDrawer}
                     badgeCount={
-                      item.href === "/employees/reviews" ? pendingReviewCount : undefined
+                      item.href === "/employees/reviews"
+                        ? pendingReviewCount
+                        : item.href === "/clients/reviews"
+                          ? pendingClientReviewCount
+                          : undefined
                     }
                     onBeforeNavigate={persistNavScroll}
                     onNavigate={onMobileClose}

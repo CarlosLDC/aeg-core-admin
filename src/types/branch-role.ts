@@ -13,6 +13,8 @@ export type ClientResponse = {
   branchId: number;
   distributorId?: number;
   createdAt: string;
+  reviewStatus: "ACTIVE" | "PENDING_REVIEW";
+  activeModificationRequestId?: number | null;
   branchCity?: string | null;
   branchState?: string | null;
   companyBusinessName?: string | null;
