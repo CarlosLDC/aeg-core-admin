@@ -145,6 +145,7 @@ export function BranchFormDialog({
     onSubmit({
       ...parsed.data,
       address: parsed.data.address ?? "",
+      contactPersonName: parsed.data.contactPersonName ?? "",
       phone: parsed.data.phone ?? "",
       email: parsed.data.email ?? "",
     });
@@ -270,10 +271,9 @@ export function BranchFormDialog({
             </legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block sm:col-span-2">
-                <FieldLabel required>Nombre persona de contacto</FieldLabel>
+                <FieldLabel>Nombre persona de contacto</FieldLabel>
                 <input
                   type="text"
-                  required
                   value={form.contactPersonName}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, contactPersonName: e.target.value }))

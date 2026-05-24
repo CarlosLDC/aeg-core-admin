@@ -8,10 +8,7 @@ export const branchFormSchema = z.object({
   city: z.string().trim().min(1, "La ciudad es obligatoria."),
   state: z.string().trim().min(1, "El estado es obligatorio."),
   address: z.string().optional(),
-  contactPersonName: z
-    .string()
-    .trim()
-    .min(1, "El nombre de la persona de contacto es obligatorio."),
+  contactPersonName: z.string().trim().optional(),
   phone: z.string().optional(),
   email: z
     .string()

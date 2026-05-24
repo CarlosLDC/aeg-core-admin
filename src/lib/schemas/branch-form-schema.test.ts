@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { branchFormSchema } from "@/lib/schemas/branch-form-schema";
 
 describe("branchFormSchema", () => {
-  it("requires contactPersonName", () => {
+  it("accepts empty contactPersonName", () => {
     const result = branchFormSchema.safeParse({
       companyId: "1",
       city: "Caracas",
@@ -17,7 +17,7 @@ describe("branchFormSchema", () => {
       clientDistributorId: "",
       isHeadquarters: false,
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("accepts valid branch payload", () => {

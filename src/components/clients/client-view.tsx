@@ -190,7 +190,7 @@ export function ClientView() {
           city: values.city,
           state: values.state,
           address: values.address || undefined,
-          contactPersonName: values.contactPersonName,
+          contactPersonName: values.contactPersonName.trim() || undefined,
           phone: values.phone || undefined,
           email: values.email || undefined,
         }),

@@ -8,7 +8,7 @@ export function toBranchRequest(values: BranchFormValues): BranchRequest {
     city: values.city.trim(),
     state: normalizeStateName(values.state),
     address: values.address.trim() || undefined,
-    contactPersonName: values.contactPersonName.trim(),
+    contactPersonName: values.contactPersonName.trim() || undefined,
     phone: values.phone.trim() || undefined,
     email: values.email.trim() || undefined,
     isHeadquarters: values.isHeadquarters || undefined,

@@ -68,43 +68,45 @@ export function ClientFormFields({
           </p>
         )}
 
-        <label className="block">
-          <FieldLabel required>RIF</FieldLabel>
-          <input
-            type="text"
-            required
-            value={form.rif}
-            disabled={
-              saving || fieldLocked("rif", inputMode, aiFields, companyLocked)
-            }
-            onChange={(e) =>
-              setForm((f) => ({
-                ...f,
-                rif: e.target.value.toUpperCase(),
-                linkedCompanyId: null,
-              }))
-            }
-            placeholder="J123456789"
-            className={cn(clientFormInputClass, "font-mono uppercase")}
-          />
-        </label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <FieldLabel required>RIF</FieldLabel>
+            <input
+              type="text"
+              required
+              value={form.rif}
+              disabled={
+                saving || fieldLocked("rif", inputMode, aiFields, companyLocked)
+              }
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  rif: e.target.value.toUpperCase(),
+                  linkedCompanyId: null,
+                }))
+              }
+              placeholder="J123456789"
+              className={cn(clientFormInputClass, "font-mono uppercase")}
+            />
+          </label>
 
-        <label className="block">
-          <FieldLabel required>Razón social</FieldLabel>
-          <input
-            type="text"
-            required
-            value={form.businessName}
-            disabled={
-              saving ||
-              fieldLocked("businessName", inputMode, aiFields, companyLocked)
-            }
-            onChange={(e) =>
-              setForm((f) => ({ ...f, businessName: e.target.value }))
-            }
-            className={clientFormInputClass}
-          />
-        </label>
+          <label className="block">
+            <FieldLabel required>Razón social</FieldLabel>
+            <input
+              type="text"
+              required
+              value={form.businessName}
+              disabled={
+                saving ||
+                fieldLocked("businessName", inputMode, aiFields, companyLocked)
+              }
+              onChange={(e) =>
+                setForm((f) => ({ ...f, businessName: e.target.value }))
+              }
+              className={clientFormInputClass}
+            />
+          </label>
+        </div>
 
         <ContributorTypeToggle
           value={form.contributorType}
@@ -173,15 +175,11 @@ export function ClientFormFields({
   return (
     <fieldset className="space-y-4">
       <legend className="sr-only">Contacto</legend>
-      <p className="text-xs text-muted">
-        Indica quién atiende en esta sucursal y cómo contactarla.
-      </p>
 
       <label className="block">
-        <FieldLabel required>Nombre persona de contacto</FieldLabel>
+        <FieldLabel>Nombre persona de contacto</FieldLabel>
         <input
           type="text"
-          required
           value={form.contactPersonName}
           disabled={saving}
           onChange={(e) =>

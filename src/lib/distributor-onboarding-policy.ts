@@ -43,9 +43,6 @@ export function validateOnboardingSection(
   }
 
   if (section === "contact") {
-    if (!form.contactPersonName.trim()) {
-      return "Indica el nombre de la persona de contacto.";
-    }
     return null;
   }
 
