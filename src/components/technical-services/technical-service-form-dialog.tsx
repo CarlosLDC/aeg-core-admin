@@ -16,7 +16,11 @@ import { FieldLabel } from "@/components/ui/field-label";
 import { PhotoDocumentUpload } from "@/components/ui/photo-document-upload";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
-import { SEAL_TAMPERED_TOGGLE_TONE } from "@/lib/toggle-button-styles";
+import {
+  FORM_FIELD_TEXTAREA_ROWS,
+  SEAL_TAMPERED_TOGGLE_TONE,
+  formFieldTextareaClass,
+} from "@/lib/toggle-button-styles";
 import {
   emptyTechnicalServiceForm,
   technicalServiceToFormValues,
@@ -154,6 +158,14 @@ export function TechnicalServiceFormDialog({
       if (!hasValue(form.reportedFailure)) {
         return "Describe la falla reportada.";
       }
+      return null;
+    }
+
+    if (targetStep === 3) {
+      if (form.sealTampered === null) {
+        return "Indica si el precinto fue violentado.";
+      }
+      if (!hasValue(form.notes)) return "Indica las observaciones.";
       return null;
     }
 
@@ -353,13 +365,13 @@ export function TechnicalServiceFormDialog({
         <FieldLabel required>Falla reportada</FieldLabel>
         <textarea
           required
-          rows={2}
+          rows={FORM_FIELD_TEXTAREA_ROWS}
           value={form.reportedFailure}
           disabled={disabled}
           onChange={(e) =>
             setForm((f) => ({ ...f, reportedFailure: e.target.value }))
           }
-          className={inputClass}
+          className={formFieldTextareaClass}
         />
       </label>
     </div>
@@ -367,20 +379,8 @@ export function TechnicalServiceFormDialog({
 
   const outcomeSection = (
     <div className={sectionClass}>
-      <label className="block">
-        <FieldLabel>Observaciones</FieldLabel>
-        <textarea
-          rows={3}
-          value={form.notes}
-          disabled={disabled}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, notes: e.target.value }))
-          }
-          className={inputClass}
-        />
-      </label>
       <div className="block">
-        <FieldLabel>Precinto violentado</FieldLabel>
+        <FieldLabel required>Precinto violentado</FieldLabel>
         <BooleanToggle
           value={form.sealTampered}
           onChange={(sealTampered) =>
@@ -394,6 +394,19 @@ export function TechnicalServiceFormDialog({
           ariaLabel="Estado del precinto"
         />
       </div>
+      <label className="block">
+        <FieldLabel required>Observaciones</FieldLabel>
+        <textarea
+          required
+          rows={FORM_FIELD_TEXTAREA_ROWS}
+          value={form.notes}
+          disabled={disabled}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, notes: e.target.value }))
+          }
+          className={formFieldTextareaClass}
+        />
+      </label>
     </div>
   );
 

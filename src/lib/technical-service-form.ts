@@ -13,7 +13,7 @@ export type TechnicalServiceFormValues = {
   technicianId: string;
   serviceCenterId: string;
   distributorId: string;
-  sealTampered: boolean;
+  sealTampered: boolean | null;
   notes: string;
   startAt: string;
   endAt: string;
@@ -34,7 +34,7 @@ export const emptyTechnicalServiceForm = (): TechnicalServiceFormValues => ({
   technicianId: "",
   serviceCenterId: "",
   distributorId: "",
-  sealTampered: false,
+  sealTampered: null,
   notes: "",
   startAt: "",
   endAt: "",
@@ -155,13 +155,20 @@ export function toTechnicalServiceRequest(
     return "Añade al menos una foto o documento.";
   }
 
+  if (values.sealTampered === null) {
+    return "Indica si el precinto fue violentado.";
+  }
+
+  const notes = values.notes.trim();
+  if (!notes) return "Las observaciones son obligatorias.";
+
   return {
     printerId,
     technicianId,
     serviceCenterId,
     distributorId,
     sealTampered: values.sealTampered,
-    notes: values.notes.trim() || null,
+    notes,
     startAt,
     endAt,
     photoUrls: values.photoUrls,

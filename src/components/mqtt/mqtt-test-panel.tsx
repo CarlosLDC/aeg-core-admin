@@ -17,6 +17,7 @@ import type {
   MqttTestMessageResponse,
 } from "@/types/mqtt";
 import { formatJsonText } from "@/lib/format-json-paste";
+import { FORM_FIELD_TEXTAREA_ROWS } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_TOPIC = "aeg/test/manual";
@@ -294,13 +295,13 @@ export function MqttTestPanel() {
             </span>
             <textarea
               required
-              rows={5}
+              rows={FORM_FIELD_TEXTAREA_ROWS}
               value={payloadText}
               onChange={(e) => setPayloadText(e.target.value)}
               onPaste={handlePayloadPaste}
               className={cn(
                 inputClass,
-                "min-h-[7.5rem] resize-y py-1.5 font-mono text-xs leading-relaxed",
+                "resize-y py-1.5 font-mono text-xs leading-relaxed",
               )}
               spellCheck={false}
             />

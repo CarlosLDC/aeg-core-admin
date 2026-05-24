@@ -4,7 +4,7 @@ import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import type { ToggleTone } from "@/lib/toggle-button-styles";
 
 type BooleanToggleProps = {
-  value: boolean;
+  value: boolean | null;
   onChange: (value: boolean) => void;
   disabled?: boolean;
   falseLabel?: string;
@@ -27,9 +27,12 @@ export function BooleanToggle({
   ariaLabel,
   className,
 }: BooleanToggleProps) {
+  const segmentValue =
+    value === null ? "unset" : value ? "true" : "false";
+
   return (
     <SegmentedToggle
-      value={value ? "true" : "false"}
+      value={segmentValue}
       onChange={(next) => onChange(next === "true")}
       disabled={disabled}
       ariaLabel={ariaLabel ?? `${falseLabel} o ${trueLabel}`}

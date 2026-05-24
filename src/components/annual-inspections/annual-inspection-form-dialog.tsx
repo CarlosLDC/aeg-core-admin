@@ -9,6 +9,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 import {
   formFieldInputClass,
+  FORM_FIELD_TEXTAREA_ROWS,
   formFieldTextareaClass,
   SEAL_TAMPERED_TOGGLE_TONE,
 } from "@/lib/toggle-button-styles";
@@ -241,7 +242,7 @@ export function AnnualInspectionFormDialog({
       <label className="block">
         <FieldLabel>Observaciones</FieldLabel>
         <textarea
-          rows={3}
+          rows={FORM_FIELD_TEXTAREA_ROWS}
           value={form.notes}
           disabled={disabled}
           onChange={(e) =>

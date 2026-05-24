@@ -161,6 +161,9 @@ export function segmentedToggleActiveClass(tone?: ToggleTone): string {
 
 export const FORM_FIELD_HEIGHT_CLASS = "h-10";
 
+/** Altura estándar de textareas de ancho completo (notas, dirección, fallas, etc.). */
+export const FORM_FIELD_TEXTAREA_ROWS = 3;
+
 export const formFieldInputClass = `${FORM_FIELD_HEIGHT_CLASS} w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60`;
 
 export const formFieldTextareaClass =

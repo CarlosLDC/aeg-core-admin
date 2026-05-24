@@ -8,6 +8,10 @@ import {
   type SeniatLockableField,
 } from "@/lib/seniat-ai-fields";
 import type { CompanyResponse } from "@/types/company";
+import {
+  FORM_FIELD_TEXTAREA_ROWS,
+  formFieldTextareaClass,
+} from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 export const clientFormInputClass =
@@ -159,13 +163,13 @@ export function ClientFormFields({
         <label className="block">
           <FieldLabel>Dirección</FieldLabel>
           <textarea
-            rows={4}
+            rows={FORM_FIELD_TEXTAREA_ROWS}
             value={form.address}
             disabled={
               saving || fieldLocked("address", inputMode, aiFields, false)
             }
             onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-            className={cn(clientFormInputClass, "min-h-[6rem] resize-y")}
+            className={formFieldTextareaClass}
           />
         </label>
       </fieldset>
