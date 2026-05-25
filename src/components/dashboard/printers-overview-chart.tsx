@@ -19,9 +19,13 @@ const STATUS_STYLES: Record<
   string,
   { stroke: string; dot: string }
 > = {
+  de_demostracion: { stroke: "#6366f1", dot: "bg-indigo-500" },
+  de_fabrica: { stroke: "#0ea5e9", dot: "bg-sky-500" },
+  inicializada: { stroke: "#a855f7", dot: "bg-violet-500" },
+  asignada: { stroke: "#10b981", dot: "bg-emerald-500" },
+  enajenada: { stroke: "#f97316", dot: "bg-orange-500" },
+  desincorporada: { stroke: "#64748b", dot: "bg-slate-500" },
   laboratorio: { stroke: "#f59e0b", dot: "bg-amber-500" },
-  activo: { stroke: "#10b981", dot: "bg-emerald-500" },
-  inactivo: { stroke: "#94a3b8", dot: "bg-slate-400" },
 };
 
 function monthlyTrend(months: MonthlyCount[]): {
@@ -89,7 +93,7 @@ function StatusDonut({
           viewBox={`0 0 ${size} ${size}`}
           className="-rotate-90"
           role="img"
-          aria-label={`Distribución por estatus: ${activePct}% activas`}
+          aria-label={`Distribución por estatus: ${activePct}% operativas`}
         >
           <circle
             cx={size / 2}
@@ -131,7 +135,7 @@ function StatusDonut({
           <span className="text-2xl font-semibold tracking-tight text-card-foreground tabular-nums">
             {activePct}%
           </span>
-          <span className="text-xs text-muted">activas</span>
+          <span className="text-xs text-muted">operativas</span>
         </div>
       </div>
 
@@ -344,8 +348,11 @@ export function PrintersOverviewChart({
 }: PrintersOverviewChartProps) {
   const [hoveredMonth, setHoveredMonth] = useState<number | null>(null);
 
-  const activeCount =
-    statusCounts.find((s) => s.status === "activo")?.count ?? 0;
+  const activeCount = statusCounts
+    .filter((s) =>
+      ["asignada", "inicializada", "de_demostracion"].includes(s.status),
+    )
+    .reduce((sum, item) => sum + item.count, 0);
   const trend = useMemo(
     () => monthlyTrend(monthlyRegistrations),
     [monthlyRegistrations],
@@ -380,7 +387,7 @@ export function PrintersOverviewChart({
           </div>
           <div>
             <dt className="text-xs font-medium uppercase tracking-wide text-muted">
-              Activas
+              Operativas
             </dt>
             <dd className="text-2xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
               {activeCount}

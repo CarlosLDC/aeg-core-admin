@@ -41,10 +41,12 @@ export function DashboardWelcome({
     .filter((item) => !item.disabled && item.href !== "/")
     .slice(0, 4);
 
-  const activePrinters = snapshot.printers.filter((p) => p.status === "activo").length;
+  const activePrinters = snapshot.printers.filter((p) =>
+    ["asignada", "inicializada", "de_demostracion"].includes(p.status),
+  ).length;
   const printerLine =
     snapshot.printers.length > 0
-      ? `${snapshot.printers.length} impresora${snapshot.printers.length === 1 ? "" : "s"} en tu ámbito · ${activePrinters} activa${activePrinters === 1 ? "" : "s"}.`
+      ? `${snapshot.printers.length} impresora${snapshot.printers.length === 1 ? "" : "s"} en tu ámbito · ${activePrinters} operativa${activePrinters === 1 ? "" : "s"}.`
       : role === "SERVICE_CENTER"
         ? "Tu rol no gestiona impresoras directamente."
         : "Aún no hay impresoras en tu ámbito.";

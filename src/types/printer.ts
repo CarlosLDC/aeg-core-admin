@@ -1,4 +1,12 @@
-export const PRINTER_STATUSES = ["laboratorio", "activo", "inactivo"] as const;
+export const PRINTER_STATUSES = [
+  "de_demostracion",
+  "de_fabrica",
+  "inicializada",
+  "asignada",
+  "enajenada",
+  "desincorporada",
+  "laboratorio",
+] as const;
 export type PrinterStatus = (typeof PRINTER_STATUSES)[number];
 
 export const DEVICE_TYPES = ["interno", "externo"] as const;

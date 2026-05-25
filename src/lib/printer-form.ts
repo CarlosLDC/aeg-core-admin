@@ -30,9 +30,13 @@ const FIRMWARE_RE = /^[0-9]+\.[0-9]+\.[0-9]+$/;
 const MAC_RE = /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/i;
 
 export const PRINTER_STATUS_LABELS: Record<PrinterStatus, string> = {
-  laboratorio: "Laboratorio",
-  activo: "Activo",
-  inactivo: "Inactivo",
+  de_demostracion: "De demostración",
+  de_fabrica: "De fábrica",
+  inicializada: "Inicializada",
+  asignada: "Asignada",
+  enajenada: "Enajenada",
+  desincorporada: "Desincorporada",
+  laboratorio: "Laboratorio (legacy)",
 };
 
 export const DEVICE_TYPE_LABELS: Record<DeviceType, string> = {
@@ -63,7 +67,7 @@ export function printerToFormValues(
     macAddress: printer.macAddress ?? "",
     status: PRINTER_STATUSES.includes(printer.status)
       ? printer.status
-      : "laboratorio",
+      : "de_fabrica",
     deviceType: DEVICE_TYPES.includes(printer.deviceType)
       ? printer.deviceType
       : "interno",
@@ -84,7 +88,7 @@ export const emptyPrinterForm = (
   installationDate: "",
   versionFirmware: "",
   macAddress: "",
-  status: "laboratorio",
+  status: "de_fabrica",
   deviceType: "interno",
   ...defaults,
 });

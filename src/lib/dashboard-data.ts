@@ -95,7 +95,17 @@ export function countPrintersByStatus(
   for (const printer of printers) {
     counts.set(printer.status, (counts.get(printer.status) ?? 0) + 1);
   }
-  return (["laboratorio", "activo", "inactivo"] as const).map((status) => ({
+  return (
+    [
+      "de_demostracion",
+      "de_fabrica",
+      "inicializada",
+      "asignada",
+      "enajenada",
+      "desincorporada",
+      "laboratorio",
+    ] as const
+  ).map((status) => ({
     status,
     label: PRINTER_STATUS_LABELS[status],
     count: counts.get(status) ?? 0,
@@ -221,7 +231,12 @@ function buildStats(
     activeContracts: number | null;
   },
 ): DashboardStat[] {
-  const activePrinters = counts.printers.filter((p) => p.status === "activo").length;
+  const activePrinters = counts.printers.filter(
+    (p) =>
+      p.status === "asignada" ||
+      p.status === "inicializada" ||
+      p.status === "de_demostracion",
+  ).length;
   const paidPrinters = counts.printers.filter((p) => p.paid).length;
   const companyHint = companiesStatHint(counts.companies, counts.branches);
   const branchHint = branchesStatHint(counts.branches, {
@@ -247,7 +262,7 @@ function buildStats(
         {
           title: "Impresoras",
           value: String(counts.printers.length),
-          hint: `${activePrinters} activas · ${paidPrinters} pagadas`,
+          hint: `${activePrinters} operativas · ${paidPrinters} pagadas`,
         },
         {
           title: "Empleados",
@@ -267,7 +282,7 @@ function buildStats(
         {
           title: "Impresoras",
           value: String(counts.printers.length),
-          hint: `${activePrinters} activas`,
+          hint: `${activePrinters} operativas`,
         },
         {
           title: "Clientes",
@@ -290,7 +305,7 @@ function buildStats(
         {
           title: "Impresoras",
           value: String(counts.printers.length),
-          hint: `${activePrinters} activas · ${counts.printers.filter((p) => p.status === "laboratorio").length} en laboratorio`,
+          hint: `${activePrinters} operativas · ${counts.printers.filter((p) => p.status === "laboratorio").length} en laboratorio`,
         },
         {
           title: "Empleados",
