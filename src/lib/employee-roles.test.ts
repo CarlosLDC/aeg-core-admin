@@ -30,10 +30,11 @@ describe("fetchEmployeeRoleTables", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
-  it("skips technicians list for distributors", async () => {
+  it("loads technicians list for distributors", async () => {
+    vi.mocked(fetchTechnicians).mockResolvedValue([]);
     vi.mocked(fetchDistributorPersons).mockResolvedValue([]);
-    const tables = await fetchEmployeeRoleTables("DISTRIBUTOR" as Role);
-    expect(fetchTechnicians).not.toHaveBeenCalled();
+    const tables = await fetchEmployeeRoleTables("DISTRIBUTOR");
+    expect(fetchTechnicians).toHaveBeenCalledTimes(1);
     expect(tables.technicians).toEqual([]);
   });
 });

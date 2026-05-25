@@ -43,7 +43,12 @@ export type EmployeeRoleFormState = {
 };
 
 export function canAssignTechnicianRole(role: Role): boolean {
-  return role === "ADMIN" || role === "TECHNICIAN" || role === "SERVICE_CENTER";
+  return (
+    role === "ADMIN" ||
+    role === "DISTRIBUTOR" ||
+    role === "TECHNICIAN" ||
+    role === "SERVICE_CENTER"
+  );
 }
 
 export function canAssignDistributorPersonRole(role: Role): boolean {
@@ -96,15 +101,12 @@ export function uiRoleToBackend(uiRole: EmployeeUiRole): {
   };
 }
 
-/** Distribuidores no pueden listar técnicos (403 en GET /api/technicians). */
 export async function fetchEmployeeRoleTables(role: Role): Promise<{
   technicians: TechnicianResponse[];
   distributorPersons: DistributorPersonResponse[];
 }> {
   const [technicians, distributorPersons] = await Promise.all([
-    role === "DISTRIBUTOR"
-      ? Promise.resolve([] as TechnicianResponse[])
-      : fetchTechnicians(),
+    fetchTechnicians(),
     fetchDistributorPersons(),
   ]);
   return { technicians, distributorPersons };
