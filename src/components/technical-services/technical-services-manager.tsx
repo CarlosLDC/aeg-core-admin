@@ -30,6 +30,7 @@ import {
 import { forbiddenMessage } from "@/lib/permissions/messages";
 import { useFieldOperationsCatalog } from "@/hooks/use-field-operations-catalog";
 import { filterTechnicalServicesInScope } from "@/lib/scope-filters";
+import { reportListTableError } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
@@ -174,9 +175,11 @@ export function TechnicalServicesManager() {
         scoped.sort((a, b) => b.startAt.localeCompare(a.startAt, "es")),
       );
     } catch (err) {
-      const message = getTechnicalServicesErrorMessage(err);
-      setListError(message);
-      toast.error(message);
+      reportListTableError({
+        message: getTechnicalServicesErrorMessage(err),
+        setListError,
+        toast,
+      });
     } finally {
       if (!silent) setLoading(false);
     }
@@ -246,7 +249,15 @@ export function TechnicalServicesManager() {
       toast.success("Servicio eliminado.");
       await loadRows({ silent: true });
     } catch (err) {
-      toast.error(getTechnicalServicesErrorMessage(err));
+      const recordLabel =
+        printerLabelById.get(String(row.printerId)) ??
+        `Servicio técnico ${row.id}`;
+      reportListTableError({
+        message: getTechnicalServicesErrorMessage(err),
+        recordLabel,
+        setListError,
+        toast,
+      });
     } finally {
       setDeletingId(null);
     }

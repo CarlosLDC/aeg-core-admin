@@ -40,6 +40,7 @@ import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { applyScopedFieldCatalog } from "@/lib/scope-filters";
+import { reportListTableError } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { fetchPrinters } from "@/lib/printers-api";
 import {
@@ -295,9 +296,11 @@ export function SealsManager() {
         ),
       );
     } catch (err) {
-      const message = getSealsErrorMessage(err);
-      setListError(message);
-      toast.error(message);
+      reportListTableError({
+        message: getSealsErrorMessage(err),
+        setListError,
+        toast,
+      });
     } finally {
       if (!silent) setLoading(false);
     }
@@ -453,7 +456,12 @@ export function SealsManager() {
       toast.success("Precinto eliminado.");
       await loadSeals({ silent: true });
     } catch (err) {
-      toast.error(getSealsErrorMessage(err));
+      reportListTableError({
+        message: getSealsErrorMessage(err),
+        recordLabel: `Precinto ${seal.serial}`,
+        setListError,
+        toast,
+      });
     } finally {
       setDeletingId(null);
     }

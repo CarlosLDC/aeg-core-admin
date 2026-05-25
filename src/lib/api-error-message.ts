@@ -1,5 +1,55 @@
 import { ApiError } from "@/types/auth";
 
+const REFERENTIAL_INTEGRITY_MESSAGE =
+  "No se puede realizar la operación porque el registro está siendo referenciado o hace referencia a un registro inexistente.";
+
+const REFERENTIAL_INTEGRITY_TOAST =
+  "No se puede completar la operación por dependencias vinculadas.";
+
+export function isReferentialIntegrityMessage(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("siendo referenciado") ||
+    lower.includes("referenciado o hace referencia") ||
+    lower.includes("integridad referencial")
+  );
+}
+
+/** Mensaje breve para notificaciones flash (toast). */
+export function toToastErrorMessage(message: string): string {
+  if (isReferentialIntegrityMessage(message)) {
+    return REFERENTIAL_INTEGRITY_TOAST;
+  }
+  return message;
+}
+
+/** Mensaje detallado para la alerta sobre la tabla. */
+export function toListErrorMessage(
+  message: string,
+  recordLabel?: string | null,
+): string {
+  if (!isReferentialIntegrityMessage(message)) {
+    return message;
+  }
+  const label = recordLabel?.trim();
+  if (label) {
+    return `No se puede eliminar «${label}» porque está siendo referenciado o hace referencia a un registro inexistente.`;
+  }
+  return REFERENTIAL_INTEGRITY_MESSAGE;
+}
+
+export function reportListTableError(options: {
+  message: string;
+  recordLabel?: string | null;
+  setListError: (message: string | null) => void;
+  toast: { error: (message: string) => void };
+}): void {
+  options.setListError(
+    toListErrorMessage(options.message, options.recordLabel),
+  );
+  options.toast.error(toToastErrorMessage(options.message));
+}
+
 /** Maps fetch/API failures to user-facing Spanish messages (for tests and reuse). */
 export async function readErrorMessageFromResponse(
   response: Response,

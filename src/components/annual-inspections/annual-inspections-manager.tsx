@@ -30,6 +30,7 @@ import {
 import { forbiddenMessage } from "@/lib/permissions/messages";
 import { useFieldOperationsCatalog } from "@/hooks/use-field-operations-catalog";
 import { filterAnnualInspectionsInScope } from "@/lib/scope-filters";
+import { reportListTableError } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { formatDate } from "@/lib/datetime-form";
@@ -184,9 +185,11 @@ export function AnnualInspectionsManager() {
         ),
       );
     } catch (err) {
-      const message = getAnnualInspectionsErrorMessage(err);
-      setListError(message);
-      toast.error(message);
+      reportListTableError({
+        message: getAnnualInspectionsErrorMessage(err),
+        setListError,
+        toast,
+      });
     } finally {
       if (!silent) setLoading(false);
     }
@@ -261,7 +264,15 @@ export function AnnualInspectionsManager() {
       toast.success("Inspección eliminada.");
       await loadRows({ silent: true });
     } catch (err) {
-      toast.error(getAnnualInspectionsErrorMessage(err));
+      const recordLabel =
+        printerLabelById.get(String(row.printerId)) ??
+        `Inspección ${row.id}`;
+      reportListTableError({
+        message: getAnnualInspectionsErrorMessage(err),
+        recordLabel,
+        setListError,
+        toast,
+      });
     } finally {
       setDeletingId(null);
     }

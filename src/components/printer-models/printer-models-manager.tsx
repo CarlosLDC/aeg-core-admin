@@ -27,6 +27,7 @@ import {
   canManagePrinterModels,
 } from "@/lib/api-permissions";
 import { forbiddenMessage } from "@/lib/permissions/messages";
+import { reportListTableError } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
@@ -141,9 +142,11 @@ export function PrinterModelsManager() {
         }),
       );
     } catch (err) {
-      const message = getPrinterModelsErrorMessage(err);
-      setListError(message);
-      toast.error(message);
+      reportListTableError({
+        message: getPrinterModelsErrorMessage(err),
+        setListError,
+        toast,
+      });
     } finally {
       if (!silent) setLoading(false);
     }
@@ -230,9 +233,12 @@ export function PrinterModelsManager() {
       await loadModels({ silent: true });
       toast.success(`Modelo "${label}" eliminado.`);
     } catch (err) {
-      const message = getPrinterModelsErrorMessage(err);
-      setListError(message);
-      toast.error(message);
+      reportListTableError({
+        message: getPrinterModelsErrorMessage(err),
+        recordLabel: label,
+        setListError,
+        toast,
+      });
     } finally {
       setDeletingId(null);
     }

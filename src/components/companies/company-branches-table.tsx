@@ -14,6 +14,7 @@ import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
+import { reportListTableError } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
@@ -220,9 +221,11 @@ export function CompanyBranchesTable({
       setAllBranches(scopedMerged);
       setBranches(forCompany);
     } catch (err) {
-      const message = getCatalogErrorMessage(err);
-      setListError(message);
-      toast.error(message);
+      reportListTableError({
+        message: getCatalogErrorMessage(err),
+        setListError,
+        toast,
+      });
     } finally {
       if (!silent) setLoading(false);
     }
@@ -381,9 +384,12 @@ export function CompanyBranchesTable({
       await loadBranches({ silent: true });
       toast.success(`Sucursal "${label}" eliminada.`);
     } catch (err) {
-      const message = getCatalogErrorMessage(err);
-      setListError(message);
-      toast.error(message);
+      reportListTableError({
+        message: getCatalogErrorMessage(err),
+        recordLabel: label,
+        setListError,
+        toast,
+      });
     } finally {
       setDeletingId(null);
     }

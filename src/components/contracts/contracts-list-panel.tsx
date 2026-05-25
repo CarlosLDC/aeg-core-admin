@@ -34,6 +34,7 @@ import {
   stopTableRowClick,
 } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
+import { reportListTableError } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
@@ -190,9 +191,11 @@ export function ContractsListPanel({
         data.sort((a, b) => b.startDate.localeCompare(a.startDate, "es")),
       );
     } catch (err) {
-      const message = getErrorMessage(err);
-      setListError(message);
-      toast.error(message);
+      reportListTableError({
+        message: getErrorMessage(err),
+        setListError,
+        toast,
+      });
     } finally {
       if (!silent) setLoading(false);
     }
@@ -306,9 +309,12 @@ export function ContractsListPanel({
       await loadContracts({ silent: true });
       toast.success("Contrato eliminado.");
     } catch (err) {
-      const message = getErrorMessage(err);
-      setListError(message);
-      toast.error(message);
+      reportListTableError({
+        message: getErrorMessage(err),
+        recordLabel: `Contrato ${contract.id} (${getPartyLabel(contract)})`,
+        setListError,
+        toast,
+      });
     } finally {
       setDeletingId(null);
     }

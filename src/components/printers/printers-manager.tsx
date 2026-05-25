@@ -33,6 +33,7 @@ import {
 } from "@/lib/api-permissions";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
+import { reportListTableError } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
@@ -302,9 +303,11 @@ export function PrintersManager() {
         data.sort((a, b) => b.createdAt.localeCompare(a.createdAt, "es")),
       );
     } catch (err) {
-      const message = getPrintersErrorMessage(err);
-      setListError(message);
-      toast.error(message);
+      reportListTableError({
+        message: getPrintersErrorMessage(err),
+        setListError,
+        toast,
+      });
     } finally {
       if (!silent) setLoading(false);
     }
@@ -527,7 +530,12 @@ export function PrintersManager() {
       toast.success("Impresora eliminada.");
       await loadPrinters({ silent: true });
     } catch (err) {
-      toast.error(getPrintersErrorMessage(err));
+      reportListTableError({
+        message: getPrintersErrorMessage(err),
+        recordLabel: printer.fiscalSerial,
+        setListError,
+        toast,
+      });
     } finally {
       setDeletingId(null);
     }

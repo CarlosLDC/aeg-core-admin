@@ -20,6 +20,7 @@ import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
+import { reportListTableError } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
@@ -279,9 +280,11 @@ export function EmployeesManager() {
         merged.sort((a, b) => a.name.localeCompare(b.name, "es")),
       );
     } catch (err) {
-      const message = getEmployeesErrorMessage(err);
-      setListError(message);
-      toast.error(message);
+      reportListTableError({
+        message: getEmployeesErrorMessage(err),
+        setListError,
+        toast,
+      });
     } finally {
       if (!silent) setLoading(false);
     }
@@ -465,9 +468,12 @@ export function EmployeesManager() {
           : `Empleado "${label}" eliminado.`,
       );
     } catch (err) {
-      const errorMessage = getEmployeesErrorMessage(err);
-      setListError(errorMessage);
-      toast.error(errorMessage);
+      reportListTableError({
+        message: getEmployeesErrorMessage(err),
+        recordLabel: label,
+        setListError,
+        toast,
+      });
     } finally {
       setDeletingId(null);
     }

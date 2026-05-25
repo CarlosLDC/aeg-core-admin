@@ -24,6 +24,7 @@ import {
   canUpdateCompanyRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
+import { reportListTableError } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
@@ -492,9 +493,12 @@ export function ClientsManager() {
       await loadClients({ silent: true });
       toast.success(`Solicitud de eliminación para "${label}" enviada a revisión.`);
     } catch (err) {
-      const errorMessage = getClientsErrorMessage(err);
-      setListError(errorMessage);
-      toast.error(errorMessage);
+      reportListTableError({
+        message: getClientsErrorMessage(err),
+        recordLabel: label,
+        setListError,
+        toast,
+      });
     } finally {
       setDeletingId(null);
     }

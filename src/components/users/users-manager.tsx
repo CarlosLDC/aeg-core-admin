@@ -51,6 +51,11 @@ import {
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
+import {
+  reportListTableError,
+  toListErrorMessage,
+  toToastErrorMessage,
+} from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { ROLE_LABELS } from "@/lib/roles";
 import { ROLES } from "@/types/user";
@@ -154,8 +159,8 @@ export function UsersManager() {
       setServiceCenters(serviceCenterRows);
     } catch (err) {
       const message = getUsersErrorMessage(err);
-      setListError((prev) => prev ?? message);
-      toast.error(message);
+      setListError((prev) => prev ?? toListErrorMessage(message));
+      toast.error(toToastErrorMessage(message));
     } finally {
       setCatalogLoading(false);
     }
@@ -171,9 +176,11 @@ export function UsersManager() {
       const data = await fetchUsers();
       setUsers(data.sort((a, b) => a.id - b.id));
     } catch (err) {
-      const message = getUsersErrorMessage(err);
-      setListError(message);
-      toast.error(message);
+      reportListTableError({
+        message: getUsersErrorMessage(err),
+        setListError,
+        toast,
+      });
     } finally {
       if (!silent) setLoading(false);
     }
@@ -273,9 +280,12 @@ export function UsersManager() {
       await loadUsers({ silent: true });
       toast.success(`Usuario "${displayUserName(user)}" eliminado.`);
     } catch (err) {
-      const message = getUsersErrorMessage(err);
-      setListError(message);
-      toast.error(message);
+      reportListTableError({
+        message: getUsersErrorMessage(err),
+        recordLabel: displayUserName(user),
+        setListError,
+        toast,
+      });
     } finally {
       setDeletingId(null);
     }
