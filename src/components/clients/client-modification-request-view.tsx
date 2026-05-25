@@ -289,10 +289,12 @@ export function ClientModificationRequestView({
           )}
           {row.actionType === "DELETE" ? (
             <>
-              <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
-                Esta acción eliminará el vínculo del cliente. Verifica que no
-                existan impresoras asociadas antes de aprobar.
-              </p>
+              {canReview ? (
+                <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
+                  Esta acción eliminará el vínculo del cliente. Verifica que no
+                  existan impresoras asociadas antes de aprobar.
+                </p>
+              ) : null}
               <DetailSection title="Metadatos" layout="quad">
                 <DetailField label="Solicitud" value={formatResourceId(row.id)} mono />
                 <DetailField

@@ -8,6 +8,7 @@ import { BranchSelect } from "@/components/users/branch-select";
 import {
   EMPLOYEE_UI_ROLE_LABELS,
   EMPLOYEE_UI_ROLE_STYLES,
+  resolveEmployeeUiRole,
   uiRolesForUser,
   type EmployeeUiRole,
   type EmployeeWithRoles,
@@ -71,17 +72,14 @@ export function EmployeeFormDialog({
   const roleOptions = useMemo(() => uiRolesForUser(userRole), [userRole]);
   const canEditProfile =
     mode === "create" || userRole === "ADMIN" || userRole === "DISTRIBUTOR";
-  const canEditRole = canEditProfile || roleOptions.length > 0;
+  const canChooseOperationalRole = roleOptions.length > 1;
+  const employeeOperationalRole =
+    employee != null ? resolveEmployeeUiRole(employee) : null;
 
   useEffect(() => {
     if (!open) return;
     if (mode === "edit" && employee) {
-      const values = employeeToFormValues(employee);
-      setForm(
-        roleOptions.includes(values.role)
-          ? values
-          : { ...values, role: roleOptions[0] ?? "distribuidor" },
-      );
+      setForm(employeeToFormValues(employee));
     } else {
       setForm({
         ...emptyForm,
@@ -262,22 +260,11 @@ export function EmployeeFormDialog({
                   <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted">
                     No tienes permisos para asignar roles operativos.
                   </p>
-                ) : roleOptions.length === 1 ? (
-                  <div className="flex h-10 w-full items-center rounded-lg border border-border bg-foreground/[0.03] px-3">
-                    <span
-                      className={cn(
-                        "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
-                        EMPLOYEE_UI_ROLE_STYLES[roleOptions[0]!],
-                      )}
-                    >
-                      {EMPLOYEE_UI_ROLE_LABELS[roleOptions[0]!]}
-                    </span>
-                  </div>
-                ) : (
+                ) : canChooseOperationalRole ? (
                   <SegmentedToggle
                     value={form.role}
                     onChange={handleRoleChange}
-                    disabled={!canEditRole || saving}
+                    disabled={saving}
                     ariaLabel="Roles disponibles para el empleado"
                     options={roleOptions.map((role) => ({
                       value: role,
@@ -285,6 +272,35 @@ export function EmployeeFormDialog({
                       tone: EMPLOYEE_UI_ROLE_TOGGLE_TONE[role],
                     }))}
                   />
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex h-10 w-full items-center rounded-lg border border-border bg-foreground/[0.03] px-3">
+                      <span
+                        className={cn(
+                          "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
+                          EMPLOYEE_UI_ROLE_STYLES[
+                            (mode === "edit" && employeeOperationalRole
+                              ? employeeOperationalRole
+                              : roleOptions[0]!) as EmployeeUiRole
+                          ],
+                        )}
+                      >
+                        {EMPLOYEE_UI_ROLE_LABELS[
+                          mode === "edit" && employeeOperationalRole
+                            ? employeeOperationalRole
+                            : roleOptions[0]!
+                        ]}
+                      </span>
+                    </div>
+                    {mode === "edit" ? (
+                      <p className="text-xs text-muted">
+                        Tu perfil solo puede asignar el rol{" "}
+                        {EMPLOYEE_UI_ROLE_LABELS[roleOptions[0]!]}. Para cambiar
+                        entre distribuidor y técnico, un administrador debe
+                        editar este empleado.
+                      </p>
+                    ) : null}
+                  </div>
                 )}
               </div>
             </div>
