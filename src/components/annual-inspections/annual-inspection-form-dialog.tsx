@@ -211,7 +211,7 @@ export function AnnualInspectionFormDialog({
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
-          <FieldLabel>Fecha de inspeccion</FieldLabel>
+          <FieldLabel>Fecha de inspección</FieldLabel>
           <input
             type="date"
             value={form.inspectionDate}

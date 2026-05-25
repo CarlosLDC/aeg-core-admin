@@ -5,6 +5,7 @@ import {
   filterPrinterModelsForDistributor,
   loadDistributorStaffBranches,
 } from "./distributor-scope";
+import { mockEmployee } from "@/lib/test-fixtures";
 import type { EmployeeResponse } from "@/types/employee";
 import type { PrinterResponse } from "@/types/printer";
 
@@ -52,8 +53,8 @@ describe("distributor-scope", () => {
   it("filters employees to distributor staff branches only", () => {
     const staff = new Set([10]);
     const rows: EmployeeResponse[] = [
-      { id: 1, branchId: 10, nationalId: "1", name: "A", phone: "", email: "", createdAt: "", type: "administrativo" },
-      { id: 2, branchId: 99, nationalId: "2", name: "B", phone: "", email: "", createdAt: "", type: "administrativo" },
+      mockEmployee({ id: 1, branchId: 10, nationalId: "1", name: "A" }),
+      mockEmployee({ id: 2, branchId: 99, nationalId: "2", name: "B" }),
     ];
     const filtered = filterEmployeesForDistributorStaff(
       rows,
@@ -78,7 +79,7 @@ describe("distributor-scope", () => {
         fiscalSerial: "S1",
         finalSalePrice: 0,
         createdAt: "",
-        status: "activo",
+        status: "inicializada",
         paid: false,
         installationDate: null,
         versionFirmware: "",

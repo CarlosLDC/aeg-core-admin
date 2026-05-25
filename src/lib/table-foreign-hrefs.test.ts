@@ -13,6 +13,8 @@ const client: ClientResponse = {
   branchPhone: null,
   branchEmail: null,
   createdAt: "2024-01-01T00:00:00Z",
+  reviewStatus: "ACTIVE",
+  activeModificationRequestId: null,
 };
 
 describe("hrefForClient", () => {

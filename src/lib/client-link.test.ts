@@ -16,6 +16,7 @@ import {
   fetchClientByBranchId,
   updateClient,
 } from "@/lib/clients-api";
+import { mockClient } from "@/lib/test-fixtures";
 import { ApiError } from "@/types/auth";
 
 describe("isDistributorClientOnlyRoles", () => {
@@ -39,12 +40,9 @@ describe("linkDistributorClientToBranch", () => {
 
   it("creates client when branch has no link", async () => {
     vi.mocked(fetchClientByBranchId).mockResolvedValue(null);
-    vi.mocked(createClient).mockResolvedValue({
-      id: 1,
-      branchId: 10,
-      distributorId: 3,
-      createdAt: "",
-    });
+    vi.mocked(createClient).mockResolvedValue(
+      mockClient({ id: 1, branchId: 10, distributorId: 3 }),
+    );
 
     await linkDistributorClientToBranch(10, distributorClientRoles(3));
 
@@ -55,12 +53,9 @@ describe("linkDistributorClientToBranch", () => {
   });
 
   it("no-ops when already linked to same distributor", async () => {
-    vi.mocked(fetchClientByBranchId).mockResolvedValue({
-      id: 5,
-      branchId: 10,
-      distributorId: 3,
-      createdAt: "",
-    });
+    vi.mocked(fetchClientByBranchId).mockResolvedValue(
+      mockClient({ id: 5, branchId: 10, distributorId: 3 }),
+    );
 
     await linkDistributorClientToBranch(10, distributorClientRoles(3));
 
@@ -68,18 +63,12 @@ describe("linkDistributorClientToBranch", () => {
   });
 
   it("links via POST when branch has client without distributor", async () => {
-    vi.mocked(fetchClientByBranchId).mockResolvedValue({
-      id: 5,
-      branchId: 10,
-      distributorId: undefined,
-      createdAt: "",
-    });
-    vi.mocked(createClient).mockResolvedValue({
-      id: 5,
-      branchId: 10,
-      distributorId: 3,
-      createdAt: "",
-    });
+    vi.mocked(fetchClientByBranchId).mockResolvedValue(
+      mockClient({ id: 5, branchId: 10, distributorId: undefined }),
+    );
+    vi.mocked(createClient).mockResolvedValue(
+      mockClient({ id: 5, branchId: 10, distributorId: 3 }),
+    );
 
     await linkDistributorClientToBranch(10, distributorClientRoles(3));
 
@@ -92,21 +81,15 @@ describe("linkDistributorClientToBranch", () => {
   it("on recoverable error, completes link with PUT when client row exists", async () => {
     vi.mocked(fetchClientByBranchId)
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: 5,
-        branchId: 10,
-        distributorId: undefined,
-        createdAt: "",
-      });
+      .mockResolvedValueOnce(
+        mockClient({ id: 5, branchId: 10, distributorId: undefined }),
+      );
     vi.mocked(createClient).mockRejectedValue(
       new ApiError("Binding property is null", 400),
     );
-    vi.mocked(updateClient).mockResolvedValue({
-      id: 5,
-      branchId: 10,
-      distributorId: 3,
-      createdAt: "",
-    });
+    vi.mocked(updateClient).mockResolvedValue(
+      mockClient({ id: 5, branchId: 10, distributorId: 3 }),
+    );
 
     await linkDistributorClientToBranch(10, distributorClientRoles(3));
 

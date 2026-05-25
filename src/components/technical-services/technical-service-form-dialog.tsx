@@ -260,7 +260,7 @@ export function TechnicalServiceFormDialog({
           )}
         </div>
         <div>
-          <FieldLabel required>Tecnico</FieldLabel>
+          <FieldLabel required>Técnico</FieldLabel>
           <SearchableSelect
             value={form.technicianId}
             onChange={(technicianId) =>

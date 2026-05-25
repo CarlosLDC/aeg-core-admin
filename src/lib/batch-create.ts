@@ -14,6 +14,22 @@ export type BatchCreateResult = {
   failed: BatchItemFailure[];
 };
 
+export type BatchRunFailure = {
+  label: string;
+  message: string;
+};
+
+export type BatchRunProgress = {
+  done: number;
+  total: number;
+  currentLabel: string;
+};
+
+export type BatchRunResult = {
+  succeeded: number;
+  failed: BatchRunFailure[];
+};
+
 export async function runSerialBatch<T>(
   serials: string[],
   createOne: (serial: string) => Promise<T>,
@@ -39,6 +55,38 @@ export async function runSerialBatch<T>(
     done: serials.length,
     total: serials.length,
     currentSerial: "",
+  });
+
+  return { succeeded, failed };
+}
+
+export async function runBatch<TItem>(
+  items: TItem[],
+  runOne: (item: TItem) => Promise<void>,
+  getLabel: (item: TItem) => string,
+  onProgress?: (progress: BatchRunProgress) => void,
+): Promise<BatchRunResult> {
+  const failed: BatchRunFailure[] = [];
+  let succeeded = 0;
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]!;
+    const label = getLabel(item);
+    onProgress?.({ done: i, total: items.length, currentLabel: label });
+    try {
+      await runOne(item);
+      succeeded++;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Error al procesar el registro.";
+      failed.push({ label, message });
+    }
+  }
+
+  onProgress?.({
+    done: items.length,
+    total: items.length,
+    currentLabel: "",
   });
 
   return { succeeded, failed };

@@ -3,6 +3,7 @@ import {
   createClientOnboarding,
   distributorClientRoles,
 } from "./client-onboarding";
+import { mockClient } from "@/lib/test-fixtures";
 
 vi.mock("@/lib/company-rif", () => ({
   resolveCompanyIdForRif: vi.fn(),
@@ -85,12 +86,9 @@ describe("createClientOnboarding", () => {
     vi.mocked(fetchDistributors).mockResolvedValue([]);
     vi.mocked(fetchServiceCenters).mockResolvedValue([]);
     vi.mocked(fetchClientByBranchId).mockResolvedValue(null);
-    vi.mocked(createClient).mockResolvedValue({
-      id: 1,
-      branchId: 20,
-      distributorId: 5,
-      createdAt: "",
-    });
+    vi.mocked(createClient).mockResolvedValue(
+      mockClient({ id: 1, branchId: 20, distributorId: 5 }),
+    );
   });
 
   it("empresa nueva: crea empresa, sucursal y cliente del distribuidor", async () => {
@@ -179,12 +177,9 @@ describe("createClientOnboarding", () => {
       id: 322,
       companyId: 77,
     });
-    vi.mocked(createClient).mockResolvedValue({
-      id: 9,
-      branchId: 322,
-      distributorId: 5,
-      createdAt: "",
-    });
+    vi.mocked(createClient).mockResolvedValue(
+      mockClient({ id: 9, branchId: 322, distributorId: 5 }),
+    );
 
     const result = await createClientOnboarding({
       values: {

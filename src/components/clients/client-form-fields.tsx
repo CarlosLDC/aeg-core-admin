@@ -113,6 +113,7 @@ export function ClientFormFields({
         </div>
 
         <ContributorTypeToggle
+          label="Tipo de contribuyente"
           value={form.contributorType}
           disabled={
             saving ||
