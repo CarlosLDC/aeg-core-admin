@@ -245,10 +245,13 @@ export function SealsManager() {
     }
   }, [canLoadPrinters, scope, user]);
 
-  const loadSeals = useCallback(async () => {
+  const loadSeals = useCallback(async (options?: { silent?: boolean }) => {
     if (!user) return;
-    setLoading(true);
-    setListError(null);
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+      setListError(null);
+    }
     try {
       let distributorId = user.distributorId;
       if (user.role === "DISTRIBUTOR" && distributorId == null) {
@@ -296,7 +299,7 @@ export function SealsManager() {
       setListError(message);
       toast.error(message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [toast, user, scope, canLoadPrinters]);
 
@@ -448,7 +451,7 @@ export function SealsManager() {
       await deleteSeal(seal.id);
       if (fromDialog) closeDialog();
       toast.success("Precinto eliminado.");
-      await loadSeals();
+      await loadSeals({ silent: true });
     } catch (err) {
       toast.error(getSealsErrorMessage(err));
     } finally {

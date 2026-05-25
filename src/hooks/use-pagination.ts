@@ -21,7 +21,7 @@ export function usePagination<T>(
 
   useEffect(() => {
     setPage(1);
-  }, [pageSize, totalItems]);
+  }, [pageSize]);
 
   const paginatedItems = useMemo(() => {
     const start = (page - 1) * pageSize;

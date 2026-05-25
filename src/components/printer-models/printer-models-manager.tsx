@@ -125,9 +125,12 @@ export function PrinterModelsManager() {
 
   const pagination = usePagination(sortedModels);
 
-  const loadModels = useCallback(async () => {
-    setLoading(true);
-    setListError(null);
+  const loadModels = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+      setListError(null);
+    }
     try {
       const data = await fetchPrinterModels();
       setModels(
@@ -142,7 +145,7 @@ export function PrinterModelsManager() {
       setListError(message);
       toast.error(message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [toast]);
 
@@ -224,7 +227,7 @@ export function PrinterModelsManager() {
     try {
       await deletePrinterModel(model.id);
       if (fromDialog) closeDialog();
-      await loadModels();
+      await loadModels({ silent: true });
       toast.success(`Modelo "${label}" eliminado.`);
     } catch (err) {
       const message = getPrinterModelsErrorMessage(err);

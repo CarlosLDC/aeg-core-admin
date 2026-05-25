@@ -253,13 +253,16 @@ export function EmployeesManager() {
 
   const pagination = usePagination(sortedEmployees);
 
-  const loadEmployees = useCallback(async () => {
+  const loadEmployees = useCallback(async (options?: { silent?: boolean }) => {
     if (!user) {
       setLoading(false);
       return;
     }
-    setLoading(true);
-    setListError(null);
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+      setListError(null);
+    }
     try {
       const employeeRows = await fetchEmployees();
       const { technicians, distributorPersons } = await fetchEmployeeRoleTables(
@@ -280,7 +283,7 @@ export function EmployeesManager() {
       setListError(message);
       toast.error(message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [toast, user]);
 
@@ -455,7 +458,7 @@ export function EmployeesManager() {
         await deleteEmployee(employee.id);
       }
       if (fromDialog) closeDialog();
-      await loadEmployees();
+      await loadEmployees({ silent: true });
       toast.success(
         canRequestReview
           ? `Solicitud de eliminación para "${label}" enviada a revisión.`

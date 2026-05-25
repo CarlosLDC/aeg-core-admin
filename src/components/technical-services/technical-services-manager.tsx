@@ -155,9 +155,12 @@ export function TechnicalServicesManager() {
 
   const pagination = usePagination(sortedRows);
 
-  const loadRows = useCallback(async () => {
-    setLoading(true);
-    setListError(null);
+  const loadRows = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+      setListError(null);
+    }
     try {
       const data = await fetchTechnicalServices();
       const role = user?.role ?? "SERVICE_CENTER";
@@ -175,7 +178,7 @@ export function TechnicalServicesManager() {
       setListError(message);
       toast.error(message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [toast, user?.role, catalog.scopedPrinterIds, catalog.distributorId]);
 
@@ -241,7 +244,7 @@ export function TechnicalServicesManager() {
       await deleteTechnicalService(row.id);
       if (fromDialog) closeDialog();
       toast.success("Servicio eliminado.");
-      await loadRows();
+      await loadRows({ silent: true });
     } catch (err) {
       toast.error(getTechnicalServicesErrorMessage(err));
     } finally {

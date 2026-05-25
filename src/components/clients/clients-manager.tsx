@@ -171,10 +171,13 @@ export function ClientsManager() {
   const [stateFilter, setStateFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<ClientSortKey>>(null);
 
-  const loadClients = useCallback(async () => {
+  const loadClients = useCallback(async (options?: { silent?: boolean }) => {
     if (!scope) return;
-    setLoading(true);
-    setListError(null);
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+      setListError(null);
+    }
     try {
       const [branchRows, distributorRows, clientRows, serviceCenterRows] =
         await Promise.all([
@@ -225,7 +228,7 @@ export function ClientsManager() {
     } catch (err) {
       setListError(getCatalogErrorMessage(err));
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [scope]);
 
@@ -486,7 +489,7 @@ export function ClientsManager() {
         return;
       }
       if (fromDialog) closeEditDialog();
-      await loadClients();
+      await loadClients({ silent: true });
       toast.success(`Solicitud de eliminación para "${label}" enviada a revisión.`);
     } catch (err) {
       const errorMessage = getClientsErrorMessage(err);

@@ -160,9 +160,12 @@ export function AnnualInspectionsManager() {
 
   const pagination = usePagination(sortedRows);
 
-  const loadRows = useCallback(async () => {
-    setLoading(true);
-    setListError(null);
+  const loadRows = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+      setListError(null);
+    }
     try {
       const data = await fetchAnnualInspections();
       const role = user?.role ?? "SERVICE_CENTER";
@@ -185,7 +188,7 @@ export function AnnualInspectionsManager() {
       setListError(message);
       toast.error(message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [
     toast,
@@ -256,7 +259,7 @@ export function AnnualInspectionsManager() {
       await deleteAnnualInspection(row.id);
       if (fromDialog) closeDialog();
       toast.success("Inspección eliminada.");
-      await loadRows();
+      await loadRows({ silent: true });
     } catch (err) {
       toast.error(getAnnualInspectionsErrorMessage(err));
     } finally {

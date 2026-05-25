@@ -161,9 +161,12 @@ export function UsersManager() {
     }
   }, [toast]);
 
-  const loadUsers = useCallback(async () => {
-    setLoading(true);
-    setListError(null);
+  const loadUsers = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+      setListError(null);
+    }
     try {
       const data = await fetchUsers();
       setUsers(data.sort((a, b) => a.id - b.id));
@@ -172,7 +175,7 @@ export function UsersManager() {
       setListError(message);
       toast.error(message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [toast]);
 
@@ -267,7 +270,7 @@ export function UsersManager() {
     try {
       await deleteUser(user.id);
       if (fromDialog) closeDialog();
-      await loadUsers();
+      await loadUsers({ silent: true });
       toast.success(`Usuario "${displayUserName(user)}" eliminado.`);
     } catch (err) {
       const message = getUsersErrorMessage(err);

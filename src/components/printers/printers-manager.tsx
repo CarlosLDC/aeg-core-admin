@@ -290,9 +290,12 @@ export function PrintersManager() {
     [scopedClients, branches, companies],
   );
 
-  const loadPrinters = useCallback(async () => {
-    setLoading(true);
-    setListError(null);
+  const loadPrinters = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+      setListError(null);
+    }
     try {
       const data = await fetchPrinters();
       setPrinters(
@@ -303,7 +306,7 @@ export function PrintersManager() {
       setListError(message);
       toast.error(message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [toast]);
 
@@ -522,7 +525,7 @@ export function PrintersManager() {
       await deletePrinter(printer.id);
       if (fromDialog) closeDialog();
       toast.success("Impresora eliminada.");
-      await loadPrinters();
+      await loadPrinters({ silent: true });
     } catch (err) {
       toast.error(getPrintersErrorMessage(err));
     } finally {

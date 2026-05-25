@@ -277,12 +277,15 @@ export function BranchesManager() {
 
   const pagination = usePagination(sortedBranches);
 
-  const loadBranches = useCallback(async () => {
+  const loadBranches = useCallback(async (options?: { silent?: boolean }) => {
     if (!scope || !catalogRoles) return;
 
     const companyList = scope.companies;
-    setLoading(true);
-    setListError(null);
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+      setListError(null);
+    }
     try {
       const branchRows = scope.branches;
       const merged = mergeBranchesWithRoles(
@@ -322,7 +325,7 @@ export function BranchesManager() {
       setListError(message);
       toast.error(message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [scope, catalogRoles, toast]);
 
@@ -482,7 +485,7 @@ export function BranchesManager() {
       await deleteBranchRoles(branch);
       await deleteBranch(branch.id);
       if (fromDialog) closeEditWizard();
-      await loadBranches();
+      await loadBranches({ silent: true });
       toast.success(`Sucursal "${label}" eliminada.`);
     } catch (err) {
       const message =

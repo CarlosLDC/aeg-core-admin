@@ -188,11 +188,14 @@ export function CompanyBranchesTable({
   const tableColumns = useTableColumnVisibility(`company-branches-${companyId}`);
   const [sort, setSort] = useState<TableSortState<CompanyBranchSortKey>>(null);
 
-  const loadBranches = useCallback(async () => {
+  const loadBranches = useCallback(async (options?: { silent?: boolean }) => {
     if (!scope || !catalogRoles) return;
 
-    setLoading(true);
-    setListError(null);
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+      setListError(null);
+    }
     try {
       const merged = mergeBranchesWithRoles(
         scope.branches,
@@ -221,7 +224,7 @@ export function CompanyBranchesTable({
       setListError(message);
       toast.error(message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [scope, catalogRoles, companyId, toast]);
 
@@ -375,7 +378,7 @@ export function CompanyBranchesTable({
       await deleteBranchRoles(branch);
       await deleteBranch(branch.id);
       if (fromDialog) closeDialog();
-      await loadBranches();
+      await loadBranches({ silent: true });
       toast.success(`Sucursal "${label}" eliminada.`);
     } catch (err) {
       const message = getCatalogErrorMessage(err);

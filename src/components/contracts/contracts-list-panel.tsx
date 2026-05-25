@@ -175,9 +175,12 @@ export function ContractsListPanel({
 
   const pagination = usePagination(sortedContracts);
 
-  const loadContracts = useCallback(async () => {
-    setLoading(true);
-    setListError(null);
+  const loadContracts = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+      setListError(null);
+    }
     try {
       const data =
         kind === "distributor"
@@ -191,7 +194,7 @@ export function ContractsListPanel({
       setListError(message);
       toast.error(message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [kind, toast, getErrorMessage]);
 
@@ -300,7 +303,7 @@ export function ContractsListPanel({
         await deleteServiceCenterContract(contract.id);
       }
       if (fromDialog) closeDialog();
-      await loadContracts();
+      await loadContracts({ silent: true });
       toast.success("Contrato eliminado.");
     } catch (err) {
       const message = getErrorMessage(err);
