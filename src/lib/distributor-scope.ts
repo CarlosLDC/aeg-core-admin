@@ -34,7 +34,9 @@ export function filterEmployeesForDistributorStaff(
 ): EmployeeResponse[] {
   if (role !== "DISTRIBUTOR") return employees;
   if (distributorStaffBranchIds.size === 0) return [];
-  return employees.filter((e) => distributorStaffBranchIds.has(e.branchId));
+  return employees.filter(
+    (e) => e.branchId != null && distributorStaffBranchIds.has(e.branchId),
+  );
 }
 
 /** Modelos referenciados por las impresoras del distribuidor (no el catálogo completo). */

@@ -14,7 +14,8 @@ export type EmployeeSnapshotResponse = {
   phone: string;
   email: string;
   type: EmployeeType;
-  branchId: number;
+  companyId: number;
+  branchId?: number | null;
   reviewStatus: EmployeeReviewStatus;
   isTechnician: boolean;
   isDistributorPerson: boolean;

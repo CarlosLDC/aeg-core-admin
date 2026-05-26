@@ -1,20 +1,13 @@
-import {
-  resolveEmployeeUiRole,
-  uiRoleToBackend,
-  type EmployeeUiRole,
-  type EmployeeWithRoles,
-} from "@/lib/employee-roles";
+import type { EmployeeWithRoles } from "@/lib/employee-roles";
 import type { EmployeeRequest } from "@/types/employee";
 import type { EmployeeModificationProposedData } from "@/types/employee-modification-request";
-import type { EmployeeRoleFormState } from "@/lib/employee-roles";
 
 export type EmployeeFormValues = {
   nationalId: string;
   name: string;
   phone: string;
   email: string;
-  branchId: string;
-  role: EmployeeUiRole;
+  companyId: string;
 };
 
 export function employeeToFormValues(employee: EmployeeWithRoles): EmployeeFormValues {
@@ -23,14 +16,13 @@ export function employeeToFormValues(employee: EmployeeWithRoles): EmployeeFormV
     name: employee.name,
     phone: employee.phone,
     email: employee.email,
-    branchId: String(employee.branchId),
-    role: resolveEmployeeUiRole(employee),
+    companyId: String(employee.companyId),
   };
 }
 
 export function toEmployeePayload(
   values: EmployeeFormValues,
-): { request: EmployeeRequest; tableRoles: ReturnType<typeof uiRoleToBackend>["tableRoles"] } | string {
+): { request: EmployeeRequest } | string {
   const nationalId = values.nationalId.trim();
   const name = values.name.trim();
   const phone = values.phone.trim();
@@ -40,14 +32,12 @@ export function toEmployeePayload(
   if (!name) return "El nombre es obligatorio.";
   if (!phone) return "El teléfono es obligatorio.";
   if (!email) return "El correo es obligatorio.";
-  if (!values.branchId.trim()) return "Selecciona la sucursal del empleado.";
+  if (!values.companyId.trim()) return "Selecciona la empresa del empleado.";
 
-  const branchId = Number(values.branchId);
-  if (!Number.isFinite(branchId)) {
-    return "La sucursal seleccionada no es válida.";
+  const companyId = Number(values.companyId);
+  if (!Number.isFinite(companyId)) {
+    return "La empresa seleccionada no es válida.";
   }
-
-  const { type, tableRoles } = uiRoleToBackend(values.role);
 
   return {
     request: {
@@ -55,22 +45,16 @@ export function toEmployeePayload(
       name,
       phone,
       email,
-      type,
-      branchId,
+      type: "tecnico",
+      companyId,
     },
-    tableRoles,
   };
 }
 
 export function toModificationProposedData(
   request: EmployeeRequest,
-  tableRoles: EmployeeRoleFormState,
 ): EmployeeModificationProposedData {
-  return {
-    ...request,
-    isTechnician: tableRoles.isTechnician,
-    isDistributorPerson: tableRoles.isDistributorPerson,
-  };
+  return { ...request };
 }
 
 export function formatEmployeeDate(value: string | undefined): string {

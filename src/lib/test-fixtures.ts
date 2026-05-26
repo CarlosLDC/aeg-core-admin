@@ -15,13 +15,13 @@ export function mockClient(over: Partial<ClientResponse> = {}): ClientResponse {
 export function mockEmployee(over: Partial<EmployeeResponse> = {}): EmployeeResponse {
   return {
     id: 1,
-    branchId: 1,
+    companyId: 1,
     nationalId: "V12345678",
     name: "Empleado",
     phone: "",
     email: "",
     createdAt: "",
-    type: "administrativo",
+    type: "tecnico",
     reviewStatus: "ACTIVE",
     activeModificationRequestId: null,
     ...over,

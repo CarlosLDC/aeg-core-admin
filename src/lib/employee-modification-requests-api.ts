@@ -55,11 +55,11 @@ function normalizeProposedData(
   }
 
   const obj = candidate as Record<string, unknown>;
-  const rawBranchId = obj.branchId ?? obj.branch_id ?? obj.id_sucursal;
-  const branchId =
-    rawBranchId == null || rawBranchId === ""
+  const rawCompanyId = obj.companyId ?? obj.company_id ?? obj.id_empresa;
+  const companyId =
+    rawCompanyId == null || rawCompanyId === ""
       ? undefined
-      : Number(rawBranchId);
+      : Number(rawCompanyId);
 
   const isTechnician = obj.isTechnician ?? obj.is_technician;
   const isDistributorPerson = obj.isDistributorPerson ?? obj.is_distributor_person;
@@ -70,7 +70,7 @@ function normalizeProposedData(
   const email = String(obj.email ?? obj.correo ?? "").trim();
   const type = (obj.type ?? obj.tipo) as EmployeeModificationProposedData["type"];
 
-  if (!nationalId && !name && !phone && !email && type == null && branchId == null) {
+  if (!nationalId && !name && !phone && !email && type == null && companyId == null) {
     return null;
   }
 
@@ -80,7 +80,7 @@ function normalizeProposedData(
     phone: phone || undefined,
     email: email || undefined,
     type,
-    branchId: Number.isFinite(branchId) ? branchId : undefined,
+    companyId: Number.isFinite(companyId) ? companyId : undefined,
     isTechnician:
       typeof isTechnician === "boolean"
         ? isTechnician
@@ -108,6 +108,10 @@ function normalizeSnapshot(
 
   return {
     ...snapshot,
+    companyId:
+      snapshot.companyId ??
+      (snapshot as { company_id?: number }).company_id ??
+      0,
     isTechnician: snapshot.isTechnician ?? false,
     isDistributorPerson: snapshot.isDistributorPerson ?? false,
   };

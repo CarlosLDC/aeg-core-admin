@@ -418,6 +418,7 @@ export async function loadDashboardSnapshot(options: {
   }
 
   const branchIds = branchIdsFromScope(scope, branches);
+  const companyIds = scope?.companyIds ?? new Set(companies.map((c) => c.id));
   const scopedBranches =
     branchIds.size > 0
       ? branches.filter((b) => branchIds.has(b.id))
@@ -435,9 +436,10 @@ export async function loadDashboardSnapshot(options: {
   );
   const employees = filterEmployeesInScope(
     employeesRaw,
-    branchIds,
+    companyIds,
     role,
     userBranchId,
+    branches,
   );
 
   let printers: PrinterResponse[] = [];

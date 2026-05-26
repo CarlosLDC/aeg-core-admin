@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { EmployeeFormDialog } from "@/components/employees/employee-form-dialog";
-import { EmployeeRoleBadge } from "@/components/employees/employee-role-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import {
@@ -31,33 +30,18 @@ import {
   type TableSortState,
 } from "@/lib/table-sort";
 import {
-  canAssignEmployeeRoles,
   canCreateEmployeeRecord,
   canUpdateEmployeeRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
-import { branchLabelById } from "@/lib/branches";
-import { filterEmployeesForDistributorStaff } from "@/lib/distributor-scope";
-import { useDistributorIdState } from "@/hooks/use-distributor-id";
-import { useDistributorStaffBranches } from "@/hooks/use-distributor-staff-branches";
+import { companyNameById, companySearchTextById } from "@/lib/branches";
+import { resolveEmployeeCompanyId } from "@/lib/employee-company";
 import {
   toEmployeePayload,
   toModificationProposedData,
   type EmployeeFormValues,
 } from "@/lib/employee-form";
 import {
-  canAssignDistributorPersonRole,
-  canAssignTechnicianRole,
-  deleteEmployeeRoles,
-  EMPLOYEE_UI_ROLE_LABELS,
-  EMPLOYEE_UI_ROLES,
-  fetchEmployeeRoleTables,
-  getEmployeeRolesErrorMessage,
-  mergeEmployeesWithRoles,
-  resolveEmployeeUiRole,
-  syncEmployeeRoles,
-  uiRolesForUser,
-  type EmployeeUiRole,
   type EmployeeWithRoles,
 } from "@/lib/employee-roles";
 import {
@@ -69,14 +53,11 @@ import {
   requestEmployeeUpdate,
   updateEmployee,
 } from "@/lib/employees-api";
-import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
-import type { EmployeeRequest } from "@/types/employee";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { employeePath } from "@/lib/resource-routes";
-import { hrefForBranch } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
@@ -101,24 +82,12 @@ export function EmployeesManager() {
     refresh: refreshScope,
   } = useCompanyScope();
 
-  const isDistributor = user?.role === "DISTRIBUTOR";
-  const {
-    distributorId,
-    loading: distributorIdLoading,
-  } = useDistributorIdState();
-  const {
-    staffBranches,
-    staffBranchIdSet,
-    loading: staffBranchesLoading,
-  } = useDistributorStaffBranches(isDistributor ? distributorId : null);
   const canCreate = user ? canCreateEmployeeRecord(user.role) : false;
   const canModify = user ? canUpdateEmployeeRecord(user.role) : false;
-  const canEditRoles = user ? canAssignEmployeeRoles(user.role) : false;
   const canRequestReview = user?.role === "DISTRIBUTOR";
-  const showActions = canModify || canEditRoles || canRequestReview;
+  const showActions = canModify || canRequestReview;
 
   const [employees, setEmployees] = useState<EmployeeWithRoles[]>([]);
-  const [branches, setBranches] = useState<BranchResponse[]>([]);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
@@ -129,14 +98,8 @@ export function EmployeesManager() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("employees");
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [branchFilter, setBranchFilter] = useState("all");
+  const [companyFilter, setCompanyFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<EmployeeSortKey>>(null);
-
-  const roleFilterOptions = useMemo(() => {
-    const base = user ? uiRolesForUser(user.role) : EMPLOYEE_UI_ROLES;
-    return base;
-  }, [user]);
 
   useEffect(() => {
     if (!scope) return;
@@ -144,90 +107,57 @@ export function EmployeesManager() {
       (a.businessName || "").localeCompare(b.businessName || "", "es"),
     );
     setCompanies(sortedCompanies);
-    setBranches(
-      [...scope.branches].sort((a, b) =>
-        branchLabelById(scope.branches, sortedCompanies, a.id).localeCompare(
-          branchLabelById(scope.branches, sortedCompanies, b.id),
-          "es",
-        ),
-      ),
-    );
     if (scopeError) {
       setListError((prev) => prev ?? scopeError);
     }
   }, [scope, scopeError]);
 
-  const formBranches = isDistributor ? staffBranches : branches;
-  const displayBranches = isDistributor ? staffBranches : branches;
-  const branchesReadyForCreate = isDistributor
-    ? staffBranches.length > 0
-    : branches.length > 0;
-  const distributorBranchesReady = isDistributor
-    ? !distributorIdLoading && !staffBranchesLoading
-    : true;
-  const defaultStaffBranchId =
-    staffBranches.length === 1 ? String(staffBranches[0].id) : "";
-
   const scopedEmployees = useMemo(() => {
-    if (user?.role === "ADMIN") return employees;
-    if (user?.role === "DISTRIBUTOR") {
-      return filterEmployeesForDistributorStaff(
-        employees,
-        "DISTRIBUTOR",
-        staffBranchIdSet,
-      );
-    }
-    const visibleBranchIds = new Set(branches.map((b) => b.id));
-    return employees.filter((e) => visibleBranchIds.has(e.branchId));
-  }, [employees, user?.role, staffBranchIdSet, branches]);
+    if (!scope) return [];
+    return employees.filter((employee) => {
+      const companyId = resolveEmployeeCompanyId(employee, scope.branches);
+      if (companyId == null) return false;
+      return scope.companyIds.has(companyId);
+    });
+  }, [employees, scope]);
 
-  const branchFilterOptions = useMemo(() => {
-    const branchIds = [
-      ...new Set(scopedEmployees.map((employee) => employee.branchId)),
-    ].sort((a, b) =>
-      branchLabelById(displayBranches, companies, a).localeCompare(
-        branchLabelById(displayBranches, companies, b),
-        "es",
-      ),
+  const companyFilterOptions = useMemo(() => {
+    const companyIds = [...new Set(
+      scopedEmployees
+        .map((employee) => resolveEmployeeCompanyId(employee, scope?.branches ?? []))
+        .filter((id): id is number => id != null),
+    )].sort((a, b) =>
+      companyNameById(companies, a).localeCompare(companyNameById(companies, b), "es"),
     );
     return [
-      filterAllOption("Todas las sucursales"),
-      ...branchIds.map((id) => ({
+      filterAllOption("Todas las empresas"),
+      ...companyIds.map((id) => ({
         value: String(id),
-        label: branchLabelById(displayBranches, companies, id),
+        label: companyNameById(companies, id),
       })),
     ];
-  }, [scopedEmployees, displayBranches, companies]);
+  }, [scopedEmployees, companies, scope]);
 
   const filteredEmployees = useMemo(() => {
     const q = search.trim().toLowerCase();
     return scopedEmployees.filter((employee) => {
+      const companyId = resolveEmployeeCompanyId(employee, scope?.branches ?? []);
+      if (companyId == null) return false;
       if (
-        branchFilter !== "all" &&
-        employee.branchId !== Number(branchFilter)
-      ) {
-        return false;
-      }
-      if (
-        roleFilter !== "all" &&
-        resolveEmployeeUiRole(employee) !== roleFilter
+        companyFilter !== "all" &&
+        companyId !== Number(companyFilter)
       ) {
         return false;
       }
       if (!q) return true;
-      const branch = branchLabelById(
-        displayBranches,
-        companies,
-        employee.branchId,
-      );
+      const company = companySearchTextById(companies, companyId);
       const haystack = [
         employee.id,
         employee.nationalId,
         employee.name,
         employee.phone,
         employee.email,
-        employee.type,
-        branch,
+        company,
       ]
         .join(" ")
         .toLowerCase();
@@ -236,11 +166,9 @@ export function EmployeesManager() {
   }, [
     scopedEmployees,
     search,
-    roleFilter,
-    branchFilter,
-    branches,
-    staffBranches,
+    companyFilter,
     companies,
+    scope,
   ]);
 
   const sortedEmployees = useMemo(
@@ -265,19 +193,8 @@ export function EmployeesManager() {
       setListError(null);
     }
     try {
-      const employeeRows = await fetchEmployees();
-      const { technicians, distributorPersons } = await fetchEmployeeRoleTables(
-        user.role,
-      );
-
-      const merged = mergeEmployeesWithRoles(
-        employeeRows,
-        technicians,
-        distributorPersons,
-      );
-
       setEmployees(
-        merged.sort((a, b) => a.name.localeCompare(b.name, "es")),
+        (await fetchEmployees()).sort((a, b) => a.name.localeCompare(b.name, "es")),
       );
     } catch (err) {
       reportListTableError({
@@ -323,67 +240,20 @@ export function EmployeesManager() {
       return;
     }
 
-    const editingRolesOnly =
-      dialog === "edit" && !canModify && canEditRoles && !canRequestReview;
-
-    if (dialog === "edit" && !canModify && !canEditRoles) {
+    if (dialog === "edit" && !canModify && !canRequestReview) {
       setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
 
-    if (values.role === "tecnico" && user && !canAssignTechnicianRole(user.role)) {
-      setFormError("No tienes permiso para asignar el rol técnico.");
+    const payload = toEmployeePayload(values);
+    if (typeof payload === "string") {
+      setFormError(payload);
       return;
     }
-
-    if (
-      values.role === "distribuidor" &&
-      user &&
-      !canAssignDistributorPersonRole(user.role)
-    ) {
-      setFormError("No tienes permiso para asignar el rol distribuidor.");
+    const body = payload.request;
+    if (scope && !scope.companyIds.has(body.companyId)) {
+      setFormError("La empresa seleccionada no está dentro de tu alcance.");
       return;
-    }
-
-    let body: EmployeeRequest | undefined;
-    let tableRoles = { isTechnician: false, isDistributorPerson: false };
-
-    if (!editingRolesOnly) {
-      const payload = toEmployeePayload(values);
-      if (typeof payload === "string") {
-        setFormError(payload);
-        return;
-      }
-      if (user?.role === "DISTRIBUTOR") {
-        if (!staffBranchIdSet.has(payload.request.branchId)) {
-          setFormError(
-            "Solo puedes registrar empleados en la sucursal de tu distribuidora.",
-          );
-          return;
-        }
-      } else if (user?.role !== "ADMIN") {
-        const visibleBranchIds = new Set(branches.map((b) => b.id));
-        if (!visibleBranchIds.has(payload.request.branchId)) {
-          setFormError("La sucursal seleccionada no está dentro de tu alcance.");
-          return;
-        }
-      }
-      body = payload.request;
-      tableRoles = payload.tableRoles;
-    } else {
-      const payload = toEmployeePayload({
-        ...values,
-        nationalId: selected?.nationalId ?? "",
-        name: selected?.name ?? "",
-        phone: selected?.phone ?? "",
-        email: selected?.email ?? "",
-        branchId: selected ? String(selected.branchId) : "",
-      });
-      if (typeof payload === "string") {
-        setFormError(payload);
-        return;
-      }
-      tableRoles = payload.tableRoles;
     }
 
     setSaving(true);
@@ -393,42 +263,32 @@ export function EmployeesManager() {
     try {
       if (dialog === "create" && body) {
         const created = await createEmployee(body);
-        await syncEmployeeRoles(created.id, null, tableRoles);
         toast.success(`Empleado "${label}" creado correctamente.`, {
           href: employeePath(created.id),
         });
       } else if (selected) {
         if (canRequestReview) {
-          if (!body) {
-            setFormError("No se pudo generar la solicitud de actualización.");
-            return;
-          }
           await requestEmployeeUpdate(
             selected.id,
-            toModificationProposedData(body, tableRoles),
+            toModificationProposedData(body),
           );
           toast.success(
             `Solicitud de actualización para "${label}" enviada a revisión.`,
             { href: employeePath(selected.id) },
           );
         } else {
-          if (body && canModify) {
+          if (canModify) {
             await updateEmployee(selected.id, body);
           }
-          await syncEmployeeRoles(selected.id, selected, tableRoles);
-          toast.success(
-            editingRolesOnly
-              ? `Rol de "${label}" actualizado.`
-              : `Empleado "${label}" actualizado.`,
-            { href: employeePath(selected.id) },
-          );
+          toast.success(`Empleado "${label}" actualizado.`, {
+            href: employeePath(selected.id),
+          });
         }
       }
       closeDialog();
       await loadEmployees();
     } catch (err) {
-      const message =
-        getEmployeesErrorMessage(err) || getEmployeeRolesErrorMessage(err);
+      const message = getEmployeesErrorMessage(err);
       setFormError(message);
       toast.error(message);
     } finally {
@@ -457,7 +317,6 @@ export function EmployeesManager() {
       if (canRequestReview) {
         await requestEmployeeDelete(employee.id);
       } else {
-        await deleteEmployeeRoles(employee);
         await deleteEmployee(employee.id);
       }
       if (fromDialog) closeDialog();
@@ -489,7 +348,7 @@ export function EmployeesManager() {
             <button
               type="button"
               onClick={openCreate}
-              disabled={!catalogReady || !branchesReadyForCreate}
+              disabled={!catalogReady}
               className={cn(
                 pageToolbarButtonClass,
                 "bg-accent text-accent-foreground disabled:opacity-50",
@@ -518,35 +377,22 @@ export function EmployeesManager() {
             Cargando empleados…
           </div>
         ) : scopedEmployees.length === 0 ? (
-          <EmptyState title="No hay empleados en las sucursales visibles." />
+          <EmptyState title="No hay empleados en las empresas visibles." />
         ) : (
           <>
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por nombre, cédula, correo o sucursal…"
+              searchPlaceholder="Buscar por nombre, cédula, correo o empresa…"
               resultCount={filteredEmployees.length}
               totalCount={scopedEmployees.length}
               filters={[
                 {
-                  id: "role",
-                  label: "Rol",
-                  value: roleFilter,
-                  onChange: setRoleFilter,
-                  options: [
-                    filterAllOption(),
-                    ...roleFilterOptions.map((role) => ({
-                      value: role,
-                      label: EMPLOYEE_UI_ROLE_LABELS[role as EmployeeUiRole],
-                    })),
-                  ],
-                },
-                {
-                  id: "branch",
-                  label: "Sucursal",
-                  value: branchFilter,
-                  onChange: setBranchFilter,
-                  options: branchFilterOptions,
+                  id: "company",
+                  label: "Empresa",
+                  value: companyFilter,
+                  onChange: setCompanyFilter,
+                  options: companyFilterOptions,
                 },
               ]}
               columns={tableColumns.toolbarColumns}
@@ -586,8 +432,7 @@ export function EmployeesManager() {
                         >
                         <th className="px-5 py-3 font-medium">Nombre</th>
                         <th className="px-5 py-3 font-medium">Cédula</th>
-                        <th className="px-5 py-3 font-medium">Rol</th>
-                        <th className="px-5 py-3 font-medium">Sucursal</th>
+                        <th className="px-5 py-3 font-medium">Empresa</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
                         </TableRowMetaHeaders>
                       </tr>
@@ -637,22 +482,12 @@ export function EmployeesManager() {
                           <td className="px-5 py-3.5 font-mono text-card-foreground">
                             {employee.nationalId}
                           </td>
-                          <td className="px-5 py-3.5">
-                            <EmployeeRoleBadge employee={employee} />
-                          </td>
                           <td className="max-w-[200px] px-5 py-3.5 text-card-foreground">
-                            <TruncatedText
-                              href={
-                                user
-                                  ? hrefForBranch(employee.branchId, user.role)
-                                  : undefined
-                              }
-                              maxClassName="max-w-[180px]"
-                            >
-                              {branchLabelById(
-                                displayBranches,
+                            <TruncatedText maxClassName="max-w-[180px]">
+                              {companyNameById(
                                 companies,
-                                employee.branchId,
+                                resolveEmployeeCompanyId(employee, scope?.branches ?? []) ??
+                                  0,
                               )}
                             </TruncatedText>
                           </td>
@@ -678,14 +513,8 @@ export function EmployeesManager() {
         <EmployeeFormDialog
           mode={dialog === "create" ? "create" : "edit"}
           employee={selected ?? undefined}
-          userRole={user.role}
-          branches={formBranches}
           companies={companies}
-          branchesLoading={
-            isDistributor ? staffBranchesLoading : scopeLoading
-          }
-          defaultBranchId={defaultStaffBranchId}
-          lockBranch={isDistributor && staffBranches.length === 1}
+          companiesLoading={scopeLoading}
           open={dialog !== null}
           saving={saving}
           error={formError}

@@ -10,6 +10,7 @@ import {
 import type { PrinterResponse } from "@/types/printer";
 import type { SealResponse } from "@/types/seal";
 import type { Role } from "@/types/user";
+import { resolveEmployeeCompanyId } from "@/lib/employee-company";
 
 export function isCompanyInScope(
   scope: CompanyScope | null,
@@ -52,14 +53,12 @@ export function assertEmployeeInScope(
   scope: CompanyScope | null,
   employee: EmployeeResponse | null | undefined,
   role: Role,
-  distributorStaffBranchIds?: Set<number>,
 ): boolean {
   if (!employee) return false;
   if (role === "ADMIN") return true;
-  if (role === "DISTRIBUTOR") {
-    return distributorStaffBranchIds?.has(employee.branchId) ?? false;
-  }
-  return isBranchInScope(scope, employee.branchId, role);
+  const companyId = resolveEmployeeCompanyId(employee, scope?.branches ?? []);
+  if (companyId == null) return false;
+  return isCompanyInScope(scope, companyId, role);
 }
 
 export function assertPrinterInScope(

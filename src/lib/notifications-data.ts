@@ -129,6 +129,7 @@ export async function loadNotifications(options: {
 
   const branches = branchesP.ok ? branchesP.value : [];
   const branchIds = branchIdsFromScope(scope, branches);
+  const companyIds = scope?.companyIds ?? new Set((companiesP.ok ? companiesP.value : []).map((c) => c.id));
   const scopedBranches =
     branchIds.size > 0
       ? branches.filter((b) => branchIds.has(b.id))
@@ -162,9 +163,10 @@ export async function loadNotifications(options: {
   if (employeesP.ok) {
     const employees = filterEmployeesInScope(
       employeesP.value,
-      branchIds,
+      companyIds,
       role,
       userBranchId,
+      branches,
     );
     for (const e of employees) {
       pushNotification(items, {
@@ -209,9 +211,10 @@ export async function loadNotifications(options: {
     ? new Set(
         filterEmployeesInScope(
           employeesP.value,
-          branchIds,
+          companyIds,
           role,
           userBranchId,
+          branches,
         ).map((e) => e.id),
       )
     : new Set<number>();

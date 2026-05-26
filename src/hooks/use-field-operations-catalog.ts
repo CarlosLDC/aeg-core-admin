@@ -22,7 +22,6 @@ import { fetchPrinters } from "@/lib/printers-api";
 import { applyScopedFieldCatalog } from "@/lib/scope-filters";
 import { fetchSeals } from "@/lib/seals-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
-import { fetchTechnicians } from "@/lib/technicians-api";
 
 export function useFieldOperationsCatalog() {
   const { user } = useAuth();
@@ -76,7 +75,6 @@ export function useFieldOperationsCatalog() {
         branches,
         printersRaw,
         sealsRaw,
-        techniciansRaw,
         employeesRaw,
         centersRaw,
         distributorsRaw,
@@ -86,7 +84,6 @@ export function useFieldOperationsCatalog() {
         scope ? Promise.resolve(scope.branches) : fetchBranches(),
         canLoadPrinters ? fetchPrinters().catch(() => []) : Promise.resolve([]),
         fetchSeals().catch(() => []),
-        fetchTechnicians().catch(() => []),
         fetchEmployees().catch(() => []),
         fetchServiceCenters().catch(() => []),
         fetchDistributors().catch(() => []),
@@ -104,7 +101,7 @@ export function useFieldOperationsCatalog() {
         distributors: distributorsRaw,
         serviceCenters: centersRaw,
         employees: employeesRaw,
-        technicians: techniciansRaw,
+        technicians: [],
         printers: printersRaw,
         seals: sealsRaw,
       });
@@ -114,7 +111,7 @@ export function useFieldOperationsCatalog() {
       setPrinterOptions(printerSelectOptions(scoped.printers));
       setSealOptions(sealSelectOptions(scoped.seals));
       setTechnicianOptions(
-        technicianSelectOptions(scoped.technicians, scoped.employees),
+        technicianSelectOptions(scoped.employees),
       );
       setEmployeeOptions(employeeSelectOptions(scoped.employees));
       setServiceCenterOptions(

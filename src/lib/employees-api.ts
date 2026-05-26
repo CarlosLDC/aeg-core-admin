@@ -7,31 +7,47 @@ import type { EmployeeModificationProposedData } from "@/types/employee-modifica
 const BASE = "/api/employees";
 const MOD_REQUESTS_BASE = "/api/employee-modification-requests";
 
+type RawEmployeeResponse = Omit<EmployeeResponse, "companyId"> & {
+  companyId?: number;
+  company_id?: number;
+};
+
+function normalizeEmployee(row: RawEmployeeResponse): EmployeeResponse {
+  return {
+    ...row,
+    companyId: row.companyId ?? row.company_id ?? 0,
+  };
+}
+
 export async function fetchEmployees(): Promise<EmployeeResponse[]> {
-  return apiFetch<EmployeeResponse[]>(BASE);
+  const rows = await apiFetch<RawEmployeeResponse[]>(BASE);
+  return rows.map(normalizeEmployee);
 }
 
 export async function fetchEmployeeById(id: number): Promise<EmployeeResponse> {
-  return apiFetch<EmployeeResponse>(`${BASE}/${id}`);
+  const row = await apiFetch<RawEmployeeResponse>(`${BASE}/${id}`);
+  return normalizeEmployee(row);
 }
 
 export async function createEmployee(
   body: EmployeeRequest,
 ): Promise<EmployeeResponse> {
-  return apiFetch<EmployeeResponse>(BASE, {
+  const row = await apiFetch<RawEmployeeResponse>(BASE, {
     method: "POST",
     body: JSON.stringify(body),
   });
+  return normalizeEmployee(row);
 }
 
 export async function updateEmployee(
   id: number,
   body: EmployeeRequest,
 ): Promise<EmployeeResponse> {
-  return apiFetch<EmployeeResponse>(`${BASE}/${id}`, {
+  const row = await apiFetch<RawEmployeeResponse>(`${BASE}/${id}`, {
     method: "PUT",
     body: JSON.stringify(body),
   });
+  return normalizeEmployee(row);
 }
 
 export async function deleteEmployee(id: number): Promise<void> {

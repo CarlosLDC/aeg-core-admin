@@ -1,41 +1,24 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { CompanySelect } from "@/components/companies/company-select";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
-import { BranchSelect } from "@/components/users/branch-select";
-import {
-  EMPLOYEE_UI_ROLE_LABELS,
-  EMPLOYEE_UI_ROLE_STYLES,
-  resolveEmployeeUiRole,
-  uiRolesForUser,
-  type EmployeeUiRole,
-  type EmployeeWithRoles,
-} from "@/lib/employee-roles";
+import type { EmployeeWithRoles } from "@/lib/employee-roles";
 import {
   employeeToFormValues,
   type EmployeeFormValues,
 } from "@/lib/employee-form";
-import { SegmentedToggle } from "@/components/ui/segmented-toggle";
-import {
-  EMPLOYEE_UI_ROLE_TOGGLE_TONE,
-  formFieldInputClass,
-} from "@/lib/toggle-button-styles";
-import type { BranchResponse } from "@/types/branch";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import type { CompanyResponse } from "@/types/company";
-import type { Role } from "@/types/user";
 import { cn } from "@/lib/utils";
 
 type EmployeeFormDialogProps = {
   mode: "create" | "edit";
   employee?: EmployeeWithRoles;
-  userRole: Role;
-  branches: BranchResponse[];
   companies: CompanyResponse[];
-  branchesLoading: boolean;
-  defaultBranchId?: string;
-  lockBranch?: boolean;
+  companiesLoading: boolean;
   open: boolean;
   saving: boolean;
   error: string | null;
@@ -48,19 +31,14 @@ const emptyForm: EmployeeFormValues = {
   name: "",
   phone: "",
   email: "",
-  branchId: "",
-  role: "distribuidor",
+  companyId: "",
 };
 
 export function EmployeeFormDialog({
   mode,
   employee,
-  userRole,
-  branches,
   companies,
-  branchesLoading,
-  defaultBranchId = "",
-  lockBranch = false,
+  companiesLoading,
   open,
   saving,
   error,
@@ -69,32 +47,14 @@ export function EmployeeFormDialog({
 }: EmployeeFormDialogProps) {
   const [form, setForm] = useState<EmployeeFormValues>(emptyForm);
 
-  const roleOptions = useMemo(() => uiRolesForUser(userRole), [userRole]);
-  const canEditProfile =
-    mode === "create" || userRole === "ADMIN" || userRole === "DISTRIBUTOR";
-  const canChooseOperationalRole = roleOptions.length > 1;
-  const employeeOperationalRole =
-    employee != null ? resolveEmployeeUiRole(employee) : null;
-
   useEffect(() => {
     if (!open) return;
     if (mode === "edit" && employee) {
       setForm(employeeToFormValues(employee));
     } else {
-      setForm({
-        ...emptyForm,
-        role: roleOptions[0] ?? "distribuidor",
-        branchId: defaultBranchId,
-      });
+      setForm(emptyForm);
     }
-  }, [open, mode, employee, roleOptions, defaultBranchId]);
-
-  useEffect(() => {
-    if (!open || mode !== "create" || !lockBranch || !defaultBranchId) return;
-    setForm((f) =>
-      f.branchId === defaultBranchId ? f : { ...f, branchId: defaultBranchId },
-    );
-  }, [open, mode, lockBranch, defaultBranchId]);
+  }, [open, mode, employee]);
 
   if (!open) return null;
 
@@ -103,12 +63,8 @@ export function EmployeeFormDialog({
     onSubmit(form);
   }
 
-  function handleRoleChange(role: EmployeeUiRole) {
-    setForm((f) => ({ ...f, role }));
-  }
-
   const inputClass = formFieldInputClass;
-  const disabledProfile = !canEditProfile || saving || branchesLoading;
+  const disabled = saving || companiesLoading;
 
   return (
     <div
@@ -158,10 +114,10 @@ export function EmployeeFormDialog({
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <fieldset
-            disabled={disabledProfile}
+            disabled={disabled}
             className={cn(
               "space-y-4 rounded-xl border border-border p-4",
-              disabledProfile && "opacity-80",
+              disabled && "opacity-80",
             )}
           >
             <legend className="px-1 text-sm font-semibold text-card-foreground">
@@ -169,10 +125,10 @@ export function EmployeeFormDialog({
             </legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <FieldLabel required={canEditProfile}>Nombre</FieldLabel>
+                <FieldLabel required>Nombre</FieldLabel>
                 <input
                   type="text"
-                  required={canEditProfile}
+                  required
                   autoComplete="name"
                   value={form.name}
                   onChange={(e) =>
@@ -184,12 +140,12 @@ export function EmployeeFormDialog({
               </label>
 
               <label className="block">
-                <FieldLabel required={canEditProfile}>
+                <FieldLabel required>
                   Cédula / documento
                 </FieldLabel>
                 <input
                   type="text"
-                  required={canEditProfile}
+                  required
                   value={form.nationalId}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, nationalId: e.target.value }))
@@ -199,10 +155,10 @@ export function EmployeeFormDialog({
               </label>
 
               <label className="block">
-                <FieldLabel required={canEditProfile}>Teléfono</FieldLabel>
+                <FieldLabel required>Teléfono</FieldLabel>
                 <input
                   type="tel"
-                  required={canEditProfile}
+                  required
                   autoComplete="tel"
                   value={form.phone}
                   onChange={(e) =>
@@ -213,10 +169,10 @@ export function EmployeeFormDialog({
               </label>
 
               <label className="block">
-                <FieldLabel required={canEditProfile}>Correo</FieldLabel>
+                <FieldLabel required>Correo</FieldLabel>
                 <input
                   type="email"
-                  required={canEditProfile}
+                  required
                   autoComplete="email"
                   value={form.email}
                   onChange={(e) =>
@@ -231,85 +187,22 @@ export function EmployeeFormDialog({
 
           <fieldset className="space-y-4 rounded-xl border border-border p-4">
             <legend className="px-1 text-sm font-semibold text-card-foreground">
-              Asignación operativa
+              Empresa
             </legend>
-            <div className="grid gap-4 md:grid-cols-2 md:items-start">
-              <div className="min-w-0">
-                <FieldLabel required={!lockBranch}>Sucursal</FieldLabel>
-                {lockBranch ? (
-                  <p className="flex h-10 items-center rounded-lg border border-border bg-foreground/[0.03] px-3 text-sm text-muted">
-                    Sucursal de tu distribuidora (personal interno)
-                  </p>
-                ) : (
-                  <BranchSelect
-                    value={form.branchId}
-                    onChange={(branchId) =>
-                      setForm((f) => ({ ...f, branchId }))
-                    }
-                    branches={branches}
-                    companies={companies}
-                    loading={branchesLoading}
-                    disabled={disabledProfile || branches.length === 0}
-                  />
-                )}
-              </div>
-
-              <div className="min-w-0">
-                <FieldLabel required>Rol</FieldLabel>
-                {roleOptions.length === 0 ? (
-                  <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted">
-                    No tienes permisos para asignar roles operativos.
-                  </p>
-                ) : canChooseOperationalRole ? (
-                  <SegmentedToggle
-                    value={form.role}
-                    onChange={handleRoleChange}
-                    disabled={saving}
-                    ariaLabel="Roles disponibles para el empleado"
-                    options={roleOptions.map((role) => ({
-                      value: role,
-                      label: EMPLOYEE_UI_ROLE_LABELS[role],
-                      tone: EMPLOYEE_UI_ROLE_TOGGLE_TONE[role],
-                    }))}
-                  />
-                ) : (
-                  <div className="space-y-2">
-                    <div className="flex h-10 w-full items-center rounded-lg border border-border bg-foreground/[0.03] px-3">
-                      <span
-                        className={cn(
-                          "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
-                          EMPLOYEE_UI_ROLE_STYLES[
-                            (mode === "edit" && employeeOperationalRole
-                              ? employeeOperationalRole
-                              : roleOptions[0]!) as EmployeeUiRole
-                          ],
-                        )}
-                      >
-                        {EMPLOYEE_UI_ROLE_LABELS[
-                          mode === "edit" && employeeOperationalRole
-                            ? employeeOperationalRole
-                            : roleOptions[0]!
-                        ]}
-                      </span>
-                    </div>
-                    {mode === "edit" ? (
-                      <p className="text-xs text-muted">
-                        Tu perfil solo puede asignar el rol{" "}
-                        {EMPLOYEE_UI_ROLE_LABELS[roleOptions[0]!]}. Para cambiar
-                        entre distribuidor y técnico, un administrador debe
-                        editar este empleado.
-                      </p>
-                    ) : null}
-                  </div>
-                )}
-              </div>
-            </div>
+            <CompanySelect
+              value={form.companyId}
+              onChange={(companyId) => setForm((f) => ({ ...f, companyId }))}
+              companies={companies}
+              loading={companiesLoading}
+              disabled={disabled}
+              required
+            />
           </fieldset>
 
           <FormDialogFooter
             mode={mode}
             saving={saving}
-            submitDisabled={branchesLoading}
+            submitDisabled={companiesLoading}
             onClose={onClose}
             createLabel="Crear empleado"
           />

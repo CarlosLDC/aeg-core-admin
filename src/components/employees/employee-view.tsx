@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { EmployeeRoleBadge } from "@/components/employees/employee-role-badge";
 import {
   EmployeeFormDialog,
 } from "@/components/employees/employee-form-dialog";
@@ -14,8 +13,6 @@ import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
-import { useDistributorId } from "@/hooks/use-distributor-id";
-import { useDistributorStaffBranches } from "@/hooks/use-distributor-staff-branches";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
   canDeleteEmployeeRecord,
@@ -23,17 +20,15 @@ import {
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
 import { assertEmployeeInScope } from "@/lib/permissions/scope-access";
-import { branchLabelById } from "@/lib/branches";
+import { companyNameById } from "@/lib/branches";
+import { resolveEmployeeCompanyId } from "@/lib/employee-company";
 import {
   toEmployeePayload,
   toModificationProposedData,
   type EmployeeFormValues,
 } from "@/lib/employee-form";
 import {
-  deleteEmployeeRoles,
-  getEmployeeRolesErrorMessage,
   loadEmployeeWithRoles,
-  syncEmployeeRoles,
   type EmployeeWithRoles,
 } from "@/lib/employee-roles";
 import {
@@ -45,12 +40,10 @@ import {
 } from "@/lib/employees-api";
 import { formatDate } from "@/lib/datetime-form";
 import {
-  branchPath,
   employeeModificationReviewPath,
   employeeModificationReviewsListPath,
   employeePath,
 } from "@/lib/resource-routes";
-import type { Role } from "@/types/user";
 
 export function EmployeeView() {
   const id = useResourceId();
@@ -62,14 +55,6 @@ export function EmployeeView() {
   const canModify = user ? canUpdateEmployeeRecord(user.role) : false;
   const canDelete = user ? canDeleteEmployeeRecord(user.role) : false;
   const canRequestReview = user?.role === "DISTRIBUTOR";
-  const userRole = (user?.role ?? "ADMIN") as Role;
-  const isDistributor = user?.role === "DISTRIBUTOR";
-  const distributorId = useDistributorId();
-  const {
-    staffBranches,
-    staffBranchIdSet,
-    loading: staffBranchesLoading,
-  } = useDistributorStaffBranches(isDistributor ? distributorId : null);
 
   const [employee, setEmployee] = useState<EmployeeWithRoles | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,11 +64,7 @@ export function EmployeeView() {
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const clientBranches = scope?.branches ?? [];
   const companies = scope?.companies ?? [];
-  const formBranches = isDistributor ? staffBranches : clientBranches;
-  const defaultStaffBranchId =
-    staffBranches.length === 1 ? String(staffBranches[0].id) : "";
 
   const load = useCallback(async () => {
     if (id == null) {
@@ -106,7 +87,6 @@ export function EmployeeView() {
           scope,
           record,
           user.role,
-          isDistributor ? staffBranchIdSet : undefined,
         )
       ) {
         setError("No tienes acceso a este recurso.");
@@ -119,12 +99,11 @@ export function EmployeeView() {
     } finally {
       setLoading(false);
     }
-  }, [id, scope, user, isDistributor, staffBranchIdSet]);
+  }, [id, scope, user]);
 
   useEffect(() => {
-    if (isDistributor && staffBranchesLoading) return;
     void load();
-  }, [load, isDistributor, staffBranchesLoading]);
+  }, [load]);
 
   async function handleSubmit(values: EmployeeFormValues) {
     if (!employee) {
@@ -146,13 +125,8 @@ export function EmployeeView() {
       return;
     }
 
-    if (
-      isDistributor &&
-      !staffBranchIdSet.has(payload.request.branchId)
-    ) {
-      setFormError(
-        "Solo puedes registrar empleados en la sucursal de tu distribuidora.",
-      );
+    if (scope && !scope.companyIds.has(payload.request.companyId)) {
+      setFormError("La empresa seleccionada no está dentro de tu alcance.");
       return;
     }
 
@@ -164,11 +138,10 @@ export function EmployeeView() {
       if (canRequestReview) {
         await requestEmployeeUpdate(
           employee.id,
-          toModificationProposedData(payload.request, payload.tableRoles),
+          toModificationProposedData(payload.request),
         );
       } else {
         await updateEmployee(employee.id, payload.request);
-        await syncEmployeeRoles(employee.id, employee, payload.tableRoles);
       }
       await load();
       toast.success(
@@ -182,8 +155,7 @@ export function EmployeeView() {
       setEditOpen(false);
       await refresh();
     } catch (err) {
-      const message =
-        getEmployeesErrorMessage(err) || getEmployeeRolesErrorMessage(err);
+      const message = getEmployeesErrorMessage(err);
       setFormError(message);
       toast.error(message);
     } finally {
@@ -217,7 +189,6 @@ export function EmployeeView() {
       if (canRequestReview) {
         await requestEmployeeDelete(employee.id);
       } else {
-        await deleteEmployeeRoles(employee);
         await deleteEmployee(employee.id);
       }
       await refresh();
@@ -232,16 +203,17 @@ export function EmployeeView() {
         await load();
       }
     } catch (err) {
-      const message =
-        getEmployeesErrorMessage(err) || getEmployeeRolesErrorMessage(err);
-      toast.error(message);
+      toast.error(getEmployeesErrorMessage(err));
     } finally {
       setDeleting(false);
     }
   }
 
-  const branchLabel = employee
-    ? branchLabelById(formBranches, companies, employee.branchId)
+  const companyLabel = employee
+    ? companyNameById(
+        companies,
+        resolveEmployeeCompanyId(employee, scope?.branches ?? []) ?? 0,
+      )
     : "—";
   const pendingReview = employee?.reviewStatus === "PENDING_REVIEW";
   const isAdmin = user?.role === "ADMIN";
@@ -305,10 +277,6 @@ export function EmployeeView() {
               <DetailField label="ID" value={String(employee.id)} mono />
               <DetailField label="Nombre" value={employee.name} />
               <DetailField label="Cédula" value={employee.nationalId} mono />
-              <DetailField
-                label="Rol"
-                value={<EmployeeRoleBadge employee={employee} />}
-              />
               <DetailField label="Teléfono" value={employee.phone || "—"} />
               <DetailField label="Correo" value={employee.email || "—"} />
               <DetailField
@@ -316,13 +284,12 @@ export function EmployeeView() {
                 value={formatDate(employee.createdAt)}
               />
               <DetailField
-                label="Sucursal"
-                value={branchLabel}
-                href={branchPath(employee.branchId)}
+                label="Empresa"
+                value={companyLabel}
               />
               <DetailField
-                label="ID sucursal"
-                value={String(employee.branchId)}
+                label="ID empresa"
+                value={String(resolveEmployeeCompanyId(employee, scope?.branches ?? []) ?? "—")}
                 mono
               />
             </DetailSection>
@@ -334,12 +301,8 @@ export function EmployeeView() {
         <EmployeeFormDialog
           mode="edit"
           employee={employee}
-          userRole={userRole}
-          branches={formBranches}
           companies={companies}
-          branchesLoading={isDistributor && staffBranchesLoading}
-          defaultBranchId={defaultStaffBranchId}
-          lockBranch={isDistributor && staffBranches.length === 1}
+          companiesLoading={false}
           open={editOpen}
           saving={saving}
           error={formError}

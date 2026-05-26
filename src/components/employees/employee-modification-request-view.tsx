@@ -11,17 +11,19 @@ import { ResourceViewActions } from "@/components/resource-view/resource-view-ac
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useConfirm } from "@/context/confirm-provider";
 import { useToast } from "@/context/toast-provider";
+import { useCompanyScope } from "@/context/company-scope-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
-import { branchPath, employeePath } from "@/lib/resource-routes";
+import { companyNameById } from "@/lib/branches";
+import { employeePath } from "@/lib/resource-routes";
 import {
   approveEmployeeModificationRequest,
   fetchEmployeeModificationRequestById,
   getEmployeeModificationRequestsErrorMessage,
   rejectEmployeeModificationRequest,
 } from "@/lib/employee-modification-requests-api";
+import { resolveEmployeeCompanyId } from "@/lib/employee-company";
 import { formatDate } from "@/lib/datetime-form";
 import { formatResourceId } from "@/lib/format-resource-id";
-import { formatOperationalRole } from "@/lib/employee-roles";
 import type {
   ModificationRequestDetailResponse,
   ModificationRequestStatus,
@@ -53,6 +55,7 @@ export function EmployeeModificationRequestView({
   const id = useResourceId();
   const toast = useToast();
   const confirm = useConfirm();
+  const { scope } = useCompanyScope();
   const [row, setRow] = useState<ModificationRequestDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -141,38 +144,31 @@ export function EmployeeModificationRequestView({
         after: formatAfterValue(proposed?.email, row.actionType),
       },
       {
-        label: "Rol",
-        before: formatOperationalRole({
-          isTechnician: current?.isTechnician,
-          isDistributorPerson: current?.isDistributorPerson,
-          type: current?.type,
-        }),
+        label: "Empresa",
+        before:
+          current == null
+            ? "—"
+            : companyNameById(
+                scope?.companies ?? [],
+                resolveEmployeeCompanyId(current, scope?.branches ?? []) ?? 0,
+              ),
         after:
-          row.actionType === "DELETE"
-            ? "Eliminar"
-            : formatOperationalRole({
-                isTechnician: proposed?.isTechnician,
-                isDistributorPerson: proposed?.isDistributorPerson,
-                type: proposed?.type,
-              }),
-      },
-      {
-        label: "Tipo (empleado)",
-        before: current?.type ?? "—",
-        after: formatAfterValue(proposed?.type, row.actionType),
-      },
-      {
-        label: "Sucursal",
-        before: current?.branchId != null ? String(current.branchId) : "—",
-        after:
-          proposed?.branchId != null
-            ? String(proposed.branchId)
+          proposed?.companyId != null
+            ? companyNameById(scope?.companies ?? [], proposed.companyId)
             : row.actionType === "DELETE"
               ? "Eliminar"
               : "—",
       },
+      {
+        label: "ID empresa",
+        before:
+          current == null
+            ? "—"
+            : String(resolveEmployeeCompanyId(current, scope?.branches ?? []) ?? "—"),
+        after: formatAfterValue(proposed?.companyId, row.actionType),
+      },
     ];
-  }, [row]);
+  }, [row, scope]);
 
   const detailSteps = useMemo<DetailPagerStep[]>(() => {
     if (!row || row.actionType !== "UPDATE") return [];
@@ -224,9 +220,7 @@ export function EmployeeModificationRequestView({
                     </div>
                   }
                   href={
-                    field.label === "Sucursal" && row.currentEmployeeSnapshot?.branchId
-                      ? branchPath(row.currentEmployeeSnapshot.branchId)
-                      : undefined
+                    undefined
                   }
                 />
               ))}
@@ -269,8 +263,8 @@ export function EmployeeModificationRequestView({
             <>
               {canReview ? (
                 <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
-                  Esta acción eliminará el empleado y su rol operativo asociado.
-                  Verifica que no existan dependencias activas antes de aprobar.
+                  Esta acción eliminará el empleado. Verifica que no existan
+                  dependencias activas antes de aprobar.
                 </p>
               ) : null}
               <DetailSection title="Metadatos" layout="quad">

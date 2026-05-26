@@ -96,7 +96,7 @@ export function uiRoleToBackend(uiRole: EmployeeUiRole): {
     };
   }
   return {
-    type: "administrativo",
+    type: "tecnico",
     tableRoles: { isTechnician: false, isDistributorPerson: true },
   };
 }
@@ -183,8 +183,8 @@ export async function syncEmployeeRoles(
       phone: "",
       email: "",
       createdAt: "",
-      type: "administrativo",
-      branchId: 0,
+      type: "tecnico",
+      companyId: 0,
       reviewStatus: "ACTIVE",
       activeModificationRequestId: null,
     } satisfies EmployeeResponse);

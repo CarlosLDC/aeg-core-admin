@@ -1,8 +1,5 @@
 export const EMPLOYEE_TYPES = [
-  "administrativo",
   "tecnico",
-  "vendedor",
-  "gerente",
 ] as const;
 
 export type EmployeeType = (typeof EMPLOYEE_TYPES)[number];
@@ -17,7 +14,9 @@ export type EmployeeResponse = {
   email: string;
   createdAt: string;
   type: EmployeeType;
-  branchId: number;
+  companyId: number;
+  /** @deprecated Solo compatibilidad durante migración backend. */
+  branchId?: number | null;
   reviewStatus: EmployeeReviewStatus;
   activeModificationRequestId: number | null;
 };
@@ -28,5 +27,5 @@ export type EmployeeRequest = {
   phone: string;
   email: string;
   type: EmployeeType;
-  branchId: number;
+  companyId: number;
 };

@@ -3,7 +3,6 @@ import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { EmployeeResponse } from "@/types/employee";
-import type { TechnicianResponse } from "@/types/employee-role";
 import type {
   DistributorResponse,
   ServiceCenterResponse,
@@ -34,18 +33,13 @@ export function sealSelectOptions(seals: SealResponse[]): SearchableSelectOption
 }
 
 export function technicianSelectOptions(
-  technicians: TechnicianResponse[],
   employees: EmployeeResponse[],
 ): SearchableSelectOption[] {
-  const empById = new Map(employees.map((e) => [e.id, e]));
-  return technicians
-    .map((t) => {
-      const emp = empById.get(t.employeeId);
-      const name = emp
-        ? `${emp.name} · ${emp.nationalId}`
-        : "Empleado desconocido";
+  return employees
+    .map((employee) => {
+      const name = `${employee.name} · ${employee.nationalId}`;
       return {
-        value: String(t.id),
+        value: String(employee.id),
         label: name,
         searchText: name,
       };
