@@ -1,11 +1,13 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export type ConfirmDialogOptions = {
   title: string;
-  message: string;
+  message?: string;
+  content?: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   destructive?: boolean;
@@ -22,6 +24,7 @@ export function ConfirmDialog({
   open,
   title,
   message,
+  content,
   confirmLabel = "Confirmar",
   cancelLabel = "Cancelar",
   destructive = false,
@@ -53,9 +56,15 @@ export function ConfirmDialog({
         >
           {title}
         </h2>
-        <p id="confirm-dialog-desc" className="mt-2 text-sm text-muted">
-          {message}
-        </p>
+        {content ? (
+          <div id="confirm-dialog-desc" className="mt-3 space-y-3">
+            {content}
+          </div>
+        ) : message ? (
+          <p id="confirm-dialog-desc" className="mt-2 text-sm text-muted">
+            {message}
+          </p>
+        ) : null}
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button
             type="button"

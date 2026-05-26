@@ -1,14 +1,15 @@
 "use client";
 
 import { FormEvent, useId, useMemo, useState } from "react";
-import { AlertTriangle, ArrowRight, Loader2, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
-import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
+import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
   SearchableSelect,
   type SearchableSelectOption,
 } from "@/components/ui/searchable-select";
+import { useConfirm } from "@/context/confirm-provider";
 import type { PrinterResponse } from "@/types/printer";
 import { cn } from "@/lib/utils";
 
@@ -37,9 +38,6 @@ function resolveDefaultClientId(
   if (printer.clientId != null) {
     return String(printer.clientId);
   }
-  if (clientOptions.length > 0) {
-    return String(clientOptions[0].id);
-  }
   return "";
 }
 
@@ -52,6 +50,7 @@ export function PrinterDispositionDialog({
   onClose,
   onSubmit,
 }: PrinterDispositionDialogProps) {
+  const confirm = useConfirm();
   const titleId = useId();
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [clientOverride, setClientOverride] = useState<string | null>(null);
@@ -67,7 +66,13 @@ export function PrinterDispositionDialog({
   const clientId = clientOverride ?? defaultClientId;
   const disabled = saving || catalogLoading;
 
-  function handleSubmit(e: FormEvent) {
+  const selectedClientLabel = useMemo(() => {
+    const id = Number(clientId);
+    if (!Number.isFinite(id) || id <= 0) return null;
+    return clientOptions.find((opt) => opt.id === id)?.label ?? null;
+  }, [clientId, clientOptions]);
+
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const id = Number(clientId);
     if (!Number.isFinite(id) || id <= 0) {
@@ -75,6 +80,33 @@ export function PrinterDispositionDialog({
       return;
     }
     setFieldError(null);
+
+    const accepted = await confirm({
+      title: "Confirmar enajenación",
+      content: (
+        <>
+          <p className="text-sm text-muted">
+            Vas a enajenar la impresora{" "}
+            <span className="font-mono text-card-foreground">
+              {printer.fiscalSerial}
+            </span>
+            {selectedClientLabel ? (
+              <>
+                {" "}
+                al cliente{" "}
+                <strong className="text-card-foreground">{selectedClientLabel}</strong>
+              </>
+            ) : null}
+            . Esta acción actualiza el estado de la impresora.
+          </p>
+          <PrinterStatusTransition from="asignada" to="enajenada" />
+        </>
+      ),
+      confirmLabel: "Enajenar impresora",
+      destructive: true,
+    });
+    if (!accepted) return;
+
     onSubmit(id);
   }
 
@@ -123,18 +155,7 @@ export function PrinterDispositionDialog({
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-            <div className="rounded-lg border border-border bg-foreground/[0.02] p-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted">
-                Cambio de estado
-              </p>
-              <div className="mt-2 flex items-center gap-2">
-                <PrinterStatusBadge status="asignada" />
-                <ArrowRight className="size-4 text-muted" />
-                <PrinterStatusBadge status="enajenada" />
-              </div>
-            </div>
-
-            <div className="mt-4">
+            <div>
               <FieldLabel>Cliente</FieldLabel>
               <SearchableSelect
                 value={clientId}
@@ -156,19 +177,6 @@ export function PrinterDispositionDialog({
                   {fieldError}
                 </p>
               ) : null}
-            </div>
-
-            <div
-              role="alert"
-              className="mt-4 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200"
-            >
-              <p className="flex items-start gap-2">
-                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-                <span>
-                  Esta es una acción importante: al confirmar, la impresora quedará
-                  en estado <strong>Enajenada</strong>.
-                </span>
-              </p>
             </div>
 
             {error ? (
