@@ -47,3 +47,14 @@ export function technicalServicePath(id: number): string {
 export function annualInspectionPath(id: number): string {
   return `/annual-inspections/${id}`;
 }
+
+export function employeeModificationReviewPath(requestId: number): string {
+  return `/reviews/employees/${requestId}`;
+}
+
+export function clientModificationReviewPath(requestId: number): string {
+  return `/reviews/clients/${requestId}`;
+}
+
+export const employeeModificationReviewsListPath = "/reviews?section=employees";
+export const clientModificationReviewsListPath = "/reviews?section=clients";

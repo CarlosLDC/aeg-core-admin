@@ -48,7 +48,7 @@ type EmployeeModificationRequestViewProps = {
 };
 
 export function EmployeeModificationRequestView({
-  backHref = "/employees/reviews",
+  backHref = "/reviews?section=employees",
 }: EmployeeModificationRequestViewProps) {
   const id = useResourceId();
   const toast = useToast();

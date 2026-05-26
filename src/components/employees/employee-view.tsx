@@ -44,7 +44,12 @@ import {
   updateEmployee,
 } from "@/lib/employees-api";
 import { formatDate } from "@/lib/datetime-form";
-import { branchPath, employeePath } from "@/lib/resource-routes";
+import {
+  branchPath,
+  employeeModificationReviewPath,
+  employeeModificationReviewsListPath,
+  employeePath,
+} from "@/lib/resource-routes";
 import type { Role } from "@/types/user";
 
 export function EmployeeView() {
@@ -242,8 +247,8 @@ export function EmployeeView() {
   const isAdmin = user?.role === "ADMIN";
   const reviewHref =
     employee?.activeModificationRequestId != null
-      ? `/employees/reviews/${employee.activeModificationRequestId}`
-      : "/employees/reviews";
+      ? employeeModificationReviewPath(employee.activeModificationRequestId)
+      : employeeModificationReviewsListPath;
 
   return (
     <>

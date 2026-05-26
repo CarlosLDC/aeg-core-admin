@@ -71,7 +71,6 @@ import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { branchPath, companyPath } from "@/lib/resource-routes";
-import { hrefForBranchClientDistributor } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
@@ -150,20 +149,6 @@ function branchToWizardValues(
 
 function branchSummary(branch: BranchWithRoles, companies: CompanyResponse[]) {
   return formatBranchShort(branch, companies);
-}
-
-function clientDistributorSummary(
-  branch: BranchWithRoles,
-  distributors: DistributorResponse[],
-  branches: BranchWithRoles[],
-  companies: CompanyResponse[],
-): string {
-  if (!branch.client?.distributorId) return "—";
-  const distributor = distributors.find(
-    (d) => d.id === branch.client?.distributorId,
-  );
-  if (!distributor) return "Distribuidor desconocido";
-  return distributorLabel(distributor, branches, companies);
 }
 
 export function BranchesManager() {
@@ -248,7 +233,6 @@ export function BranchesManager() {
         branch.contactPersonName,
         branch.phone,
         branch.email,
-        clientDistributorSummary(branch, distributors, branches, companies),
       ]
         .join(" ")
         .toLowerCase();
@@ -261,7 +245,6 @@ export function BranchesManager() {
     stateFilter,
     companyFilter,
     companies,
-    distributors,
   ]);
 
   const sortedBranches = useMemo(
@@ -580,7 +563,7 @@ export function BranchesManager() {
             ) : (
               <>
                 <TableScroll>
-                  <table className="w-full min-w-[1040px] text-left text-sm">
+                  <table className="w-full min-w-[880px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <TableRowMetaHeaders
@@ -612,7 +595,6 @@ export function BranchesManager() {
                         <th className="px-5 py-3 font-medium">Ubicación</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
                         <th className="px-5 py-3 font-medium">Roles</th>
-                        <th className="px-5 py-3 font-medium">Distribuidor</th>
                         </TableRowMetaHeaders>
                       </tr>
                     </thead>
@@ -670,27 +652,6 @@ export function BranchesManager() {
                           </td>
                           <td className="px-5 py-3.5">
                             <BranchTypeBadges branch={branch} />
-                          </td>
-                          <td className="max-w-[180px] px-5 py-3.5 text-muted">
-                            <TruncatedText
-                              href={
-                                user
-                                  ? hrefForBranchClientDistributor(
-                                      branch,
-                                      distributors,
-                                      user.role,
-                                    )
-                                  : undefined
-                              }
-                              maxClassName="max-w-[160px]"
-                            >
-                              {clientDistributorSummary(
-                                branch,
-                                distributors,
-                                branches,
-                                companies,
-                              )}
-                            </TruncatedText>
                           </td>
                           </TableRowMetaCells>
                         </ClickableTableRow>

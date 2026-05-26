@@ -18,7 +18,10 @@ import {
   DEFAULT_RETRY_DELAYS_MS,
   sleep,
 } from "@/lib/polling";
-import { employeePath } from "@/lib/resource-routes";
+import {
+  employeeModificationReviewPath,
+  employeePath,
+} from "@/lib/resource-routes";
 import type {
   ModificationRequestListItemResponse,
   ModificationRequestStatus,
@@ -200,11 +203,11 @@ export function EmployeeModificationRequestsManager() {
                       {pagination.paginatedItems.map((row) => (
                         <ClickableTableRow
                           key={row.id}
-                          href={`/employees/reviews/${row.id}`}
+                          href={employeeModificationReviewPath(row.id)}
                         >
                           <td className="px-5 py-3.5 font-mono">
                             <Link
-                              href={`/employees/reviews/${row.id}`}
+                              href={employeeModificationReviewPath(row.id)}
                               className="text-accent hover:underline"
                             >
                               {row.id}

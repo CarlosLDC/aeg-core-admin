@@ -34,6 +34,10 @@ import {
 } from "@/lib/companies-api";
 import { formatDate } from "@/lib/datetime-form";
 import { useResourceId } from "@/hooks/use-resource-id";
+import {
+  clientModificationReviewPath,
+  clientModificationReviewsListPath,
+} from "@/lib/resource-routes";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -252,8 +256,8 @@ export function ClientView() {
   const isAdmin = user?.role === "ADMIN";
   const reviewHref =
     client?.activeModificationRequestId != null
-      ? `/clients/reviews/${client.activeModificationRequestId}`
-      : "/clients/reviews";
+      ? clientModificationReviewPath(client.activeModificationRequestId)
+      : clientModificationReviewsListPath;
 
   return (
     <>

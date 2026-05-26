@@ -53,7 +53,7 @@ type ClientModificationRequestViewProps = {
 };
 
 export function ClientModificationRequestView({
-  backHref = "/clients/reviews",
+  backHref = "/reviews?section=clients",
 }: ClientModificationRequestViewProps) {
   const id = useResourceId();
   const toast = useToast();

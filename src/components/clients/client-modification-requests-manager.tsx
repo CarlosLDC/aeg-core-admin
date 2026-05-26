@@ -200,11 +200,11 @@ export function ClientModificationRequestsManager() {
                       {pagination.paginatedItems.map((row) => (
                         <ClickableTableRow
                           key={row.id}
-                          href={`/clients/reviews/${row.id}`}
+                          href={`/reviews/clients/${row.id}`}
                         >
                           <td className="px-5 py-3.5 font-mono">
                             <Link
-                              href={`/clients/reviews/${row.id}`}
+                              href={`/reviews/clients/${row.id}`}
                               className="text-accent hover:underline"
                             >
                               {row.id}

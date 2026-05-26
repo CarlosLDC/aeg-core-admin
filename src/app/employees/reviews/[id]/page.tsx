@@ -1,11 +1,17 @@
 import { redirect } from "next/navigation";
+import { employeeModificationReviewPath } from "@/lib/resource-routes";
 
 type EmployeeReviewDetailPageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
-export default function EmployeeReviewDetailPage({
+export default async function EmployeeReviewDetailPage({
   params,
 }: EmployeeReviewDetailPageProps) {
-  redirect(`/reviews/employees/${params.id}`);
+  const { id } = await params;
+  const requestId = Number.parseInt(id, 10);
+  if (!Number.isFinite(requestId) || requestId <= 0) {
+    redirect("/reviews?section=employees");
+  }
+  redirect(employeeModificationReviewPath(requestId));
 }

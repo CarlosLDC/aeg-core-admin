@@ -1,9 +1,17 @@
 import { redirect } from "next/navigation";
+import { clientModificationReviewPath } from "@/lib/resource-routes";
 
 type ClientReviewDetailPageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
-export default function ClientReviewDetailPage({ params }: ClientReviewDetailPageProps) {
-  redirect(`/reviews/clients/${params.id}`);
+export default async function ClientReviewDetailPage({
+  params,
+}: ClientReviewDetailPageProps) {
+  const { id } = await params;
+  const requestId = Number.parseInt(id, 10);
+  if (!Number.isFinite(requestId) || requestId <= 0) {
+    redirect("/reviews?section=clients");
+  }
+  redirect(clientModificationReviewPath(requestId));
 }
