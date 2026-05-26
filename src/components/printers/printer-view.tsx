@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
+import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import {
   DetailField,
@@ -40,6 +41,7 @@ import {
   DEVICE_TYPE_LABELS,
   printerModelLabel,
   printerToAssignmentRequest,
+  printerToDispositionRequest,
   printerToFormValues,
   toPrinterRequest,
   type PrinterFormValues,
@@ -79,7 +81,9 @@ export function PrinterView() {
   const { scope } = useCompanyScope();
   const canModify = user ? canModifyPrinterRecord(user.role) : false;
   const canDelete = user ? canDeletePrinterRecord(user.role) : false;
+  const isAdmin = user?.role === "ADMIN";
   const isDistributor = user?.role === "DISTRIBUTOR";
+  const canAssignInitialized = isAdmin && canModify;
 
   const [printer, setPrinter] = useState<PrinterResponse | null>(null);
   const [models, setModels] = useState<PrinterModelResponse[]>([]);
@@ -99,11 +103,15 @@ export function PrinterView() {
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [assignmentSaving, setAssignmentSaving] = useState(false);
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
+  const [dispositionOpen, setDispositionOpen] = useState(false);
+  const [dispositionSaving, setDispositionSaving] = useState(false);
+  const [dispositionError, setDispositionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const lockDistributor = isDistributor && distributorId != null;
+  const canDisposeAssigned = isDistributor && canModify && distributorId != null;
 
   const load = useCallback(async () => {
     if (id == null) {
@@ -298,13 +306,25 @@ export function PrinterView() {
               value={
                 <PrinterStatusBadge
                   status={printer.status}
-                  onAssignClick={
-                    canModify && printer.status === "inicializada"
+                  onClick={
+                    canAssignInitialized && printer.status === "inicializada"
                       ? () => {
                           setAssignmentError(null);
                           setAssignmentOpen(true);
                         }
+                      : canDisposeAssigned && printer.status === "asignada"
+                        ? () => {
+                            setDispositionError(null);
+                            setDispositionOpen(true);
+                          }
                       : undefined
+                  }
+                  actionLabel={
+                    canAssignInitialized && printer.status === "inicializada"
+                      ? "Asignar impresora"
+                      : canDisposeAssigned && printer.status === "asignada"
+                        ? "Enajenar impresora"
+                        : undefined
                   }
                 />
               }
@@ -402,11 +422,12 @@ export function PrinterView() {
     distributorLabelById,
     clientLabelById,
     softwareLabelById,
-    canModify,
+    canAssignInitialized,
+    canDisposeAssigned,
   ]);
 
   async function handleAssignmentSubmit(distributorId: number) {
-    if (!printer || !canModify) {
+    if (!printer || !canAssignInitialized) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
@@ -432,6 +453,40 @@ export function PrinterView() {
       toast.error(message);
     } finally {
       setAssignmentSaving(false);
+    }
+  }
+
+  async function handleDispositionSubmit(clientId: number) {
+    if (!printer || !canDisposeAssigned) {
+      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+      return;
+    }
+    if (printer.status !== "asignada") {
+      toast.error("Solo se pueden enajenar impresoras con estatus Asignada.");
+      return;
+    }
+    if (!clientOptions.some((option) => option.id === clientId)) {
+      toast.error("Selecciona un cliente válido de tu distribuidora.");
+      return;
+    }
+
+    setDispositionSaving(true);
+    setDispositionError(null);
+
+    try {
+      const body = printerToDispositionRequest(printer, clientId);
+      const updated = await updatePrinter(printer.id, body);
+      setPrinter(updated);
+      toast.success(`Impresora ${printer.fiscalSerial} enajenada correctamente.`, {
+        href: printerPath(updated.id),
+      });
+      setDispositionOpen(false);
+    } catch (err) {
+      const message = getPrintersErrorMessage(err);
+      setDispositionError(message);
+      toast.error(message);
+    } finally {
+      setDispositionSaving(false);
     }
   }
 
@@ -536,6 +591,21 @@ export function PrinterView() {
             if (!assignmentSaving) setAssignmentOpen(false);
           }}
           onSubmit={(id) => void handleAssignmentSubmit(id)}
+        />
+      ) : null}
+
+      {printer && dispositionOpen ? (
+        <PrinterDispositionDialog
+          key={`disposition-${printer.id}`}
+          printer={printer}
+          saving={dispositionSaving}
+          error={dispositionError}
+          clientOptions={clientOptions}
+          catalogLoading={catalogLoading}
+          onClose={() => {
+            if (!dispositionSaving) setDispositionOpen(false);
+          }}
+          onSubmit={(id) => void handleDispositionSubmit(id)}
         />
       ) : null}
 

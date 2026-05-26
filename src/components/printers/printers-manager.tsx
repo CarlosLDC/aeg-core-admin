@@ -8,6 +8,7 @@ import {
 } from "@/components/printers/printer-batch-form-dialog";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
+import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
 import {
   type SelectOption,
 } from "@/components/printers/printer-form-dialog";
@@ -54,6 +55,7 @@ import {
   formatPrinterDate,
   printerModelLabel,
   printerToAssignmentRequest,
+  printerToDispositionRequest,
   printerToFormValues,
   PRINTER_STATUS_LABELS,
   toPrinterRequest,
@@ -107,7 +109,9 @@ export function PrintersManager() {
   const { scope } = useCompanyScope();
   const canCreate = user ? canCreatePrinterRecord(user.role) : false;
   const canModify = user ? canModifyPrinterRecord(user.role) : false;
+  const isAdmin = user?.role === "ADMIN";
   const isDistributor = user?.role === "DISTRIBUTOR";
+  const canAssignInitialized = isAdmin && canModify;
   const [authMeDistributorId, setAuthMeDistributorId] = useState<number | null>(
     null,
   );
@@ -115,6 +119,8 @@ export function PrintersManager() {
     ? (user?.distributorId ?? authMeDistributorId)
     : null;
   const lockDistributor = isDistributor && distributorId != null;
+  const canDisposeAssigned =
+    isDistributor && canModify && distributorId != null;
 
   const [printers, setPrinters] = useState<PrinterResponse[]>([]);
   const [models, setModels] = useState<PrinterModelResponse[]>([]);
@@ -135,6 +141,10 @@ export function PrintersManager() {
     useState<PrinterResponse | null>(null);
   const [assignmentSaving, setAssignmentSaving] = useState(false);
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
+  const [dispositionPrinter, setDispositionPrinter] =
+    useState<PrinterResponse | null>(null);
+  const [dispositionSaving, setDispositionSaving] = useState(false);
+  const [dispositionError, setDispositionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [batchProgress, setBatchProgress] = useState<{
     done: number;
@@ -416,8 +426,18 @@ export function PrintersManager() {
     setAssignmentError(null);
   }
 
+  function openDisposition(printer: PrinterResponse) {
+    setDispositionPrinter(printer);
+    setDispositionError(null);
+  }
+
+  function closeDisposition() {
+    setDispositionPrinter(null);
+    setDispositionError(null);
+  }
+
   async function handleAssignmentSubmit(distributorId: number) {
-    if (!assignmentPrinter || !canModify) {
+    if (!assignmentPrinter || !canAssignInitialized) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
@@ -444,6 +464,41 @@ export function PrintersManager() {
       toast.error(message);
     } finally {
       setAssignmentSaving(false);
+    }
+  }
+
+  async function handleDispositionSubmit(clientId: number) {
+    if (!dispositionPrinter || !canDisposeAssigned) {
+      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+      return;
+    }
+    if (dispositionPrinter.status !== "asignada") {
+      toast.error("Solo se pueden enajenar impresoras con estatus Asignada.");
+      return;
+    }
+    if (!clientOptions.some((option) => option.id === clientId)) {
+      toast.error("Selecciona un cliente válido de tu distribuidora.");
+      return;
+    }
+
+    setDispositionSaving(true);
+    setDispositionError(null);
+
+    try {
+      const body = printerToDispositionRequest(dispositionPrinter, clientId);
+      await updatePrinter(dispositionPrinter.id, body);
+      toast.success(
+        `Impresora ${dispositionPrinter.fiscalSerial} enajenada correctamente.`,
+        { href: printerPath(dispositionPrinter.id) },
+      );
+      closeDisposition();
+      await loadPrinters({ silent: true });
+    } catch (err) {
+      const message = getPrintersErrorMessage(err);
+      setDispositionError(message);
+      toast.error(message);
+    } finally {
+      setDispositionSaving(false);
     }
   }
 
@@ -761,10 +816,23 @@ export function PrintersManager() {
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <PrinterStatusBadge
                               status={printer.status}
-                              onAssignClick={
-                                canModify && printer.status === "inicializada"
+                              onClick={
+                                canAssignInitialized &&
+                                printer.status === "inicializada"
                                   ? () => openAssignment(printer)
-                                  : undefined
+                                  : canDisposeAssigned &&
+                                      printer.status === "asignada"
+                                    ? () => openDisposition(printer)
+                                    : undefined
+                              }
+                              actionLabel={
+                                canAssignInitialized &&
+                                printer.status === "inicializada"
+                                  ? "Asignar impresora"
+                                  : canDisposeAssigned &&
+                                      printer.status === "asignada"
+                                    ? "Enajenar impresora"
+                                    : undefined
                               }
                             />
                           </td>
@@ -830,6 +898,21 @@ export function PrintersManager() {
             if (!assignmentSaving) closeAssignment();
           }}
           onSubmit={(id) => void handleAssignmentSubmit(id)}
+        />
+      ) : null}
+
+      {dispositionPrinter ? (
+        <PrinterDispositionDialog
+          key={dispositionPrinter.id}
+          printer={dispositionPrinter}
+          saving={dispositionSaving}
+          error={dispositionError}
+          clientOptions={clientOptions}
+          catalogLoading={catalogLoading}
+          onClose={() => {
+            if (!dispositionSaving) closeDisposition();
+          }}
+          onSubmit={(id) => void handleDispositionSubmit(id)}
         />
       ) : null}
 

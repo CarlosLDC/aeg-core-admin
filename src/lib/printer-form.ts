@@ -113,6 +113,26 @@ export function printerToAssignmentRequest(
   };
 }
 
+export function printerToDispositionRequest(
+  printer: PrinterResponse,
+  clientId: number,
+): PrinterRequest {
+  return {
+    modelId: printer.modelId,
+    softwareId: printer.softwareId,
+    clientId,
+    distributorId: printer.distributorId,
+    fiscalSerial: printer.fiscalSerial,
+    finalSalePrice: printer.finalSalePrice,
+    paid: printer.paid,
+    installationDate: printer.installationDate,
+    versionFirmware: printer.versionFirmware,
+    macAddress: printer.macAddress,
+    status: "enajenada",
+    deviceType: printer.deviceType,
+  };
+}
+
 export function toPrinterRequest(
   values: PrinterFormValues,
 ): PrinterRequest | string {

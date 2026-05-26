@@ -21,12 +21,14 @@ const STATUS_STYLES: Record<PrinterStatus, string> = {
 
 type PrinterStatusBadgeProps = {
   status: PrinterStatus;
-  onAssignClick?: () => void;
+  onClick?: () => void;
+  actionLabel?: string;
 };
 
 export function PrinterStatusBadge({
   status,
-  onAssignClick,
+  onClick,
+  actionLabel,
 }: PrinterStatusBadgeProps) {
   const label = PRINTER_STATUS_LABELS[status] ?? status;
   const className = cn(
@@ -34,19 +36,19 @@ export function PrinterStatusBadge({
     STATUS_STYLES[status] ?? STATUS_STYLES.desincorporada,
   );
 
-  if (status === "inicializada" && onAssignClick) {
+  if (onClick) {
     return (
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          onAssignClick();
+          onClick();
         }}
         className={cn(
           className,
           "cursor-pointer transition hover:ring-2 hover:ring-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
         )}
-        aria-label={`Asignar impresora (${label})`}
+        aria-label={actionLabel ?? `Acción de impresora (${label})`}
       >
         {label}
       </button>
