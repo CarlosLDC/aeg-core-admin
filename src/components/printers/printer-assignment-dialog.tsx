@@ -32,11 +32,11 @@ function resolveDefaultDistributorId(
   if (lockDistributor && defaultDistributorId != null) {
     return String(defaultDistributorId);
   }
+  if (!lockDistributor) {
+    return "";
+  }
   if (printer.distributorId != null) {
     return String(printer.distributorId);
-  }
-  if (distributorOptions.length > 0) {
-    return String(distributorOptions[0].id);
   }
   return "";
 }
