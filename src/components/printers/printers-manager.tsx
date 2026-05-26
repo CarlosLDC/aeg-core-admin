@@ -10,7 +10,7 @@ import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-
 import {
   type SelectOption,
 } from "@/components/printers/printer-form-dialog";
-import { runBatch, runSerialBatch } from "@/lib/batch-create";
+import { runSerialBatch } from "@/lib/batch-create";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
@@ -74,17 +74,12 @@ import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterModelResponse } from "@/types/printer-model";
-import type {
-  PrinterRequest,
-  PrinterResponse,
-  PrinterStatus,
-} from "@/types/printer";
+import type { PrinterResponse, PrinterStatus } from "@/types/printer";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { SortableTableHeader } from "@/components/ui/sortable-table-header";
-import { filterTabToggleClass } from "@/lib/toggle-button-styles";
 import { printerPath } from "@/lib/resource-routes";
 import {
   hrefForClient,
@@ -95,16 +90,6 @@ import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
 type PrinterSortKey = "price" | "installationDate" | "id" | "createdAt";
-type PrinterViewMode = "inventory" | "assignment";
-
-const printerModeButtonClass =
-  "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition";
-
-type AssignmentProgress = {
-  done: number;
-  total: number;
-  currentSerial: string;
-};
 
 function clientLabel(
   client: ClientResponse,
@@ -114,26 +99,6 @@ function clientLabel(
   const branch = branches.find((b) => b.id === client.branchId);
   if (!branch) return "Cliente desconocido";
   return formatBranchShort(branch, companies);
-}
-
-function toPrinterAssignmentRequest(
-  printer: PrinterResponse,
-  distributorId: number,
-): PrinterRequest {
-  return {
-    modelId: printer.modelId,
-    softwareId: printer.softwareId,
-    clientId: printer.clientId,
-    distributorId,
-    fiscalSerial: printer.fiscalSerial,
-    finalSalePrice: printer.finalSalePrice,
-    paid: printer.paid,
-    installationDate: printer.installationDate,
-    versionFirmware: printer.versionFirmware,
-    macAddress: printer.macAddress,
-    status: "asignada",
-    deviceType: printer.deviceType,
-  };
 }
 
 export function PrintersManager() {
@@ -182,14 +147,6 @@ export function PrintersManager() {
   const [modelFilter, setModelFilter] = useState("all");
   const [paidFilter, setPaidFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<PrinterSortKey>>(null);
-  const [viewMode, setViewMode] = useState<PrinterViewMode>("inventory");
-  const [assignmentDistributorId, setAssignmentDistributorId] = useState("");
-  const [assignmentSearch, setAssignmentSearch] = useState("");
-  const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<number[]>(
-    [],
-  );
-  const [assignmentProgress, setAssignmentProgress] =
-    useState<AssignmentProgress | null>(null);
 
   useEffect(() => {
     if (!isDistributor || user?.distributorId != null) return;
@@ -276,38 +233,6 @@ export function PrintersManager() {
     });
   }, [visiblePrinters, search, statusFilter, modelFilter, paidFilter, modelById]);
 
-  const assignablePrinters = useMemo(
-    () => visiblePrinters.filter((printer) => printer.status === "inicializada"),
-    [visiblePrinters],
-  );
-
-  const filteredAssignablePrinters = useMemo(() => {
-    const q = assignmentSearch.trim().toLowerCase();
-    if (!q) return assignablePrinters;
-    return assignablePrinters.filter((printer) => {
-      const model = modelById.get(printer.modelId);
-      const haystack = [
-        printer.id,
-        printer.fiscalSerial,
-        model ? printerModelLabel(model) : "",
-      ]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(q);
-    });
-  }, [assignablePrinters, assignmentSearch, modelById]);
-
-  const selectedAssignablePrinters = useMemo(() => {
-    const selectedSet = new Set(selectedAssignmentIds);
-    return assignablePrinters.filter((printer) => selectedSet.has(printer.id));
-  }, [assignablePrinters, selectedAssignmentIds]);
-
-  const allVisibleAssignableSelected =
-    filteredAssignablePrinters.length > 0 &&
-    filteredAssignablePrinters.every((printer) =>
-      selectedAssignmentIds.includes(printer.id),
-    );
-
   const sortedPrinters = useMemo(
     () =>
       sortTableRows(filteredPrinters, sort, {
@@ -360,8 +285,6 @@ export function PrintersManager() {
         .sort((a, b) => a.label.localeCompare(b.label, "es")),
     [scopedClients, branches, companies],
   );
-  const resolvedAssignmentDistributorId =
-    assignmentDistributorId || String(distributorOptions[0]?.id ?? "");
 
   const loadPrinters = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false;
@@ -483,101 +406,6 @@ export function PrintersManager() {
     setSelected(null);
     setFormError(null);
     setBatchProgress(null);
-  }
-
-  function toggleAssignmentSelection(printerId: number, checked: boolean) {
-    setSelectedAssignmentIds((current) => {
-      if (checked) {
-        return current.includes(printerId) ? current : [...current, printerId];
-      }
-      return current.filter((id) => id !== printerId);
-    });
-  }
-
-  function toggleAllVisibleAssignable(checked: boolean) {
-    setSelectedAssignmentIds((current) => {
-      if (!checked) {
-        const visibleIds = new Set(filteredAssignablePrinters.map((p) => p.id));
-        return current.filter((id) => !visibleIds.has(id));
-      }
-      const next = new Set(current);
-      filteredAssignablePrinters.forEach((printer) => next.add(printer.id));
-      return [...next];
-    });
-  }
-
-  async function handleAssignPrinters() {
-    if (!canModify) {
-      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
-      return;
-    }
-    if (selectedAssignablePrinters.length === 0) {
-      toast.error("Selecciona al menos una impresora para asignar.");
-      return;
-    }
-    const distributorId = Number(resolvedAssignmentDistributorId);
-    if (!Number.isFinite(distributorId) || distributorId <= 0) {
-      toast.error("Selecciona una distribuidora válida.");
-      return;
-    }
-
-    const distributorName = getDistributorLabel(distributorId);
-    if (
-      !(await confirm({
-        title: "Confirmar asignación",
-        message: `Asignar ${selectedAssignablePrinters.length} impresora${selectedAssignablePrinters.length === 1 ? "" : "s"} a \"${distributorName}\". Esta acción cambiará el estatus a \"Asignada\".`,
-        destructive: true,
-      }))
-    ) {
-      return;
-    }
-
-    setAssignmentProgress({
-      done: 0,
-      total: selectedAssignablePrinters.length,
-      currentSerial: "",
-    });
-
-    const result = await runBatch(
-      selectedAssignablePrinters,
-      async (printer) => {
-        const body = toPrinterAssignmentRequest(printer, distributorId);
-        await updatePrinter(printer.id, body);
-      },
-      (printer) => printer.fiscalSerial,
-      (progress) =>
-        setAssignmentProgress({
-          done: progress.done,
-          total: progress.total,
-          currentSerial: progress.currentLabel,
-        }),
-    );
-
-    setAssignmentProgress(null);
-
-    if (result.succeeded > 0) {
-      toast.success(
-        `${result.succeeded} impresora${result.succeeded === 1 ? "" : "s"} asignada${result.succeeded === 1 ? "" : "s"} correctamente.`,
-      );
-      await loadPrinters({ silent: true });
-    }
-
-    if (result.failed.length > 0) {
-      const sample = result.failed
-        .slice(0, 3)
-        .map((f) => `${f.label}: ${f.message}`)
-        .join(" · ");
-      const more = result.failed.length > 3 ? ` (+${result.failed.length - 3} más)` : "";
-      setListError(
-        `No se pudieron asignar ${result.failed.length} impresora(s). ${sample}${more}`,
-      );
-      toast.error(
-        `Asignación incompleta: ${result.failed.length} error${result.failed.length === 1 ? "" : "es"}.`,
-      );
-      return;
-    }
-
-    setSelectedAssignmentIds([]);
   }
 
   async function handleBatchSubmit({ serials, base }: PrinterBatchSubmitPayload) {
@@ -712,48 +540,11 @@ export function PrintersManager() {
     }
   }
 
-  const assigning = assignmentProgress != null;
-
   return (
     <div className="space-y-4">
-      {canModify ? (
-        <div className="flex w-full justify-center">
-          <div
-            className="flex w-full max-w-md gap-1 rounded-lg border border-border bg-card p-1 sm:inline-flex sm:w-auto sm:max-w-none"
-            role="tablist"
-            aria-label="Modo de impresoras"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={viewMode === "inventory"}
-              onClick={() => setViewMode("inventory")}
-              className={filterTabToggleClass(
-                viewMode === "inventory",
-                printerModeButtonClass,
-              )}
-            >
-              Inventario
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={viewMode === "assignment"}
-              onClick={() => setViewMode("assignment")}
-              className={filterTabToggleClass(
-                viewMode === "assignment",
-                printerModeButtonClass,
-              )}
-            >
-              Asignación
-            </button>
-          </div>
-        </div>
-      ) : null}
-
       <PageToolbar
         actions={
-          viewMode === "inventory" && canCreate ? (
+          canCreate ? (
             <>
               <button
                 type="button"
@@ -792,159 +583,7 @@ export function PrintersManager() {
       )}
 
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-        {viewMode === "assignment" ? (
-          loading ? (
-            <div className="flex items-center justify-center gap-2 py-16 text-muted">
-              <Loader2 className="size-5 animate-spin" />
-              Cargando impresoras…
-            </div>
-          ) : (
-            <div className="space-y-4 p-4 sm:p-5">
-            <div className="rounded-lg border border-border/70 bg-foreground/[0.02] p-4">
-              <h3 className="text-sm font-semibold text-card-foreground">
-                Paso 1: Selecciona la distribuidora destino
-              </h3>
-              <p className="mt-1 text-sm text-muted">
-                Solo se pueden asignar impresoras con estatus{" "}
-                <strong>Inicializada</strong>. Al confirmar, pasarán a{" "}
-                <strong>Asignada</strong>.
-              </p>
-              <label className="mt-3 block max-w-xl text-sm">
-                <span className="mb-1 block text-muted">Distribuidora</span>
-                <select
-                  value={resolvedAssignmentDistributorId}
-                  onChange={(e) => setAssignmentDistributorId(e.target.value)}
-                  disabled={assigning || distributorOptions.length === 0}
-                  className="w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-                >
-                  {distributorOptions.length === 0 ? (
-                    <option value="">Sin distribuidoras disponibles</option>
-                  ) : (
-                    distributorOptions.map((option) => (
-                      <option key={option.id} value={String(option.id)}>
-                        {option.label}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </label>
-            </div>
-
-            <div className="rounded-lg border border-border/70 bg-foreground/[0.02] p-4">
-              <h3 className="text-sm font-semibold text-card-foreground">
-                Paso 2: Elige las impresoras fiscalizadas
-              </h3>
-              <p className="mt-1 text-sm text-muted">
-                Elegibles: {assignablePrinters.length}. Seleccionadas:{" "}
-                {selectedAssignablePrinters.length}.
-              </p>
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                <input
-                  type="search"
-                  value={assignmentSearch}
-                  onChange={(e) => setAssignmentSearch(e.target.value)}
-                  disabled={assigning}
-                  placeholder="Buscar por serial o modelo..."
-                  className="h-10 min-w-[240px] flex-1 rounded-md border border-border bg-card px-3 text-sm text-card-foreground outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-                />
-                <label className="inline-flex items-center gap-2 text-sm text-card-foreground">
-                  <input
-                    type="checkbox"
-                    checked={allVisibleAssignableSelected}
-                    onChange={(e) => toggleAllVisibleAssignable(e.target.checked)}
-                    disabled={assigning || filteredAssignablePrinters.length === 0}
-                  />
-                  Seleccionar visibles
-                </label>
-              </div>
-
-              {assignablePrinters.length === 0 ? (
-                <p className="mt-3 rounded-md border border-border/70 bg-card px-3 py-2 text-sm text-muted">
-                  No hay impresoras con estatus Inicializada para asignar.
-                </p>
-              ) : filteredAssignablePrinters.length === 0 ? (
-                <p className="mt-3 rounded-md border border-border/70 bg-card px-3 py-2 text-sm text-muted">
-                  No hay resultados con ese filtro.
-                </p>
-              ) : (
-                <TableScroll className="mt-3">
-                  <table className="w-full min-w-[760px] text-left text-sm">
-                    <thead>
-                      <tr className="border-b border-border bg-card text-muted">
-                        <th className="w-10 px-3 py-2 font-medium">Sel</th>
-                        <th className="px-3 py-2 font-medium">Serial</th>
-                        <th className="px-3 py-2 font-medium">Modelo</th>
-                        <th className="px-3 py-2 font-medium">Distribuidor actual</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredAssignablePrinters.map((printer) => (
-                        <tr key={printer.id} className="border-b border-border/60">
-                          <td className="px-3 py-2">
-                            <input
-                              type="checkbox"
-                              checked={selectedAssignmentIds.includes(printer.id)}
-                              onChange={(e) =>
-                                toggleAssignmentSelection(printer.id, e.target.checked)
-                              }
-                              disabled={assigning}
-                              aria-label={`Seleccionar impresora ${printer.fiscalSerial}`}
-                            />
-                          </td>
-                          <td className="px-3 py-2 font-mono text-card-foreground">
-                            {printer.fiscalSerial}
-                          </td>
-                          <td className="px-3 py-2 text-card-foreground">
-                            {getModelLabel(printer.modelId)}
-                          </td>
-                          <td className="px-3 py-2 text-muted">
-                            {getDistributorLabel(printer.distributorId)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </TableScroll>
-              )}
-            </div>
-
-            <div className="rounded-lg border border-border/70 bg-foreground/[0.02] p-4">
-              <h3 className="text-sm font-semibold text-card-foreground">
-                Paso 3: Confirmar asignación
-              </h3>
-              <p className="mt-1 text-sm text-muted">
-                Se actualizará distribuidora y estatus a Asignada para las impresoras
-                seleccionadas.
-              </p>
-              {assignmentProgress ? (
-                <p className="mt-3 rounded-md border border-border/70 bg-card px-3 py-2 text-sm text-muted">
-                  Procesando {assignmentProgress.done} de {assignmentProgress.total}
-                  {assignmentProgress.currentSerial
-                    ? ` · Serial: ${assignmentProgress.currentSerial}`
-                    : ""}
-                </p>
-              ) : null}
-              <div className="mt-3">
-                <button
-                  type="button"
-                  onClick={() => void handleAssignPrinters()}
-                  disabled={
-                    assigning ||
-                    selectedAssignablePrinters.length === 0 ||
-                    !resolvedAssignmentDistributorId
-                  }
-                  className={cn(
-                    pageToolbarButtonClass,
-                    "bg-accent text-accent-foreground disabled:cursor-not-allowed disabled:opacity-60",
-                  )}
-                >
-                  {assigning ? "Asignando..." : "Asignar seleccionadas"}
-                </button>
-              </div>
-            </div>
-            </div>
-          )
-        ) : loading ? (
+        {loading ? (
           <div className="flex items-center justify-center gap-2 py-16 text-muted">
             <Loader2 className="size-5 animate-spin" />
             Cargando impresoras…
