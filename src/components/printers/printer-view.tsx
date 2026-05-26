@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import {
@@ -38,6 +39,7 @@ import { formatDate, formatMoney } from "@/lib/datetime-form";
 import {
   DEVICE_TYPE_LABELS,
   printerModelLabel,
+  printerToAssignmentRequest,
   printerToFormValues,
   toPrinterRequest,
   type PrinterFormValues,
@@ -94,6 +96,9 @@ export function PrinterView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [assignmentOpen, setAssignmentOpen] = useState(false);
+  const [assignmentSaving, setAssignmentSaving] = useState(false);
+  const [assignmentError, setAssignmentError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -290,7 +295,19 @@ export function PrinterView() {
           <DetailSection title="Estado operativo" layout="quad">
             <DetailField
               label="Estatus"
-              value={<PrinterStatusBadge status={printer.status} />}
+              value={
+                <PrinterStatusBadge
+                  status={printer.status}
+                  onAssignClick={
+                    canModify && printer.status === "inicializada"
+                      ? () => {
+                          setAssignmentError(null);
+                          setAssignmentOpen(true);
+                        }
+                      : undefined
+                  }
+                />
+              }
             />
             <DetailField
               label="Precio venta"
@@ -385,7 +402,38 @@ export function PrinterView() {
     distributorLabelById,
     clientLabelById,
     softwareLabelById,
+    canModify,
   ]);
+
+  async function handleAssignmentSubmit(distributorId: number) {
+    if (!printer || !canModify) {
+      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+      return;
+    }
+    if (printer.status !== "inicializada") {
+      toast.error("Solo se pueden asignar impresoras con estatus Inicializada.");
+      return;
+    }
+
+    setAssignmentSaving(true);
+    setAssignmentError(null);
+
+    try {
+      const body = printerToAssignmentRequest(printer, distributorId);
+      const updated = await updatePrinter(printer.id, body);
+      setPrinter(updated);
+      toast.success(`Impresora ${printer.fiscalSerial} asignada correctamente.`, {
+        href: printerPath(updated.id),
+      });
+      setAssignmentOpen(false);
+    } catch (err) {
+      const message = getPrintersErrorMessage(err);
+      setAssignmentError(message);
+      toast.error(message);
+    } finally {
+      setAssignmentSaving(false);
+    }
+  }
 
   async function handleSubmit(values: PrinterFormValues) {
     if (!printer || !canModify) {
@@ -473,6 +521,23 @@ export function PrinterView() {
           <DetailSectionsPager key={printer.id} steps={detailSteps} />
         )}
       </ResourceViewShell>
+
+      {printer && assignmentOpen ? (
+        <PrinterAssignmentDialog
+          key={printer.id}
+          printer={printer}
+          saving={assignmentSaving}
+          error={assignmentError}
+          distributorOptions={distributorOptions}
+          catalogLoading={catalogLoading}
+          lockDistributor={lockDistributor}
+          defaultDistributorId={distributorId}
+          onClose={() => {
+            if (!assignmentSaving) setAssignmentOpen(false);
+          }}
+          onSubmit={(id) => void handleAssignmentSubmit(id)}
+        />
+      ) : null}
 
       {printer && editOpen && (
         <PrinterCreateWizardDialog

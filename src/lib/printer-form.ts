@@ -93,6 +93,26 @@ export const emptyPrinterForm = (
   ...defaults,
 });
 
+export function printerToAssignmentRequest(
+  printer: PrinterResponse,
+  distributorId: number,
+): PrinterRequest {
+  return {
+    modelId: printer.modelId,
+    softwareId: printer.softwareId,
+    clientId: printer.clientId,
+    distributorId,
+    fiscalSerial: printer.fiscalSerial,
+    finalSalePrice: printer.finalSalePrice,
+    paid: printer.paid,
+    installationDate: printer.installationDate,
+    versionFirmware: printer.versionFirmware,
+    macAddress: printer.macAddress,
+    status: "asignada",
+    deviceType: printer.deviceType,
+  };
+}
+
 export function toPrinterRequest(
   values: PrinterFormValues,
 ): PrinterRequest | string {

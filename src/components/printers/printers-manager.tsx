@@ -6,6 +6,7 @@ import {
   PrinterBatchFormDialog,
   type PrinterBatchSubmitPayload,
 } from "@/components/printers/printer-batch-form-dialog";
+import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import {
   type SelectOption,
@@ -50,10 +51,9 @@ import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import {
-  DEVICE_TYPE_LABELS,
   formatPrinterDate,
-  formatPrinterPrice,
   printerModelLabel,
+  printerToAssignmentRequest,
   printerToFormValues,
   PRINTER_STATUS_LABELS,
   toPrinterRequest,
@@ -84,7 +84,6 @@ import { printerPath } from "@/lib/resource-routes";
 import {
   hrefForClient,
   hrefForDistributor,
-  hrefForPrinterModel,
 } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
@@ -132,6 +131,10 @@ export function PrintersManager() {
 
   const [dialog, setDialog] = useState<"create" | "edit" | "batch" | null>(null);
   const [selected, setSelected] = useState<PrinterResponse | null>(null);
+  const [assignmentPrinter, setAssignmentPrinter] =
+    useState<PrinterResponse | null>(null);
+  const [assignmentSaving, setAssignmentSaving] = useState(false);
+  const [assignmentError, setAssignmentError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [batchProgress, setBatchProgress] = useState<{
     done: number;
@@ -363,11 +366,6 @@ export function PrintersManager() {
     });
   }, [loadCatalog]);
 
-  function getModelLabel(modelId: number): string {
-    const model = modelById.get(modelId);
-    return model ? printerModelLabel(model) : "Modelo desconocido";
-  }
-
   function getDistributorLabel(distributorId: number | null): string {
     if (distributorId == null) return "—";
     const d = distributors.find((x) => x.id === distributorId);
@@ -406,6 +404,47 @@ export function PrintersManager() {
     setSelected(null);
     setFormError(null);
     setBatchProgress(null);
+  }
+
+  function openAssignment(printer: PrinterResponse) {
+    setAssignmentPrinter(printer);
+    setAssignmentError(null);
+  }
+
+  function closeAssignment() {
+    setAssignmentPrinter(null);
+    setAssignmentError(null);
+  }
+
+  async function handleAssignmentSubmit(distributorId: number) {
+    if (!assignmentPrinter || !canModify) {
+      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+      return;
+    }
+    if (assignmentPrinter.status !== "inicializada") {
+      toast.error("Solo se pueden asignar impresoras con estatus Inicializada.");
+      return;
+    }
+
+    setAssignmentSaving(true);
+    setAssignmentError(null);
+
+    try {
+      const body = printerToAssignmentRequest(assignmentPrinter, distributorId);
+      await updatePrinter(assignmentPrinter.id, body);
+      toast.success(
+        `Impresora ${assignmentPrinter.fiscalSerial} asignada correctamente.`,
+        { href: printerPath(assignmentPrinter.id) },
+      );
+      closeAssignment();
+      await loadPrinters({ silent: true });
+    } catch (err) {
+      const message = getPrintersErrorMessage(err);
+      setAssignmentError(message);
+      toast.error(message);
+    } finally {
+      setAssignmentSaving(false);
+    }
   }
 
   async function handleBatchSubmit({ serials, base }: PrinterBatchSubmitPayload) {
@@ -641,7 +680,7 @@ export function PrintersManager() {
             ) : (
               <>
                 <TableScroll>
-                  <table className="w-full min-w-[1100px] text-left text-sm">
+                  <table className="w-full min-w-[900px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <TableRowMetaHeaders
@@ -670,19 +709,9 @@ export function PrintersManager() {
                           }
                         >
                         <th className="px-5 py-3 font-medium">Serial</th>
-                        <th className="px-5 py-3 font-medium">Modelo</th>
                         <th className="px-5 py-3 font-medium">Estatus</th>
-                        <th className="px-5 py-3 font-medium">Tipo</th>
                         <th className="px-5 py-3 font-medium">Distribuidor</th>
                         <th className="px-5 py-3 font-medium">Cliente</th>
-                        <SortableTableHeader
-                          label="Precio"
-                          sortDirection={sort?.key === "price" ? sort.direction : null}
-                          onToggle={() =>
-                            setSort((current) => toggleTableSort(current, "price"))
-                          }
-                        />
-                        <th className="px-5 py-3 font-medium">Pagada</th>
                         <SortableTableHeader
                           label="Instalación"
                           sortDirection={
@@ -729,27 +758,15 @@ export function PrintersManager() {
                           <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
                             {printer.fiscalSerial}
                           </td>
-                          <td className="max-w-[160px] px-5 py-3.5 text-card-foreground">
-                            <TruncatedText
-                              href={
-                                user
-                                  ? hrefForPrinterModel(
-                                      printer.modelId,
-                                      user.role,
-                                    )
+                          <td className="px-5 py-3.5" data-row-click="ignore">
+                            <PrinterStatusBadge
+                              status={printer.status}
+                              onAssignClick={
+                                canModify && printer.status === "inicializada"
+                                  ? () => openAssignment(printer)
                                   : undefined
                               }
-                              maxClassName="max-w-[140px]"
-                            >
-                              {getModelLabel(printer.modelId)}
-                            </TruncatedText>
-                          </td>
-                          <td className="px-5 py-3.5">
-                            <PrinterStatusBadge status={printer.status} />
-                          </td>
-                          <td className="px-5 py-3.5 text-muted">
-                            {DEVICE_TYPE_LABELS[printer.deviceType] ??
-                              printer.deviceType}
+                            />
                           </td>
                           <td className="max-w-[160px] px-5 py-3.5 text-muted">
                             <TruncatedText
@@ -784,12 +801,6 @@ export function PrintersManager() {
                             </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5 text-muted">
-                            {formatPrinterPrice(printer.finalSalePrice)}
-                          </td>
-                          <td className="px-5 py-3.5 text-muted">
-                            {printer.paid ? "Sí" : "No"}
-                          </td>
-                          <td className="px-5 py-3.5 text-muted">
                             {formatPrinterDate(printer.installationDate)}
                           </td>
                           </TableRowMetaCells>
@@ -804,6 +815,23 @@ export function PrintersManager() {
           </>
         )}
       </div>
+
+      {assignmentPrinter ? (
+        <PrinterAssignmentDialog
+          key={assignmentPrinter.id}
+          printer={assignmentPrinter}
+          saving={assignmentSaving}
+          error={assignmentError}
+          distributorOptions={distributorOptions}
+          catalogLoading={catalogLoading}
+          lockDistributor={lockDistributor}
+          defaultDistributorId={distributorId}
+          onClose={() => {
+            if (!assignmentSaving) closeAssignment();
+          }}
+          onSubmit={(id) => void handleAssignmentSubmit(id)}
+        />
+      ) : null}
 
       <PrinterBatchFormDialog
         open={dialog === "batch"}

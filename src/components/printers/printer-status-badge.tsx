@@ -21,17 +21,37 @@ const STATUS_STYLES: Record<PrinterStatus, string> = {
 
 type PrinterStatusBadgeProps = {
   status: PrinterStatus;
+  onAssignClick?: () => void;
 };
 
-export function PrinterStatusBadge({ status }: PrinterStatusBadgeProps) {
-  return (
-    <span
-      className={cn(
-        "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium",
-        STATUS_STYLES[status] ?? STATUS_STYLES.desincorporada,
-      )}
-    >
-      {PRINTER_STATUS_LABELS[status] ?? status}
-    </span>
+export function PrinterStatusBadge({
+  status,
+  onAssignClick,
+}: PrinterStatusBadgeProps) {
+  const label = PRINTER_STATUS_LABELS[status] ?? status;
+  const className = cn(
+    "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium",
+    STATUS_STYLES[status] ?? STATUS_STYLES.desincorporada,
   );
+
+  if (status === "inicializada" && onAssignClick) {
+    return (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onAssignClick();
+        }}
+        className={cn(
+          className,
+          "cursor-pointer transition hover:ring-2 hover:ring-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
+        )}
+        aria-label={`Asignar impresora (${label})`}
+      >
+        {label}
+      </button>
+    );
+  }
+
+  return <span className={className}>{label}</span>;
 }
