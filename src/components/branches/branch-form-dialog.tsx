@@ -28,7 +28,6 @@ export type BranchFormValues = {
   isDistributor: boolean;
   isServiceCenter: boolean;
   clientDistributorId: string;
-  isHeadquarters: boolean;
 };
 
 type BranchFormDialogProps = {
@@ -58,7 +57,6 @@ const emptyForm: BranchFormValues = {
   isDistributor: false,
   isServiceCenter: false,
   clientDistributorId: "",
-  isHeadquarters: false,
 };
 
 function rolesFromBranch(branch: BranchWithRoles): BranchRoleFormState {
@@ -112,7 +110,6 @@ export function BranchFormDialog({
         isDistributor: roles.isDistributor,
         isServiceCenter: roles.isServiceCenter,
         clientDistributorId: roles.clientDistributorId,
-        isHeadquarters: Boolean(branch.isHeadquarters),
       });
     } else {
       setForm((prev) => ({
@@ -349,24 +346,6 @@ export function BranchFormDialog({
                   {label}
                 </button>
               ))}
-              <button
-                type="button"
-                disabled={saving}
-                aria-pressed={form.isHeadquarters}
-                onClick={() =>
-                  setForm((f) => ({
-                    ...f,
-                    isHeadquarters: !f.isHeadquarters,
-                  }))
-                }
-                className={toggleButtonClass(
-                  form.isHeadquarters,
-                  BRANCH_ROLE_TOGGLE_TONE.isHeadquarters,
-                  { disabled: saving },
-                )}
-              >
-                Casa matriz
-              </button>
             </div>
 
             {form.isClient && (

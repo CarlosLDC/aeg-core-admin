@@ -169,10 +169,6 @@ export function ClientView() {
               label="Correo"
               value={client.branchEmail?.trim() || branch?.email?.trim() || "—"}
             />
-            <DetailField
-              label="Casa matriz"
-              value={branch?.isHeadquarters ? "Sí" : "No"}
-            />
           </DetailSection>
         ),
       },

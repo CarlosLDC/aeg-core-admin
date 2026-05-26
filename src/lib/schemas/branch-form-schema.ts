@@ -21,7 +21,6 @@ export const branchFormSchema = z.object({
   isDistributor: z.boolean(),
   isServiceCenter: z.boolean(),
   clientDistributorId: z.string(),
-  isHeadquarters: z.boolean(),
 });
 
 export type BranchFormSchemaValues = z.infer<typeof branchFormSchema>;

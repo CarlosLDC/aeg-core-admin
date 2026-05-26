@@ -108,7 +108,6 @@ export const BRANCH_ROLE_TOGGLE_TONE = {
   isDistributor: "rose",
   isClient: "sky",
   isServiceCenter: "amber",
-  isHeadquarters: "emerald",
 } as const satisfies Record<string, ToggleTone>;
 
 export const USER_ROLE_TOGGLE_TONE: Record<Role, ToggleTone> = {

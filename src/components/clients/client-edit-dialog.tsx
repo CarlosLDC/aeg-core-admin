@@ -64,7 +64,6 @@ const emptyForm: ClientOnboardingValues = {
   contactPersonName: "",
   phone: "",
   email: "",
-  isHeadquarters: false,
 };
 
 function stepSubtitle(step: WizardStep): string {
@@ -108,7 +107,6 @@ export function ClientEditDialog({
       contactPersonName: branch.contactPersonName ?? "",
       phone: branch.phone ?? "",
       email: branch.email ?? "",
-      isHeadquarters: branch.isHeadquarters ?? false,
     });
   }, [open, company, branch]);
 

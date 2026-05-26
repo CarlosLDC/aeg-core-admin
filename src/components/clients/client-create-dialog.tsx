@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useId, useState } from "react";
 import { Building2, Loader2, MapPin, Phone, X } from "lucide-react";
-import { HeadquartersSelectorFields } from "@/components/branches/headquarters-selector-fields";
 import {
   ClientFormFields,
   type ClientFormSection,
@@ -64,7 +63,6 @@ const emptyForm = (): ClientOnboardingValues => ({
   contactPersonName: "",
   phone: "",
   email: "",
-  isHeadquarters: true,
 });
 
 function stepSubtitle(step: WizardStep): string {
@@ -204,7 +202,6 @@ export function ClientCreateDialog({
       contactPersonName: form.contactPersonName.trim(),
       phone: form.phone.trim(),
       email: form.email.trim(),
-      isHeadquarters: form.isHeadquarters ?? true,
     });
   }
 
@@ -320,18 +317,6 @@ export function ClientCreateDialog({
                     aiFields={aiFields}
                     section={currentFormStep.section}
                   />
-                  {currentFormStep.section === "contact" && (
-                    <HeadquartersSelectorFields
-                      isHeadquarters={form.isHeadquarters ?? true}
-                      disabled={saving}
-                      onChange={(value) =>
-                        setForm((f) => ({
-                          ...f,
-                          isHeadquarters: value,
-                        }))
-                      }
-                    />
-                  )}
                 </div>
               )}
             </form>

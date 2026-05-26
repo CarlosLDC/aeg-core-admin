@@ -5,7 +5,6 @@ export type OnboardingStepSection =
   | "fiscal"
   | "location"
   | "contact"
-  | "headquarters"
   | "roles";
 
 export type DistributorOnboardingForm = {
@@ -15,8 +14,6 @@ export type DistributorOnboardingForm = {
   city: string;
   state: string;
   contactPersonName: string;
-  headquartersMode?: "new" | "existing";
-  headquartersBranchId?: number | null;
 };
 
 export function validateOnboardingSection(
@@ -43,13 +40,6 @@ export function validateOnboardingSection(
   }
 
   if (section === "contact") {
-    return null;
-  }
-
-  if (section === "headquarters") {
-    if (form.headquartersMode === "existing" && !form.headquartersBranchId) {
-      return "Selecciona una sucursal existente para casa matriz.";
-    }
     return null;
   }
 

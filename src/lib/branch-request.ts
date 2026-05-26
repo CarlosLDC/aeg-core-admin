@@ -11,6 +11,5 @@ export function toBranchRequest(values: BranchFormValues): BranchRequest {
     contactPersonName: values.contactPersonName.trim() || undefined,
     phone: values.phone.trim() || undefined,
     email: values.email.trim() || undefined,
-    isHeadquarters: values.isHeadquarters || undefined,
   };
 }

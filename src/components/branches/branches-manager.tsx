@@ -105,7 +105,6 @@ type BranchFormValues = {
   isDistributor: boolean;
   isServiceCenter: boolean;
   clientDistributorId: string;
-  isHeadquarters: boolean;
 };
 
 function toBranchFormValues(values: BranchWizardValues): BranchFormValues {
@@ -121,7 +120,6 @@ function toBranchFormValues(values: BranchWizardValues): BranchFormValues {
     isDistributor: values.isDistributor,
     isServiceCenter: values.isServiceCenter,
     clientDistributorId: values.clientDistributorId,
-    isHeadquarters: values.isHeadquarters,
   };
 }
 
@@ -147,7 +145,6 @@ function branchToWizardValues(
     clientDistributorId: branch.client?.distributorId
       ? String(branch.client.distributorId)
       : "",
-    isHeadquarters: Boolean(branch.isHeadquarters),
   };
 }
 
@@ -405,7 +402,6 @@ export function BranchesManager() {
           contactPersonName: values.contactPersonName,
           phone: values.phone,
           email: values.email,
-          isHeadquarters: values.isHeadquarters,
         };
 
         const result = await createClientOnboarding({

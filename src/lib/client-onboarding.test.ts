@@ -122,7 +122,6 @@ describe("createClientOnboarding", () => {
       contactPersonName: "Ana López",
       phone: "0412",
       email: "a@test.com",
-      isHeadquarters: true,
     });
     expect(createClient).toHaveBeenCalledWith({
       branchId: 20,
@@ -209,51 +208,4 @@ describe("createClientOnboarding", () => {
     expect(result.branchLinkedExisting).toBe(true);
   });
 
-  it("permite registrar sucursal como no matriz", async () => {
-    vi.mocked(resolveCompanyIdForRif).mockResolvedValue({
-      companyId: 77,
-      companyCreated: false,
-    });
-    vi.mocked(createBranch).mockResolvedValue({
-      ...branchRow,
-      id: 501,
-      companyId: 77,
-      city: "Caracas",
-      state: "Distrito Capital",
-    });
-    const result = await createClientOnboarding({
-      values: {
-        rif: "J315694205",
-        businessName: "ACME",
-        contributorType: "ordinario",
-        linkedCompanyId: 77,
-        city: "Caracas",
-        state: "Distrito Capital",
-        address: "",
-        contactPersonName: "Ana López",
-        phone: "",
-        email: "",
-        isHeadquarters: false,
-      },
-      companies: [],
-      roles: distributorClientRoles(5),
-    });
-
-    expect(createBranch).toHaveBeenCalledWith({
-      companyId: 77,
-      city: "Caracas",
-      state: "Distrito Capital",
-      address: undefined,
-      contactPersonName: "Ana López",
-      phone: undefined,
-      email: undefined,
-      isHeadquarters: false,
-    });
-    expect(result.branch.id).toBe(501);
-    expect(result.branchLinkedExisting).toBe(false);
-    expect(createClient).toHaveBeenCalledWith({
-      branchId: 501,
-      distributorId: 5,
-    });
-  });
 });

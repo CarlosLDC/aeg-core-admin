@@ -28,7 +28,6 @@ export type ClientOnboardingValues = {
   contactPersonName: string;
   phone: string;
   email: string;
-  isHeadquarters?: boolean;
 };
 
 export type ClientOnboardingRoleOptions = {
@@ -161,7 +160,6 @@ export async function createClientOnboarding(
           contactPersonName: values.contactPersonName.trim() || undefined,
           phone: values.phone.trim() || undefined,
           email: values.email.trim() || undefined,
-          isHeadquarters: values.isHeadquarters ?? true,
         });
       } catch (branchError) {
         if (companyCreated && companyId != null) {

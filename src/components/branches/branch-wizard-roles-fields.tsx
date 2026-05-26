@@ -2,7 +2,6 @@
 
 import { DistributorSelect } from "@/components/branches/distributor-select";
 import { FieldLabel } from "@/components/ui/field-label";
-import { HeadquartersSelectorFields } from "@/components/branches/headquarters-selector-fields";
 import type { BranchWizardValues } from "@/components/branches/branch-wizard-types";
 import {
   BRANCH_ROLE_TOGGLE_TONE,
@@ -32,16 +31,6 @@ export function BranchWizardRolesFields({
   return (
     <fieldset className="space-y-4">
       <legend className="sr-only">Roles de sucursal</legend>
-      <HeadquartersSelectorFields
-        isHeadquarters={form.isHeadquarters}
-        disabled={saving}
-        onChange={(value) =>
-          setForm((f) => ({
-            ...f,
-            isHeadquarters: value,
-          }))
-        }
-      />
       <p className="text-xs text-muted">
         Cada rol crea un registro vinculado a la sucursal.
       </p>

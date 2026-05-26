@@ -88,12 +88,6 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         formBindings: ["form.email"],
         viewBindings: ["branch.email"],
       },
-      {
-        formLabels: ["Casa matriz"],
-        viewLabels: ["Casa matriz"],
-        formBindings: ["form.isHeadquarters"],
-        viewBindings: ["branch.isHeadquarters"],
-      },
     ],
   },
   {
@@ -101,7 +95,6 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
     formPath: [
       "src/components/clients/client-form-fields.tsx",
       "src/components/clients/client-create-dialog.tsx",
-      "src/components/branches/headquarters-selector-fields.tsx",
     ],
     viewPath: "src/components/clients/client-view.tsx",
     fields: [
@@ -158,12 +151,6 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         viewLabels: ["Correo"],
         formBindings: ["form.email"],
         viewBindings: ["client.branchEmail", "branch?.email"],
-      },
-      {
-        formLabels: ["casa matriz", "Casa matriz"],
-        viewLabels: ["Casa matriz"],
-        formBindings: ["form.isHeadquarters"],
-        viewBindings: ["branch?.isHeadquarters"],
       },
     ],
   },

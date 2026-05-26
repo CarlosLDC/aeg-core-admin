@@ -13,7 +13,6 @@ export type BranchResponse = {
   phone: string;
   email: string;
   contactPersonName?: string;
-  isHeadquarters?: boolean;
   createdAt: string;
 };
 
@@ -25,7 +24,6 @@ export type BranchRequest = {
   phone?: string;
   email?: string;
   contactPersonName?: string;
-  isHeadquarters?: boolean;
 };
 
 export type BranchWithRoles = BranchResponse & {

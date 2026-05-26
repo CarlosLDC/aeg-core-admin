@@ -9,7 +9,6 @@ export type CompanyResponse = {
   createdAt: string;
   rif: string;
   contributorType: ContributorType;
-  headquartersBranchId?: number | null;
 };
 
 export type CompanyRequest = {

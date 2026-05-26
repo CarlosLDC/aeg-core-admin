@@ -15,7 +15,6 @@ export type BranchWizardValues = {
   isDistributor: boolean;
   isServiceCenter: boolean;
   clientDistributorId: string;
-  isHeadquarters: boolean;
 };
 
 export const emptyBranchWizardForm = (): BranchWizardValues => ({
@@ -33,5 +32,4 @@ export const emptyBranchWizardForm = (): BranchWizardValues => ({
   isDistributor: false,
   isServiceCenter: false,
   clientDistributorId: "",
-  isHeadquarters: true,
 });
