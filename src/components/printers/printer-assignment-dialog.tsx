@@ -1,8 +1,9 @@
 "use client";
 
 import { FormEvent, useId, useMemo, useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, Loader2, X } from "lucide-react";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
+import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
   SearchableSelect,
@@ -142,12 +143,16 @@ export function PrinterAssignmentDialog({
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-            <p className="text-sm text-muted">
-              La impresora pasará de{" "}
-              <strong className="text-card-foreground">Inicializada</strong> a{" "}
-              <strong className="text-card-foreground">Asignada</strong> al
-              confirmar.
-            </p>
+            <div className="rounded-lg border border-border bg-foreground/[0.02] p-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted">
+                Cambio de estado
+              </p>
+              <div className="mt-2 flex items-center gap-2">
+                <PrinterStatusBadge status="inicializada" />
+                <ArrowRight className="size-4 text-muted" />
+                <PrinterStatusBadge status="asignada" />
+              </div>
+            </div>
 
             <div className="mt-4">
               <FieldLabel>Distribuidora</FieldLabel>
@@ -171,6 +176,19 @@ export function PrinterAssignmentDialog({
                   {fieldError}
                 </p>
               ) : null}
+            </div>
+
+            <div
+              role="alert"
+              className="mt-4 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200"
+            >
+              <p className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                <span>
+                  Esta es una acción importante: al confirmar, la impresora quedará
+                  en estado <strong>Asignada</strong>.
+                </span>
+              </p>
             </div>
 
             {error ? (
