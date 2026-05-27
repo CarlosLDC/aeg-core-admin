@@ -25,6 +25,7 @@ import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
+  canDisposePrinterRecord,
   canDeletePrinterRecord,
   canModifyPrinterRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
@@ -88,6 +89,7 @@ export function PrinterView() {
   const isAdmin = user?.role === "ADMIN";
   const isDistributor = user?.role === "DISTRIBUTOR";
   const canAssignInitialized = isAdmin && canModify;
+  const canDispose = user ? canDisposePrinterRecord(user.role) : false;
 
   const [printer, setPrinter] = useState<PrinterResponse | null>(null);
   const [models, setModels] = useState<PrinterModelResponse[]>([]);
@@ -115,7 +117,7 @@ export function PrinterView() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const lockDistributor = isDistributor && distributorId != null;
-  const canDisposeAssigned = isDistributor && canModify && distributorId != null;
+  const canDisposeAssigned = isDistributor && canDispose && distributorId != null;
 
   const load = useCallback(async () => {
     if (id == null) {

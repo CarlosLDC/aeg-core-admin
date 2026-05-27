@@ -138,6 +138,18 @@ export async function rejectClientModificationRequest(
   return normalizeDetail(raw);
 }
 
+export async function cancelClientModificationRequest(
+  id: number,
+): Promise<ClientModificationRequestDetailResponse> {
+  const raw = await apiFetch<RawClientModificationRequestDetailResponse>(
+    `${BASE}/${id}/cancel`,
+    {
+      method: "POST",
+    },
+  );
+  return normalizeDetail(raw);
+}
+
 export function getClientModificationRequestsErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 404) return "Solicitud no encontrada.";

@@ -45,6 +45,16 @@ export function canDeletePrinterRecord(role: Role): boolean {
   return can(role, "printers", "delete");
 }
 
+/** Enajenar impresoras asignadas a clientes de la misma distribuidora. */
+export function canDisposePrinterRecord(role: Role): boolean {
+  return role === "DISTRIBUTOR";
+}
+
+/** Retirar una solicitud de revisión propia (clientes/empleados). */
+export function canCancelModificationReview(role: Role): boolean {
+  return role === "DISTRIBUTOR";
+}
+
 export function canUpdateCompanyRecord(role: Role): boolean {
   return can(role, "companies", "update");
 }

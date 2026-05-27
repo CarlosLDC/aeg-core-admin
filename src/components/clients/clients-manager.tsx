@@ -20,6 +20,7 @@ import { useCompanyScope } from "@/context/company-scope-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { useToast } from "@/context/toast-provider";
 import {
+  canCancelModificationReview,
   canUpdateBranchRecord,
   canUpdateCompanyRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
@@ -60,6 +61,10 @@ import {
   requestClientUpdate,
 } from "@/lib/clients-api";
 import { toClientModificationProposedData } from "@/lib/client-form";
+import {
+  cancelClientModificationRequest,
+  getClientModificationRequestsErrorMessage,
+} from "@/lib/client-modification-requests-api";
 import { getCatalogErrorMessage } from "@/lib/api-error-message";
 import {
   getCompaniesErrorMessage,
@@ -146,8 +151,9 @@ export function ClientsManager() {
   const canEditCompany = user ? canUpdateCompanyRecord(user.role) : false;
   const canEditBranch = user ? canUpdateBranchRecord(user.role) : false;
   const canRequestReview = user?.role === "DISTRIBUTOR";
+  const canCancelReview = user ? canCancelModificationReview(user.role) : false;
   const canModify = canEditCompany && canEditBranch;
-  const showActions = canModify || canRequestReview;
+  const showActions = canModify || canRequestReview || canCancelReview;
   const {
     scope,
     loading: scopeLoading,
@@ -465,6 +471,37 @@ export function ClientsManager() {
     }
   }
 
+  async function handleCancelReview(row: ClientListRow) {
+    if (!canCancelReview) return;
+    const requestId = row.client.activeModificationRequestId;
+    if (requestId == null) {
+      toast.error("No hay una solicitud de revisión activa para cancelar.");
+      return;
+    }
+    const label = clientLabel(row);
+    if (
+      !(await confirm({
+        title: "Cancelar revisión",
+        message: `¿Retirar la solicitud pendiente de "${label}"? El cliente volverá a estar activo sin cambios.`,
+        destructive: true,
+        confirmLabel: "Cancelar revisión",
+      }))
+    ) {
+      return;
+    }
+
+    setDeletingId(row.client.id);
+    try {
+      await cancelClientModificationRequest(requestId);
+      await loadClients({ silent: true });
+      toast.success(`Solicitud de revisión para "${label}" cancelada.`);
+    } catch (err) {
+      toast.error(getClientModificationRequestsErrorMessage(err));
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   async function handleDelete(row: ClientListRow, fromDialog = false) {
     if (!canModify && !canRequestReview) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
@@ -651,6 +688,11 @@ export function ClientsManager() {
                                     onDelete={
                                       !isPendingReview(row.client)
                                         ? () => void handleDelete(row)
+                                        : undefined
+                                    }
+                                    onCancelReview={
+                                      canCancelReview && isPendingReview(row.client)
+                                        ? () => void handleCancelReview(row)
                                         : undefined
                                     }
                                     deleting={deletingId === row.client.id}

@@ -173,6 +173,18 @@ export async function rejectEmployeeModificationRequest(
   return normalizeDetail(raw);
 }
 
+export async function cancelEmployeeModificationRequest(
+  id: number,
+): Promise<ModificationRequestDetailResponse> {
+  const raw = await apiFetch<RawModificationRequestDetailResponse>(
+    `${BASE}/${id}/cancel`,
+    {
+      method: "POST",
+    },
+  );
+  return normalizeDetail(raw);
+}
+
 export function getEmployeeModificationRequestsErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 404) return "Solicitud no encontrada.";

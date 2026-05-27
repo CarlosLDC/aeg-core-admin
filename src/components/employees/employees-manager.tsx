@@ -30,6 +30,7 @@ import {
   type TableSortState,
 } from "@/lib/table-sort";
 import {
+  canCancelModificationReview,
   canCreateEmployeeRecord,
   canUpdateEmployeeRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
@@ -44,6 +45,10 @@ import {
 import {
   type EmployeeWithRoles,
 } from "@/lib/employee-roles";
+import {
+  cancelEmployeeModificationRequest,
+  getEmployeeModificationRequestsErrorMessage,
+} from "@/lib/employee-modification-requests-api";
 import {
   createEmployee,
   deleteEmployee,
@@ -85,7 +90,8 @@ export function EmployeesManager() {
   const canCreate = user ? canCreateEmployeeRecord(user.role) : false;
   const canModify = user ? canUpdateEmployeeRecord(user.role) : false;
   const canRequestReview = user?.role === "DISTRIBUTOR";
-  const showActions = canModify || canRequestReview;
+  const canCancelReview = user ? canCancelModificationReview(user.role) : false;
+  const showActions = canModify || canRequestReview || canCancelReview;
 
   const [employees, setEmployees] = useState<EmployeeWithRoles[]>([]);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
@@ -296,6 +302,37 @@ export function EmployeesManager() {
     }
   }
 
+  async function handleCancelReview(employee: EmployeeWithRoles) {
+    if (!canCancelReview) return;
+    const requestId = employee.activeModificationRequestId;
+    if (requestId == null) {
+      toast.error("No hay una solicitud de revisión activa para cancelar.");
+      return;
+    }
+    const label = employeeLabel(employee);
+    if (
+      !(await confirm({
+        title: "Cancelar revisión",
+        message: `¿Retirar la solicitud pendiente de "${label}"? El empleado volverá a estar activo sin cambios.`,
+        destructive: true,
+        confirmLabel: "Cancelar revisión",
+      }))
+    ) {
+      return;
+    }
+
+    setDeletingId(employee.id);
+    try {
+      await cancelEmployeeModificationRequest(requestId);
+      await loadEmployees({ silent: true });
+      toast.success(`Solicitud de revisión para "${label}" cancelada.`);
+    } catch (err) {
+      toast.error(getEmployeeModificationRequestsErrorMessage(err));
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   async function handleDelete(employee: EmployeeWithRoles, fromDialog = false) {
     if (!canModify && !canRequestReview) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
@@ -462,6 +499,11 @@ export function EmployeesManager() {
                                     (canModify || canRequestReview) &&
                                     !isPendingReview(employee)
                                       ? () => handleDelete(employee)
+                                      : undefined
+                                  }
+                                  onCancelReview={
+                                    canCancelReview && isPendingReview(employee)
+                                      ? () => void handleCancelReview(employee)
                                       : undefined
                                   }
                                   deleting={deletingId === employee.id}

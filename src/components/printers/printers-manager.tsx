@@ -29,6 +29,7 @@ import { filterAllOption } from "@/lib/table-filter-options";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import {
+  canDisposePrinterRecord,
   canCreatePrinterRecord,
   canModifyPrinterRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
@@ -116,6 +117,7 @@ export function PrintersManager() {
   const isAdmin = user?.role === "ADMIN";
   const isDistributor = user?.role === "DISTRIBUTOR";
   const canAssignInitialized = isAdmin && canModify;
+  const canDispose = user ? canDisposePrinterRecord(user.role) : false;
   const [authMeDistributorId, setAuthMeDistributorId] = useState<number | null>(
     null,
   );
@@ -124,7 +126,7 @@ export function PrintersManager() {
     : null;
   const lockDistributor = isDistributor && distributorId != null;
   const canDisposeAssigned =
-    isDistributor && canModify && distributorId != null;
+    isDistributor && canDispose && distributorId != null;
 
   const [printers, setPrinters] = useState<PrinterResponse[]>([]);
   const [models, setModels] = useState<PrinterModelResponse[]>([]);

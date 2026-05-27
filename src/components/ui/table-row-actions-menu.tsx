@@ -3,7 +3,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Eye, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Eye, Loader2, MoreHorizontal, Pencil, Trash2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type TableRowActionsMenuProps = {
@@ -13,6 +13,8 @@ export type TableRowActionsMenuProps = {
   editLabel?: string;
   onDelete?: () => void;
   deleteLabel?: string;
+  onCancelReview?: () => void;
+  cancelReviewLabel?: string;
   deleting?: boolean;
 };
 
@@ -28,8 +30,12 @@ type MenuCoords = {
   openUp: boolean;
 };
 
-function countMenuItems(hasEdit: boolean, hasDelete: boolean): number {
-  return 1 + (hasEdit ? 1 : 0) + (hasDelete ? 1 : 0);
+function countMenuItems(
+  hasEdit: boolean,
+  hasDelete: boolean,
+  hasCancelReview: boolean,
+): number {
+  return 1 + (hasEdit ? 1 : 0) + (hasDelete ? 1 : 0) + (hasCancelReview ? 1 : 0);
 }
 
 /** Menu is portaled with fixed positioning — use viewport space, not table/card clips. */
@@ -62,9 +68,11 @@ function computeMenuCoords(
   menu: HTMLElement | null,
   hasEdit: boolean,
   hasDelete: boolean,
+  hasCancelReview: boolean,
 ): MenuCoords {
   const rect = trigger.getBoundingClientRect();
-  const menuHeight = menu?.offsetHeight ?? countMenuItems(hasEdit, hasDelete) * 40 + 8;
+  const menuHeight =
+    menu?.offsetHeight ?? countMenuItems(hasEdit, hasDelete, hasCancelReview) * 40 + 8;
   const openUp = shouldOpenMenuUp(trigger, menuHeight);
 
   return {
@@ -81,6 +89,8 @@ export function TableRowActionsMenu({
   editLabel = "Editar",
   onDelete,
   deleteLabel = "Eliminar",
+  onCancelReview,
+  cancelReviewLabel = "Cancelar revisión",
   deleting = false,
 }: TableRowActionsMenuProps) {
   const [open, setOpen] = useState(false);
@@ -92,11 +102,14 @@ export function TableRowActionsMenu({
 
   const hasEdit = Boolean(onEdit);
   const hasDelete = Boolean(onDelete);
+  const hasCancelReview = Boolean(onCancelReview);
 
   const updateCoords = () => {
     const trigger = triggerRef.current;
     if (!trigger) return;
-    setCoords(computeMenuCoords(trigger, menuRef.current, hasEdit, hasDelete));
+    setCoords(
+      computeMenuCoords(trigger, menuRef.current, hasEdit, hasDelete, hasCancelReview),
+    );
   };
 
   useLayoutEffect(() => {
@@ -117,7 +130,7 @@ export function TableRowActionsMenu({
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", updateCoords);
     };
-  }, [open, hasEdit, hasDelete]);
+  }, [open, hasEdit, hasDelete, hasCancelReview]);
 
   useEffect(() => {
     if (!open) return;
@@ -184,6 +197,28 @@ export function TableRowActionsMenu({
             {editLabel}
           </button>
         ) : null}
+        {onCancelReview ? (
+          <button
+            type="button"
+            role="menuitem"
+            disabled={deleting}
+            className={cn(
+              menuItemClass,
+              "text-amber-800 hover:bg-amber-500/10 disabled:opacity-50 dark:text-amber-200",
+            )}
+            onClick={() => {
+              close();
+              onCancelReview();
+            }}
+          >
+            {deleting ? (
+              <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+            ) : (
+              <XCircle className="size-4 shrink-0" aria-hidden />
+            )}
+            {cancelReviewLabel}
+          </button>
+        ) : null}
         {onDelete ? (
           <button
             type="button"
@@ -227,6 +262,7 @@ export function TableRowActionsMenu({
                 null,
                 hasEdit,
                 hasDelete,
+                hasCancelReview,
               ),
             );
           }

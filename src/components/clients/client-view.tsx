@@ -15,6 +15,7 @@ import { useConfirm } from "@/context/confirm-provider";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
 import {
+  canCancelModificationReview,
   canUpdateBranchRecord,
   canUpdateCompanyRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
@@ -27,6 +28,10 @@ import {
   requestClientUpdate,
 } from "@/lib/clients-api";
 import { toClientModificationProposedData } from "@/lib/client-form";
+import {
+  cancelClientModificationRequest,
+  getClientModificationRequestsErrorMessage,
+} from "@/lib/client-modification-requests-api";
 import {
   fetchCompanyById,
   getCompaniesErrorMessage,
@@ -55,10 +60,12 @@ export function ClientView() {
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [cancellingReview, setCancellingReview] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const canEditCompany = user ? canUpdateCompanyRecord(user.role) : false;
   const canEditBranch = user ? canUpdateBranchRecord(user.role) : false;
   const canRequestReview = user?.role === "DISTRIBUTOR";
+  const canCancelReview = user ? canCancelModificationReview(user.role) : false;
 
   const load = useCallback(async () => {
     if (id == null) {
@@ -230,6 +237,34 @@ export function ClientView() {
     }
   }
 
+  async function handleCancelReview() {
+    if (!client || !canCancelReview) return;
+    const requestId = client.activeModificationRequestId;
+    if (requestId == null) {
+      toast.error("No hay una solicitud de revisión activa para cancelar.");
+      return;
+    }
+    const accepted = await confirm({
+      title: "Cancelar revisión",
+      message:
+        "¿Deseas retirar la solicitud pendiente? El cliente volverá a estar activo sin cambios.",
+      destructive: true,
+      confirmLabel: "Cancelar revisión",
+    });
+    if (!accepted) return;
+
+    setCancellingReview(true);
+    try {
+      await cancelClientModificationRequest(requestId);
+      await load();
+      toast.success("Solicitud de revisión cancelada.");
+    } catch (err) {
+      toast.error(getClientModificationRequestsErrorMessage(err));
+    } finally {
+      setCancellingReview(false);
+    }
+  }
+
   async function handleDelete() {
     if (!client || !canRequestReview) return;
     const accepted = await confirm({
@@ -284,7 +319,12 @@ export function ClientView() {
                   ? () => void handleDelete()
                   : undefined
               }
-              deleting={saving || deleting}
+              onCancelReview={
+                canCancelReview && pendingReview
+                  ? () => void handleCancelReview()
+                  : undefined
+              }
+              deleting={saving || deleting || cancellingReview}
             />
           ) : undefined
         }
@@ -299,7 +339,7 @@ export function ClientView() {
                 <span>
                   {isAdmin
                     ? "En revisión: ediciones bloqueadas."
-                    : "En revisión: espera la decisión del administrador."}
+                    : "En revisión: espera la decisión del administrador o cancela la solicitud."}
                 </span>
                 {isAdmin && (
                   <Link

@@ -15,6 +15,7 @@ import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
+  canCancelModificationReview,
   canDeleteEmployeeRecord,
   canUpdateEmployeeRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
@@ -31,6 +32,10 @@ import {
   loadEmployeeWithRoles,
   type EmployeeWithRoles,
 } from "@/lib/employee-roles";
+import {
+  cancelEmployeeModificationRequest,
+  getEmployeeModificationRequestsErrorMessage,
+} from "@/lib/employee-modification-requests-api";
 import {
   deleteEmployee,
   getEmployeesErrorMessage,
@@ -55,6 +60,7 @@ export function EmployeeView() {
   const canModify = user ? canUpdateEmployeeRecord(user.role) : false;
   const canDelete = user ? canDeleteEmployeeRecord(user.role) : false;
   const canRequestReview = user?.role === "DISTRIBUTOR";
+  const canCancelReview = user ? canCancelModificationReview(user.role) : false;
 
   const [employee, setEmployee] = useState<EmployeeWithRoles | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,6 +68,7 @@ export function EmployeeView() {
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [cancellingReview, setCancellingReview] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const companies = scope?.companies ?? [];
@@ -163,6 +170,34 @@ export function EmployeeView() {
     }
   }
 
+  async function handleCancelReview() {
+    if (!employee || !canCancelReview) return;
+    const requestId = employee.activeModificationRequestId;
+    if (requestId == null) {
+      toast.error("No hay una solicitud de revisión activa para cancelar.");
+      return;
+    }
+    const accepted = await confirm({
+      title: "Cancelar revisión",
+      message:
+        "¿Deseas retirar la solicitud pendiente? El empleado volverá a estar activo sin cambios.",
+      destructive: true,
+      confirmLabel: "Cancelar revisión",
+    });
+    if (!accepted) return;
+
+    setCancellingReview(true);
+    try {
+      await cancelEmployeeModificationRequest(requestId);
+      await load();
+      toast.success("Solicitud de revisión cancelada.");
+    } catch (err) {
+      toast.error(getEmployeeModificationRequestsErrorMessage(err));
+    } finally {
+      setCancellingReview(false);
+    }
+  }
+
   async function handleDelete() {
     if (!employee) {
       toast.error("Empleado no encontrado.");
@@ -246,7 +281,12 @@ export function EmployeeView() {
                   ? () => void handleDelete()
                   : undefined
               }
-              deleting={deleting}
+              onCancelReview={
+                canCancelReview && pendingReview
+                  ? () => void handleCancelReview()
+                  : undefined
+              }
+              deleting={deleting || cancellingReview}
             />
           ) : undefined
         }
@@ -261,7 +301,7 @@ export function EmployeeView() {
                 <span>
                   {isAdmin
                     ? "En revisión: ediciones bloqueadas."
-                    : "En revisión: espera la decisión del administrador."}
+                    : "En revisión: espera la decisión del administrador o cancela la solicitud."}
                 </span>
                 {isAdmin && (
                   <Link
