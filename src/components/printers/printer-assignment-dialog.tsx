@@ -111,10 +111,15 @@ export function PrinterAssignmentDialog({
             <span className="font-mono text-card-foreground">
               {printer.fiscalSerial}
             </span>
-            {selectedDistributorLabel ? (
+            {selfAssign ? (
+              <> a tu cartera</>
+            ) : selectedDistributorLabel ? (
               <>
                 {" "}
-                a <strong className="text-card-foreground">{selectedDistributorLabel}</strong>
+                a{" "}
+                <strong className="text-card-foreground">
+                  {selectedDistributorLabel}
+                </strong>
               </>
             ) : null}
             . Esta acción actualiza el estado de la impresora.
@@ -131,6 +136,8 @@ export function PrinterAssignmentDialog({
   }
 
   const disabled = saving || catalogLoading;
+  const selfAssign =
+    lockDistributor && defaultDistributorId != null && defaultDistributorId > 0;
 
   return (
     <div
@@ -177,29 +184,37 @@ export function PrinterAssignmentDialog({
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-            <div>
-              <FieldLabel>Distribuidora</FieldLabel>
-              <SearchableSelect
-                value={distributorId}
-                onChange={setDistributorOverride}
-                options={distributorSearchOptions}
-                disabled={disabled || lockDistributor}
-                loading={catalogLoading}
-                emptyLabel={
-                  distributorOptions.length === 0
-                    ? "Sin distribuidoras disponibles"
-                    : "Seleccionar distribuidora"
-                }
-                searchPlaceholder="Buscar distribuidora…"
-                modalTitle="Distribuidora"
-                required
-              />
-              {fieldError ? (
-                <p className="mt-1 text-sm text-rose-600 dark:text-rose-400">
-                  {fieldError}
-                </p>
-              ) : null}
-            </div>
+            {selfAssign ? (
+              <p className="text-sm text-muted">
+                La impresora quedará asignada a tu cartera con estatus{" "}
+                <span className="font-medium text-card-foreground">Asignada</span>
+                .
+              </p>
+            ) : (
+              <div>
+                <FieldLabel>Distribuidora</FieldLabel>
+                <SearchableSelect
+                  value={distributorId}
+                  onChange={setDistributorOverride}
+                  options={distributorSearchOptions}
+                  disabled={disabled}
+                  loading={catalogLoading}
+                  emptyLabel={
+                    distributorOptions.length === 0
+                      ? "Sin distribuidoras disponibles"
+                      : "Seleccionar distribuidora"
+                  }
+                  searchPlaceholder="Buscar distribuidora…"
+                  modalTitle="Distribuidora"
+                  required
+                />
+                {fieldError ? (
+                  <p className="mt-1 text-sm text-rose-600 dark:text-rose-400">
+                    {fieldError}
+                  </p>
+                ) : null}
+              </div>
+            )}
 
             {error ? (
               <p
@@ -226,13 +241,13 @@ export function PrinterAssignmentDialog({
                 disabled={
                   disabled ||
                   !distributorId ||
-                  distributorOptions.length === 0
+                  (!selfAssign && distributorOptions.length === 0)
                 }
                 className={cn(
                   "flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
                   (disabled ||
                     !distributorId ||
-                    distributorOptions.length === 0) &&
+                    (!selfAssign && distributorOptions.length === 0)) &&
                     "cursor-not-allowed opacity-70",
                 )}
               >

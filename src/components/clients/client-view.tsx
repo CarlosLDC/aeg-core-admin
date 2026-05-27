@@ -233,9 +233,9 @@ export function ClientView() {
   async function handleDelete() {
     if (!client || !canRequestReview) return;
     const accepted = await confirm({
-      title: "Solicitar eliminación",
+      title: "Eliminar",
       message:
-        "¿Deseas enviar la solicitud de eliminación de este cliente para revisión?",
+        "¿Eliminar este cliente? Un administrador debe aprobar la solicitud.",
       destructive: true,
     });
     if (!accepted) return;

@@ -176,7 +176,9 @@ export function PrinterView() {
       fetchSoftware(),
       scope ? Promise.resolve(scope.companies) : fetchCompanies(),
       scope ? Promise.resolve(scope.branches) : fetchBranches(),
-      fetchDistributors(),
+      isDistributor
+        ? Promise.resolve([] as DistributorResponse[])
+        : fetchDistributors(),
       fetchClients(),
     ])
       .then(([modelRows, softwareRows, companyRows, branchRows, distributorRows, clientRows]) => {
@@ -202,7 +204,7 @@ export function PrinterView() {
     return () => {
       cancelled = true;
     };
-  }, [scope]);
+  }, [scope, isDistributor]);
 
   useEffect(() => {
     if (!printer) return;
@@ -262,13 +264,6 @@ export function PrinterView() {
       ? "Modelo desconocido"
       : "";
 
-  const distributorLabelById = useMemo(
-    () =>
-      new Map(
-        distributorOptions.map((opt) => [opt.id, opt.label]),
-      ),
-    [distributorOptions],
-  );
   const clientLabelById = useMemo(
     () => new Map(clientOptions.map((opt) => [opt.id, opt.label])),
     [clientOptions],
@@ -363,27 +358,33 @@ export function PrinterView() {
       },
       {
         id: "assignment",
-        label: "Asignación",
+        label: isDistributor ? "Cliente" : "Asignación",
         content: (
-          <DetailSection title="Asignación" layout="quad">
-            <DetailField
-              label="Distribuidor"
-              value={
-                printer.distributorId != null
-                  ? distributorLabelById.get(printer.distributorId) ??
-                    "—"
-                  : "Sin asignar"
-              }
-              href={
-                user
-                  ? hrefForDistributor(
-                      printer.distributorId,
-                      distributors,
-                      user.role,
-                    )
-                  : undefined
-              }
-            />
+          <DetailSection
+            title={isDistributor ? "Cliente" : "Asignación"}
+            layout="quad"
+          >
+            {!isDistributor ? (
+              <DetailField
+                label="Distribuidor"
+                value={
+                  printer.distributorId != null
+                    ? distributorOptions.find(
+                        (opt) => opt.id === printer.distributorId,
+                      )?.label ?? "—"
+                    : "Sin asignar"
+                }
+                href={
+                  user
+                    ? hrefForDistributor(
+                        printer.distributorId,
+                        distributors,
+                        user.role,
+                      )
+                    : undefined
+                }
+              />
+            ) : null}
             <DetailField
               label="Cliente"
               value={
@@ -434,9 +435,10 @@ export function PrinterView() {
     model,
     modelLabel,
     user,
+    isDistributor,
     distributors,
+    distributorOptions,
     clients,
-    distributorLabelById,
     clientLabelById,
     softwareLabelById,
     canAssignInitialized,

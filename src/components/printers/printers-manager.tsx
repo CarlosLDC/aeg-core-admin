@@ -239,7 +239,7 @@ export function PrintersManager() {
         model ? printerModelLabel(model) : "",
         printer.status,
         printer.deviceType,
-        printer.distributorId,
+        ...(isDistributor ? [] : [printer.distributorId]),
         printer.clientId,
         printer.macAddress,
         printer.versionFirmware,
@@ -248,7 +248,15 @@ export function PrintersManager() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [visiblePrinters, search, statusFilter, modelFilter, paidFilter, modelById]);
+  }, [
+    visiblePrinters,
+    search,
+    statusFilter,
+    modelFilter,
+    paidFilter,
+    modelById,
+    isDistributor,
+  ]);
 
   const sortedPrinters = useMemo(
     () =>
@@ -333,7 +341,9 @@ export function PrintersManager() {
         await Promise.all([
           scope ? Promise.resolve(scope.companies) : fetchCompanies(),
           scope ? Promise.resolve(scope.branches) : fetchBranches(),
-          fetchDistributors(),
+          isDistributor
+            ? Promise.resolve([] as DistributorResponse[])
+            : fetchDistributors(),
           fetchClients(),
           fetchPrinterModels().catch(() => [] as PrinterModelResponse[]),
         ]);
@@ -366,7 +376,7 @@ export function PrintersManager() {
         setSoftware([]);
       }
     }
-  }, [scope, user?.role]);
+  }, [scope, user?.role, isDistributor]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -703,7 +713,7 @@ export function PrintersManager() {
           <EmptyState
             title={
               isDistributor
-                ? "No hay impresoras asignadas a tu distribuidora."
+                ? "No hay impresoras en tu cartera."
                 : "No hay impresoras registradas."
             }
           />
@@ -752,7 +762,13 @@ export function PrintersManager() {
             ) : (
               <>
                 <TableScroll>
-                  <table className="w-full min-w-[900px] text-left text-sm">
+                  <table
+                    className={
+                      isDistributor
+                        ? "w-full min-w-[720px] text-left text-sm"
+                        : "w-full min-w-[900px] text-left text-sm"
+                    }
+                  >
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <TableRowMetaHeaders
@@ -782,7 +798,9 @@ export function PrintersManager() {
                         >
                         <th className="px-5 py-3 font-medium">Serial</th>
                         <th className="px-5 py-3 font-medium">Estatus</th>
-                        <th className="px-5 py-3 font-medium">Distribuidor</th>
+                        {!isDistributor ? (
+                          <th className="px-5 py-3 font-medium">Distribuidor</th>
+                        ) : null}
                         <th className="px-5 py-3 font-medium">Cliente</th>
                         <SortableTableHeader
                           label="Instalación"
@@ -853,22 +871,24 @@ export function PrintersManager() {
                               }
                             />
                           </td>
-                          <td className="max-w-[160px] px-5 py-3.5 text-muted">
-                            <TruncatedText
-                              href={
-                                user
-                                  ? hrefForDistributor(
-                                      printer.distributorId,
-                                      distributors,
-                                      user.role,
-                                    )
-                                  : undefined
-                              }
-                              maxClassName="max-w-[140px]"
-                            >
-                              {getDistributorLabel(printer.distributorId)}
-                            </TruncatedText>
-                          </td>
+                          {!isDistributor ? (
+                            <td className="max-w-[160px] px-5 py-3.5 text-muted">
+                              <TruncatedText
+                                href={
+                                  user
+                                    ? hrefForDistributor(
+                                        printer.distributorId,
+                                        distributors,
+                                        user.role,
+                                      )
+                                    : undefined
+                                }
+                                maxClassName="max-w-[140px]"
+                              >
+                                {getDistributorLabel(printer.distributorId)}
+                              </TruncatedText>
+                            </td>
+                          ) : null}
                           <td className="max-w-[160px] px-5 py-3.5 text-muted">
                             <TruncatedText
                               href={

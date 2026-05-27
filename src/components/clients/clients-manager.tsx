@@ -476,7 +476,7 @@ export function ClientsManager() {
     }
     const label = clientLabel(row);
     const message = canRequestReview
-      ? `¿Solicitar eliminación para "${label}"? Un administrador debe aprobar la solicitud.`
+      ? `¿Eliminar el cliente "${label}"? Un administrador debe aprobar la solicitud.`
       : `¿Eliminar el cliente "${label}"?`;
     if (!(await confirm({ title: "Confirmar", message, destructive: true }))) {
       return;
@@ -651,11 +651,6 @@ export function ClientsManager() {
                                     onDelete={
                                       !isPendingReview(row.client)
                                         ? () => void handleDelete(row)
-                                        : undefined
-                                    }
-                                    deleteLabel={
-                                      canRequestReview
-                                        ? "Solicitar eliminación"
                                         : undefined
                                     }
                                     deleting={deletingId === row.client.id}

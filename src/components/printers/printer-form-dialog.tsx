@@ -349,22 +349,30 @@ export function PrinterFormDialog({
               <legend className="px-1 text-sm font-semibold text-card-foreground">
                 Asignación
               </legend>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="block">
-                  <FieldLabel>Distribuidor</FieldLabel>
-                  <SearchableSelect
-                    value={form.distributorId}
-                    onChange={(distributorId) =>
-                      setForm((f) => ({ ...f, distributorId }))
-                    }
-                    options={distributorSearchOptions}
-                    disabled={disabled || lockDistributor}
-                    loading={catalogLoading}
-                    emptyLabel="Sin asignar"
-                    searchPlaceholder="Buscar distribuidor…"
-                    modalTitle="Seleccionar distribuidor"
-                  />
-                </div>
+              <div
+                className={
+                  lockDistributor
+                    ? "grid gap-4 sm:grid-cols-1"
+                    : "grid gap-4 sm:grid-cols-2"
+                }
+              >
+                {!lockDistributor ? (
+                  <div className="block">
+                    <FieldLabel>Distribuidor</FieldLabel>
+                    <SearchableSelect
+                      value={form.distributorId}
+                      onChange={(distributorId) =>
+                        setForm((f) => ({ ...f, distributorId }))
+                      }
+                      options={distributorSearchOptions}
+                      disabled={disabled}
+                      loading={catalogLoading}
+                      emptyLabel="Sin asignar"
+                      searchPlaceholder="Buscar distribuidor…"
+                      modalTitle="Seleccionar distribuidor"
+                    />
+                  </div>
+                ) : null}
                 <div className="block">
                   <FieldLabel>Cliente</FieldLabel>
                   <SearchableSelect
