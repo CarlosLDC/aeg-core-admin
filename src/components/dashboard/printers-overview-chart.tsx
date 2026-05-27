@@ -537,6 +537,7 @@ export function PrintersOverviewChart({
             : "0%",
         label: "operativas",
       };
+  const showRecentTotal = isDistributor || recentTotal > 0;
 
   return (
     <div
@@ -554,7 +555,13 @@ export function PrintersOverviewChart({
               : "Estatus de la flota y altas mensuales"}
           </p>
         </div>
-        <dl className="flex flex-wrap gap-4 sm:gap-6 sm:text-right">
+        <dl
+          className={cn(
+            isDistributor
+              ? "grid w-full grid-cols-2 gap-x-6 gap-y-3 sm:w-auto sm:grid-cols-4 sm:text-right"
+              : "flex flex-wrap gap-4 sm:gap-6 sm:text-right",
+          )}
+        >
           <div>
             <dt className="text-xs font-medium uppercase tracking-wide text-muted">
               Total
@@ -592,7 +599,7 @@ export function PrintersOverviewChart({
               </dd>
             </div>
           )}
-          {recentTotal > 0 ? (
+          {showRecentTotal ? (
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted">
                 Altas (6 meses)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Radio, Send, Wifi } from "lucide-react";
 import { useToast } from "@/context/toast-provider";
 import { MqttMonitorPanel } from "@/components/mqtt/mqtt-monitor-panel";
@@ -85,9 +85,20 @@ export function MqttTestPanel() {
 
   const [topic, setTopic] = useState(DEFAULT_TOPIC);
   const [payloadText, setPayloadText] = useState(DEFAULT_PAYLOAD);
+  const payloadTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const inputClass =
     "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
+
+  function syncPayloadTextareaHeight(textarea: HTMLTextAreaElement) {
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }
+
+  useEffect(() => {
+    if (!payloadTextareaRef.current) return;
+    syncPayloadTextareaHeight(payloadTextareaRef.current);
+  }, [payloadText]);
 
   function handlePayloadPaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
     const pasted = e.clipboardData.getData("text/plain");
@@ -293,14 +304,14 @@ export function MqttTestPanel() {
               JSON (objeto o array)
             </span>
             <textarea
+              ref={payloadTextareaRef}
               required
-              rows={5}
               value={payloadText}
               onChange={(e) => setPayloadText(e.target.value)}
               onPaste={handlePayloadPaste}
               className={cn(
                 inputClass,
-                "resize-y py-1.5 font-mono text-xs leading-relaxed",
+                "min-h-[120px] resize-none overflow-hidden py-1.5 font-mono text-xs leading-relaxed",
               )}
               spellCheck={false}
             />
