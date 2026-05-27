@@ -30,7 +30,13 @@ import {
   canModifyPrinterRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
+import {
+  DISTRIBUTOR_SELF_CLIENT_MESSAGE,
+  excludeDistributorSelfClients,
+  isDistributorSelfClient,
+} from "@/lib/distributor-scope";
 import { assertPrinterInScope } from "@/lib/permissions/scope-access";
+import { useDistributorStaffBranchId } from "@/hooks/use-distributor-staff-branch-id";
 import { distributorLabel } from "@/lib/branch-roles";
 import { formatBranchShort } from "@/lib/branches";
 import { fetchBranches } from "@/lib/branches-api";
@@ -118,6 +124,9 @@ export function PrinterView() {
 
   const lockDistributor = isDistributor && distributorId != null;
   const canDisposeAssigned = isDistributor && canDispose && distributorId != null;
+  const distributorStaffBranchId = useDistributorStaffBranchId(
+    isDistributor ? distributorId : null,
+  );
 
   const load = useCallback(async () => {
     if (id == null) {
@@ -247,7 +256,10 @@ export function PrinterView() {
   const clientOptions = useMemo<SelectOption[]>(() => {
     const scopedClients =
       lockDistributor && distributorId != null
-        ? clients.filter((c) => c.distributorId === distributorId)
+        ? excludeDistributorSelfClients(
+            clients.filter((c) => c.distributorId === distributorId),
+            distributorStaffBranchId,
+          )
         : clients;
     return scopedClients
       .map((c) => ({
@@ -255,7 +267,14 @@ export function PrinterView() {
         label: clientLabel(c, branches, companies),
       }))
       .sort((a, b) => a.label.localeCompare(b.label, "es"));
-  }, [clients, branches, companies, lockDistributor, distributorId]);
+  }, [
+    clients,
+    branches,
+    companies,
+    lockDistributor,
+    distributorId,
+    distributorStaffBranchId,
+  ]);
 
   const model = printer
     ? models.find((m) => m.id === printer.modelId)
@@ -488,6 +507,16 @@ export function PrinterView() {
     }
     if (!clientOptions.some((option) => option.id === clientId)) {
       toast.error("Selecciona un cliente válido de tu distribuidora.");
+      return;
+    }
+    if (
+      isDistributorSelfClient(
+        clientId,
+        clients,
+        distributorStaffBranchId,
+      )
+    ) {
+      toast.error(DISTRIBUTOR_SELF_CLIENT_MESSAGE);
       return;
     }
 

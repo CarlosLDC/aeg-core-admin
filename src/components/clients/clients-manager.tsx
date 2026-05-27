@@ -37,6 +37,11 @@ import {
 } from "@/lib/table-sort";
 import { useDistributorId } from "@/hooks/use-distributor-id";
 import {
+  DISTRIBUTOR_SELF_CLIENT_MESSAGE,
+  excludeDistributorSelfClients,
+  resolveDistributorStaffBranchId,
+} from "@/lib/distributor-scope";
+import {
   TableRowMetaCells,
   TableRowMetaHeaders,
 } from "@/components/ui/table-meta-column-slots";
@@ -75,7 +80,10 @@ import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
 import { branchPath, clientPath } from "@/lib/resource-routes";
 import type { BranchWithRoles } from "@/types/branch";
-import type { ClientResponse } from "@/types/branch-role";
+import type {
+  ClientResponse,
+  DistributorResponse,
+} from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
@@ -110,10 +118,13 @@ function buildClientListRows(
   distributorId: number,
   branches: BranchWithRoles[],
   companies: CompanyResponse[],
+  staffBranchId: number | null,
 ): ClientListRow[] {
   const branchById = new Map(branches.map((b) => [b.id, b]));
-  return clients
-    .filter((client) => client.distributorId === distributorId)
+  return excludeDistributorSelfClients(
+    clients.filter((client) => client.distributorId === distributorId),
+    staffBranchId,
+  )
     .map((client) => {
       const branch = branchById.get(client.branchId);
       const companyFromScope =
@@ -161,6 +172,7 @@ export function ClientsManager() {
     refresh: refreshScope,
   } = useCompanyScope();
   const distributorId = useDistributorId();
+  const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
   const [clients, setClients] = useState<ClientResponse[]>([]);
   const [branches, setBranches] = useState<BranchWithRoles[]>([]);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
@@ -226,6 +238,7 @@ export function ClientsManager() {
         }
       }
       setClients(clientRows);
+      setDistributors(distributorRows);
       setBranches(merged);
       setCompanies(
         [...scope.companies].sort((a, b) =>
@@ -248,10 +261,27 @@ export function ClientsManager() {
     if (scopeError) setListError((prev) => prev ?? scopeError);
   }, [scopeError]);
 
+  const distributorStaffBranchId = useMemo(
+    () => resolveDistributorStaffBranchId(distributors, distributorId),
+    [distributors, distributorId],
+  );
+
   const clientListRows = useMemo(() => {
     if (distributorId == null) return [];
-    return buildClientListRows(clients, distributorId, branches, companies);
-  }, [clients, branches, companies, distributorId]);
+    return buildClientListRows(
+      clients,
+      distributorId,
+      branches,
+      companies,
+      distributorStaffBranchId,
+    );
+  }, [
+    clients,
+    branches,
+    companies,
+    distributorId,
+    distributorStaffBranchId,
+  ]);
 
   const stateFilterOptions = useMemo(
     () => [
@@ -305,6 +335,13 @@ export function ClientsManager() {
     setSaving(true);
     setFormError(null);
     const branchIdForRetry = options?.resumeBranchId ?? resumeBranchId;
+    if (
+      branchIdForRetry != null &&
+      branchIdForRetry === distributorStaffBranchId
+    ) {
+      setFormError(DISTRIBUTOR_SELF_CLIENT_MESSAGE);
+      return;
+    }
     try {
       const result = await createClientOnboarding({
         values,

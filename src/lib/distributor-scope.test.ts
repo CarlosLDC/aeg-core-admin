@@ -1,10 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   distributorStaffBranchIds,
+  excludeDistributorSelfClients,
   filterEmployeesForDistributorStaff,
   filterPrinterModelsForDistributor,
+  isDistributorSelfClient,
   loadDistributorStaffBranches,
+  resolveDistributorStaffBranchId,
 } from "./distributor-scope";
+import { mockClient } from "@/lib/test-fixtures";
 import { mockEmployee } from "@/lib/test-fixtures";
 import type { EmployeeResponse } from "@/types/employee";
 import type { PrinterResponse } from "@/types/printer";
@@ -48,6 +52,43 @@ describe("distributor-scope", () => {
       5,
     );
     expect([...ids]).toEqual([100]);
+  });
+
+  it("excludes distributor staff branch from client options", () => {
+    const rows = excludeDistributorSelfClients(
+      [
+        mockClient({ id: 1, branchId: 100, distributorId: 5 }),
+        mockClient({ id: 2, branchId: 200, distributorId: 5 }),
+      ],
+      100,
+    );
+    expect(rows.map((row) => row.id)).toEqual([2]);
+  });
+
+  it("detects distributor self client by branch", () => {
+    expect(
+      isDistributorSelfClient(
+        1,
+        [mockClient({ id: 1, branchId: 100, distributorId: 5 })],
+        100,
+      ),
+    ).toBe(true);
+    expect(
+      isDistributorSelfClient(
+        2,
+        [mockClient({ id: 2, branchId: 200, distributorId: 5 })],
+        100,
+      ),
+    ).toBe(false);
+  });
+
+  it("resolves staff branch id from distributor catalog", () => {
+    expect(
+      resolveDistributorStaffBranchId(
+        [{ id: 5, branchId: 100, createdAt: "" }],
+        5,
+      ),
+    ).toBe(100);
   });
 
   it("filters employees to distributor staff branches only", () => {

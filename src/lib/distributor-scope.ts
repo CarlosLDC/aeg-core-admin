@@ -1,11 +1,43 @@
 import { fetchBranchById } from "@/lib/branches-api";
 import { fetchDistributorById } from "@/lib/distributors-api";
 import type { BranchResponse } from "@/types/branch";
-import type { DistributorResponse } from "@/types/branch-role";
+import type {
+  ClientResponse,
+  DistributorResponse,
+} from "@/types/branch-role";
 import type { EmployeeResponse } from "@/types/employee";
 import type { PrinterModelResponse } from "@/types/printer-model";
 import type { PrinterResponse } from "@/types/printer";
 import type { Role } from "@/types/user";
+
+export const DISTRIBUTOR_SELF_CLIENT_MESSAGE =
+  "No puedes registrar ni usar tu propia distribuidora como cliente.";
+
+export function resolveDistributorStaffBranchId(
+  distributors: DistributorResponse[],
+  distributorId: number | null,
+): number | null {
+  if (distributorId == null) return null;
+  return distributors.find((d) => d.id === distributorId)?.branchId ?? null;
+}
+
+export function excludeDistributorSelfClients<T extends { branchId: number }>(
+  clients: T[],
+  staffBranchId: number | null,
+): T[] {
+  if (staffBranchId == null) return clients;
+  return clients.filter((client) => client.branchId !== staffBranchId);
+}
+
+export function isDistributorSelfClient(
+  clientId: number,
+  clients: ClientResponse[],
+  staffBranchId: number | null,
+): boolean {
+  if (staffBranchId == null) return false;
+  const client = clients.find((row) => row.id === clientId);
+  return client != null && client.branchId === staffBranchId;
+}
 
 /** Sucursal de la distribuidora (personal interno), no sucursales de clientes. */
 export async function loadDistributorStaffBranches(

@@ -75,7 +75,13 @@ import {
   updatePrinter,
 } from "@/lib/printers-api";
 import { fetchAuthMe } from "@/lib/auth-me-api";
-import { filterPrinterModelsForDistributor } from "@/lib/distributor-scope";
+import {
+  DISTRIBUTOR_SELF_CLIENT_MESSAGE,
+  excludeDistributorSelfClients,
+  filterPrinterModelsForDistributor,
+  isDistributorSelfClient,
+} from "@/lib/distributor-scope";
+import { useDistributorStaffBranchId } from "@/hooks/use-distributor-staff-branch-id";
 import { fetchSoftware } from "@/lib/software-api";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
@@ -127,6 +133,9 @@ export function PrintersManager() {
   const lockDistributor = isDistributor && distributorId != null;
   const canDisposeAssigned =
     isDistributor && canDispose && distributorId != null;
+  const distributorStaffBranchId = useDistributorStaffBranchId(
+    isDistributor ? distributorId : null,
+  );
 
   const [printers, setPrinters] = useState<PrinterResponse[]>([]);
   const [models, setModels] = useState<PrinterModelResponse[]>([]);
@@ -286,8 +295,14 @@ export function PrintersManager() {
 
   const scopedClients = useMemo(() => {
     if (!isDistributor || distributorId == null) return clients;
-    return clients.filter((c) => c.distributorId === distributorId);
-  }, [clients, isDistributor, distributorId]);
+    const forDistributor = clients.filter(
+      (c) => c.distributorId === distributorId,
+    );
+    return excludeDistributorSelfClients(
+      forDistributor,
+      distributorStaffBranchId,
+    );
+  }, [clients, isDistributor, distributorId, distributorStaffBranchId]);
 
   const distributorOptions = useMemo<SelectOption[]>(() => {
     const rows =
@@ -507,6 +522,16 @@ export function PrintersManager() {
     }
     if (!clientOptions.some((option) => option.id === clientId)) {
       toast.error("Selecciona un cliente válido de tu distribuidora.");
+      return;
+    }
+    if (
+      isDistributorSelfClient(
+        clientId,
+        clients,
+        distributorStaffBranchId,
+      )
+    ) {
+      toast.error(DISTRIBUTOR_SELF_CLIENT_MESSAGE);
       return;
     }
 
