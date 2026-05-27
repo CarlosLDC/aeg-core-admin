@@ -26,6 +26,7 @@ import {
 } from "@/lib/api-permissions";
 import { assertBranchInScope } from "@/lib/permissions/scope-access";
 import {
+  clientDistributorSummary,
   deleteBranchRoles,
   fetchBranchWithRolesById,
   getBranchRolesErrorMessage,
@@ -40,6 +41,7 @@ import {
 import { fetchDistributors } from "@/lib/distributors-api";
 import { formatDate } from "@/lib/datetime-form";
 import { branchPath, companyPath } from "@/lib/resource-routes";
+import { hrefForBranchClientDistributor } from "@/lib/table-foreign-hrefs";
 import { toBranchRequest } from "@/lib/branch-request";
 import { invalidateCatalogRoles } from "@/lib/catalog-roles-cache";
 import type { BranchWithRoles } from "@/types/branch";
@@ -289,11 +291,31 @@ export function BranchView() {
               label="Roles"
               value={<BranchTypeBadges branch={branch} />}
             />
+            {branch.client ? (
+              <DetailField
+                label="Distribuidor del cliente"
+                value={clientDistributorSummary(
+                  branch,
+                  distributors,
+                  branches,
+                  companies,
+                )}
+                href={
+                  user
+                    ? hrefForBranchClientDistributor(
+                        branch,
+                        distributors,
+                        user.role,
+                      )
+                    : undefined
+                }
+              />
+            ) : null}
           </DetailSection>
         ),
       },
     ];
-  }, [branch, companyLabel]);
+  }, [branch, branches, companies, companyLabel, distributors, user]);
 
   return (
     <>

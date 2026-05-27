@@ -33,6 +33,7 @@ import {
 import { canBrowseOtherCompanies } from "@/lib/company-scope";
 import {
   deleteBranchRoles,
+  clientDistributorSummary,
   distributorLabel,
   mergeBranchesWithRoles,
   syncBranchRoles,
@@ -133,20 +134,6 @@ function branchToWizardValues(
       ? String(branch.client.distributorId)
       : "",
   };
-}
-
-function clientDistributorSummary(
-  branch: BranchWithRoles,
-  distributors: DistributorResponse[],
-  branches: BranchWithRoles[],
-  companies: CompanyResponse[],
-): string {
-  if (!branch.client?.distributorId) return "—";
-  const distributor = distributors.find(
-    (d) => d.id === branch.client?.distributorId,
-  );
-  if (!distributor) return "Distribuidor desconocido";
-  return distributorLabel(distributor, branches, companies);
 }
 
 type CompanyBranchesTableProps = {

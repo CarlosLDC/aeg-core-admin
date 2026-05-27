@@ -88,6 +88,10 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         formBindings: ["form.email"],
         viewBindings: ["branch.email"],
       },
+      {
+        formLabels: ["Distribuidor del cliente"],
+        viewLabels: ["Distribuidor del cliente"],
+      },
     ],
   },
   {

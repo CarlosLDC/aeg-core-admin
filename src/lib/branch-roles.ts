@@ -66,6 +66,20 @@ export function distributorLabel(
   return formatBranchShort(branch, companies);
 }
 
+export function clientDistributorSummary(
+  branch: BranchWithRoles,
+  distributors: DistributorResponse[],
+  branches: BranchResponse[],
+  companies: CompanyResponse[],
+): string {
+  if (!branch.client?.distributorId) return "—";
+  const distributor = distributors.find(
+    (d) => d.id === branch.client?.distributorId,
+  );
+  if (!distributor) return "Distribuidor desconocido";
+  return distributorLabel(distributor, branches, companies);
+}
+
 export async function syncBranchRoles(
   branchId: number,
   previous: BranchWithRoles | null,
