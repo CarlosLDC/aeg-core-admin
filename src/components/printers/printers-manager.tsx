@@ -63,6 +63,10 @@ import {
 } from "@/lib/printer-form";
 import { fetchPrinterModels } from "@/lib/printer-models-api";
 import {
+  fetchMissingPrinterModels,
+  missingPrinterModelIds,
+} from "@/lib/printer-models-catalog";
+import {
   createPrinter,
   deletePrinter,
   fetchPrinters,
@@ -375,6 +379,19 @@ export function PrintersManager() {
       void loadCatalog();
     });
   }, [loadCatalog]);
+
+  useEffect(() => {
+    if (visiblePrinters.length === 0) return;
+    if (missingPrinterModelIds(visiblePrinters, models).length === 0) return;
+
+    let cancelled = false;
+    void fetchMissingPrinterModels(visiblePrinters, models).then((next) => {
+      if (!cancelled && next.length > models.length) setModels(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [visiblePrinters, models]);
 
   function getDistributorLabel(distributorId: number | null): string {
     if (distributorId == null) return "—";

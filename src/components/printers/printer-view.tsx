@@ -48,6 +48,10 @@ import {
 } from "@/lib/printer-form";
 import { fetchPrinterModels } from "@/lib/printer-models-api";
 import {
+  fetchMissingPrinterModels,
+  missingPrinterModelIds,
+} from "@/lib/printer-models-catalog";
+import {
   deletePrinter,
   fetchPrinterById,
   getPrintersErrorMessage,
@@ -168,7 +172,7 @@ export function PrinterView() {
     setModelsLoading(true);
     setCatalogLoading(true);
     Promise.all([
-      fetchPrinterModels(),
+      fetchPrinterModels().catch(() => [] as PrinterModelResponse[]),
       fetchSoftware(),
       scope ? Promise.resolve(scope.companies) : fetchCompanies(),
       scope ? Promise.resolve(scope.branches) : fetchBranches(),
@@ -199,6 +203,19 @@ export function PrinterView() {
       cancelled = true;
     };
   }, [scope]);
+
+  useEffect(() => {
+    if (!printer) return;
+    if (missingPrinterModelIds([printer], models).length === 0) return;
+
+    let cancelled = false;
+    void fetchMissingPrinterModels([printer], models).then((next) => {
+      if (!cancelled && next.length > models.length) setModels(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [printer, models]);
 
   const modelOptions = useMemo<SelectOption[]>(
     () =>
