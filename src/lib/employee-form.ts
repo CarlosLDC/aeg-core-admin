@@ -1,4 +1,6 @@
+import { resolveEmployeeCompanyId } from "@/lib/employee-company";
 import type { EmployeeWithRoles } from "@/lib/employee-roles";
+import type { BranchResponse } from "@/types/branch";
 import type { EmployeeRequest } from "@/types/employee";
 import type { EmployeeModificationProposedData } from "@/types/employee-modification-request";
 
@@ -10,13 +12,17 @@ export type EmployeeFormValues = {
   companyId: string;
 };
 
-export function employeeToFormValues(employee: EmployeeWithRoles): EmployeeFormValues {
+export function employeeToFormValues(
+  employee: EmployeeWithRoles,
+  branches: BranchResponse[] = [],
+): EmployeeFormValues {
+  const companyId = resolveEmployeeCompanyId(employee, branches);
   return {
     nationalId: employee.nationalId,
     name: employee.name,
     phone: employee.phone,
     email: employee.email,
-    companyId: String(employee.companyId),
+    companyId: companyId != null ? String(companyId) : "",
   };
 }
 

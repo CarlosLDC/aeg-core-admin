@@ -301,6 +301,7 @@ export function EmployeeView() {
         <EmployeeFormDialog
           mode="edit"
           employee={employee}
+          branches={scope?.branches ?? []}
           companies={companies}
           companiesLoading={false}
           open={editOpen}

@@ -513,6 +513,7 @@ export function EmployeesManager() {
         <EmployeeFormDialog
           mode={dialog === "create" ? "create" : "edit"}
           employee={selected ?? undefined}
+          branches={scope?.branches ?? []}
           companies={companies}
           companiesLoading={scopeLoading}
           open={dialog !== null}

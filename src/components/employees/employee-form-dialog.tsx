@@ -11,12 +11,14 @@ import {
   type EmployeeFormValues,
 } from "@/lib/employee-form";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
+import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import { cn } from "@/lib/utils";
 
 type EmployeeFormDialogProps = {
   mode: "create" | "edit";
   employee?: EmployeeWithRoles;
+  branches?: BranchResponse[];
   companies: CompanyResponse[];
   companiesLoading: boolean;
   open: boolean;
@@ -37,6 +39,7 @@ const emptyForm: EmployeeFormValues = {
 export function EmployeeFormDialog({
   mode,
   employee,
+  branches = [],
   companies,
   companiesLoading,
   open,
@@ -50,11 +53,11 @@ export function EmployeeFormDialog({
   useEffect(() => {
     if (!open) return;
     if (mode === "edit" && employee) {
-      setForm(employeeToFormValues(employee));
+      setForm(employeeToFormValues(employee, branches));
     } else {
       setForm(emptyForm);
     }
-  }, [open, mode, employee]);
+  }, [open, mode, employee, branches]);
 
   if (!open) return null;
 
