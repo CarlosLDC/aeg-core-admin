@@ -38,7 +38,10 @@ export async function deletePrinter(id: number): Promise<void> {
 export function getPrintersErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 403) {
-      return "No tienes permiso para ver o modificar esta impresora.";
+      return (
+        error.message ||
+        "No tienes permiso para ver o modificar esta impresora."
+      );
     }
     if (error.status === 404) return "Impresora no encontrada.";
     if (error.status === 400) {
