@@ -68,11 +68,22 @@ export type MonthlyCount = {
   count: number;
 };
 
+export type MonthlyStatusMix = {
+  key: string;
+  label: string;
+  asignada: number;
+  enajenada: number;
+};
+
+const DISTRIBUTOR_PRINTER_STATUSES = ["asignada", "enajenada"] as const;
+
 export type DashboardSnapshot = {
   stats: DashboardStat[];
   printers: PrinterResponse[];
   printerStatusCounts: PrinterStatusCount[];
   monthlyPrinterRegistrations: MonthlyCount[];
+  /** Solo distribuidor: altas mensuales desglosadas por estatus de cartera. */
+  monthlyStatusMix?: MonthlyStatusMix[];
   recentPrinters: PrinterResponse[];
   activity: DashboardActivity[];
   loadWarnings: string[];
@@ -88,28 +99,62 @@ async function settled<T>(
   }
 }
 
+const ALL_PRINTER_STATUSES = [
+  "de_demostracion",
+  "de_fabrica",
+  "inicializada",
+  "asignada",
+  "enajenada",
+  "desincorporada",
+  "laboratorio",
+] as const;
+
 export function countPrintersByStatus(
   printers: PrinterResponse[],
+  role: Role = "ADMIN",
 ): PrinterStatusCount[] {
   const counts = new Map<PrinterStatus, number>();
   for (const printer of printers) {
     counts.set(printer.status, (counts.get(printer.status) ?? 0) + 1);
   }
-  return (
-    [
-      "de_demostracion",
-      "de_fabrica",
-      "inicializada",
-      "asignada",
-      "enajenada",
-      "desincorporada",
-      "laboratorio",
-    ] as const
-  ).map((status) => ({
+  const statuses =
+    role === "DISTRIBUTOR" ? DISTRIBUTOR_PRINTER_STATUSES : ALL_PRINTER_STATUSES;
+  return statuses.map((status) => ({
     status,
     label: PRINTER_STATUS_LABELS[status],
     count: counts.get(status) ?? 0,
   }));
+}
+
+export function printersStatusMixByMonth(
+  printers: PrinterResponse[],
+  months = 6,
+): MonthlyStatusMix[] {
+  const now = new Date();
+  const buckets: MonthlyStatusMix[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const label = d.toLocaleDateString("es", { month: "short" });
+    buckets.push({ key, label, asignada: 0, enajenada: 0 });
+  }
+  const bucketMap = new Map(buckets.map((b) => [b.key, b]));
+  for (const printer of printers) {
+    if (
+      printer.status !== "asignada" &&
+      printer.status !== "enajenada"
+    ) {
+      continue;
+    }
+    const created = new Date(printer.createdAt);
+    if (Number.isNaN(created.getTime())) continue;
+    const key = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, "0")}`;
+    const bucket = bucketMap.get(key);
+    if (!bucket) continue;
+    if (printer.status === "asignada") bucket.asignada += 1;
+    else bucket.enajenada += 1;
+  }
+  return buckets;
 }
 
 export function printersByMonth(
@@ -231,6 +276,12 @@ function buildStats(
     activeContracts: number | null;
   },
 ): DashboardStat[] {
+  const assignedPrinters = counts.printers.filter(
+    (p) => p.status === "asignada",
+  ).length;
+  const disposedPrinters = counts.printers.filter(
+    (p) => p.status === "enajenada",
+  ).length;
   const activePrinters = counts.printers.filter(
     (p) =>
       p.status === "asignada" ||
@@ -282,7 +333,7 @@ function buildStats(
         {
           title: "Impresoras",
           value: String(counts.printers.length),
-          hint: `${activePrinters} operativas`,
+          hint: `${assignedPrinters} asignadas · ${disposedPrinters} enajenadas`,
         },
         {
           title: "Clientes",
@@ -473,7 +524,9 @@ export async function loadDashboardSnapshot(options: {
     activeContracts,
   });
 
-  const printerStatusCounts = countPrintersByStatus(printers);
+  const printerStatusCounts = countPrintersByStatus(printers, role);
+  const monthlyStatusMix =
+    role === "DISTRIBUTOR" ? printersStatusMixByMonth(printers) : undefined;
   const monthlyPrinterRegistrations = printersByMonth(printers);
   const recentPrinters = [...printers]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt, "es"))
@@ -486,6 +539,7 @@ export async function loadDashboardSnapshot(options: {
     printers,
     printerStatusCounts,
     monthlyPrinterRegistrations,
+    monthlyStatusMix,
     recentPrinters,
     activity,
     loadWarnings,

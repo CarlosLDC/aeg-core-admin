@@ -167,8 +167,10 @@ export function DashboardManager() {
             {canSeePrinters ? (
               <PrintersOverviewChart
                 className="min-w-0 xl:col-span-2"
+                variant={user.role === "DISTRIBUTOR" ? "distributor" : "default"}
                 statusCounts={snapshot.printerStatusCounts}
                 monthlyRegistrations={snapshot.monthlyPrinterRegistrations}
+                monthlyStatusMix={snapshot.monthlyStatusMix}
                 totalPrinters={snapshot.printers.length}
               />
             ) : (
@@ -213,7 +215,10 @@ export function DashboardManager() {
               <h2 id="dashboard-recent-printers" className="sr-only">
                 Impresoras recientes
               </h2>
-              <DashboardRecentPrinters printers={snapshot.recentPrinters} />
+              <DashboardRecentPrinters
+                printers={snapshot.recentPrinters}
+                variant={user.role === "DISTRIBUTOR" ? "distributor" : "default"}
+              />
             </section>
           )}
         </>

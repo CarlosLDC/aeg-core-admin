@@ -4,8 +4,10 @@ import type { CompanyResponse } from "@/types/company";
 import {
   branchesStatHint,
   companiesStatHint,
+  countPrintersByStatus,
   uniquePlaces,
 } from "./dashboard-data";
+import type { PrinterResponse } from "@/types/printer";
 
 const companies: CompanyResponse[] = [
   {
@@ -70,5 +72,25 @@ describe("branchesStatHint", () => {
 describe("uniquePlaces", () => {
   it("counts distinct states and cities", () => {
     expect(uniquePlaces(branches)).toBe("2 estados · 2 ciudades");
+  });
+});
+
+describe("countPrintersByStatus", () => {
+  const printers = [
+    { status: "inicializada" },
+    { status: "asignada" },
+    { status: "enajenada" },
+  ] as PrinterResponse[];
+
+  it("includes all statuses for admin", () => {
+    expect(countPrintersByStatus(printers, "ADMIN")).toHaveLength(7);
+  });
+
+  it("only includes asignada and enajenada for distributor", () => {
+    const rows = countPrintersByStatus(printers, "DISTRIBUTOR");
+    expect(rows).toHaveLength(2);
+    expect(rows.map((r) => r.status)).toEqual(["asignada", "enajenada"]);
+    expect(rows.find((r) => r.status === "asignada")?.count).toBe(1);
+    expect(rows.find((r) => r.status === "enajenada")?.count).toBe(1);
   });
 });

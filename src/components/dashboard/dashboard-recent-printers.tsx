@@ -11,12 +11,15 @@ import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 type DashboardRecentPrintersProps = {
   printers: PrinterResponse[];
   showLink?: boolean;
+  variant?: "default" | "distributor";
 };
 
 export function DashboardRecentPrinters({
   printers,
   showLink = true,
+  variant = "default",
 }: DashboardRecentPrintersProps) {
+  const isDistributor = variant === "distributor";
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       <div className="flex flex-col gap-2 border-b border-border bg-foreground/[0.02] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
@@ -24,7 +27,11 @@ export function DashboardRecentPrinters({
           <h2 className="font-semibold text-card-foreground">
             Impresoras recientes
           </h2>
-          <p className="text-sm text-muted">Últimos equipos registrados</p>
+          <p className="text-sm text-muted">
+            {isDistributor
+              ? "Asignadas y enajenadas en tu cartera"
+              : "Últimos equipos registrados"}
+          </p>
         </div>
         {showLink && (
           <Link
@@ -38,7 +45,11 @@ export function DashboardRecentPrinters({
       {printers.length === 0 ? (
         <EmptyState
           title="Sin impresoras recientes"
-          description="Registra equipos fiscales para verlos en este listado."
+          description={
+            isDistributor
+              ? "Las impresoras asignadas a tu distribuidora aparecerán aquí."
+              : "Registra equipos fiscales para verlos en este listado."
+          }
           action={
             showLink ? (
               <Link

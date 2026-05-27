@@ -25,7 +25,7 @@ function greetingForHour(): string {
 
 const ROLE_CONTEXT: Record<Role, string> = {
   ADMIN: "Vista global del catálogo operativo y la flota fiscal.",
-  DISTRIBUTOR: "Tu red de impresoras y clientes en un vistazo.",
+  DISTRIBUTOR: "Tu cartera de impresoras asignadas y enajenadas a clientes.",
   TECHNICIAN: "Equipos en campo, precintos y personal de tu ámbito.",
   SERVICE_CENTER: "Empresas, sucursales y operaciones de tu centro.",
 };
@@ -41,15 +41,25 @@ export function DashboardWelcome({
     .filter((item) => !item.disabled && item.href !== "/")
     .slice(0, 4);
 
+  const assignedCount = snapshot.printers.filter(
+    (p) => p.status === "asignada",
+  ).length;
+  const disposedCount = snapshot.printers.filter(
+    (p) => p.status === "enajenada",
+  ).length;
   const activePrinters = snapshot.printers.filter((p) =>
     ["asignada", "inicializada", "de_demostracion"].includes(p.status),
   ).length;
   const printerLine =
-    snapshot.printers.length > 0
-      ? `${snapshot.printers.length} impresora${snapshot.printers.length === 1 ? "" : "s"} en tu ámbito · ${activePrinters} operativa${activePrinters === 1 ? "" : "s"}.`
-      : role === "SERVICE_CENTER"
-        ? "Tu rol no gestiona impresoras directamente."
-        : "Aún no hay impresoras en tu ámbito.";
+    role === "DISTRIBUTOR"
+      ? snapshot.printers.length > 0
+        ? `${snapshot.printers.length} en tu cartera · ${assignedCount} asignada${assignedCount === 1 ? "" : "s"} · ${disposedCount} enajenada${disposedCount === 1 ? "" : "s"} a clientes.`
+        : "Aún no hay impresoras en tu cartera."
+      : snapshot.printers.length > 0
+        ? `${snapshot.printers.length} impresora${snapshot.printers.length === 1 ? "" : "s"} en tu ámbito · ${activePrinters} operativa${activePrinters === 1 ? "" : "s"}.`
+        : role === "SERVICE_CENTER"
+          ? "Tu rol no gestiona impresoras directamente."
+          : "Aún no hay impresoras en tu ámbito.";
 
   return (
     <section className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-card via-card to-accent/5 p-5 shadow-sm sm:p-6">

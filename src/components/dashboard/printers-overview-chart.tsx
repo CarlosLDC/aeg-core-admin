@@ -3,14 +3,17 @@
 import { useMemo, useState } from "react";
 import type {
   MonthlyCount,
+  MonthlyStatusMix,
   PrinterStatusCount,
 } from "@/lib/dashboard-data";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 
 type PrintersOverviewChartProps = {
+  variant?: "default" | "distributor";
   statusCounts: PrinterStatusCount[];
   monthlyRegistrations: MonthlyCount[];
+  monthlyStatusMix?: MonthlyStatusMix[];
   totalPrinters: number;
   className?: string;
 };
@@ -45,18 +48,18 @@ function monthlyTrend(months: MonthlyCount[]): {
 function StatusDonut({
   statusCounts,
   total,
-  activeCount,
+  centerValue,
+  centerLabel,
 }: {
   statusCounts: PrinterStatusCount[];
   total: number;
-  activeCount: number;
+  centerValue: string;
+  centerLabel: string;
 }) {
   const size = 152;
   const stroke = 16;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
-  const activePct = total > 0 ? Math.round((activeCount / total) * 100) : 0;
-
   let offset = 0;
   const segments = statusCounts
     .filter((s) => s.count > 0)
@@ -93,7 +96,7 @@ function StatusDonut({
           viewBox={`0 0 ${size} ${size}`}
           className="-rotate-90"
           role="img"
-          aria-label={`Distribución por estatus: ${activePct}% operativas`}
+          aria-label={`Distribución por estatus: ${centerValue} ${centerLabel}`}
         >
           <circle
             cx={size / 2}
@@ -133,13 +136,18 @@ function StatusDonut({
         </svg>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-2xl font-semibold tracking-tight text-card-foreground tabular-nums">
-            {activePct}%
+            {centerValue}
           </span>
-          <span className="text-xs text-muted">operativas</span>
+          <span className="text-xs text-muted">{centerLabel}</span>
         </div>
       </div>
 
-      <ul className="grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-3">
+      <ul
+        className={cn(
+          "grid w-full max-w-md grid-cols-1 gap-3",
+          statusCounts.length <= 2 ? "sm:grid-cols-2" : "sm:grid-cols-3",
+        )}
+      >
         {statusCounts.map((item) => {
           const pct = total > 0 ? Math.round((item.count / total) * 100) : 0;
           const style = STATUS_STYLES[item.status];
@@ -340,27 +348,195 @@ function MonthlyAreaChart({
   );
 }
 
+function MonthlyStatusMixChart({
+  data,
+  hoveredIndex,
+  onHover,
+}: {
+  data: MonthlyStatusMix[];
+  hoveredIndex: number | null;
+  onHover: (index: number | null) => void;
+}) {
+  const width = 480;
+  const height = 180;
+  const padX = 24;
+  const padY = 16;
+  const labelH = 20;
+  const chartW = width - padX * 2;
+  const chartH = height - padY - labelH;
+  const max = Math.max(
+    1,
+    ...data.map((d) => d.asignada + d.enajenada),
+  );
+
+  if (data.every((d) => d.asignada + d.enajenada === 0)) {
+    return (
+      <div className="flex h-48 items-center justify-center rounded-lg border border-dashed border-border bg-foreground/[0.02]">
+        <EmptyState
+          compact
+          className="py-8"
+          title="Sin movimientos en los últimos meses"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="h-auto w-full max-h-52"
+        preserveAspectRatio="xMidYMid meet"
+        onMouseLeave={() => onHover(null)}
+        role="img"
+        aria-label="Altas mensuales por estatus de cartera"
+      >
+        {[0, 0.5, 1].map((t, i) => {
+          const y = padY + chartH * (1 - t);
+          return (
+            <line
+              key={i}
+              x1={padX}
+              y1={y}
+              x2={width - padX}
+              y2={y}
+              className="stroke-border/50"
+              strokeWidth={1}
+              strokeDasharray="4 4"
+            />
+          );
+        })}
+
+        {data.map((d, i) => {
+          const total = d.asignada + d.enajenada;
+          const barW =
+            data.length <= 1 ? chartW * 0.4 : (chartW / data.length) * 0.55;
+          const x =
+            padX +
+            (data.length <= 1
+              ? chartW / 2 - barW / 2
+              : (i / Math.max(data.length - 1, 1)) * (chartW - barW) +
+                barW / 2);
+          const baseY = padY + chartH;
+          const assignH = (d.asignada / max) * chartH;
+          const disposeH = (d.enajenada / max) * chartH;
+
+          return (
+            <g key={d.key}>
+              <rect
+                x={x - barW / 2 - 8}
+                y={padY}
+                width={barW + 16}
+                height={chartH + labelH}
+                fill="transparent"
+                onMouseEnter={() => onHover(i)}
+              />
+              <rect
+                x={x - barW / 2}
+                y={baseY - assignH - disposeH}
+                width={barW}
+                height={assignH}
+                rx={2}
+                fill="#10b981"
+                opacity={hoveredIndex === i ? 1 : 0.85}
+              />
+              <rect
+                x={x - barW / 2}
+                y={baseY - disposeH}
+                width={barW}
+                height={disposeH}
+                rx={2}
+                fill="#f97316"
+                opacity={hoveredIndex === i ? 1 : 0.85}
+              />
+              <text
+                x={x}
+                y={height - 6}
+                textAnchor="middle"
+                className={cn(
+                  "fill-current text-[11px] capitalize",
+                  hoveredIndex === i
+                    ? "font-semibold text-card-foreground"
+                    : "text-muted",
+                )}
+              >
+                {d.label}
+              </text>
+              {hoveredIndex === i ? (
+                <text
+                  x={x}
+                  y={baseY - assignH - disposeH - 6}
+                  textAnchor="middle"
+                  className="fill-current text-[10px] font-medium text-card-foreground"
+                >
+                  {total}
+                </text>
+              ) : null}
+            </g>
+          );
+        })}
+      </svg>
+
+      <div className="mt-3 flex flex-wrap justify-center gap-4 text-xs text-muted">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-2.5 rounded-sm bg-emerald-500" />
+          Asignadas
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-2.5 rounded-sm bg-orange-500" />
+          Enajenadas
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function PrintersOverviewChart({
+  variant = "default",
   statusCounts,
   monthlyRegistrations,
+  monthlyStatusMix,
   totalPrinters,
   className,
 }: PrintersOverviewChartProps) {
   const [hoveredMonth, setHoveredMonth] = useState<number | null>(null);
+  const isDistributor = variant === "distributor";
 
+  const assignedCount =
+    statusCounts.find((s) => s.status === "asignada")?.count ?? 0;
+  const disposedCount =
+    statusCounts.find((s) => s.status === "enajenada")?.count ?? 0;
   const activeCount = statusCounts
     .filter((s) =>
       ["asignada", "inicializada", "de_demostracion"].includes(s.status),
     )
     .reduce((sum, item) => sum + item.count, 0);
   const trend = useMemo(
-    () => monthlyTrend(monthlyRegistrations),
-    [monthlyRegistrations],
+    () => (isDistributor ? null : monthlyTrend(monthlyRegistrations)),
+    [isDistributor, monthlyRegistrations],
   );
   const recentTotal = useMemo(
-    () => monthlyRegistrations.reduce((sum, m) => sum + m.count, 0),
-    [monthlyRegistrations],
+    () =>
+      isDistributor
+        ? (monthlyStatusMix ?? []).reduce(
+            (sum, m) => sum + m.asignada + m.enajenada,
+            0,
+          )
+        : monthlyRegistrations.reduce((sum, m) => sum + m.count, 0),
+    [isDistributor, monthlyRegistrations, monthlyStatusMix],
   );
+  const donutCenter = isDistributor
+    ? {
+        value: String(assignedCount),
+        label: "asignadas",
+      }
+    : {
+        value:
+          totalPrinters > 0
+            ? `${Math.round((activeCount / totalPrinters) * 100)}%`
+            : "0%",
+        label: "operativas",
+      };
 
   return (
     <div
@@ -373,7 +549,9 @@ export function PrintersOverviewChart({
         <div>
           <h2 className="text-lg font-semibold text-card-foreground">Impresoras</h2>
           <p className="mt-0.5 text-sm text-muted">
-            Estatus de la flota y altas mensuales
+            {isDistributor
+              ? "Cartera asignada y equipos enajenados a clientes"
+              : "Estatus de la flota y altas mensuales"}
           </p>
         </div>
         <dl className="flex flex-wrap gap-4 sm:gap-6 sm:text-right">
@@ -385,14 +563,35 @@ export function PrintersOverviewChart({
               {totalPrinters}
             </dd>
           </div>
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-muted">
-              Operativas
-            </dt>
-            <dd className="text-2xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-              {activeCount}
-            </dd>
-          </div>
+          {isDistributor ? (
+            <>
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-wide text-muted">
+                  Asignadas
+                </dt>
+                <dd className="text-2xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+                  {assignedCount}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-wide text-muted">
+                  Enajenadas
+                </dt>
+                <dd className="text-2xl font-semibold tabular-nums text-orange-600 dark:text-orange-400">
+                  {disposedCount}
+                </dd>
+              </div>
+            </>
+          ) : (
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-muted">
+                Operativas
+              </dt>
+              <dd className="text-2xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+                {activeCount}
+              </dd>
+            </div>
+          )}
           {recentTotal > 0 ? (
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted">
@@ -413,14 +612,15 @@ export function PrintersOverviewChart({
         <StatusDonut
           statusCounts={statusCounts}
           total={totalPrinters}
-          activeCount={activeCount}
+          centerValue={donutCenter.value}
+          centerLabel={donutCenter.label}
         />
       </section>
 
       <section className="pt-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-xs font-medium uppercase tracking-wide text-muted">
-            Altas por mes
+            {isDistributor ? "Altas mensuales por estatus" : "Altas por mes"}
           </h3>
           {trend ? (
             <span
@@ -436,11 +636,19 @@ export function PrintersOverviewChart({
             </span>
           ) : null}
         </div>
-        <MonthlyAreaChart
-          data={monthlyRegistrations}
-          hoveredIndex={hoveredMonth}
-          onHover={setHoveredMonth}
-        />
+        {isDistributor && monthlyStatusMix ? (
+          <MonthlyStatusMixChart
+            data={monthlyStatusMix}
+            hoveredIndex={hoveredMonth}
+            onHover={setHoveredMonth}
+          />
+        ) : (
+          <MonthlyAreaChart
+            data={monthlyRegistrations}
+            hoveredIndex={hoveredMonth}
+            onHover={setHoveredMonth}
+          />
+        )}
       </section>
     </div>
   );
