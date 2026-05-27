@@ -125,7 +125,7 @@ export function printerToDispositionRequest(
     fiscalSerial: printer.fiscalSerial,
     finalSalePrice: printer.finalSalePrice,
     paid: printer.paid,
-    installationDate: printer.installationDate,
+    installationDate: new Date().toISOString(),
     versionFirmware: printer.versionFirmware,
     macAddress: printer.macAddress,
     status: "enajenada",

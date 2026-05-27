@@ -352,7 +352,7 @@ export function PrinterView() {
               value={printer.paid ? "Pagada" : "Pendiente"}
             />
             <DetailField
-              label="Instalación"
+              label={isDistributor ? "Fecha de enajenación" : "Instalación"}
               value={formatDate(printer.installationDate)}
             />
           </DetailSection>

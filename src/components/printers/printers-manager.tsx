@@ -805,7 +805,7 @@ export function PrintersManager() {
                         ) : null}
                         <th className="px-5 py-3 font-medium">Cliente</th>
                         <SortableTableHeader
-                          label="Instalación"
+                          label={isDistributor ? "Enajenación" : "Instalación"}
                           sortDirection={
                             sort?.key === "installationDate" ? sort.direction : null
                           }
