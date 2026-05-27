@@ -538,6 +538,34 @@ export function PrintersOverviewChart({
         label: "operativas",
       };
   const showRecentTotal = isDistributor || recentTotal > 0;
+  const distributorKpis = isDistributor
+    ? [
+        {
+          label: "Total",
+          value: totalPrinters,
+          valueClassName: "text-card-foreground",
+        },
+        {
+          label: "Asignadas",
+          value: assignedCount,
+          valueClassName: "text-emerald-600 dark:text-emerald-400",
+        },
+        {
+          label: "Enajenadas",
+          value: disposedCount,
+          valueClassName: "text-orange-600 dark:text-orange-400",
+        },
+        ...(showRecentTotal
+          ? [
+              {
+                label: "Altas 6m",
+                value: recentTotal,
+                valueClassName: "text-card-foreground",
+              },
+            ]
+          : []),
+      ]
+    : [];
 
   return (
     <div
@@ -546,7 +574,12 @@ export function PrintersOverviewChart({
         className,
       )}
     >
-      <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
+      <div
+        className={cn(
+          "flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:justify-between",
+          isDistributor ? "sm:items-start" : "sm:items-end",
+        )}
+      >
         <div>
           <h2 className="text-lg font-semibold text-card-foreground">Impresoras</h2>
           <p className="mt-0.5 text-sm text-muted">
@@ -555,41 +588,37 @@ export function PrintersOverviewChart({
               : "Estatus de la flota y altas mensuales"}
           </p>
         </div>
-        <dl
-          className={cn(
-            isDistributor
-              ? "grid w-full grid-cols-2 gap-x-6 gap-y-3 sm:w-auto sm:grid-cols-4 sm:text-right"
-              : "flex flex-wrap gap-4 sm:gap-6 sm:text-right",
-          )}
-        >
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-muted">
-              Total
-            </dt>
-            <dd className="text-2xl font-semibold tabular-nums text-card-foreground">
-              {totalPrinters}
-            </dd>
-          </div>
-          {isDistributor ? (
-            <>
-              <div>
-                <dt className="text-xs font-medium uppercase tracking-wide text-muted">
-                  Asignadas
+        {isDistributor ? (
+          <dl className="grid w-full min-w-0 grid-cols-4 gap-2 sm:max-w-md sm:gap-3">
+            {distributorKpis.map((kpi) => (
+              <div
+                key={kpi.label}
+                className="flex min-w-0 flex-col items-center text-center"
+              >
+                <dt className="flex min-h-8 w-full items-end justify-center text-[10px] font-medium uppercase leading-tight tracking-wide text-muted sm:min-h-9 sm:text-xs">
+                  <span className="whitespace-nowrap">{kpi.label}</span>
                 </dt>
-                <dd className="text-2xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-                  {assignedCount}
+                <dd
+                  className={cn(
+                    "mt-0.5 w-full text-center text-2xl font-semibold tabular-nums",
+                    kpi.valueClassName,
+                  )}
+                >
+                  {kpi.value}
                 </dd>
               </div>
-              <div>
-                <dt className="text-xs font-medium uppercase tracking-wide text-muted">
-                  Enajenadas
-                </dt>
-                <dd className="text-2xl font-semibold tabular-nums text-orange-600 dark:text-orange-400">
-                  {disposedCount}
-                </dd>
-              </div>
-            </>
-          ) : (
+            ))}
+          </dl>
+        ) : (
+          <dl className="flex flex-wrap gap-4 sm:gap-6 sm:text-right">
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-muted">
+                Total
+              </dt>
+              <dd className="text-2xl font-semibold tabular-nums text-card-foreground">
+                {totalPrinters}
+              </dd>
+            </div>
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted">
                 Operativas
@@ -598,18 +627,18 @@ export function PrintersOverviewChart({
                 {activeCount}
               </dd>
             </div>
-          )}
-          {showRecentTotal ? (
-            <div>
-              <dt className="text-xs font-medium uppercase tracking-wide text-muted">
-                Altas (6 meses)
-              </dt>
-              <dd className="text-2xl font-semibold tabular-nums text-card-foreground">
-                {recentTotal}
-              </dd>
-            </div>
-          ) : null}
-        </dl>
+            {showRecentTotal ? (
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-wide text-muted">
+                  Altas (6 meses)
+                </dt>
+                <dd className="text-2xl font-semibold tabular-nums text-card-foreground">
+                  {recentTotal}
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+        )}
       </div>
 
       <section className="border-b border-border py-6">
