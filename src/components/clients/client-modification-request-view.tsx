@@ -198,9 +198,8 @@ export function ClientModificationRequestView({
             <DetailField label="Solicitud" value={formatResourceId(row.id)} mono />
             <DetailField
               label="Cliente"
-              value={formatResourceId(row.clientId)}
+              value={row.currentClientSnapshot?.businessName ?? "Cliente"}
               href={clientPath(row.clientId)}
-              mono
             />
             <DetailField label="Acción" value={row.actionType} />
             <DetailField label="Estado" value={STATUS_LABELS[row.status]} />
@@ -299,9 +298,8 @@ export function ClientModificationRequestView({
                 <DetailField label="Solicitud" value={formatResourceId(row.id)} mono />
                 <DetailField
                   label="Cliente"
-                  value={formatResourceId(row.clientId)}
+                  value={row.currentClientSnapshot?.businessName ?? "Cliente"}
                   href={clientPath(row.clientId)}
-                  mono
                 />
                 <DetailField label="Acción" value={row.actionType} />
                 <DetailField label="Estado" value={STATUS_LABELS[row.status]} />

@@ -159,14 +159,6 @@ export function EmployeeModificationRequestView({
               ? "Eliminar"
               : "—",
       },
-      {
-        label: "ID empresa",
-        before:
-          current == null
-            ? "—"
-            : String(resolveEmployeeCompanyId(current, scope?.branches ?? []) ?? "—"),
-        after: formatAfterValue(proposed?.companyId, row.actionType),
-      },
     ];
   }, [row, scope]);
 
@@ -181,9 +173,8 @@ export function EmployeeModificationRequestView({
             <DetailField label="Solicitud" value={formatResourceId(row.id)} mono />
             <DetailField
               label="Empleado"
-              value={formatResourceId(row.employeeId)}
+              value={row.currentEmployeeSnapshot?.name ?? "Empleado"}
               href={employeePath(row.employeeId)}
-              mono
             />
             <DetailField label="Acción" value={row.actionType} />
             <DetailField label="Estado" value={STATUS_LABELS[row.status]} />
@@ -271,9 +262,8 @@ export function EmployeeModificationRequestView({
                 <DetailField label="Solicitud" value={formatResourceId(row.id)} mono />
                 <DetailField
                   label="Empleado"
-                  value={formatResourceId(row.employeeId)}
+                  value={row.currentEmployeeSnapshot?.name ?? "Empleado"}
                   href={employeePath(row.employeeId)}
-                  mono
                 />
                 <DetailField label="Acción" value={row.actionType} />
                 <DetailField label="Estado" value={STATUS_LABELS[row.status]} />

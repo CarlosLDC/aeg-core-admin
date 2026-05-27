@@ -130,7 +130,6 @@ export function ClientView() {
               label="Registrado"
               value={formatDate(branch?.createdAt ?? client.createdAt)}
             />
-            <DetailField label="ID sucursal" value={String(client.branchId)} mono />
             <DetailField label="RIF" value={rif} mono />
           </DetailSection>
         ),

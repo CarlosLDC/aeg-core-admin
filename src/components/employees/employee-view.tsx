@@ -287,11 +287,6 @@ export function EmployeeView() {
                 label="Empresa"
                 value={companyLabel}
               />
-              <DetailField
-                label="ID empresa"
-                value={String(resolveEmployeeCompanyId(employee, scope?.branches ?? []) ?? "—")}
-                mono
-              />
             </DetailSection>
           </div>
         )}

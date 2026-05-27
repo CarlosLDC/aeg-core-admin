@@ -249,7 +249,6 @@ export function BranchView() {
               value={companyLabel}
               href={companyPath(branch.companyId)}
             />
-            <DetailField label="ID empresa" value={String(branch.companyId)} mono />
             <DetailField
               label="Registrada"
               value={formatDate(branch.createdAt)}

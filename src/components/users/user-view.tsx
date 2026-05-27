@@ -216,11 +216,6 @@ export function UserView() {
               value={branchLabel}
               href={user.branchId != null ? branchPath(user.branchId) : undefined}
             />
-            <DetailField
-              label="ID sucursal"
-              value={user.branchId != null ? String(user.branchId) : "—"}
-              mono
-            />
           </DetailSection>
         )}
       </ResourceViewShell>
