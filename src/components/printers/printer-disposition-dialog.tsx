@@ -105,8 +105,6 @@ export function PrinterDispositionDialog({
       title="Enajenar impresora"
       titleId={titleId}
       printer={printer}
-      fromStatus="asignada"
-      toStatus="enajenada"
       saving={saving}
       error={error}
       onClose={onClose}

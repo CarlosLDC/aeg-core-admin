@@ -134,8 +134,6 @@ export function PrinterAssignmentDialog({
       title="Asignar impresora"
       titleId={titleId}
       printer={printer}
-      fromStatus="sin_asignar"
-      toStatus="asignada"
       saving={saving}
       error={error}
       onClose={onClose}

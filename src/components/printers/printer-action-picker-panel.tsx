@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, type WheelEvent } from "react";
 import { Check, Loader2 } from "lucide-react";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,17 @@ type PrinterActionPickerPanelProps = {
   noResultsMessage?: string;
 };
 
+function scrollListByWheel(list: HTMLElement, deltaY: number): boolean {
+  const maxScroll = list.scrollHeight - list.clientHeight;
+  if (maxScroll <= 0) return false;
+
+  const next = Math.min(maxScroll, Math.max(0, list.scrollTop + deltaY));
+  if (next === list.scrollTop) return false;
+
+  list.scrollTop = next;
+  return true;
+}
+
 export function PrinterActionPickerPanel({
   label,
   searchPlaceholder,
@@ -34,6 +45,7 @@ export function PrinterActionPickerPanel({
 }: PrinterActionPickerPanelProps) {
   const listboxId = useId();
   const searchRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const selectedLabel =
     options.find((opt) => String(opt.id) === selectedValue)?.label ?? null;
@@ -44,13 +56,23 @@ export function PrinterActionPickerPanel({
     return () => window.clearTimeout(timer);
   }, [disabled, loading]);
 
+  function handlePanelWheel(event: WheelEvent<HTMLDivElement>) {
+    const list = listRef.current;
+    if (!list) return;
+    if (scrollListByWheel(list, event.deltaY)) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+
   return (
     <div
       className={cn(
-        "flex min-h-[min(18rem,50vh)] flex-col overflow-hidden rounded-lg border border-border bg-background shadow-sm",
+        "flex max-h-[min(20rem,55vh)] min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-background shadow-sm",
         "ring-2 ring-accent/25",
       )}
       aria-label={label}
+      onWheel={handlePanelWheel}
     >
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-foreground/[0.03] px-3 py-2.5">
         <span className="text-sm font-semibold text-card-foreground">{label}</span>
@@ -77,8 +99,10 @@ export function PrinterActionPickerPanel({
 
       <div
         id={listboxId}
+        ref={listRef}
         role="listbox"
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-1"
+        className="min-h-0 flex-1 overflow-y-auto py-1"
+        style={{ touchAction: "pan-y" }}
       >
         {loading ? (
           <div className="flex items-center gap-2 px-4 py-6 text-sm text-muted">

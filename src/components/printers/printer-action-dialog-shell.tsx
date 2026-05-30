@@ -2,16 +2,13 @@
 
 import type { FormEvent, ReactNode } from "react";
 import { Loader2, X } from "lucide-react";
-import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
-import type { PrinterResponse, PrinterStatus } from "@/types/printer";
+import type { PrinterResponse } from "@/types/printer";
 import { cn } from "@/lib/utils";
 
 type PrinterActionDialogShellProps = {
   title: string;
   titleId: string;
   printer: PrinterResponse;
-  fromStatus: PrinterStatus;
-  toStatus: PrinterStatus;
   saving: boolean;
   error: string | null;
   onClose: () => void;
@@ -26,8 +23,6 @@ export function PrinterActionDialogShell({
   title,
   titleId,
   printer,
-  fromStatus,
-  toStatus,
   saving,
   error,
   onClose,
@@ -78,13 +73,10 @@ export function PrinterActionDialogShell({
               <X className="size-5" />
             </button>
           </div>
-          <div className="mt-3">
-            <PrinterStatusTransition from={fromStatus} to={toStatus} />
-          </div>
         </div>
 
-        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-4 sm:px-5">
             {children}
 
             {error ? (
