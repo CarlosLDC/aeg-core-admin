@@ -33,10 +33,6 @@ export function validatePrinterWizardSection(
   }
 
   if (section === "operation") {
-    const price = form.finalSalePrice.trim();
-    if (price && (Number.isNaN(Number(price)) || Number(price) < 0)) {
-      return "El precio de venta final debe ser un número mayor o igual a 0.";
-    }
     return null;
   }
 

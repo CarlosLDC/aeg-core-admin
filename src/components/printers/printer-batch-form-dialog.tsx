@@ -80,7 +80,7 @@ const WIZARD_STEPS: (BatchWizardStep & {
     section: "operation",
     label: "Estado",
     icon: Settings2,
-    subtitle: "Estatus, tipo de dispositivo y condiciones de venta.",
+    subtitle: "Estatus, tipo de dispositivo y estado de pago.",
   },
   {
     step: 4,
@@ -209,7 +209,6 @@ export function PrinterBatchFormDialog({
       else if (
         firstKey === "status" ||
         firstKey === "deviceType" ||
-        firstKey === "finalSalePrice" ||
         firstKey === "paid"
       ) {
         setStep(3);
@@ -238,7 +237,6 @@ export function PrinterBatchFormDialog({
       ...form,
       versionFirmware: form.versionFirmware.trim(),
       macAddress: form.macAddress.trim().toUpperCase(),
-      finalSalePrice: form.finalSalePrice.trim(),
     };
     onSubmit({ serials, base });
   }

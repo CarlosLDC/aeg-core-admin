@@ -134,6 +134,9 @@ export function SealsManager() {
       ...printerOptions.map((printer) => ({
         value: String(printer.id),
         label: printer.label,
+        searchText: [String(printer.id), printer.serial, printer.label]
+          .filter(Boolean)
+          .join(" "),
       })),
     ],
     [printerOptions],
@@ -560,6 +563,8 @@ export function SealsManager() {
                   value: printerFilter,
                   onChange: setPrinterFilter,
                   options: printerFilterOptions,
+                  searchable: true,
+                  searchPlaceholder: "Buscar por serial o ID…",
                 },
               ]}
               columns={tableColumns.toolbarColumns}

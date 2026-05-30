@@ -59,7 +59,7 @@ function stepSubtitle(step: WizardStep): string {
     case 1:
       return "Modelo fiscal y serial de la impresora.";
     case 2:
-      return "Estatus, tipo de dispositivo y condiciones de venta.";
+      return "Estatus, tipo de dispositivo y estado de pago.";
     case 3:
       return "Distribuidor, cliente y software asociados.";
     case 4:
@@ -158,7 +158,6 @@ export function PrinterCreateWizardDialog({
       else if (
         firstKey === "status" ||
         firstKey === "deviceType" ||
-        firstKey === "finalSalePrice" ||
         firstKey === "paid"
       ) {
         setStep(2);
@@ -181,7 +180,6 @@ export function PrinterCreateWizardDialog({
       fiscalSerial: form.fiscalSerial.trim().toUpperCase(),
       versionFirmware: form.versionFirmware.trim(),
       macAddress: form.macAddress.trim().toUpperCase(),
-      finalSalePrice: form.finalSalePrice.trim(),
     });
   }
 

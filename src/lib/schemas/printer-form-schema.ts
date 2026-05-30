@@ -12,7 +12,6 @@ export const printerFormSchema = z
     clientId: z.string(),
     distributorId: z.string(),
     fiscalSerial: z.string().trim(),
-    finalSalePrice: z.string(),
     paid: z.boolean(),
     installationDate: z.string(),
     versionFirmware: z.string(),
@@ -40,14 +39,6 @@ export const printerFormSchema = z
         code: "custom",
         message: "MAC: formato AA:BB:CC:DD:EE:FF",
         path: ["macAddress"],
-      });
-    }
-    const price = data.finalSalePrice.trim();
-    if (price && (Number.isNaN(Number(price)) || Number(price) < 0)) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Precio de venta no válido.",
-        path: ["finalSalePrice"],
       });
     }
   });

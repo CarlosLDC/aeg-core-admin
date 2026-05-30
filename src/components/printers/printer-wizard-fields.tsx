@@ -197,21 +197,6 @@ export function PrinterWizardFields({
               ))}
             </select>
           </label>
-          <label className="block">
-            <FieldLabel>Precio venta final</FieldLabel>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              value={form.finalSalePrice}
-              disabled={disabled}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, finalSalePrice: e.target.value }))
-              }
-              className={inputClass}
-              placeholder="Opcional"
-            />
-          </label>
           <div className="block">
             <FieldLabel>Estado de pago</FieldLabel>
             <BooleanToggle

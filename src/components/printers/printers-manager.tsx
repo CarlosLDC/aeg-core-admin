@@ -100,7 +100,7 @@ import {
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
-type PrinterSortKey = "price" | "id" | "createdAt";
+type PrinterSortKey = "id" | "createdAt";
 
 function companyRifForBranch(
   branchId: number | null | undefined,
@@ -183,8 +183,6 @@ export function PrintersManager() {
   const [statusFilter, setStatusFilter] = useState<PrinterStatus | "all">(
     "all",
   );
-  const [modelFilter, setModelFilter] = useState("all");
-  const [paidFilter, setPaidFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<PrinterSortKey>>(null);
 
   useEffect(() => {
@@ -218,40 +216,12 @@ export function PrintersManager() {
     [visibleModels],
   );
 
-  const modelFilterOptions = useMemo(
-    () => [
-      filterAllOption("Todos los modelos"),
-      ...visibleModels.map((model) => ({
-        value: String(model.id),
-        label: printerModelLabel(model),
-      })),
-    ],
-    [visibleModels],
-  );
-
-  const paidFilterOptions = useMemo(
-    () => [
-      filterAllOption(),
-      { value: "yes", label: "Pagadas" },
-      { value: "no", label: "No pagadas" },
-    ],
-    [],
-  );
-
   const filteredPrinters = useMemo(() => {
     const q = search.trim().toLowerCase();
     return visiblePrinters.filter((printer) => {
       if (statusFilter !== "all" && printer.status !== statusFilter) {
         return false;
       }
-      if (
-        modelFilter !== "all" &&
-        printer.modelId !== Number(modelFilter)
-      ) {
-        return false;
-      }
-      if (paidFilter === "yes" && !printer.paid) return false;
-      if (paidFilter === "no" && printer.paid) return false;
       if (!q) return true;
       const model = modelById.get(printer.modelId);
       const haystack = [
@@ -274,8 +244,6 @@ export function PrintersManager() {
     visiblePrinters,
     search,
     statusFilter,
-    modelFilter,
-    paidFilter,
     modelById,
     isDistributor,
   ]);
@@ -283,7 +251,6 @@ export function PrintersManager() {
   const sortedPrinters = useMemo(
     () =>
       sortTableRows(filteredPrinters, sort, {
-        price: (a, b) => compareNumberValues(a.finalSalePrice, b.finalSalePrice),
         id: (a, b) => compareNumberValues(a.id, b.id),
         createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
       }),
@@ -651,7 +618,9 @@ export function PrintersManager() {
       return;
     }
 
-    const bodyOrError = toPrinterRequest(values);
+    const bodyOrError = toPrinterRequest(values, {
+      finalSalePrice: selected?.finalSalePrice ?? null,
+    });
     if (typeof bodyOrError === "string") {
       setFormError(bodyOrError);
       return;
@@ -791,20 +760,6 @@ export function PrintersManager() {
                       label: PRINTER_STATUS_LABELS[status],
                     })),
                   ],
-                },
-                {
-                  id: "model",
-                  label: "Modelo",
-                  value: modelFilter,
-                  onChange: setModelFilter,
-                  options: modelFilterOptions,
-                },
-                {
-                  id: "paid",
-                  label: "Pago",
-                  value: paidFilter,
-                  onChange: setPaidFilter,
-                  options: paidFilterOptions,
                 },
               ]}
               columns={tableColumns.toolbarColumns}

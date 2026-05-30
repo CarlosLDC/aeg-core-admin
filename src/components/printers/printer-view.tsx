@@ -47,7 +47,7 @@ import { fetchBranches } from "@/lib/branches-api";
 import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
-import { formatDate, formatMoney } from "@/lib/datetime-form";
+import { formatDate } from "@/lib/datetime-form";
 import {
   DEVICE_TYPE_LABELS,
   printerModelLabel,
@@ -367,10 +367,6 @@ export function PrinterView() {
               }
             />
             <DetailField
-              label="Precio venta"
-              value={formatMoney(printer.finalSalePrice)}
-            />
-            <DetailField
               label="Estado de pago"
               value={printer.paid ? "Pagada" : "Pendiente"}
             />
@@ -550,7 +546,9 @@ export function PrinterView() {
       return;
     }
 
-    const bodyOrError = toPrinterRequest(values);
+    const bodyOrError = toPrinterRequest(values, {
+      finalSalePrice: printer.finalSalePrice,
+    });
     if (typeof bodyOrError === "string") {
       setFormError(bodyOrError);
       return;

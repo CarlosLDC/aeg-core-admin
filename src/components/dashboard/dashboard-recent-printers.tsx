@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { formatPrinterPrice } from "@/lib/printer-form";
 import { printerPath } from "@/lib/resource-routes";
 import type { PrinterResponse } from "@/types/printer";
 import { TableScroll } from "@/components/ui/table-scroll";
@@ -69,7 +68,6 @@ export function DashboardRecentPrinters({
               <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                 <th className="px-5 py-3 font-medium">Serial fiscal</th>
                 <th className="px-5 py-3 font-medium">Estatus</th>
-                <th className="px-5 py-3 font-medium">Precio venta</th>
                 <th className="px-5 py-3 font-medium">Pagada</th>
                 <th className="px-5 py-3 font-medium">Alta</th>
               </tr>
@@ -82,9 +80,6 @@ export function DashboardRecentPrinters({
                   </td>
                   <td className="px-5 py-3.5">
                     <PrinterStatusBadge status={printer.status} />
-                  </td>
-                  <td className="px-5 py-3.5 text-muted">
-                    {formatPrinterPrice(printer.finalSalePrice)}
                   </td>
                   <td className="px-5 py-3.5 text-muted">
                     {printer.paid ? "Sí" : "No"}

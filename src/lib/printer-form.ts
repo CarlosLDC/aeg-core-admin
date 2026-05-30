@@ -17,7 +17,6 @@ export type PrinterFormValues = {
   clientId: string;
   distributorId: string;
   fiscalSerial: string;
-  finalSalePrice: string;
   paid: boolean;
   installationDate: string;
   versionFirmware: string;
@@ -59,8 +58,6 @@ export function printerToFormValues(
     distributorId:
       printer.distributorId != null ? String(printer.distributorId) : "",
     fiscalSerial: printer.fiscalSerial,
-    finalSalePrice:
-      printer.finalSalePrice != null ? String(printer.finalSalePrice) : "",
     paid: printer.paid,
     installationDate: toDatetimeLocalValue(printer.installationDate),
     versionFirmware: printer.versionFirmware ?? "",
@@ -81,7 +78,6 @@ export const emptyPrinterForm = (
   clientId: "",
   distributorId: "",
   fiscalSerial: "",
-  finalSalePrice: "",
   paid: false,
   installationDate: "",
   versionFirmware: "",
@@ -133,6 +129,7 @@ export function printerToDispositionRequest(
 
 export function toPrinterRequest(
   values: PrinterFormValues,
+  options?: { finalSalePrice?: number | null },
 ): PrinterRequest | string {
   const modelId = Number(values.modelId);
   if (!Number.isFinite(modelId) || modelId <= 0) {
@@ -142,15 +139,6 @@ export function toPrinterRequest(
   const fiscalSerial = values.fiscalSerial.trim().toUpperCase();
   if (!FISCAL_SERIAL_RE.test(fiscalSerial)) {
     return "El serial fiscal debe tener 3 letras y 7 dígitos (ej. ABC1234567).";
-  }
-
-  let finalSalePrice: number | null = null;
-  if (values.finalSalePrice.trim()) {
-    const price = Number(values.finalSalePrice);
-    if (!Number.isFinite(price) || price < 0) {
-      return "El precio de venta final debe ser un número mayor o igual a 0.";
-    }
-    finalSalePrice = price;
   }
 
   const versionFirmware = values.versionFirmware.trim();
@@ -207,7 +195,7 @@ export function toPrinterRequest(
     clientId,
     distributorId,
     fiscalSerial,
-    finalSalePrice,
+    finalSalePrice: options?.finalSalePrice ?? null,
     paid: values.paid,
     installationDate,
     versionFirmware: versionFirmware || null,
@@ -215,15 +203,6 @@ export function toPrinterRequest(
     status: values.status,
     deviceType: values.deviceType,
   };
-}
-
-export function formatPrinterPrice(price: number | null | undefined): string {
-  if (price == null) return "—";
-  return new Intl.NumberFormat("es-VE", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(price);
 }
 
 export function formatPrinterDate(value: string | null | undefined): string {
