@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { SearchablePickerModal } from "@/components/ui/searchable-picker-modal";
 import { formFieldSelectTriggerClass } from "@/lib/toggle-button-styles";
@@ -26,6 +26,10 @@ type SearchableSelectProps = {
   modalTitle?: string;
   required?: boolean;
   mono?: boolean;
+  /** Abre el modal al montar (flujos donde la selección es el paso principal). */
+  openOnMount?: boolean;
+  /** Lista visible sin escribir en el buscador. */
+  preloadOptions?: boolean;
 };
 
 export function SearchableSelect({
@@ -39,9 +43,12 @@ export function SearchableSelect({
   modalTitle,
   required,
   mono,
+  openOnMount = false,
+  preloadOptions = false,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const autoOpenedRef = useRef(false);
 
   const selected = options.find((opt) => opt.value === value);
 
@@ -49,14 +56,23 @@ export function SearchableSelect({
   const hasSearchQuery = queryTrimmed.length > 0;
 
   const filtered = useMemo(() => {
-    if (!hasSearchQuery) return [];
     const q = queryTrimmed.toLowerCase();
+    if (!hasSearchQuery) {
+      return preloadOptions ? options : [];
+    }
     return options.filter((opt) => {
       const haystack = `${opt.value} ${opt.label} ${opt.searchText ?? ""} ${opt.description ?? ""}`
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [options, queryTrimmed, hasSearchQuery]);
+  }, [options, queryTrimmed, hasSearchQuery, preloadOptions]);
+
+  useEffect(() => {
+    if (!openOnMount || autoOpenedRef.current || disabled || loading) return;
+    autoOpenedRef.current = true;
+    setQuery("");
+    setOpen(true);
+  }, [openOnMount, disabled, loading]);
 
   function openPicker() {
     if (disabled || loading) return;
@@ -126,7 +142,7 @@ export function SearchableSelect({
               </button>
             </li>
           )}
-          {!hasSearchQuery ? (
+          {!hasSearchQuery && !preloadOptions ? (
             <li className="px-4 py-6 text-center text-sm text-muted">
               Escribe en el buscador para ver opciones.
             </li>

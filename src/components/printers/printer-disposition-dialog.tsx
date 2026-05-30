@@ -171,6 +171,8 @@ export function PrinterDispositionDialog({
                 searchPlaceholder="Buscar cliente..."
                 modalTitle="Cliente"
                 required
+                openOnMount
+                preloadOptions
               />
               {fieldError ? (
                 <p className="mt-1 text-sm text-rose-600 dark:text-rose-400">
