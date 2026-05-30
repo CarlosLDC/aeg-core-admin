@@ -7,6 +7,7 @@ import type {
   PrinterStatusCount,
 } from "@/lib/dashboard-data";
 import { EmptyState } from "@/components/ui/empty-state";
+import { isPrinterOperative } from "@/lib/printer-status";
 import { cn } from "@/lib/utils";
 
 type PrintersOverviewChartProps = {
@@ -22,9 +23,8 @@ const STATUS_STYLES: Record<
   string,
   { stroke: string; dot: string }
 > = {
-  de_demostracion: { stroke: "#6366f1", dot: "bg-indigo-500" },
   de_fabrica: { stroke: "#0ea5e9", dot: "bg-sky-500" },
-  inicializada: { stroke: "#a855f7", dot: "bg-violet-500" },
+  sin_asignar: { stroke: "#a855f7", dot: "bg-violet-500" },
   asignada: { stroke: "#10b981", dot: "bg-emerald-500" },
   enajenada: { stroke: "#f97316", dot: "bg-orange-500" },
   desincorporada: { stroke: "#64748b", dot: "bg-slate-500" },
@@ -508,7 +508,7 @@ export function PrintersOverviewChart({
     statusCounts.find((s) => s.status === "enajenada")?.count ?? 0;
   const activeCount = statusCounts
     .filter((s) =>
-      ["asignada", "inicializada", "de_demostracion"].includes(s.status),
+      isPrinterOperative(s.status),
     )
     .reduce((sum, item) => sum + item.count, 0);
   const trend = useMemo(

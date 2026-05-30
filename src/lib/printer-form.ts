@@ -5,6 +5,7 @@ import type {
   PrinterResponse,
   PrinterStatus,
 } from "@/types/printer";
+import { normalizePrinterStatus } from "@/lib/printer-status";
 import {
   DEVICE_TYPES,
   PRINTER_STATUSES,
@@ -30,13 +31,12 @@ const FIRMWARE_RE = /^[0-9]+\.[0-9]+\.[0-9]+$/;
 const MAC_RE = /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/i;
 
 export const PRINTER_STATUS_LABELS: Record<PrinterStatus, string> = {
-  de_demostracion: "De demostración",
   de_fabrica: "De fábrica",
-  inicializada: "Inicializada",
+  sin_asignar: "Sin asignar",
   asignada: "Asignada",
   enajenada: "Enajenada",
   desincorporada: "Desincorporada",
-  laboratorio: "Laboratorio (legacy)",
+  laboratorio: "Laboratorio",
 };
 
 export const DEVICE_TYPE_LABELS: Record<DeviceType, string> = {
@@ -65,9 +65,7 @@ export function printerToFormValues(
     installationDate: toDatetimeLocalValue(printer.installationDate),
     versionFirmware: printer.versionFirmware ?? "",
     macAddress: printer.macAddress ?? "",
-    status: PRINTER_STATUSES.includes(printer.status)
-      ? printer.status
-      : "de_fabrica",
+    status: normalizePrinterStatus(printer.status),
     deviceType: DEVICE_TYPES.includes(printer.deviceType)
       ? printer.deviceType
       : "interno",

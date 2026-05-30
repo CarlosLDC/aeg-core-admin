@@ -35,6 +35,10 @@ import {
   excludeDistributorSelfClients,
   isDistributorSelfClient,
 } from "@/lib/distributor-scope";
+import {
+  isPrinterAssigned,
+  isPrinterUnassigned,
+} from "@/lib/printer-status";
 import { assertPrinterInScope } from "@/lib/permissions/scope-access";
 import { useDistributorStaffBranchId } from "@/hooks/use-distributor-staff-branch-id";
 import { distributorLabel } from "@/lib/branch-roles";
@@ -340,22 +344,22 @@ export function PrinterView() {
                 <PrinterStatusBadge
                   status={printer.status}
                   onClick={
-                    canAssignInitialized && printer.status === "inicializada"
+                    canAssignInitialized && isPrinterUnassigned(printer.status)
                       ? () => {
                           setAssignmentError(null);
                           setAssignmentOpen(true);
                         }
-                      : canDisposeAssigned && printer.status === "asignada"
+                      : canDisposeAssigned && isPrinterAssigned(printer.status)
                         ? () => {
                             setDispositionError(null);
                             setDispositionOpen(true);
                           }
-                      : undefined
+                        : undefined
                   }
                   actionLabel={
-                    canAssignInitialized && printer.status === "inicializada"
+                    canAssignInitialized && isPrinterUnassigned(printer.status)
                       ? "Asignar impresora"
-                      : canDisposeAssigned && printer.status === "asignada"
+                      : canDisposeAssigned && isPrinterAssigned(printer.status)
                         ? "Enajenar impresora"
                         : undefined
                   }
@@ -471,8 +475,8 @@ export function PrinterView() {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
-    if (printer.status !== "inicializada") {
-      toast.error("Solo se pueden asignar impresoras con estatus Inicializada.");
+    if (!isPrinterUnassigned(printer.status)) {
+      toast.error("Solo se pueden asignar impresoras con estatus Sin asignar.");
       return;
     }
 
@@ -501,7 +505,7 @@ export function PrinterView() {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
-    if (printer.status !== "asignada") {
+    if (!isPrinterAssigned(printer.status)) {
       toast.error("Solo se pueden enajenar impresoras con estatus Asignada.");
       return;
     }

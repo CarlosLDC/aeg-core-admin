@@ -77,13 +77,13 @@ describe("uniquePlaces", () => {
 
 describe("countPrintersByStatus", () => {
   const printers = [
-    { status: "inicializada" },
+    { status: "sin_asignar" },
     { status: "asignada" },
     { status: "enajenada" },
   ] as PrinterResponse[];
 
   it("includes all statuses for admin", () => {
-    expect(countPrintersByStatus(printers, "ADMIN")).toHaveLength(7);
+    expect(countPrintersByStatus(printers, "ADMIN")).toHaveLength(6);
   });
 
   it("only includes asignada and enajenada for distributor", () => {

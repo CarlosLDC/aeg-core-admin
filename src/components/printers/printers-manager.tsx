@@ -88,6 +88,7 @@ import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterModelResponse } from "@/types/printer-model";
 import type { PrinterResponse, PrinterStatus } from "@/types/printer";
+import { isPrinterAssigned, isPrinterUnassigned } from "@/lib/printer-status";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
@@ -485,8 +486,8 @@ export function PrintersManager() {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
-    if (assignmentPrinter.status !== "inicializada") {
-      toast.error("Solo se pueden asignar impresoras con estatus Inicializada.");
+    if (!isPrinterUnassigned(assignmentPrinter.status)) {
+      toast.error("Solo se pueden asignar impresoras con estatus Sin asignar.");
       return;
     }
 
@@ -516,7 +517,7 @@ export function PrintersManager() {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
-    if (dispositionPrinter.status !== "asignada") {
+    if (!isPrinterAssigned(dispositionPrinter.status)) {
       toast.error("Solo se pueden enajenar impresoras con estatus Asignada.");
       return;
     }
@@ -880,19 +881,19 @@ export function PrintersManager() {
                               status={printer.status}
                               onClick={
                                 canAssignInitialized &&
-                                printer.status === "inicializada"
+                                isPrinterUnassigned(printer.status)
                                   ? () => openAssignment(printer)
                                   : canDisposeAssigned &&
-                                      printer.status === "asignada"
+                                      isPrinterAssigned(printer.status)
                                     ? () => openDisposition(printer)
                                     : undefined
                               }
                               actionLabel={
                                 canAssignInitialized &&
-                                printer.status === "inicializada"
+                                isPrinterUnassigned(printer.status)
                                   ? "Asignar impresora"
                                   : canDisposeAssigned &&
-                                      printer.status === "asignada"
+                                      isPrinterAssigned(printer.status)
                                     ? "Enajenar impresora"
                                     : undefined
                               }

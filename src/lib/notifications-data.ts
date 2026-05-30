@@ -7,7 +7,7 @@ import { formatRelativeTime } from "@/lib/dashboard-data";
 import { fetchDistributorContracts } from "@/lib/distributor-contracts-api";
 import { fetchEmployees } from "@/lib/employees-api";
 import { fetchPrinterModels } from "@/lib/printer-models-api";
-import { PRINTER_STATUS_LABELS } from "@/lib/printer-form";
+import { printerStatusLabel } from "@/lib/printer-status";
 import { fetchPrinters } from "@/lib/printers-api";
 import {
   branchIdsFromScope,
@@ -185,7 +185,7 @@ export async function loadNotifications(options: {
   if (printersP?.ok) {
     const printers = filterPrintersForUser(printersP.value, role, distributorId);
     for (const p of printers) {
-      const statusLabel = PRINTER_STATUS_LABELS[p.status];
+      const statusLabel = printerStatusLabel(p.status);
       pushNotification(items, {
         id: `printer-${p.id}`,
         kind: "printer",

@@ -1,7 +1,6 @@
 export const PRINTER_STATUSES = [
-  "de_demostracion",
   "de_fabrica",
-  "inicializada",
+  "sin_asignar",
   "asignada",
   "enajenada",
   "desincorporada",
@@ -20,7 +19,7 @@ export type PrinterResponse = {
   fiscalSerial: string;
   finalSalePrice: number | null;
   createdAt: string;
-  status: PrinterStatus;
+  status: PrinterStatus | "inicializada" | "de_demostracion";
   distributorId: number | null;
   paid: boolean;
   installationDate: string | null;

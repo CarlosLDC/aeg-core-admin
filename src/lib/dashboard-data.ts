@@ -1,5 +1,9 @@
 import { contractStatus } from "@/lib/contract-form";
 import { PRINTER_STATUS_LABELS } from "@/lib/printer-form";
+import {
+  isPrinterOperative,
+  normalizePrinterStatus,
+} from "@/lib/printer-status";
 import { fetchBranches } from "@/lib/branches-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import {
@@ -100,9 +104,8 @@ async function settled<T>(
 }
 
 const ALL_PRINTER_STATUSES = [
-  "de_demostracion",
   "de_fabrica",
-  "inicializada",
+  "sin_asignar",
   "asignada",
   "enajenada",
   "desincorporada",
@@ -115,7 +118,8 @@ export function countPrintersByStatus(
 ): PrinterStatusCount[] {
   const counts = new Map<PrinterStatus, number>();
   for (const printer of printers) {
-    counts.set(printer.status, (counts.get(printer.status) ?? 0) + 1);
+    const status = normalizePrinterStatus(printer.status);
+    counts.set(status, (counts.get(status) ?? 0) + 1);
   }
   const statuses =
     role === "DISTRIBUTOR" ? DISTRIBUTOR_PRINTER_STATUSES : ALL_PRINTER_STATUSES;
@@ -282,11 +286,8 @@ function buildStats(
   const disposedPrinters = counts.printers.filter(
     (p) => p.status === "enajenada",
   ).length;
-  const activePrinters = counts.printers.filter(
-    (p) =>
-      p.status === "asignada" ||
-      p.status === "inicializada" ||
-      p.status === "de_demostracion",
+  const activePrinters = counts.printers.filter((p) =>
+    isPrinterOperative(p.status),
   ).length;
   const paidPrinters = counts.printers.filter((p) => p.paid).length;
   const companyHint = companiesStatHint(counts.companies, counts.branches);

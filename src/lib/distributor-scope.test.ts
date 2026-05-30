@@ -120,7 +120,7 @@ describe("distributor-scope", () => {
         fiscalSerial: "S1",
         finalSalePrice: 0,
         createdAt: "",
-        status: "inicializada",
+        status: "sin_asignar",
         paid: false,
         installationDate: null,
         versionFirmware: "",

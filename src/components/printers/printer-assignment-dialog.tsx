@@ -124,7 +124,7 @@ export function PrinterAssignmentDialog({
             ) : null}
             . Esta acción actualiza el estado de la impresora.
           </p>
-          <PrinterStatusTransition from="inicializada" to="asignada" />
+          <PrinterStatusTransition from="sin_asignar" to="asignada" />
         </>
       ),
       confirmLabel: "Asignar impresora",

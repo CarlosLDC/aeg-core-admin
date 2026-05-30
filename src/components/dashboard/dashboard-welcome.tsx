@@ -5,6 +5,7 @@ import { ArrowRight, RefreshCw } from "lucide-react";
 import { navItemsForRole } from "@/lib/navigation";
 import { ROLE_DESCRIPTIONS, ROLE_LABELS, ROLE_STYLES } from "@/lib/roles";
 import type { DashboardSnapshot } from "@/lib/dashboard-data";
+import { isPrinterOperative } from "@/lib/printer-status";
 import type { Role } from "@/types/user";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +49,7 @@ export function DashboardWelcome({
     (p) => p.status === "enajenada",
   ).length;
   const activePrinters = snapshot.printers.filter((p) =>
-    ["asignada", "inicializada", "de_demostracion"].includes(p.status),
+    isPrinterOperative(p.status),
   ).length;
   const printerLine =
     role === "DISTRIBUTOR"
