@@ -167,7 +167,7 @@ export function toPrinterRequest(
   if (values.installationDate.trim()) {
     const parsed = new Date(values.installationDate);
     if (Number.isNaN(parsed.getTime())) {
-      return "La fecha de instalación no es válida.";
+      return "La fecha de enajenación no es válida.";
     }
     installationDate = parsed.toISOString();
   }

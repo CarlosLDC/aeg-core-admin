@@ -94,7 +94,7 @@ const WIZARD_STEPS: (BatchWizardStep & {
     section: "technical",
     label: "Detalles",
     icon: Cpu,
-    subtitle: "Instalación, firmware y dirección MAC.",
+    subtitle: "Enajenación, firmware y dirección MAC.",
   },
 ];
 

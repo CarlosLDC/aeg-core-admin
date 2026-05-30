@@ -414,7 +414,7 @@ export function PrinterFormDialog({
               </legend>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block">
-                  <FieldLabel>Fecha de instalación</FieldLabel>
+                  <FieldLabel>Fecha de enajenación</FieldLabel>
                   <input
                     type="datetime-local"
                     value={form.installationDate}

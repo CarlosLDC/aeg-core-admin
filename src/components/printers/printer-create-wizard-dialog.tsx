@@ -63,7 +63,7 @@ function stepSubtitle(step: WizardStep): string {
     case 3:
       return "Distribuidor, cliente y software asociados.";
     case 4:
-      return "Instalación, firmware y dirección MAC.";
+      return "Enajenación, firmware y dirección MAC.";
     default:
       return "";
   }

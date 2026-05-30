@@ -53,7 +53,6 @@ import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import {
-  formatPrinterDate,
   printerModelLabel,
   printerToAssignmentRequest,
   printerToDispositionRequest,
@@ -93,7 +92,6 @@ import { PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
-import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 import { printerPath } from "@/lib/resource-routes";
 import {
   hrefForClient,
@@ -102,7 +100,19 @@ import {
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
-type PrinterSortKey = "price" | "installationDate" | "id" | "createdAt";
+type PrinterSortKey = "price" | "id" | "createdAt";
+
+function companyRifForBranch(
+  branchId: number | null | undefined,
+  branches: BranchResponse[],
+  companies: CompanyResponse[],
+): string {
+  if (branchId == null) return "—";
+  const branch = branches.find((b) => b.id === branchId);
+  if (!branch) return "—";
+  const rif = companies.find((c) => c.id === branch.companyId)?.rif?.trim();
+  return rif || "—";
+}
 
 function clientLabel(
   client: ClientResponse,
@@ -274,8 +284,6 @@ export function PrintersManager() {
     () =>
       sortTableRows(filteredPrinters, sort, {
         price: (a, b) => compareNumberValues(a.finalSalePrice, b.finalSalePrice),
-        installationDate: (a, b) =>
-          compareDateValues(a.installationDate, b.installationDate),
         id: (a, b) => compareNumberValues(a.id, b.id),
         createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
       }),
@@ -433,6 +441,22 @@ export function PrintersManager() {
     const c = clients.find((x) => x.id === clientId);
     if (!c) return "—";
     return clientLabel(c, branches, companies);
+  }
+
+  function getDistributorRif(distributorId: number | null): string {
+    if (distributorId == null) return "—";
+    const distributor = distributors.find((d) => d.id === distributorId);
+    if (!distributor) return "—";
+    return companyRifForBranch(distributor.branchId, branches, companies);
+  }
+
+  function getClientRif(clientId: number | null): string {
+    if (clientId == null) return "—";
+    const client = clients.find((c) => c.id === clientId);
+    if (!client) return "—";
+    const embedded = client.companyRif?.trim();
+    if (embedded) return embedded;
+    return companyRifForBranch(client.branchId, branches, companies);
   }
 
   function openCreate() {
@@ -830,17 +854,11 @@ export function PrintersManager() {
                           <th className="px-5 py-3 font-medium">Distribuidor</th>
                         ) : null}
                         <th className="px-5 py-3 font-medium">Cliente</th>
-                        <SortableTableHeader
-                          label={isDistributor ? "Enajenación" : "Instalación"}
-                          sortDirection={
-                            sort?.key === "installationDate" ? sort.direction : null
-                          }
-                          onToggle={() =>
-                            setSort((current) =>
-                              toggleTableSort(current, "installationDate"),
-                            )
-                          }
-                        />
+                        {isDistributor ? (
+                          <th className="px-5 py-3 font-medium">RIF Cliente</th>
+                        ) : (
+                          <th className="px-5 py-3 font-medium">RIF Distribuidor</th>
+                        )}
                         </TableRowMetaHeaders>
                       </tr>
                     </thead>
@@ -933,8 +951,10 @@ export function PrintersManager() {
                               {getClientLabel(printer.clientId)}
                             </TruncatedText>
                           </td>
-                          <td className="px-5 py-3.5 text-muted">
-                            {formatPrinterDate(printer.installationDate)}
+                          <td className="px-5 py-3.5 font-mono text-muted">
+                            {isDistributor
+                              ? getClientRif(printer.clientId)
+                              : getDistributorRif(printer.distributorId)}
                           </td>
                           </TableRowMetaCells>
                         </ClickableTableRow>

@@ -252,8 +252,8 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         viewBindings: ["printer.softwareId"],
       },
       {
-        formLabels: ["Fecha de instalación"],
-        viewLabels: ["Instalación"],
+        formLabels: ["Fecha de enajenación"],
+        viewLabels: ["Fecha de enajenación"],
         formBindings: ["form.installationDate"],
         viewBindings: ["printer.installationDate"],
       },
