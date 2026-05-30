@@ -107,6 +107,25 @@ export function printerToAssignmentRequest(
   };
 }
 
+export function printerToUnassignmentRequest(
+  printer: PrinterResponse,
+): PrinterRequest {
+  return {
+    modelId: printer.modelId,
+    softwareId: printer.softwareId,
+    clientId: printer.clientId,
+    distributorId: null,
+    fiscalSerial: printer.fiscalSerial,
+    finalSalePrice: printer.finalSalePrice,
+    paid: printer.paid,
+    installationDate: printer.installationDate,
+    versionFirmware: printer.versionFirmware,
+    macAddress: printer.macAddress,
+    status: "sin_asignar",
+    deviceType: printer.deviceType,
+  };
+}
+
 export function printerToDispositionRequest(
   printer: PrinterResponse,
   clientId: number,

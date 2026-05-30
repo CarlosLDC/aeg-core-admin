@@ -50,6 +50,11 @@ export function canDisposePrinterRecord(role: Role): boolean {
   return role === "DISTRIBUTOR";
 }
 
+/** Desasignar distribuidor y volver a Sin asignar (solo administrador). */
+export function canUnassignPrinterRecord(role: Role): boolean {
+  return role === "ADMIN" && can(role, "printers", "update");
+}
+
 /** Retirar una solicitud de revisión propia (clientes/empleados). */
 export function canCancelModificationReview(role: Role): boolean {
   return role === "DISTRIBUTOR";

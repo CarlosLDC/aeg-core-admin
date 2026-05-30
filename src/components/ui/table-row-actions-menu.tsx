@@ -3,7 +3,15 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Eye, Loader2, MoreHorizontal, Pencil, Trash2, XCircle } from "lucide-react";
+import {
+  Eye,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  UserMinus,
+  XCircle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type TableRowActionsMenuProps = {
@@ -15,7 +23,10 @@ export type TableRowActionsMenuProps = {
   deleteLabel?: string;
   onCancelReview?: () => void;
   cancelReviewLabel?: string;
+  onUnassign?: () => void;
+  unassignLabel?: string;
   deleting?: boolean;
+  unassigning?: boolean;
 };
 
 const menuItemClass =
@@ -34,8 +45,15 @@ function countMenuItems(
   hasEdit: boolean,
   hasDelete: boolean,
   hasCancelReview: boolean,
+  hasUnassign: boolean,
 ): number {
-  return 1 + (hasEdit ? 1 : 0) + (hasDelete ? 1 : 0) + (hasCancelReview ? 1 : 0);
+  return (
+    1 +
+    (hasEdit ? 1 : 0) +
+    (hasDelete ? 1 : 0) +
+    (hasCancelReview ? 1 : 0) +
+    (hasUnassign ? 1 : 0)
+  );
 }
 
 /** Menu is portaled with fixed positioning — use viewport space, not table/card clips. */
@@ -69,10 +87,12 @@ function computeMenuCoords(
   hasEdit: boolean,
   hasDelete: boolean,
   hasCancelReview: boolean,
+  hasUnassign: boolean,
 ): MenuCoords {
   const rect = trigger.getBoundingClientRect();
   const menuHeight =
-    menu?.offsetHeight ?? countMenuItems(hasEdit, hasDelete, hasCancelReview) * 40 + 8;
+    menu?.offsetHeight ??
+    countMenuItems(hasEdit, hasDelete, hasCancelReview, hasUnassign) * 40 + 8;
   const openUp = shouldOpenMenuUp(trigger, menuHeight);
 
   return {
@@ -91,7 +111,10 @@ export function TableRowActionsMenu({
   deleteLabel = "Eliminar",
   onCancelReview,
   cancelReviewLabel = "Cancelar revisión",
+  onUnassign,
+  unassignLabel = "Desasignar",
   deleting = false,
+  unassigning = false,
 }: TableRowActionsMenuProps) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<MenuCoords | null>(null);
@@ -103,12 +126,21 @@ export function TableRowActionsMenu({
   const hasEdit = Boolean(onEdit);
   const hasDelete = Boolean(onDelete);
   const hasCancelReview = Boolean(onCancelReview);
+  const hasUnassign = Boolean(onUnassign);
+  const rowBusy = deleting || unassigning;
 
   const updateCoords = () => {
     const trigger = triggerRef.current;
     if (!trigger) return;
     setCoords(
-      computeMenuCoords(trigger, menuRef.current, hasEdit, hasDelete, hasCancelReview),
+      computeMenuCoords(
+        trigger,
+        menuRef.current,
+        hasEdit,
+        hasDelete,
+        hasCancelReview,
+        hasUnassign,
+      ),
     );
   };
 
@@ -130,7 +162,7 @@ export function TableRowActionsMenu({
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", updateCoords);
     };
-  }, [open, hasEdit, hasDelete, hasCancelReview]);
+  }, [open, hasEdit, hasDelete, hasCancelReview, hasUnassign]);
 
   useEffect(() => {
     if (!open) return;
@@ -197,11 +229,33 @@ export function TableRowActionsMenu({
             {editLabel}
           </button>
         ) : null}
+        {onUnassign ? (
+          <button
+            type="button"
+            role="menuitem"
+            disabled={rowBusy}
+            className={cn(
+              menuItemClass,
+              "text-violet-800 hover:bg-violet-500/10 disabled:opacity-50 dark:text-violet-200",
+            )}
+            onClick={() => {
+              close();
+              onUnassign();
+            }}
+          >
+            {unassigning ? (
+              <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+            ) : (
+              <UserMinus className="size-4 shrink-0" aria-hidden />
+            )}
+            {unassignLabel}
+          </button>
+        ) : null}
         {onCancelReview ? (
           <button
             type="button"
             role="menuitem"
-            disabled={deleting}
+            disabled={rowBusy}
             className={cn(
               menuItemClass,
               "text-amber-800 hover:bg-amber-500/10 disabled:opacity-50 dark:text-amber-200",
@@ -223,7 +277,7 @@ export function TableRowActionsMenu({
           <button
             type="button"
             role="menuitem"
-            disabled={deleting}
+            disabled={rowBusy}
             className={cn(
               menuItemClass,
               "text-rose-700 hover:bg-rose-500/10 hover:text-rose-700 disabled:opacity-50 dark:text-rose-300",
@@ -263,6 +317,7 @@ export function TableRowActionsMenu({
                 hasEdit,
                 hasDelete,
                 hasCancelReview,
+                hasUnassign,
               ),
             );
           }

@@ -14,6 +14,7 @@ import {
 } from "@/components/printers/printer-form-dialog";
 import { runSerialBatch } from "@/lib/batch-create";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
+import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import {
@@ -32,6 +33,7 @@ import {
   canDisposePrinterRecord,
   canCreatePrinterRecord,
   canModifyPrinterRecord,
+  canUnassignPrinterRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
 import { useToast } from "@/context/toast-provider";
@@ -56,6 +58,7 @@ import {
   printerModelLabel,
   printerToAssignmentRequest,
   printerToDispositionRequest,
+  printerToUnassignmentRequest,
   printerToFormValues,
   PRINTER_STATUS_LABELS,
   toPrinterRequest,
@@ -88,6 +91,7 @@ import type { CompanyResponse } from "@/types/company";
 import type { PrinterModelResponse } from "@/types/printer-model";
 import type { PrinterResponse, PrinterStatus } from "@/types/printer";
 import { isPrinterAssigned, isPrinterUnassigned } from "@/lib/printer-status";
+import { getPrinterStatusQuickAction } from "@/lib/printer-quick-actions";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
@@ -134,6 +138,7 @@ export function PrintersManager() {
   const isAdmin = user?.role === "ADMIN";
   const isDistributor = user?.role === "DISTRIBUTOR";
   const canAssignInitialized = isAdmin && canModify;
+  const canUnassignAssigned = user ? canUnassignPrinterRecord(user.role) : false;
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
   const [authMeDistributorId, setAuthMeDistributorId] = useState<number | null>(
     null,
@@ -178,6 +183,7 @@ export function PrintersManager() {
   } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [unassigningId, setUnassigningId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("printers");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<PrinterStatus | "all">(
@@ -503,6 +509,59 @@ export function PrintersManager() {
     }
   }
 
+  async function handleUnassign(printer: PrinterResponse) {
+    if (!canUnassignAssigned) {
+      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+      return;
+    }
+    if (!isPrinterAssigned(printer.status)) {
+      toast.error("Solo se pueden desasignar impresoras con estatus Asignada.");
+      return;
+    }
+
+    const distributorName = getDistributorLabel(printer.distributorId);
+    const accepted = await confirm({
+      title: "Confirmar desasignación",
+      content: (
+        <>
+          <p className="text-sm text-muted">
+            Vas a desasignar la impresora{" "}
+            <span className="font-mono text-card-foreground">
+              {printer.fiscalSerial}
+            </span>
+            {distributorName !== "—" ? (
+              <>
+                {" "}
+                de{" "}
+                <strong className="text-card-foreground">{distributorName}</strong>
+              </>
+            ) : null}
+            . El equipo volverá a estatus Sin asignar y quedará sin distribuidor.
+          </p>
+          <PrinterStatusTransition from="asignada" to="sin_asignar" />
+        </>
+      ),
+      confirmLabel: "Desasignar impresora",
+      destructive: true,
+    });
+    if (!accepted) return;
+
+    setUnassigningId(printer.id);
+    try {
+      const body = printerToUnassignmentRequest(printer);
+      await updatePrinter(printer.id, body);
+      toast.success(
+        `Impresora ${printer.fiscalSerial} desasignada correctamente.`,
+        { href: printerPath(printer.id) },
+      );
+      await loadPrinters({ silent: true });
+    } catch (err) {
+      toast.error(getPrintersErrorMessage(err));
+    } finally {
+      setUnassigningId(null);
+    }
+  }
+
   async function handleDispositionSubmit(clientId: number) {
     if (!dispositionPrinter || !canDisposeAssigned) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
@@ -818,7 +877,18 @@ export function PrintersManager() {
                       </tr>
                     </thead>
                     <tbody>
-                      {pagination.paginatedItems.map((printer) => (
+                      {pagination.paginatedItems.map((printer) => {
+                        const statusQuickAction = getPrinterStatusQuickAction({
+                          status: printer.status,
+                          canAssign: canAssignInitialized,
+                          canUnassign: canUnassignAssigned,
+                          canDispose: canDisposeAssigned,
+                          onAssign: () => openAssignment(printer),
+                          onUnassign: () => void handleUnassign(printer),
+                          onDispose: () => openDisposition(printer),
+                        });
+
+                        return (
                         <ClickableTableRow
                           key={printer.id}
                           href={printerPath(printer.id)}
@@ -836,12 +906,19 @@ export function PrintersManager() {
                                   onEdit={
                                     canModify ? () => openEdit(printer) : undefined
                                   }
+                                  onUnassign={
+                                    canUnassignAssigned &&
+                                    isPrinterAssigned(printer.status)
+                                      ? () => void handleUnassign(printer)
+                                      : undefined
+                                  }
                                   onDelete={
                                     canModify
                                       ? () => handleDelete(printer)
                                       : undefined
                                   }
                                   deleting={deletingId === printer.id}
+                                  unassigning={unassigningId === printer.id}
                                 />
                               </td>
                             }
@@ -852,24 +929,8 @@ export function PrintersManager() {
                           <td className="px-5 py-3.5" data-row-click="ignore">
                             <PrinterStatusBadge
                               status={printer.status}
-                              onClick={
-                                canAssignInitialized &&
-                                isPrinterUnassigned(printer.status)
-                                  ? () => openAssignment(printer)
-                                  : canDisposeAssigned &&
-                                      isPrinterAssigned(printer.status)
-                                    ? () => openDisposition(printer)
-                                    : undefined
-                              }
-                              actionLabel={
-                                canAssignInitialized &&
-                                isPrinterUnassigned(printer.status)
-                                  ? "Asignar impresora"
-                                  : canDisposeAssigned &&
-                                      isPrinterAssigned(printer.status)
-                                    ? "Enajenar impresora"
-                                    : undefined
-                              }
+                              onClick={statusQuickAction?.onClick}
+                              actionLabel={statusQuickAction?.label}
                             />
                           </td>
                           {!isDistributor ? (
@@ -913,7 +974,8 @@ export function PrintersManager() {
                           </td>
                           </TableRowMetaCells>
                         </ClickableTableRow>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </TableScroll>
