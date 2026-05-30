@@ -1,14 +1,10 @@
 "use client";
 
 import { FormEvent, useId, useMemo, useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { Check, Loader2, Search, X } from "lucide-react";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
 import { FieldLabel } from "@/components/ui/field-label";
-import {
-  SearchableSelect,
-  type SearchableSelectOption,
-} from "@/components/ui/searchable-select";
 import { useConfirm } from "@/context/confirm-provider";
 import type { PrinterResponse } from "@/types/printer";
 import { cn } from "@/lib/utils";
@@ -43,14 +39,6 @@ function resolveDefaultDistributorId(
   return "";
 }
 
-function toSearchableOptions(options: SelectOption[]): SearchableSelectOption[] {
-  return options.map((opt) => ({
-    value: String(opt.id),
-    label: opt.label,
-    searchText: String(opt.id),
-  }));
-}
-
 export function PrinterAssignmentDialog({
   printer,
   saving,
@@ -68,11 +56,7 @@ export function PrinterAssignmentDialog({
   const [distributorOverride, setDistributorOverride] = useState<string | null>(
     null,
   );
-
-  const distributorSearchOptions = useMemo(
-    () => toSearchableOptions(distributorOptions),
-    [distributorOptions],
-  );
+  const [distributorQuery, setDistributorQuery] = useState("");
 
   const defaultDistributorSelection = useMemo(
     () =>
@@ -92,6 +76,13 @@ export function PrinterAssignmentDialog({
     if (!Number.isFinite(id) || id <= 0) return null;
     return distributorOptions.find((opt) => opt.id === id)?.label ?? null;
   }, [distributorId, distributorOptions]);
+  const filteredDistributorOptions = useMemo(() => {
+    const q = distributorQuery.trim().toLowerCase();
+    if (!q) return distributorOptions;
+    return distributorOptions.filter((opt) =>
+      `${opt.id} ${opt.label}`.toLowerCase().includes(q),
+    );
+  }, [distributorOptions, distributorQuery]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -193,23 +184,57 @@ export function PrinterAssignmentDialog({
             ) : (
               <div>
                 <FieldLabel>Distribuidora</FieldLabel>
-                <SearchableSelect
-                  value={distributorId}
-                  onChange={setDistributorOverride}
-                  options={distributorSearchOptions}
-                  disabled={disabled}
-                  loading={catalogLoading}
-                  emptyLabel={
-                    distributorOptions.length === 0
-                      ? "Sin distribuidoras disponibles"
-                      : "Seleccionar distribuidora"
-                  }
-                  searchPlaceholder="Buscar distribuidora…"
-                  modalTitle="Distribuidora"
-                  required
-                  openOnMount
-                  preloadOptions
-                />
+                <div className="relative mt-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
+                  <input
+                    type="text"
+                    value={distributorQuery}
+                    onChange={(e) => setDistributorQuery(e.target.value)}
+                    placeholder="Buscar distribuidora por nombre o ID…"
+                    disabled={disabled}
+                    className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:opacity-60"
+                  />
+                </div>
+                <div className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-border bg-background/30">
+                  {catalogLoading ? (
+                    <p className="px-3 py-2 text-sm text-muted">
+                      Cargando distribuidoras…
+                    </p>
+                  ) : filteredDistributorOptions.length === 0 ? (
+                    <p className="px-3 py-2 text-sm text-muted">
+                      {distributorOptions.length === 0
+                        ? "Sin distribuidoras disponibles"
+                        : "Sin resultados"}
+                    </p>
+                  ) : (
+                    <ul className="py-1">
+                      {filteredDistributorOptions.map((opt) => {
+                        const isSelected = String(opt.id) === distributorId;
+                        return (
+                          <li key={opt.id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDistributorOverride(String(opt.id));
+                                setFieldError(null);
+                              }}
+                              disabled={disabled}
+                              className={cn(
+                                "flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-foreground/5 disabled:opacity-60",
+                                isSelected && "bg-accent/10",
+                              )}
+                            >
+                              <span className="truncate">{opt.label}</span>
+                              {isSelected ? (
+                                <Check className="size-4 shrink-0 text-accent" />
+                              ) : null}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
                 {fieldError ? (
                   <p className="mt-1 text-sm text-rose-600 dark:text-rose-400">
                     {fieldError}
