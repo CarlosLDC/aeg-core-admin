@@ -8,12 +8,14 @@ type ContractDocumentUploadProps = {
   urls: string[];
   onChange: (urls: string[]) => void;
   disabled?: boolean;
+  compact?: boolean;
 };
 
 export function ContractDocumentUpload({
   urls,
   onChange,
   disabled = false,
+  compact = false,
 }: ContractDocumentUploadProps) {
   return (
     <PhotoDocumentUpload
@@ -21,6 +23,7 @@ export function ContractDocumentUpload({
       urls={urls}
       onChange={onChange}
       disabled={disabled}
+      compact={compact}
       ariaLabel="Subir documentos del contrato"
       addLabel="Añadir documentos"
     />

@@ -118,6 +118,16 @@ function mergeClientPatch(
   return { ...prev, ...patch };
 }
 
+function isClientFormSection(
+  section: FormStepDef["section"],
+): section is ClientFormSection {
+  return (
+    section === "fiscal" ||
+    section === "location" ||
+    section === "contact"
+  );
+}
+
 export function BranchCreateWizardDialog({
   mode = "create",
   open,
@@ -324,6 +334,7 @@ export function BranchCreateWizardDialog({
 
   const displayError = stepError ?? error;
   const currentFormStep = visibleFormSteps.find((s) => s.step === step);
+  const isContractStep = currentFormStep?.section === "contract";
 
   return (
     <div
@@ -392,7 +403,14 @@ export function BranchCreateWizardDialog({
           )}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+        <div
+          className={cn(
+            "min-h-0 flex-1 px-4 sm:px-6",
+            isContractStep
+              ? "flex flex-col overflow-hidden py-3"
+              : "overflow-y-auto py-4",
+          )}
+        >
           {resuming && step >= 2 && step < 5 && (
             <p className="mb-4 rounded-lg border border-accent/20 bg-accent/5 px-3 py-2 text-sm text-card-foreground">
               La empresa ya está registrada. Completa los datos de la sucursal y
@@ -412,12 +430,18 @@ export function BranchCreateWizardDialog({
             <form
               id={formId}
               onSubmit={handleFormSubmit}
-              className="flex h-full flex-col"
+              className={cn(
+                "flex flex-col",
+                isContractStep ? "min-h-0 flex-1" : "h-full",
+              )}
             >
               {displayError && (
                 <p
                   role="alert"
-                  className="mb-4 shrink-0 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
+                  className={cn(
+                    "shrink-0 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300",
+                    isContractStep ? "mb-2" : "mb-4",
+                  )}
                 >
                   {displayError}
                 </p>
@@ -432,13 +456,15 @@ export function BranchCreateWizardDialog({
                   distributors={distributors}
                   companies={companies}
                 />
-              ) : currentFormStep?.section === "contract" ? (
+              ) : isContractStep ? (
                 <BranchWizardContractFields
                   form={form}
                   setForm={setForm}
                   saving={saving}
+                  className="min-h-0 flex-1"
                 />
-              ) : currentFormStep ? (
+              ) : currentFormStep &&
+                isClientFormSection(currentFormStep.section) ? (
                 <ClientFormFields
                   form={form}
                   setForm={setClientForm}

@@ -15,6 +15,7 @@ type BranchWizardContractFieldsProps = {
   form: BranchWizardValues;
   setForm: React.Dispatch<React.SetStateAction<BranchWizardValues>>;
   saving: boolean;
+  className?: string;
 };
 
 const inputClass =
@@ -29,39 +30,21 @@ type ContractStepMeta = {
 
 function ContractBlock({
   title,
-  description,
   kind,
   draft,
   onChange,
   saving,
-  showHeader = true,
 }: {
   title: string;
-  description: string;
   kind: ContractKind;
   draft: BranchWizardContractDraft;
   onChange: (patch: Partial<BranchWizardContractDraft>) => void;
   saving: boolean;
-  showHeader?: boolean;
 }) {
   return (
-    <fieldset
-      className={cn(
-        "space-y-3 rounded-lg border border-border bg-foreground/[0.02]",
-        showHeader ? "p-3" : "border-0 bg-transparent p-0",
-      )}
-    >
-      {showHeader ? (
-        <>
-          <legend className="text-sm font-semibold text-card-foreground">
-            {title}
-          </legend>
-          <p className="text-xs text-muted">{description}</p>
-        </>
-      ) : (
-        <p className="sr-only">{title}</p>
-      )}
-      <div className="grid gap-3 sm:grid-cols-2">
+    <fieldset className="flex min-h-0 flex-1 flex-col gap-2 border-0 p-0">
+      <p className="sr-only">{title}</p>
+      <div className="grid shrink-0 gap-2 sm:grid-cols-2">
         <label className="block">
           <FieldLabel required>Inicio</FieldLabel>
           <input
@@ -85,14 +68,19 @@ function ContractBlock({
           />
         </label>
       </div>
-      <div>
-        <FieldLabel required>Documentos</FieldLabel>
-        <ContractDocumentUpload
-          kind={kind}
-          urls={draft.photoUrls}
-          onChange={(photoUrls) => onChange({ photoUrls })}
-          disabled={saving}
-        />
+      <div className="flex min-h-0 flex-1 flex-col gap-1">
+        <FieldLabel required className="shrink-0">
+          Documentos
+        </FieldLabel>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <ContractDocumentUpload
+            kind={kind}
+            urls={draft.photoUrls}
+            onChange={(photoUrls) => onChange({ photoUrls })}
+            disabled={saving}
+            compact
+          />
+        </div>
       </div>
     </fieldset>
   );
@@ -102,6 +90,7 @@ export function BranchWizardContractFields({
   form,
   setForm,
   saving,
+  className,
 }: BranchWizardContractFieldsProps) {
   const steps = useMemo((): ContractStepMeta[] => {
     const list: ContractStepMeta[] = [];
@@ -133,8 +122,7 @@ export function BranchWizardContractFields({
   }, [steps.length, form.isDistributor, form.isServiceCenter]);
 
   const stepCount = steps.length;
-  const safeIndex =
-    stepCount === 0 ? 0 : Math.min(index, stepCount - 1);
+  const safeIndex = stepCount === 0 ? 0 : Math.min(index, stepCount - 1);
   const showNav = stepCount > 1;
   const current = steps[safeIndex];
   const isFirst = safeIndex === 0;
@@ -186,15 +174,12 @@ export function BranchWizardContractFields({
   };
 
   return (
-    <div className="space-y-3">
-      <p className="text-xs text-muted">
-        Sube el primer contrato de cada rol seleccionado. Se vinculará
-        automáticamente a la entidad que se creará con esta sucursal.
-      </p>
-
+    <div
+      className={cn("flex min-h-0 flex-1 flex-col gap-2", className)}
+    >
       {showNav ? (
         <div
-          className="flex items-center gap-1 rounded-lg border border-border bg-foreground/[0.02] px-1 py-1"
+          className="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-foreground/[0.02] px-1 py-1"
           role="group"
           aria-label="Tipo de contrato"
         >
@@ -225,21 +210,19 @@ export function BranchWizardContractFields({
             <ChevronRight className="size-4" />
           </button>
         </div>
-      ) : null}
-
-      {!showNav ? (
-        <p className="text-xs text-muted">{current.description}</p>
-      ) : null}
+      ) : (
+        <p className="shrink-0 text-sm font-semibold text-card-foreground">
+          {current.title}
+        </p>
+      )}
 
       <ContractBlock
         key={current.id}
         title={current.title}
-        description={current.description}
         kind={current.kind}
         draft={draft}
         onChange={onChange}
         saving={saving}
-        showHeader={!showNav}
       />
     </div>
   );

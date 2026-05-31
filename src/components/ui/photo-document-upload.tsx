@@ -20,6 +20,8 @@ type PhotoDocumentUploadProps = {
   ariaLabel?: string;
   addLabel?: string;
   requiredHint?: string;
+  /** Fila horizontal y lista acotada; pensado para modales con altura fija. */
+  compact?: boolean;
 };
 
 export function PhotoDocumentUpload({
@@ -30,6 +32,7 @@ export function PhotoDocumentUpload({
   ariaLabel = "Subir fotos o documentos",
   addLabel = "Añadir archivos",
   requiredHint = "Se requiere al menos un archivo.",
+  compact = false,
 }: PhotoDocumentUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -68,8 +71,74 @@ export function PhotoDocumentUpload({
 
   const hasFiles = urls.length > 0;
 
+  const fileRows = urls.map((url, index) => {
+    const pdf = isPdfUrl(url);
+    const viewUrl = documentViewUrl(url);
+    const Icon = pdf ? FileText : ImageIcon;
+    return (
+      <li
+        key={`${url}-${index}`}
+        className={cn(
+          "flex items-center gap-2 rounded-lg border border-border bg-background",
+          compact ? "p-1.5" : "items-start gap-2.5 p-2.5",
+        )}
+      >
+        <div
+          className={cn(
+            "flex shrink-0 items-center justify-center overflow-hidden rounded-md bg-foreground/5",
+            compact ? "size-8" : "size-10",
+          )}
+        >
+          {!pdf ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={viewUrl} alt="" className="size-full object-cover" />
+          ) : (
+            <Icon
+              className={cn("text-muted", compact ? "size-3.5" : "size-4")}
+              aria-hidden
+            />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p
+            className={cn(
+              "truncate font-medium text-card-foreground",
+              compact ? "text-xs" : "text-sm",
+            )}
+          >
+            {blobDocumentLabel(url)}
+          </p>
+          <a
+            href={viewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-accent hover:underline"
+          >
+            Ver archivo
+          </a>
+        </div>
+        <button
+          type="button"
+          disabled={disabled || uploading}
+          onClick={() => removeUrl(index)}
+          className={cn(
+            "shrink-0 rounded-lg text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50",
+            compact ? "p-1" : "p-1.5",
+          )}
+          aria-label="Quitar archivo"
+        >
+          <Trash2 className={compact ? "size-3.5" : "size-4"} />
+        </button>
+      </li>
+    );
+  });
+
   return (
-    <div className="space-y-3">
+    <div
+      className={cn(
+        compact ? "flex min-h-0 flex-1 flex-col gap-2" : "space-y-3",
+      )}
+    >
       <input
         ref={inputRef}
         type="file"
@@ -84,7 +153,8 @@ export function PhotoDocumentUpload({
         role="group"
         aria-label={ariaLabel}
         className={cn(
-          "rounded-xl border border-dashed border-border bg-foreground/[0.02] px-4 py-5",
+          "shrink-0 rounded-xl border border-dashed border-border bg-foreground/[0.02]",
+          compact ? "px-3 py-2" : "px-4 py-5",
           disabled && "opacity-60",
         )}
       >
@@ -92,96 +162,102 @@ export function PhotoDocumentUpload({
           type="button"
           disabled={disabled || uploading}
           onClick={openFilePicker}
-          className="group flex w-full flex-col items-center gap-3 rounded-lg px-1 py-0.5 text-center transition-colors enabled:hover:bg-foreground/[0.02] disabled:cursor-not-allowed"
+          className={cn(
+            "group w-full rounded-lg transition-colors enabled:hover:bg-foreground/[0.02] disabled:cursor-not-allowed",
+            compact
+              ? "flex items-center gap-2.5 px-0.5 py-0.5 text-left"
+              : "flex flex-col items-center gap-3 px-1 py-0.5 text-center",
+          )}
         >
-          <div className="flex size-11 items-center justify-center rounded-full bg-accent/10 text-accent">
+          <div
+            className={cn(
+              "flex shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent",
+              compact ? "size-9" : "size-11",
+            )}
+          >
             {uploading ? (
-              <Loader2 className="size-5 animate-spin" aria-hidden />
+              <Loader2
+                className={cn("animate-spin", compact ? "size-4" : "size-5")}
+                aria-hidden
+              />
             ) : (
-              <Upload className="size-5" aria-hidden />
+              <Upload
+                className={cn(compact ? "size-4" : "size-5")}
+                aria-hidden
+              />
             )}
           </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-card-foreground">
+          <div className={cn(compact ? "min-w-0 flex-1" : "space-y-1")}>
+            <p
+              className={cn(
+                "font-medium text-card-foreground",
+                compact ? "truncate text-sm" : "text-sm",
+              )}
+            >
               {uploading ? "Subiendo archivos…" : addLabel}
             </p>
-            <p className="text-xs leading-relaxed text-muted">
+            <p
+              className={cn(
+                "text-muted",
+                compact
+                  ? "truncate text-xs"
+                  : "text-xs leading-relaxed",
+              )}
+            >
               PDF o imágenes (JPG, PNG, WebP, GIF)
               <span className="mx-1 text-border">·</span>
               máx. 10 MB
             </p>
-            {!hasFiles && !uploading && requiredHint && (
+            {!compact && !hasFiles && !uploading && requiredHint && (
               <p className="pt-0.5 text-xs text-muted/90">{requiredHint}</p>
             )}
           </div>
-          <span
-            className={cn(
-              "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm font-medium text-foreground",
-              !disabled && !uploading && "group-hover:border-accent/30",
-            )}
-          >
-            {uploading ? "Espera un momento…" : "Elegir archivos"}
-          </span>
+          {compact ? (
+            <span
+              className={cn(
+                "shrink-0 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground",
+                !disabled && !uploading && "group-hover:border-accent/30",
+              )}
+            >
+              {uploading ? "…" : "Elegir"}
+            </span>
+          ) : (
+            <span
+              className={cn(
+                "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm font-medium text-foreground",
+                !disabled && !uploading && "group-hover:border-accent/30",
+              )}
+            >
+              {uploading ? "Espera un momento…" : "Elegir archivos"}
+            </span>
+          )}
         </button>
+        {compact && !hasFiles && !uploading && requiredHint && (
+          <p className="mt-1.5 text-xs text-muted/90">{requiredHint}</p>
+        )}
       </div>
 
       {uploadError && (
         <p
           role="alert"
-          className="rounded-lg border border-amber-200/70 bg-amber-500/8 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/25 dark:text-amber-100"
+          className={cn(
+            "shrink-0 rounded-lg border border-amber-200/70 bg-amber-500/8 text-amber-900 dark:border-amber-500/25 dark:text-amber-100",
+            compact ? "px-2 py-1.5 text-xs" : "px-3 py-2 text-sm",
+          )}
         >
           {uploadError}
         </p>
       )}
 
       {hasFiles && (
-        <ul className="space-y-2">
-          {urls.map((url, index) => {
-            const pdf = isPdfUrl(url);
-            const viewUrl = documentViewUrl(url);
-            const Icon = pdf ? FileText : ImageIcon;
-            return (
-              <li
-                key={`${url}-${index}`}
-                className="flex items-start gap-2.5 rounded-lg border border-border bg-background p-2.5"
-              >
-                <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-foreground/5">
-                  {!pdf ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={viewUrl}
-                      alt=""
-                      className="size-full object-cover"
-                    />
-                  ) : (
-                    <Icon className="size-4 text-muted" aria-hidden />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1 pt-0.5">
-                  <p className="truncate text-sm font-medium text-card-foreground">
-                    {blobDocumentLabel(url)}
-                  </p>
-                  <a
-                    href={viewUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-0.5 inline-block text-xs text-accent hover:underline"
-                  >
-                    Ver archivo
-                  </a>
-                </div>
-                <button
-                  type="button"
-                  disabled={disabled || uploading}
-                  onClick={() => removeUrl(index)}
-                  className="shrink-0 rounded-lg p-1.5 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                  aria-label="Quitar archivo"
-                >
-                  <Trash2 className="size-4" />
-                </button>
-              </li>
-            );
-          })}
+        <ul
+          className={cn(
+            compact
+              ? "min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pr-0.5"
+              : "space-y-2",
+          )}
+        >
+          {fileRows}
         </ul>
       )}
     </div>
