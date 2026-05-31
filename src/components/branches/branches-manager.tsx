@@ -62,6 +62,14 @@ import {
   createClientOnboarding,
   type ClientOnboardingValues,
 } from "@/lib/client-onboarding";
+import {
+  branchWizardNeedsContracts,
+  createBranchWizardContracts,
+  validateBranchWizardContracts,
+} from "@/lib/branch-wizard-contracts";
+import {
+  emptyBranchWizardContractDraft,
+} from "@/components/branches/branch-wizard-types";
 import { toBranchRequest } from "@/lib/branch-request";
 import { invalidateCatalogRoles } from "@/lib/catalog-roles-cache";
 import type { BranchWithRoles } from "@/types/branch";
@@ -70,7 +78,12 @@ import type { DistributorResponse } from "@/types/branch-role";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
-import { branchPath, companyPath } from "@/lib/resource-routes";
+import {
+  branchPath,
+  companyPath,
+  distributorContractPath,
+  serviceCenterContractPath,
+} from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
@@ -144,6 +157,8 @@ function branchToWizardValues(
     clientDistributorId: branch.client?.distributorId
       ? String(branch.client.distributorId)
       : "",
+    distributorContract: emptyBranchWizardContractDraft(),
+    serviceCenterContract: emptyBranchWizardContractDraft(),
   };
 }
 
@@ -387,26 +402,74 @@ export function BranchesManager() {
           email: values.email,
         };
 
+        const roles = {
+          isClient: values.isClient,
+          isDistributor: values.isDistributor,
+          isServiceCenter: values.isServiceCenter,
+          clientDistributorId: values.clientDistributorId,
+        };
+
+        if (branchWizardNeedsContracts(roles)) {
+          const contractValidation = validateBranchWizardContracts(values, roles);
+          if (contractValidation) {
+            setFormError(contractValidation);
+            return;
+          }
+        }
+
         const result = await createClientOnboarding({
           values: onboardingValues,
           companies,
           resumeCompanyId: wizardResumeCompanyId,
-          roles: {
-            isClient: values.isClient,
-            isDistributor: values.isDistributor,
-            isServiceCenter: values.isServiceCenter,
-            clientDistributorId: values.clientDistributorId,
-          },
+          roles,
         });
 
-        toast.success(
-          result.companyCreated
-            ? `Empresa "${result.companyLabel}" y sucursal "${result.branchLabel}" creadas correctamente.`
-            : result.companyLinkedExisting
-              ? `Sucursal "${result.branchLabel}" añadida a la empresa existente "${result.companyLabel}".`
-              : `Sucursal "${result.branchLabel}" creada correctamente.`,
-          { href: branchPath(result.branch.id) },
-        );
+        let contractHref: string | undefined;
+        let contractNote = "";
+
+        if (branchWizardNeedsContracts(roles)) {
+          try {
+            const contracts = await createBranchWizardContracts({
+              values,
+              roles,
+              distributorId: result.distributorId,
+              serviceCenterId: result.serviceCenterId,
+            });
+            if (contracts.distributorContractId != null) {
+              contractHref = distributorContractPath(
+                contracts.distributorContractId,
+              );
+              contractNote = " Contrato de distribuidora registrado.";
+            } else if (contracts.serviceCenterContractId != null) {
+              contractHref = serviceCenterContractPath(
+                contracts.serviceCenterContractId,
+              );
+              contractNote = " Contrato de centro de servicio registrado.";
+            }
+          } catch (contractErr) {
+            const contractMessage =
+              contractErr instanceof Error
+                ? contractErr.message
+                : "No se pudo registrar el contrato.";
+            toast.error(
+              `Sucursal creada, pero el contrato falló: ${contractMessage}. Complétalo en Contratos.`,
+            );
+            closeWizard();
+            invalidateCatalogRoles();
+            await refreshScope();
+            return;
+          }
+        }
+
+        const baseMessage = result.companyCreated
+          ? `Empresa "${result.companyLabel}" y sucursal "${result.branchLabel}" creadas correctamente.`
+          : result.companyLinkedExisting
+            ? `Sucursal "${result.branchLabel}" añadida a la empresa existente "${result.companyLabel}".`
+            : `Sucursal "${result.branchLabel}" creada correctamente.`;
+
+        toast.success(`${baseMessage}${contractNote}`, {
+          href: contractHref ?? branchPath(result.branch.id),
+        });
         closeWizard();
       } else {
         if (!selected || !canModify) {

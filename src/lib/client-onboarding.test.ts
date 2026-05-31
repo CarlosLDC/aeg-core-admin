@@ -24,6 +24,7 @@ vi.mock("@/lib/clients-api", () => ({
 
 vi.mock("@/lib/distributors-api", () => ({
   fetchDistributors: vi.fn(),
+  fetchDistributorById: vi.fn(),
 }));
 
 vi.mock("@/lib/service-centers-api", () => ({
@@ -49,7 +50,10 @@ import {
   fetchClientByBranchId,
   fetchClients,
 } from "@/lib/clients-api";
-import { fetchDistributors } from "@/lib/distributors-api";
+import {
+  fetchDistributorById,
+  fetchDistributors,
+} from "@/lib/distributors-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
 
 const branchRow = {
@@ -84,6 +88,11 @@ describe("createClientOnboarding", () => {
     }));
     vi.mocked(fetchClients).mockResolvedValue([]);
     vi.mocked(fetchDistributors).mockResolvedValue([]);
+    vi.mocked(fetchDistributorById).mockImplementation(async (id) => ({
+      id,
+      branchId: id === 5 ? 99 : 1,
+      createdAt: "",
+    }));
     vi.mocked(fetchServiceCenters).mockResolvedValue([]);
     vi.mocked(fetchClientByBranchId).mockResolvedValue(null);
     vi.mocked(createClient).mockResolvedValue(

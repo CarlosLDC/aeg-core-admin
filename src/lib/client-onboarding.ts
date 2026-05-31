@@ -57,7 +57,20 @@ export type CreateClientOnboardingResult = {
   branchLabel: string;
   /** Empresas refrescadas tras resolver RIF duplicado (para actualizar scope en UI) */
   refreshedCompanies?: CompanyResponse[];
+  distributorId?: number | null;
+  serviceCenterId?: number | null;
 };
+
+export async function fetchBranchRoleIds(branchId: number): Promise<{
+  distributorId: number | null;
+  serviceCenterId: number | null;
+}> {
+  const branch = await loadBranchWithRoles(branchId);
+  return {
+    distributorId: branch?.distributor?.id ?? null,
+    serviceCenterId: branch?.serviceCenter?.id ?? null,
+  };
+}
 
 async function loadBranchWithRoles(branchId: number): Promise<BranchWithRoles | null> {
   const [branch, distributorRows, clientRows, serviceCenterRows] = await Promise.all([
@@ -99,6 +112,7 @@ export async function createClientOnboarding(
   ) {
     await linkDistributorClientWithRetry(resumeBranchId, roles);
     const branch = await fetchBranchById(resumeBranchId);
+    const roleIds = await fetchBranchRoleIds(resumeBranchId);
     const companyList = companies;
     return {
       branch,
@@ -110,6 +124,7 @@ export async function createClientOnboarding(
         companyList.find((c) => c.id === branch.companyId)?.businessName ??
         values.businessName,
       branchLabel,
+      ...roleIds,
     };
   }
 
@@ -211,6 +226,8 @@ export async function createClientOnboarding(
     companyList.find((c) => c.id === companyId)?.businessName ??
     values.businessName;
 
+  const roleIds = await fetchBranchRoleIds(created.id);
+
   return {
     branch: created,
     companyId,
@@ -220,6 +237,7 @@ export async function createClientOnboarding(
     companyLabel,
     branchLabel,
     refreshedCompanies: resolved.companies,
+    ...roleIds,
   };
 }
 

@@ -1,5 +1,17 @@
 import type { ContributorType } from "@/types/company";
 
+export type BranchWizardContractDraft = {
+  startDate: string;
+  endDate: string;
+  photoUrls: string[];
+};
+
+export const emptyBranchWizardContractDraft = (): BranchWizardContractDraft => ({
+  startDate: "",
+  endDate: "",
+  photoUrls: [],
+});
+
 export type BranchWizardValues = {
   rif: string;
   businessName: string;
@@ -15,6 +27,8 @@ export type BranchWizardValues = {
   isDistributor: boolean;
   isServiceCenter: boolean;
   clientDistributorId: string;
+  distributorContract: BranchWizardContractDraft;
+  serviceCenterContract: BranchWizardContractDraft;
 };
 
 export const emptyBranchWizardForm = (): BranchWizardValues => ({
@@ -32,4 +46,6 @@ export const emptyBranchWizardForm = (): BranchWizardValues => ({
   isDistributor: false,
   isServiceCenter: false,
   clientDistributorId: "",
+  distributorContract: emptyBranchWizardContractDraft(),
+  serviceCenterContract: emptyBranchWizardContractDraft(),
 });

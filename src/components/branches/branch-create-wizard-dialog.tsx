@@ -1,7 +1,16 @@
 "use client";
 
-import { FormEvent, useEffect, useId, useState } from "react";
-import { Building2, Loader2, MapPin, Phone, Tags, X } from "lucide-react";
+import { FormEvent, useEffect, useId, useMemo, useState } from "react";
+import {
+  Building2,
+  FileText,
+  Loader2,
+  MapPin,
+  Phone,
+  Tags,
+  X,
+} from "lucide-react";
+import { BranchWizardContractFields } from "@/components/branches/branch-wizard-contract-fields";
 import { BranchWizardRolesFields } from "@/components/branches/branch-wizard-roles-fields";
 import {
   emptyBranchWizardForm,
@@ -12,6 +21,9 @@ import {
   type ClientFormSection,
 } from "@/components/clients/client-form-fields";
 import { SeniatDocumentScan } from "@/components/seniat/seniat-document-scan";
+import { useAuth } from "@/context/auth-provider";
+import { canCreateContractRecord } from "@/lib/api-permissions";
+import { validateBranchWizardContracts } from "@/lib/branch-wizard-contracts";
 import {
   collectAiFilledFields,
   type SeniatLockableField,
@@ -44,28 +56,38 @@ type BranchCreateWizardDialogProps = {
   branches: BranchResponse[];
   distributors: DistributorResponse[];
   companiesLoading: boolean;
+  enableContractStep?: boolean;
   onClose: () => void;
   onSubmit: (values: BranchWizardValues) => void;
 };
 
-type WizardStep = 0 | 1 | 2 | 3 | 4;
+type WizardStep = 0 | 1 | 2 | 3 | 4 | 5;
 
-const FORM_STEPS: {
-  step: 1 | 2 | 3 | 4;
-  section: ClientFormSection | "roles";
+type FormStepDef = {
+  step: 1 | 2 | 3 | 4 | 5;
+  section: ClientFormSection | "roles" | "contract";
   label: string;
-}[] = [
+};
+
+const BASE_FORM_STEPS: FormStepDef[] = [
   { step: 1, section: "fiscal", label: "Fiscal" },
   { step: 2, section: "location", label: "Ubicación" },
   { step: 3, section: "contact", label: "Contacto" },
   { step: 4, section: "roles", label: "Roles" },
 ];
 
+const CONTRACT_FORM_STEP: FormStepDef = {
+  step: 5,
+  section: "contract",
+  label: "Contrato",
+};
+
 const STEP_ICONS = {
   1: Building2,
   2: MapPin,
   3: Phone,
   4: Tags,
+  5: FileText,
 } as const;
 
 function stepSubtitle(step: WizardStep, resuming: boolean): string {
@@ -82,6 +104,8 @@ function stepSubtitle(step: WizardStep, resuming: boolean): string {
       return "Persona de contacto, teléfono y correo.";
     case 4:
       return "Asigna los roles de esta sucursal.";
+    case 5:
+      return "Sube el primer contrato de cada rol operativo seleccionado.";
     default:
       return "";
   }
@@ -105,9 +129,11 @@ export function BranchCreateWizardDialog({
   branches,
   distributors,
   companiesLoading,
+  enableContractStep = true,
   onClose,
   onSubmit,
 }: BranchCreateWizardDialogProps) {
+  const { user } = useAuth();
   const formId = useId();
   const [step, setStep] = useState<WizardStep>(0);
   const [inputMode, setInputMode] = useState<"ai" | "manual">("manual");
@@ -117,6 +143,25 @@ export function BranchCreateWizardDialog({
 
   const isEdit = mode === "edit";
   const resuming = !isEdit && resumeCompanyId != null;
+
+  const canShowContractStep =
+    enableContractStep &&
+    !isEdit &&
+    user?.role === "ADMIN" &&
+    canCreateContractRecord(user.role);
+
+  const needsContractStep =
+    canShowContractStep && (form.isDistributor || form.isServiceCenter);
+
+  const visibleFormSteps = useMemo(
+    () =>
+      needsContractStep
+        ? [...BASE_FORM_STEPS, CONTRACT_FORM_STEP]
+        : BASE_FORM_STEPS,
+    [needsContractStep],
+  );
+
+  const lastFormStep: 4 | 5 = needsContractStep ? 5 : 4;
 
   useEffect(() => {
     if (!open) return;
@@ -143,6 +188,12 @@ export function BranchCreateWizardDialog({
     setAiFields(new Set());
     setStepError(null);
   }, [open, isEdit, initialValues, resumeCompanyId, companies]);
+
+  useEffect(() => {
+    if (step === 5 && !needsContractStep) {
+      setStep(4);
+    }
+  }, [step, needsContractStep]);
 
   if (!open) return null;
 
@@ -198,28 +249,10 @@ export function BranchCreateWizardDialog({
     return validateOnboardingSection(section, form);
   }
 
-  function goToStep(target: 1 | 2 | 3 | 4) {
+  function goToStep(target: 1 | 2 | 3 | 4 | 5) {
+    if (target === 5 && !needsContractStep) return;
     setStepError(null);
     setStep(target);
-  }
-
-  function goNext() {
-    setStepError(null);
-    if (step < 4) {
-      setStep((step + 1) as WizardStep);
-    }
-  }
-
-  function goBack() {
-    setStepError(null);
-    if (step === 1) {
-      if (resuming || isEdit) return;
-      setStep(0);
-      return;
-    }
-    if (step > 1) {
-      setStep((step - 1) as WizardStep);
-    }
   }
 
   function submitRegistration() {
@@ -241,6 +274,17 @@ export function BranchCreateWizardDialog({
       setStep(3);
       return;
     }
+    if (needsContractStep) {
+      const contractErr = validateBranchWizardContracts(form, {
+        isDistributor: form.isDistributor,
+        isServiceCenter: form.isServiceCenter,
+      });
+      if (contractErr) {
+        setStepError(contractErr);
+        setStep(5);
+        return;
+      }
+    }
     setStepError(null);
     const rif = form.rif.trim().toUpperCase();
     onSubmit({
@@ -258,15 +302,28 @@ export function BranchCreateWizardDialog({
 
   function handleFormSubmit(e: FormEvent) {
     e.preventDefault();
-    if (step < 4) {
-      goNext();
+    if (step < lastFormStep) {
+      setStepError(null);
+      setStep((step + 1) as WizardStep);
       return;
     }
     submitRegistration();
   }
 
+  function goBack() {
+    setStepError(null);
+    if (step === 1) {
+      if (resuming || isEdit) return;
+      setStep(0);
+      return;
+    }
+    if (step > 1) {
+      setStep((step - 1) as WizardStep);
+    }
+  }
+
   const displayError = stepError ?? error;
-  const currentFormStep = FORM_STEPS.find((s) => s.step === step);
+  const currentFormStep = visibleFormSteps.find((s) => s.step === step);
 
   return (
     <div
@@ -305,7 +362,7 @@ export function BranchCreateWizardDialog({
               className="mt-4 flex gap-1"
               aria-label="Pasos del registro"
             >
-              {FORM_STEPS.map(({ step: s, label }) => {
+              {visibleFormSteps.map(({ step: s, label }) => {
                 const Icon = STEP_ICONS[s];
                 const isActive = step === s;
                 const isDone = step > s;
@@ -336,7 +393,7 @@ export function BranchCreateWizardDialog({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-          {resuming && step >= 2 && (
+          {resuming && step >= 2 && step < 5 && (
             <p className="mb-4 rounded-lg border border-accent/20 bg-accent/5 px-3 py-2 text-sm text-card-foreground">
               La empresa ya está registrada. Completa los datos de la sucursal y
               pulsa «Crear sucursal».
@@ -374,6 +431,12 @@ export function BranchCreateWizardDialog({
                   branches={branches}
                   distributors={distributors}
                   companies={companies}
+                />
+              ) : currentFormStep?.section === "contract" ? (
+                <BranchWizardContractFields
+                  form={form}
+                  setForm={setForm}
+                  saving={saving}
                 />
               ) : currentFormStep ? (
                 <ClientFormFields
@@ -417,7 +480,7 @@ export function BranchCreateWizardDialog({
                 >
                   Cancelar
                 </button>
-                {step < 4 ? (
+                {step < lastFormStep ? (
                   <button
                     type="submit"
                     form={formId}

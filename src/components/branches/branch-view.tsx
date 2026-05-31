@@ -7,6 +7,7 @@ import {
   BranchCreateWizardDialog,
   type BranchWizardValues,
 } from "@/components/branches/branch-create-wizard-dialog";
+import { emptyBranchWizardContractDraft } from "@/components/branches/branch-wizard-types";
 import {
   DetailField,
   DetailSection,
@@ -109,6 +110,8 @@ function branchToWizardValues(
     clientDistributorId: branch.client?.distributorId
       ? String(branch.client.distributorId)
       : "",
+    distributorContract: emptyBranchWizardContractDraft(),
+    serviceCenterContract: emptyBranchWizardContractDraft(),
   };
 }
 
