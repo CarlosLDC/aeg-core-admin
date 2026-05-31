@@ -18,10 +18,7 @@ import {
   DEFAULT_RETRY_DELAYS_MS,
   sleep,
 } from "@/lib/polling";
-import {
-  employeeModificationReviewPath,
-  employeePath,
-} from "@/lib/resource-routes";
+import { employeeModificationReviewPath } from "@/lib/resource-routes";
 import type {
   ModificationRequestListItemResponse,
   ModificationRequestStatus,
@@ -213,13 +210,8 @@ export function EmployeeModificationRequestsManager() {
                               {row.id}
                             </Link>
                           </td>
-                          <td className="px-5 py-3.5">
-                            <Link
-                              href={employeePath(row.employeeId)}
-                              className="text-card-foreground hover:underline"
-                            >
-                              {row.employeeName}
-                            </Link>
+                          <td className="px-5 py-3.5 text-card-foreground">
+                            {row.employeeName}
                           </td>
                           <td className="px-5 py-3.5">
                             {ACTION_LABELS[row.actionType]}

@@ -19,7 +19,6 @@ import {
   DEFAULT_RETRY_DELAYS_MS,
   sleep,
 } from "@/lib/polling";
-import { clientPath } from "@/lib/resource-routes";
 import type {
   ClientModificationRequestListItemResponse,
   ModificationRequestStatus,
@@ -210,13 +209,8 @@ export function ClientModificationRequestsManager() {
                               {row.id}
                             </Link>
                           </td>
-                          <td className="px-5 py-3.5">
-                            <Link
-                              href={clientPath(row.clientId)}
-                              className="text-card-foreground hover:underline"
-                            >
-                              {row.clientName}
-                            </Link>
+                          <td className="px-5 py-3.5 text-card-foreground">
+                            {row.clientName}
                           </td>
                           <td className="px-5 py-3.5">
                             {ACTION_LABELS[row.actionType]}

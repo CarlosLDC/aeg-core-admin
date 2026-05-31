@@ -63,7 +63,6 @@ import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { userPath } from "@/lib/resource-routes";
-import { hrefForBranch } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
@@ -447,14 +446,7 @@ export function UsersManager() {
                             <RoleBadge role={user.role} />
                           </td>
                           <td className="max-w-[220px] px-5 py-3.5 text-card-foreground">
-                            <TruncatedText
-                              href={
-                                user
-                                  ? hrefForBranch(user.branchId, user.role)
-                                  : undefined
-                              }
-                              maxClassName="max-w-[200px]"
-                            >
+                            <TruncatedText maxClassName="max-w-[200px]">
                               {branchLabelById(branches, companies, user.branchId)}
                             </TruncatedText>
                           </td>

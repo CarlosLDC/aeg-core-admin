@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/table-meta-column-slots";
 import { filterAllOption } from "@/lib/table-filter-options";
 import { technicalServicePath } from "@/lib/resource-routes";
-import { hrefForEmployee, hrefForPrinter } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { TablePagination } from "@/components/ui/table-pagination";
@@ -425,28 +424,13 @@ export function TechnicalServicesManager() {
                             }
                           >
                           <td className="max-w-[140px] px-5 py-3.5 font-mono text-card-foreground">
-                            <TruncatedText
-                              href={
-                                user
-                                  ? hrefForPrinter(row.printerId, user.role)
-                                  : undefined
-                              }
-                              maxClassName="max-w-[120px]"
-                              mono
-                            >
+                            <TruncatedText maxClassName="max-w-[120px]" mono>
                               {printerLabelById.get(String(row.printerId)) ??
                                 "—"}
                             </TruncatedText>
                           </td>
                           <td className="max-w-[160px] px-5 py-3.5 text-muted">
-                            <TruncatedText
-                              href={
-                                user
-                                  ? hrefForEmployee(row.technicianId, user.role)
-                                  : undefined
-                              }
-                              maxClassName="max-w-[140px]"
-                            >
+                            <TruncatedText maxClassName="max-w-[140px]">
                               {technicianLabelById.get(String(row.technicianId)) ??
                                 "—"}
                             </TruncatedText>

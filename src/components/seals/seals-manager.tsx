@@ -71,7 +71,6 @@ import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 import { sealPath } from "@/lib/resource-routes";
-import { hrefForPrinter } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
@@ -664,14 +663,7 @@ export function SealsManager() {
                             {seal.serial}
                           </td>
                           <td className="max-w-[180px] px-5 py-3.5 text-muted">
-                            <TruncatedText
-                              href={
-                                user
-                                  ? hrefForPrinter(seal.printerId, user.role)
-                                  : undefined
-                              }
-                              maxClassName="max-w-[160px]"
-                            >
+                            <TruncatedText maxClassName="max-w-[160px]">
                               {getPrinterLabel(seal.printerId)}
                             </TruncatedText>
                           </td>

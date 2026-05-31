@@ -361,13 +361,8 @@ export function ModificationReviewsManager() {
                               {row.id}
                             </Link>
                           </td>
-                          <td className="px-5 py-3.5">
-                            <Link
-                              href={row.resourceHref}
-                              className="text-card-foreground hover:underline"
-                            >
-                              {row.resourceName}
-                            </Link>
+                          <td className="px-5 py-3.5 text-card-foreground">
+                            {row.resourceName}
                           </td>
                           <td className="px-5 py-3.5">{ACTION_LABELS[row.actionType]}</td>
                           <td className="px-5 py-3.5">

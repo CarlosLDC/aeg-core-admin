@@ -97,10 +97,6 @@ import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { printerPath } from "@/lib/resource-routes";
-import {
-  hrefForClient,
-  hrefForDistributor,
-} from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
@@ -935,35 +931,13 @@ export function PrintersManager() {
                           </td>
                           {!isDistributor ? (
                             <td className="max-w-[160px] px-5 py-3.5 text-muted">
-                              <TruncatedText
-                                href={
-                                  user
-                                    ? hrefForDistributor(
-                                        printer.distributorId,
-                                        distributors,
-                                        user.role,
-                                      )
-                                    : undefined
-                                }
-                                maxClassName="max-w-[140px]"
-                              >
+                              <TruncatedText maxClassName="max-w-[140px]">
                                 {getDistributorLabel(printer.distributorId)}
                               </TruncatedText>
                             </td>
                           ) : null}
                           <td className="max-w-[160px] px-5 py-3.5 text-muted">
-                            <TruncatedText
-                              href={
-                                user
-                                  ? hrefForClient(
-                                      printer.clientId,
-                                      clients,
-                                      user.role,
-                                    )
-                                  : undefined
-                              }
-                              maxClassName="max-w-[140px]"
-                            >
+                            <TruncatedText maxClassName="max-w-[140px]">
                               {getClientLabel(printer.clientId)}
                             </TruncatedText>
                           </td>

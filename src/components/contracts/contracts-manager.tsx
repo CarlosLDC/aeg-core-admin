@@ -20,10 +20,6 @@ import type {
   DistributorResponse,
   ServiceCenterResponse,
 } from "@/types/branch-role";
-import {
-  hrefForDistributor,
-  hrefForServiceCenter,
-} from "@/lib/table-foreign-hrefs";
 import { filterTabToggleClass } from "@/lib/toggle-button-styles";
 
 const contractTabButtonClass =
@@ -126,30 +122,6 @@ export function ContractsManager() {
     [serviceCenters, branches, companies],
   );
 
-  const getDistributorHref = useCallback(
-    (contract: DistributorContractResponse | ServiceCenterContractResponse) =>
-      user
-        ? hrefForDistributor(
-            (contract as DistributorContractResponse).distributorId,
-            distributors,
-            user.role,
-          )
-        : undefined,
-    [distributors, user],
-  );
-
-  const getServiceCenterHref = useCallback(
-    (contract: DistributorContractResponse | ServiceCenterContractResponse) =>
-      user
-        ? hrefForServiceCenter(
-            (contract as ServiceCenterContractResponse).serviceCenterId,
-            serviceCenters,
-            user.role,
-          )
-        : undefined,
-    [serviceCenters, user],
-  );
-
   return (
     <div className="space-y-4">
       <div className="flex w-full justify-center">
@@ -191,7 +163,6 @@ export function ContractsManager() {
           partyOptions={distributorOptions}
           catalogLoading={catalogLoading || scopeLoading}
           getPartyLabel={getDistributorLabel}
-          getPartyHref={getDistributorHref}
         />
       ) : (
         <ContractsListPanel
@@ -199,7 +170,6 @@ export function ContractsManager() {
           partyOptions={serviceCenterOptions}
           catalogLoading={catalogLoading || scopeLoading}
           getPartyLabel={getServiceCenterLabel}
-          getPartyHref={getServiceCenterHref}
         />
       )}
     </div>
