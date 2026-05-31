@@ -283,7 +283,7 @@ export function Sidebar({
             )}
             <ul className="space-y-1">
               {section.items.map((item) => (
-                <li key={item.href}>
+                <li key={`${item.href}-${item.title}`}>
                   <NavRow
                     item={item}
                     isActive={isNavItemActive(item, pathname, navItems)}
