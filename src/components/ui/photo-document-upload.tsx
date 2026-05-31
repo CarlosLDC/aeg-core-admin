@@ -149,79 +149,84 @@ export function PhotoDocumentUpload({
         onChange={(e) => void handleFiles(e.target.files)}
       />
 
-      <div
-        role="group"
-        aria-label={ariaLabel}
-        className={cn(
-          "shrink-0 rounded-xl border border-dashed border-border bg-foreground/[0.02]",
-          compact ? "px-3 py-2" : "px-4 py-5",
-          disabled && "opacity-60",
-        )}
-      >
-        <button
-          type="button"
-          disabled={disabled || uploading}
-          onClick={openFilePicker}
+      {compact ? (
+        <div
+          role="group"
+          aria-label={ariaLabel}
           className={cn(
-            "group w-full rounded-lg transition-colors enabled:hover:bg-foreground/[0.02] disabled:cursor-not-allowed",
-            compact
-              ? "flex items-center gap-2.5 px-0.5 py-0.5 text-left"
-              : "flex flex-col items-center gap-3 px-1 py-0.5 text-center",
+            "shrink-0 rounded-xl border border-dashed border-border bg-foreground/[0.02] px-4 py-4",
+            disabled && "opacity-60",
           )}
         >
-          <div
-            className={cn(
-              "flex shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent",
-              compact ? "size-9" : "size-11",
-            )}
+          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+              {uploading ? (
+                <Loader2 className="size-5 animate-spin" aria-hidden />
+              ) : (
+                <Upload className="size-5" aria-hidden />
+              )}
+            </div>
+            <div className="min-w-0 flex-1 space-y-0.5">
+              <p className="text-sm font-medium text-card-foreground">
+                {uploading ? "Subiendo archivos…" : addLabel}
+              </p>
+              <p className="text-xs leading-relaxed text-muted">
+                PDF o imágenes (JPG, PNG, WebP, GIF)
+                <span className="mx-1 text-border">·</span>
+                máx. 10 MB
+              </p>
+            </div>
+            <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+              <button
+                type="button"
+                disabled={disabled || uploading}
+                onClick={openFilePicker}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+              >
+                {uploading
+                  ? "Espera un momento…"
+                  : hasFiles
+                    ? "Añadir más"
+                    : "Elegir archivos"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div
+          role="group"
+          aria-label={ariaLabel}
+          className={cn(
+            "shrink-0 rounded-xl border border-dashed border-border bg-foreground/[0.02] px-4 py-5",
+            disabled && "opacity-60",
+          )}
+        >
+          <button
+            type="button"
+            disabled={disabled || uploading}
+            onClick={openFilePicker}
+            className="group flex w-full flex-col items-center gap-3 rounded-lg px-1 py-0.5 text-center transition-colors enabled:hover:bg-foreground/[0.02] disabled:cursor-not-allowed"
           >
-            {uploading ? (
-              <Loader2
-                className={cn("animate-spin", compact ? "size-4" : "size-5")}
-                aria-hidden
-              />
-            ) : (
-              <Upload
-                className={cn(compact ? "size-4" : "size-5")}
-                aria-hidden
-              />
-            )}
-          </div>
-          <div className={cn(compact ? "min-w-0 flex-1" : "space-y-1")}>
-            <p
-              className={cn(
-                "font-medium text-card-foreground",
-                compact ? "truncate text-sm" : "text-sm",
+            <div className="flex size-11 items-center justify-center rounded-full bg-accent/10 text-accent">
+              {uploading ? (
+                <Loader2 className="size-5 animate-spin" aria-hidden />
+              ) : (
+                <Upload className="size-5" aria-hidden />
               )}
-            >
-              {uploading ? "Subiendo archivos…" : addLabel}
-            </p>
-            <p
-              className={cn(
-                "text-muted",
-                compact
-                  ? "truncate text-xs"
-                  : "text-xs leading-relaxed",
-              )}
-            >
-              PDF o imágenes (JPG, PNG, WebP, GIF)
-              <span className="mx-1 text-border">·</span>
-              máx. 10 MB
-            </p>
-            {!compact && !hasFiles && !uploading && requiredHint && (
-              <p className="pt-0.5 text-xs text-muted/90">{requiredHint}</p>
-            )}
-          </div>
-          {compact ? (
-            <span
-              className={cn(
-                "shrink-0 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground",
-                !disabled && !uploading && "group-hover:border-accent/30",
-              )}
-            >
-              {uploading ? "…" : "Elegir"}
-            </span>
-          ) : (
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-card-foreground">
+                {uploading ? "Subiendo archivos…" : addLabel}
+              </p>
+              <p className="text-xs leading-relaxed text-muted">
+                PDF o imágenes (JPG, PNG, WebP, GIF)
+                <span className="mx-1 text-border">·</span>
+                máx. 10 MB
+              </p>
+              {!hasFiles && !uploading && requiredHint ? (
+                <p className="pt-0.5 text-xs text-muted/90">{requiredHint}</p>
+              ) : null}
+            </div>
             <span
               className={cn(
                 "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm font-medium text-foreground",
@@ -230,12 +235,9 @@ export function PhotoDocumentUpload({
             >
               {uploading ? "Espera un momento…" : "Elegir archivos"}
             </span>
-          )}
-        </button>
-        {compact && !hasFiles && !uploading && requiredHint && (
-          <p className="mt-1.5 text-xs text-muted/90">{requiredHint}</p>
-        )}
-      </div>
+          </button>
+        </div>
+      )}
 
       {uploadError && (
         <p

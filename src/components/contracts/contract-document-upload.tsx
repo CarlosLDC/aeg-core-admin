@@ -24,6 +24,7 @@ export function ContractDocumentUpload({
       onChange={onChange}
       disabled={disabled}
       compact={compact}
+      requiredHint={compact ? "" : undefined}
       ariaLabel="Subir documentos del contrato"
       addLabel="Añadir documentos"
     />
