@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
+import { BranchMissingContractNotice } from "@/components/branches/branch-missing-contract-notice";
 import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
 import {
   BranchCreateWizardDialog,
@@ -36,6 +37,7 @@ import { canBrowseOtherCompanies } from "@/lib/company-scope";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { reportListTableError } from "@/lib/api-error-message";
+import { useContractPartyCoverage } from "@/hooks/use-contract-party-coverage";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
@@ -63,10 +65,15 @@ import {
   type ClientOnboardingValues,
 } from "@/lib/client-onboarding";
 import {
+  getBranchMissingContractKinds,
+  missingContractLabels,
+} from "@/lib/branch-contract-coverage";
+import {
   branchWizardNeedsContracts,
   createBranchWizardContracts,
   validateBranchWizardContracts,
 } from "@/lib/branch-wizard-contracts";
+import { can } from "@/lib/permissions/can";
 import {
   emptyBranchWizardContractDraft,
 } from "@/components/branches/branch-wizard-types";
@@ -171,6 +178,8 @@ export function BranchesManager() {
   const { user } = useAuth();
   const canCreate = user ? canCreateBranchRecord(user.role) : false;
   const canModify = user ? canUpdateBranchRecord(user.role) : false;
+  const canReadContracts = user ? can(user.role, "contracts", "read") : false;
+  const contractCoverage = useContractPartyCoverage(canReadContracts);
   const {
     scope,
     catalogRoles,
@@ -659,7 +668,17 @@ export function BranchesManager() {
                       </tr>
                     </thead>
                     <tbody>
-                      {pagination.paginatedItems.map((branch) => (
+                      {pagination.paginatedItems.map((branch) => {
+                        const missingContractLabelsForBranch = contractCoverage
+                          ? missingContractLabels(
+                              getBranchMissingContractKinds(
+                                branch,
+                                contractCoverage,
+                              ),
+                            )
+                          : [];
+
+                        return (
                         <ClickableTableRow
                           key={branch.id}
                           href={branchPath(branch.id)}
@@ -708,11 +727,20 @@ export function BranchesManager() {
                             </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5">
-                            <BranchTypeBadges branch={branch} />
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <BranchTypeBadges branch={branch} />
+                              {missingContractLabelsForBranch.length > 0 ? (
+                                <BranchMissingContractNotice
+                                  variant="inline"
+                                  missingLabels={missingContractLabelsForBranch}
+                                />
+                              ) : null}
+                            </div>
                           </td>
                           </TableRowMetaCells>
                         </ClickableTableRow>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </TableScroll>

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { BranchMissingContractNotice } from "@/components/branches/branch-missing-contract-notice";
 import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
 import {
   BranchCreateWizardDialog,
@@ -19,6 +20,7 @@ import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
+import { useContractPartyCoverage } from "@/hooks/use-contract-party-coverage";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
   canDeleteBranchRecord,
@@ -41,6 +43,11 @@ import {
 } from "@/lib/branches-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { formatDate } from "@/lib/datetime-form";
+import {
+  getBranchMissingContractKinds,
+  missingContractLabels,
+} from "@/lib/branch-contract-coverage";
+import { can } from "@/lib/permissions/can";
 import { branchPath } from "@/lib/resource-routes";
 import { hrefForBranchClientDistributor } from "@/lib/table-foreign-hrefs";
 import { toBranchRequest } from "@/lib/branch-request";
@@ -125,6 +132,8 @@ export function BranchView() {
   const isDistributor = user?.role === "DISTRIBUTOR";
   const canModify = user ? canUpdateBranchRecord(user.role) : false;
   const canDelete = user ? canDeleteBranchRecord(user.role) : false;
+  const canReadContracts = user ? can(user.role, "contracts", "read") : false;
+  const contractCoverage = useContractPartyCoverage(canReadContracts);
 
   const [branch, setBranch] = useState<BranchWithRoles | null>(null);
   const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
@@ -317,6 +326,13 @@ export function BranchView() {
     ];
   }, [branch, branches, companies, companyLabel, distributors, user]);
 
+  const missingContractLabelsForBranch = useMemo(() => {
+    if (!branch || !contractCoverage) return [];
+    return missingContractLabels(
+      getBranchMissingContractKinds(branch, contractCoverage),
+    );
+  }, [branch, contractCoverage]);
+
   return (
     <>
       <ResourceViewShell
@@ -347,7 +363,17 @@ export function BranchView() {
           ) : undefined
         }
       >
-        {branch && <DetailSectionsPager key={branch.id} steps={detailSteps} />}
+        {branch ? (
+          <div className="space-y-4">
+            {missingContractLabelsForBranch.length > 0 ? (
+              <BranchMissingContractNotice
+                missingLabels={missingContractLabelsForBranch}
+                showContractsLink={canReadContracts}
+              />
+            ) : null}
+            <DetailSectionsPager key={branch.id} steps={detailSteps} />
+          </div>
+        ) : null}
       </ResourceViewShell>
 
       {branch && editOpen && (
