@@ -17,7 +17,6 @@ import {
 } from "@/lib/table-foreign-hrefs";
 import { DetailSectionsPager } from "@/components/resource-view/detail-sections-pager";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
-import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -29,7 +28,6 @@ import {
   canDisposePrinterRecord,
   canDeletePrinterRecord,
   canModifyPrinterRecord,
-  canUnassignPrinterRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
 import {
@@ -56,7 +54,6 @@ import {
   printerModelLabel,
   printerToAssignmentRequest,
   printerToDispositionRequest,
-  printerToUnassignmentRequest,
   printerToFormValues,
   toPrinterRequest,
   type PrinterFormValues,
@@ -103,7 +100,6 @@ export function PrinterView() {
   const isAdmin = user?.role === "ADMIN";
   const isDistributor = user?.role === "DISTRIBUTOR";
   const canAssignInitialized = isAdmin && canModify;
-  const canUnassignAssigned = user ? canUnassignPrinterRecord(user.role) : false;
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
 
   const [printer, setPrinter] = useState<PrinterResponse | null>(null);
@@ -127,7 +123,6 @@ export function PrinterView() {
   const [dispositionOpen, setDispositionOpen] = useState(false);
   const [dispositionSaving, setDispositionSaving] = useState(false);
   const [dispositionError, setDispositionError] = useState<string | null>(null);
-  const [unassigning, setUnassigning] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -304,77 +299,15 @@ export function PrinterView() {
     [software],
   );
 
-  async function handleUnassign() {
-    if (!printer || !canUnassignAssigned) {
-      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
-      return;
-    }
-    if (!isPrinterAssigned(printer.status)) {
-      toast.error("Solo se pueden desasignar impresoras con estatus Asignada.");
-      return;
-    }
-
-    const distributorName =
-      printer.distributorId != null
-        ? distributorOptions.find((opt) => opt.id === printer.distributorId)
-            ?.label
-        : null;
-
-    const accepted = await confirm({
-      title: "Confirmar desasignación",
-      content: (
-        <>
-          <p className="text-sm text-muted">
-            Vas a desasignar la impresora{" "}
-            <span className="font-mono text-card-foreground">
-              {printer.fiscalSerial}
-            </span>
-            {distributorName ? (
-              <>
-                {" "}
-                de{" "}
-                <strong className="text-card-foreground">{distributorName}</strong>
-              </>
-            ) : null}
-            . El equipo volverá a estatus Sin asignar y quedará sin distribuidor.
-          </p>
-          <PrinterStatusTransition from="asignada" to="sin_asignar" />
-        </>
-      ),
-      confirmLabel: "Desasignar impresora",
-      destructive: true,
-    });
-    if (!accepted) return;
-
-    setUnassigning(true);
-    try {
-      const updated = await updatePrinter(
-        printer.id,
-        printerToUnassignmentRequest(printer),
-      );
-      setPrinter(updated);
-      toast.success(
-        `Impresora ${printer.fiscalSerial} desasignada correctamente.`,
-        { href: printerPath(updated.id) },
-      );
-    } catch (err) {
-      toast.error(getPrintersErrorMessage(err));
-    } finally {
-      setUnassigning(false);
-    }
-  }
-
   const statusQuickAction = printer
     ? getPrinterStatusQuickAction({
         status: printer.status,
         canAssign: canAssignInitialized,
-        canUnassign: canUnassignAssigned,
         canDispose: canDisposeAssigned,
         onAssign: () => {
           setAssignmentError(null);
           setAssignmentOpen(true);
         },
-        onUnassign: () => void handleUnassign(),
         onDispose: () => {
           setDispositionError(null);
           setDispositionOpen(true);
@@ -529,7 +462,6 @@ export function PrinterView() {
     clientLabelById,
     softwareLabelById,
     canAssignInitialized,
-    canUnassignAssigned,
     canDisposeAssigned,
     statusQuickAction,
   ]);
@@ -686,16 +618,8 @@ export function PrinterView() {
                     }
                   : undefined
               }
-              onUnassign={
-                printer &&
-                canUnassignAssigned &&
-                isPrinterAssigned(printer.status)
-                  ? () => void handleUnassign()
-                  : undefined
-              }
               onDelete={canDelete ? () => void handleDelete() : undefined}
               deleting={deleting}
-              unassigning={unassigning}
             />
           ) : undefined
         }
