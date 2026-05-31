@@ -25,7 +25,14 @@ import {
   TableRowMetaCells,
   TableRowMetaHeaders,
 } from "@/components/ui/table-meta-column-slots";
+import {
+  DISTRIBUTOR_PRINTER_QUICK_FILTERS,
+  DISTRIBUTOR_PRINTER_STATUSES,
+  isDistributorPrinterQuickFilter,
+  type DistributorPrinterQuickFilter,
+} from "@/lib/distributor-printer-filters";
 import { filterAllOption } from "@/lib/table-filter-options";
+import { filterToggleButtonClass } from "@/lib/toggle-button-styles";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import {
@@ -177,8 +184,30 @@ export function PrintersManager() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("printers");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<PrinterStatus | "all">(
-    "all",
+  const [statusFilter, setStatusFilter] = useState<
+    PrinterStatus | "all" | DistributorPrinterQuickFilter
+  >("all");
+
+  const distributorStatusFilterOptions = useMemo(
+    () => [
+      filterAllOption("Todas"),
+      ...DISTRIBUTOR_PRINTER_STATUSES.map((status) => ({
+        value: status,
+        label: PRINTER_STATUS_LABELS[status],
+      })),
+    ],
+    [],
+  );
+
+  const adminStatusFilterOptions = useMemo(
+    () => [
+      filterAllOption(),
+      ...PRINTER_STATUSES.map((status) => ({
+        value: status,
+        label: PRINTER_STATUS_LABELS[status],
+      })),
+    ],
+    [],
   );
   const [sort, setSort] = useState<TableSortState<PrinterSortKey>>(null);
 
@@ -737,6 +766,29 @@ export function PrintersManager() {
           />
         ) : (
           <>
+            {isDistributor ? (
+              <div className="flex flex-wrap items-center gap-2 border-b border-border bg-foreground/[0.02] px-4 py-2.5 sm:px-5">
+                <span className="mr-0.5 text-xs font-medium text-muted">
+                  Filtros rápidos
+                </span>
+                {DISTRIBUTOR_PRINTER_QUICK_FILTERS.map((filter) => (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    aria-pressed={statusFilter === filter.value}
+                    onClick={() => setStatusFilter(filter.value)}
+                    className={filterToggleButtonClass(
+                      statusFilter === filter.value,
+                      filter.tone
+                        ? { className: "rounded-md", tone: filter.tone }
+                        : { className: "rounded-md" },
+                    )}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
@@ -748,15 +800,20 @@ export function PrintersManager() {
                   id: "status",
                   label: "Estatus",
                   value: statusFilter,
-                  onChange: (value) =>
-                    setStatusFilter(value as PrinterStatus | "all"),
-                  options: [
-                    filterAllOption(),
-                    ...PRINTER_STATUSES.map((status) => ({
-                      value: status,
-                      label: PRINTER_STATUS_LABELS[status],
-                    })),
-                  ],
+                  onChange: (value) => {
+                    if (isDistributor) {
+                      setStatusFilter(
+                        isDistributorPrinterQuickFilter(value)
+                          ? value
+                          : "all",
+                      );
+                      return;
+                    }
+                    setStatusFilter(value as PrinterStatus | "all");
+                  },
+                  options: isDistributor
+                    ? distributorStatusFilterOptions
+                    : adminStatusFilterOptions,
                 },
               ]}
               columns={tableColumns.toolbarColumns}
