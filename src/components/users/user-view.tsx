@@ -212,7 +212,7 @@ export function UserView() {
             />
             <DetailField label="Registrado" value={formatDate(userCreatedAt)} />
             <DetailField
-              label="Sucursal"
+              label="Empresa"
               value={branchLabel}
               href={user.branchId != null ? branchPath(user.branchId) : undefined}
             />

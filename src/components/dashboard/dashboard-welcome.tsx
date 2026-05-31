@@ -28,7 +28,7 @@ const ROLE_CONTEXT: Record<Role, string> = {
   ADMIN: "Vista global del catálogo operativo y la flota fiscal.",
   DISTRIBUTOR: "Tu cartera de impresoras asignadas y enajenadas a clientes.",
   TECHNICIAN: "Equipos en campo, precintos y personal de tu ámbito.",
-  SERVICE_CENTER: "Empresas, sucursales y operaciones de tu centro.",
+  SERVICE_CENTER: "Empresas y operaciones de tu centro.",
 };
 
 export function DashboardWelcome({

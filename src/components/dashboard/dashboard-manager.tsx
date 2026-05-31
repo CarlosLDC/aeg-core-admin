@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Building2,
   Contact,
-  MapPin,
   Printer,
   Users,
 } from "lucide-react";
@@ -29,12 +28,11 @@ import type { LucideIcon } from "lucide-react";
 
 const STAT_ICONS: Record<string, LucideIcon> = {
   Empresas: Building2,
-  Sucursales: MapPin,
   Impresoras: Printer,
   Empleados: Contact,
   Clientes: Users,
   Distribuidores: Building2,
-  "Centros de servicio": MapPin,
+  "Centros de servicio": Building2,
 };
 
 function iconForStat(stat: DashboardStat): LucideIcon {

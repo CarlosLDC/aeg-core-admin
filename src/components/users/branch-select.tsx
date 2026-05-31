@@ -41,9 +41,9 @@ export function BranchSelect({
       options={options}
       disabled={disabled}
       loading={loading}
-      emptyLabel="Sin sucursal"
-      searchPlaceholder="Buscar sucursal…"
-      modalTitle="Seleccionar sucursal"
+      emptyLabel="Sin empresa"
+      searchPlaceholder="Buscar empresa…"
+      modalTitle="Seleccionar empresa"
     />
   );
 }

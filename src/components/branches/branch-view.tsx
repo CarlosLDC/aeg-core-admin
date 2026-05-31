@@ -41,7 +41,7 @@ import {
 } from "@/lib/branches-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { formatDate } from "@/lib/datetime-form";
-import { branchPath, companyPath } from "@/lib/resource-routes";
+import { branchPath } from "@/lib/resource-routes";
 import { hrefForBranchClientDistributor } from "@/lib/table-foreign-hrefs";
 import { toBranchRequest } from "@/lib/branch-request";
 import { invalidateCatalogRoles } from "@/lib/catalog-roles-cache";
@@ -140,7 +140,7 @@ export function BranchView() {
 
   const load = useCallback(async () => {
     if (id == null) {
-      setError("Identificador de sucursal no válido.");
+      setError("Identificador de empresa no válido.");
       setLoading(false);
       return;
     }
@@ -190,7 +190,7 @@ export function BranchView() {
       await syncBranchRoles(branch.id, branch, roles);
       const updated = await fetchBranchWithRolesById(branch.id);
       setBranch(updated);
-      toast.success(`Sucursal "${label}" actualizada.`, {
+      toast.success(`Empresa "${label}" actualizada.`, {
         href: branchPath(updated.id),
       });
       setEditOpen(false);
@@ -212,7 +212,7 @@ export function BranchView() {
       return;
     }
     const label = `${branch.city}, ${branch.state}`;
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la sucursal "${label}"? Se quitarán también sus roles (cliente, distribuidor, centro de servicio) si existen.`, destructive: true }))) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la empresa "${label}"? Se quitarán también sus roles (cliente, distribuidor, centro de servicio) si existen.`, destructive: true }))) {
       return;
     }
 
@@ -222,7 +222,7 @@ export function BranchView() {
       await deleteBranch(branch.id);
       invalidateCatalogRoles();
       await refresh();
-      toast.success(`Sucursal "${label}" eliminada.`);
+      toast.success(`Empresa "${label}" eliminada.`);
       router.push("/branches");
     } catch (err) {
       const message =
@@ -236,22 +236,20 @@ export function BranchView() {
   const companyLabel = branch
     ? companyNameById(companies, branch.companyId)
     : "";
-  const title = branch ? `${branch.city}, ${branch.state}` : "Sucursal";
+  const title = branch
+    ? companyLabel || `${branch.city}, ${branch.state}`
+    : "Empresa";
   const detailSteps = useMemo(() => {
     if (!branch) return [];
 
     return [
       {
         id: "branch",
-        label: "Sucursal",
+        label: "Empresa",
         content: (
-          <DetailSection title="Sucursal" layout="quad">
+          <DetailSection title="Empresa" layout="quad">
             <DetailField label="ID" value={String(branch.id)} mono />
-            <DetailField
-              label="Empresa"
-              value={companyLabel}
-              href={companyPath(branch.companyId)}
-            />
+            <DetailField label="Razón social" value={companyLabel} />
             <DetailField
               label="Registrada"
               value={formatDate(branch.createdAt)}
@@ -263,7 +261,7 @@ export function BranchView() {
         id: "location",
         label: "Ubicación",
         content: (
-          <DetailSection title="Ubicación de la sucursal" layout="quad">
+          <DetailSection title="Ubicación" layout="quad">
             <DetailField label="Ciudad" value={branch.city} />
             <DetailField label="Estado" value={branch.state} />
             <DetailField label="Dirección" value={branch.address || "—"} />
@@ -274,7 +272,7 @@ export function BranchView() {
         id: "contact",
         label: "Contacto",
         content: (
-          <DetailSection title="Contacto de la sucursal" layout="quad">
+          <DetailSection title="Contacto" layout="quad">
             <DetailField
               label="Persona de contacto"
               value={branch.contactPersonName?.trim() || "—"}
@@ -323,9 +321,13 @@ export function BranchView() {
     <>
       <ResourceViewShell
         backHref={isDistributor ? "/clients" : "/branches"}
-        backLabel={isDistributor ? "Volver a clientes" : "Volver a sucursales"}
+        backLabel={isDistributor ? "Volver a clientes" : "Volver a empresas"}
         title={title}
-        subtitle={companyLabel}
+        subtitle={
+          branch && companyLabel
+            ? `${branch.city}, ${branch.state}`
+            : undefined
+        }
         loading={loading}
         error={error}
         actions={

@@ -71,7 +71,7 @@ function stepSubtitle(step: WizardStep): string {
     case 1:
       return "Razón social, RIF y tipo de contribuyente.";
     case 2:
-      return "Estado, ciudad y dirección de la sucursal cliente.";
+      return "Estado, ciudad y dirección de la empresa cliente.";
     case 3:
       return "Persona de contacto y canales de comunicación.";
     default:

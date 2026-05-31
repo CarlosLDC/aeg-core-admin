@@ -116,7 +116,7 @@ export function SeniatDocumentScan({
                 ? analyzeOnSelect
                   ? "Elige imagen o PDF del RIF; se analizará al instante."
                   : "Imagen o PDF del RIF. La IA rellena razón social y ubicación."
-                : "Sube una foto o PDF del RIF o registro fiscal. La IA rellenará empresa y sucursal."}
+                : "Sube una foto o PDF del RIF o registro fiscal. La IA rellenará los datos de la empresa."}
             </p>
             {file && (
               <p className="truncate pt-1 text-xs text-card-foreground">

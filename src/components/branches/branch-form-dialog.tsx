@@ -174,10 +174,10 @@ export function BranchFormDialog({
               id={titleId}
               className="text-lg font-semibold text-card-foreground"
             >
-              {mode === "create" ? "Nueva sucursal" : "Editar sucursal"}
+              {mode === "create" ? "Nueva empresa" : "Editar empresa"}
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Configura ubicación, contacto y roles operativos de la sucursal.
+              Configura ubicación, contacto y roles operativos de la empresa.
             </p>
           </div>
           <button
@@ -312,7 +312,7 @@ export function BranchFormDialog({
           </fieldset>
 
           <fieldset className="space-y-3 rounded-lg border border-border p-4">
-            <legend className="px-1 text-sm font-medium">Roles de sucursal</legend>
+            <legend className="px-1 text-sm font-medium">Roles de empresa</legend>
             <p className="text-xs text-muted">
               Cada rol crea un registro en su tabla (<code className="text-[11px]">branchId</code>
               ). El cliente puede vincularse a un distribuidor existente.
@@ -353,7 +353,7 @@ export function BranchFormDialog({
                 <FieldLabel>Distribuidor del cliente</FieldLabel>
                 <span className="mb-1.5 block text-xs text-muted">
                   Opcional. Referencia al registro de distribuidor, no a la
-                  sucursal.
+                  empresa.
                 </span>
                 <DistributorSelect
                   value={form.clientDistributorId}

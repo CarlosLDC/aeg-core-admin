@@ -52,7 +52,7 @@ const branches: BranchResponse[] = [
 describe("companiesStatHint", () => {
   it("counts companies with and without branches", () => {
     expect(companiesStatHint(companies, branches)).toBe(
-      "1 con sucursales · 1 sin sucursal",
+      "1 activas en red · 1 pendientes de alta",
     );
   });
 });

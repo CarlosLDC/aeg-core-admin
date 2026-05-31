@@ -4,7 +4,7 @@ import type { Role } from "@/types/user";
 export const RESOURCE_LABELS: Record<Resource, string> = {
   dashboard: "el panel",
   companies: "empresas",
-  branches: "sucursales",
+  branches: "empresas",
   employees: "empleados",
   printers: "impresoras",
   printerModels: "modelos fiscales",

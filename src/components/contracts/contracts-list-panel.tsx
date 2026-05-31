@@ -347,8 +347,8 @@ export function ContractsListPanel({
         >
           Registra al menos un{" "}
           {kind === "distributor"
-            ? "distribuidor en una sucursal"
-            : "centro de servicio en una sucursal"}{" "}
+            ? "distribuidor en una empresa"
+            : "centro de servicio en una empresa"}{" "}
           antes de crear contratos.
         </p>
       )}

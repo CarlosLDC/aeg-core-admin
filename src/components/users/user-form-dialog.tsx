@@ -275,7 +275,7 @@ export function UserFormDialog({
               <p className="text-xs text-muted">
                 {isAdminUser
                   ? ROLE_DESCRIPTIONS.ADMIN
-                  : "Requiere sucursal y rol operativo."}
+                  : "Requiere empresa y rol operativo."}
               </p>
             </fieldset>
           )}
@@ -287,7 +287,7 @@ export function UserFormDialog({
               </legend>
               <div className="grid gap-4 md:grid-cols-2 md:items-start">
                 <div className="min-w-0">
-                  <FieldLabel required>Sucursal</FieldLabel>
+                  <FieldLabel required>Empresa</FieldLabel>
                   <BranchSelect
                     value={form.branchId}
                     onChange={handleBranchChange}
@@ -302,7 +302,7 @@ export function UserFormDialog({
                   <FieldLabel required>Rol</FieldLabel>
                   {availableRoles.length === 0 ? (
                     <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted">
-                      Selecciona una sucursal para ver roles disponibles.
+                      Selecciona una empresa para ver roles disponibles.
                     </p>
                   ) : availableRoles.length === 1 ? (
                     <div className="flex h-10 w-full items-center rounded-lg border border-border bg-foreground/[0.03] px-3">
@@ -312,7 +312,7 @@ export function UserFormDialog({
                     <SegmentedToggle
                       value={form.role}
                       onChange={handleRoleChange}
-                      ariaLabel="Roles disponibles para la sucursal"
+                      ariaLabel="Roles disponibles para la empresa"
                       options={availableRoles.map((role) => ({
                         value: role,
                         label: ROLE_LABELS[role],
@@ -325,8 +325,8 @@ export function UserFormDialog({
 
               {branchesForRole.length === 0 && (
                 <p className="text-xs text-amber-700 dark:text-amber-300">
-                  No hay sucursales con roles operativos habilitados. Asigna rol de
-                  distribuidor o centro de servicio en Sucursales.
+                  No hay empresas con roles operativos habilitados. Asigna rol de
+                  distribuidor o centro de servicio en Empresas.
                 </p>
               )}
             </fieldset>

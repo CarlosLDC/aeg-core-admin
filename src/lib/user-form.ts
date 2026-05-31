@@ -69,14 +69,14 @@ function validateRoleByBranch(
   if (!roleRequiresBranch(role)) return null;
 
   if (!branchId.trim()) {
-    return "Selecciona una sucursal.";
+    return "Selecciona una empresa.";
   }
   const eligible = eligibleRolesForBranch(branchId, context);
   if (eligible.length === 0) {
-    return "La sucursal seleccionada no tiene roles operativos habilitados para usuarios.";
+    return "La empresa seleccionada no tiene roles operativos habilitados para usuarios.";
   }
   if (!eligible.includes(role)) {
-    return "El rol seleccionado no está habilitado para la sucursal elegida.";
+    return "El rol seleccionado no está habilitado para la empresa elegida.";
   }
   return null;
 }

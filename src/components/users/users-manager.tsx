@@ -346,7 +346,7 @@ export function UsersManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por nombre, correo, rol o sucursal…"
+              searchPlaceholder="Buscar por nombre, correo, rol o empresa…"
               resultCount={filteredUsers.length}
               totalCount={users.length}
               filters={[
@@ -405,7 +405,7 @@ export function UsersManager() {
                           <th className="px-5 py-3 font-medium">Nombre</th>
                           <th className="px-5 py-3 font-medium">Correo</th>
                           <th className="px-5 py-3 font-medium">Rol</th>
-                          <th className="px-5 py-3 font-medium">Sucursal</th>
+                          <th className="px-5 py-3 font-medium">Empresa</th>
                           <th className="px-5 py-3 font-medium">Estado</th>
                         </TableRowMetaHeaders>
                       </tr>

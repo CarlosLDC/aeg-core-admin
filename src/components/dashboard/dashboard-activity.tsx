@@ -47,7 +47,7 @@ export function DashboardActivityList({
         <EmptyState
           className="py-10"
           title="Sin movimientos recientes"
-          description="Cuando se registren impresoras, empleados o sucursales aparecerán aquí."
+          description="Cuando se registren impresoras, empleados o empresas aparecerán aquí."
         />
       ) : (
         <>

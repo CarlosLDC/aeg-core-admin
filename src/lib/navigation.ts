@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Users,
   Settings,
-  MapPin,
   Printer,
   FileDigit,
   Contact,
@@ -88,14 +87,8 @@ export const navSections: NavSection[] = [
       },
       {
         title: "Empresas",
-        href: "/companies",
-        icon: Building2,
-        roles: ["ADMIN"],
-      },
-      {
-        title: "Sucursales",
         href: "/branches",
-        icon: MapPin,
+        icon: Building2,
         roles: ["ADMIN", "TECHNICIAN", "SERVICE_CENTER"],
       },
       { title: "Empleados", href: "/employees", icon: Contact },

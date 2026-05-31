@@ -39,8 +39,7 @@ export type DashboardStat = {
 };
 
 const STAT_HREFS: Record<string, string> = {
-  Empresas: "/companies",
-  Sucursales: "/branches",
+  Empresas: "/branches",
   Impresoras: "/printers",
   Empleados: "/employees",
   Clientes: "/branches",
@@ -205,7 +204,7 @@ export function companiesStatHint(
   const withBranchIds = new Set(branches.map((b) => b.companyId));
   const withBranch = companies.filter((c) => withBranchIds.has(c.id)).length;
   const withoutBranch = companies.length - withBranch;
-  return `${withBranch} con sucursales · ${withoutBranch} sin sucursal`;
+  return `${withBranch} activas en red · ${withoutBranch} pendientes de alta`;
 }
 
 export function branchesStatHint(
@@ -255,7 +254,7 @@ function buildActivity(
     })),
     ...branches.map((b) => ({
       id: `branch-${b.id}`,
-      label: `Sucursal ${b.id} en ${b.city || "sin ciudad"}`,
+      label: `Empresa ${b.id} en ${b.city || "sin ciudad"}`,
       time: formatRelativeTime(b.createdAt),
       sortKey: new Date(b.createdAt).getTime() || 0,
     })),
@@ -290,7 +289,6 @@ function buildStats(
     isPrinterOperative(p.status),
   ).length;
   const paidPrinters = counts.printers.filter((p) => p.paid).length;
-  const companyHint = companiesStatHint(counts.companies, counts.branches);
   const branchHint = branchesStatHint(counts.branches, {
     clients: counts.clients,
     distributors: counts.distributors,
@@ -303,11 +301,6 @@ function buildStats(
       return [
         {
           title: "Empresas",
-          value: String(counts.companies.length),
-          hint: companyHint,
-        },
-        {
-          title: "Sucursales",
           value: String(counts.branches.length),
           hint: branchHint,
         },
@@ -339,10 +332,10 @@ function buildStats(
         {
           title: "Clientes",
           value: String(counts.clients),
-          hint: `${counts.branches.length} sucursales en red`,
+          hint: `${counts.branches.length} empresas en red`,
         },
         {
-          title: "Sucursales",
+          title: "Empresas",
           value: String(counts.branches.length),
           hint: placesHint,
         },
@@ -362,10 +355,10 @@ function buildStats(
         {
           title: "Empleados",
           value: String(counts.employees),
-          hint: `${counts.branches.length} sucursales cubiertas`,
+          hint: `${counts.branches.length} empresas cubiertas`,
         },
         {
-          title: "Sucursales",
+          title: "Empresas",
           value: String(counts.branches.length),
           hint: placesHint,
         },
@@ -380,11 +373,6 @@ function buildStats(
       return [
         {
           title: "Empresas",
-          value: String(counts.companies.length),
-          hint: companyHint,
-        },
-        {
-          title: "Sucursales",
           value: String(counts.branches.length),
           hint: branchHint,
         },
@@ -463,7 +451,7 @@ export async function loadDashboardSnapshot(options: {
   const employeesRaw = employeesP.ok ? employeesP.value : [];
 
   if (!companiesP.ok) loadWarnings.push("No se pudieron cargar las empresas.");
-  if (!branchesP.ok) loadWarnings.push("No se pudieron cargar las sucursales.");
+  if (!branchesP.ok) loadWarnings.push("No se pudieron cargar las empresas.");
   if (!employeesP.ok) loadWarnings.push("No se pudieron cargar los empleados.");
   if (printersP && !printersP.ok) {
     loadWarnings.push("No se pudieron cargar las impresoras.");

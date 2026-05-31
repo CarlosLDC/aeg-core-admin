@@ -47,7 +47,7 @@ export function DistributorIdSelect({
       loading={loading}
       required={required}
       emptyLabel="Seleccionar distribuidor"
-      searchPlaceholder="Buscar por ID o sucursal…"
+      searchPlaceholder="Buscar por ID o empresa…"
       modalTitle="Seleccionar distribuidor"
     />
   );

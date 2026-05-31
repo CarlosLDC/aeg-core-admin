@@ -5,7 +5,7 @@ export default function EmployeesPage() {
   return (
     <AdminShell
       title="Empleados"
-      description="Personal por sucursal y empresa"
+      description="Personal por empresa"
     >
       <EmployeesManager />
     </AdminShell>

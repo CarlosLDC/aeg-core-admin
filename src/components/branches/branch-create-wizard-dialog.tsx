@@ -94,16 +94,16 @@ function stepSubtitle(step: WizardStep, resuming: boolean): string {
   switch (step) {
     case 0:
       return resuming
-        ? "Completa la ubicación y los datos de la sucursal."
+        ? "Completa la ubicación y los datos de la empresa."
         : "Escanea el RIF o ingresa los datos manualmente.";
     case 1:
       return "Revisa o completa los datos fiscales de la empresa.";
     case 2:
-      return "Indica estado, ciudad y dirección de la sucursal.";
+      return "Indica estado, ciudad y dirección de la empresa.";
     case 3:
       return "Persona de contacto, teléfono y correo.";
     case 4:
-      return "Asigna los roles de esta sucursal.";
+      return "Asigna los roles de esta empresa.";
     case 5:
       return "Sube el primer contrato de cada rol operativo seleccionado.";
     default:
@@ -353,7 +353,7 @@ export function BranchCreateWizardDialog({
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-lg font-semibold text-card-foreground">
-                {isEdit ? "Editar sucursal" : "Nueva sucursal"}
+                {isEdit ? "Editar empresa" : "Nueva empresa"}
               </h2>
               <p className="mt-1 text-sm text-muted">
                 {stepSubtitle(step, resuming)}
@@ -413,8 +413,8 @@ export function BranchCreateWizardDialog({
         >
           {resuming && step >= 2 && step < 5 && (
             <p className="mb-4 rounded-lg border border-accent/20 bg-accent/5 px-3 py-2 text-sm text-card-foreground">
-              La empresa ya está registrada. Completa los datos de la sucursal y
-              pulsa «Crear sucursal».
+              El RIF ya está registrado. Completa ubicación y contacto y pulsa
+              «Crear empresa».
             </p>
           )}
 
@@ -527,7 +527,7 @@ export function BranchCreateWizardDialog({
                     )}
                   >
                     {saving && <Loader2 className="size-4 animate-spin" />}
-                    {isEdit ? "Guardar sucursal" : "Crear sucursal"}
+                    {isEdit ? "Guardar empresa" : "Crear empresa"}
                   </button>
                 )}
               </div>

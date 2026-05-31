@@ -84,7 +84,7 @@ export function ContractsManager() {
           const branch = branches.find((b) => b.id === sc.branchId);
           const label = branch
             ? formatBranchShort(branch, companies)
-            : "Sucursal desconocida";
+            : "Empresa desconocida";
           return { id: sc.id, label };
         })
         .sort((a, b) => a.label.localeCompare(b.label, "es")),

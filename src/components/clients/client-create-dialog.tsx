@@ -72,7 +72,7 @@ function stepSubtitle(step: WizardStep): string {
     case 1:
       return "Revisa o completa los datos fiscales del cliente.";
     case 2:
-      return "Indica estado, ciudad y dirección de la sucursal.";
+      return "Indica estado, ciudad y dirección de la empresa.";
     case 3:
       return "Persona de contacto, teléfono y correo.";
     default:

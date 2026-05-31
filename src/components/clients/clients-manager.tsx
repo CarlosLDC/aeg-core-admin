@@ -351,7 +351,7 @@ export function ClientsManager() {
       });
       const linkedParts = [
         result.companyLinkedExisting ? "empresa existente" : null,
-        result.branchLinkedExisting ? "sucursal existente" : null,
+        result.branchLinkedExisting ? "empresa existente" : null,
       ].filter(Boolean);
       const linkedHint =
         linkedParts.length > 0 ? ` (${linkedParts.join(", ")})` : "";
@@ -422,7 +422,7 @@ export function ClientsManager() {
 
   function openEdit(row: ClientListRow) {
     if (!row.branch) {
-      toast.error("No se encontró la sucursal asociada a este cliente.");
+      toast.error("No se encontró la empresa asociada a este cliente.");
       return;
     }
     const company = companies.find((c) => c.id === row.branch?.companyId);

@@ -80,7 +80,6 @@ import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import {
   branchPath,
-  companyPath,
   distributorContractPath,
   serviceCenterContractPath,
 } from "@/lib/resource-routes";
@@ -452,7 +451,7 @@ export function BranchesManager() {
                 ? contractErr.message
                 : "No se pudo registrar el contrato.";
             toast.error(
-              `Sucursal creada, pero el contrato falló: ${contractMessage}. Complétalo en Contratos.`,
+              `Empresa creada, pero el contrato falló: ${contractMessage}. Complétalo en Contratos.`,
             );
             closeWizard();
             invalidateCatalogRoles();
@@ -461,11 +460,9 @@ export function BranchesManager() {
           }
         }
 
-        const baseMessage = result.companyCreated
-          ? `Empresa "${result.companyLabel}" y sucursal "${result.branchLabel}" creadas correctamente.`
-          : result.companyLinkedExisting
-            ? `Sucursal "${result.branchLabel}" añadida a la empresa existente "${result.companyLabel}".`
-            : `Sucursal "${result.branchLabel}" creada correctamente.`;
+        const baseMessage = result.branchLinkedExisting
+          ? `Empresa "${result.branchLabel}" actualizada en el catálogo.`
+          : `Empresa "${result.branchLabel}" creada correctamente.`;
 
         toast.success(`${baseMessage}${contractNote}`, {
           href: contractHref ?? branchPath(result.branch.id),
@@ -483,7 +480,7 @@ export function BranchesManager() {
 
         await updateBranch(selected.id, body);
         await syncBranchRoles(selected.id, selected, roles);
-        toast.success(`Sucursal "${label}" actualizada.`, {
+        toast.success(`Empresa "${label}" actualizada.`, {
           href: branchPath(selected.id),
         });
         closeEditWizard();
@@ -502,7 +499,7 @@ export function BranchesManager() {
           setWizardResumeCompanyId(resumeId);
           invalidateCatalogRoles();
           await refreshScope();
-          const partial = `La empresa se creó, pero la sucursal no: ${message}. Revisa los datos de ubicación y pulsa «Crear sucursal» de nuevo (la empresa ya está vinculada).`;
+          const partial = `El RIF quedó registrado, pero no se completó el alta: ${message}. Revisa ubicación y pulsa «Crear empresa» de nuevo.`;
           setFormError(partial);
           toast.error(partial);
           return;
@@ -521,7 +518,7 @@ export function BranchesManager() {
       return;
     }
     const label = branchSummary(branch, companies);
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la sucursal "${label}"? Se quitarán también sus roles (cliente, distribuidor, centro de servicio) si existen.`, destructive: true }))) {
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la empresa "${label}"? Se quitarán también sus roles (cliente, distribuidor, centro de servicio) si existen.`, destructive: true }))) {
       return;
     }
     setDeletingId(branch.id);
@@ -530,7 +527,7 @@ export function BranchesManager() {
       await deleteBranch(branch.id);
       if (fromDialog) closeEditWizard();
       await loadBranches({ silent: true });
-      toast.success(`Sucursal "${label}" eliminada.`);
+      toast.success(`Empresa "${label}" eliminada.`);
     } catch (err) {
       reportListTableError({
         message: getCatalogErrorMessage(err),
@@ -558,7 +555,7 @@ export function BranchesManager() {
               )}
             >
               <Plus className="size-4" />
-              Nueva sucursal
+              Nueva empresa
             </button>
           ) : undefined
         }
@@ -577,10 +574,10 @@ export function BranchesManager() {
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-16 text-muted">
             <Loader2 className="size-5 animate-spin" />
-            Cargando sucursales…
+            Cargando empresas…
           </div>
         ) : branches.length === 0 ? (
-          <EmptyState title="No hay sucursales registradas." />
+          <EmptyState title="No hay empresas registradas." />
         ) : (
           <>
             <DataTableToolbar
@@ -654,7 +651,7 @@ export function BranchesManager() {
                             </th>
                           }
                         >
-                        <th className="px-5 py-3 font-medium">Empresa</th>
+                        <th className="px-5 py-3 font-medium">Razón social</th>
                         <th className="px-5 py-3 font-medium">Ubicación</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
                         <th className="px-5 py-3 font-medium">Roles</th>
@@ -676,7 +673,7 @@ export function BranchesManager() {
                               <td className="px-5 py-3.5" data-row-click="ignore">
                                 <TableRowActionsMenu
                                   viewHref={branchPath(branch.id)}
-                                  viewLabel={`Ver sucursal ${branch.city}, ${branch.state}`}
+                                  viewLabel={`Ver empresa ${branch.city}, ${branch.state}`}
                                   onEdit={
                                     canModify ? () => openEdit(branch) : undefined
                                   }

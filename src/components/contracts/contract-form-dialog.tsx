@@ -152,8 +152,8 @@ export function ContractFormDialog({
               }
               searchPlaceholder={
                 kind === "distributor"
-                  ? "Buscar distribuidora o sucursal…"
-                  : "Buscar centro de servicio o sucursal…"
+                  ? "Buscar distribuidora o empresa…"
+                  : "Buscar centro de servicio o empresa…"
               }
             />
           </label>

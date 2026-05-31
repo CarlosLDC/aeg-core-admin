@@ -182,8 +182,8 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         viewBindings: ["user.role"],
       },
       {
-        formLabels: ["Sucursal"],
-        viewLabels: ["Sucursal"],
+        formLabels: ["Empresa"],
+        viewLabels: ["Empresa"],
         formBindings: ["form.branchId"],
         viewBindings: ["user.branchId"],
       },

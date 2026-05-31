@@ -69,7 +69,7 @@ export function serviceCenterSelectOptions(
       const branch = branches.find((b) => b.id === sc.branchId);
       const label = branch
         ? formatBranchShort(branch, companies)
-        : "Sucursal desconocida";
+        : "Empresa desconocida";
       return { value: String(sc.id), label, searchText: label };
     })
     .sort((a, b) => a.label.localeCompare(b.label, "es"));
@@ -85,7 +85,7 @@ export function distributorSelectOptions(
       const branch = branches.find((b) => b.id === d.branchId);
       const label = branch
         ? formatBranchShort(branch, companies)
-        : "Sucursal desconocida";
+        : "Empresa desconocida";
       return { value: String(d.id), label, searchText: label };
     })
     .sort((a, b) => a.label.localeCompare(b.label, "es"));

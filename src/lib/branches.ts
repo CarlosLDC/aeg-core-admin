@@ -45,6 +45,6 @@ export function branchLabelById(
 ): string {
   if (branchId == null) return "—";
   const branch = branches.find((b) => b.id === branchId);
-  if (!branch) return "Sucursal desconocida";
+  if (!branch) return "Empresa desconocida";
   return formatBranchShort(branch, companies);
 }

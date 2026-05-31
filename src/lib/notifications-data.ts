@@ -142,19 +142,19 @@ export async function loadNotifications(options: {
         kind: "company",
         title: "Nueva empresa",
         message: `${c.businessName} (${c.rif}) añadida al catálogo.`,
-        href: "/companies",
+        href: "/branches",
         createdAt: c.createdAt,
       });
     }
   }
 
   for (const b of scopedBranches) {
-    const label = b.city?.trim() || b.address?.trim() || `sucursal ${b.id}`;
+    const label = b.city?.trim() || b.address?.trim() || `empresa ${b.id}`;
     pushNotification(items, {
       id: `branch-${b.id}`,
       kind: "branch",
-      title: "Nueva sucursal",
-      message: `Sucursal registrada en ${label}.`,
+      title: "Nueva empresa",
+      message: `Empresa registrada en ${label}.`,
       href: "/branches",
       createdAt: b.createdAt,
     });
@@ -323,7 +323,7 @@ export function notificationKindLabel(kind: NotificationKind): string {
   const labels: Record<NotificationKind, string> = {
     printer: "Impresora",
     company: "Empresa",
-    branch: "Sucursal",
+    branch: "Empresa",
     employee: "Empleado",
     seal: "Precinto",
     technical_service: "Servicio técnico",

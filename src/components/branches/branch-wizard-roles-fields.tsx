@@ -30,9 +30,9 @@ export function BranchWizardRolesFields({
 }: BranchWizardRolesFieldsProps) {
   return (
     <fieldset className="space-y-4">
-      <legend className="sr-only">Roles de sucursal</legend>
+      <legend className="sr-only">Roles de empresa</legend>
       <p className="text-xs text-muted">
-        Cada rol crea un registro vinculado a la sucursal.
+        Cada rol crea un registro vinculado a la empresa.
       </p>
       <div className="flex flex-wrap gap-2">
         {(

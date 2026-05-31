@@ -64,7 +64,7 @@ function LoginForm() {
             El centro de mando de tu red fiscal
           </h1>
           <p className="mt-4 text-lg leading-relaxed text-sidebar-muted">
-            Visibilidad total sobre impresoras, sucursales y equipos en campo.
+            Visibilidad total sobre impresoras, empresas y equipos en campo.
             Menos fricción, más control — todo en un panel pensado para equipos
             que no se detienen.
           </p>
@@ -185,7 +185,7 @@ function LoginForm() {
           </form>
 
           <p className="mt-6 text-center text-xs text-muted">
-            Impresoras, sucursales y servicios en campo — un solo lugar para
+            Impresoras, empresas y servicios en campo — un solo lugar para
             hacer crecer tu operación.
           </p>
         </div>
