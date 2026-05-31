@@ -983,6 +983,9 @@ export function PrintersManager() {
           saving={dispositionSaving}
           error={dispositionError}
           clientOptions={clientOptions}
+          clients={scopedClients}
+          branches={branches}
+          companies={companies}
           catalogLoading={catalogLoading}
           onClose={() => {
             if (!dispositionSaving) closeDisposition();

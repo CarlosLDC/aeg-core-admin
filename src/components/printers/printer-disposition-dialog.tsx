@@ -5,14 +5,23 @@ import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { PrinterActionDialogShell } from "@/components/printers/printer-action-dialog-shell";
 import { PrinterActionPickerPanel } from "@/components/printers/printer-action-picker-panel";
 import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
-import { useConfirm } from "@/context/confirm-provider";
+import { VenezuelanFiscalInvoicePreview } from "@/components/printers/venezuelan-fiscal-invoice-preview";
+import { buildDispositionInvoiceData } from "@/lib/venezuelan-fiscal-invoice";
+import type { BranchResponse } from "@/types/branch";
+import type { ClientResponse } from "@/types/branch-role";
+import type { CompanyResponse } from "@/types/company";
 import type { PrinterResponse } from "@/types/printer";
+
+type DispositionStep = "client" | "invoice";
 
 type PrinterDispositionDialogProps = {
   printer: PrinterResponse;
   saving: boolean;
   error: string | null;
   clientOptions: SelectOption[];
+  clients: ClientResponse[];
+  branches: BranchResponse[];
+  companies: CompanyResponse[];
   catalogLoading: boolean;
   onClose: () => void;
   onSubmit: (clientId: number) => void;
@@ -33,12 +42,15 @@ export function PrinterDispositionDialog({
   saving,
   error,
   clientOptions,
+  clients,
+  branches,
+  companies,
   catalogLoading,
   onClose,
   onSubmit,
 }: PrinterDispositionDialogProps) {
-  const confirm = useConfirm();
   const titleId = useId();
+  const [step, setStep] = useState<DispositionStep>("client");
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [clientOverride, setClientOverride] = useState<string | null>(null);
   const [clientQuery, setClientQuery] = useState("");
@@ -49,11 +61,6 @@ export function PrinterDispositionDialog({
   const clientId = clientOverride ?? defaultClientId;
   const disabled = saving || catalogLoading;
 
-  const selectedClientLabel = useMemo(() => {
-    const id = Number(clientId);
-    if (!Number.isFinite(id) || id <= 0) return null;
-    return clientOptions.find((opt) => opt.id === id)?.label ?? null;
-  }, [clientId, clientOptions]);
   const filteredClientOptions = useMemo(() => {
     const q = clientQuery.trim().toLowerCase();
     if (!q) return clientOptions;
@@ -62,77 +69,103 @@ export function PrinterDispositionDialog({
     );
   }, [clientOptions, clientQuery]);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  const invoiceData = useMemo(() => {
     const id = Number(clientId);
-    if (!Number.isFinite(id) || id <= 0) {
-      setFieldError("Selecciona un cliente válido.");
+    if (!Number.isFinite(id) || id <= 0) return null;
+    return buildDispositionInvoiceData({
+      clientId: id,
+      clients,
+      branches,
+      companies,
+      printer,
+    });
+  }, [clientId, clients, branches, companies, printer]);
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+
+    if (step === "client") {
+      const id = Number(clientId);
+      if (!Number.isFinite(id) || id <= 0) {
+        setFieldError("Selecciona un cliente válido.");
+        return;
+      }
+      if (!buildDispositionInvoiceData({
+        clientId: id,
+        clients,
+        branches,
+        companies,
+        printer,
+      })) {
+        setFieldError("No se pudo generar la factura para este cliente.");
+        return;
+      }
+      setFieldError(null);
+      setStep("invoice");
       return;
     }
-    setFieldError(null);
 
-    const accepted = await confirm({
-      title: "Confirmar enajenación",
-      content: (
-        <>
-          <p className="text-sm text-muted">
-            Vas a enajenar la impresora{" "}
-            <span className="font-mono text-card-foreground">
-              {printer.fiscalSerial}
-            </span>
-            {selectedClientLabel ? (
-              <>
-                {" "}
-                al cliente{" "}
-                <strong className="text-card-foreground">{selectedClientLabel}</strong>
-              </>
-            ) : null}
-            . Esta acción actualiza el estado de la impresora.
-          </p>
-          <PrinterStatusTransition from="asignada" to="enajenada" />
-        </>
-      ),
-      confirmLabel: "Enajenar impresora",
-      destructive: true,
-    });
-    if (!accepted) return;
-
+    const id = Number(clientId);
+    if (!Number.isFinite(id) || id <= 0) return;
     onSubmit(id);
   }
 
   return (
     <PrinterActionDialogShell
-      title="Enajenar impresora"
+      title={step === "client" ? "Enajenar impresora" : "Factura virtual"}
       titleId={titleId}
       printer={printer}
       saving={saving}
       error={error}
       onClose={onClose}
-      submitLabel="Enajenar impresora"
+      submitLabel={
+        step === "client" ? "Continuar" : "Confirmar enajenación"
+      }
       onSubmit={handleSubmit}
-      submitDisabled={disabled || !clientId || clientOptions.length === 0}
+      submitDisabled={
+        disabled ||
+        (step === "client"
+          ? !clientId || clientOptions.length === 0
+          : !invoiceData)
+      }
       submitLoading={saving}
+      size={step === "invoice" ? "receipt" : "md"}
+      cancelLabel={step === "client" ? "Cancelar" : "Volver"}
+      onCancel={step === "invoice" ? () => setStep("client") : undefined}
+      submitDestructive={step === "invoice"}
     >
-      <PrinterActionPickerPanel
-        label="Cliente"
-        searchPlaceholder="Buscar cliente por nombre o ID…"
-        query={clientQuery}
-        onQueryChange={setClientQuery}
-        options={filteredClientOptions}
-        selectedValue={clientId}
-        onSelect={(value) => {
-          setClientOverride(value);
-          setFieldError(null);
-        }}
-        loading={catalogLoading}
-        disabled={disabled}
-        emptyMessage="Sin clientes disponibles"
-        noResultsMessage="Sin resultados"
-      />
-      {fieldError ? (
-        <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">
-          {fieldError}
-        </p>
+      {step === "client" ? (
+        <>
+          <PrinterActionPickerPanel
+            label="Cliente"
+            searchPlaceholder="Buscar cliente por nombre o ID…"
+            query={clientQuery}
+            onQueryChange={setClientQuery}
+            options={filteredClientOptions}
+            selectedValue={clientId}
+            onSelect={(value) => {
+              setClientOverride(value);
+              setFieldError(null);
+            }}
+            loading={catalogLoading}
+            disabled={disabled}
+            emptyMessage="Sin clientes disponibles"
+            noResultsMessage="Sin resultados"
+          />
+          {fieldError ? (
+            <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">
+              {fieldError}
+            </p>
+          ) : null}
+        </>
+      ) : invoiceData ? (
+        <div className="flex min-h-0 flex-1 flex-col items-center gap-4 overflow-y-auto">
+          <p className="text-center text-sm text-muted">
+            Revisa la factura fiscal antes de confirmar la enajenación.
+          </p>
+          <VenezuelanFiscalInvoicePreview data={invoiceData} />
+          <PrinterStatusTransition from="asignada" to="enajenada" />
+        </div>
       ) : null}
     </PrinterActionDialogShell>
   );

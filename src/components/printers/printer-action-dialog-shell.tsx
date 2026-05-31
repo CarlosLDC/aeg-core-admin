@@ -5,6 +5,8 @@ import { Loader2, X } from "lucide-react";
 import type { PrinterResponse } from "@/types/printer";
 import { cn } from "@/lib/utils";
 
+export type PrinterActionDialogSize = "md" | "receipt";
+
 type PrinterActionDialogShellProps = {
   title: string;
   titleId: string;
@@ -17,6 +19,10 @@ type PrinterActionDialogShellProps = {
   onSubmit: (event: FormEvent) => void;
   submitDisabled?: boolean;
   submitLoading?: boolean;
+  size?: PrinterActionDialogSize;
+  cancelLabel?: string;
+  onCancel?: () => void;
+  submitDestructive?: boolean;
 };
 
 export function PrinterActionDialogShell({
@@ -31,7 +37,13 @@ export function PrinterActionDialogShell({
   onSubmit,
   submitDisabled = false,
   submitLoading = false,
+  size = "md",
+  cancelLabel = "Cancelar",
+  onCancel,
+  submitDestructive = false,
 }: PrinterActionDialogShellProps) {
+  const handleCancel = onCancel ?? onClose;
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -46,7 +58,12 @@ export function PrinterActionDialogShell({
         disabled={saving}
         onClick={onClose}
       />
-      <div className="relative flex max-h-[min(92vh,100dvh)] w-full max-w-md flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+      <div
+        className={cn(
+          "relative flex max-h-[min(92vh,100dvh)] w-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl",
+          size === "receipt" ? "max-w-lg" : "max-w-md",
+        )}
+      >
         <div className="shrink-0 border-b border-border px-4 py-3 sm:px-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -93,17 +110,20 @@ export function PrinterActionDialogShell({
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleCancel}
                 disabled={saving}
                 className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
               >
-                Cancelar
+                {cancelLabel}
               </button>
               <button
                 type="submit"
                 disabled={saving || submitDisabled}
                 className={cn(
-                  "flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
+                  "flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium",
+                  submitDestructive
+                    ? "bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-500"
+                    : "bg-accent text-accent-foreground",
                   (saving || submitDisabled) &&
                     "cursor-not-allowed opacity-70",
                 )}

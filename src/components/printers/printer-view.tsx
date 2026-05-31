@@ -258,28 +258,29 @@ export function PrinterView() {
       .sort((a, b) => a.label.localeCompare(b.label, "es"));
   }, [distributors, branches, companies, lockDistributor, distributorId]);
 
+  const scopedClients = useMemo(() => {
+    if (lockDistributor && distributorId != null) {
+      return excludeDistributorSelfClients(
+        clients.filter((c) => c.distributorId === distributorId),
+        distributorStaffBranchId,
+      );
+    }
+    return clients;
+  }, [
+    clients,
+    lockDistributor,
+    distributorId,
+    distributorStaffBranchId,
+  ]);
+
   const clientOptions = useMemo<SelectOption[]>(() => {
-    const scopedClients =
-      lockDistributor && distributorId != null
-        ? excludeDistributorSelfClients(
-            clients.filter((c) => c.distributorId === distributorId),
-            distributorStaffBranchId,
-          )
-        : clients;
     return scopedClients
       .map((c) => ({
         id: c.id,
         label: clientLabel(c, branches, companies),
       }))
       .sort((a, b) => a.label.localeCompare(b.label, "es"));
-  }, [
-    clients,
-    branches,
-    companies,
-    lockDistributor,
-    distributorId,
-    distributorStaffBranchId,
-  ]);
+  }, [scopedClients, branches, companies]);
 
   const model = printer
     ? models.find((m) => m.id === printer.modelId)
@@ -653,6 +654,9 @@ export function PrinterView() {
           saving={dispositionSaving}
           error={dispositionError}
           clientOptions={clientOptions}
+          clients={scopedClients}
+          branches={branches}
+          companies={companies}
           catalogLoading={catalogLoading}
           onClose={() => {
             if (!dispositionSaving) setDispositionOpen(false);
