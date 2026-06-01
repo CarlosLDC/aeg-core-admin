@@ -8,12 +8,23 @@ import {
 } from "./navigation";
 
 describe("navSectionsForRole", () => {
-  it("places Operaciones after Organización for DISTRIBUTOR", () => {
-    const titles = navSectionsForRole("DISTRIBUTOR").map((s) => s.title);
-    expect(titles.indexOf("Organización")).toBeLessThan(
-      titles.indexOf("Operaciones"),
+  it.each(["ADMIN", "DISTRIBUTOR"] as const)(
+    "places Organización before Operaciones for %s",
+    (role) => {
+      const titles = navSectionsForRole(role).map((s) => s.title);
+      expect(titles.indexOf("Organización")).toBeGreaterThan(-1);
+      expect(titles.indexOf("Operaciones")).toBeGreaterThan(-1);
+      expect(titles.indexOf("Organización")).toBeLessThan(
+        titles.indexOf("Operaciones"),
+      );
+    },
+  );
+
+  it("keeps Administración after Operaciones for ADMIN", () => {
+    const titles = navSectionsForRole("ADMIN").map((s) => s.title);
+    expect(titles.indexOf("Operaciones")).toBeLessThan(
+      titles.indexOf("Administración"),
     );
-    expect(titles.at(-1)).toBe("Operaciones");
   });
 });
 
