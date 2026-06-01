@@ -161,13 +161,39 @@ export function navItemsForRole(role: Role): NavItem[] {
   return mainNav.filter((item) => itemVisibleForRole(item, role));
 }
 
+/** Orden del sidebar para distribuidores: Operaciones al final, tras Organización. */
+const DISTRIBUTOR_NAV_SECTION_ORDER = [
+  "Inicio",
+  "Equipos fiscales",
+  "Organización",
+  "Operaciones",
+] as const;
+
+function orderNavSectionsForRole(
+  sections: NavSection[],
+  role: Role,
+): NavSection[] {
+  if (role !== "DISTRIBUTOR") return sections;
+
+  const order = new Map(
+    DISTRIBUTOR_NAV_SECTION_ORDER.map((title, index) => [title, index]),
+  );
+  return [...sections].sort((a, b) => {
+    const aIndex = order.get(a.title) ?? DISTRIBUTOR_NAV_SECTION_ORDER.length;
+    const bIndex = order.get(b.title) ?? DISTRIBUTOR_NAV_SECTION_ORDER.length;
+    return aIndex - bIndex;
+  });
+}
+
 export function navSectionsForRole(role: Role): NavSection[] {
-  return navSections
+  const sections = navSections
     .map((section) => ({
       ...section,
       items: section.items.filter((item) => itemVisibleForRole(item, role)),
     }))
     .filter((section) => section.items.length > 0);
+
+  return orderNavSectionsForRole(sections, role);
 }
 
 /** True when pathname is exactly this item or a nested route under it. */

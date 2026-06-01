@@ -4,7 +4,18 @@ import {
   isNavItemActive,
   mainNav,
   navItemsForRole,
+  navSectionsForRole,
 } from "./navigation";
+
+describe("navSectionsForRole", () => {
+  it("places Operaciones after Organización for DISTRIBUTOR", () => {
+    const titles = navSectionsForRole("DISTRIBUTOR").map((s) => s.title);
+    expect(titles.indexOf("Organización")).toBeLessThan(
+      titles.indexOf("Operaciones"),
+    );
+    expect(titles.at(-1)).toBe("Operaciones");
+  });
+});
 
 describe("activeNavHref", () => {
   const adminItems = navItemsForRole("ADMIN");
