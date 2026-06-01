@@ -30,7 +30,7 @@ Claims esperados por el panel: `role`, `branchId`, `distributorId`.
 
 - `/api/admin/users` — solo ADMIN
 - `/api/distributor-contracts`, `/api/service-center-contracts` — solo ADMIN
-- `/api/printer-models` GET — ADMIN, DISTRIBUTOR (solo modelos de sus impresoras), TECHNICIAN; POST/PUT/DELETE — solo ADMIN
+- `/api/printer-models` GET — ADMIN, DISTRIBUTOR (solo modelos de sus impresoras vía `PrinterModelServiceImpl`), TECHNICIAN; POST/PUT/DELETE — solo ADMIN. En `SecurityConfig` los GET no deben quedar bajo la regla global solo-ADMIN de `/api/printer-models/**`.
 - `/api/employees` GET/POST — DISTRIBUTOR: solo sucursal de la distribuidora (`assertDistributorStaffBranch`); PUT/DELETE — ADMIN
 - `/api/companies` POST — ADMIN, DISTRIBUTOR (scope)
 - `/api/companies/resolve?rif=` GET — ADMIN, DISTRIBUTOR (empresa por RIF aunque no esté en el listado filtrado)
