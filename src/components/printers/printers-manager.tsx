@@ -32,10 +32,7 @@ import {
   type DistributorPrinterQuickFilter,
 } from "@/lib/distributor-printer-filters";
 import { filterAllOption } from "@/lib/table-filter-options";
-import {
-  filterToggleButtonClass,
-  toggleButtonClass,
-} from "@/lib/toggle-button-styles";
+import { filterToggleButtonClass } from "@/lib/toggle-button-styles";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import {
@@ -786,18 +783,10 @@ export function PrintersManager() {
                     type="button"
                     aria-pressed={statusFilter === filter.value}
                     onClick={() => setStatusFilter(filter.value)}
-                    className={
-                      filter.tone
-                        ? toggleButtonClass(
-                            statusFilter === filter.value,
-                            filter.tone,
-                            { className: "rounded-md" },
-                          )
-                        : filterToggleButtonClass(
-                            statusFilter === filter.value,
-                            { className: "rounded-md" },
-                          )
-                    }
+                    className={filterToggleButtonClass(
+                      statusFilter === filter.value,
+                      { className: "rounded-md" },
+                    )}
                   >
                     {filter.label}
                   </button>

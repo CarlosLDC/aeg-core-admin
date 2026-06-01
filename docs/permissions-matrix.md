@@ -7,7 +7,7 @@ Documento de referencia alineado con `src/lib/permissions/matrix.ts`. El backend
 | Rol | Descripción |
 |-----|-------------|
 | ADMIN | Acceso global; único que modifica/elimina catálogos sensibles y usuarios |
-| DISTRIBUTOR | Alta de **clientes** vía `/clients`; **empleados** solo en su sucursal (no los de clientes); **impresoras** de su cartera; **modelos fiscales** solo lectura de los usados en sus impresoras (sin menú de catálogo) |
+| DISTRIBUTOR | Alta de **clientes** vía `/clients`; **empleados** solo en su sucursal (no los de clientes); **impresoras** de su cartera; **inspecciones anuales** en su cartera con personal interno; **modelos fiscales** solo lectura de los usados en sus impresoras (sin menú de catálogo) |
 | TECHNICIAN | Impresoras, precintos, servicios e inspecciones en alcance de sucursales |
 | SERVICE_CENTER | Precintos, servicios técnicos e inspecciones anuales |
 
@@ -23,7 +23,7 @@ Documento de referencia alineado con `src/lib/permissions/matrix.ts`. El backend
 | printerModels | ADMIN, DISTRIBUTOR, TECHNICIAN | ADMIN | ADMIN | ADMIN | DIST: lectura de modelos de **sus** impresoras; sin página `/printer-models` |
 | seals | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual lectura | Igual | Igual | Impresoras en scope |
 | technicalServices | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual | Igual | Igual | |
-| annualInspections | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual | Igual | Igual | |
+| annualInspections | ADMIN, DISTRIBUTOR, TECHNICIAN, SERVICE_CENTER | Igual | Igual | Igual | DIST: impresoras de su cartera; empleado inspector en sucursal de la distribuidora |
 | contracts | ADMIN | ADMIN | ADMIN | ADMIN | |
 | users | ADMIN | ADMIN | ADMIN | ADMIN | |
 | mqtt | ADMIN | ADMIN | — | — | |

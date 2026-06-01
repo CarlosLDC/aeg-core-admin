@@ -5,6 +5,12 @@ const ADMIN_ONLY = ["ADMIN"] as const;
 const ADMIN_DIST = ["ADMIN", "DISTRIBUTOR"] as const;
 const ADMIN_DIST_TECH = ["ADMIN", "DISTRIBUTOR", "TECHNICIAN"] as const;
 const FIELD_OPS = ["ADMIN", "TECHNICIAN", "SERVICE_CENTER"] as const;
+const FIELD_OPS_DIST = [
+  "ADMIN",
+  "DISTRIBUTOR",
+  "TECHNICIAN",
+  "SERVICE_CENTER",
+] as const;
 const ALL_ROLES = [
   "ADMIN",
   "DISTRIBUTOR",
@@ -61,10 +67,10 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     delete: FIELD_OPS,
   },
   annualInspections: {
-    read: FIELD_OPS,
-    create: FIELD_OPS,
-    update: FIELD_OPS,
-    delete: FIELD_OPS,
+    read: FIELD_OPS_DIST,
+    create: FIELD_OPS_DIST,
+    update: FIELD_OPS_DIST,
+    delete: FIELD_OPS_DIST,
   },
   contracts: {
     read: ADMIN_ONLY,

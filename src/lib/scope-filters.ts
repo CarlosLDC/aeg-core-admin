@@ -11,6 +11,10 @@ import type { TechnicianResponse } from "@/types/employee-role";
 import type { PrinterResponse } from "@/types/printer";
 import type { SealResponse } from "@/types/seal";
 import type { Role } from "@/types/user";
+import {
+  distributorStaffBranchIds,
+  filterEmployeesForDistributorStaff,
+} from "@/lib/distributor-scope";
 import { resolveEmployeeCompanyId } from "@/lib/employee-company";
 
 export function branchIdsFromScope(
@@ -137,6 +141,9 @@ export function filterAnnualInspectionsInScope<
   T extends { printerId: number; employeeId: number },
 >(rows: T[], printerIds: Set<number>, employeeIds: Set<number>, role: Role): T[] {
   if (role === "ADMIN") return rows;
+  if (role === "DISTRIBUTOR") {
+    return filterByPrinterIds(rows, printerIds, role);
+  }
   return rows.filter(
     (row) =>
       printerIds.has(row.printerId) && employeeIds.has(row.employeeId),
@@ -189,13 +196,20 @@ export function applyScopedFieldCatalog(input: ScopedFieldCatalogInput) {
     branchIds,
     role,
   );
-  const scopedEmployees = filterEmployeesInScope(
+  let scopedEmployees = filterEmployeesInScope(
     employees,
     companyIds,
     role,
     userBranchId,
     branches,
   );
+  if (role === "DISTRIBUTOR") {
+    scopedEmployees = filterEmployeesForDistributorStaff(
+      scopedEmployees,
+      role,
+      distributorStaffBranchIds(distributors, distributorId),
+    );
+  }
   const scopedTechnicians = filterTechniciansInScope(
     technicians,
     scopedEmployees,

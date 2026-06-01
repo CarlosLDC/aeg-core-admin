@@ -98,14 +98,7 @@ export const navSections: NavSection[] = [
         title: "Inspección anual",
         href: "/annual-inspections",
         icon: ClipboardCheck,
-        roles: ["ADMIN", "TECHNICIAN", "SERVICE_CENTER"],
-      },
-      {
-        title: "Inspecciones anuales",
-        href: "/annual-inspections",
-        icon: ClipboardCheck,
-        roles: ["DISTRIBUTOR"],
-        disabled: true,
+        roles: ["ADMIN", "DISTRIBUTOR", "TECHNICIAN", "SERVICE_CENTER"],
       },
       {
         title: "Descargas",

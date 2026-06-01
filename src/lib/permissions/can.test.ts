@@ -41,6 +41,13 @@ describe("can", () => {
     expect(can("TECHNICIAN", "printerModels", "read")).toBe(true);
     expect(can("DISTRIBUTOR", "printerModels", "create")).toBe(false);
   });
+
+  it("allows DISTRIBUTOR full annual inspection CRUD within API scope", () => {
+    expect(can("DISTRIBUTOR", "annualInspections", "read")).toBe(true);
+    expect(can("DISTRIBUTOR", "annualInspections", "create")).toBe(true);
+    expect(can("DISTRIBUTOR", "annualInspections", "update")).toBe(true);
+    expect(can("DISTRIBUTOR", "annualInspections", "delete")).toBe(true);
+  });
 });
 
 describe("canAccessRoute", () => {
@@ -61,6 +68,11 @@ describe("canAccessRoute", () => {
 
   it("blocks DISTRIBUTOR from contracts", () => {
     expect(canAccessRoute("DISTRIBUTOR", "/contracts")).toBe(false);
+  });
+
+  it("allows DISTRIBUTOR on annual inspections routes", () => {
+    expect(canAccessRoute("DISTRIBUTOR", "/annual-inspections")).toBe(true);
+    expect(canAccessRoute("DISTRIBUTOR", "/annual-inspections/42")).toBe(true);
   });
 
   it("allows TECHNICIAN on printer models catalog; DISTRIBUTOR reads models via impresoras", () => {

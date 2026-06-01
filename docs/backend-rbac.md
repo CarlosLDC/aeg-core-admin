@@ -37,6 +37,7 @@ Claims esperados por el panel: `role`, `branchId`, `distributorId`.
 - `/api/companies` PUT/DELETE — ADMIN
 - `/api/branches` POST — ADMIN, DISTRIBUTOR; PUT/DELETE — ADMIN
 - `/api/printers` GET — ADMIN, DISTRIBUTOR, TECHNICIAN (filtrado por scope); POST/PUT/DELETE — solo ADMIN
+- `/api/annual-inspections/**` — ADMIN, DISTRIBUTOR, TECHNICIAN, SERVICE_CENTER (DIST: listado por impresoras de cartera; POST/PUT empleado en sucursal de la distribuidora vía `assertDistributorStaffBranch`)
 
 ## Pruebas de integración
 
