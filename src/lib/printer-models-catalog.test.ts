@@ -38,4 +38,22 @@ describe("fetchMissingPrinterModels", () => {
     expect(result.map((m) => m.id).sort()).toEqual([1, 2]);
     vi.restoreAllMocks();
   });
+
+  it("falls back to list when fetch by id fails (distributor scope)", async () => {
+    vi.spyOn(printerModelsApi, "fetchPrinterModelById").mockRejectedValue(
+      new Error("403"),
+    );
+    vi.spyOn(printerModelsApi, "fetchPrinterModels").mockResolvedValue([
+      model(1),
+      model(2),
+    ]);
+
+    const result = await fetchMissingPrinterModels(
+      [{ modelId: 2 }],
+      [model(1)],
+    );
+
+    expect(result.map((m) => m.id).sort()).toEqual([1, 2]);
+    vi.restoreAllMocks();
+  });
 });

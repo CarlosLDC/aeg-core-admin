@@ -241,8 +241,8 @@ export function PrintersManager() {
   }, [models, isDistributor, visiblePrinters]);
 
   const modelById = useMemo(
-    () => new Map(visibleModels.map((m) => [m.id, m])),
-    [visibleModels],
+    () => new Map(models.map((m) => [m.id, m])),
+    [models],
   );
 
   const filteredPrinters = useMemo(() => {
@@ -418,7 +418,13 @@ export function PrintersManager() {
 
     let cancelled = false;
     void fetchMissingPrinterModels(visiblePrinters, models).then((next) => {
-      if (!cancelled && next.length > models.length) setModels(next);
+      if (
+        !cancelled &&
+        missingPrinterModelIds(visiblePrinters, next).length <
+          missingPrinterModelIds(visiblePrinters, models).length
+      ) {
+        setModels(next);
+      }
     });
     return () => {
       cancelled = true;

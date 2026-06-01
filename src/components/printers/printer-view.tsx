@@ -228,7 +228,13 @@ export function PrinterView() {
 
     let cancelled = false;
     void fetchMissingPrinterModels([printer], models).then((next) => {
-      if (!cancelled && next.length > models.length) setModels(next);
+      if (
+        !cancelled &&
+        missingPrinterModelIds([printer], next).length <
+          missingPrinterModelIds([printer], models).length
+      ) {
+        setModels(next);
+      }
     });
     return () => {
       cancelled = true;
@@ -286,7 +292,7 @@ export function PrinterView() {
     ? models.find((m) => m.id === printer.modelId)
     : undefined;
   const modelLabel = model
-    ? `${model.brand} ${model.modelCode}`
+    ? printerModelLabel(model)
     : printer
       ? "Modelo desconocido"
       : "";
