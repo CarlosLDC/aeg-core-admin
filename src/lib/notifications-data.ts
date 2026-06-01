@@ -1,5 +1,6 @@
 import { fetchAnnualInspections } from "@/lib/annual-inspections-api";
 import { fetchBranches } from "@/lib/branches-api";
+import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import type { CompanyScope } from "@/lib/company-scope";
 import { contractStatus } from "@/lib/contract-form";
@@ -20,6 +21,22 @@ import {
 import { fetchSeals } from "@/lib/seals-api";
 import { fetchServiceCenterContracts } from "@/lib/service-center-contracts-api";
 import { fetchTechnicalServices } from "@/lib/technical-services-api";
+import {
+  notificationHrefForBranch,
+  notificationHrefForCompany,
+  resolveNotificationHref,
+} from "@/lib/notification-hrefs";
+import {
+  annualInspectionPath,
+  distributorContractPath,
+  employeePath,
+  printerModelPath,
+  printerPath,
+  sealPath,
+  serviceCenterContractPath,
+  technicalServicePath,
+} from "@/lib/resource-routes";
+import type { ClientResponse } from "@/types/branch-role";
 import type { AppNotification, NotificationKind } from "@/types/notification";
 import type { Role } from "@/types/user";
 
@@ -101,6 +118,7 @@ export async function loadNotifications(options: {
   const [
     companiesP,
     branchesP,
+    clientsP,
     employeesP,
     printersP,
     sealsP,
@@ -111,6 +129,7 @@ export async function loadNotifications(options: {
   ] = await Promise.all([
     settled(scope ? Promise.resolve(scope.companies) : fetchCompanies()),
     settled(scope ? Promise.resolve(scope.branches) : fetchBranches()),
+    role === "DISTRIBUTOR" ? settled(fetchClients()) : Promise.resolve(null),
     settled(fetchEmployees()),
     canPrinters ? settled(fetchPrinters()) : Promise.resolve(null),
     canFieldOps ? settled(fetchSeals()) : Promise.resolve(null),
@@ -134,6 +153,7 @@ export async function loadNotifications(options: {
     branchIds.size > 0
       ? branches.filter((b) => branchIds.has(b.id))
       : branches;
+  const clients: ClientResponse[] = clientsP?.ok ? clientsP.value : [];
 
   if (companiesP.ok) {
     for (const c of companiesP.value) {
@@ -142,7 +162,12 @@ export async function loadNotifications(options: {
         kind: "company",
         title: "Nueva empresa",
         message: `${c.businessName} (${c.rif}) añadida al catálogo.`,
-        href: "/branches",
+        href: notificationHrefForCompany(
+          c.id,
+          role,
+          scopedBranches,
+          clients,
+        ),
         createdAt: c.createdAt,
       });
     }
@@ -155,7 +180,7 @@ export async function loadNotifications(options: {
       kind: "branch",
       title: "Nueva empresa",
       message: `Empresa registrada en ${label}.`,
-      href: "/branches",
+      href: notificationHrefForBranch(b, role, clients),
       createdAt: b.createdAt,
     });
   }
@@ -174,7 +199,7 @@ export async function loadNotifications(options: {
         kind: "employee",
         title: "Nuevo empleado",
         message: `${e.name} añadido al personal.`,
-        href: "/employees",
+        href: resolveNotificationHref(role, employeePath(e.id)),
         createdAt: e.createdAt,
       });
     }
@@ -191,7 +216,7 @@ export async function loadNotifications(options: {
         kind: "printer",
         title: "Nueva impresora",
         message: `Serial ${p.fiscalSerial} registrada (${statusLabel}).`,
-        href: "/printers",
+        href: resolveNotificationHref(role, printerPath(p.id)),
         createdAt: p.createdAt,
       });
     }
@@ -227,7 +252,7 @@ export async function loadNotifications(options: {
         kind: "seal",
         title: "Nuevo precinto",
         message: `Precinto ${s.serial} registrado en inventario.`,
-        href: "/seals",
+        href: resolveNotificationHref(role, sealPath(s.id)),
         createdAt: s.createdAt,
       });
     }
@@ -248,7 +273,7 @@ export async function loadNotifications(options: {
         message: s.reportedFailure?.trim()
           ? `Visita: ${s.reportedFailure.trim()}`
           : "Nueva visita de servicio registrada.",
-        href: "/technical-services",
+        href: resolveNotificationHref(role, technicalServicePath(s.id)),
         createdAt: s.createdAt,
       });
     }
@@ -267,7 +292,7 @@ export async function loadNotifications(options: {
         kind: "annual_inspection",
         title: "Inspección anual",
         message: "Nueva inspección anual registrada.",
-        href: "/annual-inspections",
+        href: resolveNotificationHref(role, annualInspectionPath(i.id)),
         createdAt: i.createdAt,
       });
     }
@@ -280,7 +305,7 @@ export async function loadNotifications(options: {
         kind: "printer_model",
         title: "Modelo fiscal",
         message: `Modelo ${m.brand} ${m.modelCode} añadido al catálogo.`,
-        href: "/printer-models",
+        href: resolveNotificationHref(role, printerModelPath(m.id)),
         createdAt: m.createdAt,
       });
     }
@@ -295,7 +320,7 @@ export async function loadNotifications(options: {
         kind: "contract",
         title: "Contrato de distribuidora",
         message: `Contrato ${c.id} (${status === "active" ? "vigente" : status}).`,
-        href: "/contracts",
+        href: resolveNotificationHref(role, distributorContractPath(c.id)),
         createdAt: c.createdAt,
       });
     }
@@ -306,7 +331,7 @@ export async function loadNotifications(options: {
         kind: "contract",
         title: "Contrato de centro de servicio",
         message: `Contrato ${c.id} (${status === "active" ? "vigente" : status}).`,
-        href: "/contracts",
+        href: resolveNotificationHref(role, serviceCenterContractPath(c.id)),
         createdAt: c.createdAt,
       });
     }
