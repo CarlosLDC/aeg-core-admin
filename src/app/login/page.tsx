@@ -2,10 +2,19 @@
 
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
+import {
+  AlertCircle,
+  BookOpen,
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+  User,
+} from "lucide-react";
 import { LoginAnimatedBackdrop } from "@/components/auth/login-animated-backdrop";
 import { BrandLogo } from "@/components/brand/logo";
 import { getLoginErrorMessage, useAuth } from "@/context/auth-provider";
+import { fiscalBooksAppUrl } from "@/lib/fiscal-books-app";
 import { getSafeRedirectPath } from "@/lib/safe-redirect";
 import { FieldLabel } from "@/components/ui/field-label";
 import { cn } from "@/lib/utils";
@@ -183,6 +192,17 @@ function LoginForm() {
               )}
             </button>
           </form>
+
+          <p className="mt-5 text-center text-sm text-muted">
+            ¿Necesitas consultar un libro fiscal?{" "}
+            <a
+              href={fiscalBooksAppUrl()}
+              className="inline-flex items-center gap-1.5 font-medium text-accent transition-colors hover:text-accent/80 hover:underline"
+            >
+              <BookOpen className="size-4 shrink-0" aria-hidden />
+              Libro fiscal virtual
+            </a>
+          </p>
 
           <p className="mt-6 text-center text-xs text-muted">
             Impresoras, empresas y servicios en campo — un solo lugar para
