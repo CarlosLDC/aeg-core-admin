@@ -4,7 +4,7 @@ import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
-  BookOpen,
+  ExternalLink,
   Eye,
   EyeOff,
   Loader2,
@@ -193,14 +193,13 @@ function LoginForm() {
             </button>
           </form>
 
-          <p className="mt-5 text-center text-sm text-muted">
-            ¿Necesitas consultar un libro fiscal?{" "}
+          <p className="mt-5 text-center text-sm">
             <a
               href={fiscalBooksAppUrl()}
               className="inline-flex items-center gap-1.5 font-medium text-accent transition-colors hover:text-accent/80 hover:underline"
             >
-              <BookOpen className="size-4 shrink-0" aria-hidden />
-              Libro fiscal virtual
+              Consultar Libro Fiscal
+              <ExternalLink className="size-4 shrink-0" aria-hidden />
             </a>
           </p>
 
