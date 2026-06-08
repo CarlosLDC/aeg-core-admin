@@ -48,6 +48,12 @@ Documento de referencia alineado con `src/lib/permissions/matrix.ts`. El backend
 - La sucursal nueva queda siempre vinculada al distribuidor que la creó; no se reasignan sucursales ajenas.
 - Sin edición ni eliminación de clientes existentes (solo ADMIN).
 
+## Portal libro fiscal (aeg-libros-fiscales)
+
+Los roles y permisos de esta matriz aplican **solo al panel** (`aeg-core-admin`, tabla `users`, JWT `portal=CORE_ADMIN`).
+
+El portal de libros fiscales usa tabla `fiscal_book_users` y roles `FISCAL_ADMIN`, `FISCAL_TECHNICIAN`, `FISCAL_AUDITOR` (JWT `portal=FISCAL_BOOK`). Su gestión de usuarios está en la pestaña **Usuarios del libro fiscal** del panel ADMIN. Ver [backend-rbac.md](./backend-rbac.md).
+
 ## Backend (checklist)
 
 Ver [backend-rbac.md](./backend-rbac.md).
