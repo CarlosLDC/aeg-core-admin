@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
 import { BrandLogo } from "@/components/brand/logo";
 import {
   isNavItemActive,
@@ -19,6 +19,7 @@ import {
   DEFAULT_RETRY_DELAYS_MS,
   sleep,
 } from "@/lib/polling";
+import { isExternalNavHref } from "@/lib/fiscal-books-app";
 import { cn } from "@/lib/utils";
 
 const SIDEBAR_NAV_SCROLL_KEY = "aeg-admin-sidebar-nav-scroll";
@@ -94,6 +95,50 @@ function NavRow({
     );
   }
 
+  const external = isExternalNavHref(item.href);
+  const iconClass = cn(
+    "size-5 shrink-0",
+    isActive
+      ? "text-accent"
+      : "text-sidebar-muted group-hover:text-sidebar-foreground",
+  );
+  const label = (
+    <>
+      <Icon className={iconClass} />
+      {!isCollapsed && <span>{item.title}</span>}
+      {!isCollapsed && external ? (
+        <ExternalLink
+          className="ml-auto size-3.5 shrink-0 text-sidebar-muted/80"
+          aria-hidden
+        />
+      ) : null}
+      {!isCollapsed && badgeCount != null && badgeCount > 0 ? (
+        <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[11px] font-semibold text-amber-200">
+          {badgeCount}
+        </span>
+      ) : null}
+      {isActive && !isCollapsed && !(badgeCount != null && badgeCount > 0) ? (
+        <span className="ml-auto size-1.5 rounded-full bg-accent" />
+      ) : null}
+    </>
+  );
+
+  if (external) {
+    return (
+      <a
+        href={item.href}
+        onClick={() => {
+          onBeforeNavigate?.();
+          onNavigate?.();
+        }}
+        title={isCollapsed ? item.title : undefined}
+        className={rowClass}
+      >
+        {label}
+      </a>
+    );
+  }
+
   return (
     <Link
       href={item.href}
@@ -104,23 +149,7 @@ function NavRow({
       title={isCollapsed ? item.title : undefined}
       className={rowClass}
     >
-      <Icon
-        className={cn(
-          "size-5 shrink-0",
-          isActive
-            ? "text-accent"
-            : "text-sidebar-muted group-hover:text-sidebar-foreground",
-        )}
-      />
-      {!isCollapsed && <span>{item.title}</span>}
-      {!isCollapsed && badgeCount != null && badgeCount > 0 && (
-        <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[11px] font-semibold text-amber-200">
-          {badgeCount}
-        </span>
-      )}
-      {isActive && !isCollapsed && !(badgeCount != null && badgeCount > 0) && (
-        <span className="ml-auto size-1.5 rounded-full bg-accent" />
-      )}
+      {label}
     </Link>
   );
 }

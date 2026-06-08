@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { FISCAL_BOOKS_APP_URL } from "@/lib/fiscal-books-app";
 import {
   activeNavHref,
   isNavItemActive,
@@ -24,6 +25,15 @@ describe("navSectionsForRole", () => {
     const titles = navSectionsForRole("ADMIN").map((s) => s.title);
     expect(titles.indexOf("Operaciones")).toBeLessThan(
       titles.indexOf("Administración"),
+    );
+  });
+
+  it("shows Libro fiscal for field ops with external app URL", () => {
+    const technicianItems = navItemsForRole("TECHNICIAN");
+    const fiscalBook = technicianItems.find((i) => i.title === "Libro fiscal");
+    expect(fiscalBook?.href).toBe(FISCAL_BOOKS_APP_URL);
+    expect(navItemsForRole("DISTRIBUTOR").some((i) => i.title === "Libro fiscal")).toBe(
+      false,
     );
   });
 });

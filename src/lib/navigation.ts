@@ -11,11 +11,13 @@ import {
   Stamp,
   Wrench,
   ClipboardCheck,
+  BookOpen,
   Download,
   Boxes,
   Radio,
   type LucideIcon,
 } from "lucide-react";
+import { FISCAL_BOOKS_APP_URL } from "@/lib/fiscal-books-app";
 import type { Role } from "@/types/user";
 
 export type NavItem = {
@@ -101,6 +103,12 @@ export const navSections: NavSection[] = [
         roles: ["ADMIN", "DISTRIBUTOR", "TECHNICIAN", "SERVICE_CENTER"],
       },
       {
+        title: "Libro fiscal",
+        href: FISCAL_BOOKS_APP_URL,
+        icon: BookOpen,
+        roles: ["ADMIN", "TECHNICIAN", "SERVICE_CENTER"],
+      },
+      {
         title: "Descargas",
         href: "/downloads",
         icon: Download,
@@ -166,6 +174,9 @@ export function navSectionsForRole(role: Role): NavSection[] {
 /** True when pathname is exactly this item or a nested route under it. */
 export function navItemMatchesPath(item: NavItem, pathname: string): boolean {
   if (item.disabled) return false;
+  if (item.href.startsWith("http://") || item.href.startsWith("https://")) {
+    return false;
+  }
   if (item.href === "/") return pathname === "/";
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
