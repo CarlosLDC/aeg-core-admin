@@ -24,7 +24,6 @@ Documento de referencia alineado con `src/lib/permissions/matrix.ts`. El backend
 | seals | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual lectura | Igual | Igual | Impresoras en scope |
 | technicalServices | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual | Igual | Igual | |
 | annualInspections | ADMIN, DISTRIBUTOR, TECHNICIAN, SERVICE_CENTER | Igual | Igual | Igual | DIST: impresoras de su cartera; empleado inspector en sucursal de la distribuidora |
-| fiscalBook | ADMIN, TECHNICIAN, SERVICE_CENTER | — | — | — | Libro virtual SENIAT; módulo `/fiscal-book` |
 | contracts | ADMIN | ADMIN | ADMIN | ADMIN | |
 | users | ADMIN | ADMIN | ADMIN | ADMIN | |
 | mqtt | ADMIN | ADMIN | — | — | |

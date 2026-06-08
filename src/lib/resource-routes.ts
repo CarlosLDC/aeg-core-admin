@@ -48,14 +48,6 @@ export function annualInspectionPath(id: number): string {
   return `/annual-inspections/${id}`;
 }
 
-export function fiscalBookPath(id: number): string {
-  return `/fiscal-book/${id}`;
-}
-
-export function fiscalBookSearchPath(): string {
-  return "/fiscal-book";
-}
-
 export function employeeModificationReviewPath(requestId: number): string {
   return `/reviews/employees/${requestId}`;
 }

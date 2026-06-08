@@ -1,9 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpen } from "lucide-react";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
@@ -73,8 +71,7 @@ import {
 } from "@/lib/printers-api";
 import { fetchAuthMe } from "@/lib/auth-me-api";
 import { fetchSoftware } from "@/lib/software-api";
-import { can } from "@/lib/permissions/can";
-import { fiscalBookPath, printerPath } from "@/lib/resource-routes";
+import { printerPath } from "@/lib/resource-routes";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -104,7 +101,6 @@ export function PrinterView() {
   const isDistributor = user?.role === "DISTRIBUTOR";
   const canAssignInitialized = isAdmin && canModify;
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
-  const canReadFiscalBook = user ? can(user.role, "fiscalBook", "read") : false;
 
   const [printer, setPrinter] = useState<PrinterResponse | null>(null);
   const [models, setModels] = useState<PrinterModelResponse[]>([]);
@@ -620,29 +616,18 @@ export function PrinterView() {
         error={error}
         actions={
           printer ? (
-            <div className="flex flex-wrap gap-2">
-              {canReadFiscalBook ? (
-                <Link
-                  href={fiscalBookPath(printer.id)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
-                >
-                  <BookOpen className="size-4" aria-hidden />
-                  Libro fiscal
-                </Link>
-              ) : null}
-              <ResourceViewActions
-                onEdit={
-                  canModify
-                    ? () => {
-                        setFormError(null);
-                        setEditOpen(true);
-                      }
-                    : undefined
-                }
-                onDelete={canDelete ? () => void handleDelete() : undefined}
-                deleting={deleting}
-              />
-            </div>
+            <ResourceViewActions
+              onEdit={
+                canModify
+                  ? () => {
+                      setFormError(null);
+                      setEditOpen(true);
+                    }
+                  : undefined
+              }
+              onDelete={canDelete ? () => void handleDelete() : undefined}
+              deleting={deleting}
+            />
           ) : undefined
         }
       >

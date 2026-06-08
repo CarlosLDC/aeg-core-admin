@@ -31,7 +31,6 @@ type AnnualInspectionFormDialogProps = {
   canLoadPrinters: boolean;
   printerOptions: SearchableSelectOption[];
   employeeOptions: SearchableSelectOption[];
-  presetPrinterId?: string;
   onClose: () => void;
   onSubmit: (values: AnnualInspectionFormValues) => void;
 };
@@ -46,7 +45,6 @@ export function AnnualInspectionFormDialog({
   canLoadPrinters,
   printerOptions,
   employeeOptions,
-  presetPrinterId,
   onClose,
   onSubmit,
 }: AnnualInspectionFormDialogProps) {
@@ -64,14 +62,11 @@ export function AnnualInspectionFormDialog({
     setForm(
       mode === "edit" && row
         ? annualInspectionToFormValues(row)
-        : {
-            ...emptyAnnualInspectionForm(),
-            printerId: presetPrinterId ?? "",
-          },
+        : emptyAnnualInspectionForm(),
     );
     setStep(1);
     setStepError(null);
-  }, [open, mode, row, presetPrinterId]);
+  }, [open, mode, row]);
 
   if (!open) return null;
 
