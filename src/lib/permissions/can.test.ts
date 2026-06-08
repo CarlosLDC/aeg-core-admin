@@ -42,6 +42,13 @@ describe("can", () => {
     expect(can("DISTRIBUTOR", "printerModels", "create")).toBe(false);
   });
 
+  it("allows FIELD_OPS fiscal book read but not DISTRIBUTOR", () => {
+    expect(can("ADMIN", "fiscalBook", "read")).toBe(true);
+    expect(can("TECHNICIAN", "fiscalBook", "read")).toBe(true);
+    expect(can("SERVICE_CENTER", "fiscalBook", "read")).toBe(true);
+    expect(can("DISTRIBUTOR", "fiscalBook", "read")).toBe(false);
+  });
+
   it("allows DISTRIBUTOR full annual inspection CRUD within API scope", () => {
     expect(can("DISTRIBUTOR", "annualInspections", "read")).toBe(true);
     expect(can("DISTRIBUTOR", "annualInspections", "create")).toBe(true);
@@ -79,5 +86,12 @@ describe("canAccessRoute", () => {
     expect(canAccessRoute("TECHNICIAN", "/printer-models")).toBe(true);
     expect(canAccessRoute("DISTRIBUTOR", "/printer-models/1")).toBe(false);
     expect(can("DISTRIBUTOR", "printerModels", "read")).toBe(true);
+  });
+
+  it("allows FIELD_OPS on fiscal book routes and blocks DISTRIBUTOR", () => {
+    expect(canAccessRoute("TECHNICIAN", "/fiscal-book")).toBe(true);
+    expect(canAccessRoute("SERVICE_CENTER", "/fiscal-book/42")).toBe(true);
+    expect(canAccessRoute("DISTRIBUTOR", "/fiscal-book")).toBe(false);
+    expect(resourceForPath("/fiscal-book/manual")).toBe("fiscalBook");
   });
 });

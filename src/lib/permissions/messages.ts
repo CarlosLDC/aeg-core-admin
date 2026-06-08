@@ -11,6 +11,7 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   seals: "precintos",
   technicalServices: "servicios técnicos",
   annualInspections: "inspecciones anuales",
+  fiscalBook: "libro fiscal",
   contracts: "contratos",
   users: "usuarios",
   mqtt: "pruebas MQTT",

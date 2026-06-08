@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Plus } from "lucide-react";
 import { TechnicalServiceFormDialog } from "@/components/technical-services/technical-service-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
@@ -60,6 +61,9 @@ import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 type TechnicalServiceSortKey = "startAt" | "endAt" | "cost" | "id" | "createdAt";
 
 export function TechnicalServicesManager() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const deepLinkHandled = useRef(false);
   const toast = useToast();
   const confirm = useConfirm();
   const { user } = useAuth();
@@ -83,6 +87,19 @@ export function TechnicalServicesManager() {
   const [printerFilter, setPrinterFilter] = useState("all");
   const [technicianFilter, setTechnicianFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<TechnicalServiceSortKey>>(null);
+  const presetPrinterId = searchParams.get("printerId") ?? undefined;
+
+  useEffect(() => {
+    if (deepLinkHandled.current || catalog.loading) return;
+    if (searchParams.get("action") !== "create" || !presetPrinterId || !canCreate) {
+      return;
+    }
+    deepLinkHandled.current = true;
+    setFormError(null);
+    setSelected(null);
+    setDialog("create");
+    router.replace("/technical-services", { scroll: false });
+  }, [catalog.loading, searchParams, presetPrinterId, canCreate, router]);
 
   const printerLabelById = useMemo(
     () => new Map(catalog.printerOptions.map((p) => [p.value, p.label])),
@@ -478,6 +495,7 @@ export function TechnicalServicesManager() {
         sealOptions={catalog.sealOptions}
         serviceCenterOptions={catalog.serviceCenterOptions}
         distributorOptions={catalog.distributorOptions}
+        presetPrinterId={presetPrinterId}
         onClose={closeDialog}
         onSubmit={handleSubmit}
       />

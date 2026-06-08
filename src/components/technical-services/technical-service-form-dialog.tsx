@@ -42,6 +42,7 @@ type TechnicalServiceFormDialogProps = {
   sealOptions: SearchableSelectOption[];
   serviceCenterOptions: SearchableSelectOption[];
   distributorOptions: SearchableSelectOption[];
+  presetPrinterId?: string;
   onClose: () => void;
   onSubmit: (values: TechnicalServiceFormValues) => void;
 };
@@ -111,6 +112,7 @@ export function TechnicalServiceFormDialog({
   sealOptions,
   serviceCenterOptions,
   distributorOptions,
+  presetPrinterId,
   onClose,
   onSubmit,
 }: TechnicalServiceFormDialogProps) {
@@ -127,11 +129,14 @@ export function TechnicalServiceFormDialog({
     setForm(
       mode === "edit" && row
         ? technicalServiceToFormValues(row)
-        : emptyTechnicalServiceForm(),
+        : {
+            ...emptyTechnicalServiceForm(),
+            printerId: presetPrinterId ?? "",
+          },
     );
     setStep(1);
     setStepError(null);
-  }, [open, mode, row]);
+  }, [open, mode, row, presetPrinterId]);
 
   if (!open) return null;
 

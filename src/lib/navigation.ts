@@ -11,6 +11,7 @@ import {
   Stamp,
   Wrench,
   ClipboardCheck,
+  BookOpen,
   Download,
   Boxes,
   Radio,
@@ -99,6 +100,12 @@ export const navSections: NavSection[] = [
         href: "/annual-inspections",
         icon: ClipboardCheck,
         roles: ["ADMIN", "DISTRIBUTOR", "TECHNICIAN", "SERVICE_CENTER"],
+      },
+      {
+        title: "Libro fiscal",
+        href: "/fiscal-book",
+        icon: BookOpen,
+        roles: ["ADMIN", "TECHNICIAN", "SERVICE_CENTER"],
       },
       {
         title: "Descargas",

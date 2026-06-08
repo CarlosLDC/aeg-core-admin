@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Plus } from "lucide-react";
 import { AnnualInspectionFormDialog } from "@/components/annual-inspections/annual-inspection-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
@@ -64,6 +65,9 @@ type AnnualInspectionSortKey =
   | "createdAt";
 
 export function AnnualInspectionsManager() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const deepLinkHandled = useRef(false);
   const toast = useToast();
   const confirm = useConfirm();
   const { user } = useAuth();
@@ -87,6 +91,19 @@ export function AnnualInspectionsManager() {
   const [printerFilter, setPrinterFilter] = useState("all");
   const [employeeFilter, setEmployeeFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<AnnualInspectionSortKey>>(null);
+  const presetPrinterId = searchParams.get("printerId") ?? undefined;
+
+  useEffect(() => {
+    if (deepLinkHandled.current || catalog.loading) return;
+    if (searchParams.get("action") !== "create" || !presetPrinterId || !canCreate) {
+      return;
+    }
+    deepLinkHandled.current = true;
+    setFormError(null);
+    setSelected(null);
+    setDialog("create");
+    router.replace("/annual-inspections", { scroll: false });
+  }, [catalog.loading, searchParams, presetPrinterId, canCreate, router]);
 
   const printerLabelById = useMemo(
     () => new Map(catalog.printerOptions.map((p) => [p.value, p.label])),
@@ -482,6 +499,7 @@ export function AnnualInspectionsManager() {
         canLoadPrinters={catalog.canLoadPrinters}
         printerOptions={catalog.printerOptions}
         employeeOptions={catalog.employeeOptions}
+        presetPrinterId={presetPrinterId}
         onClose={closeDialog}
         onSubmit={handleSubmit}
       />

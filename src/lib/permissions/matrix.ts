@@ -72,6 +72,9 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     update: FIELD_OPS_DIST,
     delete: FIELD_OPS_DIST,
   },
+  fiscalBook: {
+    read: FIELD_OPS,
+  },
   contracts: {
     read: ADMIN_ONLY,
     create: ADMIN_ONLY,
