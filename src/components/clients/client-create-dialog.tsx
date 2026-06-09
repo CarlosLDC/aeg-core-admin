@@ -126,7 +126,7 @@ export function ClientCreateDialog({
       ...f,
       rif: data.rif || f.rif,
       businessName:
-        match?.businessName ?? (data.businessName || f.businessName),
+        data.businessName || match?.businessName || f.businessName,
       contributorType:
         match?.contributorType ??
         data.contributorType ??

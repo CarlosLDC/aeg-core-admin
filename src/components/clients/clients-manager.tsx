@@ -68,8 +68,10 @@ import {
 import { toClientModificationProposedData } from "@/lib/client-form";
 import {
   cancelClientModificationRequest,
+  fetchClientModificationRequestById,
   getClientModificationRequestsErrorMessage,
 } from "@/lib/client-modification-requests-api";
+import type { ClientModificationProposedData } from "@/types/client-modification-request";
 import { getCatalogErrorMessage } from "@/lib/api-error-message";
 import {
   getCompaniesErrorMessage,
@@ -119,6 +121,7 @@ function buildClientListRows(
   branches: BranchWithRoles[],
   companies: CompanyResponse[],
   staffBranchId: number | null,
+  proposedByClientId: Map<number, Partial<ClientModificationProposedData>>,
 ): ClientListRow[] {
   const branchById = new Map(branches.map((b) => [b.id, b]));
   return excludeDistributorSelfClients(
@@ -131,24 +134,43 @@ function buildClientListRows(
         branch != null
           ? companies.find((c) => c.id === branch.companyId)
           : undefined;
+      const proposed = proposedByClientId.get(client.id);
       return {
         key: client.id,
         client,
         branch,
         businessName:
+          proposed?.businessName?.trim() ||
+          companyFromScope?.businessName?.trim() ||
           client.companyBusinessName?.trim() ||
-          companyFromScope?.businessName ||
           (branch != null
             ? companyNameById(companies, branch.companyId)
             : "—"),
         rif:
+          proposed?.rif?.trim() ||
+          companyFromScope?.rif?.trim() ||
           client.companyRif?.trim() ||
-          companyFromScope?.rif ||
           "—",
-        city: client.branchCity?.trim() || branch?.city || "—",
-        state: client.branchState?.trim() || branch?.state || "—",
-        phone: client.branchPhone?.trim() || branch?.phone || "—",
-        email: client.branchEmail?.trim() || branch?.email || "—",
+        city:
+          proposed?.city?.trim() ||
+          branch?.city?.trim() ||
+          client.branchCity?.trim() ||
+          "—",
+        state:
+          proposed?.state?.trim() ||
+          branch?.state?.trim() ||
+          client.branchState?.trim() ||
+          "—",
+        phone:
+          proposed?.phone?.trim() ||
+          branch?.phone?.trim() ||
+          client.branchPhone?.trim() ||
+          "—",
+        email:
+          proposed?.email?.trim() ||
+          branch?.email?.trim() ||
+          client.branchEmail?.trim() ||
+          "—",
         createdAt: branch?.createdAt ?? client.createdAt,
       };
     })
@@ -174,6 +196,9 @@ export function ClientsManager() {
   const distributorId = useDistributorId();
   const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
   const [clients, setClients] = useState<ClientResponse[]>([]);
+  const [proposedByClientId, setProposedByClientId] = useState<
+    Map<number, Partial<ClientModificationProposedData>>
+  >(new Map());
   const [branches, setBranches] = useState<BranchWithRoles[]>([]);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -245,6 +270,39 @@ export function ClientsManager() {
           (a.businessName || "").localeCompare(b.businessName || "", "es"),
         ),
       );
+
+      const pendingReviewClients = clientRows.filter(
+        (client) =>
+          client.reviewStatus === "PENDING_REVIEW" &&
+          client.activeModificationRequestId != null,
+      );
+      if (pendingReviewClients.length === 0) {
+        setProposedByClientId(new Map());
+      } else {
+        const proposals = new Map<
+          number,
+          Partial<ClientModificationProposedData>
+        >();
+        await Promise.all(
+          pendingReviewClients.map(async (client) => {
+            const requestId = client.activeModificationRequestId;
+            if (requestId == null) return;
+            try {
+              const detail =
+                await fetchClientModificationRequestById(requestId);
+              if (
+                detail.actionType === "UPDATE" &&
+                detail.proposedData != null
+              ) {
+                proposals.set(client.id, detail.proposedData);
+              }
+            } catch {
+              /* solicitud no legible */
+            }
+          }),
+        );
+        setProposedByClientId(proposals);
+      }
     } catch (err) {
       setListError(getCatalogErrorMessage(err));
     } finally {
@@ -274,6 +332,7 @@ export function ClientsManager() {
       branches,
       companies,
       distributorStaffBranchId,
+      proposedByClientId,
     );
   }, [
     clients,
@@ -281,6 +340,7 @@ export function ClientsManager() {
     companies,
     distributorId,
     distributorStaffBranchId,
+    proposedByClientId,
   ]);
 
   const stateFilterOptions = useMemo(
@@ -356,10 +416,15 @@ export function ClientsManager() {
       const linkedHint =
         linkedParts.length > 0 ? ` (${linkedParts.join(", ")})` : "";
       const createdClient = await fetchClientByBranchId(result.branch.id);
+      const reviewHint = result.submittedForReview
+        ? " Los datos ingresados fueron enviados a revisión."
+        : "";
       toast.success(
-        result.companyLinkedExisting || result.branchLinkedExisting
-          ? `Cliente registrado en "${result.companyLabel}" — ${result.branchLabel}${linkedHint}.`
-          : `Cliente "${result.companyLabel}" registrado en ${result.branchLabel}.`,
+        result.submittedForReview
+          ? `Cliente registrado en "${result.companyLabel}" — ${result.branchLabel}.${reviewHint}`
+          : result.companyLinkedExisting || result.branchLinkedExisting
+            ? `Cliente registrado en "${result.companyLabel}" — ${result.branchLabel}${linkedHint}.`
+            : `Cliente "${result.companyLabel}" registrado en ${result.branchLabel}.`,
         {
           href: createdClient
             ? clientPath(createdClient.id)

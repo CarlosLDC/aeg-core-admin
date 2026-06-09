@@ -25,6 +25,7 @@ vi.mock("@/lib/clients-api", () => ({
   fetchClientByBranchId: vi.fn(),
   createClient: vi.fn(),
   updateClient: vi.fn(),
+  requestClientUpdate: vi.fn(),
 }));
 
 vi.mock("@/lib/distributors-api", () => ({
@@ -56,6 +57,7 @@ import {
   createClient,
   fetchClientByBranchId,
   fetchClients,
+  requestClientUpdate,
 } from "@/lib/clients-api";
 import {
   fetchDistributorById,
@@ -166,7 +168,71 @@ describe("createClientOnboarding", () => {
     expect(result.branchLinkedExisting).toBe(false);
   });
 
-  it("reutiliza sucursal existente por empresa y ubicación", async () => {
+  it("reutiliza sucursal existente y envía revisión si el distribuidor ingresa datos distintos", async () => {
+    vi.mocked(resolveCompanyIdForRif).mockResolvedValue({
+      companyId: 77,
+      companyCreated: false,
+    });
+    vi.mocked(lookupBranchByCompanyLocation).mockResolvedValue({
+      ...branchRow,
+      id: 322,
+      companyId: 77,
+      city: "Valencia",
+      state: "Carabobo",
+      contactPersonName: "Viejo contacto",
+    });
+    const linkedClient = mockClient({ id: 9, branchId: 322, distributorId: 5 });
+    let fetchClientCalls = 0;
+    vi.mocked(fetchClientByBranchId).mockImplementation(async () => {
+      fetchClientCalls += 1;
+      return fetchClientCalls === 1 ? null : linkedClient;
+    });
+    const result = await createClientOnboarding({
+      values: {
+        rif: "J315694205",
+        businessName: "ACME",
+        contributorType: "ordinario",
+        linkedCompanyId: null,
+        city: "Valencia",
+        state: "Carabobo",
+        address: "",
+        contactPersonName: "Ana López",
+        phone: "",
+        email: "",
+      },
+      companies: [
+        {
+          id: 77,
+          businessName: "ACME vieja",
+          rif: "J315694205",
+          contributorType: "ordinario",
+          createdAt: "",
+        },
+      ],
+      roles: distributorClientRoles(5),
+    });
+
+    expect(createBranch).not.toHaveBeenCalled();
+    expect(updateCompany).not.toHaveBeenCalled();
+    expect(updateBranch).not.toHaveBeenCalled();
+    expect(createClient).toHaveBeenCalledWith({
+      branchId: 322,
+      distributorId: 5,
+    });
+    expect(requestClientUpdate).toHaveBeenCalledWith(
+      9,
+      expect.objectContaining({
+        businessName: "ACME",
+        contactPersonName: "Ana López",
+        distributorId: 5,
+      }),
+    );
+    expect(result.branch.id).toBe(322);
+    expect(result.branchLinkedExisting).toBe(true);
+    expect(result.submittedForReview).toBe(true);
+  });
+
+  it("admin puede sincronizar catálogo al reutilizar sucursal", async () => {
     vi.mocked(resolveCompanyIdForRif).mockResolvedValue({
       companyId: 77,
       companyCreated: false,
@@ -192,29 +258,21 @@ describe("createClientOnboarding", () => {
         email: "",
       },
       companies: [],
-      roles: distributorClientRoles(5),
+      roles: {
+        isClient: true,
+        isDistributor: true,
+        isServiceCenter: false,
+        clientDistributorId: "5",
+      },
     });
 
-    expect(createBranch).not.toHaveBeenCalled();
     expect(updateCompany).toHaveBeenCalledWith(77, {
       rif: "J315694205",
       businessName: "ACME",
       contributorType: "ordinario",
     });
-    expect(updateBranch).toHaveBeenCalledWith(322, {
-      companyId: 77,
-      city: "Valencia",
-      state: "Carabobo",
-      address: undefined,
-      contactPersonName: "Ana López",
-      phone: undefined,
-      email: undefined,
-    });
-    expect(createClient).toHaveBeenCalledWith({
-      branchId: 322,
-      distributorId: 5,
-    });
-    expect(result.branch.id).toBe(322);
+    expect(updateBranch).toHaveBeenCalled();
+    expect(requestClientUpdate).not.toHaveBeenCalled();
     expect(result.branchLinkedExisting).toBe(true);
   });
 
@@ -223,10 +281,17 @@ describe("createClientOnboarding", () => {
       ...branchRow,
       id: 322,
       companyId: 77,
+      city: "Valencia",
+      state: "Carabobo",
+      contactPersonName: "Viejo contacto",
     });
-    vi.mocked(createClient).mockResolvedValue(
-      mockClient({ id: 9, branchId: 322, distributorId: 5 }),
-    );
+    const linkedClient = mockClient({ id: 9, branchId: 322, distributorId: 5 });
+    let fetchClientCalls = 0;
+    vi.mocked(fetchClientByBranchId).mockImplementation(async () => {
+      fetchClientCalls += 1;
+      return fetchClientCalls === 1 ? null : linkedClient;
+    });
+    vi.mocked(createClient).mockResolvedValue(linkedClient);
 
     const result = await createClientOnboarding({
       values: {
@@ -241,33 +306,31 @@ describe("createClientOnboarding", () => {
         phone: "",
         email: "",
       },
-      companies: [],
+      companies: [
+        {
+          id: 77,
+          businessName: "ACME vieja",
+          rif: "J315694205",
+          contributorType: "ordinario",
+          createdAt: "",
+        },
+      ],
       resumeBranchId: 322,
       roles: distributorClientRoles(5),
     });
 
     expect(resolveCompanyIdForRif).not.toHaveBeenCalled();
     expect(createBranch).not.toHaveBeenCalled();
-    expect(updateCompany).toHaveBeenCalledWith(77, {
-      rif: "J315694205",
-      businessName: "ACME",
-      contributorType: "ordinario",
-    });
-    expect(updateBranch).toHaveBeenCalledWith(322, {
-      companyId: 77,
-      city: "Valencia",
-      state: "Carabobo",
-      address: undefined,
-      contactPersonName: "Ana López",
-      phone: undefined,
-      email: undefined,
-    });
+    expect(updateCompany).not.toHaveBeenCalled();
+    expect(updateBranch).not.toHaveBeenCalled();
     expect(createClient).toHaveBeenCalledWith({
       branchId: 322,
       distributorId: 5,
     });
+    expect(requestClientUpdate).toHaveBeenCalled();
     expect(result.branch.id).toBe(322);
     expect(result.branchLinkedExisting).toBe(true);
+    expect(result.submittedForReview).toBe(true);
   });
 
 });

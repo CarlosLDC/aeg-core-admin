@@ -11,7 +11,13 @@ import {
   lookupBranchByCompanyLocation,
   updateBranch,
 } from "@/lib/branches-api";
-import { fetchClients } from "@/lib/clients-api";
+import { onboardingMatchesCatalog } from "@/lib/client-catalog-match";
+import { toClientModificationProposedDataFromOnboarding } from "@/lib/client-form";
+import {
+  fetchClientByBranchId,
+  fetchClients,
+  requestClientUpdate,
+} from "@/lib/clients-api";
 import { updateCompany } from "@/lib/companies-api";
 import { resolveCompanyIdForRif } from "@/lib/company-rif";
 import { fetchDistributors } from "@/lib/distributors-api";
@@ -93,6 +99,8 @@ export type CreateClientOnboardingResult = {
   refreshedCompanies?: CompanyResponse[];
   distributorId?: number | null;
   serviceCenterId?: number | null;
+  /** Datos distintos al catálogo reutilizado; enviados a revisión (distribuidor). */
+  submittedForReview?: boolean;
 };
 
 export async function fetchBranchRoleIds(branchId: number): Promise<{
@@ -122,6 +130,29 @@ async function loadBranchWithRoles(branchId: number): Promise<BranchWithRoles | 
   return merged[0] ?? null;
 }
 
+async function submitDistributorCatalogUpdateIfNeeded(
+  branchId: number,
+  companyId: number,
+  companyList: CompanyResponse[],
+  branch: BranchResponse,
+  values: ClientOnboardingValues,
+  distributorId: number,
+  reusedCatalog: boolean,
+): Promise<boolean> {
+  if (!reusedCatalog) return false;
+  const company = companyList.find((c) => c.id === companyId);
+  if (onboardingMatchesCatalog(company, branch, values)) return false;
+
+  const client = await fetchClientByBranchId(branchId);
+  if (!client) return false;
+
+  await requestClientUpdate(
+    client.id,
+    toClientModificationProposedDataFromOnboarding(values, distributorId),
+  );
+  return true;
+}
+
 /**
  * Alta de cliente (distribuidor o wizard admin con roles explícitos):
  *
@@ -138,19 +169,40 @@ export async function createClientOnboarding(
 ): Promise<CreateClientOnboardingResult> {
   const { values, companies, resumeCompanyId, resumeBranchId, roles } = input;
   const branchLabel = `${values.city.trim()}, ${values.state.trim()}`;
+  const distributorOnly = isDistributorClientOnlyRoles(roles);
+  const canUpdateCatalog = !distributorOnly;
+  const distributorId = distributorOnly
+    ? Number(roles.clientDistributorId?.trim())
+    : null;
 
   if (
     resumeBranchId != null &&
     resumeBranchId > 0 &&
-    isDistributorClientOnlyRoles(roles)
+    distributorOnly
   ) {
-    const branch = await syncExistingCatalogFromOnboarding(
-      (await fetchBranchById(resumeBranchId)).companyId,
-      resumeBranchId,
-      values,
-      { syncCompany: true },
-    );
+    const existingBranch = await fetchBranchById(resumeBranchId);
+    let branch = existingBranch;
+    if (canUpdateCatalog) {
+      branch = await syncExistingCatalogFromOnboarding(
+        existingBranch.companyId,
+        resumeBranchId,
+        values,
+        { syncCompany: true },
+      );
+    }
     await linkDistributorClientWithRetry(resumeBranchId, roles);
+    const submittedForReview =
+      distributorId != null && Number.isFinite(distributorId)
+        ? await submitDistributorCatalogUpdateIfNeeded(
+            resumeBranchId,
+            branch.companyId,
+            companies,
+            branch,
+            values,
+            distributorId,
+            true,
+          )
+        : false;
     const roleIds = await fetchBranchRoleIds(resumeBranchId);
     const companyList = companies;
     return {
@@ -163,6 +215,7 @@ export async function createClientOnboarding(
         companyList.find((c) => c.id === branch.companyId)?.businessName ??
         values.businessName,
       branchLabel,
+      submittedForReview,
       ...roleIds,
     };
   }
@@ -243,7 +296,7 @@ export async function createClientOnboarding(
     );
   }
 
-  if (companyLinkedExisting || branchLinkedExisting) {
+  if (canUpdateCatalog && (companyLinkedExisting || branchLinkedExisting)) {
     created = await syncExistingCatalogFromOnboarding(
       companyId,
       created.id,
@@ -276,6 +329,22 @@ export async function createClientOnboarding(
 
   const roleIds = await fetchBranchRoleIds(created.id);
 
+  const submittedForReview =
+    distributorOnly &&
+    distributorId != null &&
+    Number.isFinite(distributorId) &&
+    (companyLinkedExisting || branchLinkedExisting)
+      ? await submitDistributorCatalogUpdateIfNeeded(
+          created.id,
+          companyId,
+          companyList,
+          created,
+          values,
+          distributorId,
+          true,
+        )
+      : false;
+
   return {
     branch: created,
     companyId,
@@ -285,6 +354,7 @@ export async function createClientOnboarding(
     companyLabel,
     branchLabel,
     refreshedCompanies: resolved.companies,
+    submittedForReview,
     ...roleIds,
   };
 }

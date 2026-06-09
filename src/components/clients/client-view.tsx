@@ -30,8 +30,10 @@ import {
 import { toClientModificationProposedData } from "@/lib/client-form";
 import {
   cancelClientModificationRequest,
+  fetchClientModificationRequestById,
   getClientModificationRequestsErrorMessage,
 } from "@/lib/client-modification-requests-api";
+import type { ClientModificationProposedData } from "@/types/client-modification-request";
 import {
   fetchCompanyById,
   getCompaniesErrorMessage,
@@ -62,6 +64,8 @@ export function ClientView() {
   const [deleting, setDeleting] = useState(false);
   const [cancellingReview, setCancellingReview] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [pendingProposed, setPendingProposed] =
+    useState<Partial<ClientModificationProposedData> | null>(null);
   const canEditCompany = user ? canUpdateCompanyRecord(user.role) : false;
   const canEditBranch = user ? canUpdateBranchRecord(user.role) : false;
   const canRequestReview = user?.role === "DISTRIBUTOR";
@@ -89,6 +93,23 @@ export function ClientView() {
         return;
       }
       setClient(clientRow);
+      if (
+        clientRow.reviewStatus === "PENDING_REVIEW" &&
+        clientRow.activeModificationRequestId != null
+      ) {
+        try {
+          const detail = await fetchClientModificationRequestById(
+            clientRow.activeModificationRequestId,
+          );
+          setPendingProposed(
+            detail.actionType === "UPDATE" ? detail.proposedData : null,
+          );
+        } catch {
+          setPendingProposed(null);
+        }
+      } else {
+        setPendingProposed(null);
+      }
       try {
         const branchRow = await fetchBranchById(clientRow.branchId);
         setBranch(branchRow);
@@ -117,10 +138,25 @@ export function ClientView() {
   }, [load]);
 
   const businessName =
-    company?.businessName?.trim() || client?.companyBusinessName?.trim() || "Cliente";
-  const rif = company?.rif?.trim() || client?.companyRif?.trim() || "—";
-  const city = client?.branchCity?.trim() || branch?.city || "—";
-  const state = client?.branchState?.trim() || branch?.state || "—";
+    pendingProposed?.businessName?.trim() ||
+    company?.businessName?.trim() ||
+    client?.companyBusinessName?.trim() ||
+    "Cliente";
+  const rif =
+    pendingProposed?.rif?.trim() ||
+    company?.rif?.trim() ||
+    client?.companyRif?.trim() ||
+    "—";
+  const city =
+    pendingProposed?.city?.trim() ||
+    branch?.city?.trim() ||
+    client?.branchCity?.trim() ||
+    "—";
+  const state =
+    pendingProposed?.state?.trim() ||
+    branch?.state?.trim() ||
+    client?.branchState?.trim() ||
+    "—";
   const title = businessName !== "Cliente" ? businessName : `${city}, ${state}`;
 
   const detailSteps = useMemo(() => {
@@ -165,19 +201,37 @@ export function ClientView() {
             <DetailField label="Ciudad" value={city} />
             <DetailField
               label="Dirección"
-              value={branch?.address?.trim() || "—"}
+              value={
+                pendingProposed?.address?.trim() ||
+                branch?.address?.trim() ||
+                "—"
+              }
             />
             <DetailField
               label="Persona de contacto"
-              value={branch?.contactPersonName?.trim() || "—"}
+              value={
+                pendingProposed?.contactPersonName?.trim() ||
+                branch?.contactPersonName?.trim() ||
+                "—"
+              }
             />
             <DetailField
               label="Teléfono"
-              value={client.branchPhone?.trim() || branch?.phone?.trim() || "—"}
+              value={
+                pendingProposed?.phone?.trim() ||
+                branch?.phone?.trim() ||
+                client.branchPhone?.trim() ||
+                "—"
+              }
             />
             <DetailField
               label="Correo"
-              value={client.branchEmail?.trim() || branch?.email?.trim() || "—"}
+              value={
+                pendingProposed?.email?.trim() ||
+                branch?.email?.trim() ||
+                client.branchEmail?.trim() ||
+                "—"
+              }
             />
           </DetailSection>
         ),
