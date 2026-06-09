@@ -14,7 +14,6 @@ import type { PrinterResponse } from "@/types/printer";
 
 export const FISCAL_TICKET_WIDTH_CH = 68;
 
-const DEFAULT_TIPO_DOCUMENTO = "DOCUMENTO FISCAL";
 const IVA_GENERAL_PORCENTAJE = 16;
 const ITEM_ALICUOTA = "G";
 
@@ -28,7 +27,6 @@ export function buildEncabezadoLineas(input: {
   direccionLinea1: string;
   direccionLinea2: string;
   ubicacion: string;
-  tipoDocumento?: string;
 }): string[] {
   return [
     "SENIAT",
@@ -36,7 +34,6 @@ export function buildEncabezadoLineas(input: {
     input.razonSocialEmpresa,
     input.direccionLinea1,
     input.direccionLinea2,
-    input.tipoDocumento ?? DEFAULT_TIPO_DOCUMENTO,
     input.ubicacion,
   ];
 }
