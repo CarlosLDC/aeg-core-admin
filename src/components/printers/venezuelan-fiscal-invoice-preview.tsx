@@ -167,101 +167,236 @@ function TicketMoney({
   );
 }
 
+function reorderArrayItems<T>(items: T[], fromIndex: number, toIndex: number): T[] {
+  if (
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= items.length ||
+    toIndex >= items.length ||
+    fromIndex === toIndex
+  ) {
+    return items;
+  }
+  const next = [...items];
+  const [moved] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, moved);
+  return next;
+}
+
 function EditableTicketZone({
   label,
-  editable,
+  canEdit,
+  isEditing,
+  onToggleEditing,
   onAddLine,
   children,
   className,
 }: {
   label: string;
-  editable: boolean;
+  canEdit: boolean;
+  isEditing: boolean;
+  onToggleEditing: () => void;
   onAddLine?: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 }) {
-  if (!editable) {
-    return <div className={className}>{children}</div>;
-  }
-
   return (
     <section
-      className={cn(
-        "relative rounded-md border border-accent/35 bg-accent/[0.06] px-2 py-2",
-        className,
-      )}
-      aria-label={`${label} editable`}
+      className={cn("relative", canEdit && "pr-7", className)}
+      aria-label={label}
     >
-      <div className="mb-2 flex items-center justify-between gap-2 font-sans">
-        <span className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-accent">
-          <span
-            className="size-1.5 shrink-0 rounded-full bg-accent"
-            aria-hidden
-          />
-          {label}
-        </span>
-        {onAddLine ? (
-          <button
-            type="button"
-            onClick={onAddLine}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium text-accent transition-colors hover:bg-accent/10"
-          >
-            <Plus className="size-3" aria-hidden />
-            Añadir línea
-          </button>
-        ) : null}
-      </div>
-      {children}
+      {canEdit ? (
+        <button
+          type="button"
+          onClick={onToggleEditing}
+          aria-pressed={isEditing}
+          aria-label={
+            isEditing
+              ? `Terminar edición del ${label.toLowerCase()}`
+              : `Editar ${label.toLowerCase()}`
+          }
+          className={cn(
+            "absolute right-0 top-0 z-10 inline-flex size-6 items-center justify-center rounded-md border font-sans shadow-sm transition-colors",
+            isEditing
+              ? "border-accent bg-accent text-accent-foreground"
+              : "border-border/60 bg-card text-muted hover:border-accent/40 hover:text-foreground",
+          )}
+        >
+          {isEditing ? (
+            <Check className="size-3.5" aria-hidden />
+          ) : (
+            <Pencil className="size-3.5" aria-hidden />
+          )}
+        </button>
+      ) : null}
+
+      {isEditing ? (
+        <div
+          className="rounded-md border border-accent/35 bg-accent/[0.06] px-2 py-2"
+          aria-label={`${label} en edición`}
+        >
+          <div className="mb-2 flex items-center justify-between gap-2 font-sans">
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-accent">
+              <span
+                className="size-1.5 shrink-0 rounded-full bg-accent"
+                aria-hidden
+              />
+              {label}
+            </span>
+            {onAddLine ? (
+              <button
+                type="button"
+                onClick={onAddLine}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium text-accent transition-colors hover:bg-accent/10"
+              >
+                <Plus className="size-3" aria-hidden />
+                Añadir línea
+              </button>
+            ) : null}
+          </div>
+          {children}
+        </div>
+      ) : (
+        children
+      )}
     </section>
   );
 }
 
-function EditableTicketLineRow({
-  editable,
-  value,
-  onChange,
-  onRemove,
-  canRemove,
-  ariaLabel,
+function EditableTicketLineList({
+  lines,
+  isEditing,
   centered = false,
+  lineLabelPrefix,
+  emptyEditingHint,
+  minLines = 1,
+  onChangeLine,
+  onRemoveLine,
+  onMoveLine,
 }: {
-  editable: boolean;
-  value: string;
-  onChange?: (value: string) => void;
-  onRemove?: () => void;
-  canRemove: boolean;
-  ariaLabel: string;
+  lines: string[];
+  isEditing: boolean;
   centered?: boolean;
+  lineLabelPrefix: string;
+  emptyEditingHint?: string;
+  minLines?: number;
+  onChangeLine: (index: number, value: string) => void;
+  onRemoveLine: (index: number) => void;
+  onMoveLine: (fromIndex: number, toIndex: number) => void;
 }) {
-  if (!editable) {
-    return value.trim().length > 0 ? (
-      <p className={cn(centered && "text-center")}>{value}</p>
-    ) : null;
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  if (!isEditing) {
+    return (
+      <>
+        {lines.map((line, index) =>
+          line.trim().length > 0 ? (
+            <p key={`${lineLabelPrefix}-view-${index}`} className={cn(centered && "text-center")}>
+              {line}
+            </p>
+          ) : null,
+        )}
+      </>
+    );
+  }
+
+  if (lines.length === 0 && emptyEditingHint) {
+    return (
+      <p className="font-sans text-[10px] text-muted">{emptyEditingHint}</p>
+    );
   }
 
   return (
-    <div className="group flex items-center gap-1">
-      <TicketText
-        editable
-        value={value}
-        onChange={onChange}
-        ariaLabel={ariaLabel}
-        centered={centered}
-        className="flex-1"
-      />
-      {canRemove && onRemove ? (
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label={`Eliminar ${ariaLabel.toLowerCase()}`}
-          className="inline-flex shrink-0 rounded p-0.5 text-muted/70 opacity-70 transition-all hover:bg-rose-500/10 hover:text-rose-600 hover:opacity-100 group-hover:opacity-100"
-        >
-          <Minus className="size-3.5" aria-hidden />
-        </button>
-      ) : (
-        <span className="size-5 shrink-0" aria-hidden />
-      )}
-    </div>
+    <>
+      {lines.map((line, index) => {
+        const ariaLabel = `${lineLabelPrefix} línea ${index + 1}`;
+        const canRemove = lines.length > minLines;
+        const canMoveUp = index > 0;
+        const canMoveDown = index < lines.length - 1;
+
+        return (
+          <div
+            key={`${lineLabelPrefix}-edit-${index}`}
+            draggable
+            onDragStart={() => {
+              setDragIndex(index);
+              setDragOverIndex(index);
+            }}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragOverIndex(index);
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              if (dragIndex != null) onMoveLine(dragIndex, index);
+              setDragIndex(null);
+              setDragOverIndex(null);
+            }}
+            onDragEnd={() => {
+              setDragIndex(null);
+              setDragOverIndex(null);
+            }}
+            className={cn(
+              "group flex items-center gap-0.5 rounded-sm transition-colors",
+              dragOverIndex === index &&
+                dragIndex !== null &&
+                dragIndex !== index &&
+                "bg-accent/10 ring-1 ring-accent/30",
+            )}
+          >
+            <button
+              type="button"
+              className="inline-flex shrink-0 cursor-grab touch-none rounded p-0.5 text-muted/60 active:cursor-grabbing hover:text-foreground"
+              aria-label={`Mover ${ariaLabel.toLowerCase()}`}
+              onMouseDown={(event) => event.stopPropagation()}
+            >
+              <GripVertical className="size-3.5" aria-hidden />
+            </button>
+            <div className="flex shrink-0 flex-col">
+              <button
+                type="button"
+                disabled={!canMoveUp}
+                onClick={() => onMoveLine(index, index - 1)}
+                aria-label={`Subir ${ariaLabel.toLowerCase()}`}
+                className="inline-flex rounded p-0.5 text-muted/70 enabled:hover:bg-foreground/5 enabled:hover:text-foreground disabled:opacity-30"
+              >
+                <ChevronUp className="size-3" aria-hidden />
+              </button>
+              <button
+                type="button"
+                disabled={!canMoveDown}
+                onClick={() => onMoveLine(index, index + 1)}
+                aria-label={`Bajar ${ariaLabel.toLowerCase()}`}
+                className="inline-flex rounded p-0.5 text-muted/70 enabled:hover:bg-foreground/5 enabled:hover:text-foreground disabled:opacity-30"
+              >
+                <ChevronDown className="size-3" aria-hidden />
+              </button>
+            </div>
+            <TicketText
+              editable
+              value={line}
+              onChange={(value) => onChangeLine(index, value)}
+              ariaLabel={ariaLabel}
+              centered={centered}
+              className="min-w-0 flex-1"
+            />
+            {canRemove ? (
+              <button
+                type="button"
+                onClick={() => onRemoveLine(index)}
+                aria-label={`Eliminar ${ariaLabel.toLowerCase()}`}
+                className="inline-flex shrink-0 rounded p-0.5 text-muted/70 opacity-70 transition-all hover:bg-rose-500/10 hover:text-rose-600 hover:opacity-100 group-hover:opacity-100"
+              >
+                <Minus className="size-3.5" aria-hidden />
+              </button>
+            ) : (
+              <span className="size-5 shrink-0" aria-hidden />
+            )}
+          </div>
+        );
+      })}
+    </>
   );
 }
 
@@ -273,11 +408,12 @@ export function VenezuelanFiscalInvoicePreview({
 }: VenezuelanFiscalInvoicePreviewProps) {
   const item = data.items[0];
   const canEdit = editable && onChange != null;
-  const isHeaderEditable = canEdit;
-  const isTrailerEditable = canEdit;
+  const [headerEditing, setHeaderEditing] = useState(false);
+  const [trailerEditing, setTrailerEditing] = useState(false);
   const headerLines = data.encabezado.lineas;
   const trailerLines = data.piePagina.mensajes;
   const hasTrailerContent = trailerLines.some((line) => line.trim().length > 0);
+  const showTrailerSection = hasTrailerContent || trailerEditing || canEdit;
 
   function patch(
     updater: (current: VenezuelanFiscalInvoiceData) => VenezuelanFiscalInvoiceData,
