@@ -275,7 +275,7 @@ export function PrinterDispositionView() {
       invoiceDraft ? (
         <form
           onSubmit={(e) => void handleSubmit(e)}
-          className="mx-auto flex w-full max-w-4xl flex-col items-stretch gap-6"
+          className="mx-auto flex w-full max-w-4xl flex-col items-center gap-6"
         >
           <p
             className="w-full rounded-lg border border-sky-500/25 bg-sky-500/10 px-4 py-3 text-sm text-sky-900 dark:border-sky-400/25 dark:bg-sky-950/40 dark:text-sky-100"

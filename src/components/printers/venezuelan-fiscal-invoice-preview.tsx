@@ -517,8 +517,8 @@ export function VenezuelanFiscalInvoicePreview({
   }
 
   return (
-    <div className={cn("flex w-full justify-center font-sans", className)}>
-      <div className="w-full max-w-[calc(68ch+4rem)] rounded-xl border border-border/60 bg-card/40 p-4 shadow-sm sm:p-6">
+    <div className={cn("mx-auto w-fit max-w-full font-sans", className)}>
+      <div className="w-fit max-w-full rounded-xl border border-border/60 bg-card/40 px-3 py-4 shadow-sm">
         {canEdit ? (
           <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
             <TicketZoneEditButton
@@ -534,16 +534,15 @@ export function VenezuelanFiscalInvoicePreview({
           </div>
         ) : null}
 
-        <div className="flex justify-center">
-          <div
-            className="min-h-[520px] w-full max-w-full bg-[#faf9f6] px-2 py-4 text-[11px] leading-tight text-black shadow-inner"
-            role="document"
-            aria-label="Vista previa de factura fiscal"
-            style={{
-              fontFamily: FISCAL_TICKET_FONT,
-              width: `${FISCAL_TICKET_WIDTH_CH}ch`,
-            }}
-          >
+        <div
+          className="min-h-[520px] max-w-full shrink-0 bg-[#faf9f6] px-2 py-4 text-[11px] leading-tight text-black shadow-inner"
+          role="document"
+          aria-label="Vista previa de factura fiscal"
+          style={{
+            fontFamily: FISCAL_TICKET_FONT,
+            width: `${FISCAL_TICKET_WIDTH_CH}ch`,
+          }}
+        >
             <EditableTicketZone
               label="Encabezado"
               isEditing={headerEditing}
@@ -725,7 +724,6 @@ export function VenezuelanFiscalInvoicePreview({
                 {data.piePagina.serialFiscal}
               </span>
             </div>
-          </div>
         </div>
       </div>
     </div>
