@@ -1,6 +1,15 @@
 "use client";
 
-import { Minus, Plus } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  GripVertical,
+  Minus,
+  Pencil,
+  Plus,
+} from "lucide-react";
 import {
   FISCAL_TICKET_WIDTH_CH,
   fiscalTicketSeparator,
