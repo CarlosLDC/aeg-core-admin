@@ -280,8 +280,9 @@ export function PrinterDispositionView() {
           <p
             className="w-full rounded-lg border border-sky-500/25 bg-sky-500/10 px-4 py-3 text-sm text-sky-900 dark:border-sky-400/25 dark:bg-sky-950/40 dark:text-sky-100"
           >
-            Revisa la factura fiscal. Solo puedes editar el encabezado y el
-            trailer antes de confirmar la enajenación.
+            Revisa la factura fiscal. Usa el botón de lápiz en el encabezado o
+            trailer para editar, reordenar y añadir líneas antes de confirmar la
+            enajenación.
           </p>
 
           <VenezuelanFiscalInvoicePreview

@@ -446,6 +446,15 @@ export function VenezuelanFiscalInvoicePreview({
     }));
   }
 
+  function moveHeaderLine(fromIndex: number, toIndex: number) {
+    patch((current) => ({
+      ...current,
+      encabezado: {
+        lineas: reorderArrayItems(current.encabezado.lineas, fromIndex, toIndex),
+      },
+    }));
+  }
+
   function patchTrailerLine(index: number, value: string) {
     patch((current) => {
       const mensajes = [...current.piePagina.mensajes];
@@ -477,18 +486,23 @@ export function VenezuelanFiscalInvoicePreview({
     }));
   }
 
+  function moveTrailerLine(fromIndex: number, toIndex: number) {
+    patch((current) => ({
+      ...current,
+      piePagina: {
+        ...current.piePagina,
+        mensajes: reorderArrayItems(
+          current.piePagina.mensajes,
+          fromIndex,
+          toIndex,
+        ),
+      },
+    }));
+  }
+
   return (
     <div className={cn("flex w-full justify-center font-sans", className)}>
       <div className="w-full max-w-[calc(68ch+4rem)] rounded-xl border border-border/60 bg-card/40 p-4 shadow-sm sm:p-6">
-        {canEdit ? (
-          <p className="mb-4 text-center text-xs text-muted">
-            Las secciones con borde resaltado son editables. Usa{" "}
-            <span className="font-medium text-foreground">Añadir línea</span> o{" "}
-            <Minus className="inline size-3 align-text-bottom" aria-hidden /> para
-            gestionar filas.
-          </p>
-        ) : null}
-
         <div className="flex justify-center">
           <div
             className="min-h-[520px] max-w-full bg-[#faf9f6] px-2 py-4 text-[11px] leading-tight text-black shadow-inner"
@@ -501,22 +515,22 @@ export function VenezuelanFiscalInvoicePreview({
           >
             <EditableTicketZone
               label="Encabezado"
-              editable={isHeaderEditable}
-              onAddLine={isHeaderEditable ? addHeaderLine : undefined}
+              canEdit={canEdit}
+              isEditing={headerEditing}
+              onToggleEditing={() => setHeaderEditing((current) => !current)}
+              onAddLine={headerEditing ? addHeaderLine : undefined}
             >
               <header className="space-y-1 text-center">
-                {headerLines.map((line, index) => (
-                  <EditableTicketLineRow
-                    key={`header-${index}`}
-                    editable={isHeaderEditable}
-                    value={line}
-                    onChange={(value) => patchHeaderLine(index, value)}
-                    onRemove={() => removeHeaderLine(index)}
-                    canRemove={headerLines.length > 1}
-                    ariaLabel={`Encabezado línea ${index + 1}`}
-                    centered
-                  />
-                ))}
+                <EditableTicketLineList
+                  lines={headerLines}
+                  isEditing={headerEditing}
+                  centered
+                  lineLabelPrefix="Encabezado"
+                  minLines={1}
+                  onChangeLine={patchHeaderLine}
+                  onRemoveLine={removeHeaderLine}
+                  onMoveLine={moveHeaderLine}
+                />
               </header>
             </EditableTicketZone>
 
@@ -649,34 +663,30 @@ export function VenezuelanFiscalInvoicePreview({
 
             <TicketSeparator />
 
-            {isTrailerEditable || hasTrailerContent ? (
+            {showTrailerSection ? (
               <>
                 <EditableTicketZone
                   label="Trailer"
-                  editable={isTrailerEditable}
-                  onAddLine={isTrailerEditable ? addTrailerLine : undefined}
+                  canEdit={canEdit}
+                  isEditing={trailerEditing}
+                  onToggleEditing={() => setTrailerEditing((current) => !current)}
+                  onAddLine={trailerEditing ? addTrailerLine : undefined}
                 >
                   <div className="space-y-1 text-center">
-                    {isTrailerEditable && trailerLines.length === 0 ? (
-                      <p className="font-sans text-[10px] text-muted">
-                        Sin líneas. Añade un mensaje de cierre.
-                      </p>
-                    ) : null}
-                    {trailerLines.map((line, index) => (
-                      <EditableTicketLineRow
-                        key={`trailer-${index}`}
-                        editable={isTrailerEditable}
-                        value={line}
-                        onChange={(value) => patchTrailerLine(index, value)}
-                        onRemove={() => removeTrailerLine(index)}
-                        canRemove
-                        ariaLabel={`Trailer línea ${index + 1}`}
-                        centered
-                      />
-                    ))}
+                    <EditableTicketLineList
+                      lines={trailerLines}
+                      isEditing={trailerEditing}
+                      centered
+                      lineLabelPrefix="Trailer"
+                      emptyEditingHint="Sin líneas. Añade un mensaje de cierre."
+                      minLines={0}
+                      onChangeLine={patchTrailerLine}
+                      onRemoveLine={removeTrailerLine}
+                      onMoveLine={moveTrailerLine}
+                    />
                   </div>
                 </EditableTicketZone>
-                <TicketSeparator />
+                {(hasTrailerContent || trailerEditing) && <TicketSeparator />}
               </>
             ) : null}
 
