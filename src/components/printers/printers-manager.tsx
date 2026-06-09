@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Layers, Loader2, Plus } from "lucide-react";
 import {
   PrinterBatchFormDialog,
@@ -62,7 +63,6 @@ import { fetchDistributors } from "@/lib/distributors-api";
 import {
   printerModelLabel,
   printerToAssignmentRequest,
-  printerToDispositionRequest,
   printerToFormValues,
   PRINTER_STATUS_LABELS,
   toPrinterRequest,
@@ -94,13 +94,13 @@ import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterModelResponse } from "@/types/printer-model";
 import type { PrinterResponse, PrinterStatus } from "@/types/printer";
-import { isPrinterAssigned, isPrinterUnassigned } from "@/lib/printer-status";
+import { isPrinterUnassigned } from "@/lib/printer-status";
 import { getPrinterStatusQuickAction } from "@/lib/printer-quick-actions";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
-import { printerPath } from "@/lib/resource-routes";
+import { printerDispositionPath, printerPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 
@@ -129,6 +129,7 @@ function clientLabel(
 }
 
 export function PrintersManager() {
+  const router = useRouter();
   const toast = useToast();
   const confirm = useConfirm();
   const { user } = useAuth();
@@ -173,8 +174,6 @@ export function PrintersManager() {
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
   const [dispositionPrinter, setDispositionPrinter] =
     useState<PrinterResponse | null>(null);
-  const [dispositionSaving, setDispositionSaving] = useState(false);
-  const [dispositionError, setDispositionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [batchProgress, setBatchProgress] = useState<{
     done: number;
@@ -496,12 +495,34 @@ export function PrintersManager() {
 
   function openDisposition(printer: PrinterResponse) {
     setDispositionPrinter(printer);
-    setDispositionError(null);
   }
 
   function closeDisposition() {
     setDispositionPrinter(null);
-    setDispositionError(null);
+  }
+
+  function handleDispositionContinue(clientId: number) {
+    if (!dispositionPrinter || !canDisposeAssigned) {
+      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+      return;
+    }
+    if (!clientOptions.some((option) => option.id === clientId)) {
+      toast.error("Selecciona un cliente válido de tu distribuidora.");
+      return;
+    }
+    if (
+      isDistributorSelfClient(
+        clientId,
+        clients,
+        distributorStaffBranchId,
+      )
+    ) {
+      toast.error(DISTRIBUTOR_SELF_CLIENT_MESSAGE);
+      return;
+    }
+    const printerId = dispositionPrinter.id;
+    closeDisposition();
+    router.push(printerDispositionPath(printerId, clientId));
   }
 
   async function handleAssignmentSubmit(distributorId: number) {
@@ -532,51 +553,6 @@ export function PrintersManager() {
       toast.error(message);
     } finally {
       setAssignmentSaving(false);
-    }
-  }
-
-  async function handleDispositionSubmit(clientId: number) {
-    if (!dispositionPrinter || !canDisposeAssigned) {
-      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
-      return;
-    }
-    if (!isPrinterAssigned(dispositionPrinter.status)) {
-      toast.error("Solo se pueden enajenar impresoras con estatus Asignada.");
-      return;
-    }
-    if (!clientOptions.some((option) => option.id === clientId)) {
-      toast.error("Selecciona un cliente válido de tu distribuidora.");
-      return;
-    }
-    if (
-      isDistributorSelfClient(
-        clientId,
-        clients,
-        distributorStaffBranchId,
-      )
-    ) {
-      toast.error(DISTRIBUTOR_SELF_CLIENT_MESSAGE);
-      return;
-    }
-
-    setDispositionSaving(true);
-    setDispositionError(null);
-
-    try {
-      const body = printerToDispositionRequest(dispositionPrinter, clientId);
-      await updatePrinter(dispositionPrinter.id, body);
-      toast.success(
-        `Impresora ${dispositionPrinter.fiscalSerial} enajenada correctamente.`,
-        { href: printerPath(dispositionPrinter.id) },
-      );
-      closeDisposition();
-      await loadPrinters({ silent: true });
-    } catch (err) {
-      const message = getPrintersErrorMessage(err);
-      setDispositionError(message);
-      toast.error(message);
-    } finally {
-      setDispositionSaving(false);
     }
   }
 
@@ -975,17 +951,13 @@ export function PrintersManager() {
         <PrinterDispositionDialog
           key={dispositionPrinter.id}
           printer={dispositionPrinter}
-          saving={dispositionSaving}
-          error={dispositionError}
           clientOptions={clientOptions}
           clients={scopedClients}
           branches={branches}
           companies={companies}
           catalogLoading={catalogLoading}
-          onClose={() => {
-            if (!dispositionSaving) closeDisposition();
-          }}
-          onSubmit={(id) => void handleDispositionSubmit(id)}
+          onClose={closeDisposition}
+          onContinue={handleDispositionContinue}
         />
       ) : null}
 

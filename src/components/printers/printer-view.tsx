@@ -36,10 +36,7 @@ import {
   excludeDistributorSelfClients,
   isDistributorSelfClient,
 } from "@/lib/distributor-scope";
-import {
-  isPrinterAssigned,
-  isPrinterUnassigned,
-} from "@/lib/printer-status";
+import { isPrinterUnassigned } from "@/lib/printer-status";
 import { getPrinterStatusQuickAction } from "@/lib/printer-quick-actions";
 import { assertPrinterInScope } from "@/lib/permissions/scope-access";
 import { useDistributorStaffBranchId } from "@/hooks/use-distributor-staff-branch-id";
@@ -54,7 +51,6 @@ import {
   DEVICE_TYPE_LABELS,
   printerModelLabel,
   printerToAssignmentRequest,
-  printerToDispositionRequest,
   printerToFormValues,
   toPrinterRequest,
   type PrinterFormValues,
@@ -76,7 +72,7 @@ import {
   canAccessFiscalBooksApp,
   fiscalBooksAppUrl,
 } from "@/lib/fiscal-books-app";
-import { printerPath } from "@/lib/resource-routes";
+import { printerDispositionPath, printerPath } from "@/lib/resource-routes";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -129,8 +125,6 @@ export function PrinterView() {
   const [assignmentSaving, setAssignmentSaving] = useState(false);
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
   const [dispositionOpen, setDispositionOpen] = useState(false);
-  const [dispositionSaving, setDispositionSaving] = useState(false);
-  const [dispositionError, setDispositionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -323,10 +317,7 @@ export function PrinterView() {
           setAssignmentError(null);
           setAssignmentOpen(true);
         },
-        onDispose: () => {
-          setDispositionError(null);
-          setDispositionOpen(true);
-        },
+        onDispose: () => setDispositionOpen(true),
       })
     : null;
 
@@ -511,13 +502,9 @@ export function PrinterView() {
     }
   }
 
-  async function handleDispositionSubmit(clientId: number) {
+  function handleDispositionContinue(clientId: number) {
     if (!printer || !canDisposeAssigned) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
-      return;
-    }
-    if (!isPrinterAssigned(printer.status)) {
-      toast.error("Solo se pueden enajenar impresoras con estatus Asignada.");
       return;
     }
     if (!clientOptions.some((option) => option.id === clientId)) {
@@ -534,25 +521,8 @@ export function PrinterView() {
       toast.error(DISTRIBUTOR_SELF_CLIENT_MESSAGE);
       return;
     }
-
-    setDispositionSaving(true);
-    setDispositionError(null);
-
-    try {
-      const body = printerToDispositionRequest(printer, clientId);
-      const updated = await updatePrinter(printer.id, body);
-      setPrinter(updated);
-      toast.success(`Impresora ${printer.fiscalSerial} enajenada correctamente.`, {
-        href: printerPath(updated.id),
-      });
-      setDispositionOpen(false);
-    } catch (err) {
-      const message = getPrintersErrorMessage(err);
-      setDispositionError(message);
-      toast.error(message);
-    } finally {
-      setDispositionSaving(false);
-    }
+    setDispositionOpen(false);
+    router.push(printerDispositionPath(printer.id, clientId));
   }
 
   async function handleSubmit(values: PrinterFormValues) {
@@ -676,17 +646,13 @@ export function PrinterView() {
         <PrinterDispositionDialog
           key={`disposition-${printer.id}`}
           printer={printer}
-          saving={dispositionSaving}
-          error={dispositionError}
           clientOptions={clientOptions}
           clients={scopedClients}
           branches={branches}
           companies={companies}
           catalogLoading={catalogLoading}
-          onClose={() => {
-            if (!dispositionSaving) setDispositionOpen(false);
-          }}
-          onSubmit={(id) => void handleDispositionSubmit(id)}
+          onClose={() => setDispositionOpen(false)}
+          onContinue={handleDispositionContinue}
         />
       ) : null}
 

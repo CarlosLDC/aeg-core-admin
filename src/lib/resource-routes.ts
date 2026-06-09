@@ -24,6 +24,10 @@ export function printerPath(id: number): string {
   return `/printers/${id}`;
 }
 
+export function printerDispositionPath(id: number, clientId: number): string {
+  return `/printers/${id}/enajenar?clientId=${clientId}`;
+}
+
 export function printerModelPath(id: number): string {
   return `/printer-models/${id}`;
 }
