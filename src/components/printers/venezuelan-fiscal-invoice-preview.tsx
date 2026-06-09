@@ -24,6 +24,45 @@ const FISCAL_TICKET_FONT =
 const ticketFieldBase =
   "border-0 bg-transparent p-0 text-[11px] leading-tight text-black outline-none focus:bg-white/50 focus:ring-1 focus:ring-black/15";
 
+/** Columna fija: Bs alineado a la izquierda de la cifra, montos al borde derecho del ticket. */
+const ticketAmountColumnClass =
+  "inline-grid shrink-0 w-[12ch] grid-cols-[2ch_minmax(0,1fr)] items-baseline tabular-nums whitespace-nowrap";
+
+function TicketAmount({
+  editable,
+  amount,
+  onChange,
+  ariaLabel,
+  strong = false,
+}: {
+  editable: boolean;
+  amount: number;
+  onChange?: (amount: number) => void;
+  ariaLabel: string;
+  strong?: boolean;
+}) {
+  const formatted = formatVenezuelanMoneyAmount(amount);
+
+  return (
+    <span className={cn(ticketAmountColumnClass, strong && "font-semibold")}>
+      <span>Bs</span>
+      {editable ? (
+        <input
+          type="text"
+          inputMode="decimal"
+          value={formatted}
+          onChange={(e) => onChange?.(parseFiscalMoneyInput(e.target.value))}
+          aria-label={ariaLabel}
+          className={cn(ticketFieldBase, "w-full min-w-0 text-right")}
+          style={{ fontFamily: FISCAL_TICKET_FONT }}
+        />
+      ) : (
+        <span className="text-right">{formatted}</span>
+      )}
+    </span>
+  );
+}
+
 function TicketSeparator() {
   return (
     <p className="my-1 overflow-hidden text-center tracking-tight text-black/80">
@@ -85,34 +124,32 @@ function TicketMoney({
   label: string;
   strong?: boolean;
 }) {
+  const rowClass = cn("flex items-baseline", strong && "font-semibold");
+
   if (!editable) {
     return (
-      <p className={cn("flex justify-between gap-3", strong && "font-semibold")}>
-        <span className="min-w-0">{label}</span>
-        <span className="shrink-0">Bs {formatVenezuelanMoneyAmount(amount)}</span>
+      <p className={rowClass}>
+        <span className="min-w-0 flex-1">{label}</span>
+        <TicketAmount
+          editable={false}
+          amount={amount}
+          ariaLabel={label || "Monto"}
+          strong={strong}
+        />
       </p>
     );
   }
+
   return (
-    <label
-      className={cn(
-        "flex items-center justify-between gap-3",
-        strong && "font-semibold",
-      )}
-    >
-      <span className="min-w-0">{label}</span>
-      <span className="inline-flex shrink-0 items-center gap-1">
-        Bs
-        <input
-          type="text"
-          inputMode="decimal"
-          value={formatVenezuelanMoneyAmount(amount)}
-          onChange={(e) => onChange?.(parseFiscalMoneyInput(e.target.value))}
-          aria-label={label || "Monto"}
-          className={cn(ticketFieldBase, "w-[7.5rem] text-right")}
-          style={{ fontFamily: FISCAL_TICKET_FONT }}
-        />
-      </span>
+    <label className={rowClass}>
+      <span className="min-w-0 flex-1">{label}</span>
+      <TicketAmount
+        editable
+        amount={amount}
+        onChange={onChange}
+        ariaLabel={label || "Monto"}
+        strong={strong}
+      />
     </label>
   );
 }
@@ -360,7 +397,7 @@ export function VenezuelanFiscalInvoicePreview({
         <TicketSeparator />
 
         {item ? (
-          <div className="flex flex-nowrap items-baseline justify-between gap-2 text-left">
+          <div className="flex flex-nowrap items-baseline text-left">
             <div className="flex min-w-0 flex-1 flex-nowrap items-baseline gap-0">
               {isEditable ? (
                 <>
@@ -386,26 +423,12 @@ export function VenezuelanFiscalInvoicePreview({
                 </span>
               )}
             </div>
-            {isEditable ? (
-              <span className="inline-flex shrink-0 items-baseline gap-1 whitespace-nowrap">
-                Bs
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={formatVenezuelanMoneyAmount(item.precio)}
-                  onChange={(e) =>
-                    patchItem("precio", parseFiscalMoneyInput(e.target.value))
-                  }
-                  aria-label="Precio del ítem"
-                  className={cn(ticketFieldBase, "w-[7ch] text-right")}
-                  style={{ fontFamily: FISCAL_TICKET_FONT }}
-                />
-              </span>
-            ) : (
-              <span className="shrink-0 whitespace-nowrap">
-                Bs {formatVenezuelanMoneyAmount(item.precio)}
-              </span>
-            )}
+            <TicketAmount
+              editable={isEditable}
+              amount={item.precio}
+              onChange={(value) => patchItem("precio", value)}
+              ariaLabel="Precio del ítem"
+            />
           </div>
         ) : null}
 
@@ -447,7 +470,7 @@ export function VenezuelanFiscalInvoicePreview({
 
         <div className="space-y-0.5 text-left">
           <p className="font-semibold">FORMA DE PAGO</p>
-          <div className="flex flex-nowrap items-center justify-between gap-2">
+          <div className="flex flex-nowrap items-baseline">
             <TicketText
               editable={isEditable}
               value={data.pagos.formaPago}
@@ -456,11 +479,11 @@ export function VenezuelanFiscalInvoicePreview({
               ariaLabel="Forma de pago"
               inline={isEditable}
             />
-            <TicketMoney
+            <TicketAmount
               editable={isEditable}
-              label=""
               amount={data.pagos.montoPagado}
               onChange={(value) => patchPago("montoPagado", value)}
+              ariaLabel="Monto pagado"
             />
           </div>
           <TicketMoney
