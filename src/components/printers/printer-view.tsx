@@ -502,7 +502,13 @@ export function PrinterView() {
     }
   }
 
-  function handleDispositionContinue(clientId: number) {
+  function handleDispositionContinue({
+    clientId,
+    facturaNro,
+  }: {
+    clientId: number;
+    facturaNro: string;
+  }) {
     if (!printer || !canDisposeAssigned) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
@@ -522,7 +528,7 @@ export function PrinterView() {
       return;
     }
     setDispositionOpen(false);
-    router.push(printerDispositionPath(printer.id, clientId));
+    router.push(printerDispositionPath(printer.id, clientId, facturaNro));
   }
 
   async function handleSubmit(values: PrinterFormValues) {

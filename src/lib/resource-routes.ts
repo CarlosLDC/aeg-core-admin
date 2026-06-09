@@ -24,8 +24,16 @@ export function printerPath(id: number): string {
   return `/printers/${id}`;
 }
 
-export function printerDispositionPath(id: number, clientId: number): string {
-  return `/printers/${id}/enajenar?clientId=${clientId}`;
+export function printerDispositionPath(
+  id: number,
+  clientId: number,
+  facturaNro: string,
+): string {
+  const params = new URLSearchParams({
+    clientId: String(clientId),
+    facturaNro,
+  });
+  return `/printers/${id}/enajenar?${params.toString()}`;
 }
 
 export function printerModelPath(id: number): string {

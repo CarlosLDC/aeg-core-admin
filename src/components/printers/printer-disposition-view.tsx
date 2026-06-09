@@ -34,6 +34,7 @@ import { printerPath } from "@/lib/resource-routes";
 import { isPrinterAssigned } from "@/lib/printer-status";
 import {
   buildDispositionInvoiceData,
+  normalizeFacturaNroInput,
   validateFacturaNroInput,
   type VenezuelanFiscalInvoiceData,
 } from "@/lib/venezuelan-fiscal-invoice";
@@ -71,11 +72,6 @@ export function PrinterDispositionView() {
   const [invoiceBaseline, setInvoiceBaseline] =
     useState<VenezuelanFiscalInvoiceData | null>(null);
   const [invoiceEditSessionKey, setInvoiceEditSessionKey] = useState(0);
-  const [facturaNroInput, setFacturaNroInput] = useState("");
-  const [confirmedFacturaNro, setConfirmedFacturaNro] = useState<string | null>(
-    null,
-  );
-  const [facturaNroError, setFacturaNroError] = useState<string | null>(null);
 
   const distributorStaffBranchId = useDistributorStaffBranchId(
     isDistributor ? distributorId : null,
@@ -84,11 +80,16 @@ export function PrinterDispositionView() {
     isDistributor && canDispose && distributorId != null;
 
   const clientIdParam = searchParams.get("clientId");
+  const facturaNroParam = searchParams.get("facturaNro");
   const clientId = useMemo(() => {
     const parsed = Number(clientIdParam);
     if (!Number.isFinite(parsed) || parsed <= 0) return null;
     return parsed;
   }, [clientIdParam]);
+  const facturaNro = useMemo(() => {
+    if (!facturaNroParam) return null;
+    return normalizeFacturaNroInput(facturaNroParam);
+  }, [facturaNroParam]);
 
   const scopedClients = useMemo(() => {
     if (distributorId == null) return clients;
@@ -177,16 +178,8 @@ export function PrinterDispositionView() {
     };
   }, [scope]);
 
-  useEffect(() => {
-    queueMicrotask(() => {
-      setFacturaNroInput("");
-      setConfirmedFacturaNro(null);
-      setFacturaNroError(null);
-    });
-  }, [clientId]);
-
   const invoiceData = useMemo(() => {
-    if (!printer || clientId == null || confirmedFacturaNro == null) {
+    if (!printer || clientId == null || facturaNro == null) {
       return null;
     }
     return buildDispositionInvoiceData({
@@ -196,12 +189,12 @@ export function PrinterDispositionView() {
       companies,
       distributors,
       printer,
-      facturaNro: confirmedFacturaNro,
+      facturaNro,
     });
   }, [
     printer,
     clientId,
-    confirmedFacturaNro,
+    facturaNro,
     scopedClients,
     branches,
     companies,
@@ -253,28 +246,18 @@ export function PrinterDispositionView() {
     return null;
   }, [clientId, scopedClients, distributorStaffBranchId]);
 
-  const invoiceGenerationError = useMemo(() => {
-    if (confirmedFacturaNro == null || invoiceData != null) return null;
-    return "No se pudo generar la factura para este cliente.";
-  }, [confirmedFacturaNro, invoiceData]);
-
-  function handleFacturaNroSubmit(e: FormEvent) {
-    e.preventDefault();
-    const validation = validateFacturaNroInput(facturaNroInput);
-    if (validation) {
-      setFacturaNroError(validation);
-      return;
+  const facturaValidationError = useMemo(() => {
+    if (!facturaNroParam) {
+      return "Ingresa el número de factura en el diálogo de enajenación.";
     }
-    setFacturaNroError(null);
-    setConfirmedFacturaNro(facturaNroInput.trim());
-  }
+    return validateFacturaNroInput(facturaNroParam);
+  }, [facturaNroParam]);
 
-  function handleChangeFacturaNro() {
-    setConfirmedFacturaNro(null);
-    setInvoiceDraft(null);
-    setInvoiceBaseline(null);
-    setFacturaNroError(null);
-  }
+  const invoiceGenerationError = useMemo(() => {
+    if (facturaValidationError || invoiceData != null) return null;
+    if (clientId == null) return null;
+    return "No se pudo generar la factura para este cliente.";
+  }, [facturaValidationError, invoiceData, clientId]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -332,80 +315,14 @@ export function PrinterDispositionView() {
           : "Revisión de factura de enajenación"
       }
       loading={loading || catalogLoading}
-      error={error ?? accessError ?? clientValidationError}
+      error={
+        error ??
+        accessError ??
+        clientValidationError ??
+        facturaValidationError ??
+        invoiceGenerationError
+      }
     >
-      {printer &&
-      isPrinterAssigned(printer.status) &&
-      canDisposeAssigned &&
-      !clientValidationError &&
-      confirmedFacturaNro == null ? (
-        <form
-          onSubmit={handleFacturaNroSubmit}
-          className="mx-auto flex w-full max-w-md flex-col gap-4"
-        >
-          <div className="space-y-2">
-            <label
-              htmlFor="factura-nro"
-              className="block text-sm font-medium text-foreground"
-            >
-              Número de factura
-            </label>
-            <p className="text-sm text-muted">
-              Ingresa el número fiscal antes de revisar el ticket de enajenación.
-            </p>
-            <input
-              id="factura-nro"
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              value={facturaNroInput}
-              onChange={(e) => {
-                setFacturaNroInput(e.target.value);
-                setFacturaNroError(null);
-              }}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm tabular-nums"
-              placeholder="Ej. 00012345"
-            />
-            {facturaNroError ? (
-              <p
-                role="alert"
-                className="text-sm text-rose-600 dark:text-rose-400"
-              >
-                {facturaNroError}
-              </p>
-            ) : null}
-          </div>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              onClick={() => router.push(backHref)}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5"
-            >
-              Volver
-            </button>
-            <button
-              type="submit"
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground"
-            >
-              Continuar
-            </button>
-          </div>
-        </form>
-      ) : null}
-
-      {printer &&
-      isPrinterAssigned(printer.status) &&
-      canDisposeAssigned &&
-      confirmedFacturaNro != null &&
-      invoiceGenerationError ? (
-        <p
-          role="alert"
-          className="mx-auto w-full max-w-md rounded-lg border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300"
-        >
-          {invoiceGenerationError}
-        </p>
-      ) : null}
-
       {printer &&
       isPrinterAssigned(printer.status) &&
       canDisposeAssigned &&
@@ -414,21 +331,6 @@ export function PrinterDispositionView() {
           onSubmit={(e) => void handleSubmit(e)}
           className="mx-auto flex w-full max-w-4xl flex-col items-center gap-6"
         >
-          <div className="flex w-full items-center justify-between gap-3 text-sm text-muted">
-            <span>
-              Factura #{" "}
-              <span className="font-medium tabular-nums text-foreground">
-                {confirmedFacturaNro}
-              </span>
-            </span>
-            <button
-              type="button"
-              onClick={handleChangeFacturaNro}
-              className="text-accent hover:underline"
-            >
-              Cambiar número
-            </button>
-          </div>
           <VenezuelanFiscalInvoicePreview
             key={invoiceEditSessionKey}
             data={invoiceDraft}
