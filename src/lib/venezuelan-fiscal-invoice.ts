@@ -56,6 +56,8 @@ export type VenezuelanFiscalInvoiceData = {
     totalGeneral: number;
   };
   piePagina: {
+    /** Líneas del trailer (antes de códigos de impresora). */
+    mensajes: string[];
     codigoImpresora: string;
     serialFiscal: string;
   };
@@ -301,6 +303,7 @@ export function buildDispositionInvoiceData(
       totalGeneral: taxes.totalGeneral,
     },
     piePagina: {
+      mensajes: ["", ""],
       codigoImpresora: resolvePrinterCode(input.printer.fiscalSerial),
       serialFiscal: input.printer.fiscalSerial.trim() || "—",
     },

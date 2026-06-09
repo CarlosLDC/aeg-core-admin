@@ -5,7 +5,6 @@ import {
   fiscalTicketSeparator,
   formatVenezuelanMoneyAmount,
   parseFiscalMoneyInput,
-  syncInvoiceAmounts,
   type VenezuelanFiscalInvoiceData,
 } from "@/lib/venezuelan-fiscal-invoice";
 import { cn } from "@/lib/utils";
@@ -161,7 +160,13 @@ export function VenezuelanFiscalInvoicePreview({
   onChange,
 }: VenezuelanFiscalInvoicePreviewProps) {
   const item = data.items[0];
-  const isEditable = editable && onChange != null;
+  const canEdit = editable && onChange != null;
+  const isHeaderEditable = canEdit;
+  const isTrailerEditable = canEdit;
+  const trailerLines =
+    data.piePagina.mensajes.length > 0
+      ? data.piePagina.mensajes
+      : ["", ""];
 
   function patch(
     updater: (current: VenezuelanFiscalInvoiceData) => VenezuelanFiscalInvoiceData,
@@ -180,70 +185,16 @@ export function VenezuelanFiscalInvoicePreview({
     }));
   }
 
-  function patchMetadatos(
-    field: keyof VenezuelanFiscalInvoiceData["metadatos"],
-    value: string,
-  ) {
-    patch((current) => ({
-      ...current,
-      metadatos: { ...current.metadatos, [field]: value },
-    }));
-  }
-
-  function patchCliente(
-    field: keyof VenezuelanFiscalInvoiceData["cliente"],
-    value: string,
-  ) {
-    patch((current) => ({
-      ...current,
-      cliente: { ...current.cliente, [field]: value },
-    }));
-  }
-
-  function patchItem(
-    field: keyof NonNullable<typeof item>,
-    value: string | number,
-  ) {
-    if (!item) return;
+  function patchTrailerMensaje(index: number, value: string) {
     patch((current) => {
-      const nextItems = [...current.items];
-      nextItems[0] = { ...item, [field]: value };
-      const next = { ...current, items: nextItems };
-      if (field === "precio") {
-        return syncInvoiceAmounts(next);
-      }
-      return next;
+      const mensajes = [...current.piePagina.mensajes];
+      while (mensajes.length <= index) mensajes.push("");
+      mensajes[index] = value;
+      return {
+        ...current,
+        piePagina: { ...current.piePagina, mensajes },
+      };
     });
-  }
-
-  function patchImpuesto(
-    field: keyof VenezuelanFiscalInvoiceData["impuestos"],
-    value: number,
-  ) {
-    patch((current) => ({
-      ...current,
-      impuestos: { ...current.impuestos, [field]: value },
-    }));
-  }
-
-  function patchPago(
-    field: keyof VenezuelanFiscalInvoiceData["pagos"],
-    value: string | number,
-  ) {
-    patch((current) => ({
-      ...current,
-      pagos: { ...current.pagos, [field]: value },
-    }));
-  }
-
-  function patchPiePagina(
-    field: "codigoImpresora" | "serialFiscal",
-    value: string,
-  ) {
-    patch((current) => ({
-      ...current,
-      piePagina: { ...current.piePagina, [field]: value },
-    }));
   }
 
   return (
@@ -261,7 +212,7 @@ export function VenezuelanFiscalInvoicePreview({
       >
         <header className="space-y-0.5 text-center">
           <TicketText
-            editable={isEditable}
+            editable={isHeaderEditable}
             value={data.encabezado.logoTexto}
             onChange={(value) => patchEncabezado("logoTexto", value)}
             className="font-semibold tracking-wide"
@@ -270,42 +221,42 @@ export function VenezuelanFiscalInvoicePreview({
           />
           <p>SENIAT</p>
           <TicketText
-            editable={isEditable}
+            editable={isHeaderEditable}
             value={data.encabezado.rifEmpresa}
             onChange={(value) => patchEncabezado("rifEmpresa", value)}
             ariaLabel="RIF empresa"
             centered
           />
           <TicketText
-            editable={isEditable}
+            editable={isHeaderEditable}
             value={data.encabezado.razonSocialEmpresa}
             onChange={(value) => patchEncabezado("razonSocialEmpresa", value)}
             ariaLabel="Razón social empresa"
             centered
           />
           <TicketText
-            editable={isEditable}
+            editable={isHeaderEditable}
             value={data.encabezado.direccionLinea1}
             onChange={(value) => patchEncabezado("direccionLinea1", value)}
             ariaLabel="Dirección línea 1"
             centered
           />
           <TicketText
-            editable={isEditable}
+            editable={isHeaderEditable}
             value={data.encabezado.direccionLinea2}
             onChange={(value) => patchEncabezado("direccionLinea2", value)}
             ariaLabel="Dirección línea 2"
             centered
           />
           <TicketText
-            editable={isEditable}
+            editable={isHeaderEditable}
             value={data.encabezado.tipoDocumento}
             onChange={(value) => patchEncabezado("tipoDocumento", value)}
             ariaLabel="Tipo de documento"
             centered
           />
           <TicketText
-            editable={isEditable}
+            editable={isHeaderEditable}
             value={data.encabezado.ubicacion}
             onChange={(value) => patchEncabezado("ubicacion", value)}
             ariaLabel="Ubicación"
@@ -316,46 +267,13 @@ export function VenezuelanFiscalInvoicePreview({
         <div className="mt-2 space-y-0.5 text-center">
           <p>
             FACTURA #:{" "}
-            {isEditable ? (
-              <input
-                type="text"
-                value={data.metadatos.facturaNro}
-                onChange={(e) => patchMetadatos("facturaNro", e.target.value)}
-                aria-label="Número de factura"
-                className={cn(ticketFieldBase, "inline-block w-[8ch] text-center")}
-                style={{ fontFamily: FISCAL_TICKET_FONT }}
-              />
-            ) : (
-              data.metadatos.facturaNro
-            )}
+            {data.metadatos.facturaNro}
           </p>
           <p className="whitespace-nowrap">
             FECHA:{" "}
-            {isEditable ? (
-              <input
-                type="text"
-                value={data.metadatos.fecha}
-                onChange={(e) => patchMetadatos("fecha", e.target.value)}
-                aria-label="Fecha"
-                className={cn(ticketFieldBase, "inline-block w-[10ch] text-center")}
-                style={{ fontFamily: FISCAL_TICKET_FONT }}
-              />
-            ) : (
-              data.metadatos.fecha
-            )}
+            {data.metadatos.fecha}
             {"               HORA: "}
-            {isEditable ? (
-              <input
-                type="text"
-                value={data.metadatos.hora}
-                onChange={(e) => patchMetadatos("hora", e.target.value)}
-                aria-label="Hora"
-                className={cn(ticketFieldBase, "inline-block w-[5ch] text-center")}
-                style={{ fontFamily: FISCAL_TICKET_FONT }}
-              />
-            ) : (
-              data.metadatos.hora
-            )}
+            {data.metadatos.hora}
           </p>
         </div>
 
@@ -366,31 +284,25 @@ export function VenezuelanFiscalInvoicePreview({
           <div className="flex flex-nowrap items-center gap-1">
             <span className="shrink-0">RIF/CI:</span>
             <TicketText
-              editable={isEditable}
+              editable={false}
               value={data.cliente.rifCi}
-              onChange={(value) => patchCliente("rifCi", value)}
               className="min-w-0 flex-1"
               ariaLabel="RIF o CI del cliente"
-              inline={isEditable}
             />
           </div>
           <div className="flex flex-nowrap items-center gap-1">
             <span className="shrink-0">RAZON SOCIAL:</span>
             <TicketText
-              editable={isEditable}
+              editable={false}
               value={data.cliente.razonSocial}
-              onChange={(value) => patchCliente("razonSocial", value)}
               className="min-w-0 flex-1"
               ariaLabel="Razón social del cliente"
-              inline={isEditable}
             />
           </div>
           <TicketText
-            editable={isEditable}
+            editable={false}
             value={data.cliente.condicion}
-            onChange={(value) => patchCliente("condicion", value)}
             ariaLabel="Condición del cliente"
-            inline={isEditable}
           />
         </div>
 
@@ -399,34 +311,14 @@ export function VenezuelanFiscalInvoicePreview({
         {item ? (
           <div className="flex flex-nowrap items-baseline text-left">
             <div className="flex min-w-0 flex-1 flex-nowrap items-baseline gap-0">
-              {isEditable ? (
-                <>
-                  <input
-                    type="text"
-                    value={item.descripcion}
-                    onChange={(e) => patchItem("descripcion", e.target.value)}
-                    aria-label="Descripción del ítem"
-                    className={cn(
-                      ticketFieldBase,
-                      "min-w-0 flex-1",
-                    )}
-                    style={{ fontFamily: FISCAL_TICKET_FONT }}
-                  />
-                  <span className="shrink-0 whitespace-nowrap">
-                    {"         "}({item.alicuota})
-                  </span>
-                </>
-              ) : (
-                <span className="min-w-0">
-                  {item.descripcion}
-                  {"         "}({item.alicuota})
-                </span>
-              )}
+              <span className="min-w-0">
+                {item.descripcion}
+                {"         "}({item.alicuota})
+              </span>
             </div>
             <TicketAmount
-              editable={isEditable}
+              editable={false}
               amount={item.precio}
-              onChange={(value) => patchItem("precio", value)}
               ariaLabel="Precio del ítem"
             />
           </div>
@@ -436,16 +328,14 @@ export function VenezuelanFiscalInvoicePreview({
 
         <div className="space-y-0.5 text-left">
           <TicketMoney
-            editable={isEditable}
+            editable={false}
             label={`BI ${item?.alicuota ?? "G"} (${data.impuestos.alicuotaGeneralPorcentaje.toFixed(2)}%)`}
             amount={data.impuestos.baseImponibleG}
-            onChange={(value) => patchImpuesto("baseImponibleG", value)}
           />
           <TicketMoney
-            editable={isEditable}
+            editable={false}
             label={`IVA ${item?.alicuota ?? "G"} (${data.impuestos.alicuotaGeneralPorcentaje.toFixed(2)}%)`}
             amount={data.impuestos.ivaG}
-            onChange={(value) => patchImpuesto("ivaG", value)}
           />
         </div>
 
@@ -453,16 +343,14 @@ export function VenezuelanFiscalInvoicePreview({
 
         <div className="space-y-0.5 text-left">
           <TicketMoney
-            editable={isEditable}
+            editable={false}
             label="SUBTTL"
             amount={data.impuestos.subtotal}
-            onChange={(value) => patchImpuesto("subtotal", value)}
           />
           <TicketMoney
-            editable={isEditable}
+            editable={false}
             label="IVA"
             amount={data.impuestos.ivaTotal}
-            onChange={(value) => patchImpuesto("ivaTotal", value)}
           />
         </div>
 
@@ -472,57 +360,65 @@ export function VenezuelanFiscalInvoicePreview({
           <p className="font-semibold">FORMA DE PAGO</p>
           <div className="flex flex-nowrap items-baseline">
             <TicketText
-              editable={isEditable}
+              editable={false}
               value={data.pagos.formaPago}
-              onChange={(value) => patchPago("formaPago", value)}
               className="min-w-0 flex-1"
               ariaLabel="Forma de pago"
-              inline={isEditable}
             />
             <TicketAmount
-              editable={isEditable}
+              editable={false}
               amount={data.pagos.montoPagado}
-              onChange={(value) => patchPago("montoPagado", value)}
               ariaLabel="Monto pagado"
             />
           </div>
           <TicketMoney
-            editable={isEditable}
+            editable={false}
             label="CAMBIO"
             amount={data.pagos.cambio}
-            onChange={(value) => patchPago("cambio", value)}
           />
         </div>
 
         <TicketSeparator />
 
         <TicketMoney
-          editable={isEditable}
+          editable={false}
           label="TOTAL"
           amount={data.pagos.totalGeneral}
-          onChange={(value) => patchPago("totalGeneral", value)}
           strong
         />
 
         <TicketSeparator />
 
+        {(isTrailerEditable ||
+          trailerLines.some((line) => line.trim().length > 0)) && (
+          <>
+            <div className="space-y-0.5 text-center">
+              {trailerLines.map((line, index) =>
+                isTrailerEditable ? (
+                  <TicketText
+                    key={index}
+                    editable
+                    value={line}
+                    onChange={(value) => patchTrailerMensaje(index, value)}
+                    ariaLabel={`Trailer línea ${index + 1}`}
+                    centered
+                  />
+                ) : line.trim().length > 0 ? (
+                  <p key={index} className="text-center">
+                    {line}
+                  </p>
+                ) : null,
+              )}
+            </div>
+            <TicketSeparator />
+          </>
+        )}
+
         <div className="flex justify-between gap-2 text-left">
-          <TicketText
-            editable={isEditable}
-            value={data.piePagina.codigoImpresora}
-            onChange={(value) => patchPiePagina("codigoImpresora", value)}
-            className="w-[4ch]"
-            ariaLabel="Código impresora"
-            inline={isEditable}
-          />
-          <TicketText
-            editable={isEditable}
-            value={data.piePagina.serialFiscal}
-            onChange={(value) => patchPiePagina("serialFiscal", value)}
-            className="min-w-0 flex-1 text-right"
-            ariaLabel="Serial fiscal"
-            inline={isEditable}
-          />
+          <span className="w-[4ch]">{data.piePagina.codigoImpresora}</span>
+          <span className="min-w-0 flex-1 text-right">
+            {data.piePagina.serialFiscal}
+          </span>
         </div>
       </div>
     </div>
