@@ -4,10 +4,16 @@ import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterResponse } from "@/types/printer";
 
+export const FISCAL_TICKET_WIDTH_CH = 68;
+
 const DEFAULT_LOGO_TEXTO = "AEG";
 const DEFAULT_TIPO_DOCUMENTO = "DOCUMENTO FISCAL";
 const IVA_GENERAL_PORCENTAJE = 16;
 const ITEM_ALICUOTA = "G";
+
+export function fiscalTicketSeparator(): string {
+  return "-".repeat(FISCAL_TICKET_WIDTH_CH);
+}
 
 export type VenezuelanFiscalInvoiceItem = {
   descripcion: string;
@@ -167,20 +173,55 @@ function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-function buildTaxesFromItemPrice(precio: number) {
+function buildTaxesFromItemPrice(
+  precio: number,
+  alicuotaPorcentaje = IVA_GENERAL_PORCENTAJE,
+) {
   const baseImponibleG = roundMoney(precio);
-  const ivaG = roundMoney((baseImponibleG * IVA_GENERAL_PORCENTAJE) / 100);
+  const ivaG = roundMoney((baseImponibleG * alicuotaPorcentaje) / 100);
   const subtotal = baseImponibleG;
   const ivaTotal = ivaG;
   const totalGeneral = roundMoney(subtotal + ivaTotal);
   return {
-    alicuotaGeneralPorcentaje: IVA_GENERAL_PORCENTAJE,
+    alicuotaGeneralPorcentaje: alicuotaPorcentaje,
     baseImponibleG,
     ivaG,
     subtotal,
     ivaTotal,
     totalGeneral,
   };
+}
+
+export function syncInvoiceAmounts(
+  data: VenezuelanFiscalInvoiceData,
+): VenezuelanFiscalInvoiceData {
+  const itemPrice = data.items[0]?.precio ?? 0;
+  const taxes = buildTaxesFromItemPrice(
+    itemPrice,
+    data.impuestos.alicuotaGeneralPorcentaje,
+  );
+  return {
+    ...data,
+    impuestos: {
+      ...data.impuestos,
+      baseImponibleG: taxes.baseImponibleG,
+      ivaG: taxes.ivaG,
+      subtotal: taxes.subtotal,
+      ivaTotal: taxes.ivaTotal,
+    },
+    pagos: {
+      ...data.pagos,
+      montoPagado: taxes.totalGeneral,
+      totalGeneral: taxes.totalGeneral,
+    },
+  };
+}
+
+export function parseFiscalMoneyInput(value: string): number {
+  const normalized = value.trim().replace(/\./g, "").replace(",", ".");
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed)) return 0;
+  return roundMoney(parsed);
 }
 
 export type BuildDispositionInvoiceInput = {

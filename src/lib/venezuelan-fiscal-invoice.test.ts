@@ -7,10 +7,12 @@ import type { PrinterResponse } from "@/types/printer";
 import {
   buildDispositionInvoiceData,
   buildSimulatedInvoiceNumber,
+  fiscalTicketSeparator,
   formatFiscalInvoiceDate,
   formatFiscalInvoiceTime,
   formatRifForFiscalDisplay,
   splitAddressLines,
+  syncInvoiceAmounts,
 } from "./venezuelan-fiscal-invoice";
 
 const branch: BranchResponse = {
@@ -148,5 +150,37 @@ describe("venezuelan fiscal invoice", () => {
     const issuedAt = new Date("2026-05-28T12:18:00");
     expect(formatFiscalInvoiceDate(issuedAt)).toBe("28/05/2026");
     expect(formatFiscalInvoiceTime(issuedAt)).toBe("12:18");
+  });
+
+  it("renders ticket separator with 68 characters", () => {
+    expect(fiscalTicketSeparator()).toHaveLength(68);
+  });
+
+  it("recalculates taxes when item price changes", () => {
+    const issuedAt = new Date("2026-05-28T12:18:00");
+    const base = buildDispositionInvoiceData({
+      clientId: 1,
+      clients: [
+        mockClient({
+          id: 1,
+          branchId: 1,
+          companyRif: "V00000003",
+          companyBusinessName: "Contado",
+        }),
+      ],
+      branches: [branch, distributorBranch],
+      companies: [company, distributorCompany],
+      distributors,
+      printer: { ...printer, finalSalePrice: 100 },
+      issuedAt,
+    });
+    expect(base).not.toBeNull();
+    const updated = syncInvoiceAmounts({
+      ...base!,
+      items: [{ ...base!.items[0]!, precio: 200 }],
+    });
+    expect(updated.impuestos.baseImponibleG).toBe(200);
+    expect(updated.impuestos.ivaG).toBe(32);
+    expect(updated.pagos.totalGeneral).toBe(232);
   });
 });

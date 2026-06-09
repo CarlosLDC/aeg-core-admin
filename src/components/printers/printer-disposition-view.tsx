@@ -32,7 +32,10 @@ import {
 import { fetchAuthMe } from "@/lib/auth-me-api";
 import { printerPath } from "@/lib/resource-routes";
 import { isPrinterAssigned } from "@/lib/printer-status";
-import { buildDispositionInvoiceData } from "@/lib/venezuelan-fiscal-invoice";
+import {
+  buildDispositionInvoiceData,
+  type VenezuelanFiscalInvoiceData,
+} from "@/lib/venezuelan-fiscal-invoice";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -62,6 +65,8 @@ export function PrinterDispositionView() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [invoiceDraft, setInvoiceDraft] =
+    useState<VenezuelanFiscalInvoiceData | null>(null);
 
   const distributorStaffBranchId = useDistributorStaffBranchId(
     isDistributor ? distributorId : null,
@@ -175,6 +180,14 @@ export function PrinterDispositionView() {
     });
   }, [printer, clientId, scopedClients, branches, companies, distributors]);
 
+  useEffect(() => {
+    if (!invoiceData) {
+      queueMicrotask(() => setInvoiceDraft(null));
+      return;
+    }
+    queueMicrotask(() => setInvoiceDraft(invoiceData));
+  }, [invoiceData]);
+
   const clientValidationError = useMemo(() => {
     if (clientId == null) {
       return "Selecciona un cliente válido para continuar.";
@@ -259,16 +272,20 @@ export function PrinterDispositionView() {
       {printer &&
       isPrinterAssigned(printer.status) &&
       canDisposeAssigned &&
-      invoiceData ? (
+      invoiceDraft ? (
         <form
           onSubmit={(e) => void handleSubmit(e)}
-          className="flex max-w-2xl flex-col items-start gap-6"
+          className="flex max-w-4xl flex-col items-start gap-6"
         >
           <p className="text-sm text-muted">
-            Revisa la factura fiscal antes de confirmar la enajenación.
+            Revisa y edita la factura fiscal antes de confirmar la enajenación.
           </p>
 
-          <VenezuelanFiscalInvoicePreview data={invoiceData} />
+          <VenezuelanFiscalInvoicePreview
+            data={invoiceDraft}
+            editable
+            onChange={setInvoiceDraft}
+          />
 
           {formError ? (
             <p
