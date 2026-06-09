@@ -164,6 +164,19 @@ function resolveCompanyAddress(branch: BranchResponse | undefined): string {
   return resolveBranchLocation(branch);
 }
 
+export function normalizeFacturaNroInput(value: string): string {
+  return value.trim();
+}
+
+export function validateFacturaNroInput(value: string): string | null {
+  const normalized = normalizeFacturaNroInput(value);
+  if (!normalized) return "Ingresa el número de factura.";
+  if (normalized.length > 20) {
+    return "El número de factura no puede superar 20 caracteres.";
+  }
+  return null;
+}
+
 export function buildSimulatedInvoiceNumber(
   issuedAt: Date,
   printerId = 0,
@@ -386,6 +399,7 @@ export type BuildDispositionInvoiceInput = {
   distributors?: DistributorResponse[];
   printer: PrinterResponse;
   issuedAt?: Date;
+  facturaNro?: string;
 };
 
 export function buildDispositionInvoiceData(
@@ -421,7 +435,10 @@ export function buildDispositionInvoiceData(
       }),
     },
     metadatos: {
-      facturaNro: buildSimulatedInvoiceNumber(issuedAt, input.printer.id),
+      facturaNro:
+        input.facturaNro != null && input.facturaNro.trim()
+          ? normalizeFacturaNroInput(input.facturaNro)
+          : buildSimulatedInvoiceNumber(issuedAt, input.printer.id),
       fecha: formatFiscalInvoiceDate(issuedAt),
       hora: formatFiscalInvoiceTime(issuedAt),
     },

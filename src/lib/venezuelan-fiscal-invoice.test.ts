@@ -145,6 +145,26 @@ describe("venezuelan fiscal invoice", () => {
     ).toBeNull();
   });
 
+  it("uses provided invoice number when facturaNro is supplied", () => {
+    const data = buildDispositionInvoiceData({
+      clientId: 1,
+      clients: [
+        mockClient({
+          id: 1,
+          branchId: 1,
+          companyRif: "V00000003",
+          companyBusinessName: "Contado",
+        }),
+      ],
+      branches: [branch],
+      companies: [company],
+      printer,
+      facturaNro: " 00098765 ",
+    });
+
+    expect(data?.metadatos.facturaNro).toBe("00098765");
+  });
+
   it("builds simulated invoice number as 8 digits", () => {
     expect(buildSimulatedInvoiceNumber(new Date("2026-05-30T18:30:45"), 8)).toBe(
       "00081830",
