@@ -262,17 +262,19 @@ export function VenezuelanFiscalInvoicePreview({
           />
         </header>
 
-        <div className="mt-2 space-y-0.5 text-center">
-          <p>
-            FACTURA #:{" "}
-            {data.metadatos.facturaNro}
-          </p>
-          <p className="whitespace-nowrap">
-            FECHA:{" "}
-            {data.metadatos.fecha}
-            {"               HORA: "}
-            {data.metadatos.hora}
-          </p>
+        <div className="mt-2 space-y-0.5 text-left">
+          <div className="flex flex-nowrap items-baseline justify-between gap-2">
+            <span className="shrink-0">FACTURA #:</span>
+            <span className="shrink-0 tabular-nums">{data.metadatos.facturaNro}</span>
+          </div>
+          <div className="flex flex-nowrap items-baseline justify-between gap-2">
+            <span className="shrink-0 tabular-nums">
+              FECHA: {data.metadatos.fecha}
+            </span>
+            <span className="shrink-0 tabular-nums">
+              HORA: {data.metadatos.hora}
+            </span>
+          </div>
         </div>
 
         <TicketSeparator />
