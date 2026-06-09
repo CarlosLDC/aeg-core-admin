@@ -650,6 +650,7 @@ export function PrinterView() {
           clients={scopedClients}
           branches={branches}
           companies={companies}
+          distributors={distributors}
           catalogLoading={catalogLoading}
           onClose={() => setDispositionOpen(false)}
           onContinue={handleDispositionContinue}

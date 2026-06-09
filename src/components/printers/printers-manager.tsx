@@ -955,6 +955,7 @@ export function PrintersManager() {
           clients={scopedClients}
           branches={branches}
           companies={companies}
+          distributors={distributors}
           catalogLoading={catalogLoading}
           onClose={closeDisposition}
           onContinue={handleDispositionContinue}

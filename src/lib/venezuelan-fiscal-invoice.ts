@@ -1,22 +1,59 @@
 import { normalizeRif } from "@/lib/seniat-extract";
 import type { BranchResponse } from "@/types/branch";
-import type { ClientResponse } from "@/types/branch-role";
+import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterResponse } from "@/types/printer";
 
+const DEFAULT_LOGO_TEXTO = "AEG";
+const DEFAULT_TIPO_DOCUMENTO = "DOCUMENTO FISCAL";
+const IVA_GENERAL_PORCENTAJE = 16;
+const ITEM_ALICUOTA = "G";
+
+export type VenezuelanFiscalInvoiceItem = {
+  descripcion: string;
+  alicuota: string;
+  precio: number;
+};
+
 export type VenezuelanFiscalInvoiceData = {
-  seniatLabel: "SENIAT";
-  rif: string;
-  businessName: string;
-  address: string;
-  fiscalSerial: string;
-  invoiceNumber: string;
-  issuedAt: Date;
-  itemDescription: string;
-  quantity: number;
-  subtotalFormatted: string;
-  taxFormatted: string;
-  totalFormatted: string;
+  encabezado: {
+    logoTexto: string;
+    rifEmpresa: string;
+    razonSocialEmpresa: string;
+    direccionLinea1: string;
+    direccionLinea2: string;
+    tipoDocumento: string;
+    ubicacion: string;
+  };
+  metadatos: {
+    facturaNro: string;
+    fecha: string;
+    hora: string;
+  };
+  cliente: {
+    rifCi: string;
+    razonSocial: string;
+    condicion: string;
+  };
+  items: VenezuelanFiscalInvoiceItem[];
+  impuestos: {
+    alicuotaGeneralPorcentaje: number;
+    baseImponibleG: number;
+    ivaG: number;
+    subtotal: number;
+    ivaTotal: number;
+  };
+  pagos: {
+    formaPago: string;
+    montoPagado: number;
+    cambio: number;
+    totalGeneral: number;
+  };
+  piePagina: {
+    mensajes: string[];
+    codigoImpresora: string;
+    serialFiscal: string;
+  };
 };
 
 export function formatRifForFiscalDisplay(raw: string): string {
@@ -60,22 +97,90 @@ function resolveBusinessName(
   return company?.businessName?.trim() || "—";
 }
 
-function resolveClientAddress(branch: BranchResponse | undefined): string {
+function resolveBranchCompany(
+  branch: BranchResponse | undefined,
+  companies: CompanyResponse[],
+): CompanyResponse | undefined {
+  if (!branch) return undefined;
+  return companies.find((c) => c.id === branch.companyId);
+}
+
+function resolveBranchLocation(branch: BranchResponse | undefined): string {
+  if (!branch) return "—";
+  const city = branch.city?.trim();
+  const state = branch.state?.trim();
+  if (city && state) return `${city}, ${state}`;
+  return city || state || "—";
+}
+
+export function splitAddressLines(address: string): [string, string] {
+  const trimmed = address.trim();
+  if (!trimmed) return ["", ""];
+  const commaIndex = trimmed.indexOf(",");
+  if (commaIndex > 0) {
+    return [
+      trimmed.slice(0, commaIndex).trim(),
+      trimmed.slice(commaIndex + 1).trim(),
+    ];
+  }
+  if (trimmed.length <= 42) return [trimmed, ""];
+  const splitAt = trimmed.lastIndexOf(" ", 42);
+  const index = splitAt > 20 ? splitAt : 42;
+  return [trimmed.slice(0, index).trim(), trimmed.slice(index).trim()];
+}
+
+function resolveCompanyAddress(branch: BranchResponse | undefined): string {
   if (!branch) return "—";
   const address = branch.address?.trim();
   if (address) return address;
-  const location = [branch.city, branch.state].filter(Boolean).join(", ");
-  return location || "—";
+  return resolveBranchLocation(branch);
 }
 
-export function buildSimulatedInvoiceNumber(issuedAt: Date): string {
-  const y = issuedAt.getFullYear();
-  const m = String(issuedAt.getMonth() + 1).padStart(2, "0");
-  const d = String(issuedAt.getDate()).padStart(2, "0");
-  const t = String(issuedAt.getHours()).padStart(2, "0");
-  const min = String(issuedAt.getMinutes()).padStart(2, "0");
-  const s = String(issuedAt.getSeconds()).padStart(2, "0");
-  return `F${y}${m}${d}-${t}${min}${s}`;
+export function buildSimulatedInvoiceNumber(
+  issuedAt: Date,
+  printerId = 0,
+): string {
+  const seq =
+    (printerId * 10_000 +
+      issuedAt.getHours() * 100 +
+      issuedAt.getMinutes()) %
+    100_000_000;
+  return String(seq).padStart(8, "0");
+}
+
+export function formatFiscalInvoiceDate(issuedAt: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${pad(issuedAt.getDate())}/${pad(issuedAt.getMonth() + 1)}/${issuedAt.getFullYear()}`;
+}
+
+export function formatFiscalInvoiceTime(issuedAt: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${pad(issuedAt.getHours())}:${pad(issuedAt.getMinutes())}`;
+}
+
+function resolvePrinterCode(fiscalSerial: string): string {
+  const letters = fiscalSerial.replace(/[^a-zA-Z]/g, "").toUpperCase();
+  return letters.slice(0, 2) || "MH";
+}
+
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function buildTaxesFromItemPrice(precio: number) {
+  const baseImponibleG = roundMoney(precio);
+  const ivaG = roundMoney((baseImponibleG * IVA_GENERAL_PORCENTAJE) / 100);
+  const subtotal = baseImponibleG;
+  const ivaTotal = ivaG;
+  const totalGeneral = roundMoney(subtotal + ivaTotal);
+  return {
+    alicuotaGeneralPorcentaje: IVA_GENERAL_PORCENTAJE,
+    baseImponibleG,
+    ivaG,
+    subtotal,
+    ivaTotal,
+    totalGeneral,
+  };
 }
 
 export type BuildDispositionInvoiceInput = {
@@ -83,6 +188,7 @@ export type BuildDispositionInvoiceInput = {
   clients: ClientResponse[];
   branches: BranchResponse[];
   companies: CompanyResponse[];
+  distributors?: DistributorResponse[];
   printer: PrinterResponse;
   issuedAt?: Date;
 };
@@ -93,34 +199,71 @@ export function buildDispositionInvoiceData(
   const client = input.clients.find((c) => c.id === input.clientId);
   if (!client) return null;
 
-  const branch = input.branches.find((b) => b.id === client.branchId);
+  const clientBranch = input.branches.find((b) => b.id === client.branchId);
   const issuedAt = input.issuedAt ?? new Date();
-  const zero = formatVenezuelanMoneyAmount(0);
+  const distributor = input.distributors?.find(
+    (row) => row.id === input.printer.distributorId,
+  );
+  const distributorBranch = distributor
+    ? input.branches.find((b) => b.id === distributor.branchId)
+    : undefined;
+  const distributorCompany = resolveBranchCompany(
+    distributorBranch,
+    input.companies,
+  );
+  const [direccionLinea1, direccionLinea2] = splitAddressLines(
+    resolveCompanyAddress(distributorBranch),
+  );
+  const itemPrice = roundMoney(input.printer.finalSalePrice ?? 0);
+  const taxes = buildTaxesFromItemPrice(itemPrice);
 
   return {
-    seniatLabel: "SENIAT",
-    rif: resolveClientRif(client, branch, input.companies),
-    businessName: resolveBusinessName(client, branch, input.companies),
-    address: resolveClientAddress(branch),
-    fiscalSerial: input.printer.fiscalSerial.trim() || "—",
-    invoiceNumber: buildSimulatedInvoiceNumber(issuedAt),
-    issuedAt,
-    itemDescription: "ENAJENACION DE EQUIPO FISCAL",
-    quantity: 1,
-    subtotalFormatted: zero,
-    taxFormatted: zero,
-    totalFormatted: zero,
+    encabezado: {
+      logoTexto: DEFAULT_LOGO_TEXTO,
+      rifEmpresa: distributorCompany?.rif
+        ? formatRifForFiscalDisplay(distributorCompany.rif)
+        : "—",
+      razonSocialEmpresa:
+        distributorCompany?.businessName?.trim() || "—",
+      direccionLinea1,
+      direccionLinea2,
+      tipoDocumento: DEFAULT_TIPO_DOCUMENTO,
+      ubicacion: resolveBranchLocation(distributorBranch),
+    },
+    metadatos: {
+      facturaNro: buildSimulatedInvoiceNumber(issuedAt, input.printer.id),
+      fecha: formatFiscalInvoiceDate(issuedAt),
+      hora: formatFiscalInvoiceTime(issuedAt),
+    },
+    cliente: {
+      rifCi: resolveClientRif(client, clientBranch, input.companies),
+      razonSocial: resolveBusinessName(client, clientBranch, input.companies),
+      condicion: "contado",
+    },
+    items: [
+      {
+        descripcion: "ENAJENACION DE EQUIPO FISCAL",
+        alicuota: ITEM_ALICUOTA,
+        precio: itemPrice,
+      },
+    ],
+    impuestos: {
+      alicuotaGeneralPorcentaje: taxes.alicuotaGeneralPorcentaje,
+      baseImponibleG: taxes.baseImponibleG,
+      ivaG: taxes.ivaG,
+      subtotal: taxes.subtotal,
+      ivaTotal: taxes.ivaTotal,
+    },
+    pagos: {
+      formaPago: "CONTADO",
+      montoPagado: taxes.totalGeneral,
+      cambio: 0,
+      totalGeneral: taxes.totalGeneral,
+    },
+    piePagina: {
+      mensajes: ["GRACIAS POR SU COMPRA", "VUELVA PRONTO"],
+      codigoImpresora: resolvePrinterCode(input.printer.fiscalSerial),
+      serialFiscal: input.printer.fiscalSerial.trim() || "—",
+    },
   };
-}
-
-export function formatFiscalInvoiceDateTime(issuedAt: Date): string {
-  return issuedAt.toLocaleString("es-VE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  });
 }

@@ -6,7 +6,7 @@ import { PrinterActionDialogShell } from "@/components/printers/printer-action-d
 import { PrinterActionPickerPanel } from "@/components/printers/printer-action-picker-panel";
 import { buildDispositionInvoiceData } from "@/lib/venezuelan-fiscal-invoice";
 import type { BranchResponse } from "@/types/branch";
-import type { ClientResponse } from "@/types/branch-role";
+import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterResponse } from "@/types/printer";
 
@@ -16,6 +16,7 @@ type PrinterDispositionDialogProps = {
   clients: ClientResponse[];
   branches: BranchResponse[];
   companies: CompanyResponse[];
+  distributors: DistributorResponse[];
   catalogLoading: boolean;
   onClose: () => void;
   onContinue: (clientId: number) => void;
@@ -34,6 +35,7 @@ export function PrinterDispositionDialog({
   clients,
   branches,
   companies,
+  distributors,
   catalogLoading,
   onClose,
   onContinue,
@@ -70,6 +72,7 @@ export function PrinterDispositionDialog({
         clients,
         branches,
         companies,
+        distributors,
         printer,
       })
     ) {

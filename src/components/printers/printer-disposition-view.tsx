@@ -18,6 +18,7 @@ import { assertPrinterInScope } from "@/lib/permissions/scope-access";
 import { fetchBranches } from "@/lib/branches-api";
 import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
+import { fetchDistributors } from "@/lib/distributors-api";
 import {
   DISTRIBUTOR_SELF_CLIENT_MESSAGE,
   isDistributorSelfClient,
@@ -33,7 +34,7 @@ import { printerPath } from "@/lib/resource-routes";
 import { isPrinterAssigned } from "@/lib/printer-status";
 import { buildDispositionInvoiceData } from "@/lib/venezuelan-fiscal-invoice";
 import type { BranchResponse } from "@/types/branch";
-import type { ClientResponse } from "@/types/branch-role";
+import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterResponse } from "@/types/printer";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,7 @@ export function PrinterDispositionView() {
   const [branches, setBranches] = useState<BranchResponse[]>([]);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [clients, setClients] = useState<ClientResponse[]>([]);
+  const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
   const [distributorId, setDistributorId] = useState<number | null>(
     user?.distributorId ?? null,
   );
@@ -143,12 +145,14 @@ export function PrinterDispositionView() {
       scope ? Promise.resolve(scope.companies) : fetchCompanies(),
       scope ? Promise.resolve(scope.branches) : fetchBranches(),
       fetchClients(),
+      fetchDistributors(),
     ])
-      .then(([companyRows, branchRows, clientRows]) => {
+      .then(([companyRows, branchRows, clientRows, distributorRows]) => {
         if (!cancelled) {
           setCompanies(companyRows);
           setBranches(branchRows);
           setClients(clientRows);
+          setDistributors(distributorRows);
         }
       })
       .finally(() => {
@@ -166,9 +170,10 @@ export function PrinterDispositionView() {
       clients: scopedClients,
       branches,
       companies,
+      distributors,
       printer,
     });
-  }, [printer, clientId, scopedClients, branches, companies]);
+  }, [printer, clientId, scopedClients, branches, companies, distributors]);
 
   const clientValidationError = useMemo(() => {
     if (clientId == null) {
@@ -257,9 +262,9 @@ export function PrinterDispositionView() {
       invoiceData ? (
         <form
           onSubmit={(e) => void handleSubmit(e)}
-          className="mx-auto flex max-w-md flex-col items-center gap-6"
+          className="flex max-w-2xl flex-col items-start gap-6"
         >
-          <p className="text-center text-sm text-muted">
+          <p className="text-sm text-muted">
             Revisa la factura fiscal antes de confirmar la enajenación.
           </p>
 

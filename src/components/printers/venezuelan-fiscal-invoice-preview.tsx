@@ -1,8 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
 import {
-  formatFiscalInvoiceDateTime,
+  formatVenezuelanMoneyAmount,
   type VenezuelanFiscalInvoiceData,
 } from "@/lib/venezuelan-fiscal-invoice";
 import { cn } from "@/lib/utils";
@@ -16,77 +15,151 @@ type VenezuelanFiscalInvoicePreviewProps = {
 const FISCAL_TICKET_FONT =
   '"Liberation Mono", "Courier New", Courier, monospace';
 
-function TicketLine({ children }: { children: ReactNode }) {
-  return <p className="whitespace-pre-wrap text-center leading-snug">{children}</p>;
+function TicketSeparator() {
+  return (
+    <p className="my-1 tracking-tight text-black/80">
+      ----------------------------------------
+    </p>
+  );
 }
 
-function TicketSeparator() {
-  return <p className="my-1 text-center tracking-tight">--------------------------------</p>;
+function AmountRow({
+  label,
+  amount,
+  strong = false,
+}: {
+  label: string;
+  amount: number;
+  strong?: boolean;
+}) {
+  return (
+    <p
+      className={cn(
+        "flex justify-between gap-3",
+        strong && "font-semibold",
+      )}
+    >
+      <span className="min-w-0">{label}</span>
+      <span className="shrink-0">Bs {formatVenezuelanMoneyAmount(amount)}</span>
+    </p>
+  );
 }
 
 export function VenezuelanFiscalInvoicePreview({
   data,
   className,
 }: VenezuelanFiscalInvoicePreviewProps) {
-  const issuedLabel = formatFiscalInvoiceDateTime(data.issuedAt);
+  const item = data.items[0];
 
   return (
     <div
-      className={cn("mx-auto w-full max-w-[280px]", className)}
+      className={cn("w-full max-w-[320px]", className)}
       role="document"
       aria-label="Vista previa de factura fiscal"
     >
       <div
-        className="relative min-h-[420px] bg-[#faf9f6] px-3 py-4 text-[11px] leading-tight text-black shadow-inner"
+        className="min-h-[520px] bg-[#faf9f6] px-3 py-4 text-[11px] leading-tight text-black shadow-inner"
         style={{ fontFamily: FISCAL_TICKET_FONT }}
       >
-        <header className="space-y-0.5">
-          <TicketLine>{data.seniatLabel}</TicketLine>
-          <TicketLine>{data.rif}</TicketLine>
-          <TicketLine>{data.businessName}</TicketLine>
-          <TicketLine>{data.address}</TicketLine>
+        <header className="space-y-0.5 text-left">
+          <p className="font-semibold tracking-wide">{data.encabezado.logoTexto}</p>
+          <p>SENIAT</p>
+          <p>{data.encabezado.rifEmpresa}</p>
+          <p>{data.encabezado.razonSocialEmpresa}</p>
+          {data.encabezado.direccionLinea1 ? (
+            <p>{data.encabezado.direccionLinea1}</p>
+          ) : null}
+          {data.encabezado.direccionLinea2 ? (
+            <p>{data.encabezado.direccionLinea2}</p>
+          ) : null}
+          <p>{data.encabezado.tipoDocumento}</p>
+          <p>{data.encabezado.rifEmpresa}</p>
+          <p>{data.encabezado.razonSocialEmpresa}</p>
+          <p>{data.encabezado.ubicacion}</p>
         </header>
 
-        <TicketSeparator />
-
-        <div className="space-y-0.5 text-left">
+        <div className="mt-2 space-y-0.5 text-left">
+          <p>FACTURA #: {data.metadatos.facturaNro}</p>
           <p>
-            <span className="font-semibold">Factura N°:</span> {data.invoiceNumber}
+            FECHA: {data.metadatos.fecha}               HORA:{" "}
+            {data.metadatos.hora}
           </p>
-          <p>
-            <span className="font-semibold">Fecha:</span> {issuedLabel}
-          </p>
-        </div>
-
-        <TicketSeparator />
-
-        <div className="space-y-1 text-left">
-          <p className="font-semibold">Descripción</p>
-          <p>{data.itemDescription}</p>
-          <p>Cant: {data.quantity}</p>
         </div>
 
         <TicketSeparator />
 
         <div className="space-y-0.5 text-left">
-          <p className="flex justify-between gap-2">
-            <span>Sub-Total Bs:</span>
-            <span>{data.subtotalFormatted}</span>
-          </p>
-          <p className="flex justify-between gap-2">
-            <span>I.V.A. Bs:</span>
-            <span>{data.taxFormatted}</span>
-          </p>
-          <p className="flex justify-between gap-2 font-semibold">
-            <span>Total Bs:</span>
-            <span>{data.totalFormatted}</span>
-          </p>
+          <p className="font-semibold">DATOS DEL CLIENTE</p>
+          <p>RIF/CI: {data.cliente.rifCi}</p>
+          <p>RAZON SOCIAL: {data.cliente.razonSocial}</p>
+          <p>{data.cliente.condicion}</p>
         </div>
 
         <TicketSeparator />
 
-        <p className="absolute bottom-3 right-3 text-[10px] tracking-tight">
-          {data.fiscalSerial}
+        {item ? (
+          <p className="flex justify-between gap-2 text-left">
+            <span className="min-w-0">
+              {item.descripcion}         ({item.alicuota})
+            </span>
+            <span className="shrink-0">
+              Bs {formatVenezuelanMoneyAmount(item.precio)}
+            </span>
+          </p>
+        ) : null}
+
+        <TicketSeparator />
+
+        <div className="space-y-0.5 text-left">
+          <AmountRow
+            label={`BI ${item?.alicuota ?? "G"} (${data.impuestos.alicuotaGeneralPorcentaje.toFixed(2)}%)`}
+            amount={data.impuestos.baseImponibleG}
+          />
+          <AmountRow
+            label={`IVA ${item?.alicuota ?? "G"} (${data.impuestos.alicuotaGeneralPorcentaje.toFixed(2)}%)`}
+            amount={data.impuestos.ivaG}
+          />
+        </div>
+
+        <TicketSeparator />
+
+        <div className="space-y-0.5 text-left">
+          <AmountRow label="SUBTTL" amount={data.impuestos.subtotal} />
+          <AmountRow label="IVA" amount={data.impuestos.ivaTotal} />
+        </div>
+
+        <TicketSeparator />
+
+        <div className="space-y-0.5 text-left">
+          <p className="font-semibold">FORMA DE PAGO</p>
+          <AmountRow
+            label={data.pagos.formaPago}
+            amount={data.pagos.montoPagado}
+          />
+          <AmountRow label="CAMBIO" amount={data.pagos.cambio} />
+        </div>
+
+        <TicketSeparator />
+
+        <AmountRow
+          label="TOTAL"
+          amount={data.pagos.totalGeneral}
+          strong
+        />
+
+        <TicketSeparator />
+
+        <div className="space-y-0.5 text-left">
+          {data.piePagina.mensajes.map((message) => (
+            <p key={message}>{message}</p>
+          ))}
+        </div>
+
+        <TicketSeparator />
+
+        <p className="flex justify-between gap-2 text-left">
+          <span>{data.piePagina.codigoImpresora}</span>
+          <span>{data.piePagina.serialFiscal}</span>
         </p>
       </div>
     </div>

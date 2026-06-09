@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { mockClient } from "@/lib/test-fixtures";
 import type { BranchResponse } from "@/types/branch";
+import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterResponse } from "@/types/printer";
 import {
   buildDispositionInvoiceData,
   buildSimulatedInvoiceNumber,
+  formatFiscalInvoiceDate,
+  formatFiscalInvoiceTime,
   formatRifForFiscalDisplay,
+  splitAddressLines,
 } from "./venezuelan-fiscal-invoice";
 
 const branch: BranchResponse = {
@@ -14,7 +18,19 @@ const branch: BranchResponse = {
   companyId: 10,
   city: "Caracas",
   state: "Distrito Capital",
-  address: "Av. Principal 123",
+  address: "Av. Principal 123, Centro",
+  phone: "",
+  email: "",
+  createdAt: "",
+};
+
+const distributorBranch: BranchResponse = {
+  id: 20,
+  companyId: 30,
+  city: "Los Teques",
+  state: "Miranda",
+  address:
+    "AV. BICENTENARIO REDOMA EL TAMBOR EDIF. VERACRUZ, PISO 1 LOCAL NRO 3 LOS TEQUES, EDO. MIRANDA",
   phone: "",
   email: "",
   createdAt: "",
@@ -28,9 +44,23 @@ const company: CompanyResponse = {
   createdAt: "",
 };
 
+const distributorCompany: CompanyResponse = {
+  id: 30,
+  businessName: "ALPHA ENGINEER GROUP",
+  rif: "J504594369",
+  contributorType: "ordinario",
+  createdAt: "",
+};
+
+const distributors: DistributorResponse[] = [
+  { id: 7, branchId: 20, createdAt: "" },
+];
+
 const printer = {
   id: 5,
-  fiscalSerial: "ABC123456789",
+  distributorId: 7,
+  fiscalSerial: "GRA0000017",
+  finalSalePrice: 732.35,
 } as PrinterResponse;
 
 describe("venezuelan fiscal invoice", () => {
@@ -39,30 +69,48 @@ describe("venezuelan fiscal invoice", () => {
     expect(formatRifForFiscalDisplay("V-12345678")).toBe("V-12345678");
   });
 
-  it("builds invoice header from client embedded fields", () => {
+  it("splits long addresses into two lines", () => {
+    const [line1, line2] = splitAddressLines(distributorBranch.address);
+    expect(line1).toContain("AV. BICENTENARIO");
+    expect(line2).toContain("MIRANDA");
+  });
+
+  it("builds structured invoice data for disposition", () => {
+    const issuedAt = new Date("2026-05-28T12:18:00");
     const data = buildDispositionInvoiceData({
       clientId: 1,
       clients: [
         mockClient({
           id: 1,
           branchId: 1,
-          companyRif: "J315694205",
-          companyBusinessName: "Acme C.A.",
+          companyRif: "V00000003",
+          companyBusinessName: "Contado",
         }),
       ],
-      branches: [branch],
-      companies: [company],
+      branches: [branch, distributorBranch],
+      companies: [company, distributorCompany],
+      distributors,
       printer,
-      issuedAt: new Date("2026-05-30T18:30:00"),
+      issuedAt,
     });
 
     expect(data).not.toBeNull();
-    expect(data?.seniatLabel).toBe("SENIAT");
-    expect(data?.rif).toBe("J-315694205");
-    expect(data?.businessName).toBe("Acme C.A.");
-    expect(data?.address).toBe("Av. Principal 123");
-    expect(data?.fiscalSerial).toBe("ABC123456789");
-    expect(data?.totalFormatted).toBe("0,00");
+    expect(data?.encabezado.logoTexto).toBe("AEG");
+    expect(data?.encabezado.rifEmpresa).toBe("J-504594369");
+    expect(data?.encabezado.razonSocialEmpresa).toBe("ALPHA ENGINEER GROUP");
+    expect(data?.encabezado.tipoDocumento).toBe("DOCUMENTO FISCAL");
+    expect(data?.encabezado.ubicacion).toBe("Los Teques, Miranda");
+    expect(data?.metadatos.fecha).toBe("28/05/2026");
+    expect(data?.metadatos.hora).toBe("12:18");
+    expect(data?.cliente.rifCi).toBe("V-00000003");
+    expect(data?.cliente.razonSocial).toBe("Contado");
+    expect(data?.cliente.condicion).toBe("contado");
+    expect(data?.items[0]?.descripcion).toBe("ENAJENACION DE EQUIPO FISCAL");
+    expect(data?.impuestos.baseImponibleG).toBe(732.35);
+    expect(data?.impuestos.ivaG).toBe(117.18);
+    expect(data?.pagos.totalGeneral).toBe(849.53);
+    expect(data?.piePagina.serialFiscal).toBe("GRA0000017");
+    expect(data?.piePagina.codigoImpresora).toBe("GR");
   });
 
   it("falls back to company and branch location when client fields are missing", () => {
@@ -71,12 +119,11 @@ describe("venezuelan fiscal invoice", () => {
       clients: [mockClient({ id: 2, branchId: 2 })],
       branches: [{ ...branch, id: 2, address: "" }],
       companies: [company],
-      printer,
+      printer: { ...printer, distributorId: null },
     });
 
-    expect(data?.rif).toBe("J-315694205");
-    expect(data?.businessName).toBe("Cliente Demo C.A.");
-    expect(data?.address).toBe("Caracas, Distrito Capital");
+    expect(data?.cliente.rifCi).toBe("J-315694205");
+    expect(data?.cliente.razonSocial).toBe("Cliente Demo C.A.");
   });
 
   it("returns null for unknown client", () => {
@@ -91,9 +138,15 @@ describe("venezuelan fiscal invoice", () => {
     ).toBeNull();
   });
 
-  it("builds simulated invoice number from timestamp", () => {
-    expect(
-      buildSimulatedInvoiceNumber(new Date("2026-05-30T18:30:45")),
-    ).toBe("F20260530-183045");
+  it("builds simulated invoice number as 8 digits", () => {
+    expect(buildSimulatedInvoiceNumber(new Date("2026-05-30T18:30:45"), 8)).toBe(
+      "00081830",
+    );
+  });
+
+  it("formats fiscal date and time", () => {
+    const issuedAt = new Date("2026-05-28T12:18:00");
+    expect(formatFiscalInvoiceDate(issuedAt)).toBe("28/05/2026");
+    expect(formatFiscalInvoiceTime(issuedAt)).toBe("12:18");
   });
 });
