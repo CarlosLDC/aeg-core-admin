@@ -183,53 +183,59 @@ function reorderArrayItems<T>(items: T[], fromIndex: number, toIndex: number): T
   return next;
 }
 
+function TicketZoneEditButton({
+  label,
+  isEditing,
+  onClick,
+}: {
+  label: string;
+  isEditing: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={isEditing}
+      aria-label={
+        isEditing
+          ? `Terminar edición del ${label.toLowerCase()}`
+          : `Editar ${label.toLowerCase()}`
+      }
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium shadow-sm transition-colors",
+        isEditing
+          ? "border-accent bg-accent text-accent-foreground"
+          : "border-border/60 bg-card text-muted hover:border-accent/40 hover:text-foreground",
+      )}
+    >
+      {isEditing ? (
+        <Check className="size-3.5" aria-hidden />
+      ) : (
+        <Pencil className="size-3.5" aria-hidden />
+      )}
+      {label}
+    </button>
+  );
+}
+
 function EditableTicketZone({
   label,
-  canEdit,
   isEditing,
-  onToggleEditing,
+  onFinishEditing,
   onAddLine,
   children,
   className,
 }: {
   label: string;
-  canEdit: boolean;
   isEditing: boolean;
-  onToggleEditing: () => void;
+  onFinishEditing: () => void;
   onAddLine?: () => void;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <section
-      className={cn("relative", canEdit && "pr-7", className)}
-      aria-label={label}
-    >
-      {canEdit ? (
-        <button
-          type="button"
-          onClick={onToggleEditing}
-          aria-pressed={isEditing}
-          aria-label={
-            isEditing
-              ? `Terminar edición del ${label.toLowerCase()}`
-              : `Editar ${label.toLowerCase()}`
-          }
-          className={cn(
-            "absolute right-0 top-0 z-10 inline-flex size-6 items-center justify-center rounded-md border font-sans shadow-sm transition-colors",
-            isEditing
-              ? "border-accent bg-accent text-accent-foreground"
-              : "border-border/60 bg-card text-muted hover:border-accent/40 hover:text-foreground",
-          )}
-        >
-          {isEditing ? (
-            <Check className="size-3.5" aria-hidden />
-          ) : (
-            <Pencil className="size-3.5" aria-hidden />
-          )}
-        </button>
-      ) : null}
-
+    <section className={className} aria-label={label}>
       {isEditing ? (
         <div
           className="rounded-md border border-accent/35 bg-accent/[0.06] px-2 py-2"
@@ -243,16 +249,26 @@ function EditableTicketZone({
               />
               {label}
             </span>
-            {onAddLine ? (
+            <div className="flex shrink-0 items-center gap-2">
+              {onAddLine ? (
+                <button
+                  type="button"
+                  onClick={onAddLine}
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium text-accent transition-colors hover:bg-accent/10"
+                >
+                  <Plus className="size-3" aria-hidden />
+                  Añadir línea
+                </button>
+              ) : null}
               <button
                 type="button"
-                onClick={onAddLine}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium text-accent transition-colors hover:bg-accent/10"
+                onClick={onFinishEditing}
+                className="inline-flex items-center gap-1 rounded-md border border-accent/40 bg-card px-2 py-0.5 text-[10px] font-medium text-accent transition-colors hover:bg-accent/10"
               >
-                <Plus className="size-3" aria-hidden />
-                Añadir línea
+                <Check className="size-3" aria-hidden />
+                Listo
               </button>
-            ) : null}
+            </div>
           </div>
           {children}
         </div>
@@ -503,9 +519,24 @@ export function VenezuelanFiscalInvoicePreview({
   return (
     <div className={cn("flex w-full justify-center font-sans", className)}>
       <div className="w-full max-w-[calc(68ch+4rem)] rounded-xl border border-border/60 bg-card/40 p-4 shadow-sm sm:p-6">
+        {canEdit ? (
+          <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
+            <TicketZoneEditButton
+              label="Encabezado"
+              isEditing={headerEditing}
+              onClick={() => setHeaderEditing((current) => !current)}
+            />
+            <TicketZoneEditButton
+              label="Trailer"
+              isEditing={trailerEditing}
+              onClick={() => setTrailerEditing((current) => !current)}
+            />
+          </div>
+        ) : null}
+
         <div className="flex justify-center">
           <div
-            className="min-h-[520px] max-w-full bg-[#faf9f6] px-2 py-4 text-[11px] leading-tight text-black shadow-inner"
+            className="min-h-[520px] w-full max-w-full bg-[#faf9f6] px-2 py-4 text-[11px] leading-tight text-black shadow-inner"
             role="document"
             aria-label="Vista previa de factura fiscal"
             style={{
@@ -515,9 +546,8 @@ export function VenezuelanFiscalInvoicePreview({
           >
             <EditableTicketZone
               label="Encabezado"
-              canEdit={canEdit}
               isEditing={headerEditing}
-              onToggleEditing={() => setHeaderEditing((current) => !current)}
+              onFinishEditing={() => setHeaderEditing(false)}
               onAddLine={headerEditing ? addHeaderLine : undefined}
             >
               <header className="space-y-1 text-center">
@@ -667,9 +697,8 @@ export function VenezuelanFiscalInvoicePreview({
               <>
                 <EditableTicketZone
                   label="Trailer"
-                  canEdit={canEdit}
                   isEditing={trailerEditing}
-                  onToggleEditing={() => setTrailerEditing((current) => !current)}
+                  onFinishEditing={() => setTrailerEditing(false)}
                   onAddLine={trailerEditing ? addTrailerLine : undefined}
                 >
                   <div className="space-y-1 text-center">
