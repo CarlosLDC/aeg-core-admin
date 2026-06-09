@@ -67,6 +67,9 @@ export function PrinterDispositionView() {
   const [formError, setFormError] = useState<string | null>(null);
   const [invoiceDraft, setInvoiceDraft] =
     useState<VenezuelanFiscalInvoiceData | null>(null);
+  const [invoiceBaseline, setInvoiceBaseline] =
+    useState<VenezuelanFiscalInvoiceData | null>(null);
+  const [invoiceEditSessionKey, setInvoiceEditSessionKey] = useState(0);
 
   const distributorStaffBranchId = useDistributorStaffBranchId(
     isDistributor ? distributorId : null,
@@ -182,11 +185,29 @@ export function PrinterDispositionView() {
 
   useEffect(() => {
     if (!invoiceData) {
-      queueMicrotask(() => setInvoiceDraft(null));
+      queueMicrotask(() => {
+        setInvoiceDraft(null);
+        setInvoiceBaseline(null);
+      });
       return;
     }
-    queueMicrotask(() => setInvoiceDraft(invoiceData));
+    queueMicrotask(() => {
+      setInvoiceDraft(invoiceData);
+      setInvoiceBaseline(invoiceData);
+      setInvoiceEditSessionKey((current) => current + 1);
+    });
   }, [invoiceData]);
+
+  const hasInvoiceChanges = useMemo(() => {
+    if (!invoiceDraft || !invoiceBaseline) return false;
+    return JSON.stringify(invoiceDraft) !== JSON.stringify(invoiceBaseline);
+  }, [invoiceDraft, invoiceBaseline]);
+
+  function handleRevertInvoice() {
+    if (!invoiceBaseline) return;
+    setInvoiceDraft(invoiceBaseline);
+    setInvoiceEditSessionKey((current) => current + 1);
+  }
 
   const clientValidationError = useMemo(() => {
     if (clientId == null) {
@@ -281,14 +302,17 @@ export function PrinterDispositionView() {
             className="w-full rounded-lg border border-sky-500/25 bg-sky-500/10 px-4 py-3 text-sm text-sky-900 dark:border-sky-400/25 dark:bg-sky-950/40 dark:text-sky-100"
           >
             Revisa la factura fiscal. Usa el botón de lápiz en el encabezado o
-            trailer para editar, reordenar y añadir líneas antes de confirmar la
-            enajenación.
+            pie de ticket para editar, reordenar y añadir líneas antes de
+            confirmar la enajenación.
           </p>
 
           <VenezuelanFiscalInvoicePreview
+            key={invoiceEditSessionKey}
             data={invoiceDraft}
             editable
+            hasChanges={hasInvoiceChanges}
             onChange={setInvoiceDraft}
+            onRevert={handleRevertInvoice}
           />
 
           {formError ? (

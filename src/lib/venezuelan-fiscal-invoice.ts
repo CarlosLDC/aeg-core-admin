@@ -24,8 +24,13 @@ export function buildEncabezadoLineas(input: {
   logoTexto?: string;
   tipoDocumento?: string;
 }): string[] {
+  const logoLine =
+    input.logoTexto?.trim() ||
+    input.razonSocialEmpresa.trim() ||
+    DEFAULT_LOGO_TEXTO;
+
   return [
-    input.logoTexto ?? DEFAULT_LOGO_TEXTO,
+    logoLine,
     "SENIAT",
     input.rifEmpresa,
     input.razonSocialEmpresa,
@@ -72,7 +77,7 @@ export type VenezuelanFiscalInvoiceData = {
     totalGeneral: number;
   };
   piePagina: {
-    /** Líneas del trailer (antes de códigos de impresora). */
+    /** Líneas del pie de ticket (antes de códigos de impresora). */
     mensajes: string[];
     codigoImpresora: string;
     serialFiscal: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import {
   Check,
   ChevronDown,
@@ -9,6 +9,7 @@ import {
   Minus,
   Pencil,
   Plus,
+  RotateCcw,
 } from "lucide-react";
 import {
   FISCAL_TICKET_WIDTH_CH,
@@ -23,7 +24,9 @@ type VenezuelanFiscalInvoicePreviewProps = {
   data: VenezuelanFiscalInvoiceData;
   className?: string;
   editable?: boolean;
+  hasChanges?: boolean;
   onChange?: (data: VenezuelanFiscalInvoiceData) => void;
+  onRevert?: () => void;
 };
 
 /** TODO: cargar Terminal Roman desde public/fonts con next/font/local cuando exista el .ttf */
@@ -420,16 +423,37 @@ export function VenezuelanFiscalInvoicePreview({
   data,
   className,
   editable = false,
+  hasChanges = false,
   onChange,
+  onRevert,
 }: VenezuelanFiscalInvoicePreviewProps) {
   const item = data.items[0];
   const canEdit = editable && onChange != null;
+  const pieDeTicketSectionRef = useRef<HTMLDivElement>(null);
   const [headerEditing, setHeaderEditing] = useState(false);
-  const [trailerEditing, setTrailerEditing] = useState(false);
+  const [pieDeTicketEditing, setPieDeTicketEditing] = useState(false);
   const headerLines = data.encabezado.lineas;
-  const trailerLines = data.piePagina.mensajes;
-  const hasTrailerContent = trailerLines.some((line) => line.trim().length > 0);
-  const showTrailerSection = hasTrailerContent || trailerEditing || canEdit;
+  const pieDeTicketLines = data.piePagina.mensajes;
+  const hasPieDeTicketContent = pieDeTicketLines.some(
+    (line) => line.trim().length > 0,
+  );
+  const showPieDeTicketSection =
+    hasPieDeTicketContent || pieDeTicketEditing || canEdit;
+
+  function togglePieDeTicketEditing() {
+    setPieDeTicketEditing((current) => {
+      const next = !current;
+      if (next) {
+        window.requestAnimationFrame(() => {
+          pieDeTicketSectionRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "end",
+          });
+        });
+      }
+      return next;
+    });
+  }
 
   function patch(
     updater: (current: VenezuelanFiscalInvoiceData) => VenezuelanFiscalInvoiceData,
@@ -471,7 +495,7 @@ export function VenezuelanFiscalInvoicePreview({
     }));
   }
 
-  function patchTrailerLine(index: number, value: string) {
+  function patchPieDeTicketLine(index: number, value: string) {
     patch((current) => {
       const mensajes = [...current.piePagina.mensajes];
       mensajes[index] = value;
@@ -482,7 +506,7 @@ export function VenezuelanFiscalInvoicePreview({
     });
   }
 
-  function addTrailerLine() {
+  function addPieDeTicketLine() {
     patch((current) => ({
       ...current,
       piePagina: {
@@ -492,7 +516,7 @@ export function VenezuelanFiscalInvoicePreview({
     }));
   }
 
-  function removeTrailerLine(index: number) {
+  function removePieDeTicketLine(index: number) {
     patch((current) => ({
       ...current,
       piePagina: {
@@ -502,7 +526,7 @@ export function VenezuelanFiscalInvoicePreview({
     }));
   }
 
-  function moveTrailerLine(fromIndex: number, toIndex: number) {
+  function movePieDeTicketLine(fromIndex: number, toIndex: number) {
     patch((current) => ({
       ...current,
       piePagina: {
@@ -527,10 +551,20 @@ export function VenezuelanFiscalInvoicePreview({
               onClick={() => setHeaderEditing((current) => !current)}
             />
             <TicketZoneEditButton
-              label="Trailer"
-              isEditing={trailerEditing}
-              onClick={() => setTrailerEditing((current) => !current)}
+              label="Pie de ticket"
+              isEditing={pieDeTicketEditing}
+              onClick={togglePieDeTicketEditing}
             />
+            {hasChanges && onRevert ? (
+              <button
+                type="button"
+                onClick={onRevert}
+                className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-card px-2.5 py-1 text-xs font-medium text-muted shadow-sm transition-colors hover:border-rose-500/30 hover:bg-rose-500/5 hover:text-rose-700 dark:hover:text-rose-300"
+              >
+                <RotateCcw className="size-3.5" aria-hidden />
+                Revertir cambios
+              </button>
+            ) : null}
           </div>
         ) : null}
 
@@ -692,29 +726,35 @@ export function VenezuelanFiscalInvoicePreview({
 
             <TicketSeparator />
 
-            {showTrailerSection ? (
+            {showPieDeTicketSection ? (
               <>
-                <EditableTicketZone
-                  label="Trailer"
-                  isEditing={trailerEditing}
-                  onFinishEditing={() => setTrailerEditing(false)}
-                  onAddLine={trailerEditing ? addTrailerLine : undefined}
-                >
-                  <div className="space-y-1 text-center">
-                    <EditableTicketLineList
-                      lines={trailerLines}
-                      isEditing={trailerEditing}
-                      centered
-                      lineLabelPrefix="Trailer"
-                      emptyEditingHint="Sin líneas. Añade un mensaje de cierre."
-                      minLines={0}
-                      onChangeLine={patchTrailerLine}
-                      onRemoveLine={removeTrailerLine}
-                      onMoveLine={moveTrailerLine}
-                    />
-                  </div>
-                </EditableTicketZone>
-                {(hasTrailerContent || trailerEditing) && <TicketSeparator />}
+                <div ref={pieDeTicketSectionRef}>
+                  <EditableTicketZone
+                    label="Pie de ticket"
+                    isEditing={pieDeTicketEditing}
+                    onFinishEditing={() => setPieDeTicketEditing(false)}
+                    onAddLine={
+                      pieDeTicketEditing ? addPieDeTicketLine : undefined
+                    }
+                  >
+                    <div className="space-y-1 text-center">
+                      <EditableTicketLineList
+                        lines={pieDeTicketLines}
+                        isEditing={pieDeTicketEditing}
+                        centered
+                        lineLabelPrefix="Pie de ticket"
+                        emptyEditingHint="Sin líneas. Añade un mensaje de cierre."
+                        minLines={0}
+                        onChangeLine={patchPieDeTicketLine}
+                        onRemoveLine={removePieDeTicketLine}
+                        onMoveLine={movePieDeTicketLine}
+                      />
+                    </div>
+                  </EditableTicketZone>
+                </div>
+                {(hasPieDeTicketContent || pieDeTicketEditing) && (
+                  <TicketSeparator />
+                )}
               </>
             ) : null}
 
