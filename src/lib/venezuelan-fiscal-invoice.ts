@@ -15,6 +15,27 @@ export function fiscalTicketSeparator(): string {
   return "-".repeat(FISCAL_TICKET_WIDTH_CH);
 }
 
+export function buildEncabezadoLineas(input: {
+  rifEmpresa: string;
+  razonSocialEmpresa: string;
+  direccionLinea1: string;
+  direccionLinea2: string;
+  ubicacion: string;
+  logoTexto?: string;
+  tipoDocumento?: string;
+}): string[] {
+  return [
+    input.logoTexto ?? DEFAULT_LOGO_TEXTO,
+    "SENIAT",
+    input.rifEmpresa,
+    input.razonSocialEmpresa,
+    input.direccionLinea1,
+    input.direccionLinea2,
+    input.tipoDocumento ?? DEFAULT_TIPO_DOCUMENTO,
+    input.ubicacion,
+  ];
+}
+
 export type VenezuelanFiscalInvoiceItem = {
   descripcion: string;
   alicuota: string;
@@ -23,13 +44,8 @@ export type VenezuelanFiscalInvoiceItem = {
 
 export type VenezuelanFiscalInvoiceData = {
   encabezado: {
-    logoTexto: string;
-    rifEmpresa: string;
-    razonSocialEmpresa: string;
-    direccionLinea1: string;
-    direccionLinea2: string;
-    tipoDocumento: string;
-    ubicacion: string;
+    /** Líneas centradas del encabezado fiscal (logo, SENIAT, RIF, etc.). */
+    lineas: string[];
   };
   metadatos: {
     facturaNro: string;
@@ -259,18 +275,20 @@ export function buildDispositionInvoiceData(
   const itemPrice = roundMoney(input.printer.finalSalePrice ?? 0);
   const taxes = buildTaxesFromItemPrice(itemPrice);
 
+  const rifEmpresa = distributorCompany?.rif
+    ? formatRifForFiscalDisplay(distributorCompany.rif)
+    : "—";
+  const razonSocialEmpresa = distributorCompany?.businessName?.trim() || "—";
+
   return {
     encabezado: {
-      logoTexto: DEFAULT_LOGO_TEXTO,
-      rifEmpresa: distributorCompany?.rif
-        ? formatRifForFiscalDisplay(distributorCompany.rif)
-        : "—",
-      razonSocialEmpresa:
-        distributorCompany?.businessName?.trim() || "—",
-      direccionLinea1,
-      direccionLinea2,
-      tipoDocumento: DEFAULT_TIPO_DOCUMENTO,
-      ubicacion: resolveBranchLocation(distributorBranch),
+      lineas: buildEncabezadoLineas({
+        rifEmpresa,
+        razonSocialEmpresa,
+        direccionLinea1,
+        direccionLinea2,
+        ubicacion: resolveBranchLocation(distributorBranch),
+      }),
     },
     metadatos: {
       facturaNro: buildSimulatedInvoiceNumber(issuedAt, input.printer.id),
@@ -303,7 +321,7 @@ export function buildDispositionInvoiceData(
       totalGeneral: taxes.totalGeneral,
     },
     piePagina: {
-      mensajes: ["", ""],
+      mensajes: [],
       codigoImpresora: resolvePrinterCode(input.printer.fiscalSerial),
       serialFiscal: input.printer.fiscalSerial.trim() || "—",
     },

@@ -97,11 +97,11 @@ describe("venezuelan fiscal invoice", () => {
     });
 
     expect(data).not.toBeNull();
-    expect(data?.encabezado.logoTexto).toBe("AEG");
-    expect(data?.encabezado.rifEmpresa).toBe("J-504594369");
-    expect(data?.encabezado.razonSocialEmpresa).toBe("ALPHA ENGINEER GROUP");
-    expect(data?.encabezado.tipoDocumento).toBe("DOCUMENTO FISCAL");
-    expect(data?.encabezado.ubicacion).toBe("Los Teques, Miranda");
+    expect(data?.encabezado.lineas[0]).toBe("AEG");
+    expect(data?.encabezado.lineas[2]).toBe("J-504594369");
+    expect(data?.encabezado.lineas[3]).toBe("ALPHA ENGINEER GROUP");
+    expect(data?.encabezado.lineas[6]).toBe("DOCUMENTO FISCAL");
+    expect(data?.encabezado.lineas[7]).toBe("Los Teques, Miranda");
     expect(data?.metadatos.fecha).toBe("28/05/2026");
     expect(data?.metadatos.hora).toBe("12:18");
     expect(data?.cliente.rifCi).toBe("V-00000003");
