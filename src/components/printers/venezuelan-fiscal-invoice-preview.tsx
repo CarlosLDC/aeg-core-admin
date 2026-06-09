@@ -199,17 +199,6 @@ export function VenezuelanFiscalInvoicePreview({
     }));
   }
 
-  function patchMensaje(index: number, value: string) {
-    patch((current) => {
-      const mensajes = [...current.piePagina.mensajes];
-      mensajes[index] = value;
-      return {
-        ...current,
-        piePagina: { ...current.piePagina, mensajes },
-      };
-    });
-  }
-
   function patchPiePagina(
     field: "codigoImpresora" | "serialFiscal",
     value: string,
@@ -276,20 +265,6 @@ export function VenezuelanFiscalInvoicePreview({
             value={data.encabezado.tipoDocumento}
             onChange={(value) => patchEncabezado("tipoDocumento", value)}
             ariaLabel="Tipo de documento"
-            centered
-          />
-          <TicketText
-            editable={isEditable}
-            value={data.encabezado.rifEmpresa}
-            onChange={(value) => patchEncabezado("rifEmpresa", value)}
-            ariaLabel="RIF empresa repetido"
-            centered
-          />
-          <TicketText
-            editable={isEditable}
-            value={data.encabezado.razonSocialEmpresa}
-            onChange={(value) => patchEncabezado("razonSocialEmpresa", value)}
-            ariaLabel="Razón social empresa repetida"
             centered
           />
           <TicketText
@@ -505,25 +480,6 @@ export function VenezuelanFiscalInvoicePreview({
           onChange={(value) => patchPago("totalGeneral", value)}
           strong
         />
-
-        <TicketSeparator />
-
-        <div className="space-y-0.5 text-center">
-          <TicketText
-            editable={isEditable}
-            value={data.piePagina.mensajes[0] ?? ""}
-            onChange={(value) => patchMensaje(0, value)}
-            ariaLabel="Mensaje 1"
-            centered
-          />
-          <TicketText
-            editable={isEditable}
-            value={data.piePagina.mensajes[1] ?? ""}
-            onChange={(value) => patchMensaje(1, value)}
-            ariaLabel="Mensaje 2"
-            centered
-          />
-        </div>
 
         <TicketSeparator />
 
