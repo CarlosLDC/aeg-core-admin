@@ -416,15 +416,10 @@ export function ClientsManager() {
       const linkedHint =
         linkedParts.length > 0 ? ` (${linkedParts.join(", ")})` : "";
       const createdClient = await fetchClientByBranchId(result.branch.id);
-      const reviewHint = result.submittedForReview
-        ? " Los datos ingresados fueron enviados a revisión."
-        : "";
       toast.success(
-        result.submittedForReview
-          ? `Cliente registrado en "${result.companyLabel}" — ${result.branchLabel}.${reviewHint}`
-          : result.companyLinkedExisting || result.branchLinkedExisting
-            ? `Cliente registrado en "${result.companyLabel}" — ${result.branchLabel}${linkedHint}.`
-            : `Cliente "${result.companyLabel}" registrado en ${result.branchLabel}.`,
+        result.companyLinkedExisting || result.branchLinkedExisting
+          ? `Cliente registrado en "${result.companyLabel}" — ${result.branchLabel}${linkedHint}.`
+          : `Cliente "${result.companyLabel}" registrado en ${result.branchLabel}.`,
         {
           href: createdClient
             ? clientPath(createdClient.id)

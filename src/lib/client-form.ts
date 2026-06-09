@@ -1,5 +1,4 @@
 import type { ClientEditValues } from "@/components/clients/client-edit-dialog";
-import type { ClientOnboardingValues } from "@/lib/client-onboarding";
 import type { ClientModificationProposedData } from "@/types/client-modification-request";
 
 export function toClientModificationProposedData(
@@ -18,24 +17,4 @@ export function toClientModificationProposedData(
     email: values.email.trim() || null,
     distributorId: distributorId ?? null,
   };
-}
-
-export function toClientModificationProposedDataFromOnboarding(
-  values: ClientOnboardingValues,
-  distributorId: number,
-): ClientModificationProposedData {
-  return toClientModificationProposedData(
-    {
-      businessName: values.businessName,
-      rif: values.rif,
-      contributorType: values.contributorType,
-      city: values.city,
-      state: values.state,
-      address: values.address,
-      contactPersonName: values.contactPersonName,
-      phone: values.phone,
-      email: values.email,
-    },
-    distributorId,
-  );
 }
