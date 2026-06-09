@@ -275,7 +275,7 @@ export function PrinterDispositionView() {
       invoiceDraft ? (
         <form
           onSubmit={(e) => void handleSubmit(e)}
-          className="mx-auto flex w-full max-w-4xl flex-col items-center gap-6"
+          className="mx-auto flex w-full max-w-4xl flex-col items-stretch gap-6"
         >
           <p className="text-sm text-muted">
             Revisa la factura fiscal. Solo puedes editar el encabezado y el

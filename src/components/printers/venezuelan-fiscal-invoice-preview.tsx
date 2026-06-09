@@ -198,13 +198,11 @@ export function VenezuelanFiscalInvoicePreview({
   }
 
   return (
-    <div
-      className={cn("mx-auto w-[68ch] max-w-full", className)}
-      role="document"
-      aria-label="Vista previa de factura fiscal"
-    >
+    <div className={cn("flex w-full justify-center", className)}>
       <div
-        className="min-h-[520px] bg-[#faf9f6] px-2 py-4 text-[11px] leading-tight text-black shadow-inner"
+        className="min-h-[520px] max-w-full bg-[#faf9f6] px-2 py-4 text-[11px] leading-tight text-black shadow-inner"
+        role="document"
+        aria-label="Vista previa de factura fiscal"
         style={{
           fontFamily: FISCAL_TICKET_FONT,
           width: `${FISCAL_TICKET_WIDTH_CH}ch`,
