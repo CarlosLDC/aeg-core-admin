@@ -281,7 +281,7 @@ export function PrinterDispositionView() {
     <ResourceViewShell
       backHref={backHref}
       backLabel="Volver a la impresora"
-      title="Factura virtual"
+      title="Enajenación - Revisión de factura virtual"
       subtitle={
         printer
           ? `Serial fiscal ${printer.fiscalSerial}`
