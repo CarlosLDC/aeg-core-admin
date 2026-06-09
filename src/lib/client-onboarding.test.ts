@@ -167,7 +167,7 @@ describe("createClientOnboarding", () => {
     expect(result.branchLinkedExisting).toBe(false);
   });
 
-  it("distribuidor: intenta crear sucursal nueva y reutiliza solo si ya existe en la ubicación", async () => {
+  it("distribuidor: bloquea re-alta si la sucursal existe sin vínculo de cliente", async () => {
     vi.mocked(resolveCompanyIdForRif).mockResolvedValue({
       companyId: 77,
       companyCreated: false,
@@ -184,49 +184,36 @@ describe("createClientOnboarding", () => {
       contactPersonName: "Viejo contacto",
     });
     vi.mocked(fetchClientByBranchId).mockResolvedValue(null);
-    const result = await createClientOnboarding({
-      values: {
-        rif: "J315694205",
-        businessName: "ACME",
-        contributorType: "ordinario",
-        linkedCompanyId: null,
-        city: "Valencia",
-        state: "Carabobo",
-        address: "",
-        contactPersonName: "Ana López",
-        phone: "",
-        email: "",
-      },
-      companies: [
-        {
-          id: 77,
-          businessName: "ACME vieja",
+    await expect(
+      createClientOnboarding({
+        values: {
           rif: "J315694205",
+          businessName: "ACME",
           contributorType: "ordinario",
-          createdAt: "",
+          linkedCompanyId: null,
+          city: "Valencia",
+          state: "Carabobo",
+          address: "",
+          contactPersonName: "Ana López",
+          phone: "",
+          email: "",
         },
-      ],
-      roles: distributorClientRoles(5),
-    });
+        companies: [
+          {
+            id: 77,
+            businessName: "ACME vieja",
+            rif: "J315694205",
+            contributorType: "ordinario",
+            createdAt: "",
+          },
+        ],
+        roles: distributorClientRoles(5),
+      }),
+    ).rejects.toThrow(/no es posible darlo de alta de nuevo/i);
 
-    expect(createBranch).toHaveBeenCalledWith({
-      companyId: 77,
-      city: "Valencia",
-      state: "Carabobo",
-      address: undefined,
-      contactPersonName: "Ana López",
-      phone: undefined,
-      email: undefined,
-    });
+    expect(createBranch).toHaveBeenCalled();
     expect(lookupBranchByCompanyLocation).toHaveBeenCalled();
-    expect(updateCompany).not.toHaveBeenCalled();
-    expect(updateBranch).not.toHaveBeenCalled();
-    expect(createClient).toHaveBeenCalledWith({
-      branchId: 322,
-      distributorId: 5,
-    });
-    expect(result.branch.id).toBe(322);
-    expect(result.branchLinkedExisting).toBe(true);
+    expect(createClient).not.toHaveBeenCalled();
   });
 
   it("admin puede sincronizar catálogo al reutilizar sucursal", async () => {

@@ -13,6 +13,12 @@ import type { Role } from "@/types/user";
 export const DISTRIBUTOR_SELF_CLIENT_MESSAGE =
   "No puedes registrar ni usar tu propia distribuidora como cliente.";
 
+/** Sucursal en catálogo sin vínculo activo (p. ej. cliente eliminado por el admin). */
+export const CLIENT_RE_REGISTRATION_FORBIDDEN_MESSAGE =
+  "Ya existe una sucursal registrada para esta empresa en esta ubicación. " +
+  "Si el cliente fue eliminado, no es posible darlo de alta de nuevo. " +
+  "Contacte al administrador.";
+
 export function resolveDistributorStaffBranchId(
   distributors: DistributorResponse[],
   distributorId: number | null,

@@ -11,7 +11,8 @@ import {
   lookupBranchByCompanyLocation,
   updateBranch,
 } from "@/lib/branches-api";
-import { fetchClients } from "@/lib/clients-api";
+import { fetchClientByBranchId, fetchClients } from "@/lib/clients-api";
+import { CLIENT_RE_REGISTRATION_FORBIDDEN_MESSAGE } from "@/lib/distributor-scope";
 import { ApiError } from "@/types/auth";
 import { updateCompany } from "@/lib/companies-api";
 import { resolveCompanyIdForRif } from "@/lib/company-rif";
@@ -149,6 +150,16 @@ async function createOnboardingBranch(
   });
 }
 
+/** Impide re-vincular una sucursal huérfana tras eliminación aprobada del cliente. */
+async function assertDistributorMayReuseBranch(
+  branchId: number,
+): Promise<void> {
+  const linked = await fetchClientByBranchId(branchId);
+  if (!linked) {
+    throw new Error(CLIENT_RE_REGISTRATION_FORBIDDEN_MESSAGE);
+  }
+}
+
 /**
  * Alta de cliente (distribuidor o wizard admin con roles explícitos):
  *
@@ -238,6 +249,7 @@ export async function createClientOnboarding(
           values.state,
         );
         if (existing) {
+          await assertDistributorMayReuseBranch(existing.id);
           created = existing;
           branchLinkedExisting = true;
         } else {
@@ -302,6 +314,10 @@ export async function createClientOnboarding(
       values,
       { syncCompany: companyLinkedExisting },
     );
+  }
+
+  if (distributorOnly && branchLinkedExisting) {
+    await assertDistributorMayReuseBranch(created.id);
   }
 
   try {
