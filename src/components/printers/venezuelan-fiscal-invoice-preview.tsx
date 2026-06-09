@@ -211,7 +211,7 @@ export function VenezuelanFiscalInvoicePreview({
 
   return (
     <div
-      className={cn("ml-6 w-[68ch] max-w-full", className)}
+      className={cn("mx-auto w-[68ch] max-w-full", className)}
       role="document"
       aria-label="Vista previa de factura fiscal"
     >

@@ -275,7 +275,7 @@ export function PrinterDispositionView() {
       invoiceDraft ? (
         <form
           onSubmit={(e) => void handleSubmit(e)}
-          className="flex max-w-4xl flex-col items-start gap-6"
+          className="mx-auto flex w-full max-w-4xl flex-col items-center gap-6"
         >
           <p className="text-sm text-muted">
             Revisa y edita la factura fiscal antes de confirmar la enajenación.
