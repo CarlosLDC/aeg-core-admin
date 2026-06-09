@@ -9,13 +9,47 @@ import {
   createBranch,
   fetchBranchById,
   lookupBranchByCompanyLocation,
+  updateBranch,
 } from "@/lib/branches-api";
 import { fetchClients } from "@/lib/clients-api";
+import { updateCompany } from "@/lib/companies-api";
 import { resolveCompanyIdForRif } from "@/lib/company-rif";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
-import type { BranchResponse, BranchWithRoles } from "@/types/branch";
+import type { BranchRequest, BranchResponse, BranchWithRoles } from "@/types/branch";
 import type { CompanyResponse, ContributorType } from "@/types/company";
+
+function toOnboardingBranchRequest(
+  companyId: number,
+  values: ClientOnboardingValues,
+): BranchRequest {
+  return {
+    companyId,
+    city: values.city.trim(),
+    state: normalizeStateName(values.state),
+    address: values.address.trim() || undefined,
+    contactPersonName: values.contactPersonName.trim() || undefined,
+    phone: values.phone.trim() || undefined,
+    email: values.email.trim() || undefined,
+  };
+}
+
+/** Actualiza empresa/sucursal reutilizadas con los datos del formulario de alta. */
+async function syncExistingCatalogFromOnboarding(
+  companyId: number,
+  branchId: number,
+  values: ClientOnboardingValues,
+  options: { syncCompany: boolean },
+): Promise<BranchResponse> {
+  if (options.syncCompany) {
+    await updateCompany(companyId, {
+      rif: values.rif.trim(),
+      businessName: values.businessName.trim(),
+      contributorType: values.contributorType,
+    });
+  }
+  return updateBranch(branchId, toOnboardingBranchRequest(companyId, values));
+}
 
 export type ClientOnboardingValues = {
   rif: string;
@@ -110,8 +144,13 @@ export async function createClientOnboarding(
     resumeBranchId > 0 &&
     isDistributorClientOnlyRoles(roles)
   ) {
+    const branch = await syncExistingCatalogFromOnboarding(
+      (await fetchBranchById(resumeBranchId)).companyId,
+      resumeBranchId,
+      values,
+      { syncCompany: true },
+    );
     await linkDistributorClientWithRetry(resumeBranchId, roles);
-    const branch = await fetchBranchById(resumeBranchId);
     const roleIds = await fetchBranchRoleIds(resumeBranchId);
     const companyList = companies;
     return {
@@ -201,6 +240,15 @@ export async function createClientOnboarding(
     }
     throw new Error(
       "El servidor no devolvió la sucursal creada. Revisa el listado o intenta de nuevo.",
+    );
+  }
+
+  if (companyLinkedExisting || branchLinkedExisting) {
+    created = await syncExistingCatalogFromOnboarding(
+      companyId,
+      created.id,
+      values,
+      { syncCompany: companyLinkedExisting },
     );
   }
 

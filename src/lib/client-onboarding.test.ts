@@ -13,6 +13,11 @@ vi.mock("@/lib/branches-api", () => ({
   createBranch: vi.fn(),
   lookupBranchByCompanyLocation: vi.fn(),
   fetchBranchById: vi.fn(),
+  updateBranch: vi.fn(),
+}));
+
+vi.mock("@/lib/companies-api", () => ({
+  updateCompany: vi.fn(),
 }));
 
 vi.mock("@/lib/clients-api", () => ({
@@ -43,7 +48,9 @@ import {
   createBranch,
   fetchBranchById,
   lookupBranchByCompanyLocation,
+  updateBranch,
 } from "@/lib/branches-api";
+import { updateCompany } from "@/lib/companies-api";
 import { syncBranchRoles } from "@/lib/branch-roles";
 import {
   createClient,
@@ -98,6 +105,24 @@ describe("createClientOnboarding", () => {
     vi.mocked(createClient).mockResolvedValue(
       mockClient({ id: 1, branchId: 20, distributorId: 5 }),
     );
+    vi.mocked(updateBranch).mockImplementation(async (id, body) => ({
+      ...branchRow,
+      id,
+      companyId: body.companyId,
+      city: body.city,
+      state: body.state,
+      address: body.address ?? "",
+      phone: body.phone ?? "",
+      email: body.email ?? "",
+      contactPersonName: body.contactPersonName,
+    }));
+    vi.mocked(updateCompany).mockResolvedValue({
+      id: 10,
+      businessName: "ACME",
+      rif: "J123456789",
+      contributorType: "ordinario",
+      createdAt: "",
+    });
   });
 
   it("empresa nueva: crea empresa, sucursal y cliente del distribuidor", async () => {
@@ -171,6 +196,20 @@ describe("createClientOnboarding", () => {
     });
 
     expect(createBranch).not.toHaveBeenCalled();
+    expect(updateCompany).toHaveBeenCalledWith(77, {
+      rif: "J315694205",
+      businessName: "ACME",
+      contributorType: "ordinario",
+    });
+    expect(updateBranch).toHaveBeenCalledWith(322, {
+      companyId: 77,
+      city: "Valencia",
+      state: "Carabobo",
+      address: undefined,
+      contactPersonName: "Ana López",
+      phone: undefined,
+      email: undefined,
+    });
     expect(createClient).toHaveBeenCalledWith({
       branchId: 322,
       distributorId: 5,
@@ -209,6 +248,20 @@ describe("createClientOnboarding", () => {
 
     expect(resolveCompanyIdForRif).not.toHaveBeenCalled();
     expect(createBranch).not.toHaveBeenCalled();
+    expect(updateCompany).toHaveBeenCalledWith(77, {
+      rif: "J315694205",
+      businessName: "ACME",
+      contributorType: "ordinario",
+    });
+    expect(updateBranch).toHaveBeenCalledWith(322, {
+      companyId: 77,
+      city: "Valencia",
+      state: "Carabobo",
+      address: undefined,
+      contactPersonName: "Ana López",
+      phone: undefined,
+      email: undefined,
+    });
     expect(createClient).toHaveBeenCalledWith({
       branchId: 322,
       distributorId: 5,
