@@ -399,26 +399,18 @@ export function buildDispositionInvoiceData(
 
   const clientBranch = input.branches.find((b) => b.id === client.branchId);
   const issuedAt = input.issuedAt ?? new Date();
-  const distributor = input.distributors?.find(
-    (row) => row.id === input.printer.distributorId,
-  );
-  const distributorBranch = distributor
-    ? input.branches.find((b) => b.id === distributor.branchId)
-    : undefined;
-  const distributorCompany = resolveBranchCompany(
-    distributorBranch,
-    input.companies,
-  );
   const [direccionLinea1, direccionLinea2] = splitAddressLines(
-    resolveCompanyAddress(distributorBranch),
+    resolveCompanyAddress(clientBranch),
   );
   const itemPrice = roundMoney(input.printer.finalSalePrice ?? 0);
   const taxes = buildTaxesFromItemPrice(itemPrice);
 
-  const rifEmpresa = distributorCompany?.rif
-    ? formatRifForFiscalDisplay(distributorCompany.rif)
-    : "-";
-  const razonSocialEmpresa = distributorCompany?.businessName?.trim() || "-";
+  const rifEmpresa = resolveClientRif(client, clientBranch, input.companies);
+  const razonSocialEmpresa = resolveBusinessName(
+    client,
+    clientBranch,
+    input.companies,
+  );
 
   return normalizeFiscalInvoiceData({
     encoding: FISCAL_TICKET_CHARSET,
@@ -428,7 +420,7 @@ export function buildDispositionInvoiceData(
         razonSocialEmpresa,
         direccionLinea1,
         direccionLinea2,
-        ubicacion: resolveBranchLocation(distributorBranch),
+        ubicacion: resolveBranchLocation(clientBranch),
       }),
     },
     metadatos: {

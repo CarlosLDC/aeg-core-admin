@@ -99,10 +99,12 @@ describe("venezuelan fiscal invoice", () => {
     expect(data).not.toBeNull();
     expect(data?.encoding).toBe("iso-8859-2");
     expect(data?.encabezado.lineas[0]).toBe("SENIAT");
-    expect(data?.encabezado.lineas[1]).toBe("J-504594369");
-    expect(data?.encabezado.lineas[2]).toBe("ALPHA ENGINEER GROUP");
+    expect(data?.encabezado.lineas[1]).toBe("V-00000003");
+    expect(data?.encabezado.lineas[2]).toBe("Contado");
+    expect(data?.encabezado.lineas[3]).toBe("Av. Principal 123");
+    expect(data?.encabezado.lineas[4]).toBe("Centro");
     expect(data?.encabezado.lineas[5]).toBe("DOCUMENTO FISCAL");
-    expect(data?.encabezado.lineas[6]).toBe("Los Teques, Miranda");
+    expect(data?.encabezado.lineas[6]).toBe("Caracas, Distrito Capital");
     expect(data?.metadatos.fecha).toBe("28/05/2026");
     expect(data?.metadatos.hora).toBe("12:18");
     expect(data?.cliente.rifCi).toBe("V-00000003");
@@ -127,6 +129,9 @@ describe("venezuelan fiscal invoice", () => {
 
     expect(data?.cliente.rifCi).toBe("J-315694205");
     expect(data?.cliente.razonSocial).toBe("Cliente Demo C.A.");
+    expect(data?.encabezado.lineas[1]).toBe("J-315694205");
+    expect(data?.encabezado.lineas[2]).toBe("Cliente Demo C.A.");
+    expect(data?.encabezado.lineas[6]).toBe("Caracas, Distrito Capital");
   });
 
   it("returns null for unknown client", () => {
