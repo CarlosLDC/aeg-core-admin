@@ -14,7 +14,6 @@ import type { PrinterResponse } from "@/types/printer";
 
 export const FISCAL_TICKET_WIDTH_CH = 68;
 
-const DEFAULT_LOGO_TEXTO = "AEG";
 const DEFAULT_TIPO_DOCUMENTO = "DOCUMENTO FISCAL";
 const IVA_GENERAL_PORCENTAJE = 16;
 const ITEM_ALICUOTA = "G";
@@ -29,16 +28,9 @@ export function buildEncabezadoLineas(input: {
   direccionLinea1: string;
   direccionLinea2: string;
   ubicacion: string;
-  logoTexto?: string;
   tipoDocumento?: string;
 }): string[] {
-  const logoLine =
-    input.logoTexto?.trim() ||
-    input.razonSocialEmpresa.trim() ||
-    DEFAULT_LOGO_TEXTO;
-
   return [
-    logoLine,
     "SENIAT",
     input.rifEmpresa,
     input.razonSocialEmpresa,
