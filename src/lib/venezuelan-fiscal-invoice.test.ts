@@ -97,6 +97,7 @@ describe("venezuelan fiscal invoice", () => {
     });
 
     expect(data).not.toBeNull();
+    expect(data?.encoding).toBe("iso-8859-2");
     expect(data?.encabezado.lineas[0]).toBe("ALPHA ENGINEER GROUP");
     expect(data?.encabezado.lineas[2]).toBe("J-504594369");
     expect(data?.encabezado.lineas[3]).toBe("ALPHA ENGINEER GROUP");

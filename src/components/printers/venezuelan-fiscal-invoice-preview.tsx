@@ -12,9 +12,11 @@ import {
   RotateCcw,
 } from "lucide-react";
 import {
+  FISCAL_TICKET_CHARSET,
   FISCAL_TICKET_WIDTH_CH,
   fiscalTicketSeparator,
   formatVenezuelanMoneyAmount,
+  normalizeFiscalInvoiceData,
   parseFiscalMoneyInput,
   type VenezuelanFiscalInvoiceData,
 } from "@/lib/venezuelan-fiscal-invoice";
@@ -460,7 +462,7 @@ export function VenezuelanFiscalInvoicePreview({
     updater: (current: VenezuelanFiscalInvoiceData) => VenezuelanFiscalInvoiceData,
   ) {
     if (!onChange) return;
-    onChange(updater(data));
+    onChange(normalizeFiscalInvoiceData(updater(data)));
   }
 
   function patchHeaderLine(index: number, value: string) {
@@ -573,6 +575,8 @@ export function VenezuelanFiscalInvoicePreview({
           className="min-h-[520px] max-w-full shrink-0 bg-[#faf9f6] px-2 py-4 text-[11px] leading-tight text-black shadow-inner"
           role="document"
           aria-label="Vista previa de factura fiscal"
+          data-encoding={FISCAL_TICKET_CHARSET}
+          lang="es"
           style={{
             fontFamily: FISCAL_TICKET_FONT,
             width: `${FISCAL_TICKET_WIDTH_CH}ch`,

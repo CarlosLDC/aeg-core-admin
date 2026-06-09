@@ -1,4 +1,12 @@
+import {
+  FISCAL_TICKET_CHARSET,
+  encodeLatin2,
+  normalizeFiscalTicketText,
+} from "@/lib/fiscal-ticket-latin2";
 import { normalizeRif } from "@/lib/seniat-extract";
+
+export { FISCAL_TICKET_CHARSET } from "@/lib/fiscal-ticket-latin2";
+export { encodeLatin2, normalizeFiscalTicketText } from "@/lib/fiscal-ticket-latin2";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -48,6 +56,7 @@ export type VenezuelanFiscalInvoiceItem = {
 };
 
 export type VenezuelanFiscalInvoiceData = {
+  encoding: typeof FISCAL_TICKET_CHARSET;
   encabezado: {
     /** Líneas centradas del encabezado fiscal (logo, SENIAT, RIF, etc.). */
     lineas: string[];
@@ -86,7 +95,7 @@ export type VenezuelanFiscalInvoiceData = {
 
 export function formatRifForFiscalDisplay(raw: string): string {
   const normalized = normalizeRif(raw);
-  if (!normalized) return "—";
+  if (!normalized) return "-";
   const letter = normalized.charAt(0);
   const digits = normalized.slice(1);
   if (!digits) return normalized;
@@ -94,10 +103,12 @@ export function formatRifForFiscalDisplay(raw: string): string {
 }
 
 export function formatVenezuelanMoneyAmount(amount: number): string {
-  return amount.toLocaleString("es-VE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  return normalizeFiscalTicketText(
+    amount.toLocaleString("es-VE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }),
+  );
 }
 
 function resolveClientRif(
@@ -107,9 +118,9 @@ function resolveClientRif(
 ): string {
   const embedded = client.companyRif?.trim();
   if (embedded) return formatRifForFiscalDisplay(embedded);
-  if (!branch) return "—";
+  if (!branch) return "-";
   const company = companies.find((c) => c.id === branch.companyId);
-  if (!company?.rif?.trim()) return "—";
+  if (!company?.rif?.trim()) return "-";
   return formatRifForFiscalDisplay(company.rif);
 }
 
@@ -120,9 +131,9 @@ function resolveBusinessName(
 ): string {
   const embedded = client.companyBusinessName?.trim();
   if (embedded) return embedded;
-  if (!branch) return "—";
+  if (!branch) return "-";
   const company = companies.find((c) => c.id === branch.companyId);
-  return company?.businessName?.trim() || "—";
+  return company?.businessName?.trim() || "-";
 }
 
 function resolveBranchCompany(
@@ -134,11 +145,11 @@ function resolveBranchCompany(
 }
 
 function resolveBranchLocation(branch: BranchResponse | undefined): string {
-  if (!branch) return "—";
+  if (!branch) return "-";
   const city = branch.city?.trim();
   const state = branch.state?.trim();
   if (city && state) return `${city}, ${state}`;
-  return city || state || "—";
+  return city || state || "-";
 }
 
 export function splitAddressLines(address: string): [string, string] {
@@ -158,7 +169,7 @@ export function splitAddressLines(address: string): [string, string] {
 }
 
 function resolveCompanyAddress(branch: BranchResponse | undefined): string {
-  if (!branch) return "—";
+  if (!branch) return "-";
   const address = branch.address?.trim();
   if (address) return address;
   return resolveBranchLocation(branch);
@@ -239,6 +250,138 @@ export function syncInvoiceAmounts(
   };
 }
 
+function normalizeStringFields<T extends Record<string, unknown>>(value: T): T {
+  const next: Record<string, unknown> = {};
+  for (const [key, field] of Object.entries(value)) {
+    if (typeof field === "string") {
+      next[key] = normalizeFiscalTicketText(field);
+    } else if (Array.isArray(field)) {
+      next[key] = field.map((entry) =>
+        typeof entry === "string" ? normalizeFiscalTicketText(entry) : entry,
+      );
+    } else {
+      next[key] = field;
+    }
+  }
+  return next as T;
+}
+
+export function normalizeFiscalInvoiceData(
+  data: VenezuelanFiscalInvoiceData,
+): VenezuelanFiscalInvoiceData {
+  return {
+    ...data,
+    encoding: FISCAL_TICKET_CHARSET,
+    encabezado: normalizeStringFields(data.encabezado),
+    metadatos: normalizeStringFields(data.metadatos),
+    cliente: normalizeStringFields(data.cliente),
+    items: data.items.map((item) => normalizeStringFields(item)),
+    pagos: normalizeStringFields(data.pagos),
+    piePagina: normalizeStringFields(data.piePagina),
+  };
+}
+
+function padTicketLine(left: string, right: string, width = FISCAL_TICKET_WIDTH_CH): string {
+  const available = Math.max(1, width - right.length);
+  const clippedLeft =
+    left.length > available ? left.slice(0, available) : left;
+  return `${clippedLeft}${" ".repeat(Math.max(1, width - clippedLeft.length - right.length))}${right}`;
+}
+
+/** Serializa la factura como texto plano de ticket fiscal (68 columnas). */
+export function serializeFiscalInvoiceTicketText(
+  data: VenezuelanFiscalInvoiceData,
+): string {
+  const normalized = normalizeFiscalInvoiceData(data);
+  const item = normalized.items[0];
+  const lines: string[] = [];
+
+  for (const line of normalized.encabezado.lineas) {
+    if (line.trim()) lines.push(line);
+  }
+
+  lines.push(
+    padTicketLine("FACTURA #:", normalized.metadatos.facturaNro),
+    padTicketLine(
+      `FECHA: ${normalized.metadatos.fecha}`,
+      `HORA: ${normalized.metadatos.hora}`,
+    ),
+    fiscalTicketSeparator(),
+    "DATOS DEL CLIENTE",
+    `RIF/CI: ${normalized.cliente.rifCi}`,
+    `RAZON SOCIAL: ${normalized.cliente.razonSocial}`,
+    normalized.cliente.condicion,
+    fiscalTicketSeparator(),
+  );
+
+  if (item) {
+    const amount = `Bs ${formatVenezuelanMoneyAmount(item.precio)}`;
+    lines.push(
+      padTicketLine(`${item.descripcion}         (${item.alicuota})`, amount),
+    );
+  }
+
+  lines.push(
+    fiscalTicketSeparator(),
+    padTicketLine(
+      `BI ${item?.alicuota ?? "G"} (${normalized.impuestos.alicuotaGeneralPorcentaje.toFixed(2)}%)`,
+      `Bs ${formatVenezuelanMoneyAmount(normalized.impuestos.baseImponibleG)}`,
+    ),
+    padTicketLine(
+      `IVA ${item?.alicuota ?? "G"} (${normalized.impuestos.alicuotaGeneralPorcentaje.toFixed(2)}%)`,
+      `Bs ${formatVenezuelanMoneyAmount(normalized.impuestos.ivaG)}`,
+    ),
+    fiscalTicketSeparator(),
+    padTicketLine(
+      "SUBTTL",
+      `Bs ${formatVenezuelanMoneyAmount(normalized.impuestos.subtotal)}`,
+    ),
+    padTicketLine(
+      "IVA",
+      `Bs ${formatVenezuelanMoneyAmount(normalized.impuestos.ivaTotal)}`,
+    ),
+    fiscalTicketSeparator(),
+    "FORMA DE PAGO",
+    padTicketLine(
+      normalized.pagos.formaPago,
+      `Bs ${formatVenezuelanMoneyAmount(normalized.pagos.montoPagado)}`,
+    ),
+    padTicketLine(
+      "CAMBIO",
+      `Bs ${formatVenezuelanMoneyAmount(normalized.pagos.cambio)}`,
+    ),
+    fiscalTicketSeparator(),
+    padTicketLine(
+      "TOTAL",
+      `Bs ${formatVenezuelanMoneyAmount(normalized.pagos.totalGeneral)}`,
+    ),
+    fiscalTicketSeparator(),
+  );
+
+  for (const message of normalized.piePagina.mensajes) {
+    if (message.trim()) lines.push(message);
+  }
+
+  if (normalized.piePagina.mensajes.some((message) => message.trim())) {
+    lines.push(fiscalTicketSeparator());
+  }
+
+  lines.push(
+    padTicketLine(
+      normalized.piePagina.codigoImpresora,
+      normalized.piePagina.serialFiscal,
+    ),
+  );
+
+  return lines.join("\n");
+}
+
+export function encodeFiscalInvoiceLatin2(
+  data: VenezuelanFiscalInvoiceData,
+): Uint8Array {
+  return encodeLatin2(serializeFiscalInvoiceTicketText(data));
+}
+
 export function parseFiscalMoneyInput(value: string): number {
   const normalized = value.trim().replace(/\./g, "").replace(",", ".");
   const parsed = Number(normalized);
@@ -282,10 +425,11 @@ export function buildDispositionInvoiceData(
 
   const rifEmpresa = distributorCompany?.rif
     ? formatRifForFiscalDisplay(distributorCompany.rif)
-    : "—";
-  const razonSocialEmpresa = distributorCompany?.businessName?.trim() || "—";
+    : "-";
+  const razonSocialEmpresa = distributorCompany?.businessName?.trim() || "-";
 
-  return {
+  return normalizeFiscalInvoiceData({
+    encoding: FISCAL_TICKET_CHARSET,
     encabezado: {
       lineas: buildEncabezadoLineas({
         rifEmpresa,
@@ -328,7 +472,7 @@ export function buildDispositionInvoiceData(
     piePagina: {
       mensajes: [],
       codigoImpresora: resolvePrinterCode(input.printer.fiscalSerial),
-      serialFiscal: input.printer.fiscalSerial.trim() || "—",
+      serialFiscal: input.printer.fiscalSerial.trim() || "-",
     },
-  };
+  });
 }
