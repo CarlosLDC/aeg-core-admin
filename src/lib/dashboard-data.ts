@@ -42,7 +42,7 @@ const STAT_HREFS: Record<string, string> = {
   Empresas: "/branches",
   Impresoras: "/printers",
   Empleados: "/employees",
-  Clientes: "/branches",
+  Clientes: "/clients",
   Distribuidores: "/branches",
   "Centros de servicio": "/branches",
 };
