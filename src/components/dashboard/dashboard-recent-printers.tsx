@@ -28,7 +28,7 @@ export function DashboardRecentPrinters({
           </h2>
           <p className="text-sm text-muted">
             {isDistributor
-              ? "Asignadas y enajenadas en tu cartera"
+              ? "Asignadas y enajenadas en tu inventario"
               : "Últimos equipos registrados"}
           </p>
         </div>

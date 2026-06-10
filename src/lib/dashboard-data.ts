@@ -93,7 +93,7 @@ export type DashboardSnapshot = {
   printers: PrinterResponse[];
   printerStatusCounts: PrinterStatusCount[];
   monthlyPrinterRegistrations: MonthlyCount[];
-  /** Solo distribuidor: altas mensuales desglosadas por estatus de cartera. */
+  /** Solo distribuidor: altas mensuales desglosadas por estatus de inventario. */
   monthlyStatusMix?: MonthlyStatusMix[];
   /** Solo distribuidor: enajenaciones por mes. */
   monthlySales?: MonthlySalesBucket[];

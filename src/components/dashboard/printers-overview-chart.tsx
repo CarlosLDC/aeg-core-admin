@@ -389,7 +389,7 @@ function MonthlyStatusMixChart({
         preserveAspectRatio="xMidYMid meet"
         onMouseLeave={() => onHover(null)}
         role="img"
-        aria-label="Altas mensuales por estatus de cartera"
+        aria-label="Altas mensuales por estatus de inventario"
       >
         {[0, 0.5, 1].map((t, i) => {
           const y = padY + chartH * (1 - t);
@@ -584,7 +584,7 @@ export function PrintersOverviewChart({
           <h2 className="text-lg font-semibold text-card-foreground">Impresoras</h2>
           <p className="mt-0.5 text-sm text-muted">
             {isDistributor
-              ? "Cartera asignada y equipos enajenados a clientes"
+              ? "Inventario asignado y equipos enajenados a clientes"
               : "Estatus de la flota y altas mensuales"}
           </p>
         </div>

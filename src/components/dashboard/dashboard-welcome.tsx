@@ -26,7 +26,7 @@ function greetingForHour(): string {
 
 const ROLE_CONTEXT: Record<Role, string> = {
   ADMIN: "Vista global del catálogo operativo y la flota fiscal.",
-  DISTRIBUTOR: "Tu cartera de impresoras asignadas y enajenadas a clientes.",
+  DISTRIBUTOR: "Tu inventario de impresoras asignadas y enajenadas a clientes.",
   TECHNICIAN: "Equipos en campo, precintos y personal de tu ámbito.",
   SERVICE_CENTER: "Empresas y operaciones de tu centro.",
 };
@@ -54,8 +54,8 @@ export function DashboardWelcome({
   const printerLine =
     role === "DISTRIBUTOR"
       ? snapshot.printers.length > 0
-        ? `${snapshot.printers.length} en tu cartera · ${assignedCount} asignada${assignedCount === 1 ? "" : "s"} · ${disposedCount} enajenada${disposedCount === 1 ? "" : "s"} a clientes.`
-        : "Aún no hay impresoras en tu cartera."
+        ? `${snapshot.printers.length} en tu inventario · ${assignedCount} asignada${assignedCount === 1 ? "" : "s"} · ${disposedCount} enajenada${disposedCount === 1 ? "" : "s"} a clientes.`
+        : "Aún no hay impresoras en tu inventario."
       : snapshot.printers.length > 0
         ? `${snapshot.printers.length} impresora${snapshot.printers.length === 1 ? "" : "s"} en tu ámbito · ${activePrinters} operativa${activePrinters === 1 ? "" : "s"}.`
         : role === "SERVICE_CENTER"
