@@ -23,10 +23,7 @@ import {
   DISTRIBUTOR_SELF_CLIENT_MESSAGE,
   isDistributorSelfClient,
 } from "@/lib/distributor-scope";
-import {
-  printerDispositionReviewTitle,
-  printerToDispositionRequest,
-} from "@/lib/printer-form";
+import { printerToDispositionRequest } from "@/lib/printer-form";
 import {
   fetchPrinterById,
   getPrintersErrorMessage,
@@ -317,11 +314,6 @@ export function PrinterDispositionView({
     <ResourceViewShell
       backHref={backHref}
       backLabel="Volver a impresoras"
-      title={
-        printer
-          ? printerDispositionReviewTitle(printer.fiscalSerial)
-          : "Enajenar impresora"
-      }
       loading={loading || catalogLoading}
       error={
         error ??

@@ -7,7 +7,7 @@ import { TruncatedText } from "@/components/ui/truncated-text";
 type ResourceViewShellProps = {
   backHref: string;
   backLabel: string;
-  title: string;
+  title?: string;
   subtitle?: string;
   loading?: boolean;
   error?: string | null;
@@ -35,29 +35,39 @@ export function ResourceViewShell({
         {backLabel}
       </Link>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <h2 className="text-xl font-semibold text-card-foreground">
-            <TruncatedText
-              maxClassName="max-w-full"
-              className="text-xl font-semibold text-card-foreground"
-            >
-              {title}
-            </TruncatedText>
-          </h2>
-          {subtitle ? (
-            <div className="mt-1 text-sm text-muted">
-              <TruncatedText
-                maxClassName="max-w-full"
-                className="text-sm text-muted"
-              >
-                {subtitle}
-              </TruncatedText>
+      {title || subtitle || actions ? (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          {title || subtitle ? (
+            <div className="min-w-0 flex-1">
+              {title ? (
+                <h2 className="text-xl font-semibold text-card-foreground">
+                  <TruncatedText
+                    maxClassName="max-w-full"
+                    className="text-xl font-semibold text-card-foreground"
+                  >
+                    {title}
+                  </TruncatedText>
+                </h2>
+              ) : null}
+              {subtitle ? (
+                <div
+                  className={
+                    title ? "mt-1 text-sm text-muted" : "text-sm text-muted"
+                  }
+                >
+                  <TruncatedText
+                    maxClassName="max-w-full"
+                    className="text-sm text-muted"
+                  >
+                    {subtitle}
+                  </TruncatedText>
+                </div>
+              ) : null}
             </div>
           ) : null}
+          {actions ? <div className="shrink-0">{actions}</div> : null}
         </div>
-        {actions ? <div className="shrink-0">{actions}</div> : null}
-      </div>
+      ) : null}
 
       {loading ? (
         <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted">
