@@ -5,6 +5,7 @@ import {
   branchesStatHint,
   companiesStatHint,
   countPrintersByStatus,
+  distributorSalesByMonth,
   uniquePlaces,
 } from "./dashboard-data";
 import type { PrinterResponse } from "@/types/printer";
@@ -72,6 +73,32 @@ describe("branchesStatHint", () => {
 describe("uniquePlaces", () => {
   it("counts distinct states and cities", () => {
     expect(uniquePlaces(branches)).toBe("2 estados · 2 ciudades");
+  });
+});
+
+describe("distributorSalesByMonth", () => {
+  it("counts enajenadas by installation date within the window", () => {
+    const now = new Date();
+    const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const printers = [
+      {
+        status: "enajenada",
+        installationDate: now.toISOString(),
+        createdAt: "2020-01-01",
+        finalSalePrice: 100,
+      },
+      {
+        status: "asignada",
+        installationDate: now.toISOString(),
+        createdAt: now.toISOString(),
+        finalSalePrice: 50,
+      },
+    ] as PrinterResponse[];
+
+    const rows = distributorSalesByMonth(printers, 12);
+    const current = rows.find((row) => row.key === key);
+    expect(current?.count).toBe(1);
+    expect(current?.revenue).toBe(100);
   });
 });
 

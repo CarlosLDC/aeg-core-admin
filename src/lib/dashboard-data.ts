@@ -78,6 +78,14 @@ export type MonthlyStatusMix = {
   enajenada: number;
 };
 
+export type MonthlySalesBucket = {
+  key: string;
+  label: string;
+  shortLabel: string;
+  count: number;
+  revenue: number;
+};
+
 const DISTRIBUTOR_PRINTER_STATUSES = ["asignada", "enajenada"] as const;
 
 export type DashboardSnapshot = {
@@ -87,6 +95,8 @@ export type DashboardSnapshot = {
   monthlyPrinterRegistrations: MonthlyCount[];
   /** Solo distribuidor: altas mensuales desglosadas por estatus de cartera. */
   monthlyStatusMix?: MonthlyStatusMix[];
+  /** Solo distribuidor: enajenaciones por mes. */
+  monthlySales?: MonthlySalesBucket[];
   recentPrinters: PrinterResponse[];
   activity: DashboardActivity[];
   loadWarnings: string[];
@@ -156,6 +166,36 @@ export function printersStatusMixByMonth(
     if (!bucket) continue;
     if (printer.status === "asignada") bucket.asignada += 1;
     else bucket.enajenada += 1;
+  }
+  return buckets;
+}
+
+export function distributorSalesByMonth(
+  printers: PrinterResponse[],
+  months = 12,
+): MonthlySalesBucket[] {
+  const now = new Date();
+  const buckets: MonthlySalesBucket[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const label = d.toLocaleDateString("es", { month: "short" });
+    const shortLabel = d.toLocaleDateString("es", {
+      month: "short",
+      year: "2-digit",
+    });
+    buckets.push({ key, label, shortLabel, count: 0, revenue: 0 });
+  }
+  const bucketMap = new Map(buckets.map((b) => [b.key, b]));
+  for (const printer of printers) {
+    if (normalizePrinterStatus(printer.status) !== "enajenada") continue;
+    const soldAt = new Date(printer.installationDate ?? printer.createdAt);
+    if (Number.isNaN(soldAt.getTime())) continue;
+    const key = `${soldAt.getFullYear()}-${String(soldAt.getMonth() + 1).padStart(2, "0")}`;
+    const bucket = bucketMap.get(key);
+    if (!bucket) continue;
+    bucket.count += 1;
+    bucket.revenue += printer.finalSalePrice ?? 0;
   }
   return buckets;
 }
@@ -335,11 +375,6 @@ function buildStats(
           hint: `${counts.branches.length} empresas en red`,
         },
         {
-          title: "Empresas",
-          value: String(counts.branches.length),
-          hint: placesHint,
-        },
-        {
           title: "Empleados",
           value: String(counts.employees),
           hint: `${counts.companies.length} empresas vinculadas`,
@@ -516,6 +551,8 @@ export async function loadDashboardSnapshot(options: {
   const printerStatusCounts = countPrintersByStatus(printers, role);
   const monthlyStatusMix =
     role === "DISTRIBUTOR" ? printersStatusMixByMonth(printers) : undefined;
+  const monthlySales =
+    role === "DISTRIBUTOR" ? distributorSalesByMonth(printers) : undefined;
   const monthlyPrinterRegistrations = printersByMonth(printers);
   const recentPrinters = [...printers]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt, "es"))
@@ -529,6 +566,7 @@ export async function loadDashboardSnapshot(options: {
     printerStatusCounts,
     monthlyPrinterRegistrations,
     monthlyStatusMix,
+    monthlySales,
     recentPrinters,
     activity,
     loadWarnings,

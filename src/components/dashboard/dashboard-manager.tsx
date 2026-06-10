@@ -12,6 +12,7 @@ import { DashboardActivityList } from "@/components/dashboard/dashboard-activity
 import { DashboardRecentPrinters } from "@/components/dashboard/dashboard-recent-printers";
 import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
 import { DashboardWelcome } from "@/components/dashboard/dashboard-welcome";
+import { DistributorSalesChart } from "@/components/dashboard/distributor-sales-chart";
 import { PrintersOverviewChart } from "@/components/dashboard/printers-overview-chart";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
@@ -23,6 +24,7 @@ import {
   type DashboardSnapshot,
   type DashboardStat,
 } from "@/lib/dashboard-data";
+import { cn } from "@/lib/utils";
 import type { Role } from "@/types/user";
 import type { LucideIcon } from "lucide-react";
 
@@ -141,7 +143,12 @@ export function DashboardManager() {
             <h2 id="dashboard-kpis" className="sr-only">
               Indicadores principales
             </h2>
-            <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-4 lg:grid-cols-4">
+            <div
+              className={cn(
+                "grid grid-cols-2 items-stretch gap-3 sm:gap-4",
+                snapshot.stats.length > 3 ? "lg:grid-cols-4" : "lg:grid-cols-3",
+              )}
+            >
               {snapshot.stats.map((stat) => (
                 <StatCard
                   key={stat.title}
@@ -155,54 +162,60 @@ export function DashboardManager() {
             </div>
           </section>
 
-          <section
-            aria-labelledby="dashboard-overview"
-            className="grid grid-cols-1 gap-6 xl:grid-cols-3 xl:items-start"
-          >
+          <section aria-labelledby="dashboard-overview">
             <h2 id="dashboard-overview" className="sr-only">
-              Resumen y actividad
+              Estadísticas
             </h2>
-            {canSeePrinters ? (
-              <PrintersOverviewChart
-                className="min-w-0 xl:col-span-2"
-                variant={user.role === "DISTRIBUTOR" ? "distributor" : "default"}
-                statusCounts={snapshot.printerStatusCounts}
-                monthlyRegistrations={snapshot.monthlyPrinterRegistrations}
-                monthlyStatusMix={snapshot.monthlyStatusMix}
-                totalPrinters={snapshot.printers.length}
+            {user.role === "DISTRIBUTOR" ? (
+              <DistributorSalesChart
+                className="min-w-0"
+                data={snapshot.monthlySales ?? []}
               />
             ) : (
-              <div className="min-w-0 rounded-xl border border-border bg-card p-5 shadow-sm xl:col-span-2">
-                <h3 className="font-semibold text-card-foreground">
-                  Resumen operativo
-                </h3>
-                <p className="mt-1 text-sm text-muted">
-                  Métricas de tu centro de servicio
-                </p>
-                <dl className="mt-6 grid gap-4 sm:grid-cols-2">
-                  {snapshot.stats.map((stat) => (
-                    <div
-                      key={stat.title}
-                      className="rounded-lg border border-border bg-background/50 px-4 py-3"
-                    >
-                      <dt className="text-xs font-medium uppercase tracking-wide text-muted">
-                        {stat.title}
-                      </dt>
-                      <dd className="mt-1 text-2xl font-semibold text-card-foreground">
-                        {stat.value}
-                      </dd>
-                      {stat.hint ? (
-                        <dd className="mt-1 text-xs text-muted">{stat.hint}</dd>
-                      ) : null}
-                    </div>
-                  ))}
-                </dl>
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-3 xl:items-start">
+                {canSeePrinters ? (
+                  <PrintersOverviewChart
+                    className="min-w-0 xl:col-span-2"
+                    statusCounts={snapshot.printerStatusCounts}
+                    monthlyRegistrations={snapshot.monthlyPrinterRegistrations}
+                    totalPrinters={snapshot.printers.length}
+                  />
+                ) : (
+                  <div className="min-w-0 rounded-xl border border-border bg-card p-5 shadow-sm xl:col-span-2">
+                    <h3 className="font-semibold text-card-foreground">
+                      Resumen operativo
+                    </h3>
+                    <p className="mt-1 text-sm text-muted">
+                      Métricas de tu centro de servicio
+                    </p>
+                    <dl className="mt-6 grid gap-4 sm:grid-cols-2">
+                      {snapshot.stats.map((stat) => (
+                        <div
+                          key={stat.title}
+                          className="rounded-lg border border-border bg-background/50 px-4 py-3"
+                        >
+                          <dt className="text-xs font-medium uppercase tracking-wide text-muted">
+                            {stat.title}
+                          </dt>
+                          <dd className="mt-1 text-2xl font-semibold text-card-foreground">
+                            {stat.value}
+                          </dd>
+                          {stat.hint ? (
+                            <dd className="mt-1 text-xs text-muted">
+                              {stat.hint}
+                            </dd>
+                          ) : null}
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                )}
+                <DashboardActivityList
+                  items={snapshot.activity}
+                  className="min-w-0 xl:col-span-1"
+                />
               </div>
             )}
-            <DashboardActivityList
-              items={snapshot.activity}
-              className="min-w-0 xl:col-span-1"
-            />
           </section>
 
           {canSeePrinters && (
