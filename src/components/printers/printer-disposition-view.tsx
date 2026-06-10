@@ -47,7 +47,13 @@ import type { CompanyResponse } from "@/types/company";
 import type { PrinterResponse } from "@/types/printer";
 import { cn } from "@/lib/utils";
 
-export function PrinterDispositionView() {
+type PrinterDispositionViewProps = {
+  onPrinterLoaded?: (printer: PrinterResponse) => void;
+};
+
+export function PrinterDispositionView({
+  onPrinterLoaded,
+}: PrinterDispositionViewProps = {}) {
   const id = useResourceId();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -118,18 +124,18 @@ export function PrinterDispositionView() {
         setPrinter(null);
         return;
       }
+      setPrinter(data);
+      onPrinterLoaded?.(data);
       if (!isPrinterAssigned(data.status)) {
         setError("Solo se pueden enajenar impresoras con estatus Asignada.");
-        setPrinter(data);
         return;
       }
-      setPrinter(data);
     } catch (err) {
       setError(getPrintersErrorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [id, scope, user, distributorId]);
+  }, [id, scope, user, distributorId, onPrinterLoaded]);
 
   useEffect(() => {
     queueMicrotask(() => {

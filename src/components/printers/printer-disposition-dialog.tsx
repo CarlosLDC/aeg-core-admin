@@ -208,7 +208,7 @@ export function PrinterDispositionDialog({
           : !facturaNro.trim())
       }
       submitLoading={false}
-      size={step === 2 ? "lg" : "md"}
+      size="lg"
       cancelLabel={step === 1 ? "Cancelar" : "Atrás"}
       onCancel={handleBack}
     >
