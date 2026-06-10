@@ -23,7 +23,7 @@ Documento de referencia alineado con `src/lib/permissions/matrix.ts`. El backend
 | printerModels | ADMIN, DISTRIBUTOR, TECHNICIAN | ADMIN | ADMIN | ADMIN | DIST: lectura de modelos de **sus** impresoras; sin página `/printer-models` |
 | seals | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual lectura | Igual | Igual | Impresoras en scope |
 | technicalServices | ADMIN, TECHNICIAN, SERVICE_CENTER | Igual | Igual | Igual | |
-| annualInspections | ADMIN, DISTRIBUTOR, TECHNICIAN, SERVICE_CENTER | Igual | Igual | Igual | DIST: impresoras de su cartera; empleado inspector en sucursal de la distribuidora |
+| annualInspections | ADMIN, DISTRIBUTOR, TECHNICIAN, SERVICE_CENTER | Igual | Igual | Igual | Solo impresoras con estatus **asignada**; DIST: impresoras de su inventario; empleado inspector en sucursal de la distribuidora |
 | contracts | ADMIN | ADMIN | ADMIN | ADMIN | |
 | users | ADMIN | ADMIN | ADMIN | ADMIN | |
 | mqtt | ADMIN | ADMIN | — | — | |

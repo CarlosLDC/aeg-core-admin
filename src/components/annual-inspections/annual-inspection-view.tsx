@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnnualInspectionFormDialog } from "@/components/annual-inspections/annual-inspection-form-dialog";
 import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
@@ -18,6 +18,7 @@ import { assertAnnualInspectionInScope } from "@/lib/permissions/scope-access";
 import { forbiddenMessage } from "@/lib/permissions/messages";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
+  annualInspectionPrinterOptions,
   toAnnualInspectionRequest,
   type AnnualInspectionFormValues,
 } from "@/lib/annual-inspection-form";
@@ -55,6 +56,15 @@ export function AnnualInspectionView() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const inspectionPrinterOptions = useMemo(
+    () =>
+      annualInspectionPrinterOptions(
+        catalog.scopedPrinters,
+        inspection?.printerId ?? null,
+      ),
+    [catalog.scopedPrinters, inspection?.printerId],
+  );
 
   const load = useCallback(async () => {
     if (id == null) {
@@ -99,7 +109,10 @@ export function AnnualInspectionView() {
       return;
     }
 
-    const bodyOrError = toAnnualInspectionRequest(values);
+    const bodyOrError = toAnnualInspectionRequest(
+      values,
+      catalog.scopedPrinters,
+    );
     if (typeof bodyOrError === "string") {
       setFormError(bodyOrError);
       return;
@@ -244,7 +257,7 @@ export function AnnualInspectionView() {
           error={formError}
           catalogLoading={catalog.loading}
           canLoadPrinters={catalog.canLoadPrinters}
-          printerOptions={catalog.printerOptions}
+          printerOptions={inspectionPrinterOptions}
           employeeOptions={catalog.employeeOptions}
           onClose={() => {
             if (!saving) setEditOpen(false);

@@ -22,6 +22,7 @@ import { fetchPrinters } from "@/lib/printers-api";
 import { applyScopedFieldCatalog } from "@/lib/scope-filters";
 import { fetchSeals } from "@/lib/seals-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
+import type { PrinterResponse } from "@/types/printer";
 
 export function useFieldOperationsCatalog() {
   const { user } = useAuth();
@@ -32,6 +33,7 @@ export function useFieldOperationsCatalog() {
     user?.role === "TECHNICIAN";
 
   const [loading, setLoading] = useState(true);
+  const [scopedPrinters, setScopedPrinters] = useState<PrinterResponse[]>([]);
   const [printerOptions, setPrinterOptions] = useState<SearchableSelectOption[]>(
     [],
   );
@@ -108,6 +110,7 @@ export function useFieldOperationsCatalog() {
 
       setScopedPrinterIds(scoped.printerIds);
       setScopedEmployeeIds(new Set(scoped.employees.map((e) => e.id)));
+      setScopedPrinters(scoped.printers);
       setPrinterOptions(printerSelectOptions(scoped.printers));
       setSealOptions(sealSelectOptions(scoped.seals));
       setTechnicianOptions(
@@ -141,6 +144,7 @@ export function useFieldOperationsCatalog() {
     loading,
     refresh: load,
     printerOptions,
+    scopedPrinters,
     scopedPrinterIds,
     scopedEmployeeIds,
     sealOptions,

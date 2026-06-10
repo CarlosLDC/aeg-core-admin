@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import { printerStatusLabel, normalizePrinterStatus } from "@/lib/printer-status";
 import type { PrinterStatus } from "@/types/printer";
 import { cn } from "@/lib/utils";
@@ -48,8 +49,12 @@ export function PrinterStatusBadge({
           "cursor-pointer transition hover:ring-2 hover:ring-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
         )}
         aria-label={actionLabel ?? `Acción de impresora (${label})`}
+        title={actionLabel}
       >
-        {label}
+        <span className="inline-flex items-center gap-1">
+          {label}
+          <ChevronRight className="size-3 shrink-0 opacity-80" aria-hidden />
+        </span>
       </button>
     );
   }

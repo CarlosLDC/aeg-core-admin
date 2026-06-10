@@ -41,6 +41,7 @@ import {
   type TableSortState,
 } from "@/lib/table-sort";
 import {
+  annualInspectionPrinterOptions,
   toAnnualInspectionRequest,
   type AnnualInspectionFormValues,
 } from "@/lib/annual-inspection-form";
@@ -105,6 +106,15 @@ export function AnnualInspectionsManager() {
   const employeeFilterOptions = useMemo(
     () => [filterAllOption("Todos los empleados"), ...catalog.employeeOptions],
     [catalog.employeeOptions],
+  );
+
+  const inspectionPrinterOptions = useMemo(
+    () =>
+      annualInspectionPrinterOptions(
+        catalog.scopedPrinters,
+        selected?.printerId ?? null,
+      ),
+    [catalog.scopedPrinters, selected?.printerId],
   );
 
   const filteredRows = useMemo(() => {
@@ -214,7 +224,10 @@ export function AnnualInspectionsManager() {
       return;
     }
 
-    const bodyOrError = toAnnualInspectionRequest(values);
+    const bodyOrError = toAnnualInspectionRequest(
+      values,
+      catalog.scopedPrinters,
+    );
     if (typeof bodyOrError === "string") {
       setFormError(bodyOrError);
       return;
@@ -480,7 +493,7 @@ export function AnnualInspectionsManager() {
         error={formError}
         catalogLoading={catalog.loading}
         canLoadPrinters={catalog.canLoadPrinters}
-        printerOptions={catalog.printerOptions}
+        printerOptions={inspectionPrinterOptions}
         employeeOptions={catalog.employeeOptions}
         onClose={closeDialog}
         onSubmit={handleSubmit}

@@ -101,6 +101,7 @@ Claims: `role`, `branchId`, `distributorId`.
 - `/api/printer-models` GET — ADMIN, DISTRIBUTOR, TECHNICIAN
 - `/api/employees` — según matriz de permisos del panel
 - `/api/companies`, `/api/branches`, `/api/printers`, `/api/annual-inspections/**` — según `docs/permissions-matrix.md`
+- `POST`/`PUT` `/api/annual-inspections` — la impresora debe existir, estar en alcance y tener estatus `asignada` (400 si no)
 
 ## Pruebas de integración
 

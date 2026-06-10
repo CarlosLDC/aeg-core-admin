@@ -89,7 +89,7 @@ export function AnnualInspectionFormDialog({
   function stepSubtitle(targetStep: WizardStep): string {
     switch (targetStep) {
       case 1:
-        return "Selecciona impresora y empleado responsable.";
+        return "Selecciona una impresora asignada y el empleado responsable.";
       case 2:
         return "Registra el resultado y observaciones de la revision.";
       case 3:
