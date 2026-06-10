@@ -6,6 +6,13 @@ import { SearchablePickerModal } from "@/components/ui/searchable-picker-modal";
 import { formFieldSelectTriggerClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
+function normalizeSearchText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLocaleLowerCase("es");
+}
+
 export type SearchableSelectOption = {
   value: string;
   label: string;
@@ -56,13 +63,14 @@ export function SearchableSelect({
   const hasSearchQuery = queryTrimmed.length > 0;
 
   const filtered = useMemo(() => {
-    const q = queryTrimmed.toLowerCase();
+    const q = normalizeSearchText(queryTrimmed);
     if (!hasSearchQuery) {
       return preloadOptions ? options : [];
     }
     return options.filter((opt) => {
-      const haystack = `${opt.value} ${opt.label} ${opt.searchText ?? ""} ${opt.description ?? ""}`
-        .toLowerCase();
+      const haystack = normalizeSearchText(
+        `${opt.value} ${opt.label} ${opt.searchText ?? ""} ${opt.description ?? ""}`,
+      );
       return haystack.includes(q);
     });
   }, [options, queryTrimmed, hasSearchQuery, preloadOptions]);

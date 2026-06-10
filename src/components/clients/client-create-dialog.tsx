@@ -9,6 +9,7 @@ import {
 import { SeniatDocumentScan } from "@/components/seniat/seniat-document-scan";
 import type { ClientOnboardingValues } from "@/lib/client-onboarding";
 import { normalizeStateName } from "@/lib/state-label";
+import { resolveVenezuelanStateCatalogValue } from "@/lib/venezuelan-states";
 import {
   collectAiFilledFields,
   type SeniatLockableField,
@@ -132,7 +133,8 @@ export function ClientCreateDialog({
         data.contributorType ??
         f.contributorType,
       linkedCompanyId: match?.id ?? null,
-      state: data.state || f.state,
+      state:
+        resolveVenezuelanStateCatalogValue(data.state || "") || f.state,
       city: data.city || f.city,
       address: data.address || f.address,
       phone: data.phone ?? f.phone,

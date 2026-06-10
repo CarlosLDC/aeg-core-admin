@@ -2,6 +2,7 @@
 
 import { ContributorTypeToggle } from "@/components/companies/contributor-type-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { ClientOnboardingValues } from "@/lib/client-onboarding";
 import {
   isFieldLockedByAi,
@@ -12,7 +13,13 @@ import {
   FORM_FIELD_TEXTAREA_ROWS,
   formFieldTextareaClass,
 } from "@/lib/toggle-button-styles";
+import {
+  resolveVenezuelanStateCatalogValue,
+  venezuelanStateSelectOptions,
+} from "@/lib/venezuelan-states";
 import { cn } from "@/lib/utils";
+
+const stateSelectOptions = venezuelanStateSelectOptions();
 
 export const clientFormInputClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:bg-foreground/[0.03] disabled:text-muted";
@@ -72,45 +79,43 @@ export function ClientFormFields({
           </p>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block">
-            <FieldLabel required>RIF</FieldLabel>
-            <input
-              type="text"
-              required
-              value={form.rif}
-              disabled={
-                saving || fieldLocked("rif", inputMode, aiFields, companyLocked)
-              }
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  rif: e.target.value.toUpperCase(),
-                  linkedCompanyId: null,
-                }))
-              }
-              placeholder="J123456789"
-              className={cn(clientFormInputClass, "font-mono uppercase")}
-            />
-          </label>
+        <label className="block">
+          <FieldLabel required>RIF</FieldLabel>
+          <input
+            type="text"
+            required
+            value={form.rif}
+            disabled={
+              saving || fieldLocked("rif", inputMode, aiFields, companyLocked)
+            }
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                rif: e.target.value.toUpperCase(),
+                linkedCompanyId: null,
+              }))
+            }
+            placeholder="J123456789"
+            className={cn(clientFormInputClass, "font-mono uppercase")}
+          />
+        </label>
 
-          <label className="block">
-            <FieldLabel required>Razón social</FieldLabel>
-            <input
-              type="text"
-              required
-              value={form.businessName}
-              disabled={
-                saving ||
-                fieldLocked("businessName", inputMode, aiFields, companyLocked)
-              }
-              onChange={(e) =>
-                setForm((f) => ({ ...f, businessName: e.target.value }))
-              }
-              className={clientFormInputClass}
-            />
-          </label>
-        </div>
+        <label className="block">
+          <FieldLabel required>Razón social</FieldLabel>
+          <input
+            type="text"
+            required
+            value={form.businessName}
+            disabled={
+              saving ||
+              fieldLocked("businessName", inputMode, aiFields, companyLocked)
+            }
+            onChange={(e) =>
+              setForm((f) => ({ ...f, businessName: e.target.value }))
+            }
+            className={clientFormInputClass}
+          />
+        </label>
 
         <ContributorTypeToggle
           label="Tipo de contribuyente"
@@ -135,15 +140,18 @@ export function ClientFormFields({
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
             <FieldLabel required>Estado</FieldLabel>
-            <input
-              type="text"
-              required
-              value={form.state}
+            <SearchableSelect
+              value={resolveVenezuelanStateCatalogValue(form.state)}
+              onChange={(state) => setForm((f) => ({ ...f, state }))}
+              options={stateSelectOptions}
               disabled={
                 saving || fieldLocked("state", inputMode, aiFields, false)
               }
-              onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
-              className={clientFormInputClass}
+              required
+              preloadOptions
+              emptyLabel="Seleccionar estado"
+              searchPlaceholder="Buscar estado…"
+              modalTitle="Estado"
             />
           </label>
           <label className="block">

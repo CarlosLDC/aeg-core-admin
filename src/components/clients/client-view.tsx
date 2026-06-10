@@ -7,7 +7,11 @@ import {
   type ClientEditValues,
 } from "@/components/clients/client-edit-dialog";
 import { ContributorBadge } from "@/components/companies/contributor-badge";
-import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
+import {
+  DetailCard,
+  DetailField,
+  DetailSection,
+} from "@/components/resource-view/detail-fields";
 import { DetailSectionsPager } from "@/components/resource-view/detail-sections-pager";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
@@ -159,7 +163,65 @@ export function ClientView() {
     "—";
   const title = businessName !== "Cliente" ? businessName : `${city}, ${state}`;
 
-  const detailSteps = useMemo(() => {
+  const contributorType =
+    pendingProposed?.contributorType ?? company?.contributorType;
+
+  const distributorDetailContent = useMemo(() => {
+    if (!client) return null;
+
+    return (
+      <DetailCard>
+        <DetailField
+          label="Tipo de contribuyente"
+          value={
+            contributorType ? (
+              <ContributorBadge type={contributorType} />
+            ) : (
+              "—"
+            )
+          }
+        />
+        <DetailField label="Estado" value={state} />
+        <DetailField label="Ciudad" value={city} />
+        <DetailField
+          label="Dirección"
+          value={
+            pendingProposed?.address?.trim() ||
+            branch?.address?.trim() ||
+            "—"
+          }
+        />
+        <DetailField
+          label="Persona de contacto"
+          value={
+            pendingProposed?.contactPersonName?.trim() ||
+            branch?.contactPersonName?.trim() ||
+            "—"
+          }
+        />
+        <DetailField
+          label="Teléfono"
+          value={
+            pendingProposed?.phone?.trim() ||
+            branch?.phone?.trim() ||
+            client.branchPhone?.trim() ||
+            "—"
+          }
+        />
+        <DetailField
+          label="Correo"
+          value={
+            pendingProposed?.email?.trim() ||
+            branch?.email?.trim() ||
+            client.branchEmail?.trim() ||
+            "—"
+          }
+        />
+      </DetailCard>
+    );
+  }, [client, branch, contributorType, city, state, pendingProposed]);
+
+  const adminDetailSteps = useMemo(() => {
     if (!client) return [];
 
     return [
@@ -186,7 +248,11 @@ export function ClientView() {
             <DetailField
               label="Tipo de contribuyente"
               value={
-                company ? <ContributorBadge type={company.contributorType} /> : "—"
+                contributorType ? (
+                  <ContributorBadge type={contributorType} />
+                ) : (
+                  "—"
+                )
               }
             />
           </DetailSection>
@@ -237,7 +303,16 @@ export function ClientView() {
         ),
       },
     ];
-  }, [client, branch, company, businessName, rif, city, state]);
+  }, [
+    client,
+    branch,
+    businessName,
+    rif,
+    city,
+    state,
+    contributorType,
+    pendingProposed,
+  ]);
 
   async function handleEdit(values: ClientEditValues) {
     if (!client || !branch || !company) {
@@ -405,7 +480,11 @@ export function ClientView() {
                 )}
               </p>
             )}
-            <DetailSectionsPager key={client.id} steps={detailSteps} />
+            {canRequestReview ? (
+              distributorDetailContent
+            ) : (
+              <DetailSectionsPager key={client.id} steps={adminDetailSteps} />
+            )}
           </div>
         ) : null}
       </ResourceViewShell>
