@@ -5,8 +5,8 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { TruncatedText } from "@/components/ui/truncated-text";
 
 type ResourceViewShellProps = {
-  backHref: string;
-  backLabel: string;
+  backHref?: string;
+  backLabel?: string;
   title?: string;
   subtitle?: string;
   loading?: boolean;
@@ -27,13 +27,15 @@ export function ResourceViewShell({
 }: ResourceViewShellProps) {
   return (
     <div className="space-y-6">
-      <Link
-        href={backHref}
-        className="inline-flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" aria-hidden />
-        {backLabel}
-      </Link>
+      {backHref ? (
+        <Link
+          href={backHref}
+          className="inline-flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" aria-hidden />
+          {backLabel ?? "Volver"}
+        </Link>
+      ) : null}
 
       {title || subtitle || actions ? (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

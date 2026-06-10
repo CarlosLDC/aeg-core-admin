@@ -312,8 +312,6 @@ export function PrinterDispositionView({
 
   return (
     <ResourceViewShell
-      backHref={backHref}
-      backLabel="Volver a impresoras"
       loading={loading || catalogLoading}
       error={
         error ??
