@@ -5,7 +5,7 @@ import { Loader2, X } from "lucide-react";
 import type { PrinterResponse } from "@/types/printer";
 import { cn } from "@/lib/utils";
 
-export type PrinterActionDialogSize = "md" | "receipt";
+export type PrinterActionDialogSize = "md" | "lg" | "receipt";
 
 type PrinterActionDialogShellProps = {
   title: string;
@@ -64,7 +64,11 @@ export function PrinterActionDialogShell({
       <div
         className={cn(
           "relative flex max-h-[min(92vh,100dvh)] w-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl",
-          size === "receipt" ? "max-w-lg" : "max-w-md",
+          size === "receipt"
+            ? "max-w-lg"
+            : size === "lg"
+              ? "max-w-xl"
+              : "max-w-md",
         )}
       >
         <div className="shrink-0 border-b border-border px-4 py-3 sm:px-5">

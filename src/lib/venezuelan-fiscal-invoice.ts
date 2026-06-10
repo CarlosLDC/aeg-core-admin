@@ -100,7 +100,7 @@ export function formatVenezuelanMoneyAmount(amount: number): string {
   );
 }
 
-function resolveClientRif(
+export function resolveClientCompanyRif(
   client: ClientResponse,
   branch: BranchResponse | undefined,
   companies: CompanyResponse[],
@@ -113,7 +113,7 @@ function resolveClientRif(
   return formatRifForFiscalDisplay(company.rif);
 }
 
-function resolveBusinessName(
+export function resolveClientCompanyName(
   client: ClientResponse,
   branch: BranchResponse | undefined,
   companies: CompanyResponse[],
@@ -416,8 +416,12 @@ export function buildDispositionInvoiceData(
   const itemPrice = roundMoney(input.printer.finalSalePrice ?? 0);
   const taxes = buildTaxesFromItemPrice(itemPrice);
 
-  const rifEmpresa = resolveClientRif(client, clientBranch, input.companies);
-  const razonSocialEmpresa = resolveBusinessName(
+  const rifEmpresa = resolveClientCompanyRif(
+    client,
+    clientBranch,
+    input.companies,
+  );
+  const razonSocialEmpresa = resolveClientCompanyName(
     client,
     clientBranch,
     input.companies,
@@ -443,8 +447,12 @@ export function buildDispositionInvoiceData(
       hora: formatFiscalInvoiceTime(issuedAt),
     },
     cliente: {
-      rifCi: resolveClientRif(client, clientBranch, input.companies),
-      razonSocial: resolveBusinessName(client, clientBranch, input.companies),
+      rifCi: resolveClientCompanyRif(client, clientBranch, input.companies),
+      razonSocial: resolveClientCompanyName(
+        client,
+        clientBranch,
+        input.companies,
+      ),
       condicion: "contado",
     },
     items: [

@@ -8,6 +8,8 @@ import { PrinterActionPickerPanel } from "@/components/printers/printer-action-p
 import { printerDispositionReviewTitle } from "@/lib/printer-form";
 import {
   buildDispositionInvoiceData,
+  resolveClientCompanyName,
+  resolveClientCompanyRif,
   validateFacturaNroInput,
 } from "@/lib/venezuelan-fiscal-invoice";
 import { cn } from "@/lib/utils";
@@ -90,10 +92,38 @@ export function PrinterDispositionDialog({
     );
   }, [clientOptions, clientQuery]);
 
-  const selectedClientLabel = useMemo(
-    () => clientOptions.find((opt) => opt.id === Number(clientId))?.label,
-    [clientOptions, clientId],
+  const selectedClient = useMemo(
+    () => clients.find((c) => c.id === Number(clientId)),
+    [clients, clientId],
   );
+
+  const selectedClientBranch = useMemo(
+    () =>
+      selectedClient
+        ? branches.find((b) => b.id === selectedClient.branchId)
+        : undefined,
+    [selectedClient, branches],
+  );
+
+  const selectedClientRif = useMemo(() => {
+    if (!selectedClient) return null;
+    const rif = resolveClientCompanyRif(
+      selectedClient,
+      selectedClientBranch,
+      companies,
+    );
+    return rif === "-" ? null : rif;
+  }, [selectedClient, selectedClientBranch, companies]);
+
+  const selectedClientCompanyName = useMemo(() => {
+    if (!selectedClient) return null;
+    const name = resolveClientCompanyName(
+      selectedClient,
+      selectedClientBranch,
+      companies,
+    );
+    return name === "-" ? null : name;
+  }, [selectedClient, selectedClientBranch, companies]);
 
   function goToStep(target: WizardStep) {
     setFieldError(null);
@@ -178,7 +208,7 @@ export function PrinterDispositionDialog({
           : !facturaNro.trim())
       }
       submitLoading={false}
-      size="md"
+      size={step === 2 ? "lg" : "md"}
       cancelLabel={step === 1 ? "Cancelar" : "Atrás"}
       onCancel={handleBack}
     >
@@ -237,13 +267,25 @@ export function PrinterDispositionDialog({
         />
       ) : (
         <div className="space-y-4">
-          {selectedClientLabel ? (
-            <p className="rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-sm">
-              <span className="text-muted">Cliente: </span>
-              <span className="font-medium text-foreground">
-                {selectedClientLabel}
-              </span>
-            </p>
+          {selectedClientRif || selectedClientCompanyName ? (
+            <div className="grid gap-3 rounded-lg border border-border bg-foreground/[0.02] px-4 py-3 sm:grid-cols-2">
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted">
+                  RIF
+                </p>
+                <p className="mt-1 truncate font-mono text-sm text-foreground">
+                  {selectedClientRif ?? "—"}
+                </p>
+              </div>
+              <div className="min-w-0 sm:col-span-1">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted">
+                  Empresa
+                </p>
+                <p className="mt-1 text-sm font-medium text-foreground">
+                  {selectedClientCompanyName ?? "—"}
+                </p>
+              </div>
+            </div>
           ) : null}
           <div className="space-y-2">
             <label
