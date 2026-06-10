@@ -23,6 +23,8 @@ type PrinterActionDialogShellProps = {
   cancelLabel?: string;
   onCancel?: () => void;
   submitDestructive?: boolean;
+  /** Por defecto muestra el serial bajo el título. */
+  showPrinterSerialSubtitle?: boolean;
 };
 
 export function PrinterActionDialogShell({
@@ -41,6 +43,7 @@ export function PrinterActionDialogShell({
   cancelLabel = "Cancelar",
   onCancel,
   submitDestructive = false,
+  showPrinterSerialSubtitle = true,
 }: PrinterActionDialogShellProps) {
   const handleCancel = onCancel ?? onClose;
 
@@ -73,12 +76,14 @@ export function PrinterActionDialogShell({
               >
                 {title}
               </h2>
-              <p className="mt-1 text-sm text-muted">
-                Serial{" "}
-                <span className="font-mono text-card-foreground">
-                  {printer.fiscalSerial}
-                </span>
-              </p>
+              {showPrinterSerialSubtitle ? (
+                <p className="mt-1 text-sm text-muted">
+                  Serial{" "}
+                  <span className="font-mono text-card-foreground">
+                    {printer.fiscalSerial}
+                  </span>
+                </p>
+              ) : null}
             </div>
             <button
               type="button"

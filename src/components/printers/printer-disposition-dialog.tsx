@@ -5,6 +5,7 @@ import { FileText, User } from "lucide-react";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { PrinterActionDialogShell } from "@/components/printers/printer-action-dialog-shell";
 import { PrinterActionPickerPanel } from "@/components/printers/printer-action-picker-panel";
+import { printerDispositionReviewTitle } from "@/lib/printer-form";
 import {
   buildDispositionInvoiceData,
   validateFacturaNroInput,
@@ -161,9 +162,10 @@ export function PrinterDispositionDialog({
 
   return (
     <PrinterActionDialogShell
-      title="Enajenar impresora"
+      title={printerDispositionReviewTitle(printer.fiscalSerial)}
       titleId={titleId}
       printer={printer}
+      showPrinterSerialSubtitle={false}
       saving={false}
       error={null}
       onClose={onClose}

@@ -8,6 +8,7 @@ import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import {
+  DetailCard,
   DetailField,
   DetailSection,
 } from "@/components/resource-view/detail-fields";
@@ -321,7 +322,72 @@ export function PrinterView() {
       })
     : null;
 
-  const detailSteps = useMemo(() => {
+  const distributorDetailContent = useMemo(() => {
+    if (!printer) return null;
+
+    return (
+      <DetailCard>
+        <DetailField
+          label="Tipo de equipo"
+          value={DEVICE_TYPE_LABELS[printer.deviceType]}
+        />
+        <DetailField
+          label="Estatus"
+          value={
+            <PrinterStatusBadge
+              status={printer.status}
+              onClick={statusQuickAction?.onClick}
+              actionLabel={statusQuickAction?.label}
+            />
+          }
+        />
+        <DetailField
+          label="Estado de pago"
+          value={printer.paid ? "Pagada" : "Pendiente"}
+        />
+        <DetailField
+          label="Fecha de enajenación"
+          value={formatDate(printer.installationDate)}
+        />
+        <DetailField
+          label="Cliente"
+          value={
+            printer.clientId != null
+              ? clientLabelById.get(printer.clientId) ?? "—"
+              : "Sin asignar"
+          }
+          href={
+            user
+              ? hrefForClient(printer.clientId, clients, user.role)
+              : undefined
+          }
+        />
+        <DetailField
+          label="Software"
+          value={
+            printer.softwareId != null
+              ? softwareLabelById.get(printer.softwareId) ?? "—"
+              : "Sin asignar"
+          }
+        />
+        <DetailField
+          label="Firmware"
+          value={printer.versionFirmware || "—"}
+          mono
+        />
+        <DetailField label="MAC" value={printer.macAddress || "—"} mono />
+      </DetailCard>
+    );
+  }, [
+    printer,
+    user,
+    clients,
+    clientLabelById,
+    softwareLabelById,
+    statusQuickAction,
+  ]);
+
+  const adminDetailSteps = useMemo(() => {
     if (!printer) return [];
 
     return [
@@ -626,9 +692,12 @@ export function PrinterView() {
           ) : undefined
         }
       >
-        {printer && (
-          <DetailSectionsPager key={printer.id} steps={detailSteps} />
-        )}
+        {printer &&
+          (isDistributor ? (
+            distributorDetailContent
+          ) : (
+            <DetailSectionsPager key={printer.id} steps={adminDetailSteps} />
+          ))}
       </ResourceViewShell>
 
       {printer && assignmentOpen ? (

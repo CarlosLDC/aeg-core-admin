@@ -23,7 +23,10 @@ import {
   DISTRIBUTOR_SELF_CLIENT_MESSAGE,
   isDistributorSelfClient,
 } from "@/lib/distributor-scope";
-import { printerToDispositionRequest } from "@/lib/printer-form";
+import {
+  printerDispositionReviewTitle,
+  printerToDispositionRequest,
+} from "@/lib/printer-form";
 import {
   fetchPrinterById,
   getPrintersErrorMessage,
@@ -302,17 +305,16 @@ export function PrinterDispositionView() {
       ? "No tienes permiso para enajenar impresoras."
       : null;
 
-  const backHref = id != null ? printerPath(id) : "/printers";
+  const backHref = "/printers";
 
   return (
     <ResourceViewShell
       backHref={backHref}
-      backLabel="Volver a la impresora"
-      title="Revisión de encabezado y pie de ticket"
-      subtitle={
+      backLabel="Volver a impresoras"
+      title={
         printer
-          ? `Serial fiscal ${printer.fiscalSerial}`
-          : "Revisión de factura de enajenación"
+          ? printerDispositionReviewTitle(printer.fiscalSerial)
+          : "Enajenar impresora"
       }
       loading={loading || catalogLoading}
       error={

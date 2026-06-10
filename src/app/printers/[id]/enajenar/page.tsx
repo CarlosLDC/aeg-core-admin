@@ -6,8 +6,8 @@ import { PrinterDispositionView } from "@/components/printers/printer-dispositio
 export default function PrinterDispositionPage() {
   return (
     <AdminShell
-      title="Enajenar impresora"
-      description="Factura virtual de enajenación"
+      title="Enajenación de impresora"
+      description="Revisión de encabezado y pie de ticket"
     >
       <RoleGuard path="/printers">
         <Suspense fallback={null}>
