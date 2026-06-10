@@ -5,7 +5,7 @@ import { FileText, User } from "lucide-react";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { PrinterActionDialogShell } from "@/components/printers/printer-action-dialog-shell";
 import { PrinterActionPickerPanel } from "@/components/printers/printer-action-picker-panel";
-import { printerDispositionReviewTitle } from "@/lib/printer-form";
+import { printerDispositionModalTitle } from "@/lib/printer-form";
 import {
   buildDispositionInvoiceData,
   resolveClientCompanyName,
@@ -192,7 +192,7 @@ export function PrinterDispositionDialog({
 
   return (
     <PrinterActionDialogShell
-      title={printerDispositionReviewTitle(printer.fiscalSerial)}
+      title={printerDispositionModalTitle(printer.fiscalSerial)}
       titleId={titleId}
       printer={printer}
       showPrinterSerialSubtitle={false}
@@ -268,8 +268,8 @@ export function PrinterDispositionDialog({
       ) : (
         <div className="space-y-4">
           {selectedClientRif || selectedClientCompanyName ? (
-            <div className="grid gap-3 rounded-lg border border-border bg-foreground/[0.02] px-4 py-3 sm:grid-cols-2">
-              <div className="min-w-0">
+            <div className="space-y-3">
+              <div className="rounded-lg border border-border bg-foreground/[0.02] px-4 py-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted">
                   RIF
                 </p>
@@ -277,7 +277,7 @@ export function PrinterDispositionDialog({
                   {selectedClientRif ?? "—"}
                 </p>
               </div>
-              <div className="min-w-0 sm:col-span-1">
+              <div className="rounded-lg border border-border bg-foreground/[0.02] px-4 py-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted">
                   Empresa
                 </p>

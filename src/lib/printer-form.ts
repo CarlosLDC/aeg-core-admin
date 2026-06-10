@@ -107,6 +107,11 @@ export function printerToAssignmentRequest(
   };
 }
 
+export function printerDispositionModalTitle(fiscalSerial: string): string {
+  const serial = fiscalSerial.trim() || "—";
+  return `Enajenar ${serial}`;
+}
+
 export function printerDispositionReviewTitle(fiscalSerial: string): string {
   const serial = fiscalSerial.trim() || "—";
   return `Enajenar ${serial} - Revisión de encabezado y pie de ticket`;
