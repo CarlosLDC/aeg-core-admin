@@ -102,20 +102,32 @@ function DocDetails({
   );
 }
 
-export function EnajenacionMqttDocsPanel() {
+export function EnajenacionMqttDocsPanel({
+  hideHeader = false,
+}: {
+  hideHeader?: boolean;
+}) {
   return (
-    <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
-      <h2 className="flex items-center gap-2 font-semibold text-card-foreground">
-        <BookOpen className="size-5 text-accent" />
-        Protocolo de enajenación automática (MQTT)
-      </h2>
-      <p className="mt-1 text-sm text-muted">
-        Referencia operativa del flujo fiscal entre impresora, broker MQTT y AEG
-        Core. Detalle técnico completo en el repositorio backend:{" "}
-        <code className="text-xs">docs/ENAJENACION_MQTT.md</code>.
-      </p>
+    <section
+      className={cn(
+        hideHeader ? "pt-4" : "rounded-xl border border-border bg-card p-5 shadow-sm",
+      )}
+    >
+      {!hideHeader && (
+        <>
+          <h2 className="flex items-center gap-2 font-semibold text-card-foreground">
+            <BookOpen className="size-5 text-accent" />
+            Protocolo de enajenación automática (MQTT)
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Referencia operativa del flujo fiscal entre impresora, broker MQTT y AEG
+            Core. Detalle técnico completo en el repositorio backend:{" "}
+            <code className="text-xs">docs/ENAJENACION_MQTT.md</code>.
+          </p>
+        </>
+      )}
 
-      <div className="mt-5 space-y-3">
+      <div className={cn("space-y-3", !hideHeader && "mt-5")}>
         <DocDetails title="¿Qué es la enajenación?" defaultOpen>
           <p>
             Transferir formalmente una impresora fiscal al{" "}

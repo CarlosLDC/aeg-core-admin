@@ -51,9 +51,11 @@ const inputClass =
 export function EnajenacionTestPanel({
   liveMessages,
   onApplyMonitorTopic,
+  onOpenMonitor,
 }: {
   liveMessages: MqttInboundMessage[];
   onApplyMonitorTopic?: (topic: string) => Promise<void>;
+  onOpenMonitor?: () => void;
 }) {
   const toast = useToast();
   const [printers, setPrinters] = useState<PrinterResponse[]>([]);
@@ -193,6 +195,7 @@ export function EnajenacionTestPanel({
     try {
       await onApplyMonitorTopic(topics.monitor);
       toast.success(`Monitor apuntando a ${topics.monitor}`);
+      onOpenMonitor?.();
     } catch (err) {
       toast.error(getMqttErrorMessage(err));
     }
@@ -240,6 +243,7 @@ export function EnajenacionTestPanel({
         try {
           await onApplyMonitorTopic(topics.monitor);
           appendLog(`Monitor suscrito a ${topics.monitor}`);
+          onOpenMonitor?.();
         } catch (err) {
           appendLog(getMqttErrorMessage(err), "error");
         }

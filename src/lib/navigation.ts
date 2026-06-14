@@ -135,7 +135,7 @@ export const navSections: NavSection[] = [
         roles: ["ADMIN"],
       },
       {
-        title: "Pruebas MQTT",
+        title: "Herramientas MQTT",
         href: "/mqtt-tests",
         icon: Radio,
         roles: ["ADMIN"],
