@@ -62,6 +62,12 @@ export function canAccessRoute(role: Role, pathname: string): boolean {
   const resource = resourceForPath(normalized);
   if (!can(role, resource, "read")) return false;
 
+  // Distribuidor: detalle de empresa de cliente sí; listado /companies no (menú /clients).
+  if (role === "DISTRIBUTOR") {
+    if (normalized === "/companies") return false;
+    if (normalized.startsWith("/companies/")) return true;
+  }
+
   const navPath = resolveNavPath(normalized);
   if (navPath) {
     const navRoles = rolesByPath.get(navPath);
@@ -71,8 +77,6 @@ export function canAccessRoute(role: Role, pathname: string): boolean {
       if (!isDetailRoute) return false;
       // Detalle de sucursal sin listado en menú (distribuidor usa /clients).
       if (navPath === "/branches" && role === "DISTRIBUTOR") return true;
-      // Detalle de empresa de cliente desde flujo de distribuidor.
-      if (navPath === "/companies" && role === "DISTRIBUTOR") return true;
       return false;
     }
   }

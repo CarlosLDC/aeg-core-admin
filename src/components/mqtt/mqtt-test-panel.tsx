@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Radio, Send, Wifi } from "lucide-react";
 import { useToast } from "@/context/toast-provider";
+import { EnajenacionTestPanel } from "@/components/mqtt/enajenacion-test-panel";
 import { MqttMonitorPanel } from "@/components/mqtt/mqtt-monitor-panel";
+import { useMqttMonitor } from "@/hooks/use-mqtt-monitor";
 import {
   checkMqttConnection,
   getMqttErrorMessage,
@@ -67,6 +69,7 @@ function JsonBlock({
 
 export function MqttTestPanel() {
   const toast = useToast();
+  const monitor = useMqttMonitor();
   const [probeLoading, setProbeLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
   const [publishLoading, setPublishLoading] = useState(false);
@@ -348,7 +351,12 @@ export function MqttTestPanel() {
         )}
       </section>
 
-      <MqttMonitorPanel />
+      <EnajenacionTestPanel
+        liveMessages={monitor.messages}
+        onApplyMonitorTopic={monitor.subscribeToTopic}
+      />
+
+      <MqttMonitorPanel monitor={monitor} />
     </div>
   );
 }

@@ -22,6 +22,8 @@ import type { MqttWsStatus } from "@/hooks/use-mqtt-monitor";
 const inputClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
 
+type MqttMonitorState = ReturnType<typeof useMqttMonitor>;
+
 function StatusBadge({
   label,
   tone,
@@ -46,9 +48,14 @@ function StatusBadge({
   );
 }
 
-export function MqttMonitorPanel() {
+export function MqttMonitorPanel({
+  monitor: monitorProp,
+}: {
+  monitor?: MqttMonitorState;
+}) {
+  const internalMonitor = useMqttMonitor();
+  const monitor = monitorProp ?? internalMonitor;
   const toast = useToast();
-  const monitor = useMqttMonitor();
   const [refreshing, setRefreshing] = useState(false);
 
   async function handleSubscribe(e: React.FormEvent) {
