@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Radio, Send, Wifi } from "lucide-react";
 import { useToast } from "@/context/toast-provider";
+import { EnajenacionMqttDocsPanel } from "@/components/mqtt/enajenacion-mqtt-docs-panel";
 import { EnajenacionTestPanel } from "@/components/mqtt/enajenacion-test-panel";
 import { MqttMonitorPanel } from "@/components/mqtt/mqtt-monitor-panel";
 import { useMqttMonitor } from "@/hooks/use-mqtt-monitor";
@@ -350,6 +351,8 @@ export function MqttTestPanel() {
           </div>
         )}
       </section>
+
+      <EnajenacionMqttDocsPanel />
 
       <EnajenacionTestPanel
         liveMessages={monitor.messages}
