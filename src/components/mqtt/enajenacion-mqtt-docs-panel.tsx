@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BookOpen, List } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, BookOpen, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ENajenacionSteps = [
@@ -109,7 +110,11 @@ function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-export function EnajenacionMqttDocsPanel() {
+export function EnajenacionMqttDocsPanel({
+  showBackLink = false,
+}: {
+  showBackLink?: boolean;
+}) {
   const [activeId, setActiveId] = useState<string>(
     ENAJENACION_DOC_SECTIONS[0].id,
   );
@@ -164,6 +169,17 @@ export function EnajenacionMqttDocsPanel() {
 
   return (
     <div className="rounded-xl border border-border bg-card shadow-sm">
+      {showBackLink && (
+        <div className="border-b border-border px-5 py-3">
+          <Link
+            href="/mqtt-tests"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" />
+            Volver a herramientas MQTT
+          </Link>
+        </div>
+      )}
       <div className="border-b border-border px-5 py-4">
         <h2 className="flex items-center gap-2 font-semibold text-card-foreground">
           <BookOpen className="size-5 text-accent" />
@@ -352,8 +368,9 @@ export function EnajenacionMqttDocsPanel() {
           <DocSection id="manual-test" title="Cómo usar la prueba manual">
             <ol className="list-decimal space-y-2 pl-5">
               <li>
-                Elige una impresora <strong className="text-card-foreground">ASIGNADA</strong>{" "}
-                con MAC y cliente válidos (pestaña Enajenación fiscal).
+                Elige una impresora{" "}
+                <strong className="text-card-foreground">ASIGNADA</strong> con MAC
+                y cliente válidos (pestaña Enajenación en Herramientas MQTT).
               </li>
               <li>
                 Pulsa <strong className="text-card-foreground">Iniciar simulación</strong>:

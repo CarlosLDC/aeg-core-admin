@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import {
   CheckCircle2,
+  ExternalLink,
   Loader2,
   Play,
   Printer,
@@ -10,6 +12,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useToast } from "@/context/toast-provider";
+import { ENAJENACION_MQTT_DOCS_PATH } from "@/lib/mqtt-docs-paths";
 import { fetchPrinterById, fetchPrinters } from "@/lib/printers-api";
 import {
   getMqttErrorMessage,
@@ -52,12 +55,10 @@ export function EnajenacionTestPanel({
   liveMessages,
   onApplyMonitorTopic,
   onOpenMonitor,
-  onOpenDocs,
 }: {
   liveMessages: MqttInboundMessage[];
   onApplyMonitorTopic?: (topic: string) => Promise<void>;
   onOpenMonitor?: () => void;
-  onOpenDocs?: () => void;
 }) {
   const toast = useToast();
   const [printers, setPrinters] = useState<PrinterResponse[]>([]);
@@ -316,15 +317,15 @@ export function EnajenacionTestPanel({
             <strong>asignada</strong> a un cliente con datos fiscales completos.
           </p>
         </div>
-        {onOpenDocs && (
-          <button
-            type="button"
-            onClick={onOpenDocs}
-            className="shrink-0 text-sm font-medium text-accent hover:underline"
-          >
-            Ver documentación →
-          </button>
-        )}
+        <Link
+          href={ENAJENACION_MQTT_DOCS_PATH}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-accent hover:underline"
+        >
+          Documentación del protocolo
+          <ExternalLink className="size-3.5" aria-hidden />
+        </Link>
       </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">

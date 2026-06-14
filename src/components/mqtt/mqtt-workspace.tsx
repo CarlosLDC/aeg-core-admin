@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Activity } from "lucide-react";
-import { EnajenacionMqttDocsPanel } from "@/components/mqtt/enajenacion-mqtt-docs-panel";
 import { EnajenacionTestPanel } from "@/components/mqtt/enajenacion-test-panel";
 import { MqttDiagnosticsPanel } from "@/components/mqtt/mqtt-diagnostics-panel";
 import { MqttMonitorPanel } from "@/components/mqtt/mqtt-monitor-panel";
@@ -10,7 +9,7 @@ import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { useMqttMonitor } from "@/hooks/use-mqtt-monitor";
 import { cn } from "@/lib/utils";
 
-type MqttTab = "monitor" | "diagnostics" | "enajenacion" | "docs";
+type MqttTab = "monitor" | "diagnostics" | "enajenacion";
 
 const TAB_HELP: Record<MqttTab, string> = {
   monitor:
@@ -18,9 +17,7 @@ const TAB_HELP: Record<MqttTab, string> = {
   diagnostics:
     "Comprueba la conectividad con el broker y publica mensajes de prueba sin depender del flujo fiscal.",
   enajenacion:
-    "Simula el ritual de enajenación fiscal (ptrEnajenar → Reporte Z). Abre la pestaña Documentación para la referencia del protocolo.",
-  docs:
-    "Referencia navegable del protocolo MQTT de enajenación: actores, flujo, requisitos y códigos de éxito.",
+    "Simula el ritual de enajenación fiscal (ptrEnajenar → Reporte Z). Abre la documentación del protocolo en una pestaña nueva desde el panel de prueba.",
 };
 
 function MqttStatusStrip({
@@ -88,14 +85,13 @@ export function MqttWorkspace() {
           { value: "monitor", label: "Monitor" },
           { value: "diagnostics", label: "Diagnóstico" },
           { value: "enajenacion", label: "Enajenación" },
-          { value: "docs", label: "Documentación" },
         ]}
-        className="max-w-3xl"
+        className="max-w-2xl"
       />
 
       <p className="text-sm text-muted">{TAB_HELP[tab]}</p>
 
-      {tab !== "monitor" && tab !== "docs" && (
+      {tab !== "monitor" && (
         <MqttStatusStrip
           monitorTopic={monitor.monitorTopic}
           wsStatus={monitor.wsStatus}
@@ -117,12 +113,7 @@ export function MqttWorkspace() {
           liveMessages={monitor.messages}
           onApplyMonitorTopic={monitor.subscribeToTopic}
           onOpenMonitor={() => setTab("monitor")}
-          onOpenDocs={() => setTab("docs")}
         />
-      </div>
-
-      <div className={cn(tab !== "docs" && "hidden")}>
-        <EnajenacionMqttDocsPanel />
       </div>
     </div>
   );
