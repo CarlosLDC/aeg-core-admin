@@ -52,10 +52,12 @@ export function EnajenacionTestPanel({
   liveMessages,
   onApplyMonitorTopic,
   onOpenMonitor,
+  onOpenDocs,
 }: {
   liveMessages: MqttInboundMessage[];
   onApplyMonitorTopic?: (topic: string) => Promise<void>;
   onOpenMonitor?: () => void;
+  onOpenDocs?: () => void;
 }) {
   const toast = useToast();
   const [printers, setPrinters] = useState<PrinterResponse[]>([]);
@@ -301,16 +303,29 @@ export function EnajenacionTestPanel({
 
   return (
     <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
-      <h2 className="flex items-center gap-2 font-semibold text-card-foreground">
-        <Printer className="size-5 text-accent" />
-        Prueba manual de enajenación
-      </h2>
-      <p className="mt-1 text-sm text-muted">
-        Simula el firmware de la impresora publicando{" "}
-        <code className="text-xs">ptrEnajenar</code> y las respuestas fiscales
-        en CmdServer vía el API. La impresora debe estar{" "}
-        <strong>asignada</strong> a un cliente con datos fiscales completos.
-      </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="flex items-center gap-2 font-semibold text-card-foreground">
+            <Printer className="size-5 text-accent" />
+            Prueba manual de enajenación
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Simula el firmware de la impresora publicando{" "}
+            <code className="text-xs">ptrEnajenar</code> y las respuestas fiscales
+            en CmdServer vía el API. La impresora debe estar{" "}
+            <strong>asignada</strong> a un cliente con datos fiscales completos.
+          </p>
+        </div>
+        {onOpenDocs && (
+          <button
+            type="button"
+            onClick={onOpenDocs}
+            className="shrink-0 text-sm font-medium text-accent hover:underline"
+          >
+            Ver documentación →
+          </button>
+        )}
+      </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <label className="block lg:col-span-2">

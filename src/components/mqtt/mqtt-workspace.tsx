@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Activity, BookOpen, ChevronDown } from "lucide-react";
+import { Activity } from "lucide-react";
 import { EnajenacionMqttDocsPanel } from "@/components/mqtt/enajenacion-mqtt-docs-panel";
 import { EnajenacionTestPanel } from "@/components/mqtt/enajenacion-test-panel";
 import { MqttDiagnosticsPanel } from "@/components/mqtt/mqtt-diagnostics-panel";
@@ -10,7 +10,7 @@ import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { useMqttMonitor } from "@/hooks/use-mqtt-monitor";
 import { cn } from "@/lib/utils";
 
-type MqttTab = "monitor" | "diagnostics" | "enajenacion";
+type MqttTab = "monitor" | "diagnostics" | "enajenacion" | "docs";
 
 const TAB_HELP: Record<MqttTab, string> = {
   monitor:
@@ -18,7 +18,9 @@ const TAB_HELP: Record<MqttTab, string> = {
   diagnostics:
     "Comprueba la conectividad con el broker y publica mensajes de prueba sin depender del flujo fiscal.",
   enajenacion:
-    "Simula el ritual de enajenación fiscal (ptrEnajenar → Reporte Z). Consulta la referencia del protocolo si lo necesitas.",
+    "Simula el ritual de enajenación fiscal (ptrEnajenar → Reporte Z). Abre la pestaña Documentación para la referencia del protocolo.",
+  docs:
+    "Referencia navegable del protocolo MQTT de enajenación: actores, flujo, requisitos y códigos de éxito.",
 };
 
 function MqttStatusStrip({
@@ -83,16 +85,17 @@ export function MqttWorkspace() {
         onChange={setTab}
         ariaLabel="Sección MQTT"
         options={[
-          { value: "monitor", label: "Monitor en vivo" },
+          { value: "monitor", label: "Monitor" },
           { value: "diagnostics", label: "Diagnóstico" },
-          { value: "enajenacion", label: "Enajenación fiscal" },
+          { value: "enajenacion", label: "Enajenación" },
+          { value: "docs", label: "Documentación" },
         ]}
-        className="max-w-2xl"
+        className="max-w-3xl"
       />
 
       <p className="text-sm text-muted">{TAB_HELP[tab]}</p>
 
-      {tab !== "monitor" && (
+      {tab !== "monitor" && tab !== "docs" && (
         <MqttStatusStrip
           monitorTopic={monitor.monitorTopic}
           wsStatus={monitor.wsStatus}
@@ -109,25 +112,17 @@ export function MqttWorkspace() {
         <MqttDiagnosticsPanel />
       </div>
 
-      <div className={cn(tab !== "enajenacion" && "hidden", "space-y-6")}>
+      <div className={cn(tab !== "enajenacion" && "hidden")}>
         <EnajenacionTestPanel
           liveMessages={monitor.messages}
           onApplyMonitorTopic={monitor.subscribeToTopic}
           onOpenMonitor={() => setTab("monitor")}
+          onOpenDocs={() => setTab("docs")}
         />
+      </div>
 
-        <details className="group rounded-xl border border-border bg-card shadow-sm">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 font-semibold text-card-foreground [&::-webkit-details-marker]:hidden">
-            <span className="flex items-center gap-2">
-              <BookOpen className="size-5 text-accent" />
-              Referencia del protocolo MQTT
-            </span>
-            <ChevronDown className="size-4 shrink-0 text-muted transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="border-t border-border px-5 pb-5">
-            <EnajenacionMqttDocsPanel hideHeader />
-          </div>
-        </details>
+      <div className={cn(tab !== "docs" && "hidden")}>
+        <EnajenacionMqttDocsPanel />
       </div>
     </div>
   );
