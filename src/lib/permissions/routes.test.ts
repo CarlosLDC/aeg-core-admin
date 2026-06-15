@@ -23,6 +23,12 @@ describe("route permissions", () => {
     expect(roles.filter((r) => canAccessRoute(r, "/mqtt-tests"))).toEqual(["ADMIN"]);
   });
 
+  it("allows ADMIN on enajenación MQTT docs", () => {
+    expect(canAccessRoute("ADMIN", "/docs/enajenacion-mqtt")).toBe(true);
+    expect(resourceForPath("/docs/enajenacion-mqtt")).toBe("mqtt");
+    expect(canAccessRoute("TECHNICIAN", "/docs/enajenacion-mqtt")).toBe(false);
+  });
+
   it("allows DISTRIBUTOR on /clients and denies /companies list", () => {
     expect(canAccessRoute("DISTRIBUTOR", "/clients")).toBe(true);
     expect(resourceForPath("/clients")).toBe("branches");
