@@ -40,10 +40,10 @@ const ENajenacionSteps = [
   {
     step: "4",
     name: "Estatus del registro",
-    direction: "Pendiente spec firmware",
+    direction: "Servidor → impresora",
     topic: "Comando",
     summary:
-      "Consulta de registro fiscal tras la configuración. Hoy el servidor omite este paso (skip-registration-status).",
+      "StaInf con data.status = NroRegMa. Respuesta en CmdServer: code 0 y dataS = ptrReg (ej. GRA0000017).",
   },
   {
     step: "5",

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildDnfSuccessResponse,
   buildPtrEnajenarPayload,
+  buildStaInfSuccessResponse,
   classifyFiscalCommand,
   compactMac,
   fiscalCmdServerTopic,
@@ -35,6 +36,22 @@ describe("enajenacion-mqtt-protocol", () => {
   it("classifies DNF command array", () => {
     const payload = JSON.stringify([{ cmd: "aperDNF", data: "x" }]);
     expect(classifyFiscalCommand(payload)).toBe("dnf");
+  });
+
+  it("classifies StaInf registration status command", () => {
+    const payload = JSON.stringify({
+      cmd: "StaInf",
+      data: { status: "NroRegMa" },
+    });
+    expect(classifyFiscalCommand(payload)).toBe("reg_status");
+  });
+
+  it("builds StaInf success response with dataS", () => {
+    expect(buildStaInfSuccessResponse("GRA0000017")).toEqual({
+      cmd: "StaInf",
+      code: 0,
+      dataS: "GRA0000017",
+    });
   });
 
   it("detects eligible assigned printer", () => {

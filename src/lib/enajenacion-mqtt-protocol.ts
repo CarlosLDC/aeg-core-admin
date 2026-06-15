@@ -10,14 +10,19 @@ export const PROD_NC_LINE_DATA_D = 9;
 export type FiscalResponseItem = {
   cmd: string;
   code: number;
-  dataD: number;
+  dataD?: number;
+  dataS?: string;
+};
+
+export type EnajenacionSimulatorContext = {
+  fiscalSerial: string;
 };
 
 export type EnajenacionSimulatorStep = {
   id: string;
   label: string;
   delayMs: number;
-  buildPayload: () => unknown;
+  buildPayload: (ctx: EnajenacionSimulatorContext) => unknown;
 };
 
 export function compactMac(mac: string): string {
@@ -79,6 +84,10 @@ export function buildWFileSpiffSuccessResponse(): FiscalResponseItem {
   return item("wFileSPIFF");
 }
 
+export function buildStaInfSuccessResponse(fiscalSerial: string): FiscalResponseItem {
+  return { cmd: "StaInf", code: 0, dataS: fiscalSerial };
+}
+
 export function buildInvoiceSuccessResponse(): FiscalResponseItem[] {
   return [
     ...Array.from({ length: 5 }, () => item("proF")),
@@ -115,43 +124,49 @@ export const EnajenacionResponseSteps: EnajenacionSimulatorStep[] = [
     id: "dnf",
     label: "Paso 2a — Respuesta DNF",
     delayMs: 800,
-    buildPayload: buildDnfSuccessResponse,
+    buildPayload: () => buildDnfSuccessResponse(),
   },
   {
     id: "fiscal-rif",
     label: "Paso 3a — fiscalAEG",
     delayMs: 600,
-    buildPayload: buildFiscalRifSuccessResponse,
+    buildPayload: () => buildFiscalRifSuccessResponse(),
   },
   {
     id: "header",
     label: "Paso 3b — paramFacSPIFF",
     delayMs: 600,
-    buildPayload: buildWFileSpiffSuccessResponse,
+    buildPayload: () => buildWFileSpiffSuccessResponse(),
   },
   {
     id: "config",
     label: "Paso 3c — configSPIFFS",
     delayMs: 600,
-    buildPayload: buildWFileSpiffSuccessResponse,
+    buildPayload: () => buildWFileSpiffSuccessResponse(),
+  },
+  {
+    id: "reg-status",
+    label: "Paso 4 — StaInf (NroRegMa)",
+    delayMs: 600,
+    buildPayload: ({ fiscalSerial }) => buildStaInfSuccessResponse(fiscalSerial),
   },
   {
     id: "invoice",
     label: "Paso 5 — Factura de prueba",
     delayMs: 800,
-    buildPayload: buildInvoiceSuccessResponse,
+    buildPayload: () => buildInvoiceSuccessResponse(),
   },
   {
     id: "credit-note",
     label: "Paso 6 — Nota de crédito",
     delayMs: 800,
-    buildPayload: buildCreditNoteSuccessResponse,
+    buildPayload: () => buildCreditNoteSuccessResponse(),
   },
   {
     id: "report-z",
     label: "Paso 7 — Reporte Z",
     delayMs: 600,
-    buildPayload: buildReportZSuccessResponse,
+    buildPayload: () => buildReportZSuccessResponse(),
   },
 ];
 
@@ -186,12 +201,16 @@ export function classifyFiscalCommand(payload: string): string {
       return `wfile:${name}`;
     }
     if (obj.cmd === "genImpRepZ") return "report_z";
+    if (obj.cmd === "StaInf") return "reg_status";
     return `object:${obj.cmd ?? "unknown"}`;
   }
   return "unknown";
 }
 
-export function buildSimulatorResponseForKind(kind: string): unknown {
+export function buildSimulatorResponseForKind(
+  kind: string,
+  fiscalSerial?: string,
+): unknown {
   switch (kind) {
     case "dnf":
       return buildDnfSuccessResponse();
@@ -200,6 +219,11 @@ export function buildSimulatorResponseForKind(kind: string): unknown {
     case "header":
     case "config":
       return buildWFileSpiffSuccessResponse();
+    case "reg_status":
+      if (!fiscalSerial?.trim()) {
+        throw new Error("StaInf requiere fiscalSerial para la respuesta dataS");
+      }
+      return buildStaInfSuccessResponse(fiscalSerial.trim());
     case "invoice":
       return buildInvoiceSuccessResponse();
     case "credit_note":

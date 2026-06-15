@@ -167,7 +167,10 @@ export function EnajenacionTestPanel({
 
       try {
         const kind = classifyFiscalCommand(message.payload);
-        const response = buildSimulatorResponseForKind(kind);
+        const response = buildSimulatorResponseForKind(
+          kind,
+          selectedPrinter?.fiscalSerial,
+        );
         respondedRef.current.add(dedupeKey);
         void publishMqttMessage({
           topic: topics.cmdServer,
@@ -204,12 +207,13 @@ export function EnajenacionTestPanel({
     }
   }
 
-  async function runSequentialResponses() {
+  async function runSequentialResponses(fiscalSerial: string) {
+    const ctx = { fiscalSerial };
     for (const step of EnajenacionResponseSteps) {
       if (abortRef.current) return;
       await sleep(step.delayMs);
       if (abortRef.current) return;
-      await publishToCmdServer(step.buildPayload(), step.label);
+      await publishToCmdServer(step.buildPayload(ctx), step.label);
     }
   }
 
@@ -268,7 +272,7 @@ export function EnajenacionTestPanel({
       );
 
       if (autoSequential) {
-        await runSequentialResponses();
+        await runSequentialResponses(selectedPrinter.fiscalSerial);
       } else {
         appendLog(
           "Modo manual: usa los botones de respuesta o activa secuencia automática.",
@@ -292,11 +296,14 @@ export function EnajenacionTestPanel({
   }
 
   async function handleManualStep(stepId: string) {
-    if (!topics) return;
+    if (!topics || !selectedPrinter?.fiscalSerial) return;
     const step = EnajenacionResponseSteps.find((s) => s.id === stepId);
     if (!step) return;
     try {
-      await publishToCmdServer(step.buildPayload(), step.label);
+      await publishToCmdServer(
+        step.buildPayload({ fiscalSerial: selectedPrinter.fiscalSerial }),
+        step.label,
+      );
     } catch (err) {
       toast.error(getMqttErrorMessage(err));
     }
