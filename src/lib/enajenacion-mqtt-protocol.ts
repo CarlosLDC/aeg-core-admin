@@ -1,4 +1,4 @@
-import type { PrinterResponse } from "@/types/printer";
+import type { PrinterRequest, PrinterResponse } from "@/types/printer";
 import { isPrinterEligibleForMqttEnajenacion } from "@/lib/printer-status";
 
 export const DNF_END_OK = 7;
@@ -187,8 +187,62 @@ export function flowStepById(id: string): EnajenacionFlowStep | undefined {
   return ENAJENACION_FLOW_STEPS.find((step) => step.id === id);
 }
 
+const MAC_COLON_RE = /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/i;
+const MAC_COMPACT_RE = /^[0-9A-F]{12}$/i;
+const TEST_FISCAL_SERIAL_RE = /^TST[0-9]{7}$/;
+
 export function compactMac(mac: string): string {
   return mac.replace(/:/g, "").toUpperCase();
+}
+
+export function parseManualMacAddress(input: string):
+  | { ok: true; mac: string }
+  | { ok: false; error: string } {
+  const trimmed = input.trim().toUpperCase();
+  if (MAC_COLON_RE.test(trimmed)) {
+    return { ok: true, mac: trimmed };
+  }
+  const compact = compactMac(trimmed);
+  if (MAC_COMPACT_RE.test(compact)) {
+    return { ok: true, mac: colonMac(compact) };
+  }
+  return {
+    ok: false,
+    error: "MAC inválida. Usa AA:BB:CC:DD:EE:FF o 12 caracteres hexadecimales.",
+  };
+}
+
+export function generateTestFiscalSerial(seed = Date.now()): string {
+  const suffix = (seed % 10_000_000).toString().padStart(7, "0");
+  return `TST${suffix}`;
+}
+
+export function isTestFiscalSerial(fiscalSerial: string): boolean {
+  return TEST_FISCAL_SERIAL_RE.test(fiscalSerial.trim().toUpperCase());
+}
+
+export function buildEnajenacionTestPrinterRequest(
+  base: PrinterResponse,
+  macColon: string,
+  fiscalSerial: string,
+): PrinterRequest {
+  if (!base.clientId) {
+    throw new Error("La impresora base debe tener cliente asignado.");
+  }
+  return {
+    modelId: base.modelId,
+    softwareId: base.softwareId,
+    clientId: base.clientId,
+    distributorId: base.distributorId,
+    fiscalSerial: fiscalSerial.trim().toUpperCase(),
+    finalSalePrice: base.finalSalePrice,
+    paid: true,
+    installationDate: base.installationDate,
+    versionFirmware: base.versionFirmware,
+    macAddress: macColon,
+    status: "laboratorio",
+    deviceType: base.deviceType,
+  };
 }
 
 export function colonMac(mac: string): string {

@@ -1,16 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckCircle2,
   Loader2,
   Play,
   Printer,
   RefreshCw,
+  Trash2,
   Zap,
 } from "lucide-react";
 import { useToast } from "@/context/toast-provider";
-import { fetchPrinterById, fetchPrinters } from "@/lib/printers-api";
+import {
+  createPrinter,
+  deletePrinter,
+  fetchPrinterById,
+  fetchPrinters,
+  getPrintersErrorMessage,
+} from "@/lib/printers-api";
 import {
   getMqttErrorMessage,
   publishMqttMessage,
@@ -19,14 +26,19 @@ import {
 import {
   ENAJENACION_FLOW_STEPS,
   EnajenacionResponseSteps,
+  buildEnajenacionTestPrinterRequest,
   buildPtrEnajenarPayload,
   compactMac,
   fiscalCmdServerTopic,
   fiscalComandoTopic,
   fiscalMonitorTopic,
   flowStepById,
+  generateTestFiscalSerial,
   isPrinterEligibleForEnajenacionTest,
+  isTestFiscalSerial,
+  parseManualMacAddress,
 } from "@/lib/enajenacion-mqtt-protocol";
+import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { printerStatusLabel } from "@/lib/printer-status";
 import { formatJsonText } from "@/lib/format-json-paste";
 import type { PrinterResponse } from "@/types/printer";
@@ -36,6 +48,8 @@ import type {
   MqttPublishResponse,
 } from "@/types/mqtt";
 import { cn } from "@/lib/utils";
+
+type PrinterSourceMode = "registered" | "manual-mac";
 
 type CommandStatus = "pending" | "running" | "success" | "error";
 
@@ -157,9 +171,17 @@ export function EnajenacionTestPanel({
   onOpenMonitor?: () => void;
 }) {
   const toast = useToast();
+  const ephemeralPrinterIdRef = useRef<number | null>(null);
   const [printers, setPrinters] = useState<PrinterResponse[]>([]);
   const [printersLoading, setPrintersLoading] = useState(true);
+  const [sourceMode, setSourceMode] = useState<PrinterSourceMode>("registered");
   const [selectedId, setSelectedId] = useState<number | "">("");
+  const [manualBasePrinterId, setManualBasePrinterId] = useState<number | "">("");
+  const [manualMacInput, setManualMacInput] = useState("");
+  const [ephemeralPrinter, setEphemeralPrinter] = useState<PrinterResponse | null>(
+    null,
+  );
+  const [ephemeralCreating, setEphemeralCreating] = useState(false);
   const [printerStatus, setPrinterStatus] = useState<PrinterResponse | null>(
     null,
   );
@@ -172,24 +194,34 @@ export function EnajenacionTestPanel({
     [printers],
   );
 
-  const selectedPrinter = useMemo(
+  const registeredPrinter = useMemo(
     () => eligiblePrinters.find((p) => p.id === selectedId) ?? null,
     [eligiblePrinters, selectedId],
   );
 
+  const manualBasePrinter = useMemo(
+    () => eligiblePrinters.find((p) => p.id === manualBasePrinterId) ?? null,
+    [eligiblePrinters, manualBasePrinterId],
+  );
+
+  const activePrinter = useMemo(
+    () => (sourceMode === "manual-mac" ? ephemeralPrinter : registeredPrinter),
+    [ephemeralPrinter, registeredPrinter, sourceMode],
+  );
+
   const topics = useMemo(() => {
-    if (!selectedPrinter?.macAddress) return null;
-    const mac = compactMac(selectedPrinter.macAddress);
+    if (!activePrinter?.macAddress) return null;
+    const mac = compactMac(activePrinter.macAddress);
     return {
       mac,
       cmdServer: fiscalCmdServerTopic(mac),
       comando: fiscalComandoTopic(mac),
       monitor: fiscalMonitorTopic(mac),
     };
-  }, [selectedPrinter]);
+  }, [activePrinter]);
 
   const manualCommands = useMemo<ManualCommand[]>(() => {
-    if (!selectedPrinter?.fiscalSerial || !selectedPrinter.macAddress || !topics) {
+    if (!activePrinter?.fiscalSerial || !activePrinter.macAddress || !topics) {
       return [];
     }
 
@@ -203,8 +235,8 @@ export function EnajenacionTestPanel({
           "Publica ptrEnajenar para que AEG Core inicie el ritual fiscal.",
         topic: topics.cmdServer,
         payload: buildPtrEnajenarPayload(
-          selectedPrinter.fiscalSerial,
-          selectedPrinter.macAddress,
+          activePrinter.fiscalSerial,
+          activePrinter.macAddress,
         ),
         successHint:
           requestStep?.successCriteria[2] ??
@@ -220,7 +252,7 @@ export function EnajenacionTestPanel({
             "Publica la respuesta simulada del firmware en CmdServer.",
           topic: topics.cmdServer,
           payload: step.buildPayload({
-            fiscalSerial: selectedPrinter.fiscalSerial,
+            fiscalSerial: activePrinter.fiscalSerial,
           }) as MqttPublishPayload,
           successHint:
             flow?.successCriteria[0] ??
@@ -228,7 +260,7 @@ export function EnajenacionTestPanel({
         };
       }),
     ];
-  }, [selectedPrinter, topics]);
+  }, [activePrinter, topics]);
 
   const activeStepIndex = useMemo(() => {
     const index = manualCommands.findIndex(
@@ -247,7 +279,35 @@ export function EnajenacionTestPanel({
   const refreshPrinterStatus = useCallback(async (printerId: number) => {
     const updated = await fetchPrinterById(printerId);
     setPrinterStatus(updated);
+    if (ephemeralPrinter?.id === printerId) {
+      setEphemeralPrinter(updated);
+    }
     return updated;
+  }, [ephemeralPrinter?.id]);
+
+  const cleanupEphemeralPrinter = useCallback(async () => {
+    const id = ephemeralPrinterIdRef.current;
+    ephemeralPrinterIdRef.current = null;
+    setEphemeralPrinter(null);
+    if (id == null) return;
+    try {
+      await deletePrinter(id);
+    } catch {
+      // Best effort: el registro de prueba puede haber sido eliminado ya.
+    }
+  }, []);
+
+  useEffect(() => {
+    ephemeralPrinterIdRef.current = ephemeralPrinter?.id ?? null;
+  }, [ephemeralPrinter]);
+
+  useEffect(() => {
+    return () => {
+      const id = ephemeralPrinterIdRef.current;
+      if (id != null) {
+        void deletePrinter(id).catch(() => undefined);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -258,7 +318,10 @@ export function EnajenacionTestPanel({
         if (!cancelled) {
           setPrinters(list);
           const first = list.find(isPrinterEligibleForEnajenacionTest);
-          if (first) setSelectedId(first.id);
+          if (first) {
+            setSelectedId(first.id);
+            setManualBasePrinterId(first.id);
+          }
         }
       } catch (err) {
         if (!cancelled) {
@@ -274,27 +337,108 @@ export function EnajenacionTestPanel({
   }, [toast]);
 
   useEffect(() => {
-    if (!selectedPrinter) {
+    if (sourceMode !== "registered" || !registeredPrinter) {
       return;
     }
     let cancelled = false;
     (async () => {
       try {
-        const updated = await refreshPrinterStatus(selectedPrinter.id);
+        const updated = await refreshPrinterStatus(registeredPrinter.id);
         if (!cancelled) setPrinterStatus(updated);
       } catch {
-        if (!cancelled) setPrinterStatus(selectedPrinter);
+        if (!cancelled) setPrinterStatus(registeredPrinter);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [selectedPrinter, refreshPrinterStatus]);
+  }, [registeredPrinter, refreshPrinterStatus, sourceMode]);
 
-  function handlePrinterChange(value: string) {
+  async function handleSourceModeChange(mode: PrinterSourceMode) {
+    if (mode === sourceMode) return;
+    if (sourceMode === "manual-mac") {
+      await cleanupEphemeralPrinter();
+    }
+    setSourceMode(mode);
+    setCommandStates({});
+    if (mode === "registered") {
+      setPrinterStatus(registeredPrinter);
+    } else {
+      setPrinterStatus(ephemeralPrinter);
+    }
+  }
+
+  function handleRegisteredPrinterChange(value: string) {
     setSelectedId(value ? Number(value) : "");
     setCommandStates({});
     setPrinterStatus(null);
+  }
+
+  async function handleManualBasePrinterChange(value: string) {
+    await cleanupEphemeralPrinter();
+    setManualBasePrinterId(value ? Number(value) : "");
+    setCommandStates({});
+    setPrinterStatus(null);
+  }
+
+  async function handleManualMacChange(value: string) {
+    if (ephemeralPrinter) {
+      await cleanupEphemeralPrinter();
+    }
+    setManualMacInput(value.toUpperCase());
+    setCommandStates({});
+    setPrinterStatus(null);
+  }
+
+  async function handlePrepareEphemeralPrinter() {
+    if (!manualBasePrinter) {
+      toast.error("Selecciona una impresora base para copiar cliente y modelo.");
+      return;
+    }
+    const parsedMac = parseManualMacAddress(manualMacInput);
+    if (!parsedMac.ok) {
+      toast.error(parsedMac.error);
+      return;
+    }
+
+    setEphemeralCreating(true);
+    try {
+      await cleanupEphemeralPrinter();
+      let created: PrinterResponse | null = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const fiscalSerial = generateTestFiscalSerial(Date.now() + attempt);
+        try {
+          created = await createPrinter(
+            buildEnajenacionTestPrinterRequest(
+              manualBasePrinter,
+              parsedMac.mac,
+              fiscalSerial,
+            ),
+          );
+          break;
+        } catch (err) {
+          if (attempt === 2) throw err;
+        }
+      }
+      if (!created) {
+        throw new Error("No se pudo crear el registro de prueba.");
+      }
+      setEphemeralPrinter(created);
+      setPrinterStatus(created);
+      setCommandStates({});
+      toast.success("Registro de prueba creado. Se eliminará al salir de esta prueba.");
+    } catch (err) {
+      toast.error(getPrintersErrorMessage(err));
+    } finally {
+      setEphemeralCreating(false);
+    }
+  }
+
+  async function handleDiscardEphemeralPrinter() {
+    await cleanupEphemeralPrinter();
+    setCommandStates({});
+    setPrinterStatus(null);
+    toast.success("Registro de prueba eliminado.");
   }
 
   async function handleApplyMonitorTopic() {
@@ -412,8 +556,8 @@ export function EnajenacionTestPanel({
       }));
       toast.success(`${command.label} publicado.`);
 
-      if (command.id === "report-z" && selectedPrinter) {
-        void refreshPrinterStatus(selectedPrinter.id).catch(() => undefined);
+      if (command.id === "report-z" && activePrinter) {
+        void refreshPrinterStatus(activePrinter.id).catch(() => undefined);
       }
     } catch (err) {
       const message = getMqttErrorMessage(err);
@@ -443,39 +587,158 @@ export function EnajenacionTestPanel({
               Enajenación MQTT manual
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-muted">
-              Selecciona una impresora, revisa cada JSON, publícalo manualmente
-              y avanza sólo cuando el broker acepte el paso. Cada respuesta queda
-              visible para debugging.
+              Selecciona una impresora registrada o ingresa una MAC manual para
+              crear un registro de prueba temporal. Revisa cada JSON, publícalo
+              manualmente y avanza sólo cuando el broker acepte el paso.
             </p>
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          <label className="block lg:col-span-2">
-            <span className="mb-1.5 block text-sm font-medium">
-              Impresora (asignada / laboratorio)
-            </span>
-            <select
-              value={selectedId}
-              onChange={(e) => handlePrinterChange(e.target.value)}
-              disabled={printersLoading}
-              className={inputClass}
-            >
-              {eligiblePrinters.length === 0 ? (
-                <option value="">No hay impresoras aptas</option>
-              ) : (
-                eligiblePrinters.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.fiscalSerial} · {p.macAddress} · cliente #{p.clientId}
-                  </option>
-                ))
-              )}
-            </select>
-          </label>
+        <div className="mt-5 space-y-4">
+          <SegmentedToggle
+            value={sourceMode}
+            onChange={(value) => void handleSourceModeChange(value)}
+            ariaLabel="Origen de la impresora"
+            options={[
+              { value: "registered", label: "Impresora registrada" },
+              { value: "manual-mac", label: "MAC manual" },
+            ]}
+            className="max-w-md"
+          />
 
-          {topics && selectedPrinter && (
-            <div className="lg:col-span-2 rounded-lg border border-border bg-foreground/[0.02] p-4 text-sm">
+          {sourceMode === "registered" ? (
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">
+                Impresora (asignada / laboratorio)
+              </span>
+              <select
+                value={selectedId}
+                onChange={(e) => handleRegisteredPrinterChange(e.target.value)}
+                disabled={printersLoading}
+                className={inputClass}
+              >
+                {eligiblePrinters.length === 0 ? (
+                  <option value="">No hay impresoras aptas</option>
+                ) : (
+                  eligiblePrinters.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.fiscalSerial} · {p.macAddress} · cliente #{p.clientId}
+                    </option>
+                  ))
+                )}
+              </select>
+            </label>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <label className="block lg:col-span-2">
+                <span className="mb-1.5 block text-sm font-medium">
+                  Impresora base (cliente y modelo)
+                </span>
+                <select
+                  value={manualBasePrinterId}
+                  onChange={(e) =>
+                    void handleManualBasePrinterChange(e.target.value)
+                  }
+                  disabled={printersLoading || ephemeralCreating}
+                  className={inputClass}
+                >
+                  {eligiblePrinters.length === 0 ? (
+                    <option value="">No hay impresoras aptas</option>
+                  ) : (
+                    eligiblePrinters.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.fiscalSerial} · cliente #{p.clientId}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </label>
+
+              <label className="block lg:col-span-2">
+                <span className="mb-1.5 block text-sm font-medium">
+                  MAC de la impresora a probar
+                </span>
+                <input
+                  type="text"
+                  value={manualMacInput}
+                  onChange={(e) => void handleManualMacChange(e.target.value)}
+                  disabled={ephemeralCreating}
+                  placeholder="AA:BB:CC:DD:EE:FF o 206EF1884C68"
+                  className={cn(inputClass, "font-mono")}
+                  spellCheck={false}
+                />
+              </label>
+
+              <div className="flex flex-wrap gap-2 lg:col-span-2">
+                <button
+                  type="button"
+                  onClick={() => void handlePrepareEphemeralPrinter()}
+                  disabled={
+                    ephemeralCreating ||
+                    printersLoading ||
+                    !manualBasePrinter ||
+                    !manualMacInput.trim()
+                  }
+                  className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-60"
+                >
+                  {ephemeralCreating ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Play className="size-4" />
+                  )}
+                  Crear registro de prueba
+                </button>
+                {ephemeralPrinter && (
+                  <button
+                    type="button"
+                    onClick={() => void handleDiscardEphemeralPrinter()}
+                    className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-foreground/5"
+                  >
+                    <Trash2 className="size-4" />
+                    Eliminar registro de prueba
+                  </button>
+                )}
+              </div>
+
+              {ephemeralPrinter ? (
+                <div className="lg:col-span-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-950 dark:text-amber-100">
+                  <p className="font-medium">Registro de prueba activo</p>
+                  <p className="mt-1 text-amber-900/90 dark:text-amber-50/90">
+                    Serial {ephemeralPrinter.fiscalSerial} · MAC{" "}
+                    {ephemeralPrinter.macAddress}. Se elimina automáticamente al
+                    salir de esta sección.
+                  </p>
+                </div>
+              ) : (
+                <p className="lg:col-span-2 text-sm text-muted">
+                  Crea un registro temporal en laboratorio con la MAC indicada.
+                  Usa un serial fiscal de prueba y conserva el cliente de la
+                  impresora base.
+                </p>
+              )}
+            </div>
+          )}
+
+          {topics && activePrinter && (
+            <div className="rounded-lg border border-border bg-foreground/[0.02] p-4 text-sm">
               <dl className="grid gap-2 sm:grid-cols-2">
+                <div>
+                  <dt className="text-muted">Serial fiscal</dt>
+                  <dd className="font-mono text-xs break-all">
+                    {activePrinter.fiscalSerial}
+                    {isTestFiscalSerial(activePrinter.fiscalSerial) ? (
+                      <span className="ml-2 text-amber-700 dark:text-amber-300">
+                        (prueba)
+                      </span>
+                    ) : null}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted">MAC</dt>
+                  <dd className="font-mono text-xs break-all">
+                    {activePrinter.macAddress}
+                  </dd>
+                </div>
                 <div>
                   <dt className="text-muted">CmdServer</dt>
                   <dd className="font-mono text-xs break-all">
@@ -518,10 +781,10 @@ export function EnajenacionTestPanel({
               Usar monitor fiscal
             </button>
           )}
-          {selectedPrinter && (
+          {activePrinter && (
             <button
               type="button"
-              onClick={() => void refreshPrinterStatus(selectedPrinter.id)}
+              onClick={() => void refreshPrinterStatus(activePrinter.id)}
               className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-foreground/5"
             >
               <RefreshCw className="size-4" />
@@ -704,8 +967,9 @@ export function EnajenacionTestPanel({
 
       {manualCommands.length === 0 && !printersLoading && (
         <section className="rounded-xl border border-border bg-card p-5 text-sm text-muted shadow-sm">
-          No hay impresoras aptas para esta prueba. Deben tener estatus Asignada o
-          Laboratorio, cliente, serial fiscal y MAC.
+          {sourceMode === "manual-mac" && !ephemeralPrinter
+            ? "Ingresa una MAC válida y crea el registro de prueba para ver los comandos del ritual."
+            : "No hay impresoras aptas para esta prueba. Deben tener estatus Asignada o Laboratorio, cliente, serial fiscal y MAC."}
         </section>
       )}
     </div>
