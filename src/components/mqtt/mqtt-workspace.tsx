@@ -17,7 +17,7 @@ const TAB_HELP: Record<MqttTab, string> = {
   diagnostics:
     "Comprueba la conectividad con el broker y publica mensajes de prueba sin depender del flujo fiscal.",
   enajenacion:
-    "Prueba el ritual fiscal con impresora física (Comando → imprime) o simulador (sin hardware).",
+    "Prueba el ritual con una impresora física registrada en AEG Core. El panel observa ptrEnajenar y las respuestas reales en el monitor.",
 };
 
 function MqttStatusStrip({

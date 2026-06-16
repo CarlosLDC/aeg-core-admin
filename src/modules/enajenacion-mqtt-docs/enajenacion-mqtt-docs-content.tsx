@@ -264,35 +264,28 @@ export function EnajenacionMqttDocsContent() {
           <ol className="list-decimal space-y-3 pl-5">
             <li>
               Elige una impresora{" "}
-              <strong className="font-semibold text-foreground">ASIGNADA</strong>{" "}
-              con MAC y cliente válidos (Herramientas MQTT → Enajenación).
+              <strong className="font-semibold text-foreground">registrada</strong>{" "}
+              (asignada o laboratorio, con cliente, serial y MAC) en Herramientas
+              MQTT → Enajenación.
             </li>
             <li>
               Pulsa{" "}
               <strong className="font-semibold text-foreground">
-                Iniciar simulación
-              </strong>
-              : publica <Code>ptrEnajenar</Code> en CmdServer.
-            </li>
-            <li>
-              Con{" "}
-              <strong className="font-semibold text-foreground">
-                secuencia automática
-              </strong>
-              , el panel envía las respuestas de los pasos 2–7 vía{" "}
-              <Code>POST /api/mqtt/publish</Code>.
-            </li>
-            <li>
-              Usa el{" "}
-              <strong className="font-semibold text-foreground">
-                monitor en vivo
+                Usar monitor fiscal
               </strong>{" "}
-              (tópico <Code>{"{mac}"}/AEG_Fiscal/Integracion/#</Code>) para ver
-              tráfico entrante.
+              y conecta el WebSocket en la pestaña Monitor.
+            </li>
+            <li>
+              <strong className="font-semibold text-foreground">
+                Enciende la impresora física
+              </strong>
+              . Debe publicar <Code>ptrEnajenar</Code> en CmdServer; el panel
+              marca cada paso al detectar los mensajes reales.
             </li>
             <li>
               Tras el Reporte Z, comprueba que el estado en BD pase a{" "}
-              <strong className="font-semibold text-foreground">Enajenada</strong>.
+              <strong className="font-semibold text-foreground">Enajenada</strong>{" "}
+              (botón Actualizar estado).
             </li>
           </ol>
           <P>

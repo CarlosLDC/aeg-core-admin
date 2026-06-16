@@ -1,83 +1,39 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  CheckCircle2,
-  Loader2,
-  Play,
-  Printer,
-  RefreshCw,
-  Trash2,
-  Zap,
-} from "lucide-react";
+import { Loader2, Printer, RefreshCw, Zap } from "lucide-react";
 import { useToast } from "@/context/toast-provider";
-import {
-  createPrinter,
-  deletePrinter,
-  fetchPrinterById,
-  fetchPrinters,
-  getPrintersErrorMessage,
-} from "@/lib/printers-api";
-import { fetchBranchById } from "@/lib/branches-api";
-import { fetchClientById } from "@/lib/clients-api";
-import { fetchCompanyById } from "@/lib/companies-api";
+import { fetchPrinterById, fetchPrinters } from "@/lib/printers-api";
 import {
   getMqttErrorMessage,
   precheckEnajenacionMqtt,
-  publishMqttMessage,
   updateMqttSubscription,
 } from "@/lib/mqtt-api";
 import {
   ENAJENACION_FLOW_STEPS,
-  EnajenacionCommandSteps,
-  EnajenacionResponseSteps,
-  type EnajenacionCommandContext,
-  buildEnajenacionTestPrinterRequest,
-  buildPtrEnajenarPayload,
   compactMac,
   detectPrinterResponseStep,
   detectServerCommandStep,
   fiscalCmdServerTopic,
   fiscalComandoTopic,
   fiscalMonitorTopic,
-  flowStepById,
-  generateTestFiscalSerial,
   isPrinterEligibleForEnajenacionTest,
-  isTestFiscalSerial,
-  parseManualMacAddress,
   resolveWfileResponseStep,
 } from "@/lib/enajenacion-mqtt-protocol";
-import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { printerStatusLabel } from "@/lib/printer-status";
-import { formatJsonText } from "@/lib/format-json-paste";
 import type { PrinterResponse } from "@/types/printer";
-import type {
-  MqttInboundMessage,
-  MqttPublishEnajenacionResult,
-  MqttPublishPayload,
-  MqttPublishResponse,
-} from "@/types/mqtt";
+import type { MqttInboundMessage } from "@/types/mqtt";
 import { cn } from "@/lib/utils";
 
-type PrinterSourceMode = "registered" | "manual-mac";
-type TestRoleMode = "simulator" | "hardware";
+type StepStatus = "pending" | "success";
 
-type CommandStatus = "pending" | "running" | "success" | "error";
-
-type ManualCommand = {
+type RitualStep = {
   id: string;
   label: string;
   description: string;
   topic: string;
-  payload: MqttPublishPayload;
   successHint: string;
-};
-
-type CommandState = {
-  payloadText: string;
-  status: CommandStatus;
-  result: { response: MqttPublishResponse; httpStatus: number } | null;
-  error: string | null;
+  isRequest: boolean;
 };
 
 const inputClass =
@@ -85,36 +41,14 @@ const inputClass =
 
 function JsonBlock({
   title,
-  status,
   children,
 }: {
   title: string;
-  status?: "ok" | "error" | "neutral";
   children: string;
 }) {
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-medium text-card-foreground">{title}</h3>
-        {status && (
-          <span
-            className={cn(
-              "rounded-full px-2 py-0.5 text-xs font-medium",
-              status === "ok" &&
-                "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-              status === "error" &&
-                "bg-rose-500/10 text-rose-700 dark:text-rose-300",
-              status === "neutral" && "bg-foreground/5 text-muted",
-            )}
-          >
-            {status === "ok"
-              ? "Éxito"
-              : status === "error"
-                ? "Error"
-                : "Respuesta"}
-          </span>
-        )}
-      </div>
+      <h4 className="text-sm font-medium text-card-foreground">{title}</h4>
       <pre className="max-h-64 overflow-auto rounded-lg border border-border bg-foreground/[0.03] p-4 font-mono text-xs text-card-foreground">
         {children}
       </pre>
@@ -122,79 +56,18 @@ function JsonBlock({
   );
 }
 
-function stringifyPayload(payload: MqttPublishPayload): string {
-  return JSON.stringify(payload, null, 2);
-}
-
-function parsePayloadText(text: string):
-  | { ok: true; payload: MqttPublishPayload }
-  | { ok: false; error: string } {
-  try {
-    const parsed: unknown = JSON.parse(text);
-    if (Array.isArray(parsed)) {
-      if (parsed.length === 0) {
-        return {
-          ok: false,
-          error: "El array JSON debe tener al menos un elemento.",
-        };
-      }
-      return { ok: true, payload: parsed };
-    }
-    if (parsed !== null && typeof parsed === "object") {
-      const payload = parsed as Record<string, unknown>;
-      if (Object.keys(payload).length === 0) {
-        return {
-          ok: false,
-          error: "El objeto JSON debe tener al menos un campo.",
-        };
-      }
-      return { ok: true, payload };
-    }
-    return {
-      ok: false,
-      error: "El comando debe ser un objeto JSON o un array JSON.",
-    };
-  } catch {
-    return { ok: false, error: "El comando no es JSON válido." };
-  }
-}
-
-function isEnajenacionStartFailure(
-  result: MqttPublishEnajenacionResult | null | undefined,
-): result is MqttPublishEnajenacionResult {
-  return (
-    result?.status === "REJECTED" || result?.status === "ALREADY_COMPLETED"
-  );
-}
-
-function statusLabel(
-  status: CommandStatus,
-  testRoleMode: TestRoleMode,
+function stepStatusLabel(
+  status: StepStatus,
   stepId: string,
   hasServerCommand: boolean,
 ): string {
-  switch (status) {
-    case "running":
-      return "Ejecutando";
-    case "success":
-      return testRoleMode === "hardware" && stepId !== "request"
-        ? "Impresora respondió"
-        : testRoleMode === "hardware"
-          ? "Solicitud recibida"
-          : "Publicado";
-    case "error":
-      return "Error";
-    default:
-      if (testRoleMode === "hardware" && stepId === "request") {
-        return "Esperando impresora";
-      }
-      if (testRoleMode === "hardware") {
-        return hasServerCommand
-          ? "Esperando impresora"
-          : "Esperando AEG Core";
-      }
-      return "Pendiente";
+  if (status === "success") {
+    return stepId === "request" ? "Solicitud recibida" : "Impresora respondió";
   }
+  if (stepId === "request") {
+    return "Esperando impresora";
+  }
+  return hasServerCommand ? "Esperando impresora" : "Esperando AEG Core";
 }
 
 function findLatestServerCommand(
@@ -221,23 +94,14 @@ export function EnajenacionTestPanel({
   onOpenMonitor?: () => void;
 }) {
   const toast = useToast();
-  const ephemeralPrinterIdRef = useRef<number | null>(null);
   const panelPublishedKeysRef = useRef<Set<string>>(new Set());
   const [printers, setPrinters] = useState<PrinterResponse[]>([]);
   const [printersLoading, setPrintersLoading] = useState(true);
-  const [sourceMode, setSourceMode] = useState<PrinterSourceMode>("registered");
-  const [testRoleMode, setTestRoleMode] = useState<TestRoleMode>("hardware");
   const [selectedId, setSelectedId] = useState<number | "">("");
-  const [manualBasePrinterId, setManualBasePrinterId] = useState<number | "">("");
-  const [manualMacInput, setManualMacInput] = useState("");
-  const [ephemeralPrinter, setEphemeralPrinter] = useState<PrinterResponse | null>(
-    null,
-  );
-  const [ephemeralCreating, setEphemeralCreating] = useState(false);
   const [printerStatus, setPrinterStatus] = useState<PrinterResponse | null>(
     null,
   );
-  const [commandStates, setCommandStates] = useState<Record<string, CommandState>>(
+  const [stepStatuses, setStepStatuses] = useState<Record<string, StepStatus>>(
     {},
   );
   const [precheck, setPrecheck] = useState<{
@@ -245,31 +109,15 @@ export function EnajenacionTestPanel({
     message: string | null;
   } | null>(null);
   const [precheckLoading, setPrecheckLoading] = useState(false);
-  const [commandContext, setCommandContext] =
-    useState<EnajenacionCommandContext | null>(null);
-  const [commandContextLoading, setCommandContextLoading] = useState(false);
-  const [commandContextError, setCommandContextError] = useState<string | null>(
-    null,
-  );
 
   const eligiblePrinters = useMemo(
     () => printers.filter(isPrinterEligibleForEnajenacionTest),
     [printers],
   );
 
-  const registeredPrinter = useMemo(
+  const activePrinter = useMemo(
     () => eligiblePrinters.find((p) => p.id === selectedId) ?? null,
     [eligiblePrinters, selectedId],
-  );
-
-  const manualBasePrinter = useMemo(
-    () => eligiblePrinters.find((p) => p.id === manualBasePrinterId) ?? null,
-    [eligiblePrinters, manualBasePrinterId],
-  );
-
-  const activePrinter = useMemo(
-    () => (sourceMode === "manual-mac" ? ephemeralPrinter : registeredPrinter),
-    [ephemeralPrinter, registeredPrinter, sourceMode],
   );
 
   const topics = useMemo(() => {
@@ -282,6 +130,54 @@ export function EnajenacionTestPanel({
       monitor: fiscalMonitorTopic(mac),
     };
   }, [activePrinter]);
+
+  const ritualSteps = useMemo<RitualStep[]>(() => {
+    if (!topics) return [];
+    return ENAJENACION_FLOW_STEPS.map((flow) => ({
+      id: flow.id,
+      label: `${flow.step}. ${flow.name}`,
+      description: flow.purpose,
+      topic: flow.id === "request" ? topics.cmdServer : topics.comando,
+      successHint: flow.successCriteria.join(" "),
+      isRequest: flow.id === "request",
+    }));
+  }, [topics]);
+
+  const printerResponsesDone = useMemo(() => {
+    if (!topics) return new Set<string>();
+    const done = new Set<string>();
+    let wfileResponseIndex = 0;
+    for (const message of [...liveMessages].reverse()) {
+      if (!message.topic.startsWith(topics.mac)) continue;
+      if (!message.topic.endsWith("/AEG_Fiscal/Integracion/CmdServer")) continue;
+      const dedupeKey = `${message.topic}:${message.payload}`;
+      if (panelPublishedKeysRef.current.has(dedupeKey)) continue;
+      const step = detectPrinterResponseStep(message.payload);
+      if (!step) continue;
+      if (step === "wfile_spiff") {
+        const resolved = resolveWfileResponseStep(wfileResponseIndex);
+        if (resolved) done.add(resolved);
+        wfileResponseIndex++;
+        continue;
+      }
+      done.add(step);
+    }
+    return done;
+  }, [liveMessages, topics]);
+
+  const activeStepIndex = useMemo(() => {
+    const index = ritualSteps.findIndex(
+      (step) => stepStatuses[step.id] !== "success",
+    );
+    return index === -1 ? ritualSteps.length : index;
+  }, [ritualSteps, stepStatuses]);
+
+  const latestFiscalMessages = useMemo(() => {
+    if (!topics) return [];
+    return liveMessages
+      .filter((message) => message.topic.startsWith(topics.mac))
+      .slice(0, 3);
+  }, [liveMessages, topics]);
 
   useEffect(() => {
     if (!activePrinter?.fiscalSerial?.trim() || !activePrinter.macAddress?.trim()) {
@@ -309,199 +205,39 @@ export function EnajenacionTestPanel({
   }, [activePrinter?.fiscalSerial, activePrinter?.macAddress]);
 
   useEffect(() => {
-    if (!activePrinter?.clientId || !activePrinter.fiscalSerial?.trim()) {
-      setCommandContext(null);
-      setCommandContextError(null);
-      setCommandContextLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setCommandContextLoading(true);
-    setCommandContextError(null);
-    void (async () => {
-      const client = await fetchClientById(activePrinter.clientId!);
-      const branch = await fetchBranchById(client.branchId);
-      const company = await fetchCompanyById(branch.companyId);
-      if (cancelled) return;
-      setCommandContext({
-        fiscalSerial: activePrinter.fiscalSerial.trim(),
-        rif: company.rif,
-        businessName: company.businessName,
-        contributorType: company.contributorType,
-        address: branch.address,
-        city: branch.city,
-        state: branch.state,
-      });
-    })()
-      .catch((err) => {
-        if (cancelled) return;
-        setCommandContext(null);
-        setCommandContextError(getMqttErrorMessage(err));
-      })
-      .finally(() => {
-        if (!cancelled) setCommandContextLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activePrinter?.clientId, activePrinter?.fiscalSerial]);
-
-  const manualCommands = useMemo<ManualCommand[]>(() => {
-    if (
-      !activePrinter?.fiscalSerial ||
-      !activePrinter.macAddress ||
-      !topics ||
-      !commandContext
-    ) {
-      return [];
-    }
-
-    const requestStep = ENAJENACION_FLOW_STEPS.find((step) => step.id === "request");
-    return [
-      {
-        id: "request",
-        label: "1. Solicitar enajenación",
-        description:
-          requestStep?.purpose ??
-          "Publica ptrEnajenar para que AEG Core inicie el ritual fiscal.",
-        topic: topics.cmdServer,
-        payload: buildPtrEnajenarPayload(
-          activePrinter.fiscalSerial,
-          activePrinter.macAddress,
-        ),
-        successHint:
-          requestStep?.successCriteria[2] ??
-          "AEG Core debe publicar el siguiente comando en el tópico Comando.",
-      },
-      ...EnajenacionCommandSteps.map((step) => {
-        const flow = flowStepById(step.flowStepId);
-        return {
-          id: step.id,
-          label: flow ? `${flow.step}. ${flow.name}` : step.label,
-          description:
-            flow?.purpose ??
-            "Publica el comando fiscal real que recibe la impresora.",
-          topic: topics.comando,
-          payload: step.buildPayload(commandContext) as MqttPublishPayload,
-          successHint:
-            flow?.successCriteria[0] ??
-            "La impresora debe ejecutar este payload y responder en CmdServer.",
-        };
-      }),
-    ];
-  }, [activePrinter, commandContext, topics]);
-
-  const hardwarePrinterDone = useMemo(() => {
-    if (!topics || testRoleMode !== "hardware") {
-      return new Set<string>();
-    }
-    const done = new Set<string>();
-    let wfileResponseIndex = 0;
-    for (const message of [...liveMessages].reverse()) {
-      if (!message.topic.startsWith(topics.mac)) continue;
-      if (!message.topic.endsWith("/AEG_Fiscal/Integracion/CmdServer")) continue;
-      const dedupeKey = `${message.topic}:${message.payload}`;
-      if (panelPublishedKeysRef.current.has(dedupeKey)) continue;
-      const step = detectPrinterResponseStep(message.payload);
-      if (!step) continue;
-      if (step === "wfile_spiff") {
-        const resolved = resolveWfileResponseStep(wfileResponseIndex);
-        if (resolved) done.add(resolved);
-        wfileResponseIndex++;
-        continue;
-      }
-      done.add(step);
-    }
-    return done;
-  }, [liveMessages, testRoleMode, topics]);
-
-  const activeStepIndex = useMemo(() => {
-    if (testRoleMode === "hardware") {
-      const order = [
-        "request",
-        ...EnajenacionResponseSteps.map((step) => step.id),
-      ];
-      const index = order.findIndex((stepId) => {
-        if (stepId === "request") {
-          return commandStates.request?.status !== "success";
-        }
-        return !hardwarePrinterDone.has(stepId);
-      });
-      return index === -1 ? order.length : index;
-    }
-    const index = manualCommands.findIndex(
-      (command) => commandStates[command.id]?.status !== "success",
-    );
-    return index === -1 ? manualCommands.length : index;
-  }, [commandStates, hardwarePrinterDone, manualCommands, testRoleMode]);
-
-  useEffect(() => {
-    if (testRoleMode !== "hardware" || hardwarePrinterDone.size === 0) {
-      return;
-    }
-    setCommandStates((prev) => {
+    if (printerResponsesDone.size === 0) return;
+    setStepStatuses((prev) => {
       let changed = false;
       const next = { ...prev };
-      for (const stepId of hardwarePrinterDone) {
-        const command = manualCommands.find((item) => item.id === stepId);
-        if (!command) continue;
-        const current = next[stepId];
-        if (current?.status === "success") continue;
-        next[stepId] = {
-          payloadText:
-            current?.payloadText ?? stringifyPayload(command.payload),
-          status: "success",
-          result: current?.result ?? null,
-          error: null,
-        };
+      for (const stepId of printerResponsesDone) {
+        if (next[stepId] === "success") continue;
+        next[stepId] = "success";
         changed = true;
       }
       return changed ? next : prev;
     });
-  }, [hardwarePrinterDone, manualCommands, testRoleMode]);
-
-  const latestFiscalMessages = useMemo(() => {
-    if (!topics) return [];
-    return liveMessages
-      .filter((message) => message.topic.startsWith(topics.mac))
-      .slice(0, 3);
-  }, [liveMessages, topics]);
+  }, [printerResponsesDone]);
 
   const refreshPrinterStatus = useCallback(async (printerId: number) => {
     const updated = await fetchPrinterById(printerId);
     setPrinterStatus(updated);
-    if (ephemeralPrinter?.id === printerId) {
-      setEphemeralPrinter(updated);
-    }
     return updated;
-  }, [ephemeralPrinter?.id]);
+  }, []);
 
-  const cleanupEphemeralPrinter = useCallback(async () => {
-    const id = ephemeralPrinterIdRef.current;
-    ephemeralPrinterIdRef.current = null;
-    setEphemeralPrinter(null);
-    if (id == null) return;
-    try {
-      await deletePrinter(id);
-    } catch {
-      // Best effort: el registro de prueba puede haber sido eliminado ya.
+  useEffect(() => {
+    if (
+      stepStatuses["report-z"] === "success" &&
+      activePrinter &&
+      printerStatus?.status !== "enajenada"
+    ) {
+      void refreshPrinterStatus(activePrinter.id).catch(() => undefined);
     }
-  }, []);
-
-  useEffect(() => {
-    ephemeralPrinterIdRef.current = ephemeralPrinter?.id ?? null;
-  }, [ephemeralPrinter]);
-
-  useEffect(() => {
-    return () => {
-      const id = ephemeralPrinterIdRef.current;
-      if (id != null) {
-        void deletePrinter(id).catch(() => undefined);
-      }
-    };
-  }, []);
+  }, [
+    stepStatuses,
+    activePrinter,
+    printerStatus?.status,
+    refreshPrinterStatus,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -511,10 +247,7 @@ export function EnajenacionTestPanel({
         if (!cancelled) {
           setPrinters(list);
           const first = list.find(isPrinterEligibleForEnajenacionTest);
-          if (first) {
-            setSelectedId(first.id);
-            setManualBasePrinterId(first.id);
-          }
+          if (first) setSelectedId(first.id);
         }
       } catch (err) {
         if (!cancelled) {
@@ -530,115 +263,27 @@ export function EnajenacionTestPanel({
   }, [toast]);
 
   useEffect(() => {
-    if (sourceMode !== "registered" || !registeredPrinter) {
+    if (!activePrinter) {
+      setPrinterStatus(null);
       return;
     }
     let cancelled = false;
-    (async () => {
-      try {
-        const updated = await refreshPrinterStatus(registeredPrinter.id);
+    void refreshPrinterStatus(activePrinter.id)
+      .then((updated) => {
         if (!cancelled) setPrinterStatus(updated);
-      } catch {
-        if (!cancelled) setPrinterStatus(registeredPrinter);
-      }
-    })();
+      })
+      .catch(() => {
+        if (!cancelled) setPrinterStatus(activePrinter);
+      });
     return () => {
       cancelled = true;
     };
-  }, [registeredPrinter, refreshPrinterStatus, sourceMode]);
+  }, [activePrinter, refreshPrinterStatus]);
 
-  function handleTestRoleModeChange(mode: TestRoleMode) {
-    if (mode === testRoleMode) return;
-    setTestRoleMode(mode);
-    setCommandStates({});
-    panelPublishedKeysRef.current.clear();
-  }
-
-  async function handleSourceModeChange(mode: PrinterSourceMode) {
-    if (mode === sourceMode) return;
-    if (sourceMode === "manual-mac") {
-      await cleanupEphemeralPrinter();
-    }
-    setSourceMode(mode);
-    setCommandStates({});
-    if (mode === "registered") {
-      setPrinterStatus(registeredPrinter);
-    } else {
-      setPrinterStatus(ephemeralPrinter);
-    }
-  }
-
-  function handleRegisteredPrinterChange(value: string) {
+  function handlePrinterChange(value: string) {
     setSelectedId(value ? Number(value) : "");
-    setCommandStates({});
+    setStepStatuses({});
     setPrinterStatus(null);
-  }
-
-  async function handleManualBasePrinterChange(value: string) {
-    await cleanupEphemeralPrinter();
-    setManualBasePrinterId(value ? Number(value) : "");
-    setCommandStates({});
-    setPrinterStatus(null);
-  }
-
-  async function handleManualMacChange(value: string) {
-    if (ephemeralPrinter) {
-      await cleanupEphemeralPrinter();
-    }
-    setManualMacInput(value.toUpperCase());
-    setCommandStates({});
-    setPrinterStatus(null);
-  }
-
-  async function handlePrepareEphemeralPrinter() {
-    if (!manualBasePrinter) {
-      toast.error("Selecciona una impresora base para copiar cliente y modelo.");
-      return;
-    }
-    const parsedMac = parseManualMacAddress(manualMacInput);
-    if (!parsedMac.ok) {
-      toast.error(parsedMac.error);
-      return;
-    }
-
-    setEphemeralCreating(true);
-    try {
-      await cleanupEphemeralPrinter();
-      let created: PrinterResponse | null = null;
-      for (let attempt = 0; attempt < 3; attempt++) {
-        const fiscalSerial = generateTestFiscalSerial(Date.now() + attempt);
-        try {
-          created = await createPrinter(
-            buildEnajenacionTestPrinterRequest(
-              manualBasePrinter,
-              parsedMac.mac,
-              fiscalSerial,
-            ),
-          );
-          break;
-        } catch (err) {
-          if (attempt === 2) throw err;
-        }
-      }
-      if (!created) {
-        throw new Error("No se pudo crear el registro de prueba.");
-      }
-      setEphemeralPrinter(created);
-      setPrinterStatus(created);
-      setCommandStates({});
-      toast.success("Registro de prueba creado. Se eliminará al salir de esta prueba.");
-    } catch (err) {
-      toast.error(getPrintersErrorMessage(err));
-    } finally {
-      setEphemeralCreating(false);
-    }
-  }
-
-  async function handleDiscardEphemeralPrinter() {
-    await cleanupEphemeralPrinter();
-    setCommandStates({});
-    setPrinterStatus(null);
-    toast.success("Registro de prueba eliminado.");
   }
 
   async function handleApplyMonitorTopic() {
@@ -656,419 +301,103 @@ export function EnajenacionTestPanel({
     }
   }
 
-  function handlePayloadChange(index: number, commandId: string, value: string) {
-    setCommandStates((prev) => {
-      const next = { ...prev };
-      for (let i = index; i < manualCommands.length; i++) {
-        const command = manualCommands[i];
-        const current = next[command.id] ?? {
-          payloadText: stringifyPayload(command.payload),
-          status: "pending" as CommandStatus,
-          result: null,
-          error: null,
-        };
-        next[command.id] = {
-          ...current,
-          payloadText: command.id === commandId ? value : current.payloadText,
-          status: "pending",
-          result: null,
-          error: null,
-        };
-      }
-      return next;
-    });
-  }
-
-  function handlePayloadPaste(
-    e: React.ClipboardEvent<HTMLTextAreaElement>,
-    index: number,
-    commandId: string,
-  ) {
-    const formatted = formatJsonText(e.clipboardData.getData("text/plain"));
-    if (formatted == null) return;
-
-    e.preventDefault();
-    const { selectionStart, selectionEnd, value } = e.currentTarget;
-    const next =
-      value.slice(0, selectionStart) + formatted + value.slice(selectionEnd);
-    handlePayloadChange(index, commandId, next);
-  }
-
-  async function handleExecute(index: number, command: ManualCommand) {
-    if (index > activeStepIndex) return;
-    if (testRoleMode === "hardware") {
-      toast.error(
-        "En modo impresora física el panel no publica en CmdServer. Espera el ptrEnajenar y las respuestas reales de la impresora.",
-      );
-      return;
-    }
-    const current = commandStates[command.id];
-    const parsed = parsePayloadText(
-      current?.payloadText ?? stringifyPayload(command.payload),
-    );
-    if (!parsed.ok) {
-      setCommandStates((prev) => ({
-        ...prev,
-        [command.id]: {
-          ...(prev[command.id] ?? {
-            payloadText: stringifyPayload(command.payload),
-            result: null,
-          }),
-          status: "error",
-          error: parsed.error,
-          result: null,
-        },
-      }));
-      return;
-    }
-    const payload = parsed.payload;
-
-    setCommandStates((prev) => {
-      const next = { ...prev };
-      for (let i = index; i < manualCommands.length; i++) {
-        const item = manualCommands[i];
-        const state = next[item.id] ?? {
-          payloadText: stringifyPayload(item.payload),
-          status: "pending" as CommandStatus,
-          result: null,
-          error: null,
-        };
-        next[item.id] = {
-          ...state,
-          status: i === index ? "running" : "pending",
-          result: null,
-          error: null,
-        };
-      }
-      return next;
-    });
-
-    try {
-      const publishResult = await publishMqttMessage({
-        topic: command.topic,
-        payload,
-      });
-      const { response, httpStatus } = publishResult;
-      const enajenacionFailure = isEnajenacionStartFailure(response.enajenacion);
-      if (command.id === "request" && enajenacionFailure) {
-        const message =
-          response.enajenacion?.message ??
-          "AEG Core rechazó la solicitud de enajenación.";
-        setCommandStates((prev) => ({
-          ...prev,
-          [command.id]: {
-            ...(prev[command.id] ?? {
-              payloadText: stringifyPayload(command.payload),
-              result: null,
-            }),
-            status: "error",
-            error: message,
-            result: publishResult,
-          },
-        }));
-        toast.error(message);
-        return;
-      }
-
-      panelPublishedKeysRef.current.add(`${command.topic}:${JSON.stringify(payload)}`);
-      setCommandStates((prev) => ({
-        ...prev,
-        [command.id]: {
-          ...(prev[command.id] ?? {
-            payloadText: stringifyPayload(command.payload),
-            error: null,
-          }),
-          status: "success",
-          result: publishResult,
-          error: null,
-        },
-      }));
-      if (command.id === "request" && response.enajenacion?.status === "STARTED") {
-        toast.success(
-          "AEG Core inició el ritual. Deberías ver el DNF en Comando en el monitor.",
-        );
-      } else if (command.topic.endsWith("/AEG_Fiscal/Integracion/Comando")) {
-        toast.success(`${command.label} publicado en Comando.`);
-      } else {
-        toast.success(`${command.label} publicado en el broker.`);
-      }
-
-      if (command.id === "report-z" && activePrinter) {
-        void refreshPrinterStatus(activePrinter.id).catch(() => undefined);
-      }
-    } catch (err) {
-      const message = getMqttErrorMessage(err);
-      setCommandStates((prev) => ({
-        ...prev,
-        [command.id]: {
-          ...(prev[command.id] ?? {
-            payloadText: stringifyPayload(command.payload),
-            result: null,
-          }),
-          status: "error",
-          error: message,
-          result: null,
-        },
-      }));
-      toast.error(message);
-    }
-  }
-
   return (
     <div className="space-y-5">
       <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="flex items-center gap-2 font-semibold text-card-foreground">
-              <Printer className="size-5 text-accent" />
-              Enajenación MQTT manual
-            </h2>
-            <p className="mt-1 max-w-2xl text-sm text-muted">
-              En modo impresora física el panel observa ptrEnajenar y las
-              respuestas reales en CmdServer; la impresora recibe comandos en
-              Comando. El modo manual publica payloads de servidor en Comando
-              para pruebas controladas.
-            </p>
-          </div>
+        <h2 className="flex items-center gap-2 font-semibold text-card-foreground">
+          <Printer className="size-5 text-accent" />
+          Enajenación con impresora física
+        </h2>
+        <p className="mt-1 max-w-2xl text-sm text-muted">
+          Elige una impresora registrada en AEG Core. Enciéndela y observa el
+          ritual en el monitor: ptrEnajenar en CmdServer, comandos del servidor
+          en Comando y respuestas de la impresora en CmdServer.
+        </p>
+
+        <div className="mt-4 rounded-lg border border-accent/25 bg-accent/5 px-4 py-3 text-sm text-card-foreground">
+          <p>
+            El panel <strong className="font-medium">no publica</strong> en el
+            broker. Solo valida la impresora en BD y marca cada paso cuando
+            detecta mensajes reales de la impresora en el monitor.
+          </p>
         </div>
 
-        <div
-          className={cn(
-            "mt-4 rounded-lg border px-4 py-3 text-sm",
-            testRoleMode === "hardware"
-              ? "border-accent/25 bg-accent/5 text-card-foreground"
-              : "border-amber-500/25 bg-amber-500/10 text-amber-950 dark:text-amber-100",
-          )}
-        >
-          {testRoleMode === "hardware" ? (
-            <p>
-              <strong className="font-medium">Modo impresora física.</strong>{" "}
-              Enciende la impresora y espera ptrEnajenar en{" "}
-              <code className="font-mono text-xs">.../CmdServer</code>. Luego
-              AEG Core publica en{" "}
-              <code className="font-mono text-xs">.../Comando</code> y la
-              impresora debe ejecutar e imprimir antes de responder en{" "}
-              <code className="font-mono text-xs">.../CmdServer</code>.
-            </p>
-          ) : (
-            <p>
-              <strong className="font-medium">Modo manual.</strong> El panel
-              publica el payload real del servidor en{" "}
-              <code className="font-mono text-xs">.../Comando</code>. La
-              impresora debe ejecutar el comando y responder en{" "}
-              <code className="font-mono text-xs">.../CmdServer</code>.
-            </p>
-          )}
-        </div>
+        <label className="mt-5 block">
+          <span className="mb-1.5 block text-sm font-medium">
+            Impresora registrada
+          </span>
+          <select
+            value={selectedId}
+            onChange={(e) => handlePrinterChange(e.target.value)}
+            disabled={printersLoading}
+            className={inputClass}
+          >
+            {eligiblePrinters.length === 0 ? (
+              <option value="">No hay impresoras aptas</option>
+            ) : (
+              eligiblePrinters.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.fiscalSerial} · {p.macAddress} · cliente #{p.clientId}
+                </option>
+              ))
+            )}
+          </select>
+          <p className="mt-1.5 text-xs text-muted">
+            Debe estar asignada o en laboratorio, con cliente, serial fiscal y
+            MAC.
+          </p>
+        </label>
 
-        <div className="mt-5 space-y-4">
-          <SegmentedToggle
-            value={testRoleMode}
-            onChange={handleTestRoleModeChange}
-            ariaLabel="Rol de la prueba"
-            options={[
-              { value: "hardware", label: "Impresora física" },
-              { value: "simulator", label: "Manual servidor" },
-            ]}
-            className="max-w-md"
-          />
-
-          <SegmentedToggle
-            value={sourceMode}
-            onChange={(value) => void handleSourceModeChange(value)}
-            ariaLabel="Origen de la impresora"
-            options={[
-              { value: "registered", label: "Impresora registrada" },
-              { value: "manual-mac", label: "MAC manual" },
-            ]}
-            className="max-w-md"
-          />
-
-          {sourceMode === "registered" ? (
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">
-                Impresora (asignada / laboratorio)
-              </span>
-              <select
-                value={selectedId}
-                onChange={(e) => handleRegisteredPrinterChange(e.target.value)}
-                disabled={printersLoading}
-                className={inputClass}
-              >
-                {eligiblePrinters.length === 0 ? (
-                  <option value="">No hay impresoras aptas</option>
-                ) : (
-                  eligiblePrinters.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.fiscalSerial} · {p.macAddress} · cliente #{p.clientId}
-                    </option>
-                  ))
-                )}
-              </select>
-            </label>
-          ) : (
-            <div className="grid gap-4 lg:grid-cols-2">
-              <label className="block lg:col-span-2">
-                <span className="mb-1.5 block text-sm font-medium">
-                  Impresora base (cliente y modelo)
-                </span>
-                <select
-                  value={manualBasePrinterId}
-                  onChange={(e) =>
-                    void handleManualBasePrinterChange(e.target.value)
-                  }
-                  disabled={printersLoading || ephemeralCreating}
-                  className={inputClass}
-                >
-                  {eligiblePrinters.length === 0 ? (
-                    <option value="">No hay impresoras aptas</option>
-                  ) : (
-                    eligiblePrinters.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.fiscalSerial} · cliente #{p.clientId}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </label>
-
-              <label className="block lg:col-span-2">
-                <span className="mb-1.5 block text-sm font-medium">
-                  MAC de la impresora a probar
-                </span>
-                <input
-                  type="text"
-                  value={manualMacInput}
-                  onChange={(e) => void handleManualMacChange(e.target.value)}
-                  disabled={ephemeralCreating}
-                  placeholder="AA:BB:CC:DD:EE:FF o 206EF1884C68"
-                  className={cn(inputClass, "font-mono")}
-                  spellCheck={false}
-                />
-              </label>
-
-              <div className="flex flex-wrap gap-2 lg:col-span-2">
-                <button
-                  type="button"
-                  onClick={() => void handlePrepareEphemeralPrinter()}
-                  disabled={
-                    ephemeralCreating ||
-                    printersLoading ||
-                    !manualBasePrinter ||
-                    !manualMacInput.trim()
-                  }
-                  className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-60"
-                >
-                  {ephemeralCreating ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Play className="size-4" />
-                  )}
-                  Crear registro de prueba
-                </button>
-                {ephemeralPrinter && (
-                  <button
-                    type="button"
-                    onClick={() => void handleDiscardEphemeralPrinter()}
-                    className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-foreground/5"
-                  >
-                    <Trash2 className="size-4" />
-                    Eliminar registro de prueba
-                  </button>
-                )}
+        {topics && activePrinter && (
+          <div className="mt-4 rounded-lg border border-border bg-foreground/[0.02] p-4 text-sm">
+            {precheckLoading ? (
+              <p className="text-muted">Validando requisitos de enajenación…</p>
+            ) : precheck && !precheck.ready ? (
+              <div className="mb-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-rose-950 dark:text-rose-100">
+                <p className="font-medium">AEG Core rechazará ptrEnajenar</p>
+                <p className="mt-1 text-sm">{precheck.message}</p>
               </div>
-
-              {ephemeralPrinter ? (
-                <div className="lg:col-span-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-950 dark:text-amber-100">
-                  <p className="font-medium">Registro de prueba activo</p>
-                  <p className="mt-1 text-amber-900/90 dark:text-amber-50/90">
-                    Serial {ephemeralPrinter.fiscalSerial} · MAC{" "}
-                    {ephemeralPrinter.macAddress}. Se elimina automáticamente al
-                    salir de esta sección.
-                  </p>
-                </div>
-              ) : (
-                <p className="lg:col-span-2 text-sm text-muted">
-                  Crea un registro temporal en laboratorio con la MAC indicada.
-                  Usa un serial fiscal de prueba y conserva el cliente de la
-                  impresora base.
-                </p>
-              )}
-            </div>
-          )}
-
-          {topics && activePrinter && (
-            <div className="rounded-lg border border-border bg-foreground/[0.02] p-4 text-sm">
-              {precheckLoading ? (
-                <p className="text-muted">Validando requisitos de enajenación…</p>
-              ) : precheck && !precheck.ready ? (
-                <div className="mb-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-rose-950 dark:text-rose-100">
-                  <p className="font-medium">AEG Core rechazará ptrEnajenar</p>
-                  <p className="mt-1 text-sm">{precheck.message}</p>
-                </div>
-              ) : precheck?.ready ? (
-                <p className="mb-4 text-emerald-700 dark:text-emerald-300">
-                  Requisitos de BD verificados: AEG Core puede iniciar el ritual.
-                </p>
-              ) : null}
-              {commandContextLoading ? (
-                <p className="mb-4 text-muted">
-                  Cargando datos fiscales para armar los payloads manuales…
-                </p>
-              ) : commandContextError ? (
-                <div className="mb-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-rose-950 dark:text-rose-100">
-                  <p className="font-medium">No se pudieron armar los payloads manuales</p>
-                  <p className="mt-1 text-sm">{commandContextError}</p>
-                </div>
-              ) : null}
-              <dl className="grid gap-2 sm:grid-cols-2">
-                <div>
-                  <dt className="text-muted">Serial fiscal</dt>
-                  <dd className="font-mono text-xs break-all">
-                    {activePrinter.fiscalSerial}
-                    {isTestFiscalSerial(activePrinter.fiscalSerial) ? (
-                      <span className="ml-2 text-amber-700 dark:text-amber-300">
-                        (prueba)
-                      </span>
-                    ) : null}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted">MAC</dt>
-                  <dd className="font-mono text-xs break-all">
-                    {activePrinter.macAddress}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted">CmdServer</dt>
-                  <dd className="font-mono text-xs break-all">
-                    {topics.cmdServer}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted">Comando</dt>
-                  <dd className="font-mono text-xs break-all">
-                    {topics.comando}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted">Estado en BD</dt>
-                  <dd>
-                    {printerStatus
-                      ? printerStatusLabel(printerStatus.status)
-                      : "—"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted">Monitor</dt>
-                  <dd className="font-mono text-xs break-all">
-                    {topics.monitor}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          )}
-        </div>
+            ) : precheck?.ready ? (
+              <p className="mb-4 text-emerald-700 dark:text-emerald-300">
+                Requisitos de BD verificados: AEG Core puede iniciar el ritual.
+              </p>
+            ) : null}
+            <dl className="grid gap-2 sm:grid-cols-2">
+              <div>
+                <dt className="text-muted">Serial fiscal</dt>
+                <dd className="font-mono text-xs break-all">
+                  {activePrinter.fiscalSerial}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted">MAC</dt>
+                <dd className="font-mono text-xs break-all">
+                  {activePrinter.macAddress}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted">CmdServer</dt>
+                <dd className="font-mono text-xs break-all">{topics.cmdServer}</dd>
+              </div>
+              <div>
+                <dt className="text-muted">Comando</dt>
+                <dd className="font-mono text-xs break-all">{topics.comando}</dd>
+              </div>
+              <div>
+                <dt className="text-muted">Estado en BD</dt>
+                <dd>
+                  {printerStatus
+                    ? printerStatusLabel(printerStatus.status)
+                    : "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted">Monitor</dt>
+                <dd className="font-mono text-xs break-all">{topics.monitor}</dd>
+              </div>
+            </dl>
+          </div>
+        )}
 
         <div className="mt-5 flex flex-wrap gap-2">
           {onApplyMonitorTopic && topics && (
@@ -1094,173 +423,72 @@ export function EnajenacionTestPanel({
         </div>
       </section>
 
-      {manualCommands.length > 0 && (
+      {ritualSteps.length > 0 && (
         <section className="space-y-3">
-          {manualCommands.map((command, index) => {
-            const state =
-              commandStates[command.id] ??
-              ({
-                payloadText: stringifyPayload(command.payload),
-                status: "pending",
-                result: null,
-                error: null,
-              } satisfies CommandState);
+          {ritualSteps.map((step, index) => {
+            const status = stepStatuses[step.id] ?? "pending";
             const locked = index > activeStepIndex;
-            const isRunning = state.status === "running";
-            const isSuccess = state.status === "success";
-            const isHardwareStep = testRoleMode === "hardware";
-            const isHardwareResponseStep =
-              isHardwareStep && command.id !== "request";
             const serverCommand =
-              topics && command.id !== "request"
-                ? findLatestServerCommand(liveMessages, topics.mac, command.id)
+              topics && !step.isRequest
+                ? findLatestServerCommand(liveMessages, topics.mac, step.id)
                 : null;
-            const canExecute =
-              !isHardwareStep && !locked && !isRunning;
 
             return (
               <article
-                key={command.id}
+                key={step.id}
                 className={cn(
                   "rounded-xl border border-border bg-card p-4 shadow-sm",
                   locked && "opacity-60",
                 )}
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-medium text-card-foreground">
-                        {command.label}
-                      </h3>
-                      <span
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-xs font-medium",
-                          state.status === "success" &&
-                            "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-                          state.status === "error" &&
-                            "bg-rose-500/10 text-rose-700 dark:text-rose-300",
-                          state.status === "running" &&
-                            "bg-amber-500/10 text-amber-800 dark:text-amber-200",
-                          state.status === "pending" && "bg-foreground/5 text-muted",
-                        )}
-                      >
-                        {statusLabel(
-                          state.status,
-                          testRoleMode,
-                          command.id,
-                          Boolean(serverCommand),
-                        )}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-muted">
-                      {isHardwareStep
-                        ? command.id === "request"
-                          ? "La impresora debe publicar ptrEnajenar en CmdServer al encender y detectar que no está enajenada."
-                          : serverCommand
-                            ? "AEG Core ya publicó en Comando. La impresora debe imprimir o grabar y responder en CmdServer."
-                            : "AEG Core debe publicar primero en Comando (p. ej. DNF). Si no aparece, revisa los requisitos de la impresora en BD."
-                        : command.description}
-                    </p>
-                    <p className="mt-1 font-mono text-xs text-muted break-all">
-                      {command.topic}
-                    </p>
-                  </div>
-                  {canExecute || (!isHardwareStep && isSuccess) ? (
-                    <button
-                      type="button"
-                      onClick={() => void handleExecute(index, command)}
-                      disabled={locked || isRunning || isHardwareStep}
-                      className={cn(
-                        "inline-flex shrink-0 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60",
-                        isSuccess
-                          ? "border border-border hover:bg-foreground/5"
-                          : "bg-accent text-accent-foreground",
-                      )}
-                    >
-                      {isRunning ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : isSuccess ? (
-                        <CheckCircle2 className="size-4" />
-                      ) : (
-                        <Play className="size-4" />
-                      )}
-                      {isSuccess
-                        ? "Re-ejecutar"
-                        : "Ejecutar"}
-                    </button>
-                  ) : null}
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="font-medium text-card-foreground">
+                    {step.label}
+                  </h3>
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-xs font-medium",
+                      status === "success" &&
+                        "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+                      status === "pending" && "bg-foreground/5 text-muted",
+                    )}
+                  >
+                    {stepStatusLabel(
+                      status,
+                      step.id,
+                      Boolean(serverCommand),
+                    )}
+                  </span>
                 </div>
+                <p className="mt-1 text-sm text-muted">{step.description}</p>
+                <p className="mt-1 font-mono text-xs text-muted break-all">
+                  {step.topic}
+                </p>
 
-                {isHardwareResponseStep && serverCommand && (
+                {!step.isRequest && serverCommand && (
                   <div className="mt-4">
-                    <JsonBlock title="Comando del servidor (Comando)" status="neutral">
+                    <JsonBlock title="Comando del servidor (Comando)">
                       {serverCommand.payload}
                     </JsonBlock>
                   </div>
                 )}
 
-                {!isHardwareStep ? (
-                <label className="mt-4 block">
-                  <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted">
-                    Comando JSON editable
-                  </span>
-                  <textarea
-                    value={state.payloadText}
-                    onChange={(e) =>
-                      handlePayloadChange(index, command.id, e.target.value)
-                    }
-                    onPaste={(e) => handlePayloadPaste(e, index, command.id)}
-                    disabled={locked || isRunning}
-                    className={cn(
-                      inputClass,
-                      "min-h-[120px] resize-y font-mono text-xs leading-relaxed disabled:opacity-70",
-                    )}
-                    spellCheck={false}
-                  />
-                </label>
-                ) : (
-                  <p className="mt-4 rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-sm text-muted">
-                    {locked
-                      ? "Completa el paso anterior antes de esperar este mensaje."
-                      : command.id === "request"
-                        ? isSuccess
-                          ? "ptrEnajenar fue recibido desde CmdServer. AEG Core debe continuar publicando el DNF en Comando."
-                          : "Esperando ptrEnajenar real de la impresora en CmdServer. No lo publiques desde el panel."
-                        : isSuccess
-                          ? "La impresora respondió en CmdServer. Revisa el monitor si no hubo impresión física."
-                          : serverCommand
-                            ? "Esperando que la impresora ejecute el comando de Comando y publique su respuesta en CmdServer."
-                            : "Esperando que AEG Core publique el comando en Comando. Si el paso 1 salió bien pero no ves nada en Comando, la validación en BD falló o MQTT entrante está desactivado."}
-                  </p>
-                )}
-
-                <p className="mt-2 text-xs text-muted">
-                  {isHardwareStep
-                    ? `Éxito esperado: ${command.successHint}`
-                    : testRoleMode === "simulator"
-                    ? `Éxito manual: el broker acepta la publicación en ${command.id === "request" ? "CmdServer" : "Comando"}. ${command.successHint}`
-                      : `Éxito esperado: ${command.successHint}`}
+                <p className="mt-3 rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-sm text-muted">
+                  {locked
+                    ? "Completa el paso anterior antes de esperar este mensaje."
+                    : step.isRequest
+                      ? status === "success"
+                        ? "ptrEnajenar recibido. AEG Core debe publicar el DNF en Comando."
+                        : "Enciende la impresora y espera ptrEnajenar en CmdServer."
+                      : status === "success"
+                        ? "La impresora respondió en CmdServer."
+                        : serverCommand
+                          ? "Ejecuta el comando en la impresora y espera su respuesta en CmdServer."
+                          : "Esperando que AEG Core publique en Comando."}
                 </p>
-
-                {state.error && (
-                  <p
-                    role="alert"
-                    className="mt-3 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
-                  >
-                    {state.error}
-                  </p>
-                )}
-
-                {state.result && !isHardwareStep && (
-                  <div className="mt-4">
-                    <JsonBlock
-                      title={`Broker · HTTP ${state.result.httpStatus}`}
-                      status="ok"
-                    >
-                      {JSON.stringify(state.result.response, null, 2)}
-                    </JsonBlock>
-                  </div>
-                )}
+                <p className="mt-2 text-xs text-muted">
+                  Éxito esperado: {step.successHint}
+                </p>
               </article>
             );
           })}
@@ -1275,8 +503,8 @@ export function EnajenacionTestPanel({
                 Últimos mensajes del monitor
               </h3>
               <p className="text-muted">
-                Útil para confirmar cuándo AEG Core publicó el comando que
-                corresponde responder.
+                Confirma cuándo AEG Core publicó el comando que la impresora debe
+                ejecutar.
               </p>
             </div>
             {onOpenMonitor && (
@@ -1319,16 +547,18 @@ export function EnajenacionTestPanel({
         </section>
       )}
 
-      {manualCommands.length === 0 && !printersLoading && (
+      {ritualSteps.length === 0 && !printersLoading && (
         <section className="rounded-xl border border-border bg-card p-5 text-sm text-muted shadow-sm">
-          {commandContextLoading
-            ? "Cargando datos fiscales para armar los payloads manuales."
-            : commandContextError
-              ? "No se pudieron cargar los datos fiscales necesarios para armar los payloads manuales."
-              : sourceMode === "manual-mac" && !ephemeralPrinter
-            ? "Ingresa una MAC válida y crea el registro de prueba para ver los comandos del ritual."
-            : "No hay impresoras aptas para esta prueba. Deben tener estatus Asignada o Laboratorio, cliente, serial fiscal y MAC."}
+          No hay impresoras aptas. Deben tener estatus Asignada o Laboratorio,
+          cliente, serial fiscal y MAC.
         </section>
+      )}
+
+      {printersLoading && (
+        <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted">
+          <Loader2 className="size-4 animate-spin" />
+          Cargando impresoras…
+        </div>
       )}
     </div>
   );
