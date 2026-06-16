@@ -1,16 +1,25 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildConfigSpiffsCommandPayload,
+  buildCreditNoteCommandPayload,
   buildDnfSuccessResponse,
+  buildDnfAlertCommandPayload,
   buildEnajenacionTestPrinterRequest,
   buildCreditNoteSuccessResponse,
+  buildFiscalRifCommandPayload,
+  buildHeaderCommandPayload,
+  buildInvoiceCommandPayload,
   buildInvoiceSuccessResponse,
   buildPtrEnajenarPayload,
+  buildRegistrationStatusCommandPayload,
+  buildReportZCommandPayload,
   buildReportZSuccessResponse,
   buildStaInfSuccessResponse,
   classifyFiscalCommand,
   compactMac,
   detectPrinterResponseStep,
   detectServerCommandStep,
+  EnajenacionCommandSteps,
   ENAJENACION_FLOW_STEPS,
   EnajenacionResponseSteps,
   fiscalCmdServerTopic,
@@ -38,6 +47,66 @@ describe("enajenacion-mqtt-protocol", () => {
       cmd: "ptrEnajenar",
       data: { ptrReg: "GRA0000017", macAddr: "20:6E:F1:88:4C:68" },
     });
+  });
+
+  it("builds server command payloads, not firmware responses", () => {
+    const context = {
+      fiscalSerial: "GRA0000017",
+      rif: "j315694205",
+      businessName: "Cliente Demo C.A.",
+      contributorType: "ordinario" as const,
+      address: "Av. Principal Edif. Demo Piso 1",
+      city: "Caracas",
+      state: "Distrito Capital",
+      invoiceDate: "2026-06-16",
+    };
+
+    expect(buildDnfAlertCommandPayload().at(-1)).toEqual({
+      cmd: "endDNF",
+      data: "TIEMPO APROXIMADO DE ESPERA 3 MIN",
+    });
+    expect(buildFiscalRifCommandPayload(context)).toMatchObject({
+      cmd: "fiscalAEG",
+      data: {
+        nameFile: "rifEmp.json",
+        contenido: { rifEmp: "J-315694205", nomEmp: "Cliente Demo C.A." },
+      },
+    });
+    expect(buildHeaderCommandPayload(context)).toMatchObject({
+      cmd: "wFileSPIFF",
+      data: {
+        Access: "AeG-1968-2024",
+        nameFile: "paramFacSPIFF.json",
+        contenido: {
+          encFacFijo: [
+            "Av. Principal Edif. Demo Piso 1",
+            "",
+            "Caracas, Distrito Capital",
+            "CONTRIBUYENTE ORDINARIO",
+          ],
+        },
+      },
+    });
+    expect(buildConfigSpiffsCommandPayload()).toMatchObject({
+      cmd: "wFileSPIFF",
+      data: { nameFile: "configSPIFFS.json" },
+    });
+    expect(buildRegistrationStatusCommandPayload()).toEqual({
+      cmd: "StaInf",
+      data: { status: "NroRegMa" },
+    });
+    expect(buildInvoiceCommandPayload().at(-1)).toEqual({
+      cmd: "endFac",
+      data: 1,
+    });
+    expect(buildCreditNoteCommandPayload(context).slice(0, 5)).toEqual([
+      { cmd: "nroFacNC", data: 1 },
+      { cmd: "fechFacNC", data: "16/06/2026" },
+      { cmd: "conSerNC", data: "GRA0000017" },
+      { cmd: "rifCiNC", data: "J-315694205" },
+      { cmd: "razSocNC", data: ["Cliente Demo C.A."] },
+    ]);
+    expect(buildReportZCommandPayload()).toEqual({ cmd: "genImpRepZ", data: 1 });
   });
 
   it("validates DNF response shape", () => {
@@ -144,6 +213,9 @@ describe("enajenacion-mqtt-protocol", () => {
     expect(ENAJENACION_FLOW_STEPS[0]?.id).toBe("request");
     expect(ENAJENACION_FLOW_STEPS.at(-1)?.id).toBe("report-z");
     for (const step of EnajenacionResponseSteps) {
+      expect(flowStepById(step.flowStepId)?.id).toBe(step.flowStepId);
+    }
+    for (const step of EnajenacionCommandSteps) {
       expect(flowStepById(step.flowStepId)?.id).toBe(step.flowStepId);
     }
   });

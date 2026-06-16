@@ -1,5 +1,6 @@
 import type { PrinterRequest, PrinterResponse } from "@/types/printer";
 import { isPrinterEligibleForMqttEnajenacion } from "@/lib/printer-status";
+import type { ContributorType } from "@/types/company";
 
 export const DNF_END_OK = 7;
 export const INVOICE_END_OK = 8;
@@ -24,6 +25,25 @@ export type EnajenacionSimulatorStep = {
   delayMs: number;
   buildPayload: (ctx: EnajenacionSimulatorContext) => unknown;
   /** Identificador del paso en {@link ENAJENACION_FLOW_STEPS}. */
+  flowStepId: string;
+};
+
+export type EnajenacionCommandContext = {
+  fiscalSerial: string;
+  rif: string;
+  businessName: string;
+  contributorType: ContributorType;
+  address: string;
+  city: string;
+  state: string;
+  invoiceNumber?: number;
+  invoiceDate?: string;
+};
+
+export type EnajenacionCommandStep = {
+  id: string;
+  label: string;
+  buildPayload: (ctx: EnajenacionCommandContext) => unknown;
   flowStepId: string;
 };
 
@@ -278,6 +298,257 @@ export function buildPtrEnajenarPayload(
   };
 }
 
+function fiscalRif(rif: string): string {
+  const trimmed = rif.trim().toUpperCase();
+  if (!trimmed || trimmed.includes("-")) return trimmed;
+  if (/^[VEJPG][0-9]{7,9}$/.test(trimmed)) {
+    return `${trimmed[0]}-${trimmed.slice(1)}`;
+  }
+  return trimmed;
+}
+
+function contributorTypeLine(contributorType: ContributorType): string {
+  switch (contributorType) {
+    case "especial":
+      return "CONTRIBUYENTE ESPECIAL";
+    case "formal":
+      return "CONTRIBUYENTE FORMAL";
+    case "ordinario":
+    default:
+      return "CONTRIBUYENTE ORDINARIO";
+  }
+}
+
+function splitAddress(address: string): [string, string] {
+  const trimmed = address.trim();
+  if (!trimmed) return ["", ""];
+  const newline = trimmed.indexOf("\n");
+  if (newline >= 0) {
+    return [trimmed.slice(0, newline).trim(), trimmed.slice(newline + 1).trim()];
+  }
+  if (trimmed.length <= 45) return [trimmed, ""];
+  const split = trimmed.lastIndexOf(" ", 45);
+  const index = split > 0 ? split : 45;
+  return [trimmed.slice(0, index).trim(), trimmed.slice(index).trim()];
+}
+
+function splitBusinessName(businessName: string): string[] {
+  const trimmed = businessName.trim();
+  if (!trimmed) return [""];
+  if (trimmed.length <= 45) return [trimmed];
+  const lines: string[] = [];
+  let start = 0;
+  while (start < trimmed.length) {
+    let end = Math.min(start + 45, trimmed.length);
+    if (end < trimmed.length) {
+      const space = trimmed.lastIndexOf(" ", end);
+      if (space > start) end = space;
+    }
+    lines.push(trimmed.slice(start, end).trim());
+    start = end;
+    while (trimmed[start] === " ") start++;
+  }
+  return lines;
+}
+
+function invoiceDateForPayload(raw?: string): string {
+  const value = raw?.trim();
+  const date = value ? new Date(`${value}T00:00:00`) : new Date();
+  if (Number.isNaN(date.getTime())) return invoiceDateForPayload();
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${day}/${month}/${date.getFullYear()}`;
+}
+
+function productLine(cmd: "proF" | "prodNC", imp: number): Record<string, unknown> {
+  return {
+    cmd,
+    data: {
+      pre: 100,
+      cant: 1000,
+      imp,
+      des01: "PRODUCTO",
+    },
+  };
+}
+
+export function buildDnfAlertCommandPayload(): Array<Record<string, string>> {
+  return [
+    { cmd: "aperDNF", data: "DOCUMENTO NO FISCAL" },
+    { cmd: "efeNeDAnJuCeDNF", data: "***** ALERTA *****" },
+    { cmd: "efeNoDAnJuCeDNF", data: "IMPRESORA EN PROCESO" },
+    { cmd: "efeNoDAnJuCeDNF", data: "DE ENAJENACION" },
+    { cmd: "efeNoDAnJuCeDNF", data: "DURANTE EL PROCESO" },
+    { cmd: "efeNoDAnJuCeDNF", data: "DE ENAJENACION" },
+    { cmd: "efeNoDAnJuCeDNF", data: "NO PUEDE SER UTILIZADA," },
+    { cmd: "efeNoDAnJuCeDNF", data: "DEBE MANTENERSE ENCENDIDA." },
+    { cmd: "efeNoDAnJuCeDNF", data: "EL PROCESO TERMINA CUANDO SE" },
+    { cmd: "efeNoDAnJuCeDNF", data: "IMPRIMA UN REPORTE Z" },
+    { cmd: "endDNF", data: "TIEMPO APROXIMADO DE ESPERA 3 MIN" },
+  ];
+}
+
+export function buildFiscalRifCommandPayload(
+  ctx: EnajenacionCommandContext,
+): Record<string, unknown> {
+  return {
+    cmd: "fiscalAEG",
+    data: {
+      nameFile: "rifEmp.json",
+      Access: "config",
+      contenido: {
+        tituloSeniat: "SENIAT",
+        rifEmp: fiscalRif(ctx.rif),
+        nomEmp: ctx.businessName.trim(),
+      },
+    },
+  };
+}
+
+export function buildHeaderCommandPayload(
+  ctx: EnajenacionCommandContext,
+): Record<string, unknown> {
+  const [addressLine1, addressLine2] = splitAddress(ctx.address);
+  return {
+    cmd: "wFileSPIFF",
+    data: {
+      Access: "AeG-1968-2024",
+      nameFile: "paramFacSPIFF.json",
+      contenido: {
+        encFacFijo: [
+          addressLine1,
+          addressLine2,
+          `${ctx.city.trim()}, ${ctx.state.trim()}`,
+          contributorTypeLine(ctx.contributorType),
+        ],
+      },
+    },
+  };
+}
+
+export function buildConfigSpiffsCommandPayload(): Record<string, unknown> {
+  return {
+    cmd: "wFileSPIFF",
+    data: {
+      nameFile: "configSPIFFS.json",
+      contenido: {
+        simMonL: "Bs",
+        impArt: {
+          desc: ["Exonerado", "IVA", "Reducido", "Lujo", "Percibido"],
+          abrev: ["(E)", "(G)", "(R)", "(A)", "(P)"],
+          valor: [0, 1600, 800, 3100, 0],
+          impMontoPtr: [
+            "EXENTO (E)",
+            "BI G (16.00%)",
+            "BI R (8.00%)",
+            "BI A (31.00%)",
+            "PERCIBIDO",
+          ],
+          impMontoImp: ["", "IVA G (16.00%)", "IVA R (8.00%)", "IVA A (31.00%)", ""],
+        },
+        formPago: {
+          tituloFormPag: "FORMA DE PAGO",
+          desc: [
+            "EFECTIVO",
+            "T. DEBITO",
+            "T. CREDITO",
+            "TRANSFERENCIA",
+            "PAGO MOVIL",
+            "BIOPAGO",
+            "EFECTIVO 7",
+            "EFECTIVO 8",
+            "EFECTIVO 9",
+            "EFECTIVO 10",
+            "DIVISA 1",
+            "DIVISA 2",
+            "DIVISA 3",
+            "DIVISA 4",
+            "DIVISA 5",
+            "DIVISA 6",
+          ],
+          impG: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 300, 300, 300, 300, 300, 300],
+          impMontoPtr: [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "BI IGTF (3.00%)",
+            "BI IGTF (3.00%)",
+            "BI IGTF (3.00%)",
+            "BI IGTF (3.00%)",
+            "BI IGTF (3.00%)",
+            "BI IGTF (3.00%)",
+          ],
+          impMontoImp: [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "IGTF (3.00%)",
+            "IGTF (3.00%)",
+            "IGTF (3.00%)",
+            "IGTF (3.00%)",
+            "IGTF (3.00%)",
+            "IGTF (3.00%)",
+          ],
+        },
+      },
+    },
+  };
+}
+
+export function buildRegistrationStatusCommandPayload(): Record<string, unknown> {
+  return {
+    cmd: "StaInf",
+    data: { status: "NroRegMa" },
+  };
+}
+
+export function buildInvoiceCommandPayload(): Array<Record<string, unknown>> {
+  return [
+    ...Array.from({ length: 5 }, (_, index) =>
+      productLine("proF", index + 1),
+    ),
+    { cmd: "subToF", data: 1, valor: 0 },
+    { cmd: "fpaF", data: { tipo: 1, monto: -1, tasaConv: 0 } },
+    { cmd: "endFac", data: 1 },
+  ];
+}
+
+export function buildCreditNoteCommandPayload(
+  ctx: EnajenacionCommandContext,
+): Array<Record<string, unknown>> {
+  return [
+    { cmd: "nroFacNC", data: ctx.invoiceNumber ?? 1 },
+    { cmd: "fechFacNC", data: invoiceDateForPayload(ctx.invoiceDate) },
+    { cmd: "conSerNC", data: ctx.fiscalSerial },
+    { cmd: "rifCiNC", data: fiscalRif(ctx.rif) },
+    { cmd: "razSocNC", data: splitBusinessName(ctx.businessName) },
+    ...Array.from({ length: 5 }, (_, index) =>
+      productLine("prodNC", index + 1),
+    ),
+    { cmd: "endPoNC", data: 1, valor: 0 },
+    { cmd: "fpaNC", data: { tipo: 1, monto: -1, tasaConv: 0 } },
+    { cmd: "endNC", data: 1 },
+  ];
+}
+
+export function buildReportZCommandPayload(): Record<string, unknown> {
+  return { cmd: "genImpRepZ", data: 1 };
+}
+
 function item(cmd: string, dataD = 0): FiscalResponseItem {
   return { cmd, code: 0, dataD };
 }
@@ -391,6 +662,57 @@ export const EnajenacionResponseSteps: EnajenacionSimulatorStep[] = [
     label: "Paso 7 — Reporte Z",
     delayMs: 600,
     buildPayload: () => buildReportZSuccessResponse(),
+  },
+];
+
+export const EnajenacionCommandSteps: EnajenacionCommandStep[] = [
+  {
+    id: "dnf",
+    flowStepId: "dnf",
+    label: "Paso 2a — DNF de alerta",
+    buildPayload: () => buildDnfAlertCommandPayload(),
+  },
+  {
+    id: "fiscal-rif",
+    flowStepId: "fiscal-rif",
+    label: "Paso 3a — fiscalAEG",
+    buildPayload: (ctx) => buildFiscalRifCommandPayload(ctx),
+  },
+  {
+    id: "header",
+    flowStepId: "header",
+    label: "Paso 3b — paramFacSPIFF",
+    buildPayload: (ctx) => buildHeaderCommandPayload(ctx),
+  },
+  {
+    id: "config",
+    flowStepId: "config",
+    label: "Paso 3c — configSPIFFS",
+    buildPayload: () => buildConfigSpiffsCommandPayload(),
+  },
+  {
+    id: "reg-status",
+    flowStepId: "reg-status",
+    label: "Paso 4 — StaInf (NroRegMa)",
+    buildPayload: () => buildRegistrationStatusCommandPayload(),
+  },
+  {
+    id: "invoice",
+    flowStepId: "invoice",
+    label: "Paso 5 — Factura de prueba",
+    buildPayload: () => buildInvoiceCommandPayload(),
+  },
+  {
+    id: "credit-note",
+    flowStepId: "credit-note",
+    label: "Paso 6 — Nota de crédito",
+    buildPayload: (ctx) => buildCreditNoteCommandPayload(ctx),
+  },
+  {
+    id: "report-z",
+    flowStepId: "report-z",
+    label: "Paso 7 — Reporte Z",
+    buildPayload: () => buildReportZCommandPayload(),
   },
 ];
 

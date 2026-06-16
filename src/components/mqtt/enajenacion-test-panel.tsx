@@ -18,6 +18,9 @@ import {
   fetchPrinters,
   getPrintersErrorMessage,
 } from "@/lib/printers-api";
+import { fetchBranchById } from "@/lib/branches-api";
+import { fetchClientById } from "@/lib/clients-api";
+import { fetchCompanyById } from "@/lib/companies-api";
 import {
   getMqttErrorMessage,
   precheckEnajenacionMqtt,
@@ -26,7 +29,9 @@ import {
 } from "@/lib/mqtt-api";
 import {
   ENAJENACION_FLOW_STEPS,
+  EnajenacionCommandSteps,
   EnajenacionResponseSteps,
+  type EnajenacionCommandContext,
   buildEnajenacionTestPrinterRequest,
   buildPtrEnajenarPayload,
   compactMac,
@@ -240,6 +245,12 @@ export function EnajenacionTestPanel({
     message: string | null;
   } | null>(null);
   const [precheckLoading, setPrecheckLoading] = useState(false);
+  const [commandContext, setCommandContext] =
+    useState<EnajenacionCommandContext | null>(null);
+  const [commandContextLoading, setCommandContextLoading] = useState(false);
+  const [commandContextError, setCommandContextError] = useState<string | null>(
+    null,
+  );
 
   const eligiblePrinters = useMemo(
     () => printers.filter(isPrinterEligibleForEnajenacionTest),
@@ -297,8 +308,53 @@ export function EnajenacionTestPanel({
     };
   }, [activePrinter?.fiscalSerial, activePrinter?.macAddress]);
 
+  useEffect(() => {
+    if (!activePrinter?.clientId || !activePrinter.fiscalSerial?.trim()) {
+      setCommandContext(null);
+      setCommandContextError(null);
+      setCommandContextLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setCommandContextLoading(true);
+    setCommandContextError(null);
+    void (async () => {
+      const client = await fetchClientById(activePrinter.clientId!);
+      const branch = await fetchBranchById(client.branchId);
+      const company = await fetchCompanyById(branch.companyId);
+      if (cancelled) return;
+      setCommandContext({
+        fiscalSerial: activePrinter.fiscalSerial.trim(),
+        rif: company.rif,
+        businessName: company.businessName,
+        contributorType: company.contributorType,
+        address: branch.address,
+        city: branch.city,
+        state: branch.state,
+      });
+    })()
+      .catch((err) => {
+        if (cancelled) return;
+        setCommandContext(null);
+        setCommandContextError(getMqttErrorMessage(err));
+      })
+      .finally(() => {
+        if (!cancelled) setCommandContextLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activePrinter?.clientId, activePrinter?.fiscalSerial]);
+
   const manualCommands = useMemo<ManualCommand[]>(() => {
-    if (!activePrinter?.fiscalSerial || !activePrinter.macAddress || !topics) {
+    if (
+      !activePrinter?.fiscalSerial ||
+      !activePrinter.macAddress ||
+      !topics ||
+      !commandContext
+    ) {
       return [];
     }
 
@@ -319,25 +375,23 @@ export function EnajenacionTestPanel({
           requestStep?.successCriteria[2] ??
           "AEG Core debe publicar el siguiente comando en el tópico Comando.",
       },
-      ...EnajenacionResponseSteps.map((step) => {
+      ...EnajenacionCommandSteps.map((step) => {
         const flow = flowStepById(step.flowStepId);
         return {
           id: step.id,
           label: flow ? `${flow.step}. ${flow.name}` : step.label,
           description:
-            flow?.panelSimulates ??
-            "Publica la respuesta simulada del firmware en CmdServer.",
-          topic: topics.cmdServer,
-          payload: step.buildPayload({
-            fiscalSerial: activePrinter.fiscalSerial,
-          }) as MqttPublishPayload,
+            flow?.purpose ??
+            "Publica el comando fiscal real que recibe la impresora.",
+          topic: topics.comando,
+          payload: step.buildPayload(commandContext) as MqttPublishPayload,
           successHint:
             flow?.successCriteria[0] ??
-            "AEG Core debe aceptar la respuesta y continuar con el siguiente paso.",
+            "La impresora debe ejecutar este payload y responder en CmdServer.",
         };
       }),
     ];
-  }, [activePrinter, topics]);
+  }, [activePrinter, commandContext, topics]);
 
   const hardwarePrinterDone = useMemo(() => {
     if (!topics || testRoleMode !== "hardware") {
@@ -733,6 +787,8 @@ export function EnajenacionTestPanel({
         toast.success(
           "AEG Core inició el ritual. Deberías ver el DNF en Comando en el monitor.",
         );
+      } else if (command.topic.endsWith("/AEG_Fiscal/Integracion/Comando")) {
+        toast.success(`${command.label} publicado en Comando.`);
       } else {
         toast.success(`${command.label} publicado en el broker.`);
       }
@@ -770,7 +826,8 @@ export function EnajenacionTestPanel({
             <p className="mt-1 max-w-2xl text-sm text-muted">
               En modo impresora física el panel observa ptrEnajenar y las
               respuestas reales en CmdServer; la impresora recibe comandos en
-              Comando. El simulador publica mensajes falsos y no imprime.
+              Comando. El modo manual publica payloads de servidor en Comando
+              para pruebas controladas.
             </p>
           </div>
         </div>
@@ -795,9 +852,11 @@ export function EnajenacionTestPanel({
             </p>
           ) : (
             <p>
-              <strong className="font-medium">Modo simulador.</strong> El panel
-              hace de firmware y publica respuestas de éxito en CmdServer. Eso
-              no imprime en la impresora: sólo prueba la lógica de AEG Core.
+              <strong className="font-medium">Modo manual.</strong> El panel
+              publica el payload real del servidor en{" "}
+              <code className="font-mono text-xs">.../Comando</code>. La
+              impresora debe ejecutar el comando y responder en{" "}
+              <code className="font-mono text-xs">.../CmdServer</code>.
             </p>
           )}
         </div>
@@ -809,7 +868,7 @@ export function EnajenacionTestPanel({
             ariaLabel="Rol de la prueba"
             options={[
               { value: "hardware", label: "Impresora física" },
-              { value: "simulator", label: "Simulador" },
+              { value: "simulator", label: "Manual servidor" },
             ]}
             className="max-w-md"
           />
@@ -951,6 +1010,16 @@ export function EnajenacionTestPanel({
                 <p className="mb-4 text-emerald-700 dark:text-emerald-300">
                   Requisitos de BD verificados: AEG Core puede iniciar el ritual.
                 </p>
+              ) : null}
+              {commandContextLoading ? (
+                <p className="mb-4 text-muted">
+                  Cargando datos fiscales para armar los payloads manuales…
+                </p>
+              ) : commandContextError ? (
+                <div className="mb-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-rose-950 dark:text-rose-100">
+                  <p className="font-medium">No se pudieron armar los payloads manuales</p>
+                  <p className="mt-1 text-sm">{commandContextError}</p>
+                </div>
               ) : null}
               <dl className="grid gap-2 sm:grid-cols-2">
                 <div>
@@ -1169,7 +1238,7 @@ export function EnajenacionTestPanel({
                   {isHardwareStep
                     ? `Éxito esperado: ${command.successHint}`
                     : testRoleMode === "simulator"
-                      ? `Éxito en simulador: el broker acepta la publicación. No implica impresión. ${command.successHint}`
+                    ? `Éxito manual: el broker acepta la publicación en ${command.id === "request" ? "CmdServer" : "Comando"}. ${command.successHint}`
                       : `Éxito esperado: ${command.successHint}`}
                 </p>
 
@@ -1252,7 +1321,11 @@ export function EnajenacionTestPanel({
 
       {manualCommands.length === 0 && !printersLoading && (
         <section className="rounded-xl border border-border bg-card p-5 text-sm text-muted shadow-sm">
-          {sourceMode === "manual-mac" && !ephemeralPrinter
+          {commandContextLoading
+            ? "Cargando datos fiscales para armar los payloads manuales."
+            : commandContextError
+              ? "No se pudieron cargar los datos fiscales necesarios para armar los payloads manuales."
+              : sourceMode === "manual-mac" && !ephemeralPrinter
             ? "Ingresa una MAC válida y crea el registro de prueba para ver los comandos del ritual."
             : "No hay impresoras aptas para esta prueba. Deben tener estatus Asignada o Laboratorio, cliente, serial fiscal y MAC."}
         </section>
