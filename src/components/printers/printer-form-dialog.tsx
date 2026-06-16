@@ -320,7 +320,7 @@ export function PrinterFormDialog({
                     value={form.paid}
                     onChange={(paid) => setForm((f) => ({ ...f, paid }))}
                     disabled={disabled}
-                    falseLabel="Pendiente"
+                    falseLabel="No pagada"
                     trueLabel="Pagada"
                     falseTone={PRINTER_PAID_TOGGLE_TONE.false}
                     trueTone={PRINTER_PAID_TOGGLE_TONE.true}

@@ -5,7 +5,7 @@ import { FileText, User } from "lucide-react";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { PrinterActionDialogShell } from "@/components/printers/printer-action-dialog-shell";
 import { PrinterActionPickerPanel } from "@/components/printers/printer-action-picker-panel";
-import { printerDispositionModalTitle } from "@/lib/printer-form";
+import { printerDispositionModalTitle, PRINTER_UNPAID_DISPOSITION_MESSAGE } from "@/lib/printer-form";
 import {
   buildDispositionInvoiceData,
   resolveClientCompanyName,
@@ -188,6 +188,29 @@ export function PrinterDispositionDialog({
     }
     setFieldError(null);
     onContinue({ clientId: id, facturaNro: normalizedFacturaNro });
+  }
+
+  if (!printer.paid) {
+    return (
+      <PrinterActionDialogShell
+        title={printerDispositionModalTitle(printer.fiscalSerial)}
+        titleId={titleId}
+        printer={printer}
+        showPrinterSerialSubtitle={false}
+        saving={false}
+        error={PRINTER_UNPAID_DISPOSITION_MESSAGE}
+        onClose={onClose}
+        submitLabel="Continuar"
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}
+        submitDisabled
+      >
+        <p className="text-sm text-muted">
+          Registra el pago de la impresora antes de iniciar la enajenación.
+        </p>
+      </PrinterActionDialogShell>
+    );
   }
 
   return (

@@ -51,8 +51,11 @@ import { formatDate } from "@/lib/datetime-form";
 import {
   DEVICE_TYPE_LABELS,
   printerModelLabel,
+  printerPaidLabel,
   printerToAssignmentRequest,
   printerToFormValues,
+  PRINTER_UNPAID_DISPOSITION_MESSAGE,
+  isPrinterPaidForDisposition,
   toPrinterRequest,
   type PrinterFormValues,
 } from "@/lib/printer-form";
@@ -312,13 +315,20 @@ export function PrinterView() {
   const statusQuickAction = printer
     ? getPrinterStatusQuickAction({
         status: printer.status,
+        printer,
         canAssign: canAssignInitialized,
         canDispose: canDisposeAssigned,
         onAssign: () => {
           setAssignmentError(null);
           setAssignmentOpen(true);
         },
-        onDispose: () => setDispositionOpen(true),
+        onDispose: () => {
+          if (!isPrinterPaidForDisposition(printer)) {
+            toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+            return;
+          }
+          setDispositionOpen(true);
+        },
       })
     : null;
 
@@ -343,7 +353,7 @@ export function PrinterView() {
         />
         <DetailField
           label="Estado de pago"
-          value={printer.paid ? "Pagada" : "Pendiente"}
+          value={printerPaidLabel(printer.paid)}
         />
         <DetailField
           label="Fecha de enajenación"
@@ -439,7 +449,7 @@ export function PrinterView() {
             />
             <DetailField
               label="Estado de pago"
-              value={printer.paid ? "Pagada" : "Pendiente"}
+              value={printerPaidLabel(printer.paid)}
             />
             <DetailField
               label="Fecha de enajenación"
@@ -538,7 +548,13 @@ export function PrinterView() {
     statusQuickAction,
   ]);
 
-  async function handleAssignmentSubmit(distributorId: number) {
+  async function handleAssignmentSubmit({
+    distributorId,
+    paid,
+  }: {
+    distributorId: number;
+    paid: boolean;
+  }) {
     if (!printer || !canAssignInitialized) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
@@ -552,7 +568,7 @@ export function PrinterView() {
     setAssignmentError(null);
 
     try {
-      const body = printerToAssignmentRequest(printer, distributorId);
+      const body = printerToAssignmentRequest(printer, distributorId, paid);
       const updated = await updatePrinter(printer.id, body);
       setPrinter(updated);
       toast.success(`Impresora ${printer.fiscalSerial} asignada correctamente.`, {
@@ -591,6 +607,10 @@ export function PrinterView() {
       )
     ) {
       toast.error(DISTRIBUTOR_SELF_CLIENT_MESSAGE);
+      return;
+    }
+    if (!isPrinterPaidForDisposition(printer)) {
+      toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
       return;
     }
     setDispositionOpen(false);
@@ -713,7 +733,7 @@ export function PrinterView() {
           onClose={() => {
             if (!assignmentSaving) setAssignmentOpen(false);
           }}
-          onSubmit={(id) => void handleAssignmentSubmit(id)}
+          onSubmit={(payload) => void handleAssignmentSubmit(payload)}
         />
       ) : null}
 

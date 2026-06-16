@@ -23,7 +23,10 @@ import {
   DISTRIBUTOR_SELF_CLIENT_MESSAGE,
   isDistributorSelfClient,
 } from "@/lib/distributor-scope";
-import { printerToDispositionRequest } from "@/lib/printer-form";
+import {
+  printerToDispositionRequest,
+  PRINTER_UNPAID_DISPOSITION_MESSAGE,
+} from "@/lib/printer-form";
 import {
   fetchPrinterById,
   getPrintersErrorMessage,
@@ -125,6 +128,10 @@ export function PrinterDispositionView({
       onPrinterLoaded?.(data);
       if (!isPrinterAssigned(data.status)) {
         setError("Solo se pueden enajenar impresoras con estatus Asignada.");
+        return;
+      }
+      if (!data.paid) {
+        setError(PRINTER_UNPAID_DISPOSITION_MESSAGE);
         return;
       }
     } catch (err) {
@@ -273,6 +280,10 @@ export function PrinterDispositionView({
     }
     if (!isPrinterAssigned(printer.status)) {
       toast.error("Solo se pueden enajenar impresoras con estatus Asignada.");
+      return;
+    }
+    if (!printer.paid) {
+      toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
       return;
     }
     if (clientValidationError || clientId == null) {

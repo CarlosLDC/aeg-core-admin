@@ -65,6 +65,8 @@ import {
   printerToAssignmentRequest,
   printerToFormValues,
   PRINTER_STATUS_LABELS,
+  PRINTER_UNPAID_DISPOSITION_MESSAGE,
+  isPrinterPaidForDisposition,
   toPrinterRequest,
   type PrinterFormValues,
 } from "@/lib/printer-form";
@@ -494,6 +496,10 @@ export function PrintersManager() {
   }
 
   function openDisposition(printer: PrinterResponse) {
+    if (!isPrinterPaidForDisposition(printer)) {
+      toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+      return;
+    }
     setDispositionPrinter(printer);
   }
 
@@ -526,12 +532,22 @@ export function PrintersManager() {
       toast.error(DISTRIBUTOR_SELF_CLIENT_MESSAGE);
       return;
     }
+    if (!isPrinterPaidForDisposition(dispositionPrinter)) {
+      toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+      return;
+    }
     const printerId = dispositionPrinter.id;
     closeDisposition();
     router.push(printerDispositionPath(printerId, clientId, facturaNro));
   }
 
-  async function handleAssignmentSubmit(distributorId: number) {
+  async function handleAssignmentSubmit({
+    distributorId,
+    paid,
+  }: {
+    distributorId: number;
+    paid: boolean;
+  }) {
     if (!assignmentPrinter || !canAssignInitialized) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
@@ -545,7 +561,11 @@ export function PrintersManager() {
     setAssignmentError(null);
 
     try {
-      const body = printerToAssignmentRequest(assignmentPrinter, distributorId);
+      const body = printerToAssignmentRequest(
+        assignmentPrinter,
+        distributorId,
+        paid,
+      );
       await updatePrinter(assignmentPrinter.id, body);
       toast.success(
         `Impresora ${assignmentPrinter.fiscalSerial} asignada correctamente.`,
@@ -861,6 +881,7 @@ export function PrintersManager() {
                       {pagination.paginatedItems.map((printer) => {
                         const statusQuickAction = getPrinterStatusQuickAction({
                           status: printer.status,
+                          printer,
                           canAssign: canAssignInitialized,
                           canDispose: canDisposeAssigned,
                           onAssign: () => openAssignment(printer),
@@ -949,7 +970,7 @@ export function PrintersManager() {
           onClose={() => {
             if (!assignmentSaving) closeAssignment();
           }}
-          onSubmit={(id) => void handleAssignmentSubmit(id)}
+          onSubmit={(payload) => void handleAssignmentSubmit(payload)}
         />
       ) : null}
 

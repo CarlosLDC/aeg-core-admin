@@ -1,11 +1,14 @@
 "use client";
 
-import { FormEvent, useId, useMemo, useState } from "react";
+import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { PrinterActionDialogShell } from "@/components/printers/printer-action-dialog-shell";
 import { PrinterActionPickerPanel } from "@/components/printers/printer-action-picker-panel";
 import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
+import { BooleanToggle } from "@/components/ui/boolean-toggle";
+import { FieldLabel } from "@/components/ui/field-label";
 import { useConfirm } from "@/context/confirm-provider";
+import { printerPaidLabel } from "@/lib/printer-form";
 import type { PrinterResponse } from "@/types/printer";
 
 type PrinterAssignmentDialogProps = {
@@ -17,7 +20,7 @@ type PrinterAssignmentDialogProps = {
   lockDistributor: boolean;
   defaultDistributorId?: number | null;
   onClose: () => void;
-  onSubmit: (distributorId: number) => void;
+  onSubmit: (payload: { distributorId: number; paid: boolean }) => void;
 };
 
 function resolveDefaultDistributorId(
@@ -56,6 +59,11 @@ export function PrinterAssignmentDialog({
     null,
   );
   const [distributorQuery, setDistributorQuery] = useState("");
+  const [paid, setPaid] = useState(printer.paid);
+
+  useEffect(() => {
+    setPaid(printer.paid);
+  }, [printer.id, printer.paid]);
 
   const defaultDistributorSelection = useMemo(
     () =>
@@ -118,6 +126,14 @@ export function PrinterAssignmentDialog({
             ) : null}
             . Esta acción actualiza el estado de la impresora.
           </p>
+          {!selfAssign ? (
+            <p className="mt-3 text-sm text-muted">
+              Estado de pago registrado:{" "}
+              <span className="font-medium text-card-foreground">
+                {printerPaidLabel(paid)}
+              </span>
+            </p>
+          ) : null}
           <PrinterStatusTransition from="sin_asignar" to="asignada" />
         </>
       ),
@@ -126,7 +142,7 @@ export function PrinterAssignmentDialog({
     });
     if (!accepted) return;
 
-    onSubmit(id);
+    onSubmit({ distributorId: id, paid: selfAssign ? printer.paid : paid });
   }
 
   return (
@@ -174,6 +190,17 @@ export function PrinterAssignmentDialog({
               {fieldError}
             </p>
           ) : null}
+          <div className="mt-4">
+            <FieldLabel>¿La impresora ya fue pagada?</FieldLabel>
+            <BooleanToggle
+              value={paid}
+              onChange={setPaid}
+              disabled={disabled}
+              falseLabel="No pagada"
+              trueLabel="Pagada"
+              ariaLabel="Estado de pago de la impresora"
+            />
+          </div>
         </>
       )}
     </PrinterActionDialogShell>

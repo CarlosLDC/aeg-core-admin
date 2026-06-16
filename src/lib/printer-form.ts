@@ -29,6 +29,20 @@ const FISCAL_SERIAL_RE = /^[A-Z]{3}[0-9]{7}$/i;
 const FIRMWARE_RE = /^[0-9]+\.[0-9]+\.[0-9]+$/;
 const MAC_RE = /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/i;
 
+export const PRINTER_PAID_LABEL = "Pagada";
+export const PRINTER_UNPAID_LABEL = "No pagada";
+
+export const PRINTER_UNPAID_DISPOSITION_MESSAGE =
+  "Solo se pueden enajenar impresoras con estatus de pago Pagada.";
+
+export function printerPaidLabel(paid: boolean): string {
+  return paid ? PRINTER_PAID_LABEL : PRINTER_UNPAID_LABEL;
+}
+
+export function isPrinterPaidForDisposition(printer: PrinterResponse): boolean {
+  return printer.paid === true;
+}
+
 export const PRINTER_STATUS_LABELS: Record<PrinterStatus, string> = {
   de_fabrica: "De fábrica",
   sin_asignar: "Sin asignar",
@@ -90,6 +104,7 @@ export const emptyPrinterForm = (
 export function printerToAssignmentRequest(
   printer: PrinterResponse,
   distributorId: number,
+  paid: boolean = printer.paid,
 ): PrinterRequest {
   return {
     modelId: printer.modelId,
@@ -98,7 +113,7 @@ export function printerToAssignmentRequest(
     distributorId,
     fiscalSerial: printer.fiscalSerial,
     finalSalePrice: printer.finalSalePrice,
-    paid: printer.paid,
+    paid,
     installationDate: printer.installationDate,
     versionFirmware: printer.versionFirmware,
     macAddress: printer.macAddress,
