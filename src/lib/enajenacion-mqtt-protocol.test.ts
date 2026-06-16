@@ -6,6 +6,8 @@ import {
   buildStaInfSuccessResponse,
   classifyFiscalCommand,
   compactMac,
+  detectPrinterResponseStep,
+  detectServerCommandStep,
   ENAJENACION_FLOW_STEPS,
   EnajenacionResponseSteps,
   fiscalCmdServerTopic,
@@ -14,6 +16,7 @@ import {
   isPrinterEligibleForEnajenacionTest,
   isTestFiscalSerial,
   parseManualMacAddress,
+  resolveWfileResponseStep,
 } from "@/lib/enajenacion-mqtt-protocol";
 import type { PrinterResponse } from "@/types/printer";
 
@@ -158,5 +161,42 @@ describe("enajenacion-mqtt-protocol", () => {
       status: "laboratorio",
       deviceType: "interno",
     });
+  });
+
+  it("detects server comando and printer cmdserver steps", () => {
+    const comandoTopic = "206EF1884C68/AEG_Fiscal/Integracion/Comando";
+    const cmdServerTopic = "206EF1884C68/AEG_Fiscal/Integracion/CmdServer";
+
+    expect(
+      detectServerCommandStep(
+        comandoTopic,
+        JSON.stringify([{ cmd: "aperDNF", data: "x" }]),
+      ),
+    ).toBe("dnf");
+    expect(
+      detectServerCommandStep(
+        comandoTopic,
+        JSON.stringify({ cmd: "genImpRepZ", data: 1 }),
+      ),
+    ).toBe("report-z");
+
+    expect(
+      detectPrinterResponseStep(
+        JSON.stringify({ cmd: "ptrEnajenar", data: { ptrReg: "X" } }),
+      ),
+    ).toBe("request");
+    expect(
+      detectPrinterResponseStep(
+        JSON.stringify({ cmd: "fiscalAEG", code: 0 }),
+      ),
+    ).toBe("fiscal-rif");
+    expect(
+      detectPrinterResponseStep(
+        JSON.stringify(buildDnfSuccessResponse()),
+      ),
+    ).toBe("dnf");
+
+    expect(resolveWfileResponseStep(0)).toBe("header");
+    expect(resolveWfileResponseStep(1)).toBe("config");
   });
 });

@@ -431,6 +431,86 @@ export function classifyFiscalCommand(payload: string): string {
   return "unknown";
 }
 
+/** Comando que AEG Core publicó en el tópico Comando (servidor → impresora). */
+export function detectServerCommandStep(
+  topic: string,
+  payload: string,
+): string | null {
+  if (!topic.endsWith("/AEG_Fiscal/Integracion/Comando")) {
+    return null;
+  }
+  try {
+    const kind = classifyFiscalCommand(payload);
+    switch (kind) {
+      case "dnf":
+        return "dnf";
+      case "fiscal_rif":
+        return "fiscal-rif";
+      case "header":
+        return "header";
+      case "config":
+        return "config";
+      case "reg_status":
+        return "reg-status";
+      case "invoice":
+        return "invoice";
+      case "credit_note":
+        return "credit-note";
+      case "report_z":
+        return "report-z";
+      default:
+        return null;
+    }
+  } catch {
+    return null;
+  }
+}
+
+type CmdServerResponseItem = {
+  cmd?: string;
+  code?: number;
+  dataS?: string;
+};
+
+/** Respuesta que la impresora publicó en CmdServer (impresora → servidor). */
+export function detectPrinterResponseStep(payload: string): string | null {
+  try {
+    const data: unknown = JSON.parse(payload);
+    if (Array.isArray(data)) {
+      const kind = classifyFiscalCommand(payload);
+      if (kind === "dnf") return "dnf";
+      if (kind === "invoice") return "invoice";
+      if (kind === "credit_note") return "credit-note";
+      return null;
+    }
+    if (!data || typeof data !== "object") {
+      return null;
+    }
+    const obj = data as CmdServerResponseItem;
+    if (obj.cmd === "ptrEnajenar") {
+      return "request";
+    }
+    if (obj.code !== 0) {
+      return null;
+    }
+    if (obj.cmd === "fiscalAEG") return "fiscal-rif";
+    if (obj.cmd === "wFileSPIFF") return "wfile_spiff";
+    if (obj.cmd === "StaInf") return "reg-status";
+    if (obj.cmd === "genImpRepZ") return "report-z";
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function resolveWfileResponseStep(
+  wfileResponseIndex: number,
+): "header" | "config" | null {
+  if (wfileResponseIndex === 0) return "header";
+  if (wfileResponseIndex === 1) return "config";
+  return null;
+}
+
 export function buildSimulatorResponseForKind(
   kind: string,
   fiscalSerial?: string,
