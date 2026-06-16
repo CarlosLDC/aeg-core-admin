@@ -4,6 +4,11 @@ import type { PrinterRequest, PrinterResponse } from "@/types/printer";
 
 const BASE = "/api/printers";
 
+export type PrinterDispositionRequest = {
+  clientId: number;
+  installationDate?: string | null;
+};
+
 export async function fetchPrinters(): Promise<PrinterResponse[]> {
   return apiFetch<PrinterResponse[]>(BASE);
 }
@@ -27,6 +32,16 @@ export async function updatePrinter(
 ): Promise<PrinterResponse> {
   return apiFetch<PrinterResponse>(`${BASE}/${id}`, {
     method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function disposePrinter(
+  id: number,
+  body: PrinterDispositionRequest,
+): Promise<PrinterResponse> {
+  return apiFetch<PrinterResponse>(`${BASE}/${id}/enajenar`, {
+    method: "POST",
     body: JSON.stringify(body),
   });
 }

@@ -24,13 +24,12 @@ import {
   isDistributorSelfClient,
 } from "@/lib/distributor-scope";
 import {
-  printerToDispositionRequest,
   PRINTER_UNPAID_DISPOSITION_MESSAGE,
 } from "@/lib/printer-form";
 import {
+  disposePrinter,
   fetchPrinterById,
   getPrintersErrorMessage,
-  updatePrinter,
 } from "@/lib/printers-api";
 import { fetchAuthMe } from "@/lib/auth-me-api";
 import { printerPath } from "@/lib/resource-routes";
@@ -61,6 +60,7 @@ export function PrinterDispositionView({
   const { user } = useAuth();
   const { scope } = useCompanyScope();
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
+  const isAdmin = user?.role === "ADMIN";
   const isDistributor = user?.role === "DISTRIBUTOR";
 
   const [printer, setPrinter] = useState<PrinterResponse | null>(null);
@@ -86,7 +86,7 @@ export function PrinterDispositionView({
     isDistributor ? distributorId : null,
   );
   const canDisposeAssigned =
-    isDistributor && canDispose && distributorId != null;
+    canDispose && (isAdmin || (isDistributor && distributorId != null));
 
   const clientIdParam = searchParams.get("clientId");
   const facturaNroParam = searchParams.get("facturaNro");
@@ -245,9 +245,10 @@ export function PrinterDispositionView({
       return "Selecciona un cliente válido para continuar.";
     }
     if (!scopedClients.some((client) => client.id === clientId)) {
-      return "Selecciona un cliente válido de tu distribuidora.";
+      return "Selecciona un cliente válido.";
     }
     if (
+      isDistributor &&
       isDistributorSelfClient(
         clientId,
         scopedClients,
@@ -257,7 +258,7 @@ export function PrinterDispositionView({
       return DISTRIBUTOR_SELF_CLIENT_MESSAGE;
     }
     return null;
-  }, [clientId, scopedClients, distributorStaffBranchId]);
+  }, [clientId, scopedClients, isDistributor, distributorStaffBranchId]);
 
   const facturaValidationError = useMemo(() => {
     if (!facturaNroParam) {
@@ -299,8 +300,7 @@ export function PrinterDispositionView({
     setSaving(true);
 
     try {
-      const body = printerToDispositionRequest(printer, clientId);
-      await updatePrinter(printer.id, body);
+      await disposePrinter(printer.id, { clientId });
       toast.success(`Impresora ${printer.fiscalSerial} enajenada correctamente.`, {
         href: printerPath(printer.id),
       });

@@ -151,7 +151,7 @@ export function PrintersManager() {
     : null;
   const lockDistributor = isDistributor && distributorId != null;
   const canDisposeAssigned =
-    isDistributor && canDispose && distributorId != null;
+    canDispose && (isAdmin || (isDistributor && distributorId != null));
   const distributorStaffBranchId = useDistributorStaffBranchId(
     isDistributor ? distributorId : null,
   );
@@ -520,10 +520,11 @@ export function PrintersManager() {
       return;
     }
     if (!clientOptions.some((option) => option.id === clientId)) {
-      toast.error("Selecciona un cliente válido de tu distribuidora.");
+      toast.error("Selecciona un cliente válido.");
       return;
     }
     if (
+      isDistributor &&
       isDistributorSelfClient(
         clientId,
         clients,
