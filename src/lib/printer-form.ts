@@ -25,6 +25,15 @@ export type PrinterFormValues = {
   deviceType: DeviceType;
 };
 
+function definedPrinterFormDefaults(
+  defaults?: Partial<PrinterFormValues>,
+): Partial<PrinterFormValues> {
+  if (!defaults) return {};
+  return Object.fromEntries(
+    Object.entries(defaults).filter(([, value]) => value !== undefined),
+  ) as Partial<PrinterFormValues>;
+}
+
 const FISCAL_SERIAL_RE = /^[A-Z]{3}[0-9]{7}$/i;
 const FIRMWARE_RE = /^[0-9]+\.[0-9]+\.[0-9]+$/;
 const MAC_RE = /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/i;
@@ -80,7 +89,7 @@ export function printerToFormValues(
     deviceType: DEVICE_TYPES.includes(printer.deviceType)
       ? printer.deviceType
       : "interno",
-    ...defaults,
+    ...definedPrinterFormDefaults(defaults),
   };
 }
 
@@ -98,7 +107,7 @@ export const emptyPrinterForm = (
   macAddress: "",
   status: "de_fabrica",
   deviceType: "interno",
-  ...defaults,
+  ...definedPrinterFormDefaults(defaults),
 });
 
 export function printerToAssignmentRequest(

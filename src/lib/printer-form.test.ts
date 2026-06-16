@@ -23,6 +23,18 @@ const assignedPrinter: PrinterResponse = {
   deviceType: "interno",
 };
 
+describe("printerToFormValues", () => {
+  it("ignores undefined defaults so edit forms keep existing assignments", () => {
+    const values = printerToFormValues(assignedPrinter, {
+      distributorId: undefined,
+    });
+
+    expect(values.distributorId).toBe("40");
+    expect(values.clientId).toBe("30");
+    expect(values.softwareId).toBe("20");
+  });
+});
+
 describe("toPrinterEditRequest", () => {
   it("preserves foreign keys when the wizard omits assignment fields", () => {
     const values = {
