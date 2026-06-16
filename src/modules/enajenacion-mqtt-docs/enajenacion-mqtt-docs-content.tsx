@@ -28,7 +28,7 @@ const ENajenacionSteps = [
     direction: "Servidor → impresora",
     topic: "Comando",
     summary:
-      "wFileSPIFF → paramFacSPIFF.json (dirección, ciudad, tipo de contribuyente).",
+      "wFileSPIFF → paramFacSPIFF.json (dirección, ciudad, tipo de contribuyente y pie fijo opcional).",
   },
   {
     step: "3c",
@@ -160,8 +160,8 @@ export function EnajenacionMqttDocsContent() {
             (MAC sin &quot;:&quot;, 12 hex — ej. <Code>206EF1884C68</Code>):
           </P>
           <pre className="overflow-x-auto rounded-lg bg-foreground/[0.04] p-4 font-mono text-sm text-foreground">
-            {"{mac}"}/AEG_Fiscal/Integracion/CmdServer ← impresora / respuestas{"\n"}
-            {"{mac}"}/AEG_Fiscal/Integracion/Comando ← comandos del servidor
+            /{"{mac}"}/AEG_Fiscal/Integracion/CmdServer ← impresora / respuestas{"\n"}
+            /{"{mac}"}/AEG_Fiscal/Integracion/Comando ← comandos del servidor
           </pre>
           <P>
             En el payload JSON la MAC usa formato con dos puntos (

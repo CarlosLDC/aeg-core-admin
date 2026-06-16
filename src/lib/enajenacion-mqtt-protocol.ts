@@ -94,9 +94,9 @@ export const ENAJENACION_FLOW_STEPS: EnajenacionFlowStep[] = [
     direction: "Servidor → impresora",
     topic: "Comando",
     purpose:
-      "Escribe paramFacSPIFF.json (dirección, ciudad, tipo de contribuyente) vía wFileSPIFF.",
+      "Escribe paramFacSPIFF.json (dirección, ciudad, tipo de contribuyente y pie fijo opcional) vía wFileSPIFF.",
     successCriteria: [
-      "wFileSPIFF con nameFile = paramFacSPIFF.json.",
+      "wFileSPIFF con nameFile = paramFacSPIFF.json, Access = AeG-1968-2024 y pieFacFijo si está configurado.",
       "Respuesta simulada: wFileSPIFF con code = 0.",
     ],
     panelSimulates: "Publica { cmd: \"wFileSPIFF\", code: 0 } en CmdServer.",
@@ -254,15 +254,15 @@ export function colonMac(mac: string): string {
 }
 
 export function fiscalCmdServerTopic(compactMac: string): string {
-  return `${compactMac}/AEG_Fiscal/Integracion/CmdServer`;
+  return `/${compactMac}/AEG_Fiscal/Integracion/CmdServer`;
 }
 
 export function fiscalComandoTopic(compactMac: string): string {
-  return `${compactMac}/AEG_Fiscal/Integracion/Comando`;
+  return `/${compactMac}/AEG_Fiscal/Integracion/Comando`;
 }
 
 export function fiscalMonitorTopic(compactMac: string): string {
-  return `${compactMac}/AEG_Fiscal/Integracion/#`;
+  return `/${compactMac}/AEG_Fiscal/Integracion/#`;
 }
 
 export function buildPtrEnajenarPayload(
@@ -301,7 +301,7 @@ export function buildWFileSpiffSuccessResponse(): FiscalResponseItem {
 }
 
 export function buildStaInfSuccessResponse(fiscalSerial: string): FiscalResponseItem {
-  return { cmd: "StaInf", code: 0, dataS: fiscalSerial };
+  return { cmd: " StaInf ", code: 0, dataS: fiscalSerial };
 }
 
 export function buildInvoiceSuccessResponse(): FiscalResponseItem[] {
@@ -409,7 +409,7 @@ export function classifyFiscalCommand(payload: string): string {
   const data: unknown = JSON.parse(payload);
   if (Array.isArray(data)) {
     const first = data[0] as { cmd?: string } | undefined;
-    const cmd = first?.cmd ?? "";
+    const cmd = first?.cmd?.trim() ?? "";
     if (cmd === "aperDNF") return "dnf";
     if (cmd === "proF") return "invoice";
     if (cmd === "nroFacNC") return "credit_note";
@@ -417,16 +417,17 @@ export function classifyFiscalCommand(payload: string): string {
   }
   if (data && typeof data === "object") {
     const obj = data as { cmd?: string; data?: { nameFile?: string } };
-    if (obj.cmd === "fiscalAEG") return "fiscal_rif";
-    if (obj.cmd === "wFileSPIFF") {
+    const cmd = obj.cmd?.trim() ?? "";
+    if (cmd === "fiscalAEG") return "fiscal_rif";
+    if (cmd === "wFileSPIFF") {
       const name = obj.data?.nameFile ?? "";
       if (name === "paramFacSPIFF.json") return "header";
       if (name === "configSPIFFS.json") return "config";
       return `wfile:${name}`;
     }
-    if (obj.cmd === "genImpRepZ") return "report_z";
-    if (obj.cmd === "StaInf") return "reg_status";
-    return `object:${obj.cmd ?? "unknown"}`;
+    if (cmd === "genImpRepZ") return "report_z";
+    if (cmd === "StaInf") return "reg_status";
+    return `object:${cmd || "unknown"}`;
   }
   return "unknown";
 }
@@ -487,16 +488,17 @@ export function detectPrinterResponseStep(payload: string): string | null {
       return null;
     }
     const obj = data as CmdServerResponseItem;
-    if (obj.cmd === "ptrEnajenar") {
+    const cmd = obj.cmd?.trim() ?? "";
+    if (cmd === "ptrEnajenar") {
       return "request";
     }
     if (obj.code !== 0) {
       return null;
     }
-    if (obj.cmd === "fiscalAEG") return "fiscal-rif";
-    if (obj.cmd === "wFileSPIFF") return "wfile_spiff";
-    if (obj.cmd === "StaInf") return "reg-status";
-    if (obj.cmd === "genImpRepZ") return "report-z";
+    if (cmd === "fiscalAEG") return "fiscal-rif";
+    if (cmd === "wFileSPIFF") return "wfile_spiff";
+    if (cmd === "StaInf") return "reg-status";
+    if (cmd === "genImpRepZ") return "report-z";
     return null;
   } catch {
     return null;

@@ -175,12 +175,15 @@ function statusLabel(
       return testRoleMode === "hardware" && stepId !== "request"
         ? "Impresora respondió"
         : testRoleMode === "hardware"
-          ? "Solicitud enviada"
+          ? "Solicitud recibida"
           : "Publicado";
     case "error":
       return "Error";
     default:
-      if (testRoleMode === "hardware" && stepId !== "request") {
+      if (testRoleMode === "hardware" && stepId === "request") {
+        return "Esperando impresora";
+      }
+      if (testRoleMode === "hardware") {
         return hasServerCommand
           ? "Esperando impresora"
           : "Esperando AEG Core";
@@ -355,9 +358,7 @@ export function EnajenacionTestPanel({
         wfileResponseIndex++;
         continue;
       }
-      if (step !== "request") {
-        done.add(step);
-      }
+      done.add(step);
     }
     return done;
   }, [liveMessages, testRoleMode, topics]);
@@ -641,9 +642,9 @@ export function EnajenacionTestPanel({
 
   async function handleExecute(index: number, command: ManualCommand) {
     if (index > activeStepIndex) return;
-    if (testRoleMode === "hardware" && command.id !== "request") {
+    if (testRoleMode === "hardware") {
       toast.error(
-        "En modo impresora física la impresora debe responder en CmdServer. No publiques respuestas simuladas desde el panel.",
+        "En modo impresora física el panel no publica en CmdServer. Espera el ptrEnajenar y las respuestas reales de la impresora.",
       );
       return;
     }
@@ -733,11 +734,7 @@ export function EnajenacionTestPanel({
           "AEG Core inició el ritual. Deberías ver el DNF en Comando en el monitor.",
         );
       } else {
-        toast.success(
-          testRoleMode === "hardware" && command.id === "request"
-            ? "ptrEnajenar publicado. La impresora debe recibir comandos en Comando e imprimir."
-            : `${command.label} publicado en el broker.`,
-        );
+        toast.success(`${command.label} publicado en el broker.`);
       }
 
       if (command.id === "report-z" && activePrinter) {
@@ -771,9 +768,9 @@ export function EnajenacionTestPanel({
               Enajenación MQTT manual
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-muted">
-              En modo impresora física sólo publicas ptrEnajenar; la impresora
-              recibe comandos en Comando, imprime y responde en CmdServer. El
-              simulador publica respuestas falsas y no imprime.
+              En modo impresora física el panel observa ptrEnajenar y las
+              respuestas reales en CmdServer; la impresora recibe comandos en
+              Comando. El simulador publica mensajes falsos y no imprime.
             </p>
           </div>
         </div>
@@ -789,7 +786,9 @@ export function EnajenacionTestPanel({
           {testRoleMode === "hardware" ? (
             <p>
               <strong className="font-medium">Modo impresora física.</strong>{" "}
-              Tras el paso 1, revisa el monitor: AEG Core publica en{" "}
+              Enciende la impresora y espera ptrEnajenar en{" "}
+              <code className="font-mono text-xs">.../CmdServer</code>. Luego
+              AEG Core publica en{" "}
               <code className="font-mono text-xs">.../Comando</code> y la
               impresora debe ejecutar e imprimir antes de responder en{" "}
               <code className="font-mono text-xs">.../CmdServer</code>.
@@ -1040,14 +1039,15 @@ export function EnajenacionTestPanel({
             const locked = index > activeStepIndex;
             const isRunning = state.status === "running";
             const isSuccess = state.status === "success";
+            const isHardwareStep = testRoleMode === "hardware";
             const isHardwareResponseStep =
-              testRoleMode === "hardware" && command.id !== "request";
+              isHardwareStep && command.id !== "request";
             const serverCommand =
               topics && command.id !== "request"
                 ? findLatestServerCommand(liveMessages, topics.mac, command.id)
                 : null;
             const canExecute =
-              !isHardwareResponseStep && !locked && !isRunning;
+              !isHardwareStep && !locked && !isRunning;
 
             return (
               <article
@@ -1084,21 +1084,23 @@ export function EnajenacionTestPanel({
                       </span>
                     </div>
                     <p className="mt-1 text-sm text-muted">
-                      {isHardwareResponseStep
-                        ? serverCommand
-                          ? "AEG Core ya publicó en Comando. La impresora debe imprimir o grabar y responder en CmdServer."
-                          : "AEG Core debe publicar primero en Comando (p. ej. DNF). Si no aparece, revisa los requisitos de la impresora en BD."
+                      {isHardwareStep
+                        ? command.id === "request"
+                          ? "La impresora debe publicar ptrEnajenar en CmdServer al encender y detectar que no está enajenada."
+                          : serverCommand
+                            ? "AEG Core ya publicó en Comando. La impresora debe imprimir o grabar y responder en CmdServer."
+                            : "AEG Core debe publicar primero en Comando (p. ej. DNF). Si no aparece, revisa los requisitos de la impresora en BD."
                         : command.description}
                     </p>
                     <p className="mt-1 font-mono text-xs text-muted break-all">
                       {command.topic}
                     </p>
                   </div>
-                  {canExecute || isSuccess ? (
+                  {canExecute || (!isHardwareStep && isSuccess) ? (
                     <button
                       type="button"
                       onClick={() => void handleExecute(index, command)}
-                      disabled={locked || isRunning || isHardwareResponseStep}
+                      disabled={locked || isRunning || isHardwareStep}
                       className={cn(
                         "inline-flex shrink-0 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60",
                         isSuccess
@@ -1115,9 +1117,7 @@ export function EnajenacionTestPanel({
                       )}
                       {isSuccess
                         ? "Re-ejecutar"
-                        : testRoleMode === "hardware"
-                          ? "Publicar ptrEnajenar"
-                          : "Ejecutar"}
+                        : "Ejecutar"}
                     </button>
                   ) : null}
                 </div>
@@ -1130,7 +1130,7 @@ export function EnajenacionTestPanel({
                   </div>
                 )}
 
-                {!isHardwareResponseStep ? (
+                {!isHardwareStep ? (
                 <label className="mt-4 block">
                   <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted">
                     Comando JSON editable
@@ -1152,17 +1152,21 @@ export function EnajenacionTestPanel({
                 ) : (
                   <p className="mt-4 rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-sm text-muted">
                     {locked
-                      ? "Completa el paso anterior antes de esperar la respuesta de la impresora."
-                      : isSuccess
-                        ? "La impresora respondió en CmdServer. Revisa el monitor si no hubo impresión física."
-                        : serverCommand
-                          ? "Esperando que la impresora ejecute el comando de Comando y publique su respuesta en CmdServer."
-                          : "Esperando que AEG Core publique el comando en Comando. Si el paso 1 salió bien pero no ves nada en Comando, la validación en BD falló o MQTT entrante está desactivado."}
+                      ? "Completa el paso anterior antes de esperar este mensaje."
+                      : command.id === "request"
+                        ? isSuccess
+                          ? "ptrEnajenar fue recibido desde CmdServer. AEG Core debe continuar publicando el DNF en Comando."
+                          : "Esperando ptrEnajenar real de la impresora en CmdServer. No lo publiques desde el panel."
+                        : isSuccess
+                          ? "La impresora respondió en CmdServer. Revisa el monitor si no hubo impresión física."
+                          : serverCommand
+                            ? "Esperando que la impresora ejecute el comando de Comando y publique su respuesta en CmdServer."
+                            : "Esperando que AEG Core publique el comando en Comando. Si el paso 1 salió bien pero no ves nada en Comando, la validación en BD falló o MQTT entrante está desactivado."}
                   </p>
                 )}
 
                 <p className="mt-2 text-xs text-muted">
-                  {isHardwareResponseStep
+                  {isHardwareStep
                     ? `Éxito esperado: ${command.successHint}`
                     : testRoleMode === "simulator"
                       ? `Éxito en simulador: el broker acepta la publicación. No implica impresión. ${command.successHint}`
@@ -1178,7 +1182,7 @@ export function EnajenacionTestPanel({
                   </p>
                 )}
 
-                {state.result && !isHardwareResponseStep && (
+                {state.result && !isHardwareStep && (
                   <div className="mt-4">
                     <JsonBlock
                       title={`Broker · HTTP ${state.result.httpStatus}`}

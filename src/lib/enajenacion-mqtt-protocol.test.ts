@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   buildDnfSuccessResponse,
   buildEnajenacionTestPrinterRequest,
+  buildCreditNoteSuccessResponse,
+  buildInvoiceSuccessResponse,
   buildPtrEnajenarPayload,
+  buildReportZSuccessResponse,
   buildStaInfSuccessResponse,
   classifyFiscalCommand,
   compactMac,
@@ -24,7 +27,7 @@ describe("enajenacion-mqtt-protocol", () => {
   it("normalizes MAC for topics", () => {
     expect(compactMac("20:6e:f1:88:4c:68")).toBe("206EF1884C68");
     expect(fiscalCmdServerTopic("206EF1884C68")).toBe(
-      "206EF1884C68/AEG_Fiscal/Integracion/CmdServer",
+      "/206EF1884C68/AEG_Fiscal/Integracion/CmdServer",
     );
   });
 
@@ -58,9 +61,48 @@ describe("enajenacion-mqtt-protocol", () => {
 
   it("builds StaInf success response with dataS", () => {
     expect(buildStaInfSuccessResponse("GRA0000017")).toEqual({
-      cmd: "StaInf",
+      cmd: " StaInf ",
       code: 0,
       dataS: "GRA0000017",
+    });
+  });
+
+  it("builds invoice success response", () => {
+    expect(buildInvoiceSuccessResponse()).toEqual([
+      { cmd: "proF", code: 0, dataD: 0 },
+      { cmd: "proF", code: 0, dataD: 0 },
+      { cmd: "proF", code: 0, dataD: 0 },
+      { cmd: "proF", code: 0, dataD: 0 },
+      { cmd: "proF", code: 0, dataD: 0 },
+      { cmd: "subToF", code: 0, dataD: 555 },
+      { cmd: "fpaF", code: 0, dataD: 0 },
+      { cmd: "endFac", code: 0, dataD: 8 },
+    ]);
+  });
+
+  it("builds credit note success response", () => {
+    expect(buildCreditNoteSuccessResponse()).toEqual([
+      { cmd: "nroFacNC", code: 0, dataD: 0 },
+      { cmd: "fechFacNC", code: 0, dataD: 0 },
+      { cmd: "conSerNC", code: 0, dataD: 0 },
+      { cmd: "rifCiNC", code: 0, dataD: 0 },
+      { cmd: "razSocNC", code: 0, dataD: 0 },
+      { cmd: "prodNC", code: 0, dataD: 9 },
+      { cmd: "prodNC", code: 0, dataD: 9 },
+      { cmd: "prodNC", code: 0, dataD: 9 },
+      { cmd: "prodNC", code: 0, dataD: 9 },
+      { cmd: "prodNC", code: 0, dataD: 9 },
+      { cmd: "endPoNC", code: 0, dataD: 555 },
+      { cmd: "fpaNC", code: 0, dataD: 0 },
+      { cmd: "endNC", code: 0, dataD: 10 },
+    ]);
+  });
+
+  it("builds report z success response", () => {
+    expect(buildReportZSuccessResponse()).toEqual({
+      cmd: "genImpRepZ",
+      code: 0,
+      dataD: 0,
     });
   });
 
@@ -164,13 +206,13 @@ describe("enajenacion-mqtt-protocol", () => {
   });
 
   it("detects server comando and printer cmdserver steps", () => {
-    const comandoTopic = "206EF1884C68/AEG_Fiscal/Integracion/Comando";
-    const cmdServerTopic = "206EF1884C68/AEG_Fiscal/Integracion/CmdServer";
+    const comandoTopic = "/206EF1884C68/AEG_Fiscal/Integracion/Comando";
+    const cmdServerTopic = "/206EF1884C68/AEG_Fiscal/Integracion/CmdServer";
 
     expect(
       detectServerCommandStep(
         comandoTopic,
-        JSON.stringify([{ cmd: "aperDNF", data: "x" }]),
+        JSON.stringify([{ cmd: " aperDNF ", data: "x" }]),
       ),
     ).toBe("dnf");
     expect(
@@ -187,9 +229,14 @@ describe("enajenacion-mqtt-protocol", () => {
     ).toBe("request");
     expect(
       detectPrinterResponseStep(
-        JSON.stringify({ cmd: "fiscalAEG", code: 0 }),
+        JSON.stringify({ cmd: " fiscalAEG ", code: 0 }),
       ),
     ).toBe("fiscal-rif");
+    expect(
+      detectPrinterResponseStep(
+        JSON.stringify({ cmd: " StaInf ", code: 0, dataS: "GRA0000017" }),
+      ),
+    ).toBe("reg-status");
     expect(
       detectPrinterResponseStep(
         JSON.stringify(buildDnfSuccessResponse()),
