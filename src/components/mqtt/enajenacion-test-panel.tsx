@@ -20,6 +20,7 @@ import {
 } from "@/lib/printers-api";
 import {
   getMqttErrorMessage,
+  precheckEnajenacionMqtt,
   publishMqttMessage,
   updateMqttSubscription,
 } from "@/lib/mqtt-api";
@@ -47,6 +48,7 @@ import { formatJsonText } from "@/lib/format-json-paste";
 import type { PrinterResponse } from "@/types/printer";
 import type {
   MqttInboundMessage,
+  MqttPublishEnajenacionResult,
   MqttPublishPayload,
   MqttPublishResponse,
 } from "@/types/mqtt";
@@ -152,10 +154,19 @@ function parsePayloadText(text: string):
   }
 }
 
+function isEnajenacionStartFailure(
+  result: MqttPublishEnajenacionResult | null | undefined,
+): result is MqttPublishEnajenacionResult {
+  return (
+    result?.status === "REJECTED" || result?.status === "ALREADY_COMPLETED"
+  );
+}
+
 function statusLabel(
   status: CommandStatus,
   testRoleMode: TestRoleMode,
   stepId: string,
+  hasServerCommand: boolean,
 ): string {
   switch (status) {
     case "running":
@@ -169,9 +180,12 @@ function statusLabel(
     case "error":
       return "Error";
     default:
-      return testRoleMode === "hardware" && stepId !== "request"
-        ? "Esperando impresora"
-        : "Pendiente";
+      if (testRoleMode === "hardware" && stepId !== "request") {
+        return hasServerCommand
+          ? "Esperando impresora"
+          : "Esperando AEG Core";
+      }
+      return "Pendiente";
   }
 }
 
@@ -218,6 +232,11 @@ export function EnajenacionTestPanel({
   const [commandStates, setCommandStates] = useState<Record<string, CommandState>>(
     {},
   );
+  const [precheck, setPrecheck] = useState<{
+    ready: boolean;
+    message: string | null;
+  } | null>(null);
+  const [precheckLoading, setPrecheckLoading] = useState(false);
 
   const eligiblePrinters = useMemo(
     () => printers.filter(isPrinterEligibleForEnajenacionTest),
@@ -249,6 +268,31 @@ export function EnajenacionTestPanel({
       monitor: fiscalMonitorTopic(mac),
     };
   }, [activePrinter]);
+
+  useEffect(() => {
+    if (!activePrinter?.fiscalSerial?.trim() || !activePrinter.macAddress?.trim()) {
+      setPrecheck(null);
+      return;
+    }
+    let cancelled = false;
+    setPrecheckLoading(true);
+    void precheckEnajenacionMqtt(
+      activePrinter.fiscalSerial,
+      activePrinter.macAddress,
+    )
+      .then((result) => {
+        if (!cancelled) setPrecheck(result);
+      })
+      .catch(() => {
+        if (!cancelled) setPrecheck(null);
+      })
+      .finally(() => {
+        if (!cancelled) setPrecheckLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activePrinter?.fiscalSerial, activePrinter?.macAddress]);
 
   const manualCommands = useMemo<ManualCommand[]>(() => {
     if (!activePrinter?.fiscalSerial || !activePrinter.macAddress || !topics) {
@@ -645,10 +689,32 @@ export function EnajenacionTestPanel({
     });
 
     try {
-      const result = await publishMqttMessage({
+      const publishResult = await publishMqttMessage({
         topic: command.topic,
         payload,
       });
+      const { response, httpStatus } = publishResult;
+      const enajenacionFailure = isEnajenacionStartFailure(response.enajenacion);
+      if (command.id === "request" && enajenacionFailure) {
+        const message =
+          response.enajenacion?.message ??
+          "AEG Core rechazó la solicitud de enajenación.";
+        setCommandStates((prev) => ({
+          ...prev,
+          [command.id]: {
+            ...(prev[command.id] ?? {
+              payloadText: stringifyPayload(command.payload),
+              result: null,
+            }),
+            status: "error",
+            error: message,
+            result: publishResult,
+          },
+        }));
+        toast.error(message);
+        return;
+      }
+
       panelPublishedKeysRef.current.add(`${command.topic}:${JSON.stringify(payload)}`);
       setCommandStates((prev) => ({
         ...prev,
@@ -658,15 +724,21 @@ export function EnajenacionTestPanel({
             error: null,
           }),
           status: "success",
-          result,
+          result: publishResult,
           error: null,
         },
       }));
-      toast.success(
-        testRoleMode === "hardware" && command.id === "request"
-          ? "ptrEnajenar publicado. La impresora debe recibir comandos en Comando e imprimir."
-          : `${command.label} publicado en el broker.`,
-      );
+      if (command.id === "request" && response.enajenacion?.status === "STARTED") {
+        toast.success(
+          "AEG Core inició el ritual. Deberías ver el DNF en Comando en el monitor.",
+        );
+      } else {
+        toast.success(
+          testRoleMode === "hardware" && command.id === "request"
+            ? "ptrEnajenar publicado. La impresora debe recibir comandos en Comando e imprimir."
+            : `${command.label} publicado en el broker.`,
+        );
+      }
 
       if (command.id === "report-z" && activePrinter) {
         void refreshPrinterStatus(activePrinter.id).catch(() => undefined);
@@ -869,6 +941,18 @@ export function EnajenacionTestPanel({
 
           {topics && activePrinter && (
             <div className="rounded-lg border border-border bg-foreground/[0.02] p-4 text-sm">
+              {precheckLoading ? (
+                <p className="text-muted">Validando requisitos de enajenación…</p>
+              ) : precheck && !precheck.ready ? (
+                <div className="mb-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-rose-950 dark:text-rose-100">
+                  <p className="font-medium">AEG Core rechazará ptrEnajenar</p>
+                  <p className="mt-1 text-sm">{precheck.message}</p>
+                </div>
+              ) : precheck?.ready ? (
+                <p className="mb-4 text-emerald-700 dark:text-emerald-300">
+                  Requisitos de BD verificados: AEG Core puede iniciar el ritual.
+                </p>
+              ) : null}
               <dl className="grid gap-2 sm:grid-cols-2">
                 <div>
                   <dt className="text-muted">Serial fiscal</dt>
@@ -991,12 +1075,19 @@ export function EnajenacionTestPanel({
                           state.status === "pending" && "bg-foreground/5 text-muted",
                         )}
                       >
-                        {statusLabel(state.status, testRoleMode, command.id)}
+                        {statusLabel(
+                          state.status,
+                          testRoleMode,
+                          command.id,
+                          Boolean(serverCommand),
+                        )}
                       </span>
                     </div>
                     <p className="mt-1 text-sm text-muted">
                       {isHardwareResponseStep
-                        ? "AEG Core publica en Comando; la impresora imprime o graba y responde en CmdServer."
+                        ? serverCommand
+                          ? "AEG Core ya publicó en Comando. La impresora debe imprimir o grabar y responder en CmdServer."
+                          : "AEG Core debe publicar primero en Comando (p. ej. DNF). Si no aparece, revisa los requisitos de la impresora en BD."
                         : command.description}
                     </p>
                     <p className="mt-1 font-mono text-xs text-muted break-all">
@@ -1064,7 +1155,9 @@ export function EnajenacionTestPanel({
                       ? "Completa el paso anterior antes de esperar la respuesta de la impresora."
                       : isSuccess
                         ? "La impresora respondió en CmdServer. Revisa el monitor si no hubo impresión física."
-                        : "Esperando que la impresora ejecute el comando de Comando y publique su respuesta en CmdServer."}
+                        : serverCommand
+                          ? "Esperando que la impresora ejecute el comando de Comando y publique su respuesta en CmdServer."
+                          : "Esperando que AEG Core publique el comando en Comando. Si el paso 1 salió bien pero no ves nada en Comando, la validación en BD falló o MQTT entrante está desactivado."}
                   </p>
                 )}
 

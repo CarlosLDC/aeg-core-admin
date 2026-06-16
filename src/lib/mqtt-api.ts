@@ -3,6 +3,7 @@ import { getStoredToken } from "@/lib/auth-storage";
 import { redirectToLoginAfterExpired } from "@/lib/session-expired";
 import { ApiError } from "@/types/auth";
 import type {
+  EnajenacionMqttPrecheckResponse,
   MqttConnectionProbeResult,
   MqttInboundMessage,
   MqttMonitorStatus,
@@ -113,6 +114,21 @@ export async function publishMqttMessage(
     );
   }
   return { response: data, httpStatus: status };
+}
+
+export async function precheckEnajenacionMqtt(
+  ptrReg: string,
+  mac: string,
+): Promise<EnajenacionMqttPrecheckResponse> {
+  const params = new URLSearchParams({ ptrReg, mac });
+  const { data, status } = await mqttFetch<EnajenacionMqttPrecheckResponse>(
+    `${BASE}/enajenacion/precheck?${params}`,
+  );
+  ensureMqttSuccess(status, data, "No se pudo validar los requisitos de enajenación.");
+  if (data === undefined) {
+    throw new ApiError("Respuesta vacía del servidor", 500);
+  }
+  return data;
 }
 
 export async function getMqttMonitorStatus(): Promise<MqttMonitorStatus> {

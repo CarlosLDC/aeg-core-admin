@@ -14,11 +14,28 @@ export type MqttPublishRequest = {
   payload: MqttPublishPayload;
 };
 
+export type MqttPublishEnajenacionStatus =
+  | "SKIPPED"
+  | "STARTED"
+  | "REJECTED"
+  | "ALREADY_COMPLETED";
+
+export type MqttPublishEnajenacionResult = {
+  status: MqttPublishEnajenacionStatus;
+  message: string | null;
+};
+
 export type MqttPublishResponse = {
   status: string;
   topic: string;
   payload: MqttPublishPayload;
   broker: string;
+  enajenacion?: MqttPublishEnajenacionResult | null;
+};
+
+export type EnajenacionMqttPrecheckResponse = {
+  ready: boolean;
+  message: string | null;
 };
 
 export type MqttTestMessageResponse = {
