@@ -654,6 +654,7 @@ export function PrintersManager() {
 
     const bodyOrError = toPrinterRequest(values, {
       finalSalePrice: selected?.finalSalePrice ?? null,
+      preserveFrom: dialog === "edit" ? selected ?? undefined : undefined,
     });
     if (typeof bodyOrError === "string") {
       setFormError(bodyOrError);

@@ -625,6 +625,7 @@ export function PrinterView() {
 
     const bodyOrError = toPrinterRequest(values, {
       finalSalePrice: printer.finalSalePrice,
+      preserveFrom: printer,
     });
     if (typeof bodyOrError === "string") {
       setFormError(bodyOrError);

@@ -154,7 +154,10 @@ export function printerToDispositionRequest(
 
 export function toPrinterRequest(
   values: PrinterFormValues,
-  options?: { finalSalePrice?: number | null },
+  options?: {
+    finalSalePrice?: number | null;
+    preserveFrom?: PrinterResponse;
+  },
 ): PrinterRequest | string {
   const modelId = Number(values.modelId);
   if (!Number.isFinite(modelId) || modelId <= 0) {
@@ -197,7 +200,7 @@ export function toPrinterRequest(
     return "Cliente no válido.";
   }
 
-  const distributorId = values.distributorId.trim()
+  let distributorId = values.distributorId.trim()
     ? Number(values.distributorId)
     : null;
   if (
@@ -205,6 +208,14 @@ export function toPrinterRequest(
     (!Number.isFinite(distributorId!) || distributorId! <= 0)
   ) {
     return "Distribuidor no válido.";
+  }
+  if (
+    distributorId == null &&
+    options?.preserveFrom?.distributorId != null &&
+    values.status !== "sin_asignar" &&
+    values.status !== "de_fabrica"
+  ) {
+    distributorId = options.preserveFrom.distributorId;
   }
 
   if (!PRINTER_STATUSES.includes(values.status)) {
