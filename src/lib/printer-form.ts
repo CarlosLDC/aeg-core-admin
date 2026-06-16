@@ -152,12 +152,13 @@ export function printerToDispositionRequest(
   };
 }
 
+function clearsPrinterAssignments(status: PrinterStatus): boolean {
+  return status === "sin_asignar" || status === "de_fabrica";
+}
+
 export function toPrinterRequest(
   values: PrinterFormValues,
-  options?: {
-    finalSalePrice?: number | null;
-    preserveFrom?: PrinterResponse;
-  },
+  options?: { finalSalePrice?: number | null },
 ): PrinterRequest | string {
   const modelId = Number(values.modelId);
   if (!Number.isFinite(modelId) || modelId <= 0) {
@@ -200,7 +201,7 @@ export function toPrinterRequest(
     return "Cliente no válido.";
   }
 
-  let distributorId = values.distributorId.trim()
+  const distributorId = values.distributorId.trim()
     ? Number(values.distributorId)
     : null;
   if (
@@ -208,14 +209,6 @@ export function toPrinterRequest(
     (!Number.isFinite(distributorId!) || distributorId! <= 0)
   ) {
     return "Distribuidor no válido.";
-  }
-  if (
-    distributorId == null &&
-    options?.preserveFrom?.distributorId != null &&
-    values.status !== "sin_asignar" &&
-    values.status !== "de_fabrica"
-  ) {
-    distributorId = options.preserveFrom.distributorId;
   }
 
   if (!PRINTER_STATUSES.includes(values.status)) {
@@ -238,6 +231,37 @@ export function toPrinterRequest(
     macAddress: macAddress || null,
     status: values.status,
     deviceType: values.deviceType,
+  };
+}
+
+/** PUT de edición: conserva relaciones existentes si el wizard no las envió. */
+export function toPrinterEditRequest(
+  values: PrinterFormValues,
+  printer: PrinterResponse,
+  options?: { finalSalePrice?: number | null },
+): PrinterRequest | string {
+  const bodyOrError = toPrinterRequest(values, {
+    finalSalePrice: options?.finalSalePrice ?? printer.finalSalePrice,
+  });
+  if (typeof bodyOrError === "string") {
+    return bodyOrError;
+  }
+
+  const clearAssignments = clearsPrinterAssignments(bodyOrError.status);
+
+  return {
+    ...bodyOrError,
+    distributorId: clearAssignments
+      ? null
+      : (bodyOrError.distributorId ?? printer.distributorId),
+    clientId: clearAssignments
+      ? null
+      : (bodyOrError.clientId ?? printer.clientId),
+    softwareId: bodyOrError.softwareId ?? printer.softwareId,
+    installationDate:
+      bodyOrError.installationDate ?? printer.installationDate ?? null,
+    finalSalePrice:
+      options?.finalSalePrice ?? printer.finalSalePrice ?? null,
   };
 }
 

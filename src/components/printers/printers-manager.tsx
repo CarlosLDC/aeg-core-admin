@@ -67,6 +67,7 @@ import {
   PRINTER_STATUS_LABELS,
   PRINTER_UNPAID_DISPOSITION_MESSAGE,
   isPrinterPaidForDisposition,
+  toPrinterEditRequest,
   toPrinterRequest,
   type PrinterFormValues,
 } from "@/lib/printer-form";
@@ -652,10 +653,12 @@ export function PrintersManager() {
       return;
     }
 
-    const bodyOrError = toPrinterRequest(values, {
-      finalSalePrice: selected?.finalSalePrice ?? null,
-      preserveFrom: dialog === "edit" ? selected ?? undefined : undefined,
-    });
+    const bodyOrError =
+      dialog === "edit" && selected
+        ? toPrinterEditRequest(values, selected)
+        : toPrinterRequest(values, {
+            finalSalePrice: selected?.finalSalePrice ?? null,
+          });
     if (typeof bodyOrError === "string") {
       setFormError(bodyOrError);
       return;

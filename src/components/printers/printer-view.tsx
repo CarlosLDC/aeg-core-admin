@@ -56,7 +56,7 @@ import {
   printerToFormValues,
   PRINTER_UNPAID_DISPOSITION_MESSAGE,
   isPrinterPaidForDisposition,
-  toPrinterRequest,
+  toPrinterEditRequest,
   type PrinterFormValues,
 } from "@/lib/printer-form";
 import { fetchPrinterModels } from "@/lib/printer-models-api";
@@ -623,10 +623,7 @@ export function PrinterView() {
       return;
     }
 
-    const bodyOrError = toPrinterRequest(values, {
-      finalSalePrice: printer.finalSalePrice,
-      preserveFrom: printer,
-    });
+    const bodyOrError = toPrinterEditRequest(values, printer);
     if (typeof bodyOrError === "string") {
       setFormError(bodyOrError);
       return;

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useId, useState } from "react";
+import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import { Cpu, Link2, Loader2, Printer, Settings2, X } from "lucide-react";
 import {
   PrinterWizardFields,
@@ -95,19 +95,27 @@ export function PrinterCreateWizardDialog({
     Partial<Record<keyof PrinterFormValues, string>>
   >({});
 
+  const initialFormSnapshot = useMemo(
+    () => (initialValues ? JSON.stringify(initialValues) : ""),
+    [initialValues],
+  );
+
   useEffect(() => {
     if (!open) return;
+    const parsed: PrinterFormValues | null = initialFormSnapshot
+      ? (JSON.parse(initialFormSnapshot) as PrinterFormValues)
+      : null;
     setStep(1);
     setStepError(null);
     setFieldErrors({});
     setForm({
-      ...emptyPrinterForm(initialValues ?? undefined),
+      ...emptyPrinterForm(parsed ?? undefined),
       distributorId:
         lockDistributor && defaultDistributorId != null
           ? String(defaultDistributorId)
-          : (initialValues?.distributorId ?? ""),
+          : (parsed?.distributorId ?? ""),
     });
-  }, [open, initialValues, lockDistributor, defaultDistributorId]);
+  }, [open, initialFormSnapshot, lockDistributor, defaultDistributorId]);
 
   if (!open) return null;
 
