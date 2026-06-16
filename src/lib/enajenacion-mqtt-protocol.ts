@@ -23,7 +23,169 @@ export type EnajenacionSimulatorStep = {
   label: string;
   delayMs: number;
   buildPayload: (ctx: EnajenacionSimulatorContext) => unknown;
+  /** Identificador del paso en {@link ENAJENACION_FLOW_STEPS}. */
+  flowStepId: string;
 };
+
+export type EnajenacionFlowStep = {
+  id: string;
+  step: string;
+  name: string;
+  direction: "Impresora → servidor" | "Servidor → impresora";
+  topic: "CmdServer" | "Comando";
+  purpose: string;
+  successCriteria: string[];
+  /** Qué hace el panel de prueba en este paso (si aplica). */
+  panelSimulates?: string;
+};
+
+/** Ritual completo: paso 1 (solicitud) + pasos 2–7 (orquestación servidor). */
+export const ENAJENACION_FLOW_STEPS: EnajenacionFlowStep[] = [
+  {
+    id: "request",
+    step: "1",
+    name: "Solicitud de enajenación",
+    direction: "Impresora → servidor",
+    topic: "CmdServer",
+    purpose:
+      "Al arrancar, la impresora avisa que aún no está enajenada. AEG Core valida serial fiscal, MAC, cliente, datos fiscales y que no haya otra sesión activa para esa MAC.",
+    successCriteria: [
+      "Impresora en BD con estatus Asignada o Laboratorio, pagada y con cliente asignado.",
+      "ptrReg coincide con el serial fiscal y macAddr con la MAC de la impresora.",
+      "El servidor acepta la solicitud y publica el DNF de alerta (paso 2a). Si falla una validación, no inicia el ritual.",
+    ],
+    panelSimulates:
+      "Publica ptrEnajenar en CmdServer al pulsar «Iniciar simulación» (sustituye el arranque de la impresora).",
+  },
+  {
+    id: "dnf",
+    step: "2a",
+    name: "DNF de alerta",
+    direction: "Servidor → impresora",
+    topic: "Comando",
+    purpose:
+      "Imprime un documento no fiscal que advierte al operador no usar el equipo hasta completar el Reporte Z.",
+    successCriteria: [
+      "Cada comando del bloque DNF responde con code = 0.",
+      "endDNF con code = 0 y dataD = 7 (constante DNF_END_OK).",
+      "Cualquier code ≠ 0 aborta la sesión.",
+    ],
+    panelSimulates:
+      "Envía la respuesta simulada del firmware (aperDNF … endDNF) en CmdServer.",
+  },
+  {
+    id: "fiscal-rif",
+    step: "3a",
+    name: "RIF y razón social",
+    direction: "Servidor → impresora",
+    topic: "Comando",
+    purpose:
+      "Graba rifEmp.json en la impresora con el RIF y la razón social del cliente tomados de AEG Core.",
+    successCriteria: [
+      "Comando fiscalAEG publicado en Comando.",
+      "Respuesta simulada: fiscalAEG con code = 0.",
+    ],
+    panelSimulates: "Publica { cmd: \"fiscalAEG\", code: 0 } en CmdServer.",
+  },
+  {
+    id: "header",
+    step: "3b",
+    name: "Encabezado y dirección",
+    direction: "Servidor → impresora",
+    topic: "Comando",
+    purpose:
+      "Escribe paramFacSPIFF.json (dirección, ciudad, tipo de contribuyente) vía wFileSPIFF.",
+    successCriteria: [
+      "wFileSPIFF con nameFile = paramFacSPIFF.json.",
+      "Respuesta simulada: wFileSPIFF con code = 0.",
+    ],
+    panelSimulates: "Publica { cmd: \"wFileSPIFF\", code: 0 } en CmdServer.",
+  },
+  {
+    id: "config",
+    step: "3c",
+    name: "Impuestos y formas de pago",
+    direction: "Servidor → impresora",
+    topic: "Comando",
+    purpose:
+      "Escribe configSPIFFS.json con la plantilla fiscal fija del servidor (tasas, formas de pago).",
+    successCriteria: [
+      "wFileSPIFF con nameFile = configSPIFFS.json.",
+      "Respuesta simulada: wFileSPIFF con code = 0.",
+    ],
+    panelSimulates: "Publica { cmd: \"wFileSPIFF\", code: 0 } en CmdServer.",
+  },
+  {
+    id: "reg-status",
+    step: "4",
+    name: "Estatus del registro fiscal",
+    direction: "Servidor → impresora",
+    topic: "Comando",
+    purpose:
+      "Consulta StaInf (NroRegMa) para confirmar que el número de registro en la impresora coincide con el serial fiscal.",
+    successCriteria: [
+      "StaInf publicado en Comando con data.status = NroRegMa.",
+      "Respuesta: StaInf con code = 0 y dataS = serial fiscal (ptrReg).",
+    ],
+    panelSimulates:
+      "Publica { cmd: \"StaInf\", code: 0, dataS: \"<serial>\" } en CmdServer.",
+  },
+  {
+    id: "invoice",
+    step: "5",
+    name: "Factura de prueba",
+    direction: "Servidor → impresora",
+    topic: "Comando",
+    purpose:
+      "Emite una factura fiscal de prueba para validar la configuración antes del cierre.",
+    successCriteria: [
+      "5 × proF, subToF, fpaF y endFac, todos con code = 0.",
+      "subToF con dataD = 555.",
+      "endFac con dataD = 8 (INVOICE_END_OK).",
+    ],
+    panelSimulates:
+      "Publica el arreglo de respuestas (proF … endFac) en CmdServer.",
+  },
+  {
+    id: "credit-note",
+    step: "6",
+    name: "Nota de crédito de anulación",
+    direction: "Servidor → impresora",
+    topic: "Comando",
+    purpose:
+      "Anula la factura de prueba mediante una nota de crédito fiscal.",
+    successCriteria: [
+      "13 comandos NC; cada prodNC con code = 0 y dataD = 9.",
+      "endPoNC con dataD = 555.",
+      "endNC con dataD = 10 (CREDIT_NOTE_END_OK).",
+    ],
+    panelSimulates:
+      "Publica el arreglo de respuestas (nroFacNC … endNC) en CmdServer.",
+  },
+  {
+    id: "report-z",
+    step: "7",
+    name: "Reporte Z",
+    direction: "Servidor → impresora",
+    topic: "Comando",
+    purpose:
+      "Cierra el ritual fiscal con genImpRepZ. Tras el OK, AEG Core marca la impresora como Enajenada en base de datos.",
+    successCriteria: [
+      "genImpRepZ con code = 0 y dataD = 0.",
+      "Estado en BD pasa a Enajenada (éxito global del ritual).",
+      "Cualquier code ≠ 0 en cualquier paso impide el cambio de estatus.",
+    ],
+    panelSimulates:
+      "Publica { cmd: \"genImpRepZ\", code: 0 } en CmdServer; el panel consulta la BD hasta ver Enajenada.",
+  },
+];
+
+export const ENAJENACION_GLOBAL_SUCCESS =
+  "La impresora queda con estatus Enajenada en AEG Core tras un Reporte Z exitoso. El panel lo comprueba automáticamente al final de la secuencia.";
+
+export function flowStepById(id: string): EnajenacionFlowStep | undefined {
+  return ENAJENACION_FLOW_STEPS.find((step) => step.id === id);
+}
 
 export function compactMac(mac: string): string {
   return mac.replace(/:/g, "").toUpperCase();
@@ -122,48 +284,56 @@ export function buildReportZSuccessResponse(): FiscalResponseItem {
 export const EnajenacionResponseSteps: EnajenacionSimulatorStep[] = [
   {
     id: "dnf",
+    flowStepId: "dnf",
     label: "Paso 2a — Respuesta DNF",
     delayMs: 800,
     buildPayload: () => buildDnfSuccessResponse(),
   },
   {
     id: "fiscal-rif",
+    flowStepId: "fiscal-rif",
     label: "Paso 3a — fiscalAEG",
     delayMs: 600,
     buildPayload: () => buildFiscalRifSuccessResponse(),
   },
   {
     id: "header",
+    flowStepId: "header",
     label: "Paso 3b — paramFacSPIFF",
     delayMs: 600,
     buildPayload: () => buildWFileSpiffSuccessResponse(),
   },
   {
     id: "config",
+    flowStepId: "config",
     label: "Paso 3c — configSPIFFS",
     delayMs: 600,
     buildPayload: () => buildWFileSpiffSuccessResponse(),
   },
   {
     id: "reg-status",
+    flowStepId: "reg-status",
     label: "Paso 4 — StaInf (NroRegMa)",
     delayMs: 600,
     buildPayload: ({ fiscalSerial }) => buildStaInfSuccessResponse(fiscalSerial),
   },
   {
     id: "invoice",
+    flowStepId: "invoice",
     label: "Paso 5 — Factura de prueba",
     delayMs: 800,
     buildPayload: () => buildInvoiceSuccessResponse(),
   },
   {
     id: "credit-note",
+    flowStepId: "credit-note",
     label: "Paso 6 — Nota de crédito",
     delayMs: 800,
     buildPayload: () => buildCreditNoteSuccessResponse(),
   },
   {
     id: "report-z",
+    flowStepId: "report-z",
     label: "Paso 7 — Reporte Z",
     delayMs: 600,
     buildPayload: () => buildReportZSuccessResponse(),

@@ -5,7 +5,10 @@ import {
   buildStaInfSuccessResponse,
   classifyFiscalCommand,
   compactMac,
+  ENAJENACION_FLOW_STEPS,
+  EnajenacionResponseSteps,
   fiscalCmdServerTopic,
+  flowStepById,
   isPrinterEligibleForEnajenacionTest,
 } from "@/lib/enajenacion-mqtt-protocol";
 import type { PrinterResponse } from "@/types/printer";
@@ -85,5 +88,14 @@ describe("enajenacion-mqtt-protocol", () => {
       fiscalSerial: "GRA0000019",
     } as PrinterResponse;
     expect(isPrinterEligibleForEnajenacionTest(printer)).toBe(false);
+  });
+
+  it("defines the full enajenacion flow with success criteria", () => {
+    expect(ENAJENACION_FLOW_STEPS).toHaveLength(9);
+    expect(ENAJENACION_FLOW_STEPS[0]?.id).toBe("request");
+    expect(ENAJENACION_FLOW_STEPS.at(-1)?.id).toBe("report-z");
+    for (const step of EnajenacionResponseSteps) {
+      expect(flowStepById(step.flowStepId)?.id).toBe(step.flowStepId);
+    }
   });
 });

@@ -28,8 +28,10 @@ import {
   fiscalCmdServerTopic,
   fiscalComandoTopic,
   fiscalMonitorTopic,
+  flowStepById,
   isPrinterEligibleForEnajenacionTest,
 } from "@/lib/enajenacion-mqtt-protocol";
+import { EnajenacionStepsGuide } from "@/components/mqtt/enajenacion-steps-guide";
 import { printerStatusLabel } from "@/lib/printer-status";
 import type { PrinterResponse } from "@/types/printer";
 import type { MqttInboundMessage } from "@/types/mqtt";
@@ -310,31 +312,44 @@ export function EnajenacionTestPanel({
   }
 
   return (
-    <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="flex items-center gap-2 font-semibold text-card-foreground">
-            <Printer className="size-5 text-accent" />
-            Prueba manual de enajenación
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            Simula el firmware de la impresora publicando{" "}
-            <code className="text-xs">ptrEnajenar</code> y las respuestas fiscales
-            La impresora debe estar en estado{" "}
-            <strong>asignada</strong> o <strong>laboratorio</strong>, con cliente
-            y datos fiscales completos.
-          </p>
+    <div className="space-y-6">
+      <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 font-semibold text-card-foreground">
+              <Printer className="size-5 text-accent" />
+              Simulador de enajenación MQTT
+            </h2>
+            <p className="mt-1 max-w-2xl text-sm text-muted">
+              Prueba el ritual fiscal completo sin hardware: el panel hace de{" "}
+              <strong className="font-medium text-card-foreground">
+                impresora simulada
+              </strong>{" "}
+              (publica en CmdServer) y AEG Core responde como en producción.
+              Consulta la guía de pasos más abajo para entender cada fase y sus
+              criterios de éxito.
+            </p>
+          </div>
+          <Link
+            href={ENAJENACION_MQTT_DOCS_PATH}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-accent hover:underline"
+          >
+            Referencia técnica completa
+            <ExternalLink className="size-3.5" aria-hidden />
+          </Link>
         </div>
-        <Link
-          href={ENAJENACION_MQTT_DOCS_PATH}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-accent hover:underline"
-        >
-          Documentación del protocolo
-          <ExternalLink className="size-3.5" aria-hidden />
-        </Link>
-      </div>
+
+        <div className="mt-4 rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-950 dark:text-amber-100">
+          <p className="font-medium">Requisitos de la impresora elegida</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-amber-900/90 dark:text-amber-50/90">
+            <li>Estatus Asignada o Laboratorio, con cliente y MAC registrados.</li>
+            <li>Serial fiscal y MAC coherentes con los tópicos MQTT.</li>
+            <li>Cliente con RIF, razón social y dirección completos en BD.</li>
+            <li>Sin otra sesión MQTT activa para la misma MAC.</li>
+          </ul>
+        </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <label className="block lg:col-span-2">
@@ -389,24 +404,43 @@ export function EnajenacionTestPanel({
         )}
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-4 text-sm">
-        <label className="inline-flex items-center gap-2">
+      <div className="mt-4 space-y-3 text-sm">
+        <label className="flex gap-3 rounded-lg border border-border p-3 hover:bg-foreground/[0.02]">
           <input
             type="checkbox"
+            className="mt-1"
             checked={autoSequential}
             onChange={(e) => setAutoSequential(e.target.checked)}
             disabled={running}
           />
-          Secuencia automática de respuestas (pasos 2–7)
+          <span>
+            <span className="font-medium text-card-foreground">
+              Secuencia automática (pasos 2a–7)
+            </span>
+            <span className="mt-0.5 block text-muted">
+              Tras publicar ptrEnajenar, envía todas las respuestas simuladas del
+              firmware en orden, con la pausa configurada entre pasos.
+            </span>
+          </span>
         </label>
-        <label className="inline-flex items-center gap-2">
+        <label className="flex gap-3 rounded-lg border border-border p-3 hover:bg-foreground/[0.02]">
           <input
             type="checkbox"
+            className="mt-1"
             checked={autoRespondLive}
             onChange={(e) => setAutoRespondLive(e.target.checked)}
             disabled={running}
           />
-          Auto-responder comandos vistos en el monitor
+          <span>
+            <span className="font-medium text-card-foreground">
+              Auto-responder comandos del monitor
+            </span>
+            <span className="mt-0.5 block text-muted">
+              Cuando AEG Core publica en Comando, detecta el tipo de comando y
+              publica la respuesta de éxito correspondiente en CmdServer (útil
+              si desactivas la secuencia automática).
+            </span>
+          </span>
         </label>
       </div>
 
@@ -458,17 +492,34 @@ export function EnajenacionTestPanel({
       </div>
 
       {!autoSequential && topics && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {EnajenacionResponseSteps.map((step) => (
-            <button
-              key={step.id}
-              type="button"
-              onClick={() => void handleManualStep(step.id)}
-              className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5"
-            >
-              {step.label}
-            </button>
-          ))}
+        <div className="mt-4">
+          <p className="mb-2 text-sm text-muted">
+            Modo manual: envía cada respuesta simulada cuando corresponda (tras
+            ver el comando en el monitor).
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {EnajenacionResponseSteps.map((step) => {
+              const flow = flowStepById(step.flowStepId);
+              return (
+                <button
+                  key={step.id}
+                  type="button"
+                  title={flow?.purpose}
+                  onClick={() => void handleManualStep(step.id)}
+                  className="rounded-lg border border-border px-3 py-2 text-left text-xs hover:bg-foreground/5"
+                >
+                  <span className="block font-medium text-card-foreground">
+                    {flow?.step ?? step.label} — {flow?.name ?? step.label}
+                  </span>
+                  {flow?.successCriteria[0] ? (
+                    <span className="mt-0.5 block text-muted">
+                      Éxito: {flow.successCriteria[0]}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -492,6 +543,11 @@ export function EnajenacionTestPanel({
           </ul>
         </div>
       )}
-    </section>
+      </section>
+
+      <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <EnajenacionStepsGuide />
+      </section>
+    </div>
   );
 }

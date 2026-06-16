@@ -17,7 +17,7 @@ const TAB_HELP: Record<MqttTab, string> = {
   diagnostics:
     "Comprueba la conectividad con el broker y publica mensajes de prueba sin depender del flujo fiscal.",
   enajenacion:
-    "Simula el ritual de enajenación fiscal (ptrEnajenar → Reporte Z). Abre la documentación del protocolo en una pestaña nueva desde el panel de prueba.",
+    "Simula el ritual fiscal de punta a punta: ptrEnajenar, respuestas del firmware y Reporte Z. Incluye guía paso a paso con criterios de éxito.",
 };
 
 function MqttStatusStrip({
