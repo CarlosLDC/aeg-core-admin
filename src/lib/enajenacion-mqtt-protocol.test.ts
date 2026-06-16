@@ -64,4 +64,26 @@ describe("enajenacion-mqtt-protocol", () => {
     } as PrinterResponse;
     expect(isPrinterEligibleForEnajenacionTest(printer)).toBe(true);
   });
+
+  it("detects eligible laboratorio printer", () => {
+    const printer = {
+      id: 2,
+      status: "laboratorio",
+      clientId: 10,
+      macAddress: "20:6E:F1:88:4C:69",
+      fiscalSerial: "GRA0000018",
+    } as PrinterResponse;
+    expect(isPrinterEligibleForEnajenacionTest(printer)).toBe(true);
+  });
+
+  it("rejects sin_asignar printer for enajenacion test", () => {
+    const printer = {
+      id: 3,
+      status: "sin_asignar",
+      clientId: 10,
+      macAddress: "20:6E:F1:88:4C:6A",
+      fiscalSerial: "GRA0000019",
+    } as PrinterResponse;
+    expect(isPrinterEligibleForEnajenacionTest(printer)).toBe(false);
+  });
 });

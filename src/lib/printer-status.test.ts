@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isPrinterAssigned,
+  isPrinterEligibleForMqttEnajenacion,
   isPrinterOperative,
   isPrinterUnassigned,
   normalizePrinterStatus,
@@ -23,5 +24,13 @@ describe("printer-status", () => {
     expect(isPrinterAssigned("asignada")).toBe(true);
     expect(isPrinterOperative("sin_asignar")).toBe(true);
     expect(isPrinterOperative("laboratorio")).toBe(false);
+  });
+
+  it("detects printers eligible for MQTT enajenacion", () => {
+    expect(isPrinterEligibleForMqttEnajenacion("asignada")).toBe(true);
+    expect(isPrinterEligibleForMqttEnajenacion("laboratorio")).toBe(true);
+    expect(isPrinterEligibleForMqttEnajenacion("de_demostracion")).toBe(true);
+    expect(isPrinterEligibleForMqttEnajenacion("sin_asignar")).toBe(false);
+    expect(isPrinterEligibleForMqttEnajenacion("enajenada")).toBe(false);
   });
 });

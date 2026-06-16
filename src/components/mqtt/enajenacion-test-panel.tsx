@@ -320,8 +320,9 @@ export function EnajenacionTestPanel({
           <p className="mt-1 text-sm text-muted">
             Simula el firmware de la impresora publicando{" "}
             <code className="text-xs">ptrEnajenar</code> y las respuestas fiscales
-            en CmdServer vía el API. La impresora debe estar{" "}
-            <strong>asignada</strong> a un cliente con datos fiscales completos.
+            La impresora debe estar en estado{" "}
+            <strong>asignada</strong> o <strong>laboratorio</strong>, con cliente
+            y datos fiscales completos.
           </p>
         </div>
         <Link
@@ -338,7 +339,7 @@ export function EnajenacionTestPanel({
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <label className="block lg:col-span-2">
           <span className="mb-1.5 block text-sm font-medium">
-            Impresora (ASIGNADA)
+            Impresora (asignada / laboratorio)
           </span>
           <select
             value={selectedId}

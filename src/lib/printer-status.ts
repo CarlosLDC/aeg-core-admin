@@ -27,6 +27,16 @@ export function isPrinterAssigned(status: string): boolean {
   return normalizePrinterStatus(status) === "asignada";
 }
 
+export function isPrinterLaboratorio(status: string): boolean {
+  return normalizePrinterStatus(status) === "laboratorio";
+}
+
+/** Estados desde los que se puede iniciar o simular enajenación MQTT. */
+export function isPrinterEligibleForMqttEnajenacion(status: string): boolean {
+  const normalized = normalizePrinterStatus(status);
+  return normalized === "asignada" || normalized === "laboratorio";
+}
+
 export function isPrinterOperative(status: string): boolean {
   const normalized = normalizePrinterStatus(status);
   return normalized === "asignada" || normalized === "sin_asignar";

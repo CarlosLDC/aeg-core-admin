@@ -1,5 +1,5 @@
 import type { PrinterResponse } from "@/types/printer";
-import { isPrinterAssigned } from "@/lib/printer-status";
+import { isPrinterEligibleForMqttEnajenacion } from "@/lib/printer-status";
 
 export const DNF_END_OK = 7;
 export const INVOICE_END_OK = 8;
@@ -174,7 +174,7 @@ export function isPrinterEligibleForEnajenacionTest(
   printer: PrinterResponse,
 ): boolean {
   return (
-    isPrinterAssigned(printer.status) &&
+    isPrinterEligibleForMqttEnajenacion(printer.status) &&
     Boolean(printer.clientId) &&
     Boolean(printer.macAddress?.trim()) &&
     Boolean(printer.fiscalSerial?.trim())

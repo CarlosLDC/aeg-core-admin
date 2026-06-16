@@ -195,7 +195,8 @@ export function EnajenacionMqttDocsContent() {
               coincidente con topic/payload.
             </li>
             <li>
-              Estado <Code>ASIGNADA</Code> (no <Code>ENAJENADA</Code>).
+              Estado <Code>ASIGNADA</Code> o <Code>LABORATORIO</Code> (no{" "}
+              <Code>ENAJENADA</Code>).
             </li>
             <li>
               <Code>clientId</Code> asignado; cliente con sucursal, RIF, razón
