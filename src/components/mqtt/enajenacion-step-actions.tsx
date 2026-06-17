@@ -6,13 +6,14 @@ import { useToast } from "@/context/toast-provider";
 import { getMqttErrorMessage, publishMqttMessage } from "@/lib/mqtt-api";
 import {
   printerSimulationButtonLabel,
+  formatMqttPayloadForDisplay,
   type PrinterSimulationPayload,
 } from "@/lib/enajenacion-mqtt-protocol";
 import type { MqttInboundMessage, MqttPublishPayload } from "@/types/mqtt";
 import { cn } from "@/lib/utils";
 
 function formatPayload(payload: unknown): string {
-  return JSON.stringify(payload, null, 2);
+  return formatMqttPayloadForDisplay(JSON.stringify(payload));
 }
 
 function CopyTextButton({

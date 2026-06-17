@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Info, Loader2, Printer, RotateCcw } from "lucide-react";
+import { Info, Loader2, Printer, RefreshCw, RotateCcw } from "lucide-react";
 import {
   EnajenacionActiveStep,
   EnajenacionSuccessCard,
@@ -174,7 +174,30 @@ export function EnajenacionTestPanel({
       ) : null}
 
       {ritual.ritualSteps.length > 0 && !ritual.ritualComplete ? (
-        <>
+        <section className="space-y-4">
+          <div className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                if (wsStatus !== "open") {
+                  connectMonitorWebSocket();
+                }
+                void ritual.refreshStepLiveData();
+              }}
+              disabled={ritual.stepRefreshLoading}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5 disabled:opacity-50"
+            >
+              <RefreshCw
+                className={cn(
+                  "size-3.5",
+                  ritual.stepRefreshLoading && "animate-spin",
+                )}
+                aria-hidden
+              />
+              Actualizar comandos
+            </button>
+          </div>
+
           <EnajenacionRitualStepper
             steps={ritual.ritualSteps}
             stepStatuses={ritual.stepStatuses}
@@ -198,7 +221,7 @@ export function EnajenacionTestPanel({
               }
             />
           ) : null}
-        </>
+        </section>
       ) : null}
 
       {ritual.activePrinter && ritual.topics ? (

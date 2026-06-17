@@ -27,6 +27,7 @@ import {
   filterFiscalMessagesSince,
   findLatestPtrEnajenarReceivedAt,
   findLatestServerCommand,
+  formatMqttPayloadForDisplay,
   fiscalCmdServerTopic,
   fiscalComandoTopic,
   fiscalTopicMatchesMac,
@@ -37,6 +38,7 @@ import {
   isPtrEnajenarPayload,
   isPrinterEligibleForEnajenacionTest,
   isTestFiscalSerial,
+  mergeMqttMessages,
   parseManualMacAddress,
   resolveWfileResponseStep,
 } from "@/lib/enajenacion-mqtt-protocol";
@@ -470,5 +472,32 @@ describe("enajenacion-mqtt-protocol", () => {
         fiscalCmdServerTopic(mac),
       ).payload,
     ).toEqual({ cmd: "wFileSPIFF", code: 0, dataD: 0 });
+  });
+
+  it("formats MQTT JSON payloads for display", () => {
+    expect(formatMqttPayloadForDisplay('{"cmd":"aperDNF","code":0}')).toBe(
+      '{\n  "cmd": "aperDNF",\n  "code": 0\n}',
+    );
+    expect(formatMqttPayloadForDisplay("not-json")).toBe("not-json");
+  });
+
+  it("merges MQTT message buffers without duplicates", () => {
+    const first = [
+      {
+        topic: "/206EF1884C68/AEG_Fiscal/Integracion/Comando",
+        payload: '{"cmd":"aperDNF"}',
+        receivedAt: "2026-01-01T10:00:00.000Z",
+      },
+    ];
+    const second = [
+      ...first,
+      {
+        topic: "/206EF1884C68/AEG_Fiscal/Integracion/Comando",
+        payload: '{"cmd":"fiscalAEG"}',
+        receivedAt: "2026-01-01T10:00:01.000Z",
+      },
+    ];
+    expect(mergeMqttMessages(first, second)).toHaveLength(2);
+    expect(mergeMqttMessages(first, first)).toHaveLength(1);
   });
 });

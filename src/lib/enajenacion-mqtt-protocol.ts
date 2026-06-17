@@ -307,6 +307,38 @@ export function parseMessageReceivedAt(receivedAt: string): number | null {
   return Number.isNaN(at) ? null : at;
 }
 
+export function formatMqttPayloadForDisplay(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  try {
+    return JSON.stringify(JSON.parse(trimmed), null, 2);
+  } catch {
+    return raw;
+  }
+}
+
+export function mergeMqttMessages(
+  ...groups: { topic: string; payload: string; receivedAt: string }[][]
+): { topic: string; payload: string; receivedAt: string }[] {
+  const byKey = new Map<
+    string,
+    { topic: string; payload: string; receivedAt: string }
+  >();
+  for (const group of groups) {
+    for (const message of group) {
+      byKey.set(
+        `${message.topic}\0${message.receivedAt}\0${message.payload}`,
+        message,
+      );
+    }
+  }
+  return [...byKey.values()].sort(
+    (a, b) =>
+      (parseMessageReceivedAt(b.receivedAt) ?? 0) -
+      (parseMessageReceivedAt(a.receivedAt) ?? 0),
+  );
+}
+
 export function isPtrEnajenarPayload(payload: string): boolean {
   return detectPrinterResponseStep(payload) === "request";
 }

@@ -8,6 +8,7 @@ import {
 } from "@/components/mqtt/enajenacion-step-actions";
 import type { RitualStepActionState } from "@/hooks/use-enajenacion-ritual";
 import type { RitualStep } from "@/hooks/use-enajenacion-ritual";
+import { formatMqttPayloadForDisplay } from "@/lib/enajenacion-mqtt-protocol";
 import { printerStatusLabel } from "@/lib/printer-status";
 import { printerPath } from "@/lib/resource-routes";
 import type { PrinterResponse } from "@/types/printer";
@@ -42,7 +43,9 @@ export function EnajenacionActiveStep({
   const payloadText = stepState.simulation
     ? formatPayload(stepState.simulation.payload)
     : "";
-  const commandText = stepState.serverCommand?.payload ?? "";
+  const commandText = stepState.serverCommand?.payload
+    ? formatMqttPayloadForDisplay(stepState.serverCommand.payload)
+    : "";
 
   return (
     <article className="rounded-xl border border-border bg-card p-5 shadow-sm">
