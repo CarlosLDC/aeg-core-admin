@@ -1,17 +1,12 @@
 "use client";
 
-import { Loader2, Printer, RefreshCw, RotateCcw, Zap } from "lucide-react";
-import { useToast } from "@/context/toast-provider";
+import { Loader2, Printer, RotateCcw } from "lucide-react";
 import {
   EnajenacionActiveStep,
   EnajenacionSuccessCard,
 } from "@/components/mqtt/enajenacion-active-step";
 import { EnajenacionRitualStepper } from "@/components/mqtt/enajenacion-ritual-stepper";
 import { useEnajenacionRitual } from "@/hooks/use-enajenacion-ritual";
-import {
-  getMqttErrorMessage,
-  updateMqttSubscription,
-} from "@/lib/mqtt-api";
 import { printerStatusLabel } from "@/lib/printer-status";
 import type { MqttInboundMessage } from "@/types/mqtt";
 import { cn } from "@/lib/utils";
@@ -25,28 +20,10 @@ function formatAnchorTime(anchorAt: number): string {
 
 export function EnajenacionTestPanel({
   liveMessages,
-  onApplyMonitorTopic,
 }: {
   liveMessages: MqttInboundMessage[];
-  onApplyMonitorTopic?: (topic: string) => Promise<void>;
-  onOpenMonitor?: () => void;
 }) {
-  const toast = useToast();
   const ritual = useEnajenacionRitual(liveMessages);
-
-  async function handleApplyMonitorTopic() {
-    if (!ritual.topics) return;
-    try {
-      if (onApplyMonitorTopic) {
-        await onApplyMonitorTopic(ritual.topics.monitor);
-      } else {
-        await updateMqttSubscription(ritual.topics.monitor);
-      }
-      toast.success(`Monitor apuntando a ${ritual.topics.monitor}`);
-    } catch (err) {
-      toast.error(getMqttErrorMessage(err));
-    }
-  }
 
   if (ritual.printersLoading) {
     return (
@@ -60,10 +37,22 @@ export function EnajenacionTestPanel({
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-card-foreground">
-          <Printer className="size-5 text-accent" />
-          Enajenación MQTT
-        </h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-card-foreground">
+            <Printer className="size-5 text-accent" />
+            Enajenación MQTT
+          </h2>
+          {ritual.activePrinter && (
+            <button
+              type="button"
+              onClick={ritual.handleResetTracking}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5"
+            >
+              <RotateCcw className="size-3.5" />
+              Reiniciar
+            </button>
+          )}
+        </div>
 
         <label className="mt-4 block">
           <span className="mb-1.5 block text-sm font-medium">Impresora</span>
@@ -155,66 +144,35 @@ export function EnajenacionTestPanel({
       ) : null}
 
       {ritual.activePrinter && ritual.topics ? (
-        <footer className="space-y-3 border-t border-border pt-4">
-          <div className="flex flex-wrap gap-2">
-            {onApplyMonitorTopic && (
-              <button
-                type="button"
-                onClick={() => void handleApplyMonitorTopic()}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5"
-              >
-                <Zap className="size-3.5" />
-                Monitor fiscal
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={ritual.handleResetTracking}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5"
-            >
-              <RotateCcw className="size-3.5" />
-              Reiniciar
-            </button>
-            <button
-              type="button"
-              onClick={() => void ritual.refreshPrinterStatus(ritual.activePrinter!.id)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5"
-            >
-              <RefreshCw className="size-3.5" />
-              Actualizar estado
-            </button>
-          </div>
-
-          <details className="rounded-lg border border-border text-sm">
-            <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-muted">
-              Detalles técnicos
-            </summary>
-            <dl className="grid gap-2 border-t border-border px-3 py-3 text-xs sm:grid-cols-2">
-              <div>
-                <dt className="text-muted">MAC</dt>
-                <dd className="font-mono break-all">{ritual.activePrinter.macAddress}</dd>
+        <details className="rounded-lg border border-border bg-card text-sm shadow-sm">
+          <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-muted">
+            Detalles técnicos
+          </summary>
+          <dl className="grid gap-2 border-t border-border px-3 py-3 text-xs sm:grid-cols-2">
+            <div>
+              <dt className="text-muted">MAC</dt>
+              <dd className="font-mono break-all">{ritual.activePrinter.macAddress}</dd>
+            </div>
+            <div>
+              <dt className="text-muted">CmdServer</dt>
+              <dd className="font-mono break-all">{ritual.topics.cmdServer}</dd>
+            </div>
+            <div>
+              <dt className="text-muted">Comando</dt>
+              <dd className="font-mono break-all">{ritual.topics.comando}</dd>
+            </div>
+            <div>
+              <dt className="text-muted">Monitor</dt>
+              <dd className="font-mono break-all">{ritual.topics.monitor}</dd>
+            </div>
+            {ritual.ritualAnchorAt !== null ? (
+              <div className="sm:col-span-2">
+                <dt className="text-muted">Sesión anclada</dt>
+                <dd>{formatAnchorTime(ritual.ritualAnchorAt)}</dd>
               </div>
-              <div>
-                <dt className="text-muted">CmdServer</dt>
-                <dd className="font-mono break-all">{ritual.topics.cmdServer}</dd>
-              </div>
-              <div>
-                <dt className="text-muted">Comando</dt>
-                <dd className="font-mono break-all">{ritual.topics.comando}</dd>
-              </div>
-              <div>
-                <dt className="text-muted">Monitor</dt>
-                <dd className="font-mono break-all">{ritual.topics.monitor}</dd>
-              </div>
-              {ritual.ritualAnchorAt !== null ? (
-                <div className="sm:col-span-2">
-                  <dt className="text-muted">Sesión anclada</dt>
-                  <dd>{formatAnchorTime(ritual.ritualAnchorAt)}</dd>
-                </div>
-              ) : null}
-            </dl>
-          </details>
-        </footer>
+            ) : null}
+          </dl>
+        </details>
       ) : null}
     </div>
   );

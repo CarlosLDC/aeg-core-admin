@@ -39,10 +39,7 @@ export function MqttWorkspace() {
       </div>
 
       <div className={cn(tab !== "enajenacion" && "hidden")}>
-        <EnajenacionTestPanel
-          liveMessages={monitor.messages}
-          onApplyMonitorTopic={monitor.subscribeToTopic}
-        />
+        <EnajenacionTestPanel liveMessages={monitor.messages} />
       </div>
     </div>
   );
