@@ -168,9 +168,18 @@ export function EnajenacionTestPanel() {
       ) : null}
 
       {ritual.ritualSteps.length > 0 && !ritual.ritualComplete ? (
-        <>
+        <div className="space-y-4">
+          <EnajenacionRitualStepper
+            steps={ritual.ritualSteps}
+            stepStatuses={ritual.stepStatuses}
+            activeStepIndex={ritual.activeStepIndex}
+            displayStepIndex={ritual.displayStepIndex}
+            onSelectStep={ritual.handleStepperSelect}
+          />
+
           {ritual.displayedStep && ritual.displayedStepState ? (
             <EnajenacionActiveStep
+              className="mb-4"
               step={ritual.displayedStep}
               stepState={ritual.displayedStepState}
               onPublished={ritual.handleStepPublished}
@@ -182,15 +191,7 @@ export function EnajenacionTestPanel() {
               }
             />
           ) : null}
-
-          <EnajenacionRitualStepper
-            steps={ritual.ritualSteps}
-            stepStatuses={ritual.stepStatuses}
-            activeStepIndex={ritual.activeStepIndex}
-            displayStepIndex={ritual.displayStepIndex}
-            onSelectStep={ritual.handleStepperSelect}
-          />
-        </>
+        </div>
       ) : null}
 
       {ritual.activePrinter && ritual.topics ? (

@@ -24,12 +24,14 @@ export function EnajenacionActiveStep({
   onPublished,
   onReturnToCurrent,
   currentStepLabel,
+  className,
 }: {
   step: RitualStep;
   stepState: RitualStepActionState;
   onPublished: (stepId: string) => void;
   onReturnToCurrent?: () => void;
   currentStepLabel?: string;
+  className?: string;
 }) {
   const showSimulation =
     !stepState.locked &&
@@ -44,7 +46,12 @@ export function EnajenacionActiveStep({
     : "";
 
   return (
-    <article className="rounded-xl border border-border bg-card p-5 shadow-sm">
+    <article
+      className={cn(
+        "rounded-xl border border-border bg-card p-5 shadow-sm",
+        className,
+      )}
+    >
       <p className="text-xs font-medium uppercase tracking-wide text-muted">
         Paso {step.step}
       </p>
