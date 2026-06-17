@@ -330,11 +330,11 @@ export function findLatestPtrEnajenarReceivedAt(
   return latest;
 }
 
-export function filterFiscalMessagesSince(
-  messages: { topic: string; receivedAt: string }[],
+export function filterFiscalMessagesSince<T extends { topic: string; receivedAt: string }>(
+  messages: T[],
   mac: string,
   anchorAt: number,
-): typeof messages {
+): T[] {
   return messages.filter((message) => {
     if (!fiscalTopicMatchesMac(message.topic, mac)) return false;
     const at = parseMessageReceivedAt(message.receivedAt);
