@@ -631,11 +631,6 @@ export function EnajenacionTestPanel({
                     simulation={simulation}
                     disabled={simulateDisabled}
                     disabledReason={simulateDisabledReason}
-                    onBeforePublish={
-                      onApplyMonitorTopic && topics
-                        ? handleApplyMonitorTopic
-                        : undefined
-                    }
                   />
                 )}
 

@@ -46,13 +46,11 @@ export function SimulatePrinterButton({
   simulation,
   disabled,
   disabledReason,
-  onBeforePublish,
 }: {
   stepId: string;
   simulation: PrinterSimulationPayload;
   disabled?: boolean;
   disabledReason?: string;
-  onBeforePublish?: () => Promise<void>;
 }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
@@ -60,9 +58,6 @@ export function SimulatePrinterButton({
   async function handlePublish() {
     setLoading(true);
     try {
-      if (onBeforePublish) {
-        await onBeforePublish();
-      }
       await publishMqttMessage({
         topic: simulation.topic,
         payload: simulation.payload as MqttPublishPayload,
