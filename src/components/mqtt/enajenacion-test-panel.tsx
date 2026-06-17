@@ -14,6 +14,36 @@ import type { MqttWsStatus } from "@/hooks/use-mqtt-monitor";
 import { printerStatusLabel } from "@/lib/printer-status";
 import type { MqttInboundMessage } from "@/types/mqtt";
 import { cn } from "@/lib/utils";
+import type { EnajenacionSseStatus } from "@/types/enajenacion-sse";
+
+function sseStatusLabel(status: EnajenacionSseStatus): string {
+  switch (status) {
+    case "open":
+      return "SSE conectado";
+    case "connecting":
+      return "SSE conectando…";
+    case "reconnecting":
+      return "SSE reconectando…";
+    case "closed":
+      return "SSE desconectado";
+    default:
+      return "SSE inactivo";
+  }
+}
+
+function sseStatusClass(status: EnajenacionSseStatus): string {
+  switch (status) {
+    case "open":
+      return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
+    case "connecting":
+    case "reconnecting":
+      return "bg-amber-500/10 text-amber-800 dark:text-amber-200";
+    case "closed":
+      return "bg-rose-500/10 text-rose-800 dark:text-rose-200";
+    default:
+      return "bg-foreground/5 text-muted";
+  }
+}
 
 export function EnajenacionTestPanel({
   liveMessages,
@@ -125,6 +155,15 @@ export function EnajenacionTestPanel({
 
         {ritual.activePrinter && ritual.printerStatus && (
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                sseStatusClass(ritual.sseStatus),
+              )}
+              title="Canal en tiempo real con AEG Core para progreso de enajenación"
+            >
+              {sseStatusLabel(ritual.sseStatus)}
+            </span>
             <span
               className={cn(
                 "rounded-full px-2.5 py-0.5 text-xs font-medium",

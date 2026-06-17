@@ -7,6 +7,7 @@ import { fetchBranchById } from "@/lib/branches-api";
 import { fetchClientById } from "@/lib/clients-api";
 import { fetchCompanyById } from "@/lib/companies-api";
 import { getMqttErrorMessage, precheckEnajenacionMqtt } from "@/lib/mqtt-api";
+import { useEnajenacionSse } from "@/hooks/use-enajenacion-sse";
 import {
   ENAJENACION_FLOW_STEPS,
   buildEnajenacionCommandContextFromClientData,
@@ -29,6 +30,18 @@ import {
 } from "@/lib/enajenacion-mqtt-protocol";
 import type { PrinterResponse } from "@/types/printer";
 import type { MqttInboundMessage } from "@/types/mqtt";
+import type { EnajenacionSseServerCommand } from "@/types/enajenacion-sse";
+
+function sseCommandToInbound(
+  command: EnajenacionSseServerCommand,
+): MqttInboundMessage {
+  return {
+    topic: command.topic,
+    payload: command.payload,
+    receivedAt: command.receivedAt,
+    qos: null,
+  };
+}
 
 export type RitualStepStatus = "pending" | "success";
 
@@ -109,6 +122,8 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     };
   }, [activePrinter]);
 
+  const sse = useEnajenacionSse(topics?.mac ?? null, Boolean(topics));
+
   const ritualSteps = useMemo<RitualStep[]>(() => {
     if (!topics) return [];
     return ENAJENACION_FLOW_STEPS.map((flow) => ({
@@ -180,8 +195,11 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     for (const stepId of panelAcknowledgedSteps) {
       done.add(stepId);
     }
+    for (const stepId of sse.acceptedStepIds) {
+      done.add(stepId);
+    }
     return done;
-  }, [panelAcknowledgedSteps, ritualAnchorAt, ritualMessages, topics]);
+  }, [panelAcknowledgedSteps, ritualAnchorAt, ritualMessages, sse.acceptedStepIds, topics]);
 
   const activeStepIndex = useMemo(() => {
     const index = ritualSteps.findIndex(
@@ -283,19 +301,16 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
   }, []);
 
   useEffect(() => {
-    if (
-      stepStatuses["report-z"] === "success" &&
-      activePrinter &&
-      printerStatus?.status !== "enajenada"
-    ) {
+    if (sse.sessionError) {
+      toast.error(sse.sessionError);
+    }
+  }, [sse.sessionError, toast]);
+
+  useEffect(() => {
+    if (sse.lastEvent?.type === "session_completed" && activePrinter) {
       void refreshPrinterStatus(activePrinter.id).catch(() => undefined);
     }
-  }, [
-    stepStatuses,
-    activePrinter,
-    printerStatus?.status,
-    refreshPrinterStatus,
-  ]);
+  }, [activePrinter, refreshPrinterStatus, sse.lastEvent]);
 
   useEffect(() => {
     let cancelled = false;
@@ -347,9 +362,12 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
       const locked = index > activeStepIndex;
       const isActive = index === activeStepIndex;
       const isReview = status === "success" && index < activeStepIndex;
+      const sseCommand = sse.serverCommandsByStepId[step.id];
       const serverCommand = step.isRequest
         ? null
-        : findLatestServerCommand(ritualMessages, topics.mac, step.id);
+        : sseCommand
+          ? sseCommandToInbound(sseCommand)
+          : findLatestServerCommand(ritualMessages, topics.mac, step.id);
       const simulation =
         commandContext && activePrinter?.macAddress
           ? buildPrinterSimulationPayload(
@@ -381,7 +399,9 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
             : precheck && !precheck.ready
               ? (precheck.message ?? "AEG Core rechazará ptrEnajenar.")
               : status === "pending" && !canSimulatePrinterResponse
-                ? "Espera el comando real de AEG Core en Comando."
+                ? sse.status === "open" || sse.status === "connecting"
+                  ? "Esperando confirmación del servidor (SSE)…"
+                  : "Espera el comando real de AEG Core en Comando."
                 : undefined;
 
       const contextLine = step.isRequest
@@ -411,6 +431,8 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
       ritualSteps,
       stepStatuses,
       topics,
+      sse.serverCommandsByStepId,
+      sse.status,
     ],
   );
 
@@ -482,5 +504,6 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     handleResetTracking,
     handleStepperSelect,
     refreshPrinterStatus,
+    sseStatus: sse.status,
   };
 }

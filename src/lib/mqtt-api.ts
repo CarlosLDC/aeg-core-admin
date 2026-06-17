@@ -196,6 +196,19 @@ export function getMqttWebSocketUrl(): string {
   return `${wsBase}/ws/mqtt?token=${encodeURIComponent(token)}`;
 }
 
+export function getEnajenacionSseUrl(mac: string): string {
+  const token = getStoredToken();
+  if (!token) {
+    throw new ApiError("No hay sesión activa", 401);
+  }
+  const httpBase = getApiBaseUrl().replace(/\/$/, "");
+  const params = new URLSearchParams({
+    mac,
+    token,
+  });
+  return `${httpBase}/api/mqtt/enajenacion/stream?${params}`;
+}
+
 export function getMqttErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     return error.message;
