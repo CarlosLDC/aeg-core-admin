@@ -19,56 +19,87 @@ export function EnajenacionRitualStepper({
 }) {
   return (
     <nav
-      className="flex gap-0.5 overflow-x-auto pb-1"
+      className="w-full rounded-xl border border-border bg-card px-2 py-4 shadow-sm sm:px-4"
       aria-label="Progreso del ritual"
     >
-      {steps.map((step, index) => {
-        const status = stepStatuses[step.id] ?? "pending";
-        const isDone = status === "success";
-        const isActive = index === displayStepIndex;
-        const isCurrent = index === activeStepIndex;
-        const canReview = isDone && index < activeStepIndex;
+      <div className="flex w-full items-center">
+        {steps.flatMap((step, index) => {
+          const status = stepStatuses[step.id] ?? "pending";
+          const isDone = status === "success";
+          const isActive = index === displayStepIndex;
+          const isCurrent = index === activeStepIndex;
+          const canReview = isDone && index < activeStepIndex;
+          const prevDone =
+            index > 0 &&
+            (stepStatuses[steps[index - 1]!.id] ?? "pending") === "success";
 
-        return (
-          <button
-            key={step.id}
-            type="button"
-            disabled={!canReview && !isActive && !isCurrent}
-            onClick={() => onSelectStep(index)}
-            aria-current={isActive ? "step" : undefined}
-            title={step.name}
-            className={cn(
-              "flex min-w-[2.25rem] shrink-0 flex-col items-center gap-1 rounded-lg px-1 py-1.5 text-center transition-colors",
-              canReview && "cursor-pointer hover:bg-foreground/5",
-              isActive && "bg-accent/10",
-              !canReview && !isActive && !isCurrent && "cursor-default opacity-50",
-            )}
-          >
-            <span
-              className={cn(
-                "flex size-7 items-center justify-center rounded-full text-[11px] font-semibold",
-                isDone && "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-                isActive && !isDone && "bg-accent text-accent-foreground",
-                !isDone && !isActive && "bg-foreground/5 text-muted",
-              )}
+          const node = (
+            <div
+              key={step.id}
+              className="flex shrink-0 flex-col items-center gap-1.5"
             >
-              {isDone ? (
-                <Check className="size-3.5" aria-hidden />
-              ) : (
-                step.step
-              )}
-            </span>
-            <span
+              <button
+                type="button"
+                disabled={!canReview && !isActive && !isCurrent}
+                onClick={() => onSelectStep(index)}
+                aria-current={isActive ? "step" : undefined}
+                aria-label={`Paso ${step.step}: ${step.name}`}
+                title={step.name}
+                className={cn(
+                  "flex size-6 items-center justify-center rounded-full border-2 text-[9px] font-bold transition-colors sm:size-7 sm:text-[10px]",
+                  isDone &&
+                    "border-emerald-500 bg-emerald-500 text-white",
+                  isActive &&
+                    !isDone &&
+                    "border-accent bg-accent text-accent-foreground shadow-[0_0_0_4px] shadow-accent/25",
+                  !isDone &&
+                    !isActive &&
+                    "border-border bg-card text-muted",
+                  canReview && "cursor-pointer hover:border-emerald-600",
+                  !canReview &&
+                    !isActive &&
+                    !isCurrent &&
+                    "cursor-default",
+                )}
+              >
+                {isDone ? (
+                  <Check className="size-3 sm:size-3.5" strokeWidth={3} aria-hidden />
+                ) : (
+                  step.step
+                )}
+              </button>
+              <span
+                className={cn(
+                  "text-[9px] font-medium leading-none sm:text-[10px]",
+                  isActive
+                    ? "text-accent"
+                    : isDone
+                      ? "text-emerald-700 dark:text-emerald-300"
+                      : "text-muted",
+                )}
+              >
+                {step.step}
+              </span>
+            </div>
+          );
+
+          if (index === 0) {
+            return [node];
+          }
+
+          return [
+            <div
+              key={`line-${step.id}`}
               className={cn(
-                "max-w-[3rem] truncate text-[10px] font-medium leading-tight",
-                isActive ? "text-accent" : "text-muted",
+                "h-0.5 min-w-1 flex-1 self-center transition-colors",
+                prevDone ? "bg-emerald-500" : "bg-border",
               )}
-            >
-              {step.step}
-            </span>
-          </button>
-        );
-      })}
+              aria-hidden
+            />,
+            node,
+          ];
+        })}
+      </div>
     </nav>
   );
 }
