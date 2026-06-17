@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { EnajenacionTestPanel } from "@/components/mqtt/enajenacion-test-panel";
 import { MqttDiagnosticsPanel } from "@/components/mqtt/mqtt-diagnostics-panel";
 import { MqttMonitorPanel } from "@/components/mqtt/mqtt-monitor-panel";
@@ -10,16 +10,34 @@ import { cn } from "@/lib/utils";
 
 type MqttTab = "monitor" | "diagnostics" | "enajenacion";
 
+const TAB_STORAGE_KEY = "mqtt-workspace-tab";
+
+function readStoredTab(): MqttTab {
+  if (typeof window === "undefined") {
+    return "diagnostics";
+  }
+  const stored = sessionStorage.getItem(TAB_STORAGE_KEY);
+  if (stored === "monitor" || stored === "diagnostics" || stored === "enajenacion") {
+    return stored;
+  }
+  return "diagnostics";
+}
+
 export function MqttWorkspace() {
-  const [tab, setTab] = useState<MqttTab>("diagnostics");
+  const [tab, setTab] = useState<MqttTab>(readStoredTab);
   const monitor = useMqttMonitor();
+
+  const handleTabChange = useCallback((next: MqttTab) => {
+    setTab(next);
+    sessionStorage.setItem(TAB_STORAGE_KEY, next);
+  }, []);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-center">
         <SegmentedToggle
           value={tab}
-          onChange={setTab}
+          onChange={handleTabChange}
           ariaLabel="Sección MQTT"
           options={[
             { value: "diagnostics", label: "Diagnóstico" },
@@ -39,7 +57,14 @@ export function MqttWorkspace() {
       </div>
 
       <div className={cn(tab !== "enajenacion" && "hidden")}>
-        <EnajenacionTestPanel liveMessages={monitor.messages} />
+        <EnajenacionTestPanel
+          liveMessages={monitor.messages}
+          monitorTopic={monitor.monitorTopic}
+          wsStatus={monitor.wsStatus}
+          subscribeToMonitor={monitor.subscribeToTopic}
+          connectMonitorWebSocket={monitor.connectWebSocket}
+          monitorSyncEnabled={tab === "enajenacion"}
+        />
       </div>
     </div>
   );

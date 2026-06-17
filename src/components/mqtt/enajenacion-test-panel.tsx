@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Loader2, Printer, RotateCcw } from "lucide-react";
 import {
   EnajenacionActiveStep,
@@ -7,6 +8,7 @@ import {
 } from "@/components/mqtt/enajenacion-active-step";
 import { EnajenacionRitualStepper } from "@/components/mqtt/enajenacion-ritual-stepper";
 import { useEnajenacionRitual } from "@/hooks/use-enajenacion-ritual";
+import type { MqttWsStatus } from "@/hooks/use-mqtt-monitor";
 import { printerStatusLabel } from "@/lib/printer-status";
 import type { MqttInboundMessage } from "@/types/mqtt";
 import { cn } from "@/lib/utils";
@@ -20,10 +22,44 @@ function formatAnchorTime(anchorAt: number): string {
 
 export function EnajenacionTestPanel({
   liveMessages,
+  monitorTopic,
+  wsStatus,
+  subscribeToMonitor,
+  connectMonitorWebSocket,
+  monitorSyncEnabled = false,
 }: {
   liveMessages: MqttInboundMessage[];
+  monitorTopic: string;
+  wsStatus: MqttWsStatus;
+  subscribeToMonitor: (topic: string) => Promise<void>;
+  connectMonitorWebSocket: () => void;
+  monitorSyncEnabled?: boolean;
 }) {
   const ritual = useEnajenacionRitual(liveMessages);
+
+  useEffect(() => {
+    if (!monitorSyncEnabled) return;
+
+    const target = ritual.topics?.monitor.trim();
+    if (!target || !ritual.activePrinter) return;
+
+    if (monitorTopic.trim() === target) {
+      if (wsStatus !== "open") {
+        connectMonitorWebSocket();
+      }
+      return;
+    }
+
+    void subscribeToMonitor(target).catch(() => undefined);
+  }, [
+    monitorSyncEnabled,
+    ritual.activePrinter?.id,
+    ritual.topics?.monitor,
+    monitorTopic,
+    wsStatus,
+    subscribeToMonitor,
+    connectMonitorWebSocket,
+  ]);
 
   if (ritual.printersLoading) {
     return (
@@ -138,6 +174,12 @@ export function EnajenacionTestPanel({
               step={ritual.displayedStep}
               stepState={ritual.displayedStepState}
               onPublished={ritual.handleStepPublished}
+              onReturnToCurrent={() =>
+                ritual.handleStepperSelect(ritual.activeStepIndex)
+              }
+              currentStepLabel={
+                ritual.ritualSteps[ritual.activeStepIndex]?.step
+              }
             />
           ) : null}
         </>

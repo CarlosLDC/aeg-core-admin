@@ -21,10 +21,14 @@ export function EnajenacionActiveStep({
   step,
   stepState,
   onPublished,
+  onReturnToCurrent,
+  currentStepLabel,
 }: {
   step: RitualStep;
   stepState: RitualStepActionState;
   onPublished: (stepId: string) => void;
+  onReturnToCurrent?: () => void;
+  currentStepLabel?: string;
 }) {
   const showAction =
     !stepState.locked &&
@@ -43,9 +47,18 @@ export function EnajenacionActiveStep({
       <p className="mt-2 text-sm text-muted">{stepState.contextLine}</p>
 
       {stepState.isReview && (
-        <p className="mt-3 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200">
-          Paso completado.
-        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200">
+          <span>Paso completado.</span>
+          {onReturnToCurrent && currentStepLabel ? (
+            <button
+              type="button"
+              onClick={onReturnToCurrent}
+              className="font-medium text-accent hover:underline"
+            >
+              Volver al paso {currentStepLabel}
+            </button>
+          ) : null}
+        </div>
       )}
 
       {!step.isRequest && (

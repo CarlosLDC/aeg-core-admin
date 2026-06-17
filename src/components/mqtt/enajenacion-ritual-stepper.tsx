@@ -55,6 +55,10 @@ export function EnajenacionRitualStepper({
                   !isDone &&
                     !isActive &&
                     "border-border bg-card text-muted",
+                  isCurrent &&
+                    !isActive &&
+                    !isDone &&
+                    "ring-2 ring-accent/40 ring-offset-2 ring-offset-card",
                   canReview && "cursor-pointer hover:border-emerald-600",
                   !canReview &&
                     !isActive &&

@@ -440,7 +440,14 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
   function handleStepperSelect(index: number) {
     const step = ritualSteps[index];
     if (!step) return;
-    if ((stepStatuses[step.id] ?? "pending") === "success") {
+    if (index === activeStepIndex) {
+      setDisplayStepIndex(index);
+      return;
+    }
+    if (
+      index < activeStepIndex &&
+      (stepStatuses[step.id] ?? "pending") === "success"
+    ) {
       setDisplayStepIndex(index);
     }
   }

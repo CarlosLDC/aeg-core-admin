@@ -106,7 +106,11 @@ export function useMqttMonitor() {
     setMonitorTopic(subscription.topic);
     setSubscriptionActive(subscription.active);
     setMessages(history);
-  }, []);
+    if (subscription.active && wsRef.current?.readyState !== WebSocket.OPEN) {
+      connectWebSocket();
+    }
+    return subscription;
+  }, [connectWebSocket]);
 
   useEffect(() => {
     let cancelled = false;
