@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Printer, RefreshCw, RotateCcw, Zap } from "lucide-react";
 import { useToast } from "@/context/toast-provider";
 import { fetchPrinterById, fetchPrinters } from "@/lib/printers-api";
@@ -12,11 +12,14 @@ import {
   precheckEnajenacionMqtt,
   updateMqttSubscription,
 } from "@/lib/mqtt-api";
-import { EnajenacionStepCopyBlocks } from "@/components/mqtt/enajenacion-step-copy-blocks";
+import {
+  ServerCommandBlock,
+  SimulatePrinterButton,
+} from "@/components/mqtt/enajenacion-step-actions";
 import {
   ENAJENACION_FLOW_STEPS,
   buildEnajenacionCommandContextFromClientData,
-  buildEnajenacionStepCopyContents,
+  buildPrinterSimulationPayload,
   compactMac,
   type EnajenacionCommandContext,
   detectPrinterResponseStep,
@@ -51,23 +54,6 @@ type RitualStep = {
 const inputClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
 
-function JsonBlock({
-  title,
-  children,
-}: {
-  title: string;
-  children: string;
-}) {
-  return (
-    <div className="space-y-2">
-      <h4 className="text-sm font-medium text-card-foreground">{title}</h4>
-      <pre className="max-h-64 overflow-auto rounded-lg border border-border bg-foreground/[0.03] p-4 font-mono text-xs text-card-foreground">
-        {children}
-      </pre>
-    </div>
-  );
-}
-
 function stepStatusLabel(
   status: StepStatus,
   stepId: string,
@@ -77,7 +63,7 @@ function stepStatusLabel(
     return stepId === "request" ? "Solicitud recibida" : "Impresora respondió";
   }
   if (stepId === "request") {
-    return "Esperando impresora";
+    return "Listo para iniciar";
   }
   return hasServerCommand ? "Esperando impresora" : "Esperando AEG Core";
 }
@@ -111,7 +97,6 @@ export function EnajenacionTestPanel({
   onOpenMonitor?: () => void;
 }) {
   const toast = useToast();
-  const panelPublishedKeysRef = useRef<Set<string>>(new Set());
   const [printers, setPrinters] = useState<PrinterResponse[]>([]);
   const [printersLoading, setPrintersLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<number | "">("");
@@ -209,8 +194,6 @@ export function EnajenacionTestPanel({
       }
 
       if (!isFiscalCmdServerTopic(message.topic)) continue;
-      const dedupeKey = `${message.topic}:${message.payload}`;
-      if (panelPublishedKeysRef.current.has(dedupeKey)) continue;
       const step = detectPrinterResponseStep(message.payload);
       if (!step) continue;
       if (step === "request") {
@@ -242,17 +225,6 @@ export function EnajenacionTestPanel({
       .filter((message) => fiscalTopicMatchesMac(message.topic, topics.mac))
       .slice(0, 3);
   }, [liveMessages, ritualMessages, topics]);
-
-  const stepCopyContents = useMemo(() => {
-    if (!topics || !commandContext || !activePrinter?.macAddress) {
-      return null;
-    }
-    return buildEnajenacionStepCopyContents(
-      commandContext,
-      activePrinter.macAddress,
-      { cmdServer: topics.cmdServer, comando: topics.comando },
-    );
-  }, [topics, commandContext, activePrinter?.macAddress]);
 
   useEffect(() => {
     if (!activePrinter?.fiscalSerial?.trim() || !activePrinter.macAddress?.trim()) {
@@ -432,20 +404,23 @@ export function EnajenacionTestPanel({
       <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <h2 className="flex items-center gap-2 font-semibold text-card-foreground">
           <Printer className="size-5 text-accent" />
-          Enajenación con impresora física
+          Prueba de enajenación MQTT
         </h2>
         <p className="mt-1 max-w-2xl text-sm text-muted">
-          Elige una impresora registrada en AEG Core. Enciéndela y observa el
-          ritual en el monitor: ptrEnajenar en CmdServer, comandos del servidor
-          en Comando y respuestas de la impresora en CmdServer.
+          Elige una impresora registrada en AEG Core y recorre el ritual paso a
+          paso. Los comandos en Comando son tráfico real de AEG Core; las
+          respuestas de impresora en CmdServer se simulan con un clic desde este
+          panel.
         </p>
 
         <div className="mt-4 rounded-lg border border-accent/25 bg-accent/5 px-4 py-3 text-sm text-card-foreground">
           <p>
-            El panel <strong className="font-medium">no publica</strong> en el
-            broker. Usa los bloques <strong className="font-medium">Copiar para MQTTX</strong>{" "}
-            en cada paso (tópico y payload por separado). Marca el progreso según
-            el monitor; conecta el WebSocket en la pestaña Monitor.
+            <strong className="font-medium">Comando</strong> (servidor →
+            impresora): solo lectura desde el monitor.{" "}
+            <strong className="font-medium">CmdServer</strong> (impresora →
+            servidor): publícalo con <em>Iniciar ritual</em> o{" "}
+            <em>Simular respuesta OK</em>. Conecta el WebSocket en la pestaña
+            Monitor para ver el tráfico en tiempo real.
           </p>
         </div>
 
@@ -501,8 +476,9 @@ export function EnajenacionTestPanel({
             ) : (
               <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-950 dark:text-amber-100">
                 No hay <code className="font-mono text-xs">ptrEnajenar</code> en
-                el buffer del monitor. Publica uno en CmdServer o pulsa{" "}
-                <strong className="font-medium">Reiniciar seguimiento</strong>{" "}
+                el buffer del monitor. Pulsa{" "}
+                <strong className="font-medium">Iniciar ritual</strong> en el
+                paso 1 o <strong className="font-medium">Reiniciar seguimiento</strong>{" "}
                 justo después de enviarlo.
               </p>
             )}
@@ -586,6 +562,32 @@ export function EnajenacionTestPanel({
               topics && !step.isRequest
                 ? findLatestServerCommand(ritualMessages, topics.mac, step.id)
                 : null;
+            const simulation =
+              topics && commandContext && activePrinter?.macAddress
+                ? buildPrinterSimulationPayload(
+                    step.id,
+                    commandContext,
+                    activePrinter.macAddress,
+                    topics.cmdServer,
+                  )
+                : null;
+            const simulateDisabled =
+              locked ||
+              !simulation ||
+              commandContextLoading ||
+              Boolean(precheck && !precheck.ready) ||
+              (!step.isRequest && status === "pending" && !serverCommand);
+            const simulateDisabledReason = locked
+              ? "Completa el paso anterior primero."
+              : commandContextLoading
+                ? "Cargando datos fiscales del cliente…"
+                : commandContextError
+                  ? commandContextError
+                  : precheck && !precheck.ready
+                    ? precheck.message ?? "AEG Core rechazará ptrEnajenar."
+                    : !step.isRequest && status === "pending" && !serverCommand
+                      ? "Espera el comando real de AEG Core en Comando."
+                      : undefined;
 
             return (
               <article
@@ -619,39 +621,35 @@ export function EnajenacionTestPanel({
                   {step.topic}
                 </p>
 
-                {!step.isRequest && serverCommand && (
-                  <div className="mt-4">
-                    <JsonBlock title="Último comando visto en monitor (Comando)">
-                      {serverCommand.payload}
-                    </JsonBlock>
-                  </div>
+                {!locked && !step.isRequest && (
+                  <ServerCommandBlock serverCommand={serverCommand} />
                 )}
 
-                {commandContextLoading && (
-                  <p className="mt-4 text-sm text-muted">
-                    Cargando tópicos y payloads del cliente…
-                  </p>
-                )}
-                {commandContextError && (
-                  <p className="mt-4 text-sm text-rose-700 dark:text-rose-300">
-                    No se pudieron armar los payloads: {commandContextError}
-                  </p>
-                )}
-                {stepCopyContents?.[step.id] && (
-                  <EnajenacionStepCopyBlocks content={stepCopyContents[step.id]!} />
+                {!locked && status === "pending" && simulation && (
+                  <SimulatePrinterButton
+                    stepId={step.id}
+                    simulation={simulation}
+                    disabled={simulateDisabled}
+                    disabledReason={simulateDisabledReason}
+                    onBeforePublish={
+                      onApplyMonitorTopic && topics
+                        ? handleApplyMonitorTopic
+                        : undefined
+                    }
+                  />
                 )}
 
                 <p className="mt-3 rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-sm text-muted">
                   {locked
-                    ? "Completa el paso anterior antes de esperar este mensaje."
+                    ? "Completa el paso anterior antes de continuar."
                     : step.isRequest
                       ? status === "success"
-                        ? "ptrEnajenar recibido. AEG Core debe publicar el DNF en Comando."
-                        : "Enciende la impresora y espera ptrEnajenar en CmdServer."
+                        ? "ptrEnajenar enviado. El DNF real aparecerá en el paso 2 (Comando)."
+                        : "Pulsa Iniciar ritual para publicar ptrEnajenar en CmdServer."
                       : status === "success"
-                        ? "La impresora respondió en CmdServer."
+                        ? "Respuesta simulada recibida por AEG Core."
                         : serverCommand
-                          ? "Ejecuta el comando en la impresora y espera su respuesta en CmdServer."
+                          ? "Revisa el comando real y pulsa Simular respuesta OK."
                           : "Esperando que AEG Core publique en Comando."}
                 </p>
                 <p className="mt-2 text-xs text-muted">

@@ -11,7 +11,7 @@ import {
   buildInvoiceCommandPayload,
   buildInvoiceSuccessResponse,
   buildEnajenacionCommandContextFromClientData,
-  buildEnajenacionStepCopyContents,
+  buildPrinterSimulationPayload,
   buildPtrEnajenarPayload,
   buildRegistrationStatusCommandPayload,
   buildReportZCommandPayload,
@@ -286,7 +286,7 @@ describe("enajenacion-mqtt-protocol", () => {
     });
   });
 
-  it("builds per-step MQTT copy content with separate publish and response", () => {
+  it("builds per-step printer simulation payloads for CmdServer", () => {
     const mac = "206EF1884C68";
     const ctx = buildEnajenacionCommandContextFromClientData({
       fiscalSerial: "GRA0000017",
@@ -297,33 +297,39 @@ describe("enajenacion-mqtt-protocol", () => {
       city: "Caracas",
       state: "Distrito Capital",
     });
-    const topics = {
-      cmdServer: fiscalCmdServerTopic(mac),
-      comando: fiscalComandoTopic(mac),
-    };
-    const copies = buildEnajenacionStepCopyContents(ctx, "20:6E:F1:88:4C:68", topics);
+    const cmdServer = fiscalCmdServerTopic(mac);
 
-    expect(copies.request?.publish.topic).toBe(topics.cmdServer);
-    expect(copies.request?.publish.payload).toEqual(
+    const request = buildPrinterSimulationPayload(
+      "request",
+      ctx,
+      "20:6E:F1:88:4C:68",
+      cmdServer,
+    );
+    expect(request.topic).toBe(cmdServer);
+    expect(request.payload).toEqual(
       buildPtrEnajenarPayload("GRA0000017", "20:6E:F1:88:4C:68"),
     );
-    expect(copies.request?.expectedResponse.topic).toBe(topics.comando);
 
-    expect(copies["fiscal-rif"]?.publish.payload).toMatchObject({
-      cmd: "fiscalAEG",
-      data: {
-        contenido: {
-          rifEmp: "J-500662998",
-          nomEmp: "INVERSIONES SHOP COMPUTER 2020, C.A.",
-        },
-      },
-    });
-    expect(copies["fiscal-rif"]?.expectedResponse.payload).toEqual({
+    const fiscalRif = buildPrinterSimulationPayload(
+      "fiscal-rif",
+      ctx,
+      "20:6E:F1:88:4C:68",
+      cmdServer,
+    );
+    expect(fiscalRif.topic).toBe(cmdServer);
+    expect(fiscalRif.payload).toEqual({
       cmd: "fiscalAEG",
       code: 0,
       dataD: 0,
     });
-    expect(copies.dnf?.expectedResponse.topic).toBe(topics.cmdServer);
+
+    const dnf = buildPrinterSimulationPayload(
+      "dnf",
+      ctx,
+      "20:6E:F1:88:4C:68",
+      cmdServer,
+    );
+    expect(dnf.payload).toEqual(buildDnfSuccessResponse());
   });
 
   it("anchors ritual progress to the latest ptrEnajenar", () => {

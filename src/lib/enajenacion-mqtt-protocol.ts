@@ -773,21 +773,10 @@ export const EnajenacionCommandSteps: EnajenacionCommandStep[] = [
   },
 ];
 
-export type EnajenacionMqttCopyBlock = {
-  heading: string;
-  detail: string;
+export type PrinterSimulationPayload = {
   topic: string;
   payload: unknown;
 };
-
-export type EnajenacionStepCopyContent = {
-  publish: EnajenacionMqttCopyBlock;
-  expectedResponse: EnajenacionMqttCopyBlock;
-};
-
-export function formatEnajenacionPayloadForCopy(payload: unknown): string {
-  return JSON.stringify(payload, null, 2);
-}
 
 export function buildEnajenacionCommandContextFromClientData(params: {
   fiscalSerial: string;
@@ -810,139 +799,36 @@ export function buildEnajenacionCommandContextFromClientData(params: {
   };
 }
 
-export function buildEnajenacionStepCopyContents(
+/** Payload que el panel publica en CmdServer para simular la impresora. */
+export function buildPrinterSimulationPayload(
+  stepId: string,
   ctx: EnajenacionCommandContext,
   macAddress: string,
-  topics: { cmdServer: string; comando: string },
-): Record<string, EnajenacionStepCopyContent> {
-  return {
-    request: {
-      publish: {
-        heading: "Publicar (simula impresora)",
-        detail: "Impresora → AEG Core",
-        topic: topics.cmdServer,
-        payload: buildPtrEnajenarPayload(ctx.fiscalSerial, macAddress),
-      },
-      expectedResponse: {
-        heading: "Respuesta esperada del servidor",
-        detail: "AEG Core publica el DNF en Comando",
-        topic: topics.comando,
-        payload: buildDnfAlertCommandPayload(),
-      },
-    },
-    dnf: {
-      publish: {
-        heading: "Comando del servidor",
-        detail: "AEG Core → impresora (esperar en Comando)",
-        topic: topics.comando,
-        payload: buildDnfAlertCommandPayload(),
-      },
-      expectedResponse: {
-        heading: "Respuesta de la impresora",
-        detail: "Simular en CmdServer tras imprimir el DNF",
-        topic: topics.cmdServer,
-        payload: buildDnfSuccessResponse(),
-      },
-    },
-    "fiscal-rif": {
-      publish: {
-        heading: "Comando del servidor",
-        detail: "AEG Core → impresora (fiscalAEG / rifEmp.json)",
-        topic: topics.comando,
-        payload: buildFiscalRifCommandPayload(ctx),
-      },
-      expectedResponse: {
-        heading: "Respuesta de la impresora",
-        detail: "Simular en CmdServer",
-        topic: topics.cmdServer,
-        payload: buildFiscalRifSuccessResponse(),
-      },
-    },
-    header: {
-      publish: {
-        heading: "Comando del servidor",
-        detail: "AEG Core → impresora (paramFacSPIFF.json)",
-        topic: topics.comando,
-        payload: buildHeaderCommandPayload(ctx),
-      },
-      expectedResponse: {
-        heading: "Respuesta de la impresora",
-        detail: "Simular en CmdServer (1.ª respuesta wFileSPIFF)",
-        topic: topics.cmdServer,
-        payload: buildWFileSpiffSuccessResponse(),
-      },
-    },
-    config: {
-      publish: {
-        heading: "Comando del servidor",
-        detail: "AEG Core → impresora (configSPIFFS.json)",
-        topic: topics.comando,
-        payload: buildConfigSpiffsCommandPayload(),
-      },
-      expectedResponse: {
-        heading: "Respuesta de la impresora",
-        detail: "Simular en CmdServer (2.ª respuesta wFileSPIFF)",
-        topic: topics.cmdServer,
-        payload: buildWFileSpiffSuccessResponse(),
-      },
-    },
-    "reg-status": {
-      publish: {
-        heading: "Comando del servidor",
-        detail: "AEG Core → impresora (StaInf / NroRegMa)",
-        topic: topics.comando,
-        payload: buildRegistrationStatusCommandPayload(),
-      },
-      expectedResponse: {
-        heading: "Respuesta de la impresora",
-        detail: `Simular en CmdServer con dataS = ${ctx.fiscalSerial}`,
-        topic: topics.cmdServer,
-        payload: buildStaInfSuccessResponse(ctx.fiscalSerial),
-      },
-    },
-    invoice: {
-      publish: {
-        heading: "Comando del servidor",
-        detail: "AEG Core → impresora (factura de prueba)",
-        topic: topics.comando,
-        payload: buildInvoiceCommandPayload(),
-      },
-      expectedResponse: {
-        heading: "Respuesta de la impresora",
-        detail: "Simular en CmdServer (arreglo proF … endFac)",
-        topic: topics.cmdServer,
-        payload: buildInvoiceSuccessResponse(),
-      },
-    },
-    "credit-note": {
-      publish: {
-        heading: "Comando del servidor",
-        detail: "AEG Core → impresora (nota de crédito)",
-        topic: topics.comando,
-        payload: buildCreditNoteCommandPayload(ctx),
-      },
-      expectedResponse: {
-        heading: "Respuesta de la impresora",
-        detail: "Simular en CmdServer (arreglo nroFacNC … endNC)",
-        topic: topics.cmdServer,
-        payload: buildCreditNoteSuccessResponse(),
-      },
-    },
-    "report-z": {
-      publish: {
-        heading: "Comando del servidor",
-        detail: "AEG Core → impresora (Reporte Z)",
-        topic: topics.comando,
-        payload: buildReportZCommandPayload(),
-      },
-      expectedResponse: {
-        heading: "Respuesta de la impresora",
-        detail: "Simular en CmdServer; AEG Core marca Enajenada en BD",
-        topic: topics.cmdServer,
-        payload: buildReportZSuccessResponse(),
-      },
-    },
+  cmdServerTopic: string,
+): PrinterSimulationPayload {
+  if (stepId === "request") {
+    return {
+      topic: cmdServerTopic,
+      payload: buildPtrEnajenarPayload(ctx.fiscalSerial, macAddress),
+    };
+  }
+  const responseStep = EnajenacionResponseSteps.find(
+    (step) => step.flowStepId === stepId,
+  );
+  if (!responseStep) {
+    throw new Error(`Paso de simulación desconocido: ${stepId}`);
+  }
+  const simulatorCtx: EnajenacionSimulatorContext = {
+    fiscalSerial: ctx.fiscalSerial,
   };
+  return {
+    topic: cmdServerTopic,
+    payload: responseStep.buildPayload(simulatorCtx),
+  };
+}
+
+export function printerSimulationButtonLabel(stepId: string): string {
+  return stepId === "request" ? "Iniciar ritual" : "Simular respuesta OK";
 }
 
 export function isPrinterEligibleForEnajenacionTest(

@@ -261,12 +261,17 @@ export function EnajenacionMqttDocsContent() {
         </Section>
 
         <Section id="manual-test" title="Cómo usar la prueba manual">
+          <P>
+            En <strong className="font-semibold text-foreground">Herramientas MQTT → Enajenación</strong>{" "}
+            el admin simula la impresora: publica en CmdServer con un clic. Los
+            comandos en Comando son siempre los que genera AEG Core (solo
+            lectura en el panel).
+          </P>
           <ol className="list-decimal space-y-3 pl-5">
             <li>
               Elige una impresora{" "}
               <strong className="font-semibold text-foreground">registrada</strong>{" "}
-              (asignada o laboratorio, con cliente, serial y MAC) en Herramientas
-              MQTT → Enajenación.
+              (asignada o laboratorio, con cliente, serial y MAC).
             </li>
             <li>
               Pulsa{" "}
@@ -276,11 +281,16 @@ export function EnajenacionMqttDocsContent() {
               y conecta el WebSocket en la pestaña Monitor.
             </li>
             <li>
+              En el paso 1 pulsa{" "}
               <strong className="font-semibold text-foreground">
-                Enciende la impresora física
-              </strong>
-              . Debe publicar <Code>ptrEnajenar</Code> en CmdServer; el panel
-              marca cada paso al detectar los mensajes reales.
+                Iniciar ritual
+              </strong>{" "}
+              (<Code>ptrEnajenar</Code> en CmdServer). En los pasos 2–7 revisa
+              el comando real en Comando y pulsa{" "}
+              <strong className="font-semibold text-foreground">
+                Simular respuesta OK
+              </strong>{" "}
+              para cada respuesta de impresora.
             </li>
             <li>
               Tras el Reporte Z, comprueba que el estado en BD pase a{" "}
