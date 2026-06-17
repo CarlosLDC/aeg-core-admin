@@ -874,7 +874,7 @@ export function detectServerCommandStep(
   topic: string,
   payload: string,
 ): string | null {
-  if (!topic.endsWith("/AEG_Fiscal/Integracion/Comando")) {
+  if (!isFiscalComandoTopic(topic)) {
     return null;
   }
   try {
@@ -948,6 +948,27 @@ export function resolveWfileResponseStep(
   if (wfileResponseIndex === 0) return "header";
   if (wfileResponseIndex === 1) return "config";
   return null;
+}
+
+/** Último comando del servidor en Comando que corresponde al paso del ritual. */
+export function findLatestServerCommand<
+  T extends { topic: string; payload: string; receivedAt: string },
+>(messages: T[], mac: string, stepId: string): T | null {
+  let latest: T | null = null;
+  let latestAt = -1;
+  for (const message of messages) {
+    if (!fiscalTopicMatchesMac(message.topic, mac)) continue;
+    if (!isFiscalComandoTopic(message.topic)) continue;
+    if (detectServerCommandStep(message.topic, message.payload) !== stepId) {
+      continue;
+    }
+    const at = parseMessageReceivedAt(message.receivedAt) ?? 0;
+    if (at >= latestAt) {
+      latestAt = at;
+      latest = message;
+    }
+  }
+  return latest;
 }
 
 export function buildSimulatorResponseForKind(

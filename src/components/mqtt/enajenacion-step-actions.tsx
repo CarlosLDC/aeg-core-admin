@@ -46,11 +46,13 @@ export function SimulatePrinterButton({
   simulation,
   disabled,
   disabledReason,
+  onPublished,
 }: {
   stepId: string;
   simulation: PrinterSimulationPayload;
   disabled?: boolean;
   disabledReason?: string;
+  onPublished?: (stepId: string) => void;
 }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
@@ -67,6 +69,7 @@ export function SimulatePrinterButton({
           ? "ptrEnajenar publicado en CmdServer"
           : "Respuesta simulada publicada en CmdServer",
       );
+      onPublished?.(stepId);
     } catch (err) {
       toast.error(getMqttErrorMessage(err));
     } finally {

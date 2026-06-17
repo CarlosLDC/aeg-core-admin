@@ -26,6 +26,7 @@ import {
   detectServerCommandStep,
   filterFiscalMessagesSince,
   findLatestPtrEnajenarReceivedAt,
+  findLatestServerCommand,
   fiscalCmdServerTopic,
   fiscalComandoTopic,
   fiscalMonitorTopic,
@@ -68,21 +69,6 @@ function stepStatusLabel(
   return hasServerCommand ? "Esperando impresora" : "Esperando AEG Core";
 }
 
-function findLatestServerCommand(
-  messages: MqttInboundMessage[],
-  mac: string,
-  stepId: string,
-): MqttInboundMessage | null {
-  for (const message of messages) {
-    if (!fiscalTopicMatchesMac(message.topic, mac)) continue;
-    if (!message.topic.trim().endsWith("/AEG_Fiscal/Integracion/Comando")) continue;
-    if (detectServerCommandStep(message.topic, message.payload) === stepId) {
-      return message;
-    }
-  }
-  return null;
-}
-
 function formatAnchorTime(anchorAt: number): string {
   return new Date(anchorAt).toLocaleString();
 }
@@ -121,6 +107,10 @@ export function EnajenacionTestPanel({
   const [commandContextError, setCommandContextError] = useState<string | null>(
     null,
   );
+  /** Pasos cuya respuesta se publicó desde el panel (aunque el monitor no la refleje aún). */
+  const [panelAcknowledgedSteps, setPanelAcknowledgedSteps] = useState<
+    Set<string>
+  >(() => new Set());
 
   const eligiblePrinters = useMemo(
     () => printers.filter(isPrinterEligibleForEnajenacionTest),
@@ -208,8 +198,11 @@ export function EnajenacionTestPanel({
       }
       done.add(step);
     }
+    for (const stepId of panelAcknowledgedSteps) {
+      done.add(stepId);
+    }
     return done;
-  }, [ritualAnchorAt, ritualMessages, topics]);
+  }, [panelAcknowledgedSteps, ritualAnchorAt, ritualMessages, topics]);
 
   const activeStepIndex = useMemo(() => {
     const index = ritualSteps.findIndex(
@@ -374,11 +367,17 @@ export function EnajenacionTestPanel({
     setManualTrackingAnchorAt(null);
     setCommandContext(null);
     setCommandContextError(null);
+    setPanelAcknowledgedSteps(new Set());
+  }
+
+  function handleStepPublished(stepId: string) {
+    setPanelAcknowledgedSteps((prev) => new Set([...prev, stepId]));
   }
 
   function handleResetTracking() {
     setManualTrackingAnchorAt(Date.now());
     setStepStatuses({});
+    setPanelAcknowledgedSteps(new Set());
     toast.success(
       "Seguimiento reiniciado. Solo contarán mensajes posteriores a este momento o al próximo ptrEnajenar.",
     );
@@ -571,12 +570,20 @@ export function EnajenacionTestPanel({
                     topics.cmdServer,
                   )
                 : null;
+            const isActiveStep = index === activeStepIndex;
+            const priorStepsComplete = ritualSteps
+              .slice(0, index)
+              .every((s) => (stepStatuses[s.id] ?? "pending") === "success");
+            const canSimulatePrinterResponse =
+              step.isRequest ||
+              Boolean(serverCommand) ||
+              (isActiveStep && priorStepsComplete);
             const simulateDisabled =
               locked ||
               !simulation ||
               commandContextLoading ||
               Boolean(precheck && !precheck.ready) ||
-              (!step.isRequest && status === "pending" && !serverCommand);
+              (status === "pending" && !canSimulatePrinterResponse);
             const simulateDisabledReason = locked
               ? "Completa el paso anterior primero."
               : commandContextLoading
@@ -585,7 +592,7 @@ export function EnajenacionTestPanel({
                   ? commandContextError
                   : precheck && !precheck.ready
                     ? precheck.message ?? "AEG Core rechazará ptrEnajenar."
-                    : !step.isRequest && status === "pending" && !serverCommand
+                    : status === "pending" && !canSimulatePrinterResponse
                       ? "Espera el comando real de AEG Core en Comando."
                       : undefined;
 
@@ -631,6 +638,7 @@ export function EnajenacionTestPanel({
                     simulation={simulation}
                     disabled={simulateDisabled}
                     disabledReason={simulateDisabledReason}
+                    onPublished={handleStepPublished}
                   />
                 )}
 

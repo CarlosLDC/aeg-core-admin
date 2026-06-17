@@ -26,6 +26,7 @@ import {
   EnajenacionResponseSteps,
   filterFiscalMessagesSince,
   findLatestPtrEnajenarReceivedAt,
+  findLatestServerCommand,
   fiscalCmdServerTopic,
   fiscalComandoTopic,
   fiscalTopicMatchesMac,
@@ -416,5 +417,58 @@ describe("enajenacion-mqtt-protocol", () => {
 
     expect(resolveWfileResponseStep(0)).toBe("header");
     expect(resolveWfileResponseStep(1)).toBe("config");
+  });
+
+  it("finds the latest Comando message per ritual step (incl. config 3c)", () => {
+    const mac = "206EF1884C68";
+    const comando = fiscalComandoTopic(mac);
+    const headerPayload = JSON.stringify({
+      cmd: "wFileSPIFF",
+      data: { nameFile: "paramFacSPIFF.json" },
+    });
+    const configPayload = JSON.stringify({
+      cmd: "wFileSPIFF",
+      data: { nameFile: "configSPIFFS.json" },
+    });
+    const messages = [
+      {
+        topic: comando,
+        payload: headerPayload,
+        receivedAt: "2026-06-16T22:00:00.000Z",
+      },
+      {
+        topic: comando,
+        payload: configPayload,
+        receivedAt: "2026-06-16T22:00:10.000Z",
+      },
+      {
+        topic: comando,
+        payload: headerPayload,
+        receivedAt: "2026-06-16T22:00:20.000Z",
+      },
+    ];
+
+    expect(findLatestServerCommand(messages, mac, "header")?.receivedAt).toBe(
+      "2026-06-16T22:00:20.000Z",
+    );
+    expect(findLatestServerCommand(messages, mac, "config")?.payload).toBe(
+      configPayload,
+    );
+    expect(
+      buildPrinterSimulationPayload(
+        "config",
+        buildEnajenacionCommandContextFromClientData({
+          fiscalSerial: "GRA0000017",
+          rif: "J500662998",
+          businessName: "Test",
+          contributorType: "ordinario",
+          address: "Av 1",
+          city: "Caracas",
+          state: "DC",
+        }),
+        "20:6E:F1:88:4C:68",
+        fiscalCmdServerTopic(mac),
+      ).payload,
+    ).toEqual({ cmd: "wFileSPIFF", code: 0, dataD: 0 });
   });
 });
