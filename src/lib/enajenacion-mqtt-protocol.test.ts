@@ -22,12 +22,15 @@ import {
   EnajenacionCommandSteps,
   ENAJENACION_FLOW_STEPS,
   EnajenacionResponseSteps,
+  filterFiscalMessagesSince,
+  findLatestPtrEnajenarReceivedAt,
   fiscalCmdServerTopic,
   fiscalTopicMatchesMac,
   flowStepById,
   generateTestFiscalSerial,
   isFiscalCmdServerTopic,
   isFiscalComandoTopic,
+  isPtrEnajenarPayload,
   isPrinterEligibleForEnajenacionTest,
   isTestFiscalSerial,
   parseManualMacAddress,
@@ -278,6 +281,35 @@ describe("enajenacion-mqtt-protocol", () => {
       status: "laboratorio",
       deviceType: "interno",
     });
+  });
+
+  it("anchors ritual progress to the latest ptrEnajenar", () => {
+    const mac = "206EF1884C68";
+    const ptr = buildPtrEnajenarPayload("GRA0000017", mac);
+    const messages = [
+      {
+        topic: fiscalCmdServerTopic(mac),
+        payload: JSON.stringify(ptr),
+        receivedAt: "2026-06-16T22:00:00.000Z",
+      },
+      {
+        topic: fiscalCmdServerTopic(mac),
+        payload: JSON.stringify(buildDnfSuccessResponse()),
+        receivedAt: "2026-06-16T22:00:05.000Z",
+      },
+      {
+        topic: fiscalCmdServerTopic(mac),
+        payload: JSON.stringify(ptr),
+        receivedAt: "2026-06-16T22:20:20.000Z",
+      },
+    ];
+    expect(isPtrEnajenarPayload(JSON.stringify(ptr))).toBe(true);
+    expect(findLatestPtrEnajenarReceivedAt(messages, mac)).toBe(
+      Date.parse("2026-06-16T22:20:20.000Z"),
+    );
+    const since = filterFiscalMessagesSince(messages, mac, Date.parse("2026-06-16T22:20:20.000Z"));
+    expect(since).toHaveLength(1);
+    expect(since[0]?.receivedAt).toBe("2026-06-16T22:20:20.000Z");
   });
 
   it("matches fiscal topics with or without leading slash", () => {

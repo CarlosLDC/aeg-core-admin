@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Printer, RefreshCw, Zap } from "lucide-react";
+import { Loader2, Printer, RefreshCw, RotateCcw, Zap } from "lucide-react";
 import { useToast } from "@/context/toast-provider";
 import { fetchPrinterById, fetchPrinters } from "@/lib/printers-api";
 import {
@@ -14,12 +14,15 @@ import {
   compactMac,
   detectPrinterResponseStep,
   detectServerCommandStep,
+  filterFiscalMessagesSince,
+  findLatestPtrEnajenarReceivedAt,
   fiscalCmdServerTopic,
   fiscalComandoTopic,
   fiscalMonitorTopic,
   fiscalTopicMatchesMac,
   isFiscalCmdServerTopic,
   isPrinterEligibleForEnajenacionTest,
+  parseMessageReceivedAt,
   resolveWfileResponseStep,
 } from "@/lib/enajenacion-mqtt-protocol";
 import { printerStatusLabel } from "@/lib/printer-status";
@@ -79,11 +82,16 @@ function findLatestServerCommand(
 ): MqttInboundMessage | null {
   for (const message of messages) {
     if (!fiscalTopicMatchesMac(message.topic, mac)) continue;
+    if (!message.topic.trim().endsWith("/AEG_Fiscal/Integracion/Comando")) continue;
     if (detectServerCommandStep(message.topic, message.payload) === stepId) {
       return message;
     }
   }
   return null;
+}
+
+function formatAnchorTime(anchorAt: number): string {
+  return new Date(anchorAt).toLocaleString();
 }
 
 export function EnajenacionTestPanel({
@@ -111,6 +119,10 @@ export function EnajenacionTestPanel({
     message: string | null;
   } | null>(null);
   const [precheckLoading, setPrecheckLoading] = useState(false);
+  /** Ancla manual tras «Reiniciar seguimiento»; se descarta si llega un ptrEnajenar más nuevo. */
+  const [manualTrackingAnchorAt, setManualTrackingAnchorAt] = useState<
+    number | null
+  >(null);
 
   const eligiblePrinters = useMemo(
     () => printers.filter(isPrinterEligibleForEnajenacionTest),
@@ -145,13 +157,39 @@ export function EnajenacionTestPanel({
     }));
   }, [topics]);
 
+  const autoPtrEnajenarAnchorAt = useMemo(() => {
+    if (!topics) return null;
+    return findLatestPtrEnajenarReceivedAt(liveMessages, topics.mac);
+  }, [liveMessages, topics]);
+
+  const ritualAnchorAt = useMemo(() => {
+    if (manualTrackingAnchorAt !== null) {
+      if (
+        autoPtrEnajenarAnchorAt !== null &&
+        autoPtrEnajenarAnchorAt > manualTrackingAnchorAt
+      ) {
+        return autoPtrEnajenarAnchorAt;
+      }
+      return manualTrackingAnchorAt;
+    }
+    return autoPtrEnajenarAnchorAt;
+  }, [autoPtrEnajenarAnchorAt, manualTrackingAnchorAt]);
+
+  const ritualMessages = useMemo(() => {
+    if (!topics || ritualAnchorAt === null) return [];
+    return filterFiscalMessagesSince(liveMessages, topics.mac, ritualAnchorAt);
+  }, [liveMessages, topics, ritualAnchorAt]);
+
   const completedRitualSteps = useMemo(() => {
-    if (!topics) return new Set<string>();
+    if (!topics || ritualAnchorAt === null) return new Set<string>();
     const done = new Set<string>();
     let wfileResponseIndex = 0;
-    for (const message of [...liveMessages].reverse()) {
-      if (!fiscalTopicMatchesMac(message.topic, topics.mac)) continue;
-
+    const chronological = [...ritualMessages].sort(
+      (a, b) =>
+        (parseMessageReceivedAt(a.receivedAt) ?? 0) -
+        (parseMessageReceivedAt(b.receivedAt) ?? 0),
+    );
+    for (const message of chronological) {
       const serverStep = detectServerCommandStep(message.topic, message.payload);
       if (serverStep === "dnf") {
         done.add("request");
@@ -162,6 +200,10 @@ export function EnajenacionTestPanel({
       if (panelPublishedKeysRef.current.has(dedupeKey)) continue;
       const step = detectPrinterResponseStep(message.payload);
       if (!step) continue;
+      if (step === "request") {
+        done.add("request");
+        continue;
+      }
       if (step === "wfile_spiff") {
         const resolved = resolveWfileResponseStep(wfileResponseIndex);
         if (resolved) done.add(resolved);
@@ -171,7 +213,7 @@ export function EnajenacionTestPanel({
       done.add(step);
     }
     return done;
-  }, [liveMessages, topics]);
+  }, [ritualAnchorAt, ritualMessages, topics]);
 
   const activeStepIndex = useMemo(() => {
     const index = ritualSteps.findIndex(
@@ -182,10 +224,11 @@ export function EnajenacionTestPanel({
 
   const latestFiscalMessages = useMemo(() => {
     if (!topics) return [];
-    return liveMessages
+    const source = ritualMessages.length > 0 ? ritualMessages : liveMessages;
+    return source
       .filter((message) => fiscalTopicMatchesMac(message.topic, topics.mac))
       .slice(0, 3);
-  }, [liveMessages, topics]);
+  }, [liveMessages, ritualMessages, topics]);
 
   useEffect(() => {
     if (!activePrinter?.fiscalSerial?.trim() || !activePrinter.macAddress?.trim()) {
@@ -213,18 +256,16 @@ export function EnajenacionTestPanel({
   }, [activePrinter?.fiscalSerial, activePrinter?.macAddress]);
 
   useEffect(() => {
-    if (completedRitualSteps.size === 0) return;
-    setStepStatuses((prev) => {
-      let changed = false;
-      const next = { ...prev };
-      for (const stepId of completedRitualSteps) {
-        if (next[stepId] === "success") continue;
-        next[stepId] = "success";
-        changed = true;
-      }
-      return changed ? next : prev;
-    });
-  }, [completedRitualSteps]);
+    if (ritualAnchorAt === null) {
+      setStepStatuses({});
+      return;
+    }
+    const next: Record<string, StepStatus> = {};
+    for (const step of ritualSteps) {
+      next[step.id] = completedRitualSteps.has(step.id) ? "success" : "pending";
+    }
+    setStepStatuses(next);
+  }, [completedRitualSteps, ritualAnchorAt, ritualSteps]);
 
   const refreshPrinterStatus = useCallback(async (printerId: number) => {
     const updated = await fetchPrinterById(printerId);
@@ -292,6 +333,15 @@ export function EnajenacionTestPanel({
     setSelectedId(value ? Number(value) : "");
     setStepStatuses({});
     setPrinterStatus(null);
+    setManualTrackingAnchorAt(null);
+  }
+
+  function handleResetTracking() {
+    setManualTrackingAnchorAt(Date.now());
+    setStepStatuses({});
+    toast.success(
+      "Seguimiento reiniciado. Solo contarán mensajes posteriores a este momento o al próximo ptrEnajenar.",
+    );
   }
 
   async function handleApplyMonitorTopic() {
@@ -372,6 +422,23 @@ export function EnajenacionTestPanel({
                 Requisitos de BD verificados: AEG Core puede iniciar el ritual.
               </p>
             ) : null}
+            {ritualAnchorAt !== null ? (
+              <p className="mb-4 text-xs text-muted">
+                Sesión de seguimiento anclada a{" "}
+                <time dateTime={new Date(ritualAnchorAt).toISOString()}>
+                  {formatAnchorTime(ritualAnchorAt)}
+                </time>
+                . Los pasos solo avanzan con mensajes posteriores a ese
+                ptrEnajenar.
+              </p>
+            ) : (
+              <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-950 dark:text-amber-100">
+                No hay <code className="font-mono text-xs">ptrEnajenar</code> en
+                el buffer del monitor. Publica uno en CmdServer o pulsa{" "}
+                <strong className="font-medium">Reiniciar seguimiento</strong>{" "}
+                justo después de enviarlo.
+              </p>
+            )}
             <dl className="grid gap-2 sm:grid-cols-2">
               <div>
                 <dt className="text-muted">Serial fiscal</dt>
@@ -423,6 +490,16 @@ export function EnajenacionTestPanel({
           {activePrinter && (
             <button
               type="button"
+              onClick={handleResetTracking}
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-foreground/5"
+            >
+              <RotateCcw className="size-4" />
+              Reiniciar seguimiento
+            </button>
+          )}
+          {activePrinter && (
+            <button
+              type="button"
               onClick={() => void refreshPrinterStatus(activePrinter.id)}
               className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-foreground/5"
             >
@@ -440,7 +517,7 @@ export function EnajenacionTestPanel({
             const locked = index > activeStepIndex;
             const serverCommand =
               topics && !step.isRequest
-                ? findLatestServerCommand(liveMessages, topics.mac, step.id)
+                ? findLatestServerCommand(ritualMessages, topics.mac, step.id)
                 : null;
 
             return (

@@ -302,6 +302,46 @@ export function isFiscalComandoTopic(topic: string): boolean {
   return topic.trim().endsWith("/AEG_Fiscal/Integracion/Comando");
 }
 
+export function parseMessageReceivedAt(receivedAt: string): number | null {
+  const at = Date.parse(receivedAt);
+  return Number.isNaN(at) ? null : at;
+}
+
+export function isPtrEnajenarPayload(payload: string): boolean {
+  return detectPrinterResponseStep(payload) === "request";
+}
+
+/** Marca de tiempo del ptrEnajenar más reciente para esta MAC (inicio de sesión MQTT). */
+export function findLatestPtrEnajenarReceivedAt(
+  messages: { topic: string; payload: string; receivedAt: string }[],
+  mac: string,
+): number | null {
+  let latest: number | null = null;
+  for (const message of messages) {
+    if (!fiscalTopicMatchesMac(message.topic, mac)) continue;
+    if (!isFiscalCmdServerTopic(message.topic)) continue;
+    if (!isPtrEnajenarPayload(message.payload)) continue;
+    const at = parseMessageReceivedAt(message.receivedAt);
+    if (at === null) continue;
+    if (latest === null || at > latest) {
+      latest = at;
+    }
+  }
+  return latest;
+}
+
+export function filterFiscalMessagesSince(
+  messages: { topic: string; receivedAt: string }[],
+  mac: string,
+  anchorAt: number,
+): typeof messages {
+  return messages.filter((message) => {
+    if (!fiscalTopicMatchesMac(message.topic, mac)) return false;
+    const at = parseMessageReceivedAt(message.receivedAt);
+    return at !== null && at >= anchorAt;
+  });
+}
+
 export function buildPtrEnajenarPayload(
   fiscalSerial: string,
   macWithColons: string,
