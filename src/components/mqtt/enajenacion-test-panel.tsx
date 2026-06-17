@@ -185,14 +185,6 @@ export function EnajenacionTestPanel() {
 
       {ritual.ritualSteps.length > 0 && !ritual.ritualComplete ? (
         <>
-          <EnajenacionRitualStepper
-            steps={ritual.ritualSteps}
-            stepStatuses={ritual.stepStatuses}
-            activeStepIndex={ritual.activeStepIndex}
-            displayStepIndex={ritual.displayStepIndex}
-            onSelectStep={ritual.handleStepperSelect}
-          />
-
           {ritual.displayedStep && ritual.displayedStepState ? (
             <EnajenacionActiveStep
               step={ritual.displayedStep}
@@ -206,6 +198,14 @@ export function EnajenacionTestPanel() {
               }
             />
           ) : null}
+
+          <EnajenacionRitualStepper
+            steps={ritual.ritualSteps}
+            stepStatuses={ritual.stepStatuses}
+            activeStepIndex={ritual.activeStepIndex}
+            displayStepIndex={ritual.displayStepIndex}
+            onSelectStep={ritual.handleStepperSelect}
+          />
         </>
       ) : null}
 
