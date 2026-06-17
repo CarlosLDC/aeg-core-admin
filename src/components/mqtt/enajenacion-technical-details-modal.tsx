@@ -90,17 +90,17 @@ export function EnajenacionTechnicalDetailsModal({
 
         <div className="px-4 py-3">
           <dl className="space-y-3 text-sm">
-            <div className="flex flex-wrap gap-x-6 gap-y-3">
-              <div>
-                <dt className="text-xs font-medium text-muted">MAC</dt>
-                <dd className="mt-0.5 font-mono break-all text-card-foreground">
-                  {printer.macAddress}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium text-muted">Cliente</dt>
-                <dd className="mt-0.5 text-card-foreground">{clientName}</dd>
-              </div>
+            <div>
+              <dt className="text-xs font-medium text-muted">MAC</dt>
+              <dd className="mt-0.5 font-mono break-all text-card-foreground">
+                {printer.macAddress}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium text-muted">Cliente</dt>
+              <dd className="mt-0.5 break-words text-card-foreground">
+                {clientName}
+              </dd>
             </div>
             <div>
               <dt className="text-xs font-medium text-muted">CmdServer</dt>
