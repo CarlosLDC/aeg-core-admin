@@ -191,6 +191,8 @@ export function EnajenacionTestPanel({
               onReturnToCurrent={() =>
                 ritual.handleStepperSelect(ritual.activeStepIndex)
               }
+              onAdvanceToNext={ritual.handleAdvanceToNextStep}
+              canAdvanceToNext={ritual.canAdvanceFromDisplayedStep}
               currentStepLabel={
                 ritual.ritualSteps[ritual.activeStepIndex]?.step
               }

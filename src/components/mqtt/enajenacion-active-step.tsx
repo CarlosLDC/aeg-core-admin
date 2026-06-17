@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2, ExternalLink } from "lucide-react";
+import { ArrowRight, CheckCircle2, ExternalLink } from "lucide-react";
 import {
-  ServerCommandBlock,
+  EnajenacionStepDetails,
   SimulatePrinterButton,
 } from "@/components/mqtt/enajenacion-step-actions";
 import type { RitualStepActionState } from "@/hooks/use-enajenacion-ritual";
@@ -22,19 +22,27 @@ export function EnajenacionActiveStep({
   stepState,
   onPublished,
   onReturnToCurrent,
+  onAdvanceToNext,
+  canAdvanceToNext,
   currentStepLabel,
 }: {
   step: RitualStep;
   stepState: RitualStepActionState;
   onPublished: (stepId: string) => void;
   onReturnToCurrent?: () => void;
+  onAdvanceToNext?: () => void;
+  canAdvanceToNext?: boolean;
   currentStepLabel?: string;
 }) {
-  const showAction =
+  const showSimulation =
     !stepState.locked &&
     stepState.status === "pending" &&
     stepState.simulation &&
     stepState.isActive;
+  const payloadText = stepState.simulation
+    ? formatPayload(stepState.simulation.payload)
+    : "";
+  const commandText = stepState.serverCommand?.payload ?? "";
 
   return (
     <article className="rounded-xl border border-border bg-card p-5 shadow-sm">
@@ -62,26 +70,28 @@ export function EnajenacionActiveStep({
       )}
 
       {!step.isRequest && (
-        <details className="mt-4 rounded-lg border border-border bg-foreground/[0.02] text-sm">
-          <summary className="cursor-pointer px-3 py-2 text-sm text-muted">
-            Ver comando del servidor
-          </summary>
-          <div className="border-t border-border px-3 py-3">
-            <ServerCommandBlock serverCommand={stepState.serverCommand} />
-          </div>
-        </details>
+        <div className="mt-4">
+          <EnajenacionStepDetails
+            label="Ver comando del servidor"
+            copyText={commandText}
+            copyLabel="Comando"
+            emptyMessage="Aún no hay comando en Comando para este paso."
+          />
+        </div>
       )}
 
-      {showAction && (
-        <div className="mt-5 space-y-3">
-          <details className="rounded-lg border border-border bg-foreground/[0.02] text-sm">
-            <summary className="cursor-pointer px-3 py-2 text-xs text-muted">
-              Ver payload CmdServer
-            </summary>
-            <pre className="max-h-48 overflow-auto border-t border-border px-3 py-2 font-mono text-xs text-card-foreground">
-              {formatPayload(stepState.simulation!.payload)}
-            </pre>
-          </details>
+      {stepState.simulation ? (
+        <div className={cn(!step.isRequest ? "mt-3" : "mt-4")}>
+          <EnajenacionStepDetails
+            label="Ver payload CmdServer"
+            copyText={payloadText}
+            copyLabel="Payload"
+          />
+        </div>
+      ) : null}
+
+      {showSimulation && (
+        <div className="mt-5">
           <SimulatePrinterButton
             stepId={step.id}
             simulation={stepState.simulation!}
@@ -92,6 +102,17 @@ export function EnajenacionActiveStep({
           />
         </div>
       )}
+
+      {canAdvanceToNext && onAdvanceToNext ? (
+        <button
+          type="button"
+          onClick={onAdvanceToNext}
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-foreground/[0.02] px-4 py-2.5 text-sm font-medium hover:bg-foreground/5"
+        >
+          Siguiente paso
+          <ArrowRight className="size-4" aria-hidden />
+        </button>
+      ) : null}
 
       {stepState.isActive && stepState.status === "success" && step.isRequest && (
         <p className="mt-4 text-sm text-muted">

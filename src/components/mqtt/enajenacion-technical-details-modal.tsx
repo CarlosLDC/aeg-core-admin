@@ -60,8 +60,8 @@ export function EnajenacionTechnicalDetailsModal({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative flex max-h-[min(85vh,40rem)] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-5 py-4">
+      <div className="relative w-[min(100%,32rem)] rounded-xl border border-border bg-card shadow-xl">
+        <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
           <div className="min-w-0">
             <h3
               id={titleId}
@@ -86,40 +86,44 @@ export function EnajenacionTechnicalDetailsModal({
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
-          <dl className="grid gap-4 text-sm sm:grid-cols-2">
-            <div>
-              <dt className="text-xs font-medium text-muted">MAC</dt>
-              <dd className="mt-1 font-mono break-all text-card-foreground">
-                {printer.macAddress}
-              </dd>
+        <div className="px-4 py-3">
+          <dl className="space-y-3 text-sm">
+            <div className="flex flex-wrap gap-x-6 gap-y-3">
+              <div>
+                <dt className="text-xs font-medium text-muted">MAC</dt>
+                <dd className="mt-0.5 font-mono break-all text-card-foreground">
+                  {printer.macAddress}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium text-muted">Cliente</dt>
+                <dd className="mt-0.5 text-card-foreground">
+                  #{printer.clientId}
+                </dd>
+              </div>
             </div>
             <div>
-              <dt className="text-xs font-medium text-muted">Cliente</dt>
-              <dd className="mt-1 text-card-foreground">#{printer.clientId}</dd>
-            </div>
-            <div className="sm:col-span-2">
               <dt className="text-xs font-medium text-muted">CmdServer</dt>
-              <dd className="mt-1 font-mono break-all text-card-foreground">
+              <dd className="mt-0.5 font-mono break-all text-card-foreground">
                 {topics.cmdServer}
               </dd>
             </div>
-            <div className="sm:col-span-2">
+            <div>
               <dt className="text-xs font-medium text-muted">Comando</dt>
-              <dd className="mt-1 font-mono break-all text-card-foreground">
+              <dd className="mt-0.5 font-mono break-all text-card-foreground">
                 {topics.comando}
               </dd>
             </div>
-            <div className="sm:col-span-2">
+            <div>
               <dt className="text-xs font-medium text-muted">Monitor</dt>
-              <dd className="mt-1 font-mono break-all text-card-foreground">
+              <dd className="mt-0.5 font-mono break-all text-card-foreground">
                 {topics.monitor}
               </dd>
             </div>
             {ritualAnchorAt !== null ? (
-              <div className="sm:col-span-2">
+              <div>
                 <dt className="text-xs font-medium text-muted">Sesión anclada</dt>
-                <dd className="mt-1 text-card-foreground">
+                <dd className="mt-0.5 text-card-foreground">
                   {formatAnchorTime(ritualAnchorAt)}
                 </dd>
               </div>

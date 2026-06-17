@@ -193,11 +193,6 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
   const ritualComplete = activeStepIndex >= ritualSteps.length;
 
   useEffect(() => {
-    if (ritualComplete) return;
-    setDisplayStepIndex(activeStepIndex);
-  }, [activeStepIndex, ritualComplete]);
-
-  useEffect(() => {
     if (!activePrinter?.fiscalSerial?.trim() || !activePrinter.macAddress?.trim()) {
       setPrecheck(null);
       return;
@@ -452,8 +447,21 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     }
   }
 
+  function handleAdvanceToNextStep() {
+    if (ritualComplete) return;
+    setDisplayStepIndex((prev) => {
+      const target = Math.min(activeStepIndex, ritualSteps.length - 1);
+      return Math.max(prev, target);
+    });
+  }
+
   const displayedStep = ritualSteps[displayStepIndex] ?? null;
   const displayedStepState = getStepActionState(displayStepIndex);
+  const canAdvanceFromDisplayedStep =
+    !ritualComplete &&
+    displayedStep !== null &&
+    (stepStatuses[displayedStep.id] ?? "pending") === "success" &&
+    displayStepIndex < activeStepIndex;
 
   return {
     printersLoading,
@@ -478,6 +486,8 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     handleStepPublished,
     handleResetTracking,
     handleStepperSelect,
+    handleAdvanceToNextStep,
+    canAdvanceFromDisplayedStep,
     refreshPrinterStatus,
   };
 }
