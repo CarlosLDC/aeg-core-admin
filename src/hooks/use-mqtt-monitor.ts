@@ -16,7 +16,7 @@ import type {
 
 const MAX_MESSAGES = 500;
 
-export type MqttWsStatus = "closed" | "connecting" | "open";
+export type MqttLiveStatus = "idle" | "syncing" | "live";
 
 function wireToInbound(msg: MqttMonitorWireMessage): MqttInboundMessage | null {
   if (msg.type !== "message" || !msg.topic || msg.receivedAt === undefined) {
@@ -33,7 +33,7 @@ function wireToInbound(msg: MqttMonitorWireMessage): MqttInboundMessage | null {
 export function useMqttMonitor() {
   const [monitorTopic, setMonitorTopic] = useState("aeg/test/#");
   const [messages, setMessages] = useState<MqttInboundMessage[]>([]);
-  const [wsStatus, setWsStatus] = useState<MqttWsStatus>("closed");
+  const [liveStatus, setLiveStatus] = useState<MqttLiveStatus>("idle");
   const [monitorStatus, setMonitorStatus] = useState<MqttMonitorStatus | null>(
     null,
   );
@@ -43,7 +43,7 @@ export function useMqttMonitor() {
 
   const wsRef = useRef<WebSocket | null>(null);
 
-  const disconnectWebSocket = useCallback(() => {
+  const stopLiveStream = useCallback(() => {
     const ws = wsRef.current;
     if (ws) {
       ws.onopen = null;
@@ -53,26 +53,26 @@ export function useMqttMonitor() {
       ws.close();
       wsRef.current = null;
     }
-    setWsStatus("closed");
+    setLiveStatus("idle");
   }, []);
 
-  const connectWebSocket = useCallback(() => {
-    disconnectWebSocket();
-    setWsStatus("connecting");
+  const startLiveStream = useCallback(() => {
+    stopLiveStream();
+    setLiveStatus("syncing");
     try {
       const ws = new WebSocket(getMqttWebSocketUrl());
       wsRef.current = ws;
 
-      ws.onopen = () => setWsStatus("open");
+      ws.onopen = () => setLiveStatus("live");
       ws.onclose = () => {
         if (wsRef.current === ws) {
-          setWsStatus("closed");
+          setLiveStatus("idle");
           wsRef.current = null;
         }
       };
       ws.onerror = () => {
         if (wsRef.current === ws) {
-          setWsStatus("closed");
+          setLiveStatus("idle");
         }
       };
       ws.onmessage = (event) => {
@@ -92,9 +92,9 @@ export function useMqttMonitor() {
         }
       };
     } catch {
-      setWsStatus("closed");
+      setLiveStatus("idle");
     }
-  }, [disconnectWebSocket]);
+  }, [stopLiveStream]);
 
   const refreshMonitor = useCallback(async () => {
     const [status, subscription, history] = await Promise.all([
@@ -107,10 +107,10 @@ export function useMqttMonitor() {
     setSubscriptionActive(subscription.active);
     setMessages(history);
     if (subscription.active && wsRef.current?.readyState !== WebSocket.OPEN) {
-      connectWebSocket();
+      startLiveStream();
     }
     return subscription;
-  }, [connectWebSocket]);
+  }, [startLiveStream]);
 
   useEffect(() => {
     let cancelled = false;
@@ -129,9 +129,9 @@ export function useMqttMonitor() {
     })();
     return () => {
       cancelled = true;
-      disconnectWebSocket();
+      stopLiveStream();
     };
-  }, [disconnectWebSocket, refreshMonitor]);
+  }, [stopLiveStream, refreshMonitor]);
 
   const subscribeToTopic = useCallback(
     async (topic: string) => {
@@ -145,14 +145,14 @@ export function useMqttMonitor() {
         setMonitorTopic(result.topic);
         setSubscriptionActive(result.active);
         setMessages([]);
-        connectWebSocket();
+        startLiveStream();
         const status = await getMqttMonitorStatus();
         setMonitorStatus(status);
       } finally {
         setSubscribeLoading(false);
       }
     },
-    [connectWebSocket],
+    [startLiveStream],
   );
 
   const clearMessages = useCallback(() => setMessages([]), []);
@@ -161,14 +161,12 @@ export function useMqttMonitor() {
     monitorTopic,
     setMonitorTopic,
     messages,
-    wsStatus,
+    liveStatus,
     monitorStatus,
     subscriptionActive,
     initialLoading,
     subscribeLoading,
     subscribeToTopic,
-    connectWebSocket,
-    disconnectWebSocket,
     refreshMonitor,
     clearMessages,
   };

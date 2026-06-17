@@ -441,7 +441,6 @@ export function useEnajenacionRitual() {
     topics,
     ritualSteps,
     sessionStartedAt,
-    sseEventLog: sse.eventLog,
     stepStatuses,
     activeStepIndex,
     displayStepIndex,

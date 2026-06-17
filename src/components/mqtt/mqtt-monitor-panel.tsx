@@ -1,22 +1,39 @@
 "use client";
 
-import { Loader2, Plug, PlugZap, Trash2 } from "lucide-react";
+import { Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { useToast } from "@/context/toast-provider";
-import { useMqttMonitor } from "@/hooks/use-mqtt-monitor";
+import { useMqttMonitor, type MqttLiveStatus } from "@/hooks/use-mqtt-monitor";
 import { getMqttErrorMessage } from "@/lib/mqtt-api";
 import { cn } from "@/lib/utils";
 import type { MqttInboundMessage } from "@/types/mqtt";
-import type { MqttWsStatus } from "@/hooks/use-mqtt-monitor";
 
 const inputClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
 
 type MqttMonitorState = ReturnType<typeof useMqttMonitor>;
 
-function wsLabel(status: MqttWsStatus): string {
-  if (status === "open") return "Conectado";
-  if (status === "connecting") return "Conectando…";
-  return "Desconectado";
+function liveStatusLabel(
+  status: MqttLiveStatus,
+  subscriptionActive: boolean,
+): string {
+  if (!subscriptionActive) return "Sin suscripción";
+  if (status === "live") return "En vivo";
+  if (status === "syncing") return "Sincronizando…";
+  return "Inactivo";
+}
+
+function liveStatusClass(
+  status: MqttLiveStatus,
+  subscriptionActive: boolean,
+): string {
+  if (!subscriptionActive) return "bg-foreground/5 text-muted";
+  if (status === "live") {
+    return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
+  }
+  if (status === "syncing") {
+    return "bg-amber-500/10 text-amber-800 dark:text-amber-200";
+  }
+  return "bg-foreground/5 text-muted";
 }
 
 export function MqttMonitorPanel({
@@ -32,7 +49,16 @@ export function MqttMonitorPanel({
     e.preventDefault();
     try {
       await monitor.subscribeToTopic(monitor.monitorTopic);
-      toast.success(`Suscrito a ${monitor.monitorTopic.trim()}`);
+      toast.success(`Escuchando ${monitor.monitorTopic.trim()}`);
+    } catch (err) {
+      toast.error(getMqttErrorMessage(err));
+    }
+  }
+
+  async function handleRefresh() {
+    try {
+      await monitor.refreshMonitor();
+      toast.success("Monitor actualizado");
     } catch (err) {
       toast.error(getMqttErrorMessage(err));
     }
@@ -41,12 +67,8 @@ export function MqttMonitorPanel({
   return (
     <section className="mx-auto max-w-2xl space-y-4">
       <p className="rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-xs text-muted">
-        Tráfico MQTT bruto del broker. La pestaña Enajenación usa un stream SSE
-        separado para el progreso del ritual; suscríbete aquí a{" "}
-        <code className="font-mono text-card-foreground">
-          /{"{MAC}"}/AEG_Fiscal/Integracion/#
-        </code>{" "}
-        solo si necesitas depurar frames MQTT.
+        AEG Core escucha el broker MQTT en el servidor. Elige un tópico para ver
+        los mensajes entrantes.
       </p>
 
       <form onSubmit={handleSubscribe} className="flex flex-col gap-2 sm:flex-row">
@@ -75,39 +97,28 @@ export function MqttMonitorPanel({
         <span
           className={cn(
             "rounded-full px-2.5 py-0.5 text-xs font-medium",
-            monitor.wsStatus === "open"
-              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-              : monitor.wsStatus === "connecting"
-                ? "bg-amber-500/10 text-amber-800 dark:text-amber-200"
-                : "bg-foreground/5 text-muted",
+            liveStatusClass(monitor.liveStatus, monitor.subscriptionActive),
           )}
         >
-          {wsLabel(monitor.wsStatus)}
+          {liveStatusLabel(monitor.liveStatus, monitor.subscriptionActive)}
         </span>
-        {monitor.wsStatus === "open" ? (
-          <button
-            type="button"
-            onClick={monitor.disconnectWebSocket}
-            className="inline-flex items-center gap-1 text-xs text-muted hover:text-card-foreground"
-          >
-            <Plug className="size-3.5" />
-            Desconectar
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={monitor.connectWebSocket}
-            disabled={monitor.wsStatus === "connecting"}
-            className="inline-flex items-center gap-1 text-xs text-muted hover:text-card-foreground disabled:opacity-50"
-          >
-            {monitor.wsStatus === "connecting" ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <PlugZap className="size-3.5" />
-            )}
-            Conectar
-          </button>
-        )}
+        {monitor.monitorStatus?.brokerUrl ? (
+          <span className="text-xs text-muted">
+            Broker:{" "}
+            <span className="font-mono text-card-foreground">
+              {monitor.monitorStatus.brokerUrl}
+            </span>
+          </span>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => void handleRefresh()}
+          disabled={monitor.initialLoading}
+          className="inline-flex items-center gap-1 text-xs text-muted hover:text-card-foreground disabled:opacity-50"
+        >
+          <RefreshCw className="size-3.5" />
+          Actualizar
+        </button>
       </div>
 
       <div>

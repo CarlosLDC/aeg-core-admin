@@ -7,7 +7,6 @@ import {
   EnajenacionSuccessCard,
 } from "@/components/mqtt/enajenacion-active-step";
 import { EnajenacionRitualStepper } from "@/components/mqtt/enajenacion-ritual-stepper";
-import { EnajenacionSseEventLog } from "@/components/mqtt/enajenacion-sse-event-log";
 import { EnajenacionTechnicalDetailsModal } from "@/components/mqtt/enajenacion-technical-details-modal";
 import { PrinterSelect } from "@/components/printers/printer-select";
 import { useEnajenacionRitual } from "@/hooks/use-enajenacion-ritual";
@@ -161,21 +160,6 @@ export function EnajenacionTestPanel() {
         </p>
       )}
 
-      {ritual.activePrinter && ritual.topics ? (
-        <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
-          <h3 className="text-sm font-medium text-card-foreground">
-            Monitor SSE ({ritual.sseEventLog.length})
-          </h3>
-          <p className="mt-1 text-xs text-muted">
-            Progreso del ritual y comandos publicados por AEG Core. Para tráfico
-            MQTT bruto usa la pestaña Monitor.
-          </p>
-          <div className="mt-3">
-            <EnajenacionSseEventLog events={ritual.sseEventLog} />
-          </div>
-        </section>
-      ) : null}
-
       {ritual.ritualComplete && ritual.activePrinter ? (
         <EnajenacionSuccessCard
           printer={ritual.activePrinter}
@@ -217,7 +201,6 @@ export function EnajenacionTestPanel() {
           clientName={ritual.getClientName(ritual.activePrinter.clientId)}
           topics={ritual.topics}
           sessionStartedAt={ritual.sessionStartedAt}
-          sseEventLog={ritual.sseEventLog}
         />
       ) : null}
     </div>
