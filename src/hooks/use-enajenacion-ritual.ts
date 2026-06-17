@@ -494,11 +494,14 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
   }
 
   function handleResetTracking() {
+    sse.resetProgress();
     setManualTrackingAnchorAt(Date.now());
     setStepStatuses({});
     setPanelAcknowledgedSteps(new Set());
     setDisplayStepIndex(0);
-    toast.success("Seguimiento reiniciado.");
+    toast.success(
+      "Seguimiento reiniciado en el panel. Publica ptrEnajenar de nuevo para un ritual nuevo en el servidor.",
+    );
   }
 
   function handleStepperSelect(index: number) {
