@@ -42,7 +42,7 @@ export function useEnajenacionSse(mac: string | null, enabled = true) {
     if (event.type === "session_failed" && event.reason) {
       setSessionError(event.reason);
     }
-    if (event.type === "session_completed") {
+    if (event.type === "session_started" || event.type === "session_completed") {
       setSessionError(null);
     }
     setAcceptedStepIds((prev) => mergeAcceptedStepsFromSse(prev, event));
