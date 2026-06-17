@@ -8,7 +8,7 @@ const ENajenacionSteps = [
       "Al encender, la impresora publica ptrEnajenar con ptrReg (serial fiscal) y macAddr.",
   },
   {
-    step: "2a",
+    step: "2",
     name: "DNF de alerta",
     direction: "Servidor → impresora",
     topic: "Comando",

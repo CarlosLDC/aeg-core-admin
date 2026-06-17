@@ -72,14 +72,14 @@ export const ENAJENACION_FLOW_STEPS: EnajenacionFlowStep[] = [
     successCriteria: [
       "Impresora en BD con estatus Asignada o Laboratorio, pagada y con cliente asignado.",
       "ptrReg coincide con el serial fiscal y macAddr con la MAC de la impresora.",
-      "El servidor acepta la solicitud y publica el DNF de alerta (paso 2a). Si falla una validación, no inicia el ritual.",
+      "El servidor acepta la solicitud y publica el DNF de alerta (paso 2). Si falla una validación, no inicia el ritual.",
     ],
     panelSimulates:
       "Publica ptrEnajenar en CmdServer al pulsar «Iniciar simulación» (sustituye el arranque de la impresora).",
   },
   {
     id: "dnf",
-    step: "2a",
+    step: "2",
     name: "DNF de alerta",
     direction: "Servidor → impresora",
     topic: "Comando",
@@ -667,7 +667,7 @@ export const EnajenacionResponseSteps: EnajenacionSimulatorStep[] = [
   {
     id: "dnf",
     flowStepId: "dnf",
-    label: "Paso 2a — Respuesta DNF",
+    label: "Paso 2 — Respuesta DNF",
     delayMs: 800,
     buildPayload: () => buildDnfSuccessResponse(),
   },
@@ -726,7 +726,7 @@ export const EnajenacionCommandSteps: EnajenacionCommandStep[] = [
   {
     id: "dnf",
     flowStepId: "dnf",
-    label: "Paso 2a — DNF de alerta",
+    label: "Paso 2 — DNF de alerta",
     buildPayload: () => buildDnfAlertCommandPayload(),
   },
   {
