@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, ExternalLink } from "lucide-react";
+import { CheckCircle2, ExternalLink } from "lucide-react";
 import {
   EnajenacionStepDetails,
   SimulatePrinterButton,
@@ -23,16 +23,12 @@ export function EnajenacionActiveStep({
   stepState,
   onPublished,
   onReturnToCurrent,
-  onAdvanceToNext,
-  canAdvanceToNext,
   currentStepLabel,
 }: {
   step: RitualStep;
   stepState: RitualStepActionState;
   onPublished: (stepId: string) => void;
   onReturnToCurrent?: () => void;
-  onAdvanceToNext?: () => void;
-  canAdvanceToNext?: boolean;
   currentStepLabel?: string;
 }) {
   const showSimulation =
@@ -105,17 +101,6 @@ export function EnajenacionActiveStep({
           />
         </div>
       )}
-
-      {canAdvanceToNext && onAdvanceToNext ? (
-        <button
-          type="button"
-          onClick={onAdvanceToNext}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-foreground/[0.02] px-4 py-2.5 text-sm font-medium hover:bg-foreground/5"
-        >
-          Siguiente paso
-          <ArrowRight className="size-4" aria-hidden />
-        </button>
-      ) : null}
 
       {stepState.isActive && stepState.status === "success" && step.isRequest && (
         <p className="mt-4 text-sm text-muted">

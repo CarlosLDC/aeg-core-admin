@@ -6,7 +6,7 @@ import { fetchPrinterById, fetchPrinters } from "@/lib/printers-api";
 import { fetchBranchById } from "@/lib/branches-api";
 import { fetchClientById } from "@/lib/clients-api";
 import { fetchCompanyById } from "@/lib/companies-api";
-import { getMqttErrorMessage, precheckEnajenacionMqtt, getMqttRecentMessages } from "@/lib/mqtt-api";
+import { getMqttErrorMessage, precheckEnajenacionMqtt } from "@/lib/mqtt-api";
 import {
   ENAJENACION_FLOW_STEPS,
   buildEnajenacionCommandContextFromClientData,
@@ -23,7 +23,6 @@ import {
   fiscalMonitorTopic,
   isFiscalCmdServerTopic,
   isPrinterEligibleForEnajenacionTest,
-  mergeMqttMessages,
   parseMessageReceivedAt,
   resolveWfileResponseStep,
   type PrinterSimulationPayload,
@@ -88,15 +87,6 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     Set<string>
   >(() => new Set());
   const [displayStepIndex, setDisplayStepIndex] = useState(0);
-  const [syncedMessages, setSyncedMessages] = useState<MqttInboundMessage[]>(
-    [],
-  );
-  const [stepRefreshLoading, setStepRefreshLoading] = useState(false);
-
-  const ritualLiveMessages = useMemo(
-    () => mergeMqttMessages(liveMessages, syncedMessages),
-    [liveMessages, syncedMessages],
-  );
 
   const eligiblePrinters = useMemo(
     () => printers.filter(isPrinterEligibleForEnajenacionTest),
@@ -131,8 +121,8 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
 
   const autoPtrEnajenarAnchorAt = useMemo(() => {
     if (!topics) return null;
-    return findLatestPtrEnajenarReceivedAt(ritualLiveMessages, topics.mac);
-  }, [ritualLiveMessages, topics]);
+    return findLatestPtrEnajenarReceivedAt(liveMessages, topics.mac);
+  }, [liveMessages, topics]);
 
   const ritualAnchorAt = useMemo(() => {
     if (manualTrackingAnchorAt !== null) {
@@ -149,12 +139,8 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
 
   const ritualMessages = useMemo(() => {
     if (!topics || ritualAnchorAt === null) return [];
-    return filterFiscalMessagesSince(
-      ritualLiveMessages,
-      topics.mac,
-      ritualAnchorAt,
-    );
-  }, [ritualLiveMessages, topics, ritualAnchorAt]);
+    return filterFiscalMessagesSince(liveMessages, topics.mac, ritualAnchorAt);
+  }, [liveMessages, topics, ritualAnchorAt]);
 
   const completedRitualSteps = useMemo(() => {
     if (!topics) return new Set<string>();
@@ -205,6 +191,11 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
   }, [ritualSteps, stepStatuses]);
 
   const ritualComplete = activeStepIndex >= ritualSteps.length;
+
+  useEffect(() => {
+    if (ritualComplete) return;
+    setDisplayStepIndex(activeStepIndex);
+  }, [activeStepIndex, ritualComplete]);
 
   useEffect(() => {
     if (!activePrinter?.fiscalSerial?.trim() || !activePrinter.macAddress?.trim()) {
@@ -431,7 +422,6 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     setCommandContext(null);
     setCommandContextError(null);
     setPanelAcknowledgedSteps(new Set());
-    setSyncedMessages([]);
     setDisplayStepIndex(0);
   }
 
@@ -442,24 +432,10 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     }
   }
 
-  const refreshStepLiveData = useCallback(async () => {
-    setStepRefreshLoading(true);
-    try {
-      const recent = await getMqttRecentMessages(200);
-      setSyncedMessages(recent);
-      toast.success("Comandos del paso actualizados.");
-    } catch (err) {
-      toast.error(getMqttErrorMessage(err));
-    } finally {
-      setStepRefreshLoading(false);
-    }
-  }, [toast]);
-
   function handleResetTracking() {
     setManualTrackingAnchorAt(Date.now());
     setStepStatuses({});
     setPanelAcknowledgedSteps(new Set());
-    setSyncedMessages([]);
     setDisplayStepIndex(0);
     toast.success("Seguimiento reiniciado.");
   }
@@ -479,21 +455,8 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     }
   }
 
-  function handleAdvanceToNextStep() {
-    if (ritualComplete) return;
-    setDisplayStepIndex((prev) => {
-      const target = Math.min(activeStepIndex, ritualSteps.length - 1);
-      return Math.max(prev, target);
-    });
-  }
-
   const displayedStep = ritualSteps[displayStepIndex] ?? null;
   const displayedStepState = getStepActionState(displayStepIndex);
-  const canAdvanceFromDisplayedStep =
-    !ritualComplete &&
-    displayedStep !== null &&
-    (stepStatuses[displayedStep.id] ?? "pending") === "success" &&
-    displayStepIndex < activeStepIndex;
 
   return {
     printersLoading,
@@ -518,10 +481,6 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     handleStepPublished,
     handleResetTracking,
     handleStepperSelect,
-    handleAdvanceToNextStep,
-    canAdvanceFromDisplayedStep,
-    refreshStepLiveData,
-    stepRefreshLoading,
     refreshPrinterStatus,
   };
 }
