@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 type MqttTab = "monitor" | "diagnostics" | "enajenacion";
 
 export function MqttWorkspace() {
-  const [tab, setTab] = useState<MqttTab>("monitor");
+  const [tab, setTab] = useState<MqttTab>("diagnostics");
   const monitor = useMqttMonitor();
 
   return (
@@ -22,8 +22,8 @@ export function MqttWorkspace() {
           onChange={setTab}
           ariaLabel="Sección MQTT"
           options={[
-            { value: "monitor", label: "Monitor" },
             { value: "diagnostics", label: "Diagnóstico" },
+            { value: "monitor", label: "Monitor" },
             { value: "enajenacion", label: "Enajenación" },
           ]}
           className="w-full max-w-md"
