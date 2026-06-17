@@ -1,19 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Radio, Send, Wifi } from "lucide-react";
+import { Loader2, Send, Wifi } from "lucide-react";
 import { useToast } from "@/context/toast-provider";
 import {
   checkMqttConnection,
   getMqttErrorMessage,
   publishMqttMessage,
-  sendMqttTestMessage,
 } from "@/lib/mqtt-api";
 import type {
   MqttConnectionProbeResult,
   MqttPublishPayload,
   MqttPublishResponse,
-  MqttTestMessageResponse,
 } from "@/types/mqtt";
 import { formatJsonText } from "@/lib/format-json-paste";
 import { cn } from "@/lib/utils";
@@ -67,15 +65,11 @@ function JsonBlock({
 export function MqttDiagnosticsPanel() {
   const toast = useToast();
   const [probeLoading, setProbeLoading] = useState(false);
-  const [testLoading, setTestLoading] = useState(false);
   const [publishLoading, setPublishLoading] = useState(false);
   const [probeResult, setProbeResult] = useState<{
     result: MqttConnectionProbeResult;
     httpStatus: number;
   } | null>(null);
-  const [testResult, setTestResult] = useState<MqttTestMessageResponse | null>(
-    null,
-  );
   const [publishResult, setPublishResult] = useState<{
     response: MqttPublishResponse;
     httpStatus: number;
@@ -134,20 +128,6 @@ export function MqttDiagnosticsPanel() {
       toast.error(getMqttErrorMessage(err));
     } finally {
       setProbeLoading(false);
-    }
-  }
-
-  async function handleTestMessage() {
-    setTestLoading(true);
-    setTestResult(null);
-    try {
-      const result = await sendMqttTestMessage();
-      setTestResult(result);
-      toast.success("Mensaje de prueba enviado.");
-    } catch (err) {
-      toast.error(getMqttErrorMessage(err));
-    } finally {
-      setTestLoading(false);
     }
   }
 
@@ -238,19 +218,6 @@ export function MqttDiagnosticsPanel() {
               )}
               Probar conexión
             </button>
-            <button
-              type="button"
-              onClick={handleTestMessage}
-              disabled={testLoading}
-              className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-foreground/5 disabled:opacity-50"
-            >
-              {testLoading ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Radio className="size-4" />
-              )}
-              Mensaje rápido
-            </button>
           </div>
         </div>
 
@@ -265,13 +232,6 @@ export function MqttDiagnosticsPanel() {
           </div>
         )}
 
-        {testResult && (
-          <div className="mt-4">
-            <JsonBlock title="Mensaje de prueba (aeg/test)" status="ok">
-              {JSON.stringify(testResult, null, 2)}
-            </JsonBlock>
-          </div>
-        )}
       </section>
 
       <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
