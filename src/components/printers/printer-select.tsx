@@ -8,6 +8,8 @@ export type PrinterSelectOption = {
   label: string;
   /** Serial fiscal; útil para mostrar en tablas sin el ID. */
   serial?: string;
+  /** Texto extra para filtrar (p. ej. MAC). */
+  searchText?: string;
 };
 
 type PrinterSelectProps = {
@@ -18,6 +20,8 @@ type PrinterSelectProps = {
   loading?: boolean;
   emptyLabel?: string;
   searchPlaceholder?: string;
+  preloadOptions?: boolean;
+  required?: boolean;
 };
 
 export function PrinterSelect({
@@ -28,13 +32,17 @@ export function PrinterSelect({
   loading,
   emptyLabel = "Sin asignar",
   searchPlaceholder = "Buscar por serial o ID…",
+  preloadOptions = false,
+  required,
 }: PrinterSelectProps) {
   const searchableOptions = useMemo(
     () =>
       options.map((opt) => ({
         value: String(opt.id),
         label: opt.label,
-        searchText: String(opt.id),
+        searchText:
+          opt.searchText ??
+          `${opt.id} ${opt.serial ?? ""} ${opt.label}`,
       })),
     [options],
   );
@@ -50,6 +58,8 @@ export function PrinterSelect({
       searchPlaceholder={searchPlaceholder}
       modalTitle="Seleccionar impresora"
       mono
+      preloadOptions={preloadOptions}
+      required={required}
     />
   );
 }

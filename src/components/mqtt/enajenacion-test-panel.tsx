@@ -1,24 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
-import { Loader2, Printer, RotateCcw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Info, Loader2, Printer, RotateCcw } from "lucide-react";
 import {
   EnajenacionActiveStep,
   EnajenacionSuccessCard,
 } from "@/components/mqtt/enajenacion-active-step";
 import { EnajenacionRitualStepper } from "@/components/mqtt/enajenacion-ritual-stepper";
+import { EnajenacionTechnicalDetailsModal } from "@/components/mqtt/enajenacion-technical-details-modal";
+import { PrinterSelect } from "@/components/printers/printer-select";
 import { useEnajenacionRitual } from "@/hooks/use-enajenacion-ritual";
 import type { MqttWsStatus } from "@/hooks/use-mqtt-monitor";
 import { printerStatusLabel } from "@/lib/printer-status";
 import type { MqttInboundMessage } from "@/types/mqtt";
 import { cn } from "@/lib/utils";
-
-const inputClass =
-  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
-
-function formatAnchorTime(anchorAt: number): string {
-  return new Date(anchorAt).toLocaleString();
-}
 
 export function EnajenacionTestPanel({
   liveMessages,
@@ -35,7 +30,19 @@ export function EnajenacionTestPanel({
   connectMonitorWebSocket: () => void;
   monitorSyncEnabled?: boolean;
 }) {
+  const [technicalDetailsOpen, setTechnicalDetailsOpen] = useState(false);
   const ritual = useEnajenacionRitual(liveMessages);
+
+  const printerOptions = useMemo(
+    () =>
+      ritual.eligiblePrinters.map((p) => ({
+        id: p.id,
+        label: `${p.fiscalSerial} · cliente #${p.clientId}`,
+        serial: p.fiscalSerial,
+        searchText: `${p.id} ${p.fiscalSerial} ${p.macAddress} ${p.clientId}`,
+      })),
+    [ritual.eligiblePrinters],
+  );
 
   useEffect(() => {
     if (!monitorSyncEnabled) return;
@@ -79,34 +86,41 @@ export function EnajenacionTestPanel({
             Enajenación MQTT
           </h2>
           {ritual.activePrinter && (
-            <button
-              type="button"
-              onClick={ritual.handleResetTracking}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5"
-            >
-              <RotateCcw className="size-3.5" />
-              Reiniciar
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              {ritual.topics ? (
+                <button
+                  type="button"
+                  onClick={() => setTechnicalDetailsOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5"
+                >
+                  <Info className="size-3.5" />
+                  Detalles técnicos
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={ritual.handleResetTracking}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5"
+              >
+                <RotateCcw className="size-3.5" />
+                Reiniciar
+              </button>
+            </div>
           )}
         </div>
 
         <label className="mt-4 block">
           <span className="mb-1.5 block text-sm font-medium">Impresora</span>
-          <select
-            value={ritual.selectedId}
-            onChange={(e) => ritual.handlePrinterChange(e.target.value)}
-            className={inputClass}
-          >
-            {ritual.eligiblePrinters.length === 0 ? (
-              <option value="">No hay impresoras aptas</option>
-            ) : (
-              ritual.eligiblePrinters.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.fiscalSerial} · cliente #{p.clientId}
-                </option>
-              ))
-            )}
-          </select>
+          <PrinterSelect
+            value={ritual.selectedId === "" ? "" : String(ritual.selectedId)}
+            onChange={ritual.handlePrinterChange}
+            options={printerOptions}
+            loading={ritual.printersLoading}
+            emptyLabel="No hay impresoras aptas"
+            searchPlaceholder="Buscar por serial, MAC o cliente…"
+            preloadOptions
+            required
+          />
         </label>
 
         {ritual.activePrinter && ritual.printerStatus && (
@@ -186,35 +200,13 @@ export function EnajenacionTestPanel({
       ) : null}
 
       {ritual.activePrinter && ritual.topics ? (
-        <details className="rounded-lg border border-border bg-card text-sm shadow-sm">
-          <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-muted">
-            Detalles técnicos
-          </summary>
-          <dl className="grid gap-2 border-t border-border px-3 py-3 text-xs sm:grid-cols-2">
-            <div>
-              <dt className="text-muted">MAC</dt>
-              <dd className="font-mono break-all">{ritual.activePrinter.macAddress}</dd>
-            </div>
-            <div>
-              <dt className="text-muted">CmdServer</dt>
-              <dd className="font-mono break-all">{ritual.topics.cmdServer}</dd>
-            </div>
-            <div>
-              <dt className="text-muted">Comando</dt>
-              <dd className="font-mono break-all">{ritual.topics.comando}</dd>
-            </div>
-            <div>
-              <dt className="text-muted">Monitor</dt>
-              <dd className="font-mono break-all">{ritual.topics.monitor}</dd>
-            </div>
-            {ritual.ritualAnchorAt !== null ? (
-              <div className="sm:col-span-2">
-                <dt className="text-muted">Sesión anclada</dt>
-                <dd>{formatAnchorTime(ritual.ritualAnchorAt)}</dd>
-              </div>
-            ) : null}
-          </dl>
-        </details>
+        <EnajenacionTechnicalDetailsModal
+          open={technicalDetailsOpen}
+          onClose={() => setTechnicalDetailsOpen(false)}
+          printer={ritual.activePrinter}
+          topics={ritual.topics}
+          ritualAnchorAt={ritual.ritualAnchorAt}
+        />
       ) : null}
     </div>
   );
