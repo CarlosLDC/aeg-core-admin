@@ -70,7 +70,3 @@ export function clientModificationReviewPath(requestId: number): string {
 
 export const employeeModificationReviewsListPath = "/reviews?section=employees";
 export const clientModificationReviewsListPath = "/reviews?section=clients";
-
-export function enajenacionTrafficPath(printerId: number): string {
-  return `/mqtt-tests/trafico?printerId=${printerId}`;
-}

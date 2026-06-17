@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/context/toast-provider";
 import { fetchPrinterById, fetchPrinters } from "@/lib/printers-api";
-import { fetchClients } from "@/lib/clients-api";
+import { fetchBranchById } from "@/lib/branches-api";
+import { fetchClientById, fetchClients } from "@/lib/clients-api";
+import { fetchCompanyById } from "@/lib/companies-api";
 import { getMqttErrorMessage, precheckEnajenacionMqtt } from "@/lib/mqtt-api";
-import { loadEnajenacionCommandContext } from "@/lib/load-enajenacion-command-context";
 import { useEnajenacionSse } from "@/hooks/use-enajenacion-sse";
 import {
   ENAJENACION_FLOW_STEPS,
+  buildEnajenacionCommandContextFromClientData,
   buildPrinterSimulationPayload,
   compactMac,
   type EnajenacionCommandContext,
@@ -214,12 +216,21 @@ export function useEnajenacionRitual() {
     setCommandContextError(null);
     void (async () => {
       try {
-        const ctx = await loadEnajenacionCommandContext({
-          clientId,
-          fiscalSerial,
-        });
+        const client = await fetchClientById(clientId);
+        const branch = await fetchBranchById(client.branchId);
+        const company = await fetchCompanyById(branch.companyId);
         if (cancelled) return;
-        setCommandContext(ctx);
+        setCommandContext(
+          buildEnajenacionCommandContextFromClientData({
+            fiscalSerial,
+            rif: company.rif,
+            businessName: company.businessName,
+            contributorType: company.contributorType,
+            address: branch.address,
+            city: branch.city,
+            state: branch.state,
+          }),
+        );
       } catch (err) {
         if (!cancelled) {
           setCommandContext(null);
