@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Info, Loader2, Printer, RotateCcw } from "lucide-react";
+import { Info, Loader2, Printer } from "lucide-react";
 import {
   EnajenacionActiveStep,
   EnajenacionSuccessCard,
@@ -130,14 +130,6 @@ export function EnajenacionTestPanel({
                   Detalles técnicos
                 </button>
               ) : null}
-              <button
-                type="button"
-                onClick={ritual.handleResetTracking}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5"
-              >
-                <RotateCcw className="size-3.5" />
-                Reiniciar
-              </button>
             </div>
           )}
         </div>

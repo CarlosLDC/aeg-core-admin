@@ -30,16 +30,12 @@ export function useEnajenacionSse(mac: string | null, enabled = true) {
   const reconnectAttemptRef = useRef(0);
   const reconnectTimerRef = useRef<number | null>(null);
 
-  const resetProgress = useCallback(() => {
+  const resetState = useCallback(() => {
     setLastEvent(null);
     setAcceptedStepIds(new Set());
     setServerCommandsByStepId({});
     setSessionError(null);
   }, []);
-
-  const resetState = useCallback(() => {
-    resetProgress();
-  }, [resetProgress]);
 
   const applyEvent = useCallback((event: EnajenacionSseEvent) => {
     setLastEvent(event);
@@ -144,6 +140,5 @@ export function useEnajenacionSse(mac: string | null, enabled = true) {
     serverCommandsByStepId,
     sessionError,
     reconnect: connect,
-    resetProgress,
   };
 }

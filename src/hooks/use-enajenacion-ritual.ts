@@ -493,17 +493,6 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     setManualTrackingAnchorAt((prev) => prev ?? Date.now());
   }
 
-  function handleResetTracking() {
-    sse.resetProgress();
-    setManualTrackingAnchorAt(Date.now());
-    setStepStatuses({});
-    setPanelAcknowledgedSteps(new Set());
-    setDisplayStepIndex(0);
-    toast.success(
-      "Seguimiento reiniciado en el panel. Publica ptrEnajenar de nuevo para un ritual nuevo en el servidor.",
-    );
-  }
-
   function handleStepperSelect(index: number) {
     const step = ritualSteps[index];
     if (!step) return;
@@ -544,7 +533,6 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     commandContextError,
     handlePrinterChange,
     handleStepPublished,
-    handleResetTracking,
     handleStepperSelect,
     refreshPrinterStatus,
     sseStatus: sse.status,
