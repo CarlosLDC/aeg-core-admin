@@ -4,6 +4,8 @@ import { redirectToLoginAfterExpired } from "@/lib/session-expired";
 import { ApiError } from "@/types/auth";
 import type {
   EnajenacionMqttPrecheckResponse,
+  EnajenacionActivityListResponse,
+  EnajenacionActiveSession,
   MqttConnectionProbeResult,
   MqttInboundMessage,
   MqttMonitorStatus,
@@ -129,6 +131,35 @@ export async function precheckEnajenacionMqtt(
     throw new ApiError("Respuesta vacía del servidor", 500);
   }
   return data;
+}
+
+export async function getEnajenacionActivity(options?: {
+  limit?: number;
+  mac?: string;
+}): Promise<EnajenacionActivityListResponse> {
+  const params = new URLSearchParams();
+  params.set("limit", String(options?.limit ?? 100));
+  if (options?.mac?.trim()) {
+    params.set("mac", options.mac.trim());
+  }
+  const { data, status } = await mqttFetch<EnajenacionActivityListResponse>(
+    `${BASE}/enajenacion/activity?${params}`,
+  );
+  ensureMqttSuccess(status, data, "No se pudo cargar la actividad de enajenación.");
+  if (data === undefined) {
+    throw new ApiError("Respuesta vacía del servidor", 500);
+  }
+  return data;
+}
+
+export async function getEnajenacionActiveSessions(): Promise<
+  EnajenacionActiveSession[]
+> {
+  const { data, status } = await mqttFetch<EnajenacionActiveSession[]>(
+    `${BASE}/enajenacion/sessions`,
+  );
+  ensureMqttSuccess(status, data, "No se pudieron cargar las sesiones activas.");
+  return data ?? [];
 }
 
 export async function getMqttMonitorStatus(): Promise<MqttMonitorStatus> {

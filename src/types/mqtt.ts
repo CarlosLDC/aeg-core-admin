@@ -72,3 +72,43 @@ export type MqttMonitorWireMessage = {
   receivedAt?: string;
   qos?: number | null;
 };
+
+export type EnajenacionActivityDirection = "INBOUND" | "OUTBOUND";
+
+export type EnajenacionActivityResult =
+  | "RECEIVED"
+  | "PROCESSED"
+  | "PUBLISHED"
+  | "IGNORED"
+  | "REJECTED"
+  | "FAILED"
+  | "COMPLETED";
+
+export type EnajenacionActivityEntry = {
+  id: string;
+  at: string;
+  mac: string;
+  printerId: number | null;
+  ptrReg: string | null;
+  direction: EnajenacionActivityDirection | null;
+  topic: string | null;
+  payload: string | null;
+  result: EnajenacionActivityResult;
+  detail: string | null;
+  sessionState: string | null;
+};
+
+export type EnajenacionActivityListResponse = {
+  entries: EnajenacionActivityEntry[];
+  total: number;
+};
+
+export type EnajenacionActiveSession = {
+  mac: string;
+  printerId: number;
+  ptrReg: string;
+  state: string;
+  startedAt: string;
+  lastError: string | null;
+  awaitingResponse: boolean;
+};
