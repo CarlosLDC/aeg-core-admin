@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatSseEventSummary,
   mergeAcceptedStepsFromSse,
   mergeServerCommandsFromSse,
   parseEnajenacionSseMessage,
@@ -62,5 +63,17 @@ describe("enajenacion-sse", () => {
 
     const commands = mergeServerCommandsFromSse({}, event);
     expect(commands["fiscal-rif"]?.payload).toContain("fiscalAEG");
+  });
+
+  it("formats SSE event summaries", () => {
+    expect(
+      formatSseEventSummary({
+        type: "step_transition",
+        mac: "206EF1884C68",
+        at: "2026-06-17T10:00:01Z",
+        acceptedStepId: "dnf",
+        publishedStepId: "fiscal-rif",
+      }),
+    ).toContain("dnf");
   });
 });

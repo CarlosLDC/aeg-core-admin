@@ -57,14 +57,7 @@ export function MqttWorkspace() {
       </div>
 
       <div className={cn(tab !== "enajenacion" && "hidden")}>
-        <EnajenacionTestPanel
-          liveMessages={monitor.messages}
-          monitorTopic={monitor.monitorTopic}
-          wsStatus={monitor.wsStatus}
-          subscribeToMonitor={monitor.subscribeToTopic}
-          connectMonitorWebSocket={monitor.connectWebSocket}
-          monitorSyncEnabled={tab === "enajenacion"}
-        />
+        <EnajenacionTestPanel />
       </div>
     </div>
   );

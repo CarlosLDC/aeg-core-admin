@@ -3,8 +3,10 @@
 import { useEffect, useId } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { EnajenacionSseEventLog } from "@/components/mqtt/enajenacion-sse-event-log";
 import type { RitualTopics } from "@/hooks/use-enajenacion-ritual";
 import type { PrinterResponse } from "@/types/printer";
+import type { EnajenacionSseEvent } from "@/types/enajenacion-sse";
 
 type EnajenacionTechnicalDetailsModalProps = {
   open: boolean;
@@ -12,11 +14,12 @@ type EnajenacionTechnicalDetailsModalProps = {
   printer: PrinterResponse;
   clientName: string;
   topics: RitualTopics;
-  ritualAnchorAt: number | null;
+  sessionStartedAt: string | null;
+  sseEventLog: EnajenacionSseEvent[];
 };
 
-function formatAnchorTime(anchorAt: number): string {
-  return new Date(anchorAt).toLocaleString();
+function formatSessionTime(iso: string): string {
+  return new Date(iso).toLocaleString();
 }
 
 export function EnajenacionTechnicalDetailsModal({
@@ -25,7 +28,8 @@ export function EnajenacionTechnicalDetailsModal({
   printer,
   clientName,
   topics,
-  ritualAnchorAt,
+  sessionStartedAt,
+  sseEventLog,
 }: EnajenacionTechnicalDetailsModalProps) {
   const titleId = useId();
 
@@ -62,8 +66,8 @@ export function EnajenacionTechnicalDetailsModal({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative w-[min(100%,32rem)] rounded-xl border border-border bg-card shadow-xl">
-        <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+      <div className="relative flex max-h-[min(90vh,40rem)] w-[min(100%,36rem)] flex-col rounded-xl border border-border bg-card shadow-xl">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-3">
           <div className="min-w-0">
             <h3
               id={titleId}
@@ -88,7 +92,7 @@ export function EnajenacionTechnicalDetailsModal({
           </button>
         </div>
 
-        <div className="px-4 py-3">
+        <div className="min-h-0 flex-1 overflow-auto px-4 py-3">
           <dl className="space-y-3 text-sm">
             <div>
               <dt className="text-xs font-medium text-muted">MAC</dt>
@@ -115,20 +119,40 @@ export function EnajenacionTechnicalDetailsModal({
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium text-muted">Monitor</dt>
+              <dt className="text-xs font-medium text-muted">
+                Monitor MQTT (pestaña Monitor)
+              </dt>
               <dd className="mt-0.5 font-mono break-all text-card-foreground">
                 {topics.monitor}
               </dd>
             </div>
-            {ritualAnchorAt !== null ? (
+            <div>
+              <dt className="text-xs font-medium text-muted">Stream SSE</dt>
+              <dd className="mt-0.5 font-mono break-all text-card-foreground">
+                /api/mqtt/enajenacion/stream?mac={topics.mac}
+              </dd>
+            </div>
+            {sessionStartedAt ? (
               <div>
-                <dt className="text-xs font-medium text-muted">Sesión anclada</dt>
+                <dt className="text-xs font-medium text-muted">
+                  Última sesión SSE
+                </dt>
                 <dd className="mt-0.5 text-card-foreground">
-                  {formatAnchorTime(ritualAnchorAt)}
+                  {formatSessionTime(sessionStartedAt)}
                 </dd>
               </div>
             ) : null}
           </dl>
+
+          <div className="mt-5">
+            <h4 className="text-xs font-medium text-muted">Eventos SSE</h4>
+            <div className="mt-2">
+              <EnajenacionSseEventLog
+                events={sseEventLog}
+                emptyMessage="Aún no hay eventos en esta conexión SSE."
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>,

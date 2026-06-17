@@ -1,18 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Info, Loader2, Printer } from "lucide-react";
 import {
   EnajenacionActiveStep,
   EnajenacionSuccessCard,
 } from "@/components/mqtt/enajenacion-active-step";
 import { EnajenacionRitualStepper } from "@/components/mqtt/enajenacion-ritual-stepper";
+import { EnajenacionSseEventLog } from "@/components/mqtt/enajenacion-sse-event-log";
 import { EnajenacionTechnicalDetailsModal } from "@/components/mqtt/enajenacion-technical-details-modal";
 import { PrinterSelect } from "@/components/printers/printer-select";
 import { useEnajenacionRitual } from "@/hooks/use-enajenacion-ritual";
-import type { MqttWsStatus } from "@/hooks/use-mqtt-monitor";
 import { printerStatusLabel } from "@/lib/printer-status";
-import type { MqttInboundMessage } from "@/types/mqtt";
 import { cn } from "@/lib/utils";
 import type { EnajenacionSseStatus } from "@/types/enajenacion-sse";
 
@@ -45,23 +44,9 @@ function sseStatusClass(status: EnajenacionSseStatus): string {
   }
 }
 
-export function EnajenacionTestPanel({
-  liveMessages,
-  monitorTopic,
-  wsStatus,
-  subscribeToMonitor,
-  connectMonitorWebSocket,
-  monitorSyncEnabled = false,
-}: {
-  liveMessages: MqttInboundMessage[];
-  monitorTopic: string;
-  wsStatus: MqttWsStatus;
-  subscribeToMonitor: (topic: string) => Promise<void>;
-  connectMonitorWebSocket: () => void;
-  monitorSyncEnabled?: boolean;
-}) {
+export function EnajenacionTestPanel() {
   const [technicalDetailsOpen, setTechnicalDetailsOpen] = useState(false);
-  const ritual = useEnajenacionRitual(liveMessages);
+  const ritual = useEnajenacionRitual();
 
   const printerOptions = useMemo(
     () =>
@@ -76,30 +61,6 @@ export function EnajenacionTestPanel({
       }),
     [ritual.eligiblePrinters, ritual.getClientName],
   );
-
-  useEffect(() => {
-    if (!monitorSyncEnabled) return;
-
-    const target = ritual.topics?.monitor.trim();
-    if (!target || !ritual.activePrinter) return;
-
-    if (monitorTopic.trim() === target) {
-      if (wsStatus !== "open") {
-        connectMonitorWebSocket();
-      }
-      return;
-    }
-
-    void subscribeToMonitor(target).catch(() => undefined);
-  }, [
-    monitorSyncEnabled,
-    ritual.activePrinter?.id,
-    ritual.topics?.monitor,
-    monitorTopic,
-    wsStatus,
-    subscribeToMonitor,
-    connectMonitorWebSocket,
-  ]);
 
   if (ritual.printersLoading) {
     return (
@@ -200,6 +161,21 @@ export function EnajenacionTestPanel({
         </p>
       )}
 
+      {ritual.activePrinter && ritual.topics ? (
+        <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <h3 className="text-sm font-medium text-card-foreground">
+            Monitor SSE ({ritual.sseEventLog.length})
+          </h3>
+          <p className="mt-1 text-xs text-muted">
+            Progreso del ritual y comandos publicados por AEG Core. Para tráfico
+            MQTT bruto usa la pestaña Monitor.
+          </p>
+          <div className="mt-3">
+            <EnajenacionSseEventLog events={ritual.sseEventLog} />
+          </div>
+        </section>
+      ) : null}
+
       {ritual.ritualComplete && ritual.activePrinter ? (
         <EnajenacionSuccessCard
           printer={ritual.activePrinter}
@@ -240,7 +216,8 @@ export function EnajenacionTestPanel({
           printer={ritual.activePrinter}
           clientName={ritual.getClientName(ritual.activePrinter.clientId)}
           topics={ritual.topics}
-          ritualAnchorAt={ritual.ritualAnchorAt}
+          sessionStartedAt={ritual.sessionStartedAt}
+          sseEventLog={ritual.sseEventLog}
         />
       ) : null}
     </div>

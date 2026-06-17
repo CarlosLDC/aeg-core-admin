@@ -40,6 +40,15 @@ export function MqttMonitorPanel({
 
   return (
     <section className="mx-auto max-w-2xl space-y-4">
+      <p className="rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-xs text-muted">
+        Tráfico MQTT bruto del broker. La pestaña Enajenación usa un stream SSE
+        separado para el progreso del ritual; suscríbete aquí a{" "}
+        <code className="font-mono text-card-foreground">
+          /{"{MAC}"}/AEG_Fiscal/Integracion/#
+        </code>{" "}
+        solo si necesitas depurar frames MQTT.
+      </p>
+
       <form onSubmit={handleSubscribe} className="flex flex-col gap-2 sm:flex-row">
         <input
           type="text"

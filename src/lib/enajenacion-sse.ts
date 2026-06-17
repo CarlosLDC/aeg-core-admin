@@ -67,3 +67,20 @@ export function mergeServerCommandsFromSse(
   }
   return next;
 }
+
+export function formatSseEventSummary(event: EnajenacionSseEvent): string {
+  switch (event.type) {
+    case "connected":
+      return "Stream SSE conectado";
+    case "session_started":
+      return `Sesión iniciada · comando publicado: ${event.publishedStepId ?? "?"}`;
+    case "step_transition":
+      return `${event.acceptedStepId ?? "?"} aceptado · siguiente: ${event.publishedStepId ?? "?"}`;
+    case "session_completed":
+      return "Sesión completada";
+    case "session_failed":
+      return `Sesión fallida: ${event.reason ?? "error desconocido"}`;
+    default:
+      return event.type;
+  }
+}

@@ -14,18 +14,10 @@ import {
   buildPrinterSimulationPayload,
   compactMac,
   type EnajenacionCommandContext,
-  detectPrinterResponseStep,
-  detectServerCommandStep,
-  filterFiscalMessagesSince,
-  findLatestPtrEnajenarReceivedAt,
-  findLatestServerCommand,
   fiscalCmdServerTopic,
   fiscalComandoTopic,
   fiscalMonitorTopic,
-  isFiscalCmdServerTopic,
   isPrinterEligibleForEnajenacionTest,
-  parseMessageReceivedAt,
-  resolveWfileResponseStep,
   type PrinterSimulationPayload,
 } from "@/lib/enajenacion-mqtt-protocol";
 import type { PrinterResponse } from "@/types/printer";
@@ -72,7 +64,7 @@ export type RitualStepActionState = {
   contextLine: string;
 };
 
-export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
+export function useEnajenacionRitual() {
   const toast = useToast();
   const [printers, setPrinters] = useState<PrinterResponse[]>([]);
   const [clients, setClients] = useState<ClientResponse[]>([]);
@@ -89,9 +81,6 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     message: string | null;
   } | null>(null);
   const [precheckLoading, setPrecheckLoading] = useState(false);
-  const [manualTrackingAnchorAt, setManualTrackingAnchorAt] = useState<
-    number | null
-  >(null);
   const [commandContext, setCommandContext] =
     useState<EnajenacionCommandContext | null>(null);
   const [commandContextLoading, setCommandContextLoading] = useState(false);
@@ -153,92 +142,27 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     }));
   }, [topics]);
 
-  const autoPtrEnajenarAnchorAt = useMemo(() => {
-    if (!topics) return null;
-    return findLatestPtrEnajenarReceivedAt(liveMessages, topics.mac);
-  }, [liveMessages, topics]);
-
-  const ritualAnchorAt = useMemo(() => {
-    if (manualTrackingAnchorAt !== null) {
-      if (
-        autoPtrEnajenarAnchorAt !== null &&
-        autoPtrEnajenarAnchorAt > manualTrackingAnchorAt
-      ) {
-        return autoPtrEnajenarAnchorAt;
-      }
-      return manualTrackingAnchorAt;
-    }
-    return autoPtrEnajenarAnchorAt;
-  }, [autoPtrEnajenarAnchorAt, manualTrackingAnchorAt]);
-
-  const ritualMessages = useMemo(() => {
-    if (!topics || ritualAnchorAt === null) return [];
-    return filterFiscalMessagesSince(liveMessages, topics.mac, ritualAnchorAt);
-  }, [liveMessages, topics, ritualAnchorAt]);
-
-  const sseDrivesProgress =
-    sse.status === "open" ||
-    sse.status === "connecting" ||
-    sse.status === "reconnecting";
-
   const completedRitualSteps = useMemo(() => {
     if (!topics) return new Set<string>();
     const done = new Set<string>();
-
-    if (sseDrivesProgress) {
-      for (const stepId of sse.acceptedStepIds) {
-        done.add(stepId);
-      }
-      if (panelAcknowledgedSteps.has("request")) {
-        done.add("request");
-      }
-      return done;
-    }
-
-    if (ritualAnchorAt !== null) {
-      let wfileResponseIndex = 0;
-      const chronological = [...ritualMessages].sort(
-        (a, b) =>
-          (parseMessageReceivedAt(a.receivedAt) ?? 0) -
-          (parseMessageReceivedAt(b.receivedAt) ?? 0),
-      );
-      for (const message of chronological) {
-        const serverStep = detectServerCommandStep(
-          message.topic,
-          message.payload,
-        );
-        if (serverStep === "dnf") {
-          done.add("request");
-        }
-
-        if (!isFiscalCmdServerTopic(message.topic)) continue;
-        const step = detectPrinterResponseStep(message.payload);
-        if (!step) continue;
-        if (step === "request") {
-          done.add("request");
-          continue;
-        }
-        if (step === "wfile_spiff") {
-          const resolved = resolveWfileResponseStep(wfileResponseIndex);
-          if (resolved) done.add(resolved);
-          wfileResponseIndex++;
-          continue;
-        }
-        done.add(step);
-      }
-    }
-    for (const stepId of panelAcknowledgedSteps) {
+    for (const stepId of sse.acceptedStepIds) {
       done.add(stepId);
     }
+    if (panelAcknowledgedSteps.has("request")) {
+      done.add("request");
+    }
     return done;
-  }, [
-    panelAcknowledgedSteps,
-    ritualAnchorAt,
-    ritualMessages,
-    sse.acceptedStepIds,
-    sseDrivesProgress,
-    topics,
-  ]);
+  }, [panelAcknowledgedSteps, sse.acceptedStepIds, topics]);
+
+  const sessionStartedAt = useMemo(() => {
+    for (let index = sse.eventLog.length - 1; index >= 0; index -= 1) {
+      const event = sse.eventLog[index];
+      if (event.type === "session_started") {
+        return event.at;
+      }
+    }
+    return null;
+  }, [sse.eventLog]);
 
   const activeStepIndex = useMemo(() => {
     const index = ritualSteps.findIndex(
@@ -322,7 +246,7 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
   }, [activePrinter?.clientId, activePrinter?.fiscalSerial]);
 
   useEffect(() => {
-    if (ritualAnchorAt === null && completedRitualSteps.size === 0) {
+    if (completedRitualSteps.size === 0) {
       setStepStatuses({});
       return;
     }
@@ -331,7 +255,7 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
       next[step.id] = completedRitualSteps.has(step.id) ? "success" : "pending";
     }
     setStepStatuses(next);
-  }, [completedRitualSteps, ritualAnchorAt, ritualSteps]);
+  }, [completedRitualSteps, ritualSteps]);
 
   const refreshPrinterStatus = useCallback(async (printerId: number) => {
     const updated = await fetchPrinterById(printerId);
@@ -406,11 +330,10 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
       const isActive = index === activeStepIndex;
       const isReview = status === "success" && index < activeStepIndex;
       const sseCommand = sse.serverCommandsByStepId[step.id];
-      const serverCommand = step.isRequest
-        ? null
-        : sseCommand
-          ? sseCommandToInbound(sseCommand)
-          : findLatestServerCommand(ritualMessages, topics.mac, step.id);
+      const serverCommand =
+        step.isRequest || !sseCommand
+          ? null
+          : sseCommandToInbound(sseCommand);
       const simulation =
         commandContext && activePrinter?.macAddress
           ? buildPrinterSimulationPayload(
@@ -439,7 +362,7 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
               : status === "pending" && !canSimulatePrinterResponse
                 ? sse.status === "open" || sse.status === "connecting"
                   ? "Esperando confirmación del servidor (SSE)…"
-                  : "Espera el comando real de AEG Core en Comando."
+                  : "Espera la conexión SSE o el comando del servidor."
                 : undefined;
 
       const contextLine = step.isRequest
@@ -465,7 +388,6 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
       commandContextError,
       commandContextLoading,
       precheck,
-      ritualMessages,
       ritualSteps,
       stepStatuses,
       topics,
@@ -478,7 +400,6 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     setSelectedId(value ? Number(value) : "");
     setStepStatuses({});
     setPrinterStatus(null);
-    setManualTrackingAnchorAt(null);
     setCommandContext(null);
     setCommandContextError(null);
     setPanelAcknowledgedSteps(new Set());
@@ -490,7 +411,6 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
       return;
     }
     setPanelAcknowledgedSteps((prev) => new Set([...prev, stepId]));
-    setManualTrackingAnchorAt((prev) => prev ?? Date.now());
   }
 
   function handleStepperSelect(index: number) {
@@ -520,7 +440,8 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     selectedId,
     topics,
     ritualSteps,
-    ritualAnchorAt,
+    sessionStartedAt,
+    sseEventLog: sse.eventLog,
     stepStatuses,
     activeStepIndex,
     displayStepIndex,

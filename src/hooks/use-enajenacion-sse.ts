@@ -14,10 +14,12 @@ import type {
 } from "@/types/enajenacion-sse";
 
 const MAX_RECONNECT_DELAY_MS = 15_000;
+const MAX_EVENT_LOG = 50;
 
 export function useEnajenacionSse(mac: string | null, enabled = true) {
   const [status, setStatus] = useState<EnajenacionSseStatus>("idle");
   const [lastEvent, setLastEvent] = useState<EnajenacionSseEvent | null>(null);
+  const [eventLog, setEventLog] = useState<EnajenacionSseEvent[]>([]);
   const [acceptedStepIds, setAcceptedStepIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -32,6 +34,7 @@ export function useEnajenacionSse(mac: string | null, enabled = true) {
 
   const resetState = useCallback(() => {
     setLastEvent(null);
+    setEventLog([]);
     setAcceptedStepIds(new Set());
     setServerCommandsByStepId({});
     setSessionError(null);
@@ -39,6 +42,7 @@ export function useEnajenacionSse(mac: string | null, enabled = true) {
 
   const applyEvent = useCallback((event: EnajenacionSseEvent) => {
     setLastEvent(event);
+    setEventLog((prev) => [...prev, event].slice(-MAX_EVENT_LOG));
     if (event.type === "session_failed" && event.reason) {
       setSessionError(event.reason);
     }
@@ -136,6 +140,7 @@ export function useEnajenacionSse(mac: string | null, enabled = true) {
   return {
     status,
     lastEvent,
+    eventLog,
     acceptedStepIds,
     serverCommandsByStepId,
     sessionError,
