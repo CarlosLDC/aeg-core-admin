@@ -16,7 +16,7 @@ function formatPayload(payload: unknown): string {
   return formatMqttPayloadForDisplay(JSON.stringify(payload));
 }
 
-function CopyTextButton({
+export function CopyTextButton({
   text,
   label,
 }: {

@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Info, Loader2, Printer } from "lucide-react";
+import { Info, Loader2, MessagesSquare, Printer } from "lucide-react";
 import {
   EnajenacionActiveStep,
   EnajenacionSuccessCard,
@@ -11,6 +12,7 @@ import { EnajenacionTechnicalDetailsModal } from "@/components/mqtt/enajenacion-
 import { PrinterSelect } from "@/components/printers/printer-select";
 import { useEnajenacionRitual } from "@/hooks/use-enajenacion-ritual";
 import { printerStatusLabel } from "@/lib/printer-status";
+import { enajenacionTrafficPath } from "@/lib/resource-routes";
 import { cn } from "@/lib/utils";
 import type { EnajenacionSseStatus } from "@/types/enajenacion-sse";
 
@@ -81,14 +83,23 @@ export function EnajenacionTestPanel() {
           {ritual.activePrinter && (
             <div className="flex shrink-0 items-center gap-2">
               {ritual.topics ? (
-                <button
-                  type="button"
-                  onClick={() => setTechnicalDetailsOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5"
-                >
-                  <Info className="size-3.5" />
-                  Detalles técnicos
-                </button>
+                <>
+                  <Link
+                    href={enajenacionTrafficPath(ritual.activePrinter.id)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5"
+                  >
+                    <MessagesSquare className="size-3.5" />
+                    Tópicos y payloads
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setTechnicalDetailsOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5"
+                  >
+                    <Info className="size-3.5" />
+                    Detalles técnicos
+                  </button>
+                </>
               ) : null}
             </div>
           )}
