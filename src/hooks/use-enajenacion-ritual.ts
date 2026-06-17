@@ -377,13 +377,8 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
               topics.cmdServer,
             )
           : null;
-      const priorStepsComplete = ritualSteps
-        .slice(0, index)
-        .every((s) => (stepStatuses[s.id] ?? "pending") === "success");
       const canSimulatePrinterResponse =
-        step.isRequest ||
-        Boolean(serverCommand) ||
-        (isActive && priorStepsComplete);
+        step.isRequest || Boolean(serverCommand);
       const simulateDisabled =
         locked ||
         !simulation ||
