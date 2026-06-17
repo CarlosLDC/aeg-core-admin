@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/context/toast-provider";
 import { fetchPrinterById, fetchPrinters } from "@/lib/printers-api";
 import { fetchBranchById } from "@/lib/branches-api";
-import { fetchClientById } from "@/lib/clients-api";
+import { fetchClientById, fetchClients } from "@/lib/clients-api";
 import { fetchCompanyById } from "@/lib/companies-api";
 import { getMqttErrorMessage, precheckEnajenacionMqtt } from "@/lib/mqtt-api";
 import { useEnajenacionSse } from "@/hooks/use-enajenacion-sse";
@@ -29,6 +29,7 @@ import {
   type PrinterSimulationPayload,
 } from "@/lib/enajenacion-mqtt-protocol";
 import type { PrinterResponse } from "@/types/printer";
+import type { ClientResponse } from "@/types/branch-role";
 import type { MqttInboundMessage } from "@/types/mqtt";
 import type { EnajenacionSseServerCommand } from "@/types/enajenacion-sse";
 
@@ -74,6 +75,7 @@ export type RitualStepActionState = {
 export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
   const toast = useToast();
   const [printers, setPrinters] = useState<PrinterResponse[]>([]);
+  const [clients, setClients] = useState<ClientResponse[]>([]);
   const [printersLoading, setPrintersLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<number | "">("");
   const [printerStatus, setPrinterStatus] = useState<PrinterResponse | null>(
@@ -104,6 +106,23 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
   const eligiblePrinters = useMemo(
     () => printers.filter(isPrinterEligibleForEnajenacionTest),
     [printers],
+  );
+
+  const clientNameById = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const client of clients) {
+      const name = client.companyBusinessName?.trim();
+      if (name) map.set(client.id, name);
+    }
+    return map;
+  }, [clients]);
+
+  const getClientName = useCallback(
+    (clientId: number | null | undefined): string => {
+      if (clientId == null) return "—";
+      return clientNameById.get(clientId) ?? "Cliente desconocido";
+    },
+    [clientNameById],
   );
 
   const activePrinter = useMemo(
@@ -336,9 +355,13 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     let cancelled = false;
     (async () => {
       try {
-        const list = await fetchPrinters();
+        const [list, clientList] = await Promise.all([
+          fetchPrinters(),
+          fetchClients(),
+        ]);
         if (!cancelled) {
           setPrinters(list);
+          setClients(clientList);
           const first = list.find(isPrinterEligibleForEnajenacionTest);
           if (first) setSelectedId(first.id);
         }
@@ -500,6 +523,7 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     printersLoading,
     eligiblePrinters,
     activePrinter,
+    getClientName,
     printerStatus,
     selectedId,
     topics,

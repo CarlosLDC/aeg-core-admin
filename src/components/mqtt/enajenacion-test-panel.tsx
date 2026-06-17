@@ -65,13 +65,16 @@ export function EnajenacionTestPanel({
 
   const printerOptions = useMemo(
     () =>
-      ritual.eligiblePrinters.map((p) => ({
-        id: p.id,
-        label: `${p.fiscalSerial} · cliente #${p.clientId}`,
-        serial: p.fiscalSerial,
-        searchText: `${p.id} ${p.fiscalSerial} ${p.macAddress} ${p.clientId}`,
-      })),
-    [ritual.eligiblePrinters],
+      ritual.eligiblePrinters.map((p) => {
+        const clientName = ritual.getClientName(p.clientId);
+        return {
+          id: p.id,
+          label: `${p.fiscalSerial} · ${clientName}`,
+          serial: p.fiscalSerial,
+          searchText: `${p.id} ${p.fiscalSerial} ${p.macAddress} ${clientName} ${p.clientId ?? ""}`,
+        };
+      }),
+    [ritual.eligiblePrinters, ritual.getClientName],
   );
 
   useEffect(() => {
@@ -243,6 +246,7 @@ export function EnajenacionTestPanel({
           open={technicalDetailsOpen}
           onClose={() => setTechnicalDetailsOpen(false)}
           printer={ritual.activePrinter}
+          clientName={ritual.getClientName(ritual.activePrinter.clientId)}
           topics={ritual.topics}
           ritualAnchorAt={ritual.ritualAnchorAt}
         />

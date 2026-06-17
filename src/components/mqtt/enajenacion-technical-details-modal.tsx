@@ -10,6 +10,7 @@ type EnajenacionTechnicalDetailsModalProps = {
   open: boolean;
   onClose: () => void;
   printer: PrinterResponse;
+  clientName: string;
   topics: RitualTopics;
   ritualAnchorAt: number | null;
 };
@@ -22,6 +23,7 @@ export function EnajenacionTechnicalDetailsModal({
   open,
   onClose,
   printer,
+  clientName,
   topics,
   ritualAnchorAt,
 }: EnajenacionTechnicalDetailsModalProps) {
@@ -97,9 +99,7 @@ export function EnajenacionTechnicalDetailsModal({
               </div>
               <div>
                 <dt className="text-xs font-medium text-muted">Cliente</dt>
-                <dd className="mt-0.5 text-card-foreground">
-                  #{printer.clientId}
-                </dd>
+                <dd className="mt-0.5 text-card-foreground">{clientName}</dd>
               </div>
             </div>
             <div>
