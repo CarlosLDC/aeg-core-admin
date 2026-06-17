@@ -73,7 +73,15 @@ export function EnajenacionActiveStep({
       )}
 
       {showAction && (
-        <div className="mt-5">
+        <div className="mt-5 space-y-3">
+          <details className="rounded-lg border border-border bg-foreground/[0.02] text-sm">
+            <summary className="cursor-pointer px-3 py-2 text-xs text-muted">
+              Ver payload CmdServer
+            </summary>
+            <pre className="max-h-48 overflow-auto border-t border-border px-3 py-2 font-mono text-xs text-card-foreground">
+              {formatPayload(stepState.simulation!.payload)}
+            </pre>
+          </details>
           <SimulatePrinterButton
             stepId={step.id}
             simulation={stepState.simulation!}
@@ -82,14 +90,6 @@ export function EnajenacionActiveStep({
             onPublished={onPublished}
             fullWidth
           />
-          <details className="mt-3 rounded-lg border border-border bg-foreground/[0.02] text-sm">
-            <summary className="cursor-pointer px-3 py-2 text-xs text-muted">
-              Ver payload CmdServer
-            </summary>
-            <pre className="max-h-48 overflow-auto border-t border-border px-3 py-2 font-mono text-xs text-card-foreground">
-              {formatPayload(stepState.simulation!.payload)}
-            </pre>
-          </details>
         </div>
       )}
 
