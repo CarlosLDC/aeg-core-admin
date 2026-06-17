@@ -11,10 +11,6 @@ import {
 import type { MqttInboundMessage, MqttPublishPayload } from "@/types/mqtt";
 import { cn } from "@/lib/utils";
 
-function formatPayload(payload: unknown): string {
-  return JSON.stringify(payload, null, 2);
-}
-
 export function ServerCommandBlock({
   serverCommand,
 }: {
@@ -22,22 +18,16 @@ export function ServerCommandBlock({
 }) {
   if (!serverCommand) {
     return (
-      <div className="mt-4 rounded-lg border border-dashed border-border bg-foreground/[0.02] px-3 py-3 text-sm text-muted">
-        Esperando comando real de AEG Core en Comando…
-      </div>
+      <p className="text-sm text-muted">
+        Aún no hay comando en Comando para este paso.
+      </p>
     );
   }
 
   return (
-    <div className="mt-4 space-y-2">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted">
-        Comando real del servidor (Comando)
-      </p>
-      <p className="font-mono text-xs break-all text-muted">{serverCommand.topic}</p>
-      <pre className="max-h-64 overflow-auto rounded-lg border border-border bg-foreground/[0.03] p-4 font-mono text-xs text-card-foreground">
-        {serverCommand.payload}
-      </pre>
-    </div>
+    <pre className="max-h-48 overflow-auto rounded-lg border border-border bg-foreground/[0.03] p-3 font-mono text-xs text-card-foreground">
+      {serverCommand.payload}
+    </pre>
   );
 }
 
@@ -47,12 +37,14 @@ export function SimulatePrinterButton({
   disabled,
   disabledReason,
   onPublished,
+  fullWidth,
 }: {
   stepId: string;
   simulation: PrinterSimulationPayload;
   disabled?: boolean;
   disabledReason?: string;
   onPublished?: (stepId: string) => void;
+  fullWidth?: boolean;
 }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
@@ -78,14 +70,15 @@ export function SimulatePrinterButton({
   }
 
   return (
-    <div className="mt-4 space-y-2">
+    <div className="space-y-2">
       <button
         type="button"
         onClick={() => void handlePublish()}
         disabled={disabled || loading}
         className={cn(
-          "inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
+          "inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground",
           "hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50",
+          fullWidth && "w-full",
         )}
       >
         {loading ? (
@@ -97,16 +90,7 @@ export function SimulatePrinterButton({
       </button>
       {disabled && disabledReason ? (
         <p className="text-xs text-muted">{disabledReason}</p>
-      ) : (
-        <details className="rounded-lg border border-border bg-foreground/[0.02] text-sm">
-          <summary className="cursor-pointer px-3 py-2 text-xs text-muted">
-            Ver payload que se publicará en CmdServer
-          </summary>
-          <pre className="max-h-48 overflow-auto border-t border-border px-3 py-2 font-mono text-xs text-card-foreground">
-            {formatPayload(simulation.payload)}
-          </pre>
-        </details>
-      )}
+      ) : null}
     </div>
   );
 }

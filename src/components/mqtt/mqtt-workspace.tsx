@@ -17,7 +17,7 @@ const TAB_HELP: Record<MqttTab, string> = {
   diagnostics:
     "Comprueba la conectividad con el broker y publica mensajes de prueba sin depender del flujo fiscal.",
   enajenacion:
-    "Prueba el ritual MQTT con una impresora registrada: Comando es tráfico real de AEG Core; CmdServer se simula con un clic desde el panel.",
+    "Simula el ritual paso a paso: un clic por respuesta de impresora; Comando es tráfico real de AEG Core.",
 };
 
 function MqttStatusStrip({
@@ -91,7 +91,7 @@ export function MqttWorkspace() {
 
       <p className="text-sm text-muted">{TAB_HELP[tab]}</p>
 
-      {tab !== "monitor" && (
+      {tab === "diagnostics" && (
         <MqttStatusStrip
           monitorTopic={monitor.monitorTopic}
           wsStatus={monitor.wsStatus}
