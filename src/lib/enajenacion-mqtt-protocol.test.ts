@@ -23,8 +23,11 @@ import {
   ENAJENACION_FLOW_STEPS,
   EnajenacionResponseSteps,
   fiscalCmdServerTopic,
+  fiscalTopicMatchesMac,
   flowStepById,
   generateTestFiscalSerial,
+  isFiscalCmdServerTopic,
+  isFiscalComandoTopic,
   isPrinterEligibleForEnajenacionTest,
   isTestFiscalSerial,
   parseManualMacAddress,
@@ -275,6 +278,21 @@ describe("enajenacion-mqtt-protocol", () => {
       status: "laboratorio",
       deviceType: "interno",
     });
+  });
+
+  it("matches fiscal topics with or without leading slash", () => {
+    expect(fiscalTopicMatchesMac("/206EF1884C68/AEG_Fiscal/Integracion/CmdServer", "206EF1884C68")).toBe(
+      true,
+    );
+    expect(fiscalTopicMatchesMac("206EF1884C68/AEG_Fiscal/Integracion/Comando", "206ef1884c68")).toBe(
+      true,
+    );
+    expect(fiscalTopicMatchesMac("/206EF1884C68/AEG_Fiscal/Integracion/Comando", "AA:BB:CC:DD:EE:FF")).toBe(
+      false,
+    );
+    expect(fiscalTopicMatchesMac("aeg/telemetry/device-1", "206EF1884C68")).toBe(false);
+    expect(isFiscalCmdServerTopic("/206EF1884C68/AEG_Fiscal/Integracion/CmdServer")).toBe(true);
+    expect(isFiscalComandoTopic("/206EF1884C68/AEG_Fiscal/Integracion/Comando")).toBe(true);
   });
 
   it("detects server comando and printer cmdserver steps", () => {

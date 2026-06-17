@@ -285,6 +285,23 @@ export function fiscalMonitorTopic(compactMac: string): string {
   return `/${compactMac}/AEG_Fiscal/Integracion/#`;
 }
 
+/** Tópicos fiscales pueden llegar con o sin `/` inicial (firmware vs broker). */
+export function fiscalTopicMatchesMac(topic: string, mac: string): boolean {
+  const match = topic.trim().match(/^\/?([0-9A-Fa-f]{12})\//);
+  if (!match) {
+    return false;
+  }
+  return match[1]!.toUpperCase() === compactMac(mac);
+}
+
+export function isFiscalCmdServerTopic(topic: string): boolean {
+  return topic.trim().endsWith("/AEG_Fiscal/Integracion/CmdServer");
+}
+
+export function isFiscalComandoTopic(topic: string): boolean {
+  return topic.trim().endsWith("/AEG_Fiscal/Integracion/Comando");
+}
+
 export function buildPtrEnajenarPayload(
   fiscalSerial: string,
   macWithColons: string,

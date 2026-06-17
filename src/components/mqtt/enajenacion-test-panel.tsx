@@ -17,6 +17,8 @@ import {
   fiscalCmdServerTopic,
   fiscalComandoTopic,
   fiscalMonitorTopic,
+  fiscalTopicMatchesMac,
+  isFiscalCmdServerTopic,
   isPrinterEligibleForEnajenacionTest,
   resolveWfileResponseStep,
 } from "@/lib/enajenacion-mqtt-protocol";
@@ -76,7 +78,7 @@ function findLatestServerCommand(
   stepId: string,
 ): MqttInboundMessage | null {
   for (const message of messages) {
-    if (!message.topic.startsWith(mac)) continue;
+    if (!fiscalTopicMatchesMac(message.topic, mac)) continue;
     if (detectServerCommandStep(message.topic, message.payload) === stepId) {
       return message;
     }
@@ -143,13 +145,19 @@ export function EnajenacionTestPanel({
     }));
   }, [topics]);
 
-  const printerResponsesDone = useMemo(() => {
+  const completedRitualSteps = useMemo(() => {
     if (!topics) return new Set<string>();
     const done = new Set<string>();
     let wfileResponseIndex = 0;
     for (const message of [...liveMessages].reverse()) {
-      if (!message.topic.startsWith(topics.mac)) continue;
-      if (!message.topic.endsWith("/AEG_Fiscal/Integracion/CmdServer")) continue;
+      if (!fiscalTopicMatchesMac(message.topic, topics.mac)) continue;
+
+      const serverStep = detectServerCommandStep(message.topic, message.payload);
+      if (serverStep === "dnf") {
+        done.add("request");
+      }
+
+      if (!isFiscalCmdServerTopic(message.topic)) continue;
       const dedupeKey = `${message.topic}:${message.payload}`;
       if (panelPublishedKeysRef.current.has(dedupeKey)) continue;
       const step = detectPrinterResponseStep(message.payload);
@@ -175,7 +183,7 @@ export function EnajenacionTestPanel({
   const latestFiscalMessages = useMemo(() => {
     if (!topics) return [];
     return liveMessages
-      .filter((message) => message.topic.startsWith(topics.mac))
+      .filter((message) => fiscalTopicMatchesMac(message.topic, topics.mac))
       .slice(0, 3);
   }, [liveMessages, topics]);
 
@@ -205,18 +213,18 @@ export function EnajenacionTestPanel({
   }, [activePrinter?.fiscalSerial, activePrinter?.macAddress]);
 
   useEffect(() => {
-    if (printerResponsesDone.size === 0) return;
+    if (completedRitualSteps.size === 0) return;
     setStepStatuses((prev) => {
       let changed = false;
       const next = { ...prev };
-      for (const stepId of printerResponsesDone) {
+      for (const stepId of completedRitualSteps) {
         if (next[stepId] === "success") continue;
         next[stepId] = "success";
         changed = true;
       }
       return changed ? next : prev;
     });
-  }, [printerResponsesDone]);
+  }, [completedRitualSteps]);
 
   const refreshPrinterStatus = useCallback(async (printerId: number) => {
     const updated = await fetchPrinterById(printerId);
@@ -317,8 +325,10 @@ export function EnajenacionTestPanel({
         <div className="mt-4 rounded-lg border border-accent/25 bg-accent/5 px-4 py-3 text-sm text-card-foreground">
           <p>
             El panel <strong className="font-medium">no publica</strong> en el
-            broker. Solo valida la impresora en BD y marca cada paso cuando
-            detecta mensajes reales de la impresora en el monitor.
+            broker. Marca cada paso según el tráfico que AEG Core recibe en el
+            monitor. Usa <strong className="font-medium">Usar monitor fiscal</strong>{" "}
+            y conecta el WebSocket en la pestaña Monitor para ver Comando y
+            CmdServer en tiempo real.
           </p>
         </div>
 
