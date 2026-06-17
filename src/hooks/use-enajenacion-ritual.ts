@@ -157,9 +157,25 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     return filterFiscalMessagesSince(liveMessages, topics.mac, ritualAnchorAt);
   }, [liveMessages, topics, ritualAnchorAt]);
 
+  const sseDrivesProgress =
+    sse.status === "open" ||
+    sse.status === "connecting" ||
+    sse.status === "reconnecting";
+
   const completedRitualSteps = useMemo(() => {
     if (!topics) return new Set<string>();
     const done = new Set<string>();
+
+    if (sseDrivesProgress) {
+      for (const stepId of sse.acceptedStepIds) {
+        done.add(stepId);
+      }
+      if (panelAcknowledgedSteps.has("request")) {
+        done.add("request");
+      }
+      return done;
+    }
+
     if (ritualAnchorAt !== null) {
       let wfileResponseIndex = 0;
       const chronological = [...ritualMessages].sort(
@@ -195,11 +211,15 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
     for (const stepId of panelAcknowledgedSteps) {
       done.add(stepId);
     }
-    for (const stepId of sse.acceptedStepIds) {
-      done.add(stepId);
-    }
     return done;
-  }, [panelAcknowledgedSteps, ritualAnchorAt, ritualMessages, sse.acceptedStepIds, topics]);
+  }, [
+    panelAcknowledgedSteps,
+    ritualAnchorAt,
+    ritualMessages,
+    sse.acceptedStepIds,
+    sseDrivesProgress,
+    topics,
+  ]);
 
   const activeStepIndex = useMemo(() => {
     const index = ritualSteps.findIndex(
@@ -443,10 +463,11 @@ export function useEnajenacionRitual(liveMessages: MqttInboundMessage[]) {
   }
 
   function handleStepPublished(stepId: string) {
-    setPanelAcknowledgedSteps((prev) => new Set([...prev, stepId]));
-    if (stepId === "request") {
-      setManualTrackingAnchorAt((prev) => prev ?? Date.now());
+    if (stepId !== "request") {
+      return;
     }
+    setPanelAcknowledgedSteps((prev) => new Set([...prev, stepId]));
+    setManualTrackingAnchorAt((prev) => prev ?? Date.now());
   }
 
   function handleResetTracking() {
