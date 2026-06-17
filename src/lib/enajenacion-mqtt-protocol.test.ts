@@ -10,6 +10,8 @@ import {
   buildHeaderCommandPayload,
   buildInvoiceCommandPayload,
   buildInvoiceSuccessResponse,
+  buildEnajenacionCommandContextFromClientData,
+  buildEnajenacionStepCopyContents,
   buildPtrEnajenarPayload,
   buildRegistrationStatusCommandPayload,
   buildReportZCommandPayload,
@@ -25,6 +27,7 @@ import {
   filterFiscalMessagesSince,
   findLatestPtrEnajenarReceivedAt,
   fiscalCmdServerTopic,
+  fiscalComandoTopic,
   fiscalTopicMatchesMac,
   flowStepById,
   generateTestFiscalSerial,
@@ -281,6 +284,46 @@ describe("enajenacion-mqtt-protocol", () => {
       status: "laboratorio",
       deviceType: "interno",
     });
+  });
+
+  it("builds per-step MQTT copy content with separate publish and response", () => {
+    const mac = "206EF1884C68";
+    const ctx = buildEnajenacionCommandContextFromClientData({
+      fiscalSerial: "GRA0000017",
+      rif: "J500662998",
+      businessName: "INVERSIONES SHOP COMPUTER 2020, C.A.",
+      contributorType: "ordinario",
+      address: "Av. Principal 123",
+      city: "Caracas",
+      state: "Distrito Capital",
+    });
+    const topics = {
+      cmdServer: fiscalCmdServerTopic(mac),
+      comando: fiscalComandoTopic(mac),
+    };
+    const copies = buildEnajenacionStepCopyContents(ctx, "20:6E:F1:88:4C:68", topics);
+
+    expect(copies.request?.publish.topic).toBe(topics.cmdServer);
+    expect(copies.request?.publish.payload).toEqual(
+      buildPtrEnajenarPayload("GRA0000017", "20:6E:F1:88:4C:68"),
+    );
+    expect(copies.request?.expectedResponse.topic).toBe(topics.comando);
+
+    expect(copies["fiscal-rif"]?.publish.payload).toMatchObject({
+      cmd: "fiscalAEG",
+      data: {
+        contenido: {
+          rifEmp: "J-500662998",
+          nomEmp: "INVERSIONES SHOP COMPUTER 2020, C.A.",
+        },
+      },
+    });
+    expect(copies["fiscal-rif"]?.expectedResponse.payload).toEqual({
+      cmd: "fiscalAEG",
+      code: 0,
+      dataD: 0,
+    });
+    expect(copies.dnf?.expectedResponse.topic).toBe(topics.cmdServer);
   });
 
   it("anchors ritual progress to the latest ptrEnajenar", () => {

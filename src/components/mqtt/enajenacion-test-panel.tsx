@@ -4,14 +4,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Printer, RefreshCw, RotateCcw, Zap } from "lucide-react";
 import { useToast } from "@/context/toast-provider";
 import { fetchPrinterById, fetchPrinters } from "@/lib/printers-api";
+import { fetchBranchById } from "@/lib/branches-api";
+import { fetchClientById } from "@/lib/clients-api";
+import { fetchCompanyById } from "@/lib/companies-api";
 import {
   getMqttErrorMessage,
   precheckEnajenacionMqtt,
   updateMqttSubscription,
 } from "@/lib/mqtt-api";
+import { EnajenacionStepCopyBlocks } from "@/components/mqtt/enajenacion-step-copy-blocks";
 import {
   ENAJENACION_FLOW_STEPS,
+  buildEnajenacionCommandContextFromClientData,
+  buildEnajenacionStepCopyContents,
   compactMac,
+  type EnajenacionCommandContext,
   detectPrinterResponseStep,
   detectServerCommandStep,
   filterFiscalMessagesSince,
@@ -123,6 +130,12 @@ export function EnajenacionTestPanel({
   const [manualTrackingAnchorAt, setManualTrackingAnchorAt] = useState<
     number | null
   >(null);
+  const [commandContext, setCommandContext] =
+    useState<EnajenacionCommandContext | null>(null);
+  const [commandContextLoading, setCommandContextLoading] = useState(false);
+  const [commandContextError, setCommandContextError] = useState<string | null>(
+    null,
+  );
 
   const eligiblePrinters = useMemo(
     () => printers.filter(isPrinterEligibleForEnajenacionTest),
@@ -230,6 +243,17 @@ export function EnajenacionTestPanel({
       .slice(0, 3);
   }, [liveMessages, ritualMessages, topics]);
 
+  const stepCopyContents = useMemo(() => {
+    if (!topics || !commandContext || !activePrinter?.macAddress) {
+      return null;
+    }
+    return buildEnajenacionStepCopyContents(
+      commandContext,
+      activePrinter.macAddress,
+      { cmdServer: topics.cmdServer, comando: topics.comando },
+    );
+  }, [topics, commandContext, activePrinter?.macAddress]);
+
   useEffect(() => {
     if (!activePrinter?.fiscalSerial?.trim() || !activePrinter.macAddress?.trim()) {
       setPrecheck(null);
@@ -254,6 +278,48 @@ export function EnajenacionTestPanel({
       cancelled = true;
     };
   }, [activePrinter?.fiscalSerial, activePrinter?.macAddress]);
+
+  useEffect(() => {
+    const clientId = activePrinter?.clientId;
+    const fiscalSerial = activePrinter?.fiscalSerial?.trim();
+    if (!clientId || !fiscalSerial) {
+      setCommandContext(null);
+      setCommandContextError(null);
+      return;
+    }
+    let cancelled = false;
+    setCommandContextLoading(true);
+    setCommandContextError(null);
+    void (async () => {
+      try {
+        const client = await fetchClientById(clientId);
+        const branch = await fetchBranchById(client.branchId);
+        const company = await fetchCompanyById(branch.companyId);
+        if (cancelled) return;
+        setCommandContext(
+          buildEnajenacionCommandContextFromClientData({
+            fiscalSerial,
+            rif: company.rif,
+            businessName: company.businessName,
+            contributorType: company.contributorType,
+            address: branch.address,
+            city: branch.city,
+            state: branch.state,
+          }),
+        );
+      } catch (err) {
+        if (!cancelled) {
+          setCommandContext(null);
+          setCommandContextError(getMqttErrorMessage(err));
+        }
+      } finally {
+        if (!cancelled) setCommandContextLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activePrinter?.clientId, activePrinter?.fiscalSerial]);
 
   useEffect(() => {
     if (ritualAnchorAt === null) {
@@ -334,6 +400,8 @@ export function EnajenacionTestPanel({
     setStepStatuses({});
     setPrinterStatus(null);
     setManualTrackingAnchorAt(null);
+    setCommandContext(null);
+    setCommandContextError(null);
   }
 
   function handleResetTracking() {
@@ -375,10 +443,9 @@ export function EnajenacionTestPanel({
         <div className="mt-4 rounded-lg border border-accent/25 bg-accent/5 px-4 py-3 text-sm text-card-foreground">
           <p>
             El panel <strong className="font-medium">no publica</strong> en el
-            broker. Marca cada paso según el tráfico que AEG Core recibe en el
-            monitor. Usa <strong className="font-medium">Usar monitor fiscal</strong>{" "}
-            y conecta el WebSocket en la pestaña Monitor para ver Comando y
-            CmdServer en tiempo real.
+            broker. Usa los bloques <strong className="font-medium">Copiar para MQTTX</strong>{" "}
+            en cada paso (tópico y payload por separado). Marca el progreso según
+            el monitor; conecta el WebSocket en la pestaña Monitor.
           </p>
         </div>
 
@@ -554,10 +621,24 @@ export function EnajenacionTestPanel({
 
                 {!step.isRequest && serverCommand && (
                   <div className="mt-4">
-                    <JsonBlock title="Comando del servidor (Comando)">
+                    <JsonBlock title="Último comando visto en monitor (Comando)">
                       {serverCommand.payload}
                     </JsonBlock>
                   </div>
+                )}
+
+                {commandContextLoading && (
+                  <p className="mt-4 text-sm text-muted">
+                    Cargando tópicos y payloads del cliente…
+                  </p>
+                )}
+                {commandContextError && (
+                  <p className="mt-4 text-sm text-rose-700 dark:text-rose-300">
+                    No se pudieron armar los payloads: {commandContextError}
+                  </p>
+                )}
+                {stepCopyContents?.[step.id] && (
+                  <EnajenacionStepCopyBlocks content={stepCopyContents[step.id]!} />
                 )}
 
                 <p className="mt-3 rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-sm text-muted">
