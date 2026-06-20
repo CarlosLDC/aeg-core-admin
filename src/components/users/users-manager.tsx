@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { RoleBadge } from "@/components/users/role-badge";
 import { UserAccessBadge } from "@/components/users/user-access-badge";
-import { UsersArchitectureNote } from "@/components/users/users-architecture-note";
 import {
   UserFormDialog,
   type UserFormValues,
@@ -304,8 +303,6 @@ export function UsersManager() {
 
   return (
     <div className="space-y-4">
-      <UsersArchitectureNote />
-
       <PageToolbar
         actions={
           <button
