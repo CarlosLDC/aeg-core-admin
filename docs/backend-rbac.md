@@ -2,77 +2,87 @@
 
 Debe reflejar `docs/permissions-matrix.md` para el **panel** y las reglas del **libro fiscal** descritas abajo.
 
-## Dos portales, dos tablas de usuarios
+## Un solo catálogo de usuarios
 
 | Portal | Tabla | Login | Claim JWT `portal` |
 |--------|-------|-------|---------------------|
-| **aeg-core-admin** | `users` | `POST /api/auth/login` | `CORE_ADMIN` |
-| **aeg-libros-fiscales** | `fiscal_book_users` | `POST /api/auth/fiscal-book/login` | `FISCAL_BOOK` |
+| **aeg-core-admin** | `users` | `POST /api/auth/login` (default `portal=CORE_ADMIN`) | `CORE_ADMIN` |
+| **aeg-libros-fiscales** | `users` | `POST /api/auth/login` con `portal=FISCAL_BOOK` | `FISCAL_BOOK` |
 
-Los tokens **no son intercambiables**: `PortalAuthorizationFilter` bloquea rutas del panel con token fiscal y viceversa.
+Ambos portales autentican contra la misma tabla `users`. El campo opcional `portal` en el login determina el claim JWT y las reglas de acceso inmediato (p. ej. `SENIAT` rechazado en panel).
 
-### Roles del panel (`users.role`)
+### Roles unificados (`users.role`)
 
-`ADMIN`, `DISTRIBUTOR`, `TECHNICIAN`, `SERVICE_CENTER`, `SENIAT` (lectura global legacy en APIs de datos).
+| Rol | Panel | Libro fiscal | Escritura libro | Alcance libro |
+|-----|-------|--------------|-----------------|---------------|
+| `ADMIN` | Sí | Sí | Sí | Global |
+| `DISTRIBUTOR` | Sí | Sí | Sí | Cartera distribuidora |
+| `TECHNICIAN` | Sí | Sí | Sí | Sucursales de su empresa |
+| `SERVICE_CENTER` | Sí | Sí | Sí | Idem técnico |
+| `SENIAT` | **No** | Sí (auditor) | **No** (solo lectura) | Global |
 
-### Roles del libro fiscal (`fiscal_book_users.role`)
-
-| Rol | Uso |
-|-----|-----|
-| `FISCAL_ADMIN` | Operación completa en el portal de libros |
-| `FISCAL_TECHNICIAN` | Consulta + altas; requiere `employee_id` |
-| `FISCAL_AUDITOR` | Solo lectura (equivalente SENIAT del libro) |
-
-Spring expone autoridades `ROLE_FISCAL_*` (distintas de `ROLE_ADMIN`, etc.).
+Spring expone autoridades `ROLE_*` según el enum `Role`.
 
 ## JWT
 
 Claims comunes:
 
 - `portal`: `CORE_ADMIN` | `FISCAL_BOOK`
-- `role`: nombre del enum del portal
-- Panel adicional: `branchId`, `distributorId`
-- Libro fiscal adicional: `employeeId`, `distributorId` (derivado del empleado)
+- `role`: nombre del enum (`ADMIN`, `DISTRIBUTOR`, …)
+- `branchId`, `distributorId` (panel y libro; `null` para `ADMIN` y `SENIAT`)
 
 ## Endpoints de autenticación
 
-| Método | Ruta | Tabla |
+| Método | Ruta | Notas |
 |--------|------|-------|
-| POST | `/api/auth/login` | `users` |
-| GET | `/api/auth/me` | `users` (portal `CORE_ADMIN`) |
-| POST | `/api/auth/fiscal-book/login` | `fiscal_book_users` |
-| GET | `/api/auth/fiscal-book/me` | `fiscal_book_users` (portal `FISCAL_BOOK`) |
+| POST | `/api/auth/login` | Body opcional `{ "portal": "CORE_ADMIN" \| "FISCAL_BOOK" }`. Default: `CORE_ADMIN`. |
+| GET | `/api/auth/me` | Perfil del usuario autenticado (`users`) |
+
+Reglas de login:
+
+- `role == SENIAT` + `portal=CORE_ADMIN` → **403** (“Esta cuenta solo puede acceder al portal de libros fiscales”).
+- Cualquier otro rol puede iniciar sesión en ambos portales (el JWT lleva el `portal` solicitado).
 
 ## Gestión ADMIN (solo panel)
 
 | Método | Ruta |
 |--------|------|
 | CRUD | `/api/admin/users` |
-| CRUD | `/api/admin/fiscal-book-users` |
 
-Validaciones en alta fiscal:
+Validaciones en alta/edición:
 
-- Email único en `fiscal_book_users` **y** no presente en `users` → 409
-- `FISCAL_TECHNICIAN` requiere `employeeId` válido en `empleados`
-- `FISCAL_AUDITOR` / `FISCAL_ADMIN` sin empleado
+- `ADMIN` y `SENIAT`: sin `branchId` obligatorio.
+- `DISTRIBUTOR`, `TECHNICIAN`, `SERVICE_CENTER`: requieren sucursal y coherencia con catálogos de distribuidor/centro de servicio.
 
 ## Datos del libro fiscal
 
-| Método | Ruta | Roles |
-|--------|------|-------|
-| GET | `/api/fiscal-books/**` | `FISCAL_ADMIN`, `FISCAL_TECHNICIAN`, `FISCAL_AUDITOR` |
+| Método | Ruta | Roles lectura | Roles escritura |
+|--------|------|---------------|-----------------|
+| GET | `/api/fiscal-books/**` | Todos los roles | — |
+| POST/PUT/DELETE | servicios técnicos, inspecciones, precintos, etc. | — | `ADMIN`, `DISTRIBUTOR`, `TECHNICIAN`, `SERVICE_CENTER` (excluye `SENIAT`) |
 
-`SecurityScopeService.findVisiblePrinters()` aplica alcance por rol fiscal (técnico → distribuidora del empleado).
+`SecurityScopeService` aplica alcance por rol (`isGlobalReader()` para `ADMIN` y `SENIAT`; resto según `branchId` / `distributorId`).
 
-## Migración desde Supabase
+## Autorización por portal
 
-Ver `core/scripts/migrate_supabase_perfiles_to_fiscal_book_users.md` en aeg-core.
+`PortalAuthorizationFilter`:
 
-Mapeo `perfiles.rol_usuario`:
+- Usuario `SENIAT`: solo rutas del libro fiscal y `GET /api/auth/me`; cualquier ruta del panel → 403.
+- Usuario con rol distinto de `SENIAT` y JWT `portal=CORE_ADMIN`: acceso al panel **y** a APIs del libro (lectura/escritura según rol).
 
-- `admin` → `FISCAL_ADMIN`
-- `tecnico` → `FISCAL_TECHNICIAN`
-- `seniat` → `FISCAL_AUDITOR`
+Rutas del libro (prefijos):
+
+- `/api/fiscal-books/**`
+- `/api/technical-services/**`, `/api/annual-inspections/**`, `/api/seals/**`, `/api/technicians/**`, `/api/employees/**`, `/api/service-centers/**`
+
+## Migración desde `fiscal_book_users`
+
+Flyway `V23__unify_fiscal_book_users_into_users.sql`:
+
+- `FISCAL_AUDITOR` → `SENIAT`
+- `FISCAL_ADMIN` → `ADMIN` (si no hay conflicto de email)
+- `FISCAL_TECHNICIAN` → `TECHNICIAN` o `SERVICE_CENTER`
+- Drop tabla `fiscal_book_users`
 
 ## Autorización (panel)
 
@@ -82,7 +92,7 @@ Mapeo `perfiles.rol_usuario`:
 public void deleteCompany(@PathVariable Long id) { ... }
 ```
 
-## Alcance por JWT (panel)
+## Alcance por JWT
 
 Claims: `role`, `branchId`, `distributorId`.
 
@@ -95,8 +105,7 @@ Claims: `role`, `branchId`, `distributorId`.
 
 ## Endpoints críticos (panel)
 
-- `/api/admin/users` — solo ADMIN (`CORE_ADMIN`)
-- `/api/admin/fiscal-book-users` — solo ADMIN (`CORE_ADMIN`)
+- `/api/admin/users` — solo ADMIN
 - `/api/distributor-contracts`, `/api/service-center-contracts` — solo ADMIN
 - `/api/printer-models` GET — ADMIN, DISTRIBUTOR, TECHNICIAN
 - `/api/employees` — según matriz de permisos del panel
@@ -105,9 +114,9 @@ Claims: `role`, `branchId`, `distributorId`.
 
 ## Pruebas de integración
 
-- Login panel con credencial fiscal → 401
-- Login fiscal con credencial panel → 401
-- Token fiscal → `GET /api/admin/users` → 403
-- Token panel → `GET /api/auth/fiscal-book/me` → 403
-- ADMIN panel crea usuario `FISCAL_AUDITOR` → login en libro fiscal OK
-- `FISCAL_TECHNICIAN` sin `employeeId` en alta → 400
+Ver `UnifiedAuthRbacIT`:
+
+- Login panel con usuario `SENIAT` → 403
+- Login libro con `SENIAT` + `portal=FISCAL_BOOK` → OK
+- Token ADMIN panel → `GET /api/fiscal-books/**` → OK
+- Token `SENIAT` → `GET /api/admin/users` → 403

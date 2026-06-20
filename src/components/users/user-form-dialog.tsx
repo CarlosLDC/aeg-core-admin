@@ -70,6 +70,9 @@ export function UserFormDialog({
 }: UserFormDialogProps) {
   const [form, setForm] = useState<UserFormValues>(emptyForm);
   const isAdminUser = form.role === "ADMIN";
+  const isSeniatUser = form.role === "SENIAT";
+  const needsOperationalAssignment = !isAdminUser && !isSeniatUser;
+  const accessKind = isAdminUser ? "admin" : isSeniatUser ? "seniat" : "operativo";
 
   const availableRoles = useMemo(
     () =>
@@ -109,14 +112,17 @@ export function UserFormDialog({
     setForm((f) => ({ ...f, role }));
   }
 
-  function handleAdminToggle(admin: boolean) {
+  function handleAccessKindChange(kind: "operativo" | "admin" | "seniat") {
     setForm((f) => {
-      if (admin) {
+      if (kind === "admin") {
         return { ...f, role: "ADMIN", branchId: "" };
+      }
+      if (kind === "seniat") {
+        return { ...f, role: "SENIAT", branchId: "" };
       }
       return {
         ...f,
-        role: f.role === "ADMIN" ? "DISTRIBUTOR" : f.role,
+        role: f.role === "ADMIN" || f.role === "SENIAT" ? "DISTRIBUTOR" : f.role,
       };
     });
   }
@@ -256,8 +262,8 @@ export function UserFormDialog({
                 Tipo de acceso
               </legend>
               <SegmentedToggle
-                value={isAdminUser ? "admin" : "operativo"}
-                onChange={(next) => handleAdminToggle(next === "admin")}
+                value={accessKind}
+                onChange={handleAccessKindChange}
                 ariaLabel="Tipo de acceso"
                 options={[
                   {
@@ -270,17 +276,24 @@ export function UserFormDialog({
                     label: "Administrador",
                     tone: USER_ROLE_TOGGLE_TONE.ADMIN,
                   },
+                  {
+                    value: "seniat",
+                    label: "Auditor SENIAT",
+                    tone: USER_ROLE_TOGGLE_TONE.SENIAT,
+                  },
                 ]}
               />
               <p className="text-xs text-muted">
                 {isAdminUser
                   ? ROLE_DESCRIPTIONS.ADMIN
-                  : "Requiere empresa y rol operativo."}
+                  : isSeniatUser
+                    ? ROLE_DESCRIPTIONS.SENIAT
+                    : "Requiere empresa y rol operativo."}
               </p>
             </fieldset>
           )}
 
-          {!isAdminUser && (
+          {needsOperationalAssignment && (
             <fieldset className="space-y-4 rounded-xl border border-border p-4">
               <legend className="px-1 text-sm font-semibold text-card-foreground">
                 Asignación operativa
@@ -349,7 +362,7 @@ export function UserFormDialog({
           <FormDialogFooter
             mode={mode}
             saving={saving}
-            submitDisabled={!isAdminUser && branchesLoading}
+            submitDisabled={needsOperationalAssignment && branchesLoading}
             onClose={onClose}
             createLabel="Crear usuario"
           />

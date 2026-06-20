@@ -19,14 +19,15 @@ describe("fiscalBooksAppUrl", () => {
 });
 
 describe("canAccessFiscalBooksApp", () => {
-  it("allows field ops roles", () => {
+  it("allows panel roles except SENIAT", () => {
     expect(canAccessFiscalBooksApp("ADMIN")).toBe(true);
+    expect(canAccessFiscalBooksApp("DISTRIBUTOR")).toBe(true);
     expect(canAccessFiscalBooksApp("TECHNICIAN")).toBe(true);
     expect(canAccessFiscalBooksApp("SERVICE_CENTER")).toBe(true);
   });
 
-  it("denies distributor", () => {
-    expect(canAccessFiscalBooksApp("DISTRIBUTOR")).toBe(false);
+  it("denies SENIAT", () => {
+    expect(canAccessFiscalBooksApp("SENIAT")).toBe(false);
   });
 });
 

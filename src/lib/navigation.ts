@@ -106,7 +106,7 @@ export const navSections: NavSection[] = [
         title: "Libro fiscal",
         href: FISCAL_BOOKS_APP_URL,
         icon: BookOpen,
-        roles: ["ADMIN", "TECHNICIAN", "SERVICE_CENTER"],
+        roles: ["ADMIN", "DISTRIBUTOR", "TECHNICIAN", "SERVICE_CENTER"],
       },
       {
         title: "Tools",

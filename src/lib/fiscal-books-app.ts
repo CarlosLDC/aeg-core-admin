@@ -4,6 +4,7 @@ export const FISCAL_BOOKS_APP_URL = "https://aeg-libros-fiscales.vercel.app";
 
 export const FISCAL_BOOKS_ROLES = [
   "ADMIN",
+  "DISTRIBUTOR",
   "TECHNICIAN",
   "SERVICE_CENTER",
 ] as const satisfies readonly Role[];

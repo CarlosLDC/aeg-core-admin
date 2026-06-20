@@ -71,6 +71,21 @@ describe("validateUserCreateForm branch role eligibility", () => {
     expect(error).toBeNull();
     expect(resolveUserBranchId("ADMIN", "")).toBeNull();
   });
+
+  it("accepts SENIAT without branch", () => {
+    const error = validateUserCreateForm(
+      {
+        name: "Auditor SENIAT",
+        email: "seniat@aeg.local",
+        password: "secret1",
+        role: "SENIAT",
+        branchId: "",
+      },
+      { distributors, serviceCenters },
+    );
+    expect(error).toBeNull();
+    expect(resolveUserBranchId("SENIAT", "")).toBeNull();
+  });
 });
 
 describe("validateUserEditForm", () => {

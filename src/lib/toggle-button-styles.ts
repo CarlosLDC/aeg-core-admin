@@ -115,6 +115,7 @@ export const USER_ROLE_TOGGLE_TONE: Record<Role, ToggleTone> = {
   DISTRIBUTOR: "rose",
   TECHNICIAN: "emerald",
   SERVICE_CENTER: "amber",
+  SENIAT: "slate",
 };
 
 export const EMPLOYEE_UI_ROLE_TOGGLE_TONE: Record<EmployeeUiRole, ToggleTone> = {
