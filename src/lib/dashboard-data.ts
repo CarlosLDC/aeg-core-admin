@@ -20,10 +20,10 @@ import {
   branchIdsFromScope,
   filterByBranchScope,
   filterPrintersForUser,
+  filterTechnicianUsersInScope,
 } from "@/lib/scope-filters";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
-import type { UserResponse } from "@/types/user";
 import type { PrinterResponse, PrinterStatus } from "@/types/printer";
 import type { Role } from "@/types/user";
 
@@ -366,8 +366,8 @@ function buildStats(
           hint: `${counts.branches.length} empresas en red`,
         },
         {
-          title: "Técnicos",
-          value: String(counts.technicians),
+          title: "Asignadas",
+          value: String(assignedPrinters),
           hint: `${counts.companies.length} empresas vinculadas`,
         },
       ];
@@ -399,8 +399,9 @@ export async function loadDashboardSnapshot(options: {
   distributorId: number | null;
   userBranchId: number | null;
 }): Promise<DashboardSnapshot> {
-  const { role, scope, catalogRoles, distributorId, userBranchId } = options;
+  const { role, scope, catalogRoles, distributorId } = options;
   const loadWarnings: string[] = [];
+  const canLoadUsers = can(role, "users", "read");
 
   const [
     companiesP,
@@ -408,9 +409,8 @@ export async function loadDashboardSnapshot(options: {
     clientsP,
     distributorsP,
     serviceCentersP,
-    techniciansP,
-    printersP,
     usersP,
+    printersP,
     contractsP,
   ] = await Promise.all([
     settled(scope ? Promise.resolve(scope.companies) : fetchCompanies()),
@@ -430,11 +430,10 @@ export async function loadDashboardSnapshot(options: {
         ? Promise.resolve(catalogRoles.serviceCenters)
         : loadCatalogRoles().then((r) => r.serviceCenters),
     ),
-    settled(fetchUsers()),
+    canLoadUsers ? settled(fetchUsers()) : Promise.resolve(null),
     role === "ADMIN" || role === "TECHNICIAN"
       ? settled(fetchPrinters())
       : Promise.resolve(null),
-    can(role, "users", "read") ? settled(fetchUsers()) : Promise.resolve(null),
     can(role, "contracts", "read")
       ? settled(
           Promise.all([
@@ -450,11 +449,12 @@ export async function loadDashboardSnapshot(options: {
   const clients = clientsP.ok ? clientsP.value : [];
   const distributors = distributorsP.ok ? distributorsP.value : [];
   const serviceCenters = serviceCentersP.ok ? serviceCentersP.value : [];
-  const techniciansRaw: UserResponse[] = techniciansP.ok ? techniciansP.value : [];
 
   if (!companiesP.ok) loadWarnings.push("No se pudieron cargar las empresas.");
   if (!branchesP.ok) loadWarnings.push("No se pudieron cargar las empresas.");
-  if (!techniciansP.ok) loadWarnings.push("No se pudieron cargar los usuarios.");
+  if (canLoadUsers && usersP && !usersP.ok) {
+    loadWarnings.push("No se pudieron cargar los usuarios.");
+  }
   if (printersP && !printersP.ok) {
     loadWarnings.push("No se pudieron cargar las impresoras.");
   }
@@ -476,7 +476,11 @@ export async function loadDashboardSnapshot(options: {
     branchIds,
     role,
   );
-  const technicians = techniciansRaw.filter((user) => user.role === "TECHNICIAN");
+  const technicians = filterTechnicianUsersInScope(
+    usersP?.ok ? usersP.value : [],
+    role,
+    distributorId,
+  );
 
   let printers: PrinterResponse[] = [];
   if (printersP?.ok) {

@@ -4,6 +4,7 @@ import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import type { CompanyScope } from "@/lib/company-scope";
 import { contractStatus } from "@/lib/contract-form";
+import { can } from "@/lib/permissions/can";
 import { formatRelativeTime } from "@/lib/dashboard-data";
 import { fetchDistributorContracts } from "@/lib/distributor-contracts-api";
 import { fetchUsers } from "@/lib/users-api";
@@ -112,6 +113,7 @@ export async function loadNotifications(options: {
   const canFieldOps = role === "ADMIN" || role === "TECHNICIAN";
   const canAnnualInspections = canFieldOps;
   const isAdmin = role === "ADMIN";
+  const canLoadUsers = can(role, "users", "read");
 
   const [
     companiesP,
@@ -128,7 +130,7 @@ export async function loadNotifications(options: {
     settled(scope ? Promise.resolve(scope.companies) : fetchCompanies()),
     settled(scope ? Promise.resolve(scope.branches) : fetchBranches()),
     role === "TECHNICIAN" ? settled(fetchClients()) : Promise.resolve(null),
-    settled(fetchUsers()),
+    canLoadUsers ? settled(fetchUsers()) : Promise.resolve(null),
     canPrinters ? settled(fetchPrinters()) : Promise.resolve(null),
     canFieldOps ? settled(fetchSeals()) : Promise.resolve(null),
     canFieldOps ? settled(fetchTechnicalServices()) : Promise.resolve(null),
@@ -246,7 +248,7 @@ export async function loadNotifications(options: {
   }
 
   if (inspectionsP?.ok) {
-    const technicianUserIds = technicianUsersP.ok
+    const technicianUserIds = technicianUsersP?.ok
       ? new Set(
           filterTechnicianUsersInScope(
             technicianUsersP.value,
