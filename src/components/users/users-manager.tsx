@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { RoleBadge } from "@/components/users/role-badge";
-import { UserAccessBadge } from "@/components/users/user-access-badge";
 import {
   UserFormDialog,
   type UserFormValues,
@@ -355,7 +354,7 @@ export function UsersManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por nombre, correo, rol, acceso o empresa…"
+              searchPlaceholder="Buscar por nombre, correo, rol o empresa…"
               resultCount={filteredUsers.length}
               totalCount={users.length}
               filters={[
@@ -402,7 +401,7 @@ export function UsersManager() {
             ) : (
               <>
                 <TableScroll>
-                  <table className="w-full min-w-[800px] text-left text-sm">
+                  <table className="w-full min-w-[640px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <TableRowMetaHeaders
@@ -425,8 +424,6 @@ export function UsersManager() {
                           <th className="px-5 py-3 font-medium">Nombre</th>
                           <th className="px-5 py-3 font-medium">Correo</th>
                           <th className="px-5 py-3 font-medium">Rol</th>
-                          <th className="px-5 py-3 font-medium">Acceso</th>
-                          <th className="px-5 py-3 font-medium">Alcance</th>
                           <th className="px-5 py-3 font-medium">Estado</th>
                         </TableRowMetaHeaders>
                       </tr>
@@ -465,21 +462,6 @@ export function UsersManager() {
                           </td>
                           <td className="px-5 py-3.5">
                             <RoleBadge role={user.role} />
-                          </td>
-                          <td className="px-5 py-3.5">
-                            <UserAccessBadge role={user.role} />
-                          </td>
-                          <td className="max-w-[220px] px-5 py-3.5 text-card-foreground">
-                            <TruncatedText maxClassName="max-w-[200px]">
-                              {userBranchDisplayLabel(
-                                user.role,
-                                branchLabelById(
-                                  branches,
-                                  companies,
-                                  user.branchId,
-                                ),
-                              )}
-                            </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5">
                             <span
