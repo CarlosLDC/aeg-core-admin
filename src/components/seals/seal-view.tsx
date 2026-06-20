@@ -7,7 +7,6 @@ import { DetailField, DetailSection } from "@/components/resource-view/detail-fi
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
-import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
@@ -18,12 +17,6 @@ import {
 } from "@/lib/api-permissions";
 import { assertSealInScope } from "@/lib/permissions/scope-access";
 import { forbiddenMessage } from "@/lib/permissions/messages";
-import { applyScopedFieldCatalog } from "@/lib/scope-filters";
-import { fetchAuthMe } from "@/lib/auth-me-api";
-import { fetchBranches } from "@/lib/branches-api";
-import { fetchClients } from "@/lib/clients-api";
-import { fetchCompanies } from "@/lib/companies-api";
-import { fetchDistributors } from "@/lib/distributors-api";
 import { formatDate } from "@/lib/datetime-form";
 import {
   SEAL_COLOR_LABELS,
@@ -31,7 +24,6 @@ import {
   toSealRequest,
   type SealFormValues,
 } from "@/lib/seal-form";
-import { fetchPrinters } from "@/lib/printers-api";
 import {
   deleteSeal,
   fetchSealById,
@@ -42,28 +34,37 @@ import { printerPath, sealPath } from "@/lib/resource-routes";
 import type { PrinterSelectOption } from "@/components/seals/seal-form-dialog";
 import type { SealResponse } from "@/types/seal";
 
+function toPrinterSelectOptions(
+  options: { value: string; label: string }[],
+): PrinterSelectOption[] {
+  return options.map((option) => ({
+    id: Number(option.value),
+    label: option.label,
+  }));
+}
+
 export function SealView() {
   const id = useResourceId();
   const router = useRouter();
   const toast = useToast();
   const confirm = useConfirm();
   const { user } = useAuth();
-  const { scope } = useCompanyScope();
   const catalog = useFieldOperationsCatalog();
   const canModify = user ? canModifySealRecord(user.role) : false;
   const canDelete = user ? canDeleteSealRecord(user.role) : false;
 
   const [seal, setSeal] = useState<SealResponse | null>(null);
-  const [printerOptions, setPrinterOptions] = useState<PrinterSelectOption[]>(
-    [],
-  );
-  const [printersLoading, setPrintersLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const printerOptions = useMemo(
+    () => toPrinterSelectOptions(catalog.printerOptions),
+    [catalog.printerOptions],
+  );
 
   const printerLabelById = useMemo(
     () => new Map(printerOptions.map((p) => [p.id, p.label])),
@@ -100,70 +101,6 @@ export function SealView() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    setPrintersLoading(true);
-
-    (async () => {
-      try {
-        let distributorId = user.distributorId;
-        if (user.role === "TECHNICIAN" && distributorId == null) {
-          try {
-            const me = await fetchAuthMe();
-            distributorId = me.distributorId ?? null;
-          } catch {
-            /* ignore */
-          }
-        }
-
-        const [companies, branches, printersRaw, clients, distributors] =
-          await Promise.all([
-            scope ? Promise.resolve(scope.companies) : fetchCompanies(),
-            scope ? Promise.resolve(scope.branches) : fetchBranches(),
-            fetchPrinters().catch(() => []),
-            fetchClients().catch(() => []),
-            fetchDistributors().catch(() => []),
-          ]);
-
-        const scoped = applyScopedFieldCatalog({
-          role: user.role,
-          scope,
-          distributorId,
-          userBranchId: user.branchId,
-          companies,
-          branches,
-          clients,
-          distributors,
-          serviceCenters: [],
-          employees: [],
-          technicians: [],
-          printers: printersRaw,
-          seals: [],
-        });
-
-        if (!cancelled) {
-          setPrinterOptions(
-            scoped.printers
-              .map((p) => ({
-                id: p.id,
-                label: p.fiscalSerial,
-              }))
-              .sort((a, b) => a.label.localeCompare(b.label, "es")),
-          );
-        }
-      } catch {
-        if (!cancelled) setPrinterOptions([]);
-      } finally {
-        if (!cancelled) setPrintersLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, scope]);
 
   async function handleSubmit(values: SealFormValues) {
     if (!seal) return;
@@ -289,7 +226,7 @@ export function SealView() {
           saving={saving}
           error={formError}
           printerOptions={printerOptions}
-          printersLoading={printersLoading}
+          printersLoading={catalog.loading}
           onClose={() => {
             if (!saving) setEditOpen(false);
           }}

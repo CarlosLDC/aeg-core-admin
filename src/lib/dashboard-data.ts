@@ -14,7 +14,6 @@ import { fetchDistributorContracts } from "@/lib/distributor-contracts-api";
 import { fetchUsers } from "@/lib/users-api";
 import { fetchPrinters } from "@/lib/printers-api";
 import { fetchServiceCenterContracts } from "@/lib/service-center-contracts-api";
-import { fetchUsers } from "@/lib/users-api";
 import type { CompanyScope } from "@/lib/company-scope";
 import { can } from "@/lib/permissions/can";
 import {

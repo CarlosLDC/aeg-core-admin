@@ -43,6 +43,7 @@ import { applyScopedFieldCatalog } from "@/lib/scope-filters";
 import { reportListTableError } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { fetchPrinters } from "@/lib/printers-api";
+import { fetchUsers } from "@/lib/users-api";
 import {
   compareDateValues,
   compareNumberValues,
@@ -86,9 +87,7 @@ export function SealsManager() {
   const canDelete = user ? canDeleteSealRecord(user.role) : false;
 
   const canLoadPrinters =
-    user?.role === "ADMIN" ||
-    user?.role === "TECHNICIAN" ||
-    user?.role === "TECHNICIAN";
+    user?.role === "ADMIN" || user?.role === "TECHNICIAN";
 
   const [seals, setSeals] = useState<SealResponse[]>([]);
   const [printerOptions, setPrinterOptions] = useState<PrinterSelectOption[]>(
@@ -207,27 +206,28 @@ export function SealsManager() {
         }
       }
 
-      const [companies, branches, printersRaw, clients, distributors] =
+      const [companies, branches, printersRaw, clients, distributors, usersRaw] =
         await Promise.all([
           scope ? Promise.resolve(scope.companies) : fetchCompanies(),
           scope ? Promise.resolve(scope.branches) : fetchBranches(),
           fetchPrinters(),
           fetchClients().catch(() => []),
           fetchDistributors().catch(() => []),
+          fetchUsers().catch(() => []),
         ]);
 
       const scoped = applyScopedFieldCatalog({
         role: user.role,
         scope,
         distributorId,
-        userBranchId: user.branchId,
         companies,
         branches,
         clients,
         distributors,
         serviceCenters: [],
-        employees: [],
-        technicians: [],
+        technicianUsers: usersRaw.filter(
+          (row) => row.role === "TECHNICIAN" && row.enabled,
+        ),
         printers: printersRaw,
         seals: [],
       });
@@ -266,7 +266,7 @@ export function SealsManager() {
         }
       }
 
-      const [companies, branches, sealsRaw, printersRaw, clients, distributors] =
+      const [companies, branches, sealsRaw, printersRaw, clients, distributors, usersRaw] =
         await Promise.all([
           scope ? Promise.resolve(scope.companies) : fetchCompanies(),
           scope ? Promise.resolve(scope.branches) : fetchBranches(),
@@ -274,20 +274,21 @@ export function SealsManager() {
           canLoadPrinters ? fetchPrinters().catch(() => []) : Promise.resolve([]),
           fetchClients().catch(() => []),
           fetchDistributors().catch(() => []),
+          fetchUsers().catch(() => []),
         ]);
 
       const scoped = applyScopedFieldCatalog({
         role: user.role,
         scope,
         distributorId,
-        userBranchId: user.branchId,
         companies,
         branches,
         clients,
         distributors,
         serviceCenters: [],
-        employees: [],
-        technicians: [],
+        technicianUsers: usersRaw.filter(
+          (row) => row.role === "TECHNICIAN" && row.enabled,
+        ),
         printers: printersRaw,
         seals: sealsRaw,
       });

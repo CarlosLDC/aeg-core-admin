@@ -104,9 +104,7 @@ export function DashboardManager() {
   if (!user) return null;
 
   const canSeePrinters =
-    user.role === "ADMIN" ||
-    user.role === "TECHNICIAN" ||
-    user.role === "TECHNICIAN";
+    user.role === "ADMIN" || user.role === "TECHNICIAN";
 
   const showWelcome = snapshot && !loading;
 
