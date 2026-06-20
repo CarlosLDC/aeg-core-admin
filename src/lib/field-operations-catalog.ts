@@ -1,14 +1,14 @@
-import { formatBranchShort } from "@/lib/branches";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
+import { formatBranchShort } from "@/lib/branches";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
-import type { EmployeeResponse } from "@/types/employee";
 import type {
   DistributorResponse,
   ServiceCenterResponse,
 } from "@/types/branch-role";
 import type { PrinterResponse } from "@/types/printer";
 import type { SealResponse } from "@/types/seal";
+import type { UserResponse } from "@/types/user";
 
 export function printerSelectOptions(
   printers: PrinterResponse[],
@@ -32,30 +32,21 @@ export function sealSelectOptions(seals: SealResponse[]): SearchableSelectOption
     .sort((a, b) => a.label.localeCompare(b.label, "es"));
 }
 
-export function technicianSelectOptions(
-  employees: EmployeeResponse[],
+export function technicianUserSelectOptions(
+  users: UserResponse[],
 ): SearchableSelectOption[] {
-  return employees
-    .map((employee) => {
-      const name = `${employee.name} · ${employee.nationalId}`;
+  return users
+    .map((user) => {
+      const cedula = user.nationalId?.trim();
+      const label = cedula
+        ? `${user.name} · ${cedula}`
+        : user.name;
       return {
-        value: String(employee.id),
-        label: name,
-        searchText: name,
+        value: String(user.id),
+        label,
+        searchText: `${user.name} ${user.email} ${cedula ?? ""}`,
       };
     })
-    .sort((a, b) => a.label.localeCompare(b.label, "es"));
-}
-
-export function employeeSelectOptions(
-  employees: EmployeeResponse[],
-): SearchableSelectOption[] {
-  return employees
-    .map((e) => ({
-      value: String(e.id),
-      label: `${e.name} · ${e.nationalId}`,
-      searchText: `${e.name} ${e.nationalId} ${e.email}`,
-    }))
     .sort((a, b) => a.label.localeCompare(b.label, "es"));
 }
 

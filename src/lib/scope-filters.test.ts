@@ -3,9 +3,9 @@ import { filterAnnualInspectionsInScope } from "./scope-filters";
 
 describe("filterAnnualInspectionsInScope", () => {
   const rows = [
-    { id: 1, printerId: 10, employeeId: 100 },
-    { id: 2, printerId: 20, employeeId: 200 },
-    { id: 3, printerId: 10, employeeId: 999 },
+    { id: 1, printerId: 10, userId: 100 },
+    { id: 2, printerId: 20, userId: 200 },
+    { id: 3, printerId: 10, userId: 999 },
   ];
 
   it("returns all rows for ADMIN", () => {
@@ -14,32 +14,34 @@ describe("filterAnnualInspectionsInScope", () => {
     ).toEqual(rows);
   });
 
-  it("filters DISTRIBUTOR by printer only", () => {
+  it("filters TECHNICIAN by printer only when user set is empty", () => {
     const printerIds = new Set([10]);
-    const employeeIds = new Set([999]);
     expect(
       filterAnnualInspectionsInScope(
         rows,
         printerIds,
-        employeeIds,
-        "DISTRIBUTOR",
+        new Set(),
+        "TECHNICIAN",
       ),
     ).toEqual([
-      { id: 1, printerId: 10, employeeId: 100 },
-      { id: 3, printerId: 10, employeeId: 999 },
+      { id: 1, printerId: 10, userId: 100 },
+      { id: 3, printerId: 10, userId: 999 },
     ]);
   });
 
-  it("filters TECHNICIAN by printer and employee", () => {
+  it("filters TECHNICIAN by scoped printers", () => {
     const printerIds = new Set([10]);
-    const employeeIds = new Set([100]);
+    const userIds = new Set([100]);
     expect(
       filterAnnualInspectionsInScope(
         rows,
         printerIds,
-        employeeIds,
+        userIds,
         "TECHNICIAN",
       ),
-    ).toEqual([{ id: 1, printerId: 10, employeeId: 100 }]);
+    ).toEqual([
+      { id: 1, printerId: 10, userId: 100 },
+      { id: 3, printerId: 10, userId: 999 },
+    ]);
   });
 });

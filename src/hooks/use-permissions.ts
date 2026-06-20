@@ -24,7 +24,6 @@ export function usePermissions() {
       canCreate: (resource: Resource) => check(resource, "create"),
       canUpdate: (resource: Resource) => check(resource, "update"),
       canDelete: (resource: Resource) => check(resource, "delete"),
-      canAssignEmployeeRoles: () => check("employees", "assignRoles"),
     };
   }, [role]);
 }

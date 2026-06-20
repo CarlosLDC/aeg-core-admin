@@ -2,54 +2,35 @@ import type { Action, PermissionMatrix, Resource } from "@/lib/permissions/types
 import type { Role } from "@/types/user";
 
 const ADMIN_ONLY = ["ADMIN"] as const;
-const ADMIN_DIST = ["ADMIN", "DISTRIBUTOR"] as const;
-const ADMIN_DIST_TECH = ["ADMIN", "DISTRIBUTOR", "TECHNICIAN"] as const;
-const FIELD_OPS = ["ADMIN", "TECHNICIAN", "SERVICE_CENTER"] as const;
-const FIELD_OPS_DIST = [
-  "ADMIN",
-  "DISTRIBUTOR",
-  "TECHNICIAN",
-  "SERVICE_CENTER",
-] as const;
-const ALL_ROLES = [
-  "ADMIN",
-  "DISTRIBUTOR",
-  "TECHNICIAN",
-  "SERVICE_CENTER",
-] as const;
+const ADMIN_TECH = ["ADMIN", "TECHNICIAN"] as const;
+const FIELD_OPS = ["ADMIN", "TECHNICIAN"] as const;
+const ALL_PANEL_ROLES = ["ADMIN", "TECHNICIAN"] as const;
 
 /** Fuente única de verdad — mantener en sync con docs/permissions-matrix.md */
 export const PERMISSION_MATRIX: PermissionMatrix = {
   dashboard: {
-    read: ALL_ROLES,
+    read: ALL_PANEL_ROLES,
   },
   companies: {
-    read: ADMIN_DIST,
-    create: ADMIN_DIST,
-    update: ADMIN_DIST,
+    read: ADMIN_TECH,
+    create: ADMIN_TECH,
+    update: ADMIN_TECH,
     delete: ADMIN_ONLY,
   },
   branches: {
-    read: ALL_ROLES,
-    create: ADMIN_DIST,
-    update: ADMIN_DIST,
+    read: ALL_PANEL_ROLES,
+    create: ADMIN_TECH,
+    update: ADMIN_TECH,
     delete: ADMIN_ONLY,
-  },
-  employees: {
-    read: ALL_ROLES,
-    create: ADMIN_DIST,
-    update: ADMIN_ONLY,
-    delete: ADMIN_ONLY,
-    assignRoles: ["ADMIN", "DISTRIBUTOR", "TECHNICIAN", "SERVICE_CENTER"],
   },
   printers: {
-    read: ADMIN_DIST_TECH,
+    read: ADMIN_TECH,
     create: ADMIN_ONLY,
     update: ADMIN_ONLY,
     delete: ADMIN_ONLY,
   },
   printerModels: {
-    read: ADMIN_DIST_TECH,
+    read: ADMIN_TECH,
     create: ADMIN_ONLY,
     update: ADMIN_ONLY,
     delete: ADMIN_ONLY,
@@ -67,10 +48,10 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     delete: FIELD_OPS,
   },
   annualInspections: {
-    read: FIELD_OPS_DIST,
-    create: FIELD_OPS_DIST,
-    update: FIELD_OPS_DIST,
-    delete: FIELD_OPS_DIST,
+    read: FIELD_OPS,
+    create: FIELD_OPS,
+    update: FIELD_OPS,
+    delete: FIELD_OPS,
   },
   contracts: {
     read: ADMIN_ONLY,
@@ -89,12 +70,12 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     create: ADMIN_ONLY,
   },
   seniatExtract: {
-    read: ADMIN_DIST,
-    create: ADMIN_DIST,
+    read: ADMIN_TECH,
+    create: ADMIN_TECH,
   },
   uploads: {
-    read: [...ADMIN_DIST_TECH, "SERVICE_CENTER"],
-    create: [...ADMIN_DIST_TECH, "SERVICE_CENTER"],
+    read: ADMIN_TECH,
+    create: ADMIN_TECH,
   },
 };
 

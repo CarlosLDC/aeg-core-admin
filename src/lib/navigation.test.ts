@@ -9,7 +9,7 @@ import {
 } from "./navigation";
 
 describe("navSectionsForRole", () => {
-  it.each(["ADMIN", "DISTRIBUTOR"] as const)(
+  it.each(["ADMIN", "TECHNICIAN"] as const)(
     "places Organización before Operaciones for %s",
     (role) => {
       const titles = navSectionsForRole(role).map((s) => s.title);
@@ -32,7 +32,7 @@ describe("navSectionsForRole", () => {
     const technicianItems = navItemsForRole("TECHNICIAN");
     const fiscalBook = technicianItems.find((i) => i.title === "Libro fiscal");
     expect(fiscalBook?.href).toBe(FISCAL_BOOKS_APP_URL);
-    expect(navItemsForRole("DISTRIBUTOR").some((i) => i.title === "Libro fiscal")).toBe(
+    expect(navItemsForRole("TECHNICIAN").some((i) => i.title === "Libro fiscal")).toBe(
       true,
     );
     expect(navItemsForRole("SENIAT").some((i) => i.title === "Libro fiscal")).toBe(

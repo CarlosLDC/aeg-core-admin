@@ -27,6 +27,7 @@ import {
   type TechnicalServiceFormValues,
 } from "@/lib/technical-service-form";
 import type { TechnicalServiceResponse } from "@/types/technical-service";
+import type { Role } from "@/types/user";
 import { cn } from "@/lib/utils";
 
 type TechnicalServiceFormDialogProps = {
@@ -38,7 +39,9 @@ type TechnicalServiceFormDialogProps = {
   catalogLoading: boolean;
   canLoadPrinters: boolean;
   printerOptions: SearchableSelectOption[];
-  technicianOptions: SearchableSelectOption[];
+  technicianUserOptions: SearchableSelectOption[];
+  currentUserRole?: Role;
+  currentUserId?: number | null;
   sealOptions: SearchableSelectOption[];
   serviceCenterOptions: SearchableSelectOption[];
   distributorOptions: SearchableSelectOption[];
@@ -107,7 +110,9 @@ export function TechnicalServiceFormDialog({
   catalogLoading,
   canLoadPrinters,
   printerOptions,
-  technicianOptions,
+  technicianUserOptions,
+  currentUserRole,
+  currentUserId,
   sealOptions,
   serviceCenterOptions,
   distributorOptions,
@@ -116,6 +121,8 @@ export function TechnicalServiceFormDialog({
 }: TechnicalServiceFormDialogProps) {
   const formId = useId();
   const isWizard = true;
+  const lockTechnicianField =
+    mode === "create" && currentUserRole === "TECHNICIAN" && currentUserId != null;
   const [step, setStep] = useState<WizardStep>(1);
   const [stepError, setStepError] = useState<string | null>(null);
   const [form, setForm] = useState<TechnicalServiceFormValues>(
@@ -124,14 +131,17 @@ export function TechnicalServiceFormDialog({
 
   useEffect(() => {
     if (!open) return;
-    setForm(
+    const base =
       mode === "edit" && row
         ? technicalServiceToFormValues(row)
-        : emptyTechnicalServiceForm(),
-    );
+        : emptyTechnicalServiceForm();
+    if (lockTechnicianField && currentUserId != null) {
+      base.userId = String(currentUserId);
+    }
+    setForm(base);
     setStep(1);
     setStepError(null);
-  }, [open, mode, row]);
+  }, [open, mode, row, lockTechnicianField, currentUserId]);
 
   if (!open) return null;
 
@@ -144,7 +154,7 @@ export function TechnicalServiceFormDialog({
   function validateStep(targetStep: WizardStep): string | null {
     if (targetStep === 1) {
       if (!hasValue(form.printerId)) return "Selecciona una impresora.";
-      if (!hasValue(form.technicianId)) return "Selecciona un tecnico.";
+      if (!hasValue(form.userId)) return "Selecciona un tecnico.";
       return null;
     }
 
@@ -262,12 +272,12 @@ export function TechnicalServiceFormDialog({
         <div>
           <FieldLabel required>Técnico</FieldLabel>
           <SearchableSelect
-            value={form.technicianId}
-            onChange={(technicianId) =>
-              setForm((f) => ({ ...f, technicianId }))
+            value={form.userId}
+            onChange={(userId) =>
+              setForm((f) => ({ ...f, userId }))
             }
-            options={technicianOptions}
-            disabled={disabled}
+            options={technicianUserOptions}
+            disabled={disabled || lockTechnicianField}
             loading={catalogLoading}
             required
             searchPlaceholder="Buscar tecnico..."

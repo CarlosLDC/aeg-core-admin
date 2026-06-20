@@ -4,9 +4,7 @@ import type { Role } from "@/types/user";
 
 const ACCESS_STYLES: Record<Role, string> = {
   ADMIN: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
-  DISTRIBUTOR: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
-  TECHNICIAN: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
-  SERVICE_CENTER: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
+  TECHNICIAN: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
   SENIAT: "bg-slate-500/10 text-slate-700 dark:text-slate-300",
 };
 

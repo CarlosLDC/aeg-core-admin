@@ -52,7 +52,7 @@ export function DashboardManager() {
   );
 
   useEffect(() => {
-    if (user?.role !== "DISTRIBUTOR") {
+    if (user?.role !== "TECHNICIAN") {
       setDistributorId(user?.distributorId ?? null);
       return;
     }
@@ -105,7 +105,7 @@ export function DashboardManager() {
 
   const canSeePrinters =
     user.role === "ADMIN" ||
-    user.role === "DISTRIBUTOR" ||
+    user.role === "TECHNICIAN" ||
     user.role === "TECHNICIAN";
 
   const showWelcome = snapshot && !loading;
@@ -166,7 +166,7 @@ export function DashboardManager() {
             <h2 id="dashboard-overview" className="sr-only">
               Estadísticas
             </h2>
-            {user.role === "DISTRIBUTOR" ? (
+            {user.role === "TECHNICIAN" ? (
               <DistributorSalesChart
                 className="min-w-0"
                 data={snapshot.monthlySales ?? []}
@@ -228,7 +228,7 @@ export function DashboardManager() {
               </h2>
               <DashboardRecentPrinters
                 printers={snapshot.recentPrinters}
-                variant={user.role === "DISTRIBUTOR" ? "distributor" : "default"}
+                variant={user.role === "TECHNICIAN" ? "distributor" : "default"}
               />
             </section>
           )}

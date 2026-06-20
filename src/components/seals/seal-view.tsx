@@ -109,7 +109,7 @@ export function SealView() {
     (async () => {
       try {
         let distributorId = user.distributorId;
-        if (user.role === "DISTRIBUTOR" && distributorId == null) {
+        if (user.role === "TECHNICIAN" && distributorId == null) {
           try {
             const me = await fetchAuthMe();
             distributorId = me.distributorId ?? null;

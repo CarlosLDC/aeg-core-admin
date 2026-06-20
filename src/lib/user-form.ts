@@ -1,90 +1,68 @@
-import type { DistributorResponse } from "@/types/branch-role";
-import type { ServiceCenterResponse } from "@/types/branch-role";
 import type { Role } from "@/types/user";
 
 const MIN_PASSWORD_LENGTH = 6;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-export function roleRequiresBranch(role: Role): boolean {
-  return role === "DISTRIBUTOR" || role === "TECHNICIAN" || role === "SERVICE_CENTER";
-}
 
 type UserFormFields = {
   name: string;
   email: string;
   password: string;
   role: Role;
-  branchId: string;
+  distributorId: string;
+  nationalId: string;
 };
 
-type UserFormContext = {
-  distributors: DistributorResponse[];
-  serviceCenters: ServiceCenterResponse[];
-};
+export function roleRequiresTechnicianProfile(role: Role): boolean {
+  return role === "TECHNICIAN";
+}
 
-function branchIdToNumber(branchId: string): number | null {
-  const id = Number(branchId);
+export function normalizeNationalId(value: string): string {
+  return value.trim().replace(/\s+/g, "");
+}
+
+function distributorIdToNumber(distributorId: string): number | null {
+  const id = Number(distributorId);
   if (!Number.isFinite(id) || id <= 0) return null;
   return id;
 }
 
-export function resolveUserBranchId(role: Role, branchId: string): number | null {
-  if (!roleRequiresBranch(role)) return null;
-  return branchIdToNumber(branchId);
-}
-
-export function branchIdsWithDistributorRole(
-  distributors: DistributorResponse[],
-): Set<number> {
-  return new Set(distributors.map((d) => d.branchId));
-}
-
-export function branchIdsWithServiceCenterRole(
-  serviceCenters: ServiceCenterResponse[],
-): Set<number> {
-  return new Set(serviceCenters.map((s) => s.branchId));
-}
-
-export function eligibleRolesForBranch(
-  branchId: string,
-  context: UserFormContext,
-): Role[] {
-  const id = branchIdToNumber(branchId);
-  if (!id) return [];
-  const roles: Role[] = [];
-  if (branchIdsWithDistributorRole(context.distributors).has(id)) {
-    roles.push("DISTRIBUTOR");
-  }
-  if (branchIdsWithServiceCenterRole(context.serviceCenters).has(id)) {
-    roles.push("SERVICE_CENTER", "TECHNICIAN");
-  }
-  return roles;
-}
-
-function validateRoleByBranch(
+export function resolveUserDistributorId(
   role: Role,
-  branchId: string,
-  context: UserFormContext,
-): string | null {
-  if (!roleRequiresBranch(role)) return null;
+  distributorId: string,
+): number | null {
+  if (!roleRequiresTechnicianProfile(role)) return null;
+  return distributorIdToNumber(distributorId);
+}
 
-  if (!branchId.trim()) {
-    return "Selecciona una empresa.";
+export function resolveUserNationalId(
+  role: Role,
+  nationalId: string,
+): string | null {
+  if (!roleRequiresTechnicianProfile(role)) return null;
+  const normalized = normalizeNationalId(nationalId);
+  return normalized || null;
+}
+
+function validateTechnicianProfile(
+  role: Role,
+  distributorId: string,
+  nationalId: string,
+): string | null {
+  if (!roleRequiresTechnicianProfile(role)) return null;
+
+  if (!distributorId.trim()) {
+    return "Selecciona una distribuidora.";
   }
-  const eligible = eligibleRolesForBranch(branchId, context);
-  if (eligible.length === 0) {
-    return "La empresa seleccionada no tiene roles operativos habilitados para usuarios.";
+  if (!distributorIdToNumber(distributorId)) {
+    return "La distribuidora seleccionada no es válida.";
   }
-  if (!eligible.includes(role)) {
-    return "El rol seleccionado no está habilitado para la empresa elegida.";
+  if (!normalizeNationalId(nationalId)) {
+    return "La cédula es obligatoria para usuarios técnicos.";
   }
   return null;
 }
 
-export function validateUserCreateForm(
-  values: UserFormFields,
-  context: UserFormContext,
-): string | null {
+export function validateUserCreateForm(values: UserFormFields): string | null {
   const name = values.name.trim();
   if (!name) return "El nombre es obligatorio.";
 
@@ -96,20 +74,17 @@ export function validateUserCreateForm(
     return `La clave debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
   }
 
-  const roleError = validateRoleByBranch(
+  const profileError = validateTechnicianProfile(
     values.role,
-    values.branchId,
-    context,
+    values.distributorId,
+    values.nationalId,
   );
-  if (roleError) return roleError;
+  if (profileError) return profileError;
 
   return null;
 }
 
-export function validateUserEditForm(
-  values: UserFormFields,
-  context: UserFormContext,
-): string | null {
+export function validateUserEditForm(values: UserFormFields): string | null {
   const name = values.name.trim();
   if (!name) return "El nombre es obligatorio.";
 
@@ -124,12 +99,12 @@ export function validateUserEditForm(
     return `La clave debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
   }
 
-  const roleError = validateRoleByBranch(
+  const profileError = validateTechnicianProfile(
     values.role,
-    values.branchId,
-    context,
+    values.distributorId,
+    values.nationalId,
   );
-  if (roleError) return roleError;
+  if (profileError) return profileError;
 
   return null;
 }

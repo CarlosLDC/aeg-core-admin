@@ -129,7 +129,7 @@ export function BranchView() {
   const confirm = useConfirm();
   const { user } = useAuth();
   const { scope, refresh } = useCompanyScope();
-  const isDistributor = user?.role === "DISTRIBUTOR";
+  const isDistributor = user?.role === "TECHNICIAN";
   const canModify = user ? canUpdateBranchRecord(user.role) : false;
   const canDelete = user ? canDeleteBranchRecord(user.role) : false;
   const canReadContracts = user ? can(user.role, "contracts", "read") : false;

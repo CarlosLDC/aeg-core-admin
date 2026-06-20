@@ -4,7 +4,6 @@ import {
   branchPath,
   companyPath,
   distributorContractPath,
-  employeePath,
   printerModelPath,
   printerPath,
   sealPath,
@@ -29,7 +28,7 @@ export function notificationHrefForBranch(
   role: Role,
   clients: ClientResponse[],
 ): string | null {
-  if (role === "DISTRIBUTOR") {
+  if (role === "TECHNICIAN") {
     const client = clients.find((c) => c.branchId === branch.id);
     if (client) {
       return resolveNotificationHref(

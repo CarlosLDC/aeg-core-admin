@@ -6,16 +6,9 @@ import type {
 } from "@/types/branch-role";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
-import type { EmployeeResponse } from "@/types/employee";
-import type { TechnicianResponse } from "@/types/employee-role";
 import type { PrinterResponse } from "@/types/printer";
 import type { SealResponse } from "@/types/seal";
-import type { Role } from "@/types/user";
-import {
-  distributorStaffBranchIds,
-  filterEmployeesForDistributorStaff,
-} from "@/lib/distributor-scope";
-import { resolveEmployeeCompanyId } from "@/lib/employee-company";
+import type { Role, UserResponse } from "@/types/user";
 
 export function branchIdsFromScope(
   scope: CompanyScope | null,
@@ -42,7 +35,7 @@ export function filterPrintersForUser(
   role: Role,
   distributorId: number | null,
 ): PrinterResponse[] {
-  if (role === "DISTRIBUTOR" && distributorId != null) {
+  if (role === "TECHNICIAN" && distributorId != null) {
     return printers.filter((p) => p.distributorId === distributorId);
   }
   return printers;
@@ -55,7 +48,7 @@ export function filterPrintersByBranchScope(
   clients: ClientResponse[],
   distributors: DistributorResponse[],
 ): PrinterResponse[] {
-  if (role === "ADMIN" || role === "DISTRIBUTOR") return printers;
+  if (role === "ADMIN" || role === "TECHNICIAN") return printers;
   if (branchIds.size === 0) return [];
 
   const clientById = new Map(clients.map((c) => [c.id, c]));
@@ -74,29 +67,17 @@ export function filterPrintersByBranchScope(
   });
 }
 
-export function filterEmployeesInScope(
-  employees: EmployeeResponse[],
-  companyIds: Set<number>,
+export function filterTechnicianUsersInScope(
+  users: UserResponse[],
   role: Role,
-  _userBranchId: number | null,
-  branches: BranchResponse[] = [],
-): EmployeeResponse[] {
-  if (role === "ADMIN") return employees;
-  if (companyIds.size > 0) {
-    return employees.filter((employee) => {
-      const companyId = resolveEmployeeCompanyId(employee, branches);
-      return companyId != null && companyIds.has(companyId);
-    });
+  distributorId: number | null,
+): UserResponse[] {
+  const technicians = users.filter((user) => user.role === "TECHNICIAN");
+  if (role === "ADMIN") return technicians;
+  if (role === "TECHNICIAN" && distributorId != null) {
+    return technicians.filter((user) => user.distributorId === distributorId);
   }
-  return [];
-}
-
-export function filterTechniciansInScope(
-  technicians: TechnicianResponse[],
-  employees: EmployeeResponse[],
-): TechnicianResponse[] {
-  const employeeIds = new Set(employees.map((e) => e.id));
-  return technicians.filter((t) => employeeIds.has(t.employeeId));
+  return technicians;
 }
 
 export function filterSealsByPrinterScope(
@@ -127,7 +108,7 @@ export function filterTechnicalServicesInScope<
   T extends { printerId: number; distributorId: number | null },
 >(rows: T[], printerIds: Set<number>, role: Role, distributorId: number | null): T[] {
   let scoped = filterByPrinterIds(rows, printerIds, role);
-  if (role === "DISTRIBUTOR" && distributorId != null) {
+  if (role === "TECHNICIAN" && distributorId != null) {
     scoped = scoped.filter(
       (row) =>
         row.distributorId === distributorId ||
@@ -138,15 +119,15 @@ export function filterTechnicalServicesInScope<
 }
 
 export function filterAnnualInspectionsInScope<
-  T extends { printerId: number; employeeId: number },
->(rows: T[], printerIds: Set<number>, employeeIds: Set<number>, role: Role): T[] {
+  T extends { printerId: number; userId: number },
+>(rows: T[], printerIds: Set<number>, technicianUserIds: Set<number>, role: Role): T[] {
   if (role === "ADMIN") return rows;
-  if (role === "DISTRIBUTOR") {
+  if (role === "TECHNICIAN") {
     return filterByPrinterIds(rows, printerIds, role);
   }
   return rows.filter(
     (row) =>
-      printerIds.has(row.printerId) && employeeIds.has(row.employeeId),
+      printerIds.has(row.printerId) && technicianUserIds.has(row.userId),
   );
 }
 
@@ -154,14 +135,12 @@ export type ScopedFieldCatalogInput = {
   role: Role;
   scope: CompanyScope | null;
   distributorId: number | null;
-  userBranchId: number | null;
   companies: CompanyResponse[];
   branches: BranchResponse[];
   clients: ClientResponse[];
   distributors: DistributorResponse[];
   serviceCenters: ServiceCenterResponse[];
-  employees: EmployeeResponse[];
-  technicians: TechnicianResponse[];
+  technicianUsers: UserResponse[];
   printers: PrinterResponse[];
   seals: SealResponse[];
 };
@@ -171,20 +150,17 @@ export function applyScopedFieldCatalog(input: ScopedFieldCatalogInput) {
     role,
     scope,
     distributorId,
-    userBranchId,
     companies,
     branches,
     clients,
     distributors,
     serviceCenters,
-    employees,
-    technicians,
+    technicianUsers,
     printers,
     seals,
   } = input;
 
   const branchIds = branchIdsFromScope(scope, branches);
-  const companyIds = scope?.companyIds ?? new Set(companies.map((c) => c.id));
   const scopedClients = filterByBranchScope(clients, branchIds, role);
   const scopedDistributors = filterByBranchScope(
     distributors,
@@ -196,23 +172,10 @@ export function applyScopedFieldCatalog(input: ScopedFieldCatalogInput) {
     branchIds,
     role,
   );
-  let scopedEmployees = filterEmployeesInScope(
-    employees,
-    companyIds,
+  const scopedTechnicianUsers = filterTechnicianUsersInScope(
+    technicianUsers,
     role,
-    userBranchId,
-    branches,
-  );
-  if (role === "DISTRIBUTOR") {
-    scopedEmployees = filterEmployeesForDistributorStaff(
-      scopedEmployees,
-      role,
-      distributorStaffBranchIds(distributors, distributorId),
-    );
-  }
-  const scopedTechnicians = filterTechniciansInScope(
-    technicians,
-    scopedEmployees,
+    distributorId,
   );
 
   let scopedPrinters = filterPrintersForUser(printers, role, distributorId);
@@ -235,8 +198,7 @@ export function applyScopedFieldCatalog(input: ScopedFieldCatalogInput) {
     clients: scopedClients,
     distributors: scopedDistributors,
     serviceCenters: scopedServiceCenters,
-    employees: scopedEmployees,
-    technicians: scopedTechnicians,
+    technicianUsers: scopedTechnicianUsers,
     printers: scopedPrinters,
     printerIds: scopedPrinterIds,
     seals: scopedSeals,

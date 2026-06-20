@@ -10,7 +10,7 @@ import type { PrinterResponse } from "@/types/printer";
 
 export type AnnualInspectionFormValues = {
   printerId: string;
-  employeeId: string;
+  userId: string;
   sealTampered: boolean;
   notes: string;
   photoUrls: string[];
@@ -22,7 +22,7 @@ export const ANNUAL_INSPECTION_ASSIGNED_PRINTER_MESSAGE =
 
 export const emptyAnnualInspectionForm = (): AnnualInspectionFormValues => ({
   printerId: "",
-  employeeId: "",
+  userId: "",
   sealTampered: false,
   notes: "",
   photoUrls: [],
@@ -74,7 +74,7 @@ export function annualInspectionToFormValues(
 ): AnnualInspectionFormValues {
   return {
     printerId: String(row.printerId),
-    employeeId: String(row.employeeId),
+    userId: String(row.userId),
     sealTampered: row.sealTampered,
     notes: row.notes ?? "",
     photoUrls: [...(row.photoUrls ?? [])],
@@ -98,9 +98,9 @@ export function toAnnualInspectionRequest(
     if (printerError) return printerError;
   }
 
-  const employeeId = Number(values.employeeId);
-  if (!Number.isFinite(employeeId) || employeeId <= 0) {
-    return "Selecciona un empleado.";
+  const userId = Number(values.userId);
+  if (!Number.isFinite(userId) || userId <= 0) {
+    return "Selecciona un técnico.";
   }
 
   if (values.photoUrls.length === 0) {
@@ -109,7 +109,7 @@ export function toAnnualInspectionRequest(
 
   return {
     printerId,
-    employeeId,
+    userId,
     sealTampered: values.sealTampered,
     notes: values.notes.trim() || null,
     photoUrls: values.photoUrls,

@@ -1,118 +1,93 @@
 import { describe, expect, it } from "vitest";
 import {
-  eligibleRolesForBranch,
-  resolveUserBranchId,
+  normalizeNationalId,
+  resolveUserDistributorId,
+  resolveUserNationalId,
   validateUserCreateForm,
   validateUserEditForm,
 } from "@/lib/user-form";
 
-const distributors = [
-  { id: 5, branchId: 10, createdAt: "2026-01-01T00:00:00Z" },
-  { id: 8, branchId: 20, createdAt: "2026-01-01T00:00:00Z" },
-];
-const serviceCenters = [
-  { id: 3, branchId: 20, createdAt: "2026-01-01T00:00:00Z" },
-];
-
-describe("validateUserCreateForm branch role eligibility", () => {
-  it("rejects DISTRIBUTOR when branch has no distributor role", () => {
-    const error = validateUserCreateForm(
-      {
-        name: "Usuario Distribuidor",
-        email: "dist@aeg.local",
-        password: "secret1",
-        role: "DISTRIBUTOR",
-        branchId: "99",
-      },
-      { distributors, serviceCenters },
-    );
-    expect(error).toMatch(/no tiene roles operativos/i);
+describe("validateUserCreateForm", () => {
+  it("accepts TECHNICIAN with distributor and national id", () => {
+    const error = validateUserCreateForm({
+      name: "Usuario Técnico",
+      email: "tech@aeg.local",
+      password: "secret1",
+      role: "TECHNICIAN",
+      distributorId: "7",
+      nationalId: "V12345678",
+    });
+    expect(error).toBeNull();
+    expect(resolveUserDistributorId("TECHNICIAN", "7")).toBe(7);
+    expect(resolveUserNationalId("TECHNICIAN", "V12345678")).toBe("V12345678");
   });
 
-  it("accepts DISTRIBUTOR when branch matches distributor catalog", () => {
-    const error = validateUserCreateForm(
-      {
-        name: "Usuario Distribuidor",
-        email: "dist@aeg.local",
-        password: "secret1",
-        role: "DISTRIBUTOR",
-        branchId: "10",
-      },
-      { distributors, serviceCenters },
-    );
-    expect(error).toBeNull();
+  it("rejects TECHNICIAN without distributor", () => {
+    const error = validateUserCreateForm({
+      name: "Usuario Técnico",
+      email: "tech@aeg.local",
+      password: "secret1",
+      role: "TECHNICIAN",
+      distributorId: "",
+      nationalId: "V12345678",
+    });
+    expect(error).toMatch(/distribuidora/i);
   });
 
-  it("accepts TECHNICIAN when branch has service center role", () => {
-    const error = validateUserCreateForm(
-      {
-        name: "Usuario Técnico",
-        email: "tech@aeg.local",
-        password: "secret1",
-        role: "TECHNICIAN",
-        branchId: "20",
-      },
-      { distributors, serviceCenters },
-    );
-    expect(error).toBeNull();
+  it("rejects TECHNICIAN without national id", () => {
+    const error = validateUserCreateForm({
+      name: "Usuario Técnico",
+      email: "tech@aeg.local",
+      password: "secret1",
+      role: "TECHNICIAN",
+      distributorId: "7",
+      nationalId: "",
+    });
+    expect(error).toMatch(/cédula/i);
   });
 
-  it("accepts ADMIN without branch", () => {
-    const error = validateUserCreateForm(
-      {
-        name: "Administrador",
-        email: "admin@aeg.local",
-        password: "secret1",
-        role: "ADMIN",
-        branchId: "",
-      },
-      { distributors, serviceCenters },
-    );
+  it("accepts ADMIN without distributor or national id", () => {
+    const error = validateUserCreateForm({
+      name: "Administrador",
+      email: "admin@aeg.local",
+      password: "secret1",
+      role: "ADMIN",
+      distributorId: "",
+      nationalId: "",
+    });
     expect(error).toBeNull();
-    expect(resolveUserBranchId("ADMIN", "")).toBeNull();
+    expect(resolveUserDistributorId("ADMIN", "")).toBeNull();
   });
 
-  it("accepts SENIAT without branch", () => {
-    const error = validateUserCreateForm(
-      {
-        name: "Auditor SENIAT",
-        email: "seniat@aeg.local",
-        password: "secret1",
-        role: "SENIAT",
-        branchId: "",
-      },
-      { distributors, serviceCenters },
-    );
+  it("accepts SENIAT without distributor or national id", () => {
+    const error = validateUserCreateForm({
+      name: "Auditor SENIAT",
+      email: "seniat@aeg.local",
+      password: "secret1",
+      role: "SENIAT",
+      distributorId: "",
+      nationalId: "",
+    });
     expect(error).toBeNull();
-    expect(resolveUserBranchId("SENIAT", "")).toBeNull();
   });
 });
 
 describe("validateUserEditForm", () => {
-  it("accepts ADMIN without branch", () => {
-    const error = validateUserEditForm(
-      {
-        name: "Administrador",
-        email: "admin@aeg.local",
-        password: "",
-        role: "ADMIN",
-        branchId: "",
-      },
-      { distributors, serviceCenters },
-    );
+  it("accepts ADMIN without distributor or national id", () => {
+    const error = validateUserEditForm({
+      name: "Administrador",
+      email: "admin@aeg.local",
+      password: "",
+      role: "ADMIN",
+      distributorId: "",
+      nationalId: "",
+    });
     expect(error).toBeNull();
   });
 });
 
-describe("eligibleRolesForBranch", () => {
-  it("returns roles from branch role catalogs", () => {
-    expect(eligibleRolesForBranch("10", { distributors, serviceCenters })).toEqual([
-      "DISTRIBUTOR",
-    ]);
-    expect(eligibleRolesForBranch("20", { distributors, serviceCenters })).toEqual([
-      "DISTRIBUTOR",
-      "SERVICE_CENTER",
-      "TECHNICIAN",
-    ]);
+describe("normalizeNationalId", () => {
+  it("strips whitespace", () => {
+    expect(normalizeNationalId(" V 12 345 678 ")).toBe("V12345678");
   });
 });

@@ -12,10 +12,6 @@ export function clientPath(id: number): string {
   return `/clients/${id}`;
 }
 
-export function employeePath(id: number): string {
-  return `/employees/${id}`;
-}
-
 export function userPath(id: number): string {
   return `/users/${id}`;
 }
@@ -60,13 +56,8 @@ export function annualInspectionPath(id: number): string {
   return `/annual-inspections/${id}`;
 }
 
-export function employeeModificationReviewPath(requestId: number): string {
-  return `/reviews/employees/${requestId}`;
-}
-
 export function clientModificationReviewPath(requestId: number): string {
   return `/reviews/clients/${requestId}`;
 }
 
-export const employeeModificationReviewsListPath = "/reviews?section=employees";
-export const clientModificationReviewsListPath = "/reviews?section=clients";
+export const clientModificationReviewsListPath = "/reviews";

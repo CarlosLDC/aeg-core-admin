@@ -5,7 +5,6 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   dashboard: "el panel",
   companies: "empresas",
   branches: "empresas",
-  employees: "empleados",
   printers: "impresoras",
   printerModels: "modelos fiscales",
   seals: "precintos",
@@ -37,17 +36,13 @@ export const ACTION_COLUMN_LABELS: Record<Action, string> = {
 
 export const ROLE_LABELS: Record<Role, string> = {
   ADMIN: "Administrador",
-  DISTRIBUTOR: "Distribuidor",
   TECHNICIAN: "Técnico",
-  SERVICE_CENTER: "Centro de servicio",
   SENIAT: "Auditor SENIAT",
 };
 
 export const ROLE_ABBREV: Record<Role, string> = {
   ADMIN: "ADM",
-  DISTRIBUTOR: "DIST",
   TECHNICIAN: "TEC",
-  SERVICE_CENTER: "CS",
   SENIAT: "SEN",
 };
 

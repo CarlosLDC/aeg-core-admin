@@ -75,7 +75,7 @@ export function CompaniesManager() {
 
   const canCreate = user ? canCreateCatalogRecord(user.role) : false;
   const canModify = user ? canUpdateCompanyRecord(user.role) : false;
-  const isDistributor = user?.role === "DISTRIBUTOR";
+  const isDistributor = user?.role === "TECHNICIAN";
 
   useEffect(() => {
     if (!scope) return;

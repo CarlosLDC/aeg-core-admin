@@ -13,7 +13,6 @@ import {
 } from "@/lib/navigation";
 import { useAuth } from "@/context/auth-provider";
 import { fetchClientModificationRequests } from "@/lib/client-modification-requests-api";
-import { fetchEmployeeModificationRequests } from "@/lib/employee-modification-requests-api";
 import {
   DEFAULT_POLL_INTERVAL_MS,
   DEFAULT_RETRY_DELAYS_MS,
@@ -167,7 +166,6 @@ export function Sidebar({
   const sections = user ? navSectionsForRole(user.role) : [];
   const navItems = user ? navItemsForRole(user.role) : [];
   const navRef = useRef<HTMLElement>(null);
-  const [pendingReviewCount, setPendingReviewCount] = useState(0);
   const [pendingClientReviewCount, setPendingClientReviewCount] = useState(0);
 
   const persistNavScroll = useCallback(() => {
@@ -193,7 +191,6 @@ export function Sidebar({
 
   useEffect(() => {
     if (user?.role !== "ADMIN") {
-      setPendingReviewCount(0);
       setPendingClientReviewCount(0);
       return;
     }
@@ -202,9 +199,7 @@ export function Sidebar({
 
     const loadPending = async () => {
       try {
-        const pending = await fetchEmployeeModificationRequests("PENDING");
         const pendingClients = await fetchClientModificationRequests("PENDING");
-        if (!cancelled) setPendingReviewCount(pending.length);
         if (!cancelled) setPendingClientReviewCount(pendingClients.length);
         return true;
       } catch {
@@ -319,7 +314,7 @@ export function Sidebar({
                     isCollapsed={isCollapsed && !isMobileDrawer}
                     badgeCount={
                       item.href === "/reviews"
-                        ? pendingReviewCount + pendingClientReviewCount
+                        ? pendingClientReviewCount
                         : undefined
                     }
                     onBeforeNavigate={persistNavScroll}

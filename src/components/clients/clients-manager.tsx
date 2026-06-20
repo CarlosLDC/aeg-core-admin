@@ -183,7 +183,7 @@ export function ClientsManager() {
   const { user } = useAuth();
   const canEditCompany = user ? canUpdateCompanyRecord(user.role) : false;
   const canEditBranch = user ? canUpdateBranchRecord(user.role) : false;
-  const canRequestReview = user?.role === "DISTRIBUTOR";
+  const canRequestReview = user?.role === "TECHNICIAN";
   const canCancelReview = user ? canCancelModificationReview(user.role) : false;
   const canModify = canEditCompany && canEditBranch;
   const showActions = canModify || canRequestReview || canCancelReview;

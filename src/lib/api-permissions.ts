@@ -16,19 +16,14 @@ export {
   getCatalogForbiddenMessage,
 };
 
-/** POST empresas, sucursales, empleados (catálogo base). */
+/** POST empresas y sucursales (catálogo base). */
 export function canCreateCatalogRecord(role: Role): boolean {
   return can(role, "companies", "create");
 }
 
-/** POST sucursales (misma regla que empresas para distribuidor). */
+/** POST sucursales (misma regla que empresas para técnicos). */
 export function canCreateBranchRecord(role: Role): boolean {
   return can(role, "branches", "create");
-}
-
-/** POST empleados. */
-export function canCreateEmployeeRecord(role: Role): boolean {
-  return can(role, "employees", "create");
 }
 
 /** POST impresoras. */
@@ -45,14 +40,14 @@ export function canDeletePrinterRecord(role: Role): boolean {
   return can(role, "printers", "delete");
 }
 
-/** Enajenar impresoras asignadas: admin global, distribuidor dentro de su alcance. */
+/** Enajenar impresoras asignadas: admin global, técnico dentro de su alcance. */
 export function canDisposePrinterRecord(role: Role): boolean {
-  return role === "ADMIN" || role === "DISTRIBUTOR";
+  return role === "ADMIN" || role === "TECHNICIAN";
 }
 
-/** Retirar una solicitud de revisión propia (clientes/empleados). */
+/** Retirar una solicitud de revisión propia (clientes). */
 export function canCancelModificationReview(role: Role): boolean {
-  return role === "DISTRIBUTOR";
+  return role === "TECHNICIAN";
 }
 
 export function canUpdateCompanyRecord(role: Role): boolean {
@@ -63,17 +58,9 @@ export function canUpdateBranchRecord(role: Role): boolean {
   return can(role, "branches", "update");
 }
 
-export function canUpdateEmployeeRecord(role: Role): boolean {
-  return can(role, "employees", "update");
-}
-
-/** PUT catálogo (compat: todas las entidades de catálogo). */
+/** PUT catálogo (compat: empresas y sucursales). */
 export function canUpdateCatalogRecord(role: Role): boolean {
-  return (
-    canUpdateCompanyRecord(role) &&
-    canUpdateBranchRecord(role) &&
-    canUpdateEmployeeRecord(role)
-  );
+  return canUpdateCompanyRecord(role) && canUpdateBranchRecord(role);
 }
 
 export function canDeleteCompanyRecord(role: Role): boolean {
@@ -84,26 +71,14 @@ export function canDeleteBranchRecord(role: Role): boolean {
   return can(role, "branches", "delete");
 }
 
-export function canDeleteEmployeeRecord(role: Role): boolean {
-  return can(role, "employees", "delete");
-}
-
 /** DELETE catálogo (compat). */
 export function canDeleteCatalogRecord(role: Role): boolean {
-  return (
-    canDeleteCompanyRecord(role) &&
-    canDeleteBranchRecord(role) &&
-    canDeleteEmployeeRecord(role)
-  );
+  return canDeleteCompanyRecord(role) && canDeleteBranchRecord(role);
 }
 
-/** Alias: modificar empresas/sucursales/empleados (PUT). */
+/** Alias: modificar empresas/sucursales (PUT). */
 export function canModifyCatalogRecord(role: Role): boolean {
   return canUpdateCatalogRecord(role);
-}
-
-export function canAssignEmployeeRoles(role: Role): boolean {
-  return can(role, "employees", "assignRoles");
 }
 
 export function canCreateSealRecord(role: Role): boolean {

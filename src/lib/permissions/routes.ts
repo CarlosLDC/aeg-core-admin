@@ -8,7 +8,6 @@ const ROUTE_RESOURCE: Array<{ prefix: string; resource: Resource }> = [
   { prefix: "/clients", resource: "branches" },
   { prefix: "/companies", resource: "companies" },
   { prefix: "/branches", resource: "branches" },
-  { prefix: "/employees", resource: "employees" },
   { prefix: "/printers", resource: "printers" },
   { prefix: "/printer-models", resource: "printerModels" },
   { prefix: "/seals", resource: "seals" },
@@ -63,8 +62,8 @@ export function canAccessRoute(role: Role, pathname: string): boolean {
   const resource = resourceForPath(normalized);
   if (!can(role, resource, "read")) return false;
 
-  // Distribuidor: detalle de empresa de cliente sí; listado /companies no (menú /clients).
-  if (role === "DISTRIBUTOR") {
+  // Técnico: detalle de empresa de cliente sí; listado /companies no (menú /clients).
+  if (role === "TECHNICIAN") {
     if (normalized === "/companies") return false;
     if (normalized.startsWith("/companies/")) return true;
   }
@@ -76,8 +75,7 @@ export function canAccessRoute(role: Role, pathname: string): boolean {
       const isDetailRoute =
         normalized !== navPath && normalized.startsWith(`${navPath}/`);
       if (!isDetailRoute) return false;
-      // Detalle de sucursal sin listado en menú (distribuidor usa /clients).
-      if (navPath === "/branches" && role === "DISTRIBUTOR") return true;
+      if (navPath === "/branches" && role === "TECHNICIAN") return true;
       return false;
     }
   }

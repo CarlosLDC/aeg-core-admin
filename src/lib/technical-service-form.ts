@@ -10,7 +10,7 @@ import type {
 
 export type TechnicalServiceFormValues = {
   printerId: string;
-  technicianId: string;
+  userId: string;
   serviceCenterId: string;
   distributorId: string;
   sealTampered: boolean | null;
@@ -31,7 +31,7 @@ export type TechnicalServiceFormValues = {
 
 export const emptyTechnicalServiceForm = (): TechnicalServiceFormValues => ({
   printerId: "",
-  technicianId: "",
+  userId: "",
   serviceCenterId: "",
   distributorId: "",
   sealTampered: null,
@@ -55,7 +55,7 @@ export function technicalServiceToFormValues(
 ): TechnicalServiceFormValues {
   return {
     printerId: String(row.printerId),
-    technicianId: String(row.technicianId),
+    userId: String(row.userId),
     serviceCenterId:
       row.serviceCenterId != null ? String(row.serviceCenterId) : "",
     distributorId:
@@ -93,8 +93,8 @@ export function toTechnicalServiceRequest(
     return "Selecciona una impresora.";
   }
 
-  const technicianId = Number(values.technicianId);
-  if (!Number.isFinite(technicianId) || technicianId <= 0) {
+  const userId = Number(values.userId);
+  if (!Number.isFinite(userId) || userId <= 0) {
     return "Selecciona un técnico.";
   }
 
@@ -164,7 +164,7 @@ export function toTechnicalServiceRequest(
 
   return {
     printerId,
-    technicianId,
+    userId,
     serviceCenterId,
     distributorId,
     sealTampered: values.sealTampered,

@@ -11,7 +11,7 @@ import {
   type CatalogRolesSnapshot,
 } from "@/lib/catalog-roles-cache";
 import { fetchDistributorContracts } from "@/lib/distributor-contracts-api";
-import { fetchEmployees } from "@/lib/employees-api";
+import { fetchUsers } from "@/lib/users-api";
 import { fetchPrinters } from "@/lib/printers-api";
 import { fetchServiceCenterContracts } from "@/lib/service-center-contracts-api";
 import { fetchUsers } from "@/lib/users-api";
@@ -20,12 +20,11 @@ import { can } from "@/lib/permissions/can";
 import {
   branchIdsFromScope,
   filterByBranchScope,
-  filterEmployeesInScope,
   filterPrintersForUser,
 } from "@/lib/scope-filters";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
-import type { EmployeeResponse } from "@/types/employee";
+import type { UserResponse } from "@/types/user";
 import type { PrinterResponse, PrinterStatus } from "@/types/printer";
 import type { Role } from "@/types/user";
 
@@ -41,8 +40,8 @@ export type DashboardStat = {
 const STAT_HREFS: Record<string, string> = {
   Empresas: "/branches",
   Impresoras: "/printers",
-  Empleados: "/employees",
   Clientes: "/clients",
+  Usuarios: "/users",
   Distribuidores: "/branches",
   "Centros de servicio": "/branches",
 };
@@ -131,7 +130,7 @@ export function countPrintersByStatus(
     counts.set(status, (counts.get(status) ?? 0) + 1);
   }
   const statuses =
-    role === "DISTRIBUTOR" ? DISTRIBUTOR_PRINTER_STATUSES : ALL_PRINTER_STATUSES;
+    role === "TECHNICIAN" ? DISTRIBUTOR_PRINTER_STATUSES : ALL_PRINTER_STATUSES;
   return statuses.map((status) => ({
     status,
     label: PRINTER_STATUS_LABELS[status],
@@ -276,7 +275,6 @@ export function uniquePlaces(branches: BranchResponse[]): string {
 
 function buildActivity(
   printers: PrinterResponse[],
-  employees: EmployeeResponse[],
   branches: BranchResponse[],
 ): DashboardActivity[] {
   const items: DashboardActivity[] = [
@@ -285,12 +283,6 @@ function buildActivity(
       label: `Impresora ${p.fiscalSerial} registrada`,
       time: formatRelativeTime(p.createdAt),
       sortKey: new Date(p.createdAt).getTime() || 0,
-    })),
-    ...employees.map((e) => ({
-      id: `employee-${e.id}`,
-      label: `Empleado ${e.name} añadido`,
-      time: formatRelativeTime(e.createdAt),
-      sortKey: new Date(e.createdAt).getTime() || 0,
     })),
     ...branches.map((b) => ({
       id: `branch-${b.id}`,
@@ -313,7 +305,7 @@ function buildStats(
     clients: number;
     distributors: number;
     serviceCenters: number;
-    employees: number;
+    technicians: number;
     printers: PrinterResponse[];
     users: number | null;
     activeContracts: number | null;
@@ -350,10 +342,10 @@ function buildStats(
           hint: `${activePrinters} operativas · ${paidPrinters} pagadas`,
         },
         {
-          title: "Empleados",
-          value: String(counts.employees),
+          title: "Usuarios",
+          value: String(counts.technicians),
           hint: [
-            counts.users != null ? `${counts.users} usuarios` : null,
+            counts.users != null ? `${counts.users} cuentas activas` : null,
             counts.activeContracts != null
               ? `${counts.activeContracts} contratos vigentes`
               : null,
@@ -362,7 +354,7 @@ function buildStats(
             .join(" · ") || undefined,
         },
       ];
-    case "DISTRIBUTOR":
+    case "TECHNICIAN":
       return [
         {
           title: "Impresoras",
@@ -375,35 +367,11 @@ function buildStats(
           hint: `${counts.branches.length} empresas en red`,
         },
         {
-          title: "Empleados",
-          value: String(counts.employees),
+          title: "Técnicos",
+          value: String(counts.technicians),
           hint: `${counts.companies.length} empresas vinculadas`,
         },
       ];
-    case "TECHNICIAN":
-      return [
-        {
-          title: "Impresoras",
-          value: String(counts.printers.length),
-          hint: `${activePrinters} operativas · ${counts.printers.filter((p) => p.status === "laboratorio").length} en laboratorio`,
-        },
-        {
-          title: "Empleados",
-          value: String(counts.employees),
-          hint: `${counts.branches.length} empresas cubiertas`,
-        },
-        {
-          title: "Empresas",
-          value: String(counts.branches.length),
-          hint: placesHint,
-        },
-        {
-          title: "Distribuidores",
-          value: String(counts.distributors),
-          hint: `${counts.serviceCenters} centros de servicio`,
-        },
-      ];
-    case "SERVICE_CENTER":
     default:
       return [
         {
@@ -412,8 +380,8 @@ function buildStats(
           hint: branchHint,
         },
         {
-          title: "Empleados",
-          value: String(counts.employees),
+          title: "Técnicos",
+          value: String(counts.technicians),
           hint: placesHint,
         },
         {
@@ -441,7 +409,7 @@ export async function loadDashboardSnapshot(options: {
     clientsP,
     distributorsP,
     serviceCentersP,
-    employeesP,
+    techniciansP,
     printersP,
     usersP,
     contractsP,
@@ -463,8 +431,8 @@ export async function loadDashboardSnapshot(options: {
         ? Promise.resolve(catalogRoles.serviceCenters)
         : loadCatalogRoles().then((r) => r.serviceCenters),
     ),
-    settled(fetchEmployees()),
-    role === "ADMIN" || role === "DISTRIBUTOR" || role === "TECHNICIAN"
+    settled(fetchUsers()),
+    role === "ADMIN" || role === "TECHNICIAN"
       ? settled(fetchPrinters())
       : Promise.resolve(null),
     can(role, "users", "read") ? settled(fetchUsers()) : Promise.resolve(null),
@@ -483,11 +451,11 @@ export async function loadDashboardSnapshot(options: {
   const clients = clientsP.ok ? clientsP.value : [];
   const distributors = distributorsP.ok ? distributorsP.value : [];
   const serviceCenters = serviceCentersP.ok ? serviceCentersP.value : [];
-  const employeesRaw = employeesP.ok ? employeesP.value : [];
+  const techniciansRaw: UserResponse[] = techniciansP.ok ? techniciansP.value : [];
 
   if (!companiesP.ok) loadWarnings.push("No se pudieron cargar las empresas.");
   if (!branchesP.ok) loadWarnings.push("No se pudieron cargar las empresas.");
-  if (!employeesP.ok) loadWarnings.push("No se pudieron cargar los empleados.");
+  if (!techniciansP.ok) loadWarnings.push("No se pudieron cargar los usuarios.");
   if (printersP && !printersP.ok) {
     loadWarnings.push("No se pudieron cargar las impresoras.");
   }
@@ -509,13 +477,7 @@ export async function loadDashboardSnapshot(options: {
     branchIds,
     role,
   );
-  const employees = filterEmployeesInScope(
-    employeesRaw,
-    companyIds,
-    role,
-    userBranchId,
-    branches,
-  );
+  const technicians = techniciansRaw.filter((user) => user.role === "TECHNICIAN");
 
   let printers: PrinterResponse[] = [];
   if (printersP?.ok) {
@@ -542,7 +504,7 @@ export async function loadDashboardSnapshot(options: {
     clients: scopedClients.length,
     distributors: scopedDistributors.length,
     serviceCenters: scopedServiceCenters.length,
-    employees: employees.length,
+    technicians: technicians.length,
     printers,
     users,
     activeContracts,
@@ -550,15 +512,15 @@ export async function loadDashboardSnapshot(options: {
 
   const printerStatusCounts = countPrintersByStatus(printers, role);
   const monthlyStatusMix =
-    role === "DISTRIBUTOR" ? printersStatusMixByMonth(printers) : undefined;
+    role === "TECHNICIAN" ? printersStatusMixByMonth(printers) : undefined;
   const monthlySales =
-    role === "DISTRIBUTOR" ? distributorSalesByMonth(printers) : undefined;
+    role === "TECHNICIAN" ? distributorSalesByMonth(printers) : undefined;
   const monthlyPrinterRegistrations = printersByMonth(printers);
   const recentPrinters = [...printers]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt, "es"))
     .slice(0, 6);
 
-  const activity = buildActivity(printers, employees, scopedBranches);
+  const activity = buildActivity(printers, scopedBranches);
 
   return {
     stats: stats.slice(0, 4).map(withStatHref),

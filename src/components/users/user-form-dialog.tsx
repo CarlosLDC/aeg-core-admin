@@ -1,14 +1,13 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { SegmentedToggle } from "@/components/ui/segmented-toggle";
-import { RoleBadge } from "@/components/users/role-badge";
-import { BranchSelect } from "@/components/users/branch-select";
+import { DistributorIdSelect } from "@/components/users/distributor-id-select";
 import { PasswordInput } from "@/components/ui/password-input";
-import { ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/roles";
+import { ROLE_DESCRIPTIONS } from "@/lib/roles";
 import {
   userPortalAccessDetail,
   userPortalAccessLabel,
@@ -17,20 +16,18 @@ import {
   USER_ROLE_TOGGLE_TONE,
   formFieldInputClass,
 } from "@/lib/toggle-button-styles";
-import {
-  eligibleRolesForBranch,
-} from "@/lib/user-form";
-import type { DistributorResponse } from "@/types/branch-role";
-import type { ServiceCenterResponse } from "@/types/branch-role";
 import type { BranchResponse } from "@/types/branch";
+import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { Role, UserResponse } from "@/types/user";
+
 export type UserFormValues = {
   name: string;
   email: string;
   password: string;
   role: Role;
-  branchId: string;
+  distributorId: string;
+  nationalId: string;
   enabled: boolean;
 };
 
@@ -40,8 +37,7 @@ type UserFormDialogProps = {
   branches: BranchResponse[];
   companies: CompanyResponse[];
   distributors: DistributorResponse[];
-  serviceCenters: ServiceCenterResponse[];
-  branchesLoading: boolean;
+  catalogLoading: boolean;
   open: boolean;
   saving: boolean;
   error: string | null;
@@ -53,8 +49,9 @@ const emptyForm: UserFormValues = {
   name: "",
   email: "",
   password: "",
-  role: "DISTRIBUTOR",
-  branchId: "",
+  role: "TECHNICIAN",
+  distributorId: "",
+  nationalId: "",
   enabled: true,
 };
 
@@ -64,8 +61,7 @@ export function UserFormDialog({
   branches,
   companies,
   distributors,
-  serviceCenters,
-  branchesLoading,
+  catalogLoading,
   open,
   saving,
   error,
@@ -78,55 +74,27 @@ export function UserFormDialog({
   const needsOperationalAssignment = !isAdminUser && !isSeniatUser;
   const accessKind = isAdminUser ? "admin" : isSeniatUser ? "seniat" : "operativo";
 
-  const availableRoles = useMemo(
-    () =>
-      eligibleRolesForBranch(form.branchId, {
-        distributors,
-        serviceCenters,
-      }),
-    [form.branchId, distributors, serviceCenters],
-  );
-
-  const branchesForRole = useMemo(
-    () =>
-      branches.filter((branch) =>
-        eligibleRolesForBranch(String(branch.id), {
-          distributors,
-          serviceCenters,
-        }).length > 0,
-      ),
-    [branches, distributors, serviceCenters],
-  );
-
-  function handleBranchChange(branchId: string) {
-    setForm((f) => {
-      const eligible = eligibleRolesForBranch(branchId, {
-        distributors,
-        serviceCenters,
-      });
-      const next: UserFormValues = { ...f, branchId };
-      if (!eligible.includes(f.role)) {
-        next.role = eligible[0] ?? "DISTRIBUTOR";
-      }
-      return next;
-    });
-  }
-
-  function handleRoleChange(role: Role) {
-    setForm((f) => ({ ...f, role }));
-  }
-
   function handleAccessKindChange(kind: "operativo" | "admin" | "seniat") {
     setForm((f) => {
       if (kind === "admin") {
-        return { ...f, role: "ADMIN", branchId: "" };
+        return {
+          ...f,
+          role: "ADMIN",
+          distributorId: "",
+          nationalId: "",
+        };
       }
       if (kind === "seniat") {
-        return { ...f, role: "SENIAT", branchId: "" };
+        return {
+          ...f,
+          role: "SENIAT",
+          distributorId: "",
+          nationalId: "",
+        };
       }
       return {
         ...f,
-        role: f.role === "ADMIN" || f.role === "SENIAT" ? "DISTRIBUTOR" : f.role,
+        role: "TECHNICIAN",
       };
     });
   }
@@ -139,19 +107,15 @@ export function UserFormDialog({
         email: user.email ?? user.username ?? "",
         password: "",
         role: user.role,
-        branchId: user.branchId != null ? String(user.branchId) : "",
+        distributorId:
+          user.distributorId != null ? String(user.distributorId) : "",
+        nationalId: user.nationalId ?? "",
         enabled: user.enabled,
       });
     } else {
       setForm(emptyForm);
     }
   }, [open, mode, user]);
-
-  useEffect(() => {
-    if (!form.branchId || availableRoles.length === 0) return;
-    if (availableRoles.includes(form.role)) return;
-    setForm((prev) => ({ ...prev, role: availableRoles[0]! }));
-  }, [availableRoles, form.branchId, form.role]);
 
   if (!open) return null;
 
@@ -272,7 +236,7 @@ export function UserFormDialog({
                 {
                   value: "operativo",
                   label: "Usuario operativo",
-                  tone: USER_ROLE_TOGGLE_TONE.DISTRIBUTOR,
+                  tone: USER_ROLE_TOGGLE_TONE.TECHNICIAN,
                 },
                 {
                   value: "admin",
@@ -291,7 +255,7 @@ export function UserFormDialog({
                 ? ROLE_DESCRIPTIONS.ADMIN
                 : isSeniatUser
                   ? ROLE_DESCRIPTIONS.SENIAT
-                  : "Requiere empresa y rol operativo. Accede al panel y al libro fiscal."}
+                  : ROLE_DESCRIPTIONS.TECHNICIAN}
             </p>
             <p className="text-xs text-muted">
               Portales:{" "}
@@ -310,46 +274,40 @@ export function UserFormDialog({
               </legend>
               <div className="grid gap-4 md:grid-cols-2 md:items-start">
                 <div className="min-w-0">
-                  <FieldLabel required>Empresa</FieldLabel>
-                  <BranchSelect
-                    value={form.branchId}
-                    onChange={handleBranchChange}
-                    branches={branchesForRole}
+                  <FieldLabel required>Distribuidora</FieldLabel>
+                  <DistributorIdSelect
+                    value={form.distributorId}
+                    onChange={(distributorId) =>
+                      setForm((f) => ({ ...f, distributorId }))
+                    }
+                    distributors={distributors}
+                    branches={branches}
                     companies={companies}
-                    loading={branchesLoading}
-                    disabled={branchesLoading}
+                    loading={catalogLoading}
+                    disabled={catalogLoading}
+                    required
                   />
                 </div>
 
-                <div className="min-w-0">
-                  <FieldLabel required>Rol</FieldLabel>
-                  {availableRoles.length === 0 ? (
-                    <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted">
-                      Selecciona una empresa para ver roles disponibles.
-                    </p>
-                  ) : availableRoles.length === 1 ? (
-                    <div className="flex h-10 w-full items-center rounded-lg border border-border bg-foreground/[0.03] px-3">
-                      <RoleBadge role={availableRoles[0]!} />
-                    </div>
-                  ) : (
-                    <SegmentedToggle
-                      value={form.role}
-                      onChange={handleRoleChange}
-                      ariaLabel="Roles disponibles para la empresa"
-                      options={availableRoles.map((role) => ({
-                        value: role,
-                        label: ROLE_LABELS[role],
-                        tone: USER_ROLE_TOGGLE_TONE[role],
-                      }))}
-                    />
-                  )}
-                </div>
+                <label className="block min-w-0">
+                  <FieldLabel required>Cédula</FieldLabel>
+                  <input
+                    type="text"
+                    required
+                    value={form.nationalId}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, nationalId: e.target.value }))
+                    }
+                    placeholder="Ej. V-12345678"
+                    className={formFieldInputClass}
+                  />
+                </label>
               </div>
 
-              {branchesForRole.length === 0 && (
+              {distributors.length === 0 && !catalogLoading && (
                 <p className="text-xs text-amber-700 dark:text-amber-300">
-                  No hay empresas con roles operativos habilitados. Asigna rol de
-                  distribuidor o centro de servicio en Empresas.
+                  No hay distribuidoras registradas. Asigna el rol de distribuidor
+                  en Empresas antes de crear usuarios técnicos.
                 </p>
               )}
             </fieldset>
@@ -372,7 +330,7 @@ export function UserFormDialog({
           <FormDialogFooter
             mode={mode}
             saving={saving}
-            submitDisabled={needsOperationalAssignment && branchesLoading}
+            submitDisabled={needsOperationalAssignment && catalogLoading}
             onClose={onClose}
             createLabel="Crear usuario"
           />

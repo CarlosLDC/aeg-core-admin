@@ -28,18 +28,26 @@ export function userPortalAccessDetail(role: Role): string {
     case "ADMIN":
       return "Accede al panel con permisos globales y al libro fiscal con la misma cuenta.";
     default:
-      return "Accede al panel según su rol operativo y al libro fiscal con el mismo correo y clave.";
+      return "Accede al panel según su distribuidora y al libro fiscal con el mismo correo y clave.";
   }
 }
 
-export function userBranchDisplayLabel(
+export function userDistributorDisplayLabel(
   role: Role,
-  branchLabel: string | null | undefined,
+  distributorLabel: string | null | undefined,
 ): string {
-  if (!roleHasGlobalScope(role)) {
-    return branchLabel?.trim() || "—";
+  if (roleHasGlobalScope(role)) {
+    return role === "SENIAT" ? "Global (auditoría)" : "Global (administrador)";
   }
-  return role === "SENIAT" ? "Global (auditoría)" : "Global (administrador)";
+  return distributorLabel?.trim() || "—";
+}
+
+export function userNationalIdDisplayLabel(
+  role: Role,
+  nationalId: string | null | undefined,
+): string {
+  if (role !== "TECHNICIAN") return "—";
+  return nationalId?.trim() || "—";
 }
 
 export function userFiscalBookWriteLabel(role: Role): string {

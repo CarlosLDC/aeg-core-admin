@@ -71,7 +71,7 @@ export function NotificationsProvider({
   }, [user?.username]);
 
   useEffect(() => {
-    if (user?.role !== "DISTRIBUTOR") {
+    if (user?.role !== "TECHNICIAN") {
       setDistributorId(user?.distributorId ?? null);
       return;
     }

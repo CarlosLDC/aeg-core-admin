@@ -2,12 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
-import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
@@ -17,24 +15,19 @@ import {
 } from "@/lib/client-modification-requests-api";
 import { formatDate } from "@/lib/datetime-form";
 import {
-  fetchEmployeeModificationRequests,
-  getEmployeeModificationRequestsErrorMessage,
-} from "@/lib/employee-modification-requests-api";
-import {
   DEFAULT_POLL_INTERVAL_MS,
   DEFAULT_RETRY_DELAYS_MS,
   sleep,
 } from "@/lib/polling";
-import { clientPath, employeePath } from "@/lib/resource-routes";
-import type { ModificationActionType } from "@/types/client-modification-request";
-import type { ModificationRequestStatus } from "@/types/employee-modification-request";
+import { clientPath } from "@/lib/resource-routes";
+import type {
+  ModificationActionType,
+  ModificationRequestStatus,
+} from "@/types/client-modification-request";
 import { cn } from "@/lib/utils";
 
-type ReviewSection = "employees" | "clients";
-
-type UnifiedReviewRow = {
+type ReviewRow = {
   id: number;
-  section: ReviewSection;
   resourceId: number;
   resourceName: string;
   actionType: ModificationActionType;
@@ -42,7 +35,6 @@ type UnifiedReviewRow = {
   requestedByName: string;
   createdAt: string;
   reviewHref: string;
-  resourceHref: string;
 };
 
 const STATUS_LABELS: Record<ModificationRequestStatus, string> = {
@@ -56,24 +48,9 @@ const ACTION_LABELS: Record<ModificationActionType, string> = {
   DELETE: "Eliminacion",
 };
 
-function pendingBadgeClass(active: boolean): string {
-  return cn(
-    "inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold",
-    active
-      ? "bg-accent-foreground/20 text-accent-foreground"
-      : "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-  );
-}
-
 export function ModificationReviewsManager() {
   const toast = useToast();
-  const searchParams = useSearchParams();
-  const sectionParam = searchParams.get("section");
-  const initialSection: ReviewSection =
-    sectionParam === "clients" ? "clients" : "employees";
-
-  const [activeSection, setActiveSection] = useState<ReviewSection>(initialSection);
-  const [rows, setRows] = useState<UnifiedReviewRow[]>([]);
+  const [rows, setRows] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -81,7 +58,6 @@ export function ModificationReviewsManager() {
     "all",
   );
   const userChangedStatusFilter = useRef(false);
-  const userChangedSectionFilter = useRef(false);
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false;
@@ -90,78 +66,36 @@ export function ModificationReviewsManager() {
       setError(null);
     }
     try {
-      const [
-        pendingEmployees,
-        approvedEmployees,
-        rejectedEmployees,
-        pendingClients,
-        approvedClients,
-        rejectedClients,
-      ] = await Promise.all([
-        fetchEmployeeModificationRequests("PENDING"),
-        fetchEmployeeModificationRequests("APPROVED"),
-        fetchEmployeeModificationRequests("REJECTED"),
+      const [pendingClients, approvedClients, rejectedClients] = await Promise.all([
         fetchClientModificationRequests("PENDING"),
         fetchClientModificationRequests("APPROVED"),
         fetchClientModificationRequests("REJECTED"),
       ]);
 
-      const nextRows: UnifiedReviewRow[] = [
-        ...pendingEmployees,
-        ...approvedEmployees,
-        ...rejectedEmployees,
+      const nextRows: ReviewRow[] = [
+        ...pendingClients,
+        ...approvedClients,
+        ...rejectedClients,
       ].map((row) => ({
         id: row.id,
-        section: "employees",
-        resourceId: row.employeeId,
-        resourceName: row.employeeName,
+        resourceId: row.clientId,
+        resourceName: row.clientName,
         actionType: row.actionType,
         status: row.status,
         requestedByName: row.requestedByName,
         createdAt: row.createdAt,
-        reviewHref: `/reviews/employees/${row.id}`,
-        resourceHref: employeePath(row.employeeId),
+        reviewHref: `/reviews/clients/${row.id}`,
       }));
 
-      nextRows.push(
-        ...[...pendingClients, ...approvedClients, ...rejectedClients].map((row) => ({
-          id: row.id,
-          section: "clients" as const,
-          resourceId: row.clientId,
-          resourceName: row.clientName,
-          actionType: row.actionType,
-          status: row.status,
-          requestedByName: row.requestedByName,
-          createdAt: row.createdAt,
-          reviewHref: `/reviews/clients/${row.id}`,
-          resourceHref: clientPath(row.clientId),
-        })),
-      );
-
-      const employeePendingCount = pendingEmployees.length;
-      const clientPendingCount = pendingClients.length;
-      if (!userChangedSectionFilter.current) {
-        if (employeePendingCount > 0) {
-          setActiveSection("employees");
-        } else if (clientPendingCount > 0) {
-          setActiveSection("clients");
-        }
-      }
-
-      const pendingCount = employeePendingCount + clientPendingCount;
       if (!userChangedStatusFilter.current) {
-        setStatusFilter(pendingCount > 0 ? "PENDING" : "all");
+        setStatusFilter(pendingClients.length > 0 ? "PENDING" : "all");
       }
       setRows(nextRows.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)));
       if (!silent) setError(null);
       return true;
     } catch (err) {
       if (silent) return false;
-      const employeeError = getEmployeeModificationRequestsErrorMessage(err);
-      const message =
-        employeeError === "Ha ocurrido un error inesperado."
-          ? getClientModificationRequestsErrorMessage(err)
-          : employeeError;
+      const message = getClientModificationRequestsErrorMessage(err);
       setError(message);
       toast.error(message);
       return false;
@@ -214,76 +148,21 @@ export function ModificationReviewsManager() {
     };
   }, [load]);
 
-  const employeePendingCount = useMemo(
-    () => rows.filter((row) => row.section === "employees" && row.status === "PENDING").length,
-    [rows],
-  );
-  const clientPendingCount = useMemo(
-    () => rows.filter((row) => row.section === "clients" && row.status === "PENDING").length,
-    [rows],
-  );
-
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return rows.filter((row) => {
-      if (row.section !== activeSection) return false;
       if (statusFilter !== "all" && row.status !== statusFilter) return false;
       if (!q) return true;
       return `${row.id} ${row.resourceName} ${row.requestedByName} ${row.actionType}`
         .toLowerCase()
         .includes(q);
     });
-  }, [rows, activeSection, search, statusFilter]);
+  }, [rows, search, statusFilter]);
 
   const pagination = usePagination(filtered);
-  const sectionLabel = activeSection === "employees" ? "empleado" : "cliente";
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-center">
-        <SegmentedToggle
-          value={activeSection}
-          onChange={(next) => {
-            userChangedSectionFilter.current = true;
-            setActiveSection(next);
-          }}
-          ariaLabel="Sección de revisiones"
-          options={[
-            {
-              value: "employees",
-              label: (
-                <span className="inline-flex items-center gap-2">
-                  Empleados
-                  {employeePendingCount > 0 ? (
-                    <span
-                      className={pendingBadgeClass(activeSection === "employees")}
-                    >
-                      {employeePendingCount}
-                    </span>
-                  ) : null}
-                </span>
-              ),
-            },
-            {
-              value: "clients",
-              label: (
-                <span className="inline-flex items-center gap-2">
-                  Clientes
-                  {clientPendingCount > 0 ? (
-                    <span
-                      className={pendingBadgeClass(activeSection === "clients")}
-                    >
-                      {clientPendingCount}
-                    </span>
-                  ) : null}
-                </span>
-              ),
-            },
-          ]}
-          className="w-full max-w-md"
-        />
-      </div>
-
       {error && (
         <p
           role="alert"
@@ -306,9 +185,9 @@ export function ModificationReviewsManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder={`Buscar por ${sectionLabel} o solicitante...`}
+              searchPlaceholder="Buscar por cliente o solicitante..."
               resultCount={filtered.length}
-              totalCount={rows.filter((row) => row.section === activeSection).length}
+              totalCount={rows.length}
               filters={[
                 {
                   id: "status",
@@ -336,9 +215,7 @@ export function ModificationReviewsManager() {
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <th className="px-5 py-3 font-medium">Solicitud</th>
-                        <th className="px-5 py-3 font-medium">
-                          {activeSection === "employees" ? "Empleado" : "Cliente"}
-                        </th>
+                        <th className="px-5 py-3 font-medium">Cliente</th>
                         <th className="px-5 py-3 font-medium">Accion</th>
                         <th className="px-5 py-3 font-medium">Estado</th>
                         <th className="px-5 py-3 font-medium">Solicitado por</th>
@@ -347,7 +224,7 @@ export function ModificationReviewsManager() {
                     </thead>
                     <tbody>
                       {pagination.paginatedItems.map((row) => (
-                        <ClickableTableRow key={`${row.section}-${row.id}`} href={row.reviewHref}>
+                        <ClickableTableRow key={row.id} href={row.reviewHref}>
                           <td className="px-5 py-3.5 font-mono">
                             <Link href={row.reviewHref} className="text-accent hover:underline">
                               {row.id}

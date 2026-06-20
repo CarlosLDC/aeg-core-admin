@@ -9,28 +9,25 @@ import { fetchBranches } from "@/lib/branches-api";
 import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
-import { fetchEmployees } from "@/lib/employees-api";
 import {
   distributorSelectOptions,
-  employeeSelectOptions,
   printerSelectOptions,
   sealSelectOptions,
   serviceCenterSelectOptions,
-  technicianSelectOptions,
+  technicianUserSelectOptions,
 } from "@/lib/field-operations-catalog";
 import { fetchPrinters } from "@/lib/printers-api";
 import { applyScopedFieldCatalog } from "@/lib/scope-filters";
 import { fetchSeals } from "@/lib/seals-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
+import { fetchUsers } from "@/lib/users-api";
 import type { PrinterResponse } from "@/types/printer";
 
 export function useFieldOperationsCatalog() {
   const { user } = useAuth();
   const { scope } = useCompanyScope();
   const canLoadPrinters =
-    user?.role === "ADMIN" ||
-    user?.role === "DISTRIBUTOR" ||
-    user?.role === "TECHNICIAN";
+    user?.role === "ADMIN" || user?.role === "TECHNICIAN";
 
   const [loading, setLoading] = useState(true);
   const [scopedPrinters, setScopedPrinters] = useState<PrinterResponse[]>([]);
@@ -40,14 +37,11 @@ export function useFieldOperationsCatalog() {
   const [scopedPrinterIds, setScopedPrinterIds] = useState<Set<number>>(
     () => new Set(),
   );
-  const [scopedEmployeeIds, setScopedEmployeeIds] = useState<Set<number>>(
-    () => new Set(),
-  );
+  const [scopedTechnicianUserIds, setScopedTechnicianUserIds] = useState<
+    Set<number>
+  >(() => new Set());
   const [sealOptions, setSealOptions] = useState<SearchableSelectOption[]>([]);
-  const [technicianOptions, setTechnicianOptions] = useState<
-    SearchableSelectOption[]
-  >([]);
-  const [employeeOptions, setEmployeeOptions] = useState<
+  const [technicianUserOptions, setTechnicianUserOptions] = useState<
     SearchableSelectOption[]
   >([]);
   const [serviceCenterOptions, setServiceCenterOptions] = useState<
@@ -56,6 +50,7 @@ export function useFieldOperationsCatalog() {
   const [distributorOptions, setDistributorOptions] = useState<
     SearchableSelectOption[]
   >([]);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -63,21 +58,24 @@ export function useFieldOperationsCatalog() {
     setLoading(true);
     try {
       let distributorId = user.distributorId;
-      if (user.role === "DISTRIBUTOR" && distributorId == null) {
+      let authUserId: number | null = null;
+      if (user.role === "TECHNICIAN") {
         try {
           const me = await fetchAuthMe();
-          distributorId = me.distributorId ?? null;
+          distributorId = me.distributorId ?? distributorId;
+          authUserId = me.id;
         } catch {
           /* sin /api/auth/me */
         }
       }
+      setCurrentUserId(authUserId);
 
       const [
         companies,
         branches,
         printersRaw,
         sealsRaw,
-        employeesRaw,
+        technicianUsersRaw,
         centersRaw,
         distributorsRaw,
         clientsRaw,
@@ -86,7 +84,7 @@ export function useFieldOperationsCatalog() {
         scope ? Promise.resolve(scope.branches) : fetchBranches(),
         canLoadPrinters ? fetchPrinters().catch(() => []) : Promise.resolve([]),
         fetchSeals().catch(() => []),
-        fetchEmployees().catch(() => []),
+        fetchUsers().catch(() => []),
         fetchServiceCenters().catch(() => []),
         fetchDistributors().catch(() => []),
         fetchClients().catch(() => []),
@@ -96,27 +94,28 @@ export function useFieldOperationsCatalog() {
         role: user.role,
         scope,
         distributorId,
-        userBranchId: user.branchId,
         companies,
         branches,
         clients: clientsRaw,
         distributors: distributorsRaw,
         serviceCenters: centersRaw,
-        employees: employeesRaw,
-        technicians: [],
+        technicianUsers: technicianUsersRaw.filter(
+          (row) => row.role === "TECHNICIAN" && row.enabled,
+        ),
         printers: printersRaw,
         seals: sealsRaw,
       });
 
       setScopedPrinterIds(scoped.printerIds);
-      setScopedEmployeeIds(new Set(scoped.employees.map((e) => e.id)));
+      setScopedTechnicianUserIds(
+        new Set(scoped.technicianUsers.map((row) => row.id)),
+      );
       setScopedPrinters(scoped.printers);
       setPrinterOptions(printerSelectOptions(scoped.printers));
       setSealOptions(sealSelectOptions(scoped.seals));
-      setTechnicianOptions(
-        technicianSelectOptions(scoped.employees),
+      setTechnicianUserOptions(
+        technicianUserSelectOptions(scoped.technicianUsers),
       );
-      setEmployeeOptions(employeeSelectOptions(scoped.employees));
       setServiceCenterOptions(
         serviceCenterSelectOptions(
           scoped.serviceCenters,
@@ -146,14 +145,14 @@ export function useFieldOperationsCatalog() {
     printerOptions,
     scopedPrinters,
     scopedPrinterIds,
-    scopedEmployeeIds,
+    scopedTechnicianUserIds,
     sealOptions,
-    technicianOptions,
-    employeeOptions,
+    technicianUserOptions,
     serviceCenterOptions,
     distributorOptions,
     canLoadPrinters,
     role: user?.role,
     distributorId: user?.distributorId ?? null,
+    currentUserId,
   };
 }

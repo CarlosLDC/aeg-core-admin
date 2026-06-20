@@ -19,12 +19,10 @@ describe("PERMISSION_MATRIX completeness", () => {
     }
   });
 
-  it("only uses assignRoles on employees", () => {
+  it("does not use assignRoles on any resource", () => {
     for (const resource of RESOURCES) {
-      if (resource === "employees") continue;
       expect(PERMISSION_MATRIX[resource]?.assignRoles).toBeUndefined();
     }
-    expect(PERMISSION_MATRIX.employees?.assignRoles?.length).toBeGreaterThan(0);
   });
 
   it("covers standard CRUD or documented exceptions", () => {

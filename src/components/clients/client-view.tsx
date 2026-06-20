@@ -72,7 +72,7 @@ export function ClientView() {
     useState<Partial<ClientModificationProposedData> | null>(null);
   const canEditCompany = user ? canUpdateCompanyRecord(user.role) : false;
   const canEditBranch = user ? canUpdateBranchRecord(user.role) : false;
-  const canRequestReview = user?.role === "DISTRIBUTOR";
+  const canRequestReview = user?.role === "TECHNICIAN";
   const canCancelReview = user ? canCancelModificationReview(user.role) : false;
 
   const load = useCallback(async () => {
@@ -87,7 +87,7 @@ export function ClientView() {
     try {
       const clientRow = await fetchClientById(id);
       if (
-        user?.role === "DISTRIBUTOR" &&
+        user?.role === "TECHNICIAN" &&
         user.distributorId != null &&
         clientRow.distributorId !== user.distributorId
       ) {

@@ -29,7 +29,12 @@ import {
   updateTechnicalService,
 } from "@/lib/technical-services-api";
 import { catalogOptionLabel } from "@/lib/record-labels";
-import { printerPath, sealPath, technicalServicePath } from "@/lib/resource-routes";
+import {
+  printerPath,
+  sealPath,
+  technicalServicePath,
+  userPath,
+} from "@/lib/resource-routes";
 import type { TechnicalServiceResponse } from "@/types/technical-service";
 
 export function TechnicalServiceView() {
@@ -178,10 +183,11 @@ export function TechnicalServiceView() {
                 <DetailField
                   label="Técnico"
                   value={catalogOptionLabel(
-                    catalog.technicianOptions,
-                    service.technicianId,
+                    catalog.technicianUserOptions,
+                    service.userId,
                     "—",
                   )}
+                  href={userPath(service.userId)}
                 />
                 <DetailField
                   label="Centro de servicio"
@@ -308,7 +314,9 @@ export function TechnicalServiceView() {
           catalogLoading={catalog.loading}
           canLoadPrinters={catalog.canLoadPrinters}
           printerOptions={catalog.printerOptions}
-          technicianOptions={catalog.technicianOptions}
+          technicianUserOptions={catalog.technicianUserOptions}
+          currentUserRole={catalog.role}
+          currentUserId={catalog.currentUserId}
           sealOptions={catalog.sealOptions}
           serviceCenterOptions={catalog.serviceCenterOptions}
           distributorOptions={catalog.distributorOptions}

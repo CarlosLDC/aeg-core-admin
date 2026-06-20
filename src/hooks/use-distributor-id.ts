@@ -13,11 +13,11 @@ export function useDistributorIdState(): {
     user?.distributorId ?? null,
   );
   const [loading, setLoading] = useState<boolean>(
-    user?.role === "DISTRIBUTOR" && user.distributorId == null,
+    user?.role === "TECHNICIAN" && user.distributorId == null,
   );
 
   useEffect(() => {
-    if (user?.role !== "DISTRIBUTOR") {
+    if (user?.role !== "TECHNICIAN") {
       setDistributorId(null);
       setLoading(false);
       return;

@@ -86,16 +86,16 @@ export function AnnualInspectionsManager() {
   const tableColumns = useTableColumnVisibility("annual-inspections");
   const [search, setSearch] = useState("");
   const [printerFilter, setPrinterFilter] = useState("all");
-  const [employeeFilter, setEmployeeFilter] = useState("all");
+  const [technicianFilter, setTechnicianFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<AnnualInspectionSortKey>>(null);
 
   const printerLabelById = useMemo(
     () => new Map(catalog.printerOptions.map((p) => [p.value, p.label])),
     [catalog.printerOptions],
   );
-  const employeeLabelById = useMemo(
-    () => new Map(catalog.employeeOptions.map((e) => [e.value, e.label])),
-    [catalog.employeeOptions],
+  const technicianLabelById = useMemo(
+    () => new Map(catalog.technicianUserOptions.map((e) => [e.value, e.label])),
+    [catalog.technicianUserOptions],
   );
 
   const printerFilterOptions = useMemo(
@@ -103,9 +103,9 @@ export function AnnualInspectionsManager() {
     [catalog.printerOptions],
   );
 
-  const employeeFilterOptions = useMemo(
-    () => [filterAllOption("Todos los empleados"), ...catalog.employeeOptions],
-    [catalog.employeeOptions],
+  const technicianFilterOptions = useMemo(
+    () => [filterAllOption("Todos los técnicos"), ...catalog.technicianUserOptions],
+    [catalog.technicianUserOptions],
   );
 
   const inspectionPrinterOptions = useMemo(
@@ -127,8 +127,8 @@ export function AnnualInspectionsManager() {
         return false;
       }
       if (
-        employeeFilter !== "all" &&
-        String(row.employeeId) !== employeeFilter
+        technicianFilter !== "all" &&
+        String(row.userId) !== technicianFilter
       ) {
         return false;
       }
@@ -136,9 +136,9 @@ export function AnnualInspectionsManager() {
       const haystack = [
         row.id,
         row.printerId,
-        row.employeeId,
+        row.userId,
         printerLabelById.get(String(row.printerId)),
-        employeeLabelById.get(String(row.employeeId)),
+        technicianLabelById.get(String(row.userId)),
         row.notes,
         row.inspectionDate,
       ]
@@ -150,9 +150,9 @@ export function AnnualInspectionsManager() {
     rows,
     search,
     printerFilter,
-    employeeFilter,
+    technicianFilter,
     printerLabelById,
-    employeeLabelById,
+    technicianLabelById,
   ]);
 
   const sortedRows = useMemo(
@@ -178,11 +178,11 @@ export function AnnualInspectionsManager() {
     }
     try {
       const data = await fetchAnnualInspections();
-      const role = user?.role ?? "SERVICE_CENTER";
+      const role = user?.role ?? "TECHNICIAN";
       const scoped = filterAnnualInspectionsInScope(
         data,
         catalog.scopedPrinterIds,
-        catalog.scopedEmployeeIds,
+        catalog.scopedTechnicianUserIds,
         role,
       );
       setRows(
@@ -206,7 +206,7 @@ export function AnnualInspectionsManager() {
     toast,
     user?.role,
     catalog.scopedPrinterIds,
-    catalog.scopedEmployeeIds,
+    catalog.scopedTechnicianUserIds,
   ]);
 
   useEffect(() => {
@@ -336,7 +336,7 @@ export function AnnualInspectionsManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por impresora, empleado, fecha…"
+              searchPlaceholder="Buscar por impresora, técnico, fecha…"
               resultCount={filteredRows.length}
               totalCount={rows.length}
               filters={[
@@ -348,11 +348,11 @@ export function AnnualInspectionsManager() {
                   options: printerFilterOptions,
                 },
                 {
-                  id: "employee",
-                  label: "Empleado",
-                  value: employeeFilter,
-                  onChange: setEmployeeFilter,
-                  options: employeeFilterOptions,
+                  id: "technician",
+                  label: "Técnico",
+                  value: technicianFilter,
+                  onChange: setTechnicianFilter,
+                  options: technicianFilterOptions,
                 },
               ]}
               columns={tableColumns.toolbarColumns}
@@ -391,7 +391,7 @@ export function AnnualInspectionsManager() {
                           }
                         >
                         <th className="px-5 py-3 font-medium">Impresora</th>
-                        <th className="px-5 py-3 font-medium">Empleado</th>
+                        <th className="px-5 py-3 font-medium">Técnico</th>
                         <SortableTableHeader
                           label="Fecha"
                           sortDirection={
@@ -459,7 +459,7 @@ export function AnnualInspectionsManager() {
                           </td>
                           <td className="max-w-[180px] px-5 py-3.5 text-muted">
                             <TruncatedText maxClassName="max-w-[160px]">
-                              {employeeLabelById.get(String(row.employeeId)) ??
+                              {technicianLabelById.get(String(row.userId)) ??
                                 "—"}
                             </TruncatedText>
                           </td>
@@ -494,7 +494,9 @@ export function AnnualInspectionsManager() {
         catalogLoading={catalog.loading}
         canLoadPrinters={catalog.canLoadPrinters}
         printerOptions={inspectionPrinterOptions}
-        employeeOptions={catalog.employeeOptions}
+        technicianUserOptions={catalog.technicianUserOptions}
+        currentUserRole={catalog.role}
+        currentUserId={catalog.currentUserId}
         onClose={closeDialog}
         onSubmit={handleSubmit}
       />

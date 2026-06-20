@@ -26,9 +26,8 @@ function greetingForHour(): string {
 
 const ROLE_CONTEXT: Record<Role, string> = {
   ADMIN: "Vista global del catálogo operativo y la flota fiscal.",
-  DISTRIBUTOR: "Tu inventario de impresoras asignadas y enajenadas a clientes.",
-  TECHNICIAN: "Equipos en campo, precintos y personal de tu ámbito.",
-  SERVICE_CENTER: "Empresas y operaciones de tu centro.",
+  TECHNICIAN:
+    "Tu inventario de impresoras, clientes, precintos e inspecciones en tu distribuidora.",
   SENIAT: "Consulta del libro fiscal para auditoría tributaria.",
 };
 
@@ -53,15 +52,13 @@ export function DashboardWelcome({
     isPrinterOperative(p.status),
   ).length;
   const printerLine =
-    role === "DISTRIBUTOR"
+    role === "TECHNICIAN"
       ? snapshot.printers.length > 0
         ? `${snapshot.printers.length} en tu inventario · ${assignedCount} asignada${assignedCount === 1 ? "" : "s"} · ${disposedCount} enajenada${disposedCount === 1 ? "" : "s"} a clientes.`
         : "Aún no hay impresoras en tu inventario."
       : snapshot.printers.length > 0
         ? `${snapshot.printers.length} impresora${snapshot.printers.length === 1 ? "" : "s"} en tu ámbito · ${activePrinters} operativa${activePrinters === 1 ? "" : "s"}.`
-        : role === "SERVICE_CENTER"
-          ? "Tu rol no gestiona impresoras directamente."
-          : "Aún no hay impresoras en tu ámbito.";
+        : "Aún no hay impresoras en tu ámbito.";
 
   return (
     <section className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-card via-card to-accent/5 p-5 shadow-sm sm:p-6">

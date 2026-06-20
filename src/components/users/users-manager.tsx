@@ -7,11 +7,10 @@ import {
   UserFormDialog,
   type UserFormValues,
 } from "@/components/users/user-form-dialog";
-import { branchLabelById } from "@/lib/branches";
+import { distributorLabel } from "@/lib/branch-roles";
 import { fetchBranches } from "@/lib/branches-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
-import { fetchServiceCenters } from "@/lib/service-centers-api";
 import {
   createUser,
   deleteUser,
@@ -22,11 +21,11 @@ import {
 import {
   validateUserCreateForm,
   validateUserEditForm,
-  resolveUserBranchId,
+  resolveUserDistributorId,
+  resolveUserNationalId,
 } from "@/lib/user-form";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
-import type { ServiceCenterResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { UserResponse } from "@/types/user";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
@@ -59,8 +58,9 @@ import {
 import { usePagination } from "@/hooks/use-pagination";
 import { ROLE_LABELS } from "@/lib/roles";
 import {
-  userBranchDisplayLabel,
   userCreateSuccessMessage,
+  userDistributorDisplayLabel,
+  userNationalIdDisplayLabel,
   userPortalAccessLabel,
 } from "@/lib/user-access";
 import { ROLES } from "@/types/user";
@@ -93,6 +93,18 @@ function sortBranches(
   });
 }
 
+function distributorLabelForUser(
+  user: UserResponse,
+  distributors: DistributorResponse[],
+  branches: BranchResponse[],
+  companies: CompanyResponse[],
+): string {
+  if (user.distributorId == null) return "—";
+  const distributor = distributors.find((row) => row.id === user.distributorId);
+  if (!distributor) return `Distribuidora #${user.distributorId}`;
+  return distributorLabel(distributor, branches, companies);
+}
+
 export function UsersManager() {
   const { user } = useAuth();
   const toast = useToast();
@@ -101,9 +113,6 @@ export function UsersManager() {
   const [branches, setBranches] = useState<BranchResponse[]>([]);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
-  const [serviceCenters, setServiceCenters] = useState<ServiceCenterResponse[]>(
-    [],
-  );
   const [loading, setLoading] = useState(true);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
@@ -130,13 +139,16 @@ export function UsersManager() {
       if (statusFilter === "active" && !user.enabled) return false;
       if (statusFilter === "inactive" && user.enabled) return false;
       if (!q) return true;
-      const branch = branchLabelById(branches, companies, user.branchId);
-      const scope = userBranchDisplayLabel(user.role, branch);
+      const distributor = userDistributorDisplayLabel(
+        user.role,
+        distributorLabelForUser(user, distributors, branches, companies),
+      );
+      const cedula = userNationalIdDisplayLabel(user.role, user.nationalId);
       const haystack =
-        `${user.id} ${displayUserName(user)} ${user.email} ${user.role} ${userPortalAccessLabel(user.role)} ${scope}`.toLowerCase();
+        `${user.id} ${displayUserName(user)} ${user.email} ${user.role} ${userPortalAccessLabel(user.role)} ${distributor} ${cedula}`.toLowerCase();
       return haystack.includes(q);
     });
-  }, [users, search, roleFilter, portalFilter, statusFilter, branches, companies]);
+  }, [users, search, roleFilter, portalFilter, statusFilter, branches, companies, distributors]);
 
   const sortedUsers = useMemo(
     () =>
@@ -151,20 +163,17 @@ export function UsersManager() {
   const loadCatalog = useCallback(async () => {
     setCatalogLoading(true);
     try {
-      const [companyRows, branchRows, distributorRows, serviceCenterRows] =
-        await Promise.all([
+      const [companyRows, branchRows, distributorRows] = await Promise.all([
         fetchCompanies(),
         fetchBranches(),
         fetchDistributors(),
-        fetchServiceCenters(),
-        ]);
+      ]);
       const sortedCompanies = companyRows.sort((a, b) =>
         (a.businessName || "").localeCompare(b.businessName || "", "es"),
       );
       setCompanies(sortedCompanies);
       setBranches(sortBranches(branchRows, sortedCompanies));
       setDistributors(distributorRows);
-      setServiceCenters(serviceCenterRows);
     } catch (err) {
       const message = getUsersErrorMessage(err);
       setListError((prev) => prev ?? toListErrorMessage(message));
@@ -223,8 +232,8 @@ export function UsersManager() {
   async function handleSubmit(values: UserFormValues) {
     const validationError =
       dialog === "create"
-        ? validateUserCreateForm(values, { distributors, serviceCenters })
-        : validateUserEditForm(values, { distributors, serviceCenters });
+        ? validateUserCreateForm(values)
+        : validateUserEditForm(values);
 
     if (validationError) {
       setFormError(validationError);
@@ -233,7 +242,11 @@ export function UsersManager() {
 
     setSaving(true);
     setFormError(null);
-    const branchId = resolveUserBranchId(values.role, values.branchId);
+    const distributorId = resolveUserDistributorId(
+      values.role,
+      values.distributorId,
+    );
+    const nationalId = resolveUserNationalId(values.role, values.nationalId);
     const name = values.name.trim();
     const email = values.email.trim().toLowerCase();
 
@@ -244,7 +257,8 @@ export function UsersManager() {
           email,
           password: values.password,
           role: values.role,
-          branchId,
+          distributorId,
+          nationalId,
         });
         toast.success(userCreateSuccessMessage(name, values.role), {
           href: userPath(created.id),
@@ -254,7 +268,8 @@ export function UsersManager() {
           name,
           email,
           role: values.role,
-          branchId,
+          distributorId,
+          nationalId,
           enabled: values.enabled,
         };
         if (values.password.trim()) {
@@ -354,7 +369,7 @@ export function UsersManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por nombre, correo, rol o empresa…"
+              searchPlaceholder="Buscar por nombre, correo, rol o distribuidora…"
               resultCount={filteredUsers.length}
               totalCount={users.length}
               filters={[
@@ -401,7 +416,7 @@ export function UsersManager() {
             ) : (
               <>
                 <TableScroll>
-                  <table className="w-full min-w-[640px] text-left text-sm">
+                  <table className="w-full min-w-[760px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <TableRowMetaHeaders
@@ -424,6 +439,8 @@ export function UsersManager() {
                           <th className="px-5 py-3 font-medium">Nombre</th>
                           <th className="px-5 py-3 font-medium">Correo</th>
                           <th className="px-5 py-3 font-medium">Rol</th>
+                          <th className="px-5 py-3 font-medium">Distribuidora</th>
+                          <th className="px-5 py-3 font-medium">Cédula</th>
                           <th className="px-5 py-3 font-medium">Estado</th>
                         </TableRowMetaHeaders>
                       </tr>
@@ -463,6 +480,25 @@ export function UsersManager() {
                           <td className="px-5 py-3.5">
                             <RoleBadge role={user.role} />
                           </td>
+                          <td className="max-w-[180px] px-5 py-3.5 text-muted">
+                            <TruncatedText maxClassName="max-w-[160px]">
+                              {userDistributorDisplayLabel(
+                                user.role,
+                                distributorLabelForUser(
+                                  user,
+                                  distributors,
+                                  branches,
+                                  companies,
+                                ),
+                              )}
+                            </TruncatedText>
+                          </td>
+                          <td className="px-5 py-3.5 font-mono text-muted">
+                            {userNationalIdDisplayLabel(
+                              user.role,
+                              user.nationalId,
+                            )}
+                          </td>
                           <td className="px-5 py-3.5">
                             <span
                               className={cn(
@@ -494,8 +530,7 @@ export function UsersManager() {
         branches={branches}
         companies={companies}
         distributors={distributors}
-        serviceCenters={serviceCenters}
-        branchesLoading={catalogLoading}
+        catalogLoading={catalogLoading}
         open={dialog !== null}
         saving={saving}
         error={formError}

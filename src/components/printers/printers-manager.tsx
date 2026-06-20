@@ -140,7 +140,7 @@ export function PrintersManager() {
   const canCreate = user ? canCreatePrinterRecord(user.role) : false;
   const canModify = user ? canModifyPrinterRecord(user.role) : false;
   const isAdmin = user?.role === "ADMIN";
-  const isDistributor = user?.role === "DISTRIBUTOR";
+  const isDistributor = user?.role === "TECHNICIAN";
   const canAssignInitialized = isAdmin && canModify;
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
   const [authMeDistributorId, setAuthMeDistributorId] = useState<number | null>(

@@ -42,7 +42,7 @@ export function CompanyView() {
   const confirm = useConfirm();
   const { user } = useAuth();
   const { scope, refresh } = useCompanyScope();
-  const isDistributor = user?.role === "DISTRIBUTOR";
+  const isDistributor = user?.role === "TECHNICIAN";
   const canModify = user ? canUpdateCompanyRecord(user.role) : false;
   const canDelete = user ? canDeleteCompanyRecord(user.role) : false;
 

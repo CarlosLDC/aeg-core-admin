@@ -36,7 +36,7 @@ describe("toAnnualInspectionRequest", () => {
     const result = toAnnualInspectionRequest(
       {
         printerId: "2",
-        employeeId: "10",
+        userId: "10",
         sealTampered: false,
         notes: "",
         photoUrls: ["https://example.com/photo.jpg"],

@@ -14,12 +14,12 @@ describe("route permissions", () => {
     expect(canAccessRoute("ADMIN", "/users")).toBe(true);
   });
 
-  it("denies SERVICE_CENTER from /users", () => {
-    expect(canAccessRoute("SERVICE_CENTER", "/users")).toBe(false);
+  it("denies TECHNICIAN from /users", () => {
+    expect(canAccessRoute("TECHNICIAN", "/users")).toBe(false);
   });
 
   it("respects nav role restrictions on /mqtt-tests", () => {
-    const roles: Role[] = ["ADMIN", "DISTRIBUTOR", "TECHNICIAN", "SERVICE_CENTER"];
+    const roles: Role[] = ["ADMIN", "TECHNICIAN"];
     expect(roles.filter((r) => canAccessRoute(r, "/mqtt-tests"))).toEqual(["ADMIN"]);
   });
 
@@ -29,21 +29,21 @@ describe("route permissions", () => {
     expect(canAccessRoute("TECHNICIAN", "/docs/enajenacion-mqtt")).toBe(false);
   });
 
-  it("allows DISTRIBUTOR on /clients and denies /companies list", () => {
-    expect(canAccessRoute("DISTRIBUTOR", "/clients")).toBe(true);
+  it("allows TECHNICIAN on /clients and denies /companies list", () => {
+    expect(canAccessRoute("TECHNICIAN", "/clients")).toBe(true);
     expect(resourceForPath("/clients")).toBe("branches");
-    expect(canAccessRoute("DISTRIBUTOR", "/companies")).toBe(false);
-    expect(canAccessRoute("DISTRIBUTOR", "/companies/42")).toBe(true);
+    expect(canAccessRoute("TECHNICIAN", "/companies")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/companies/42")).toBe(true);
   });
 
-  it("allows ADMIN on /companies; /clients is DISTRIBUTOR-only in nav", () => {
+  it("allows ADMIN on /companies; /clients is TECHNICIAN-only in nav", () => {
     expect(canAccessRoute("ADMIN", "/companies")).toBe(true);
     expect(canAccessRoute("ADMIN", "/clients")).toBe(false);
   });
 
-  it("allows DISTRIBUTOR on client and branch detail routes", () => {
-    expect(canAccessRoute("DISTRIBUTOR", "/clients/42")).toBe(true);
-    expect(canAccessRoute("DISTRIBUTOR", "/branches/99")).toBe(true);
-    expect(canAccessRoute("DISTRIBUTOR", "/branches")).toBe(false);
+  it("allows TECHNICIAN on client and branch detail routes", () => {
+    expect(canAccessRoute("TECHNICIAN", "/clients/42")).toBe(true);
+    expect(canAccessRoute("TECHNICIAN", "/branches/99")).toBe(true);
+    expect(canAccessRoute("TECHNICIAN", "/branches")).toBe(true);
   });
 });

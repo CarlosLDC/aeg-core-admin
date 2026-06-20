@@ -11,15 +11,13 @@ import {
 import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
-import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
-import { branchLabelById } from "@/lib/branches";
+import { distributorLabel } from "@/lib/branch-roles";
 import { fetchBranches } from "@/lib/branches-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
-import { fetchServiceCenters } from "@/lib/service-centers-api";
 import { formatDate } from "@/lib/datetime-form";
 import {
   deleteUser,
@@ -27,20 +25,24 @@ import {
   getUsersErrorMessage,
   updateUser,
 } from "@/lib/users-api";
-import { validateUserEditForm, resolveUserBranchId } from "@/lib/user-form";
+import {
+  validateUserEditForm,
+  resolveUserDistributorId,
+  resolveUserNationalId,
+} from "@/lib/user-form";
 import { ROLE_DESCRIPTIONS } from "@/lib/roles";
 import {
   FISCAL_BOOK_PORTAL_URL,
-  userBranchDisplayLabel,
+  userDistributorDisplayLabel,
   userFiscalBookWriteLabel,
+  userNationalIdDisplayLabel,
   userPortalAccessDetail,
 } from "@/lib/user-access";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
-import type { ServiceCenterResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { UserResponse } from "@/types/user";
-import { branchPath, userPath } from "@/lib/resource-routes";
+import { userPath } from "@/lib/resource-routes";
 
 function displayUserName(user: UserResponse): string {
   return user.name?.trim() || user.username?.trim() || user.email;
@@ -51,15 +53,11 @@ export function UserView() {
   const router = useRouter();
   const toast = useToast();
   const confirm = useConfirm();
-  const { scope } = useCompanyScope();
 
   const [user, setUser] = useState<UserResponse | null>(null);
   const [branches, setBranches] = useState<BranchResponse[]>([]);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
-  const [serviceCenters, setServiceCenters] = useState<ServiceCenterResponse[]>(
-    [],
-  );
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,9 +65,6 @@ export function UserView() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-
-  const scopeBranches = scope?.branches ?? branches;
-  const scopeCompanies = scope?.companies ?? companies;
 
   const load = useCallback(async () => {
     if (id == null) {
@@ -97,18 +92,12 @@ export function UserView() {
   useEffect(() => {
     let cancelled = false;
     setCatalogLoading(true);
-    Promise.all([
-      scope ? Promise.resolve(scope.companies) : fetchCompanies(),
-      scope ? Promise.resolve(scope.branches) : fetchBranches(),
-      fetchDistributors(),
-      fetchServiceCenters(),
-    ])
-      .then(([companyRows, branchRows, distributorRows, serviceCenterRows]) => {
+    Promise.all([fetchCompanies(), fetchBranches(), fetchDistributors()])
+      .then(([companyRows, branchRows, distributorRows]) => {
         if (cancelled) return;
         setCompanies(companyRows);
         setBranches(branchRows);
         setDistributors(distributorRows);
-        setServiceCenters(serviceCenterRows);
       })
       .finally(() => {
         if (!cancelled) setCatalogLoading(false);
@@ -116,15 +105,12 @@ export function UserView() {
     return () => {
       cancelled = true;
     };
-  }, [scope]);
+  }, []);
 
   async function handleSubmit(values: UserFormValues) {
     if (!user) return;
 
-    const validationError = validateUserEditForm(
-      values,
-      { distributors, serviceCenters },
-    );
+    const validationError = validateUserEditForm(values);
     if (validationError) {
       setFormError(validationError);
       return;
@@ -132,7 +118,11 @@ export function UserView() {
 
     setSaving(true);
     setFormError(null);
-    const branchId = resolveUserBranchId(values.role, values.branchId);
+    const distributorId = resolveUserDistributorId(
+      values.role,
+      values.distributorId,
+    );
+    const nationalId = resolveUserNationalId(values.role, values.nationalId);
     const name = values.name.trim();
     const email = values.email.trim().toLowerCase();
 
@@ -141,7 +131,8 @@ export function UserView() {
         name,
         email,
         role: values.role,
-        branchId,
+        distributorId,
+        nationalId,
         enabled: values.enabled,
       };
       if (values.password.trim()) {
@@ -180,11 +171,18 @@ export function UserView() {
     }
   }
 
-  const branchLabel = user
-    ? userBranchDisplayLabel(
+  const distributorName = user
+    ? userDistributorDisplayLabel(
         user.role,
-        user.branchId != null
-          ? branchLabelById(scopeBranches, scopeCompanies, user.branchId)
+        user.distributorId != null
+          ? (() => {
+              const distributor = distributors.find(
+                (row) => row.id === user.distributorId,
+              );
+              return distributor
+                ? distributorLabel(distributor, branches, companies)
+                : `Distribuidora #${user.distributorId}`;
+            })()
           : null,
       )
     : "—";
@@ -235,10 +233,11 @@ export function UserView() {
                 label="Libro fiscal"
                 value={userFiscalBookWriteLabel(user.role)}
               />
+              <DetailField label="Distribuidora" value={distributorName} />
               <DetailField
-                label="Alcance"
-                value={branchLabel}
-                href={user.branchId != null ? branchPath(user.branchId) : undefined}
+                label="Cédula"
+                value={userNationalIdDisplayLabel(user.role, user.nationalId)}
+                mono
               />
               <DetailField
                 label="Notas"
@@ -274,11 +273,10 @@ export function UserView() {
         <UserFormDialog
           mode="edit"
           user={user}
-          branches={scopeBranches}
-          companies={scopeCompanies}
+          branches={branches}
+          companies={companies}
           distributors={distributors}
-          serviceCenters={serviceCenters}
-          branchesLoading={catalogLoading}
+          catalogLoading={catalogLoading}
           open={editOpen}
           saving={saving}
           error={formError}

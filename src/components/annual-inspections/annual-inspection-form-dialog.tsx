@@ -19,6 +19,7 @@ import {
   type AnnualInspectionFormValues,
 } from "@/lib/annual-inspection-form";
 import type { AnnualInspectionResponse } from "@/types/annual-inspection";
+import type { Role } from "@/types/user";
 import { cn } from "@/lib/utils";
 
 type AnnualInspectionFormDialogProps = {
@@ -30,7 +31,9 @@ type AnnualInspectionFormDialogProps = {
   catalogLoading: boolean;
   canLoadPrinters: boolean;
   printerOptions: SearchableSelectOption[];
-  employeeOptions: SearchableSelectOption[];
+  technicianUserOptions: SearchableSelectOption[];
+  currentUserRole?: Role;
+  currentUserId?: number | null;
   onClose: () => void;
   onSubmit: (values: AnnualInspectionFormValues) => void;
 };
@@ -44,12 +47,16 @@ export function AnnualInspectionFormDialog({
   catalogLoading,
   canLoadPrinters,
   printerOptions,
-  employeeOptions,
+  technicianUserOptions,
+  currentUserRole,
+  currentUserId,
   onClose,
   onSubmit,
 }: AnnualInspectionFormDialogProps) {
   const formId = useId();
   const isWizard = true;
+  const lockTechnicianField =
+    mode === "create" && currentUserRole === "TECHNICIAN" && currentUserId != null;
   type WizardStep = 1 | 2 | 3;
   const [step, setStep] = useState<WizardStep>(1);
   const [stepError, setStepError] = useState<string | null>(null);
@@ -59,14 +66,17 @@ export function AnnualInspectionFormDialog({
 
   useEffect(() => {
     if (!open) return;
-    setForm(
+    const base =
       mode === "edit" && row
         ? annualInspectionToFormValues(row)
-        : emptyAnnualInspectionForm(),
-    );
+        : emptyAnnualInspectionForm();
+    if (lockTechnicianField && currentUserId != null) {
+      base.userId = String(currentUserId);
+    }
+    setForm(base);
     setStep(1);
     setStepError(null);
-  }, [open, mode, row]);
+  }, [open, mode, row, lockTechnicianField, currentUserId]);
 
   if (!open) return null;
 
@@ -89,7 +99,7 @@ export function AnnualInspectionFormDialog({
   function stepSubtitle(targetStep: WizardStep): string {
     switch (targetStep) {
       case 1:
-        return "Selecciona una impresora asignada y el empleado responsable.";
+        return "Selecciona una impresora asignada y el técnico responsable.";
       case 2:
         return "Registra el resultado y observaciones de la revision.";
       case 3:
@@ -106,7 +116,7 @@ export function AnnualInspectionFormDialog({
   function validateStep(targetStep: WizardStep): string | null {
     if (targetStep === 1) {
       if (!hasValue(form.printerId)) return "Selecciona una impresora.";
-      if (!hasValue(form.employeeId)) return "Selecciona un empleado.";
+      if (!hasValue(form.userId)) return "Selecciona un técnico.";
       return null;
     }
 
@@ -190,17 +200,17 @@ export function AnnualInspectionFormDialog({
         </div>
 
         <div>
-          <FieldLabel required>Empleado</FieldLabel>
+          <FieldLabel required>Técnico</FieldLabel>
           <SearchableSelect
-            value={form.employeeId}
-            onChange={(employeeId) =>
-              setForm((f) => ({ ...f, employeeId }))
+            value={form.userId}
+            onChange={(userId) =>
+              setForm((f) => ({ ...f, userId }))
             }
-            options={employeeOptions}
-            disabled={disabled}
+            options={technicianUserOptions}
+            disabled={disabled || lockTechnicianField}
             loading={catalogLoading}
             required
-            searchPlaceholder="Buscar empleado..."
+            searchPlaceholder="Buscar técnico..."
           />
         </div>
       </div>

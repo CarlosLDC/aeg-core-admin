@@ -118,7 +118,7 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         formLabels: ["Tipo de contribuyente"],
         viewLabels: ["Tipo de contribuyente"],
         formBindings: ["form.contributorType"],
-        viewBindings: ["company.contributorType"],
+        viewBindings: ["company?.contributorType", "contributorType"],
       },
       {
         formLabels: ["Estado"],
@@ -182,10 +182,16 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         viewBindings: ["user.role"],
       },
       {
-        formLabels: ["Empresa"],
-        viewLabels: ["Empresa"],
-        formBindings: ["form.branchId"],
-        viewBindings: ["user.branchId"],
+        formLabels: ["Distribuidora"],
+        viewLabels: ["Distribuidora"],
+        formBindings: ["form.distributorId"],
+        viewBindings: ["user.distributorId"],
+      },
+      {
+        formLabels: ["Cédula"],
+        viewLabels: ["Cédula"],
+        formBindings: ["form.nationalId"],
+        viewBindings: ["user.nationalId"],
       },
     ],
   },
@@ -223,9 +229,9 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
       },
       {
         formLabels: ["Estado de pago"],
-        viewLabels: ["Pagada"],
+        viewLabels: ["Pagada", "Estado de pago"],
         formBindings: ["form.paid"],
-        viewBindings: ["printer.paid"],
+        viewBindings: ["printer.paid", "printerPaidLabel"],
       },
       {
         formLabels: ["Distribuidor"],
@@ -292,8 +298,8 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
       {
         formLabels: ["Técnico"],
         viewLabels: ["Técnico"],
-        formBindings: ["form.technicianId"],
-        viewBindings: ["service.technicianId"],
+        formBindings: ["form.userId"],
+        viewBindings: ["service.userId"],
       },
       {
         formLabels: ["Centro de servicio"],
@@ -399,7 +405,12 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
     viewPath: "src/components/annual-inspections/annual-inspection-view.tsx",
     fields: [
       { formLabels: ["Impresora"], viewLabels: ["Impresora"] },
-      { formLabels: ["Empleado"], viewLabels: ["Empleado"] },
+      {
+        formLabels: ["Técnico"],
+        viewLabels: ["Técnico"],
+        formBindings: ["form.userId"],
+        viewBindings: ["inspection.userId"],
+      },
       { formLabels: ["Fecha de inspección"], viewLabels: ["Fecha inspección"] },
       { formLabels: ["Precinto violentado"], viewLabels: ["Precinto violado"] },
       { formLabels: ["Observaciones"], viewLabels: ["Notas"] },

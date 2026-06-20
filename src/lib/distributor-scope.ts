@@ -5,10 +5,8 @@ import type {
   ClientResponse,
   DistributorResponse,
 } from "@/types/branch-role";
-import type { EmployeeResponse } from "@/types/employee";
 import type { PrinterModelResponse } from "@/types/printer-model";
 import type { PrinterResponse } from "@/types/printer";
-import type { Role } from "@/types/user";
 
 export const DISTRIBUTOR_SELF_CLIENT_MESSAGE =
   "No puedes registrar ni usar tu propia distribuidora como cliente.";
@@ -63,18 +61,6 @@ export function distributorStaffBranchIds(
   const row = distributors.find((d) => d.id === distributorId);
   if (!row) return new Set();
   return new Set([row.branchId]);
-}
-
-export function filterEmployeesForDistributorStaff(
-  employees: EmployeeResponse[],
-  role: Role,
-  distributorStaffBranchIds: Set<number>,
-): EmployeeResponse[] {
-  if (role !== "DISTRIBUTOR") return employees;
-  if (distributorStaffBranchIds.size === 0) return [];
-  return employees.filter(
-    (e) => e.branchId != null && distributorStaffBranchIds.has(e.branchId),
-  );
 }
 
 /** Modelos referenciados por las impresoras del distribuidor (no el catálogo completo). */

@@ -27,19 +27,18 @@ const client: ClientResponse = {
 };
 
 describe("notification hrefs", () => {
-  it("denies distributor list routes but allows detail", () => {
-    expect(resolveNotificationHref("DISTRIBUTOR", "/branches")).toBeNull();
-    expect(resolveNotificationHref("DISTRIBUTOR", "/branches/99")).toBe(
+  it("allows technician detail routes", () => {
+    expect(resolveNotificationHref("TECHNICIAN", "/branches/99")).toBe(
       "/branches/99",
     );
-    expect(resolveNotificationHref("DISTRIBUTOR", "/printers/12")).toBe(
+    expect(resolveNotificationHref("TECHNICIAN", "/printers/12")).toBe(
       "/printers/12",
     );
   });
 
-  it("links distributor branch notifications to client detail when available", () => {
+  it("links technician branch notifications to client detail when available", () => {
     expect(
-      notificationHrefForBranch(branch, "DISTRIBUTOR", [client]),
+      notificationHrefForBranch(branch, "TECHNICIAN", [client]),
     ).toBe("/clients/7");
   });
 
@@ -48,7 +47,7 @@ describe("notification hrefs", () => {
       notificationHrefForCompany(10, "ADMIN", [branch], []),
     ).toBe("/branches/99");
     expect(
-      notificationHrefForCompany(10, "DISTRIBUTOR", [branch], [client]),
+      notificationHrefForCompany(10, "TECHNICIAN", [branch], [client]),
     ).toBe("/clients/7");
   });
 });

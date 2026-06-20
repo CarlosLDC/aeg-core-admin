@@ -1,7 +1,6 @@
 import type { CompanyScope } from "@/lib/company-scope";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
-import type { EmployeeResponse } from "@/types/employee";
 import {
   filterAnnualInspectionsInScope,
   filterSealsByPrinterScope,
@@ -10,7 +9,6 @@ import {
 import type { PrinterResponse } from "@/types/printer";
 import type { SealResponse } from "@/types/seal";
 import type { Role } from "@/types/user";
-import { resolveEmployeeCompanyId } from "@/lib/employee-company";
 
 export function isCompanyInScope(
   scope: CompanyScope | null,
@@ -49,18 +47,6 @@ export function assertBranchInScope(
   return isBranchInScope(scope, branch.id, role);
 }
 
-export function assertEmployeeInScope(
-  scope: CompanyScope | null,
-  employee: EmployeeResponse | null | undefined,
-  role: Role,
-): boolean {
-  if (!employee) return false;
-  if (role === "ADMIN") return true;
-  const companyId = resolveEmployeeCompanyId(employee, scope?.branches ?? []);
-  if (companyId == null) return false;
-  return isCompanyInScope(scope, companyId, role);
-}
-
 export function assertPrinterInScope(
   scope: CompanyScope | null,
   printer: PrinterResponse | null | undefined,
@@ -69,7 +55,7 @@ export function assertPrinterInScope(
 ): boolean {
   if (!printer) return false;
   if (role === "ADMIN") return true;
-  if (role === "DISTRIBUTOR" && distributorId != null) {
+  if (role === "TECHNICIAN" && distributorId != null) {
     return printer.distributorId === distributorId;
   }
   if (!scope) return false;
@@ -101,16 +87,20 @@ export function assertTechnicalServiceInScope<
 }
 
 export function assertAnnualInspectionInScope<
-  T extends { printerId: number; employeeId: number },
+  T extends { printerId: number; userId: number },
 >(
   row: T | null | undefined,
   printerIds: Set<number>,
-  employeeIds: Set<number>,
+  technicianUserIds: Set<number>,
   role: Role,
 ): boolean {
   if (!row) return false;
   return (
-    filterAnnualInspectionsInScope([row], printerIds, employeeIds, role).length >
-    0
+    filterAnnualInspectionsInScope(
+      [row],
+      printerIds,
+      technicianUserIds,
+      role,
+    ).length > 0
   );
 }

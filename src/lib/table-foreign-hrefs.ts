@@ -2,10 +2,10 @@ import { canAccessRoute } from "@/lib/permissions/routes";
 import {
   branchPath,
   clientPath,
-  employeePath,
   printerModelPath,
   printerPath,
   sealPath,
+  userPath,
 } from "@/lib/resource-routes";
 import type { BranchWithRoles } from "@/types/branch";
 import type {
@@ -73,13 +73,13 @@ export function hrefForBranch(
   );
 }
 
-export function hrefForEmployee(
-  employeeId: number | null | undefined,
+export function hrefForTechnicianUser(
+  userId: number | null | undefined,
   role: Role,
 ): string | undefined {
   return hrefIfAccessible(
     role,
-    employeeId != null ? employeePath(employeeId) : undefined,
+    userId != null ? userPath(userId) : undefined,
   );
 }
 

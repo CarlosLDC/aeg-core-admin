@@ -32,8 +32,8 @@ import { formatDate } from "@/lib/datetime-form";
 import { catalogOptionLabel } from "@/lib/record-labels";
 import {
   annualInspectionPath,
-  employeePath,
   printerPath,
+  userPath,
 } from "@/lib/resource-routes";
 import type { AnnualInspectionResponse } from "@/types/annual-inspection";
 
@@ -82,7 +82,7 @@ export function AnnualInspectionView() {
         !assertAnnualInspectionInScope(
           data,
           catalog.scopedPrinterIds,
-          catalog.scopedEmployeeIds,
+          catalog.scopedTechnicianUserIds,
           user.role,
         )
       ) {
@@ -96,7 +96,7 @@ export function AnnualInspectionView() {
     } finally {
       setLoading(false);
     }
-  }, [id, user, catalog.scopedPrinterIds, catalog.scopedEmployeeIds]);
+  }, [id, user, catalog.scopedPrinterIds, catalog.scopedTechnicianUserIds]);
 
   useEffect(() => {
     void load();
@@ -198,13 +198,13 @@ export function AnnualInspectionView() {
                 href={printerPath(inspection.printerId)}
               />
               <DetailField
-                label="Empleado"
+                label="Técnico"
                 value={catalogOptionLabel(
-                  catalog.employeeOptions,
-                  inspection.employeeId,
+                  catalog.technicianUserOptions,
+                  inspection.userId,
                   "—",
                 )}
-                href={employeePath(inspection.employeeId)}
+                href={userPath(inspection.userId)}
               />
               <DetailField
                 label="Fecha inspección"
@@ -258,7 +258,9 @@ export function AnnualInspectionView() {
           catalogLoading={catalog.loading}
           canLoadPrinters={catalog.canLoadPrinters}
           printerOptions={inspectionPrinterOptions}
-          employeeOptions={catalog.employeeOptions}
+          technicianUserOptions={catalog.technicianUserOptions}
+          currentUserRole={catalog.role}
+          currentUserId={catalog.currentUserId}
           onClose={() => {
             if (!saving) setEditOpen(false);
           }}

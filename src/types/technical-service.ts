@@ -1,7 +1,7 @@
 export type TechnicalServiceResponse = {
   id: number;
   printerId: number;
-  technicianId: number;
+  userId: number;
   serviceCenterId: number | null;
   sealTampered: boolean;
   notes: string | null;
@@ -23,7 +23,7 @@ export type TechnicalServiceResponse = {
 
 export type TechnicalServiceRequest = {
   printerId: number;
-  technicianId: number;
+  userId: number;
   serviceCenterId?: number | null;
   sealTampered: boolean;
   notes?: string | null;

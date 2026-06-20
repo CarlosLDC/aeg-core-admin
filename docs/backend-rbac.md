@@ -13,13 +13,13 @@ Ambos portales autentican contra la misma tabla `users`. El campo opcional `port
 
 ### Roles unificados (`users.role`)
 
-| Rol | Panel | Libro fiscal | Escritura libro | Alcance libro |
-|-----|-------|--------------|-----------------|---------------|
+| Rol | Panel | Libro fiscal | Escritura libro | Alcance |
+|-----|-------|--------------|-----------------|---------|
 | `ADMIN` | Sí | Sí | Sí | Global |
-| `DISTRIBUTOR` | Sí | Sí | Sí | Cartera distribuidora |
-| `TECHNICIAN` | Sí | Sí | Sí | Sucursales de su empresa |
-| `SERVICE_CENTER` | Sí | Sí | Sí | Idem técnico |
+| `TECHNICIAN` | Sí | Sí | Sí | Distribuidora (`distributorId`) + cédula (`nationalId`) |
 | `SENIAT` | **No** | Sí (auditor) | **No** (solo lectura) | Global |
+
+Los roles históricos `DISTRIBUTOR` y `SERVICE_CENTER` se migraron a `TECHNICIAN` (Flyway V24).
 
 Spring expone autoridades `ROLE_*` según el enum `Role`.
 
@@ -28,8 +28,10 @@ Spring expone autoridades `ROLE_*` según el enum `Role`.
 Claims comunes:
 
 - `portal`: `CORE_ADMIN` | `FISCAL_BOOK`
-- `role`: nombre del enum (`ADMIN`, `DISTRIBUTOR`, …)
-- `branchId`, `distributorId` (panel y libro; `null` para `ADMIN` y `SENIAT`)
+- `role`: `ADMIN`, `TECHNICIAN`, `SENIAT`
+- `userId`: id del usuario (`users.id`)
+- `distributorId`: distribuidora operativa (técnicos)
+- `nationalId`: cédula del técnico (operaciones de campo)
 
 ## Endpoints de autenticación
 
@@ -51,17 +53,19 @@ Reglas de login:
 
 Validaciones en alta/edición:
 
-- `ADMIN` y `SENIAT`: sin `branchId` obligatorio.
-- `DISTRIBUTOR`, `TECHNICIAN`, `SERVICE_CENTER`: requieren sucursal y coherencia con catálogos de distribuidor/centro de servicio.
+- `ADMIN` y `SENIAT`: sin `distributorId` ni `nationalId`.
+- `TECHNICIAN`: requiere `distributorId` y `nationalId` (cédula única).
 
 ## Datos del libro fiscal
 
 | Método | Ruta | Roles lectura | Roles escritura |
 |--------|------|---------------|-----------------|
 | GET | `/api/fiscal-books/**` | Todos los roles | — |
-| POST/PUT/DELETE | servicios técnicos, inspecciones, precintos, etc. | — | `ADMIN`, `DISTRIBUTOR`, `TECHNICIAN`, `SERVICE_CENTER` (excluye `SENIAT`) |
+| POST/PUT/DELETE | servicios técnicos, inspecciones, precintos, etc. | — | `ADMIN`, `TECHNICIAN` (excluye `SENIAT`) |
 
-`SecurityScopeService` aplica alcance por rol (`isGlobalReader()` para `ADMIN` y `SENIAT`; resto según `branchId` / `distributorId`).
+Servicios técnicos e inspecciones anuales referencian `users.id` (`userId` / `id_usuario`), no tablas de empleados.
+
+`SecurityScopeService` aplica alcance por rol (`isGlobalReader()` para `ADMIN` y `SENIAT`; `TECHNICIAN` por `distributorId`).
 
 ## Autorización por portal
 
@@ -73,16 +77,12 @@ Validaciones en alta/edición:
 Rutas del libro (prefijos):
 
 - `/api/fiscal-books/**`
-- `/api/technical-services/**`, `/api/annual-inspections/**`, `/api/seals/**`, `/api/technicians/**`, `/api/employees/**`, `/api/service-centers/**`
+- `/api/technical-services/**`, `/api/annual-inspections/**`, `/api/seals/**`, `/api/service-centers/**`
 
-## Migración desde `fiscal_book_users`
+## Migraciones relevantes
 
-Flyway `V23__unify_fiscal_book_users_into_users.sql`:
-
-- `FISCAL_AUDITOR` → `SENIAT`
-- `FISCAL_ADMIN` → `ADMIN` (si no hay conflicto de email)
-- `FISCAL_TECHNICIAN` → `TECHNICIAN` o `SERVICE_CENTER`
-- Drop tabla `fiscal_book_users`
+- `V23__unify_fiscal_book_users_into_users.sql`: unifica auditores/técnicos del libro en `users`.
+- `V24__users_as_technicians_drop_employees.sql`: `national_id` en `users`, `id_usuario` en ST/inspecciones, elimina `empleados`/`tecnicos`/`distribuidores` (personas).
 
 ## Autorización (panel)
 
@@ -94,7 +94,7 @@ public void deleteCompany(@PathVariable Long id) { ... }
 
 ## Alcance por JWT
 
-Claims: `role`, `branchId`, `distributorId`.
+Claims: `role`, `distributorId`, `nationalId`, `userId`.
 
 | Verbo | Regla |
 |-------|--------|
@@ -107,8 +107,7 @@ Claims: `role`, `branchId`, `distributorId`.
 
 - `/api/admin/users` — solo ADMIN
 - `/api/distributor-contracts`, `/api/service-center-contracts` — solo ADMIN
-- `/api/printer-models` GET — ADMIN, DISTRIBUTOR, TECHNICIAN
-- `/api/employees` — según matriz de permisos del panel
+- `/api/printer-models` GET — ADMIN, TECHNICIAN
 - `/api/companies`, `/api/branches`, `/api/printers`, `/api/annual-inspections/**` — según `docs/permissions-matrix.md`
 - `POST`/`PUT` `/api/annual-inspections` — la impresora debe existir, estar en alcance y tener estatus `asignada` (400 si no)
 

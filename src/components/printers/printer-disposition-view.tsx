@@ -61,7 +61,7 @@ export function PrinterDispositionView({
   const { scope } = useCompanyScope();
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
   const isAdmin = user?.role === "ADMIN";
-  const isDistributor = user?.role === "DISTRIBUTOR";
+  const isDistributor = user?.role === "TECHNICIAN";
 
   const [printer, setPrinter] = useState<PrinterResponse | null>(null);
   const [branches, setBranches] = useState<BranchResponse[]>([]);

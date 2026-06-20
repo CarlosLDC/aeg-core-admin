@@ -3,7 +3,6 @@ import {
   canAccessPanel,
   roleHasGlobalScope,
   userAccessKind,
-  userBranchDisplayLabel,
   userCreateSuccessMessage,
   userFiscalBookWriteLabel,
   userPortalAccessLabel,
@@ -13,7 +12,7 @@ describe("userAccessKind", () => {
   it("maps roles to access kinds", () => {
     expect(userAccessKind("ADMIN")).toBe("admin");
     expect(userAccessKind("SENIAT")).toBe("seniat");
-    expect(userAccessKind("DISTRIBUTOR")).toBe("operativo");
+    expect(userAccessKind("TECHNICIAN")).toBe("operativo");
   });
 });
 
@@ -21,16 +20,6 @@ describe("userPortalAccessLabel", () => {
   it("distinguishes SENIAT from panel roles", () => {
     expect(userPortalAccessLabel("TECHNICIAN")).toBe("Panel + libro fiscal");
     expect(userPortalAccessLabel("SENIAT")).toBe("Solo libro fiscal");
-  });
-});
-
-describe("userBranchDisplayLabel", () => {
-  it("shows global labels for admin and SENIAT", () => {
-    expect(userBranchDisplayLabel("ADMIN", null)).toBe("Global (administrador)");
-    expect(userBranchDisplayLabel("SENIAT", null)).toBe("Global (auditoría)");
-    expect(userBranchDisplayLabel("TECHNICIAN", "Acme · Caracas")).toBe(
-      "Acme · Caracas",
-    );
   });
 });
 
@@ -44,8 +33,8 @@ describe("userCreateSuccessMessage", () => {
 describe("access helpers", () => {
   it("flags panel access and write scope", () => {
     expect(canAccessPanel("SENIAT")).toBe(false);
-    expect(canAccessPanel("ADMIN")).toBe(true);
-    expect(roleHasGlobalScope("DISTRIBUTOR")).toBe(false);
+    expect(canAccessPanel("TECHNICIAN")).toBe(true);
+    expect(roleHasGlobalScope("TECHNICIAN")).toBe(false);
     expect(userFiscalBookWriteLabel("SENIAT")).toBe("Solo lectura");
     expect(userFiscalBookWriteLabel("ADMIN")).toBe("Escritura global");
   });

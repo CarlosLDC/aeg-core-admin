@@ -89,8 +89,8 @@ export function TechnicalServicesManager() {
     [catalog.printerOptions],
   );
   const technicianLabelById = useMemo(
-    () => new Map(catalog.technicianOptions.map((t) => [t.value, t.label])),
-    [catalog.technicianOptions],
+    () => new Map(catalog.technicianUserOptions.map((t) => [t.value, t.label])),
+    [catalog.technicianUserOptions],
   );
 
   const printerFilterOptions = useMemo(
@@ -99,8 +99,8 @@ export function TechnicalServicesManager() {
   );
 
   const technicianFilterOptions = useMemo(
-    () => [filterAllOption("Todos los técnicos"), ...catalog.technicianOptions],
-    [catalog.technicianOptions],
+    () => [filterAllOption("Todos los técnicos"), ...catalog.technicianUserOptions],
+    [catalog.technicianUserOptions],
   );
 
   const filteredRows = useMemo(() => {
@@ -114,7 +114,7 @@ export function TechnicalServicesManager() {
       }
       if (
         technicianFilter !== "all" &&
-        String(row.technicianId) !== technicianFilter
+        String(row.userId) !== technicianFilter
       ) {
         return false;
       }
@@ -122,9 +122,9 @@ export function TechnicalServicesManager() {
       const haystack = [
         row.id,
         row.printerId,
-        row.technicianId,
+        row.userId,
         printerLabelById.get(String(row.printerId)),
-        technicianLabelById.get(String(row.technicianId)),
+        technicianLabelById.get(String(row.userId)),
         row.reportedFailure,
         row.notes,
       ]
@@ -163,7 +163,7 @@ export function TechnicalServicesManager() {
     }
     try {
       const data = await fetchTechnicalServices();
-      const role = user?.role ?? "SERVICE_CENTER";
+      const role = user?.role ?? "TECHNICIAN";
       const scoped = filterTechnicalServicesInScope(
         data,
         catalog.scopedPrinterIds,
@@ -431,7 +431,7 @@ export function TechnicalServicesManager() {
                           </td>
                           <td className="max-w-[160px] px-5 py-3.5 text-muted">
                             <TruncatedText maxClassName="max-w-[140px]">
-                              {technicianLabelById.get(String(row.technicianId)) ??
+                              {technicianLabelById.get(String(row.userId)) ??
                                 "—"}
                             </TruncatedText>
                           </td>
@@ -474,7 +474,9 @@ export function TechnicalServicesManager() {
         catalogLoading={catalog.loading}
         canLoadPrinters={catalog.canLoadPrinters}
         printerOptions={catalog.printerOptions}
-        technicianOptions={catalog.technicianOptions}
+        technicianUserOptions={catalog.technicianUserOptions}
+        currentUserRole={catalog.role}
+        currentUserId={catalog.currentUserId}
         sealOptions={catalog.sealOptions}
         serviceCenterOptions={catalog.serviceCenterOptions}
         distributorOptions={catalog.distributorOptions}

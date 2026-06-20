@@ -14,7 +14,6 @@ export const RESOURCES = [
   "dashboard",
   "companies",
   "branches",
-  "employees",
   "printers",
   "printerModels",
   "seals",

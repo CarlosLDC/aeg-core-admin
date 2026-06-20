@@ -113,8 +113,8 @@ describe("countPrintersByStatus", () => {
     expect(countPrintersByStatus(printers, "ADMIN")).toHaveLength(6);
   });
 
-  it("only includes asignada and enajenada for distributor", () => {
-    const rows = countPrintersByStatus(printers, "DISTRIBUTOR");
+  it("only includes asignada and enajenada for technician", () => {
+    const rows = countPrintersByStatus(printers, "TECHNICIAN");
     expect(rows).toHaveLength(2);
     expect(rows.map((r) => r.status)).toEqual(["asignada", "enajenada"]);
     expect(rows.find((r) => r.status === "asignada")?.count).toBe(1);

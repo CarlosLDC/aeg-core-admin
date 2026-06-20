@@ -6,14 +6,14 @@ import type { CompanyScope } from "@/lib/company-scope";
 import { contractStatus } from "@/lib/contract-form";
 import { formatRelativeTime } from "@/lib/dashboard-data";
 import { fetchDistributorContracts } from "@/lib/distributor-contracts-api";
-import { fetchEmployees } from "@/lib/employees-api";
+import { fetchUsers } from "@/lib/users-api";
 import { fetchPrinterModels } from "@/lib/printer-models-api";
 import { printerStatusLabel } from "@/lib/printer-status";
 import { fetchPrinters } from "@/lib/printers-api";
 import {
   branchIdsFromScope,
   filterAnnualInspectionsInScope,
-  filterEmployeesInScope,
+  filterTechnicianUsersInScope,
   filterPrintersForUser,
   filterSealsByPrinterScope,
   filterTechnicalServicesInScope,
@@ -29,7 +29,6 @@ import {
 import {
   annualInspectionPath,
   distributorContractPath,
-  employeePath,
   printerModelPath,
   printerPath,
   sealPath,
@@ -109,18 +108,16 @@ export async function loadNotifications(options: {
   const warnings: string[] = [];
   const items: AppNotification[] = [];
 
-  const canPrinters =
-    role === "ADMIN" || role === "DISTRIBUTOR" || role === "TECHNICIAN";
-  const canFieldOps =
-    role === "ADMIN" || role === "TECHNICIAN" || role === "SERVICE_CENTER";
-  const canAnnualInspections = canFieldOps || role === "DISTRIBUTOR";
+  const canPrinters = role === "ADMIN" || role === "TECHNICIAN";
+  const canFieldOps = role === "ADMIN" || role === "TECHNICIAN";
+  const canAnnualInspections = canFieldOps;
   const isAdmin = role === "ADMIN";
 
   const [
     companiesP,
     branchesP,
     clientsP,
-    employeesP,
+    technicianUsersP,
     printersP,
     sealsP,
     servicesP,
@@ -130,8 +127,8 @@ export async function loadNotifications(options: {
   ] = await Promise.all([
     settled(scope ? Promise.resolve(scope.companies) : fetchCompanies()),
     settled(scope ? Promise.resolve(scope.branches) : fetchBranches()),
-    role === "DISTRIBUTOR" ? settled(fetchClients()) : Promise.resolve(null),
-    settled(fetchEmployees()),
+    role === "TECHNICIAN" ? settled(fetchClients()) : Promise.resolve(null),
+    settled(fetchUsers()),
     canPrinters ? settled(fetchPrinters()) : Promise.resolve(null),
     canFieldOps ? settled(fetchSeals()) : Promise.resolve(null),
     canFieldOps ? settled(fetchTechnicalServices()) : Promise.resolve(null),
@@ -188,28 +185,6 @@ export async function loadNotifications(options: {
     });
   }
 
-  if (employeesP.ok) {
-    const employees = filterEmployeesInScope(
-      employeesP.value,
-      companyIds,
-      role,
-      userBranchId,
-      branches,
-    );
-    for (const e of employees) {
-      pushNotification(items, {
-        id: `employee-${e.id}`,
-        kind: "employee",
-        title: "Nuevo empleado",
-        message: `${e.name} añadido al personal.`,
-        href: resolveNotificationHref(role, employeePath(e.id)),
-        createdAt: e.createdAt,
-      });
-    }
-  } else {
-    warnings.push("No se pudieron cargar empleados para notificaciones.");
-  }
-
   if (printersP?.ok) {
     const printers = filterPrintersForUser(printersP.value, role, distributorId);
     for (const p of printers) {
@@ -232,18 +207,6 @@ export async function loadNotifications(options: {
         filterPrintersForUser(printersP.value, role, distributorId).map(
           (p) => p.id,
         ),
-      )
-    : new Set<number>();
-
-  const employeeIds = employeesP.ok
-    ? new Set(
-        filterEmployeesInScope(
-          employeesP.value,
-          companyIds,
-          role,
-          userBranchId,
-          branches,
-        ).map((e) => e.id),
       )
     : new Set<number>();
 
@@ -283,10 +246,19 @@ export async function loadNotifications(options: {
   }
 
   if (inspectionsP?.ok) {
+    const technicianUserIds = technicianUsersP.ok
+      ? new Set(
+          filterTechnicianUsersInScope(
+            technicianUsersP.value,
+            role,
+            distributorId,
+          ).map((user) => user.id),
+        )
+      : new Set<number>();
     const scoped = filterAnnualInspectionsInScope(
       inspectionsP.value,
       printerIds,
-      employeeIds,
+      technicianUserIds,
       role,
     );
     for (const i of scoped) {

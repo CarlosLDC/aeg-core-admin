@@ -20,7 +20,7 @@ export type CompanyScope = {
 };
 
 export function canBrowseOtherCompanies(role: Role): boolean {
-  return role === "ADMIN" || role === "DISTRIBUTOR";
+  return role === "ADMIN" || role === "TECHNICIAN";
 }
 
 /** PUT/DELETE en empresas — solo ADMIN (POST permitido a cualquier autenticado). */
@@ -33,7 +33,7 @@ export { canModifyCatalogRecord as canManageCompanies } from "@/lib/api-permissi
 export function buildCompanyScope(input: CompanyScopeInput): CompanyScope {
   const { role, branchId, distributorId, companies, branches } = input;
 
-  if (role === "ADMIN" || role === "DISTRIBUTOR") {
+  if (role === "ADMIN" || role === "TECHNICIAN") {
     const companyIds = new Set(companies.map((c) => c.id));
     return {
       role,

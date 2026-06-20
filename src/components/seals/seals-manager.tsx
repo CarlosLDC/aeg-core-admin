@@ -87,7 +87,7 @@ export function SealsManager() {
 
   const canLoadPrinters =
     user?.role === "ADMIN" ||
-    user?.role === "DISTRIBUTOR" ||
+    user?.role === "TECHNICIAN" ||
     user?.role === "TECHNICIAN";
 
   const [seals, setSeals] = useState<SealResponse[]>([]);
@@ -198,7 +198,7 @@ export function SealsManager() {
     setPrintersLoading(true);
     try {
       let distributorId = user.distributorId;
-      if (user.role === "DISTRIBUTOR" && distributorId == null) {
+      if (user.role === "TECHNICIAN" && distributorId == null) {
         try {
           const me = await fetchAuthMe();
           distributorId = me.distributorId ?? null;
@@ -257,7 +257,7 @@ export function SealsManager() {
     }
     try {
       let distributorId = user.distributorId;
-      if (user.role === "DISTRIBUTOR" && distributorId == null) {
+      if (user.role === "TECHNICIAN" && distributorId == null) {
         try {
           const me = await fetchAuthMe();
           distributorId = me.distributorId ?? null;
