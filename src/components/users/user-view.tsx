@@ -36,7 +36,6 @@ import {
   userDistributorDisplayLabel,
   userFiscalBookWriteLabel,
   userNationalIdDisplayLabel,
-  userPortalAccessDetail,
 } from "@/lib/user-access";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
@@ -238,10 +237,6 @@ export function UserView() {
                 label="Cédula"
                 value={userNationalIdDisplayLabel(user.role, user.nationalId)}
                 mono
-              />
-              <DetailField
-                label="Notas"
-                value={userPortalAccessDetail(user.role)}
               />
               {user.role === "SENIAT" && (
                 <DetailField

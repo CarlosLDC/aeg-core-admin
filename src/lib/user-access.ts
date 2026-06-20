@@ -21,17 +21,6 @@ export function userPortalAccessLabel(role: Role): string {
   return role === "SENIAT" ? "Solo libro fiscal" : "Panel + libro fiscal";
 }
 
-export function userPortalAccessDetail(role: Role): string {
-  switch (role) {
-    case "SENIAT":
-      return `Inicia sesión únicamente en aeg-libros-fiscales. Esta cuenta no puede entrar al panel administrativo.`;
-    case "ADMIN":
-      return "Accede al panel con permisos globales y al libro fiscal con la misma cuenta.";
-    default:
-      return "Accede al panel según su distribuidora y al libro fiscal con el mismo correo y clave.";
-  }
-}
-
 export function userDistributorDisplayLabel(
   role: Role,
   distributorLabel: string | null | undefined,

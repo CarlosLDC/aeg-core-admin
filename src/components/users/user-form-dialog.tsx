@@ -9,10 +9,6 @@ import { DistributorIdSelect } from "@/components/users/distributor-id-select";
 import { PasswordInput } from "@/components/ui/password-input";
 import { ROLE_DESCRIPTIONS } from "@/lib/roles";
 import {
-  userPortalAccessDetail,
-  userPortalAccessLabel,
-} from "@/lib/user-access";
-import {
   USER_ROLE_TOGGLE_TONE,
   formFieldInputClass,
 } from "@/lib/toggle-button-styles";
@@ -256,14 +252,6 @@ export function UserFormDialog({
                 : isSeniatUser
                   ? ROLE_DESCRIPTIONS.SENIAT
                   : ROLE_DESCRIPTIONS.TECHNICIAN}
-            </p>
-            <p className="text-xs text-muted">
-              Portales:{" "}
-              <span className="font-medium text-card-foreground">
-                {userPortalAccessLabel(form.role)}
-              </span>
-              {" · "}
-              {userPortalAccessDetail(form.role)}
             </p>
           </fieldset>
 
