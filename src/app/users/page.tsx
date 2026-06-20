@@ -6,7 +6,7 @@ export default function UsersPage() {
   return (
     <AdminShell
       title="Usuarios"
-      description="Gestión de cuentas del panel y auditores SENIAT del libro fiscal (solo administradores)"
+      description="Catálogo unificado de cuentas: panel administrativo, operación de campo y auditores SENIAT del libro fiscal."
     >
       <RoleGuard path="/users">
         <UsersManager />

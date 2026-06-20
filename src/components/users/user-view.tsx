@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RoleBadge } from "@/components/users/role-badge";
+import { UserAccessBadge } from "@/components/users/user-access-badge";
 import {
   UserFormDialog,
   type UserFormValues,
@@ -27,12 +28,19 @@ import {
   updateUser,
 } from "@/lib/users-api";
 import { validateUserEditForm, resolveUserBranchId } from "@/lib/user-form";
-import { branchPath, userPath } from "@/lib/resource-routes";
+import { ROLE_DESCRIPTIONS } from "@/lib/roles";
+import {
+  FISCAL_BOOK_PORTAL_URL,
+  userBranchDisplayLabel,
+  userFiscalBookWriteLabel,
+  userPortalAccessDetail,
+} from "@/lib/user-access";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
 import type { ServiceCenterResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { UserResponse } from "@/types/user";
+import { branchPath, userPath } from "@/lib/resource-routes";
 
 function displayUserName(user: UserResponse): string {
   return user.name?.trim() || user.username?.trim() || user.email;
@@ -172,10 +180,14 @@ export function UserView() {
     }
   }
 
-  const branchLabel =
-    user?.branchId != null
-      ? branchLabelById(scopeBranches, scopeCompanies, user.branchId)
-      : "—";
+  const branchLabel = user
+    ? userBranchDisplayLabel(
+        user.role,
+        user.branchId != null
+          ? branchLabelById(scopeBranches, scopeCompanies, user.branchId)
+          : null,
+      )
+    : "—";
   const userCreatedAt = (user as (UserResponse & { createdAt?: string }) | null)
     ?.createdAt;
 
@@ -201,22 +213,60 @@ export function UserView() {
         }
       >
         {user && (
-          <DetailSection title="Usuario" layout="quad">
-            <DetailField label="ID" value={String(user.id)} mono />
-            <DetailField label="Nombre" value={displayUserName(user)} />
-            <DetailField label="Correo" value={user.email} mono />
-            <DetailField label="Rol" value={<RoleBadge role={user.role} />} />
-            <DetailField
-              label="Estado"
-              value={user.enabled ? "Activo" : "Deshabilitado"}
-            />
-            <DetailField label="Registrado" value={formatDate(userCreatedAt)} />
-            <DetailField
-              label="Empresa"
-              value={branchLabel}
-              href={user.branchId != null ? branchPath(user.branchId) : undefined}
-            />
-          </DetailSection>
+          <>
+            <DetailSection title="Identidad" layout="quad">
+              <DetailField label="ID" value={String(user.id)} mono />
+              <DetailField label="Nombre" value={displayUserName(user)} />
+              <DetailField label="Correo" value={user.email} mono />
+              <DetailField label="Rol" value={<RoleBadge role={user.role} />} />
+              <DetailField
+                label="Estado"
+                value={user.enabled ? "Activo" : "Deshabilitado"}
+              />
+              <DetailField label="Registrado" value={formatDate(userCreatedAt)} />
+            </DetailSection>
+
+            <DetailSection title="Portales y permisos" layout="quad">
+              <DetailField
+                label="Acceso"
+                value={<UserAccessBadge role={user.role} />}
+              />
+              <DetailField
+                label="Libro fiscal"
+                value={userFiscalBookWriteLabel(user.role)}
+              />
+              <DetailField
+                label="Alcance"
+                value={branchLabel}
+                href={user.branchId != null ? branchPath(user.branchId) : undefined}
+              />
+              <DetailField
+                label="Notas"
+                value={userPortalAccessDetail(user.role)}
+              />
+              {user.role === "SENIAT" && (
+                <DetailField
+                  label="URL de acceso"
+                  value={
+                    <a
+                      href={FISCAL_BOOK_PORTAL_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-accent underline-offset-2 hover:underline"
+                    >
+                      {FISCAL_BOOK_PORTAL_URL}
+                    </a>
+                  }
+                />
+              )}
+              {user.role !== "SENIAT" && (
+                <DetailField
+                  label="Descripción del rol"
+                  value={ROLE_DESCRIPTIONS[user.role]}
+                />
+              )}
+            </DetailSection>
+          </>
         )}
       </ResourceViewShell>
 

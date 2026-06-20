@@ -40,6 +40,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   DISTRIBUTOR: "Distribuidor",
   TECHNICIAN: "Técnico",
   SERVICE_CENTER: "Centro de servicio",
+  SENIAT: "Auditor SENIAT",
 };
 
 export const ROLE_ABBREV: Record<Role, string> = {
@@ -47,6 +48,7 @@ export const ROLE_ABBREV: Record<Role, string> = {
   DISTRIBUTOR: "DIST",
   TECHNICIAN: "TEC",
   SERVICE_CENTER: "CS",
+  SENIAT: "SEN",
 };
 
 export function forbiddenMessage(

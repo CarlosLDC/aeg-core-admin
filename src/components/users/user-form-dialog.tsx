@@ -10,6 +10,10 @@ import { BranchSelect } from "@/components/users/branch-select";
 import { PasswordInput } from "@/components/ui/password-input";
 import { ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/roles";
 import {
+  userPortalAccessDetail,
+  userPortalAccessLabel,
+} from "@/lib/user-access";
+import {
   USER_ROLE_TOGGLE_TONE,
   formFieldInputClass,
 } from "@/lib/toggle-button-styles";
@@ -180,8 +184,8 @@ export function UserFormDialog({
             </h2>
             <p className="mt-1 text-sm text-muted">
               {mode === "create"
-                ? "Define rápidamente identidad, credenciales y asignación operativa."
-                : "Actualiza identidad, credenciales y asignación operativa."}
+                ? "Una sola cuenta por usuario: el tipo de acceso define si entra al panel, al libro fiscal o solo a este último."
+                : "Actualiza identidad, credenciales y tipo de acceso del usuario."}
             </p>
           </div>
           <button
@@ -256,42 +260,48 @@ export function UserFormDialog({
             </div>
           </fieldset>
 
-          {mode === "create" && (
-            <fieldset className="space-y-4 rounded-xl border border-border p-4">
-              <legend className="px-1 text-sm font-semibold text-card-foreground">
-                Tipo de acceso
-              </legend>
-              <SegmentedToggle
-                value={accessKind}
-                onChange={handleAccessKindChange}
-                ariaLabel="Tipo de acceso"
-                options={[
-                  {
-                    value: "operativo",
-                    label: "Usuario operativo",
-                    tone: USER_ROLE_TOGGLE_TONE.DISTRIBUTOR,
-                  },
-                  {
-                    value: "admin",
-                    label: "Administrador",
-                    tone: USER_ROLE_TOGGLE_TONE.ADMIN,
-                  },
-                  {
-                    value: "seniat",
-                    label: "Auditor SENIAT",
-                    tone: USER_ROLE_TOGGLE_TONE.SENIAT,
-                  },
-                ]}
-              />
-              <p className="text-xs text-muted">
-                {isAdminUser
-                  ? ROLE_DESCRIPTIONS.ADMIN
-                  : isSeniatUser
-                    ? ROLE_DESCRIPTIONS.SENIAT
-                    : "Requiere empresa y rol operativo."}
-              </p>
-            </fieldset>
-          )}
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Tipo de acceso
+            </legend>
+            <SegmentedToggle
+              value={accessKind}
+              onChange={handleAccessKindChange}
+              ariaLabel="Tipo de acceso"
+              options={[
+                {
+                  value: "operativo",
+                  label: "Usuario operativo",
+                  tone: USER_ROLE_TOGGLE_TONE.DISTRIBUTOR,
+                },
+                {
+                  value: "admin",
+                  label: "Administrador",
+                  tone: USER_ROLE_TOGGLE_TONE.ADMIN,
+                },
+                {
+                  value: "seniat",
+                  label: "Auditor SENIAT",
+                  tone: USER_ROLE_TOGGLE_TONE.SENIAT,
+                },
+              ]}
+            />
+            <p className="text-xs text-muted">
+              {isAdminUser
+                ? ROLE_DESCRIPTIONS.ADMIN
+                : isSeniatUser
+                  ? ROLE_DESCRIPTIONS.SENIAT
+                  : "Requiere empresa y rol operativo. Accede al panel y al libro fiscal."}
+            </p>
+            <p className="text-xs text-muted">
+              Portales:{" "}
+              <span className="font-medium text-card-foreground">
+                {userPortalAccessLabel(form.role)}
+              </span>
+              {" · "}
+              {userPortalAccessDetail(form.role)}
+            </p>
+          </fieldset>
 
           {needsOperationalAssignment && (
             <fieldset className="space-y-4 rounded-xl border border-border p-4">

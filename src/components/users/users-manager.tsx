@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { RoleBadge } from "@/components/users/role-badge";
+import { UserAccessBadge } from "@/components/users/user-access-badge";
+import { UsersArchitectureNote } from "@/components/users/users-architecture-note";
 import {
   UserFormDialog,
   type UserFormValues,
@@ -58,6 +60,11 @@ import {
 } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { ROLE_LABELS } from "@/lib/roles";
+import {
+  userBranchDisplayLabel,
+  userCreateSuccessMessage,
+  userPortalAccessLabel,
+} from "@/lib/user-access";
 import { ROLES } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
@@ -109,6 +116,7 @@ export function UsersManager() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [portalFilter, setPortalFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const tableColumns = useTableColumnVisibility("users", {
     includeCreatedAt: false,
@@ -119,15 +127,18 @@ export function UsersManager() {
     const q = search.trim().toLowerCase();
     return users.filter((user) => {
       if (roleFilter !== "all" && user.role !== roleFilter) return false;
+      if (portalFilter === "panel" && user.role === "SENIAT") return false;
+      if (portalFilter === "book-only" && user.role !== "SENIAT") return false;
       if (statusFilter === "active" && !user.enabled) return false;
       if (statusFilter === "inactive" && user.enabled) return false;
       if (!q) return true;
       const branch = branchLabelById(branches, companies, user.branchId);
+      const scope = userBranchDisplayLabel(user.role, branch);
       const haystack =
-        `${user.id} ${displayUserName(user)} ${user.email} ${user.role} ${branch}`.toLowerCase();
+        `${user.id} ${displayUserName(user)} ${user.email} ${user.role} ${userPortalAccessLabel(user.role)} ${scope}`.toLowerCase();
       return haystack.includes(q);
     });
-  }, [users, search, roleFilter, statusFilter, branches, companies]);
+  }, [users, search, roleFilter, portalFilter, statusFilter, branches, companies]);
 
   const sortedUsers = useMemo(
     () =>
@@ -237,10 +248,9 @@ export function UsersManager() {
           role: values.role,
           branchId,
         });
-        toast.success(
-          `Usuario "${name}" creado. Ya puede iniciar sesión en el panel.`,
-          { href: userPath(created.id) },
-        );
+        toast.success(userCreateSuccessMessage(name, values.role), {
+          href: userPath(created.id),
+        });
       } else if (selected) {
         const body: Parameters<typeof updateUser>[1] = {
           name,
@@ -294,6 +304,8 @@ export function UsersManager() {
 
   return (
     <div className="space-y-4">
+      <UsersArchitectureNote />
+
       <PageToolbar
         actions={
           <button
@@ -346,7 +358,7 @@ export function UsersManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por nombre, correo, rol o empresa…"
+              searchPlaceholder="Buscar por nombre, correo, rol, acceso o empresa…"
               resultCount={filteredUsers.length}
               totalCount={users.length}
               filters={[
@@ -361,6 +373,17 @@ export function UsersManager() {
                       value: role,
                       label: ROLE_LABELS[role],
                     })),
+                  ],
+                },
+                {
+                  id: "portal",
+                  label: "Acceso",
+                  value: portalFilter,
+                  onChange: setPortalFilter,
+                  options: [
+                    filterAllOption(),
+                    { value: "panel", label: "Panel + libro fiscal" },
+                    { value: "book-only", label: "Solo libro fiscal" },
                   ],
                 },
                 {
@@ -405,7 +428,8 @@ export function UsersManager() {
                           <th className="px-5 py-3 font-medium">Nombre</th>
                           <th className="px-5 py-3 font-medium">Correo</th>
                           <th className="px-5 py-3 font-medium">Rol</th>
-                          <th className="px-5 py-3 font-medium">Empresa</th>
+                          <th className="px-5 py-3 font-medium">Acceso</th>
+                          <th className="px-5 py-3 font-medium">Alcance</th>
                           <th className="px-5 py-3 font-medium">Estado</th>
                         </TableRowMetaHeaders>
                       </tr>
@@ -445,9 +469,19 @@ export function UsersManager() {
                           <td className="px-5 py-3.5">
                             <RoleBadge role={user.role} />
                           </td>
+                          <td className="px-5 py-3.5">
+                            <UserAccessBadge role={user.role} />
+                          </td>
                           <td className="max-w-[220px] px-5 py-3.5 text-card-foreground">
                             <TruncatedText maxClassName="max-w-[200px]">
-                              {branchLabelById(branches, companies, user.branchId)}
+                              {userBranchDisplayLabel(
+                                user.role,
+                                branchLabelById(
+                                  branches,
+                                  companies,
+                                  user.branchId,
+                                ),
+                              )}
                             </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5">

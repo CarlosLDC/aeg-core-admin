@@ -29,6 +29,7 @@ const ROLE_CONTEXT: Record<Role, string> = {
   DISTRIBUTOR: "Tu inventario de impresoras asignadas y enajenadas a clientes.",
   TECHNICIAN: "Equipos en campo, precintos y personal de tu ámbito.",
   SERVICE_CENTER: "Empresas y operaciones de tu centro.",
+  SENIAT: "Consulta del libro fiscal para auditoría tributaria.",
 };
 
 export function DashboardWelcome({
