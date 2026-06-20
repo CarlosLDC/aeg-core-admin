@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
+import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
@@ -25,7 +26,6 @@ import {
   sleep,
 } from "@/lib/polling";
 import { clientPath, employeePath } from "@/lib/resource-routes";
-import { filterTabToggleClass } from "@/lib/toggle-button-styles";
 import type { ModificationActionType } from "@/types/client-modification-request";
 import type { ModificationRequestStatus } from "@/types/employee-modification-request";
 import { cn } from "@/lib/utils";
@@ -55,9 +55,6 @@ const ACTION_LABELS: Record<ModificationActionType, string> = {
   UPDATE: "Actualizacion",
   DELETE: "Eliminacion",
 };
-
-const sectionToggleButtonClass =
-  "inline-flex min-h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-lg px-2 py-2 text-center text-xs font-medium transition-colors sm:flex-none sm:px-4 sm:text-sm sm:whitespace-nowrap";
 
 function pendingBadgeClass(active: boolean): string {
   return cn(
@@ -243,53 +240,48 @@ export function ModificationReviewsManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex w-full justify-center">
-        <div
-          className="flex w-full max-w-md gap-1 rounded-lg border border-border bg-card p-1 sm:inline-flex sm:w-auto sm:max-w-none"
-          role="tablist"
-          aria-label="Seccion de revisiones"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeSection === "employees"}
-            onClick={() => {
-              userChangedSectionFilter.current = true;
-              setActiveSection("employees");
-            }}
-            className={filterTabToggleClass(
-              activeSection === "employees",
-              sectionToggleButtonClass,
-            )}
-          >
-            Empleados
-            {employeePendingCount > 0 ? (
-              <span className={pendingBadgeClass(activeSection === "employees")}>
-                {employeePendingCount}
-              </span>
-            ) : null}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeSection === "clients"}
-            onClick={() => {
-              userChangedSectionFilter.current = true;
-              setActiveSection("clients");
-            }}
-            className={filterTabToggleClass(
-              activeSection === "clients",
-              sectionToggleButtonClass,
-            )}
-          >
-            Clientes
-            {clientPendingCount > 0 ? (
-              <span className={pendingBadgeClass(activeSection === "clients")}>
-                {clientPendingCount}
-              </span>
-            ) : null}
-          </button>
-        </div>
+      <div className="flex justify-center">
+        <SegmentedToggle
+          value={activeSection}
+          onChange={(next) => {
+            userChangedSectionFilter.current = true;
+            setActiveSection(next);
+          }}
+          ariaLabel="Sección de revisiones"
+          options={[
+            {
+              value: "employees",
+              label: (
+                <span className="inline-flex items-center gap-2">
+                  Empleados
+                  {employeePendingCount > 0 ? (
+                    <span
+                      className={pendingBadgeClass(activeSection === "employees")}
+                    >
+                      {employeePendingCount}
+                    </span>
+                  ) : null}
+                </span>
+              ),
+            },
+            {
+              value: "clients",
+              label: (
+                <span className="inline-flex items-center gap-2">
+                  Clientes
+                  {clientPendingCount > 0 ? (
+                    <span
+                      className={pendingBadgeClass(activeSection === "clients")}
+                    >
+                      {clientPendingCount}
+                    </span>
+                  ) : null}
+                </span>
+              ),
+            },
+          ]}
+          className="w-full max-w-md"
+        />
       </div>
 
       {error && (

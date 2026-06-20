@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ContractsListPanel } from "@/components/contracts/contracts-list-panel";
+import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { distributorLabel } from "@/lib/branch-roles";
@@ -20,10 +21,6 @@ import type {
   DistributorResponse,
   ServiceCenterResponse,
 } from "@/types/branch-role";
-import { filterTabToggleClass } from "@/lib/toggle-button-styles";
-
-const contractTabButtonClass =
-  "inline-flex min-h-10 min-w-0 flex-1 items-center justify-center rounded-lg px-2 py-2 text-center text-xs font-medium transition-colors sm:flex-none sm:px-4 sm:text-sm sm:whitespace-nowrap";
 
 type Tab = "distributor" | "serviceCenter";
 
@@ -124,37 +121,17 @@ export function ContractsManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex w-full justify-center">
-        <div
-          className="flex w-full max-w-md gap-1 rounded-lg border border-border bg-card p-1 sm:inline-flex sm:w-auto sm:max-w-none"
-          role="tablist"
-          aria-label="Tipo de contrato"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "distributor"}
-            onClick={() => setTab("distributor")}
-            className={filterTabToggleClass(
-              tab === "distributor",
-              contractTabButtonClass,
-            )}
-          >
-            Distribuidora
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "serviceCenter"}
-            onClick={() => setTab("serviceCenter")}
-            className={filterTabToggleClass(
-              tab === "serviceCenter",
-              contractTabButtonClass,
-            )}
-          >
-            Centro de servicio
-          </button>
-        </div>
+      <div className="flex justify-center">
+        <SegmentedToggle
+          value={tab}
+          onChange={setTab}
+          ariaLabel="Tipo de contrato"
+          options={[
+            { value: "distributor", label: "Distribuidora" },
+            { value: "serviceCenter", label: "Centro de servicio" },
+          ]}
+          className="w-full max-w-md"
+        />
       </div>
 
       {tab === "distributor" ? (

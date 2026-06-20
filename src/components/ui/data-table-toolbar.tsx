@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  ChevronDown,
   Columns3,
   Filter,
   RotateCcw,
@@ -10,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { FILTER_ALL } from "@/lib/table-filter-options";
 import { filterToggleButtonClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
@@ -40,9 +40,6 @@ export type ColumnToggle = {
 
 const searchInputClass =
   "w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-ring/20";
-
-const nativeSelectClass =
-  "w-full appearance-none rounded-lg border border-border bg-background py-2 pl-3 pr-9 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-ring/20";
 
 type DataTableToolbarProps = {
   search: string;
@@ -93,24 +90,15 @@ function TableFilterField({ filter }: { filter: FilterSelect }) {
           modalTitle={filter.label}
         />
       ) : (
-        <div className="relative">
-          <select
-            id={`filter-${filter.id}`}
-            value={filter.value}
-            onChange={(e) => filter.onChange(e.target.value)}
-            className={nativeSelectClass}
-          >
-            {filter.options.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted"
-            aria-hidden
-          />
-        </div>
+        <SegmentedToggle
+          value={filter.value}
+          onChange={filter.onChange}
+          ariaLabel={filter.label}
+          options={filter.options.map((opt) => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
+        />
       )}
     </div>
   );
