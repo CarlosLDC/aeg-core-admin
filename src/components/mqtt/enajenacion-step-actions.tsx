@@ -140,7 +140,7 @@ export function SimulatePrinterButton({
       toast.success(
         stepId === "request"
           ? "ptrEnajenar publicado en CmdServer"
-          : "Respuesta simulada publicada en CmdServer",
+          : "Respuesta simulada publicada en Respuesta",
       );
       onPublished?.(stepId);
     } catch (err) {

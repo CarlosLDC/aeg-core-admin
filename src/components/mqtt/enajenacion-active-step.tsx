@@ -89,7 +89,9 @@ export function EnajenacionActiveStep({
       {stepState.simulation ? (
         <div className={cn(!step.isRequest ? "mt-3" : "mt-4")}>
           <EnajenacionStepDetails
-            label="Ver payload CmdServer"
+            label={
+              step.isRequest ? "Ver payload CmdServer" : "Ver payload Respuesta"
+            }
             copyText={payloadText}
             copyLabel="Payload"
           />

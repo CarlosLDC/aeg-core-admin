@@ -43,7 +43,7 @@ const ENajenacionSteps = [
     direction: "Servidor → impresora",
     topic: "Comando",
     summary:
-      "StaInf con data.status = NroRegMa. Respuesta en CmdServer: code 0 y dataS = ptrReg (ej. GRA0000017).",
+      "StaInf con data.status = NroRegMa. Respuesta en Respuesta: code 0 y dataS = ptrReg (ej. GRA0000017).",
   },
   {
     step: "5",
@@ -160,7 +160,8 @@ export function EnajenacionMqttDocsContent() {
             (MAC sin &quot;:&quot;, 12 hex — ej. <Code>206EF1884C68</Code>):
           </P>
           <pre className="overflow-x-auto rounded-lg bg-foreground/[0.04] p-4 font-mono text-sm text-foreground">
-            /{"{mac}"}/AEG_Fiscal/Integracion/CmdServer ← impresora / respuestas{"\n"}
+            /{"{mac}"}/AEG_Fiscal/Integracion/CmdServer ← impresora: ptrEnajenar{"\n"}
+            /{"{mac}"}/AEG_Fiscal/Integracion/Respuesta ← impresora: respuestas{"\n"}
             /{"{mac}"}/AEG_Fiscal/Integracion/Comando ← comandos del servidor
           </pre>
           <P>
@@ -263,7 +264,7 @@ export function EnajenacionMqttDocsContent() {
         <Section id="manual-test" title="Cómo usar la prueba manual">
           <P>
             En <strong className="font-semibold text-foreground">Herramientas MQTT → Enajenación</strong>{" "}
-            el admin simula la impresora: publica en CmdServer con un clic. Los
+            el admin simula la impresora: publica ptrEnajenar en CmdServer y respuestas en Respuesta. Los
             comandos en Comando son siempre los que genera AEG Core (solo
             lectura en el panel).
           </P>
@@ -286,6 +287,7 @@ export function EnajenacionMqttDocsContent() {
                 Iniciar ritual
               </strong>{" "}
               (<Code>ptrEnajenar</Code> en CmdServer). En los pasos 2–7 revisa
+              Comando y simula la respuesta en Respuesta con{" "}
               el comando real en Comando y pulsa{" "}
               <strong className="font-semibold text-foreground">
                 Simular respuesta OK

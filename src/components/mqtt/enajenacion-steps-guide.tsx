@@ -36,6 +36,13 @@ function StepCard({
           <span className="mt-0.5 block text-xs text-muted">
             {step.direction} · tópico{" "}
             <code className="font-mono text-[11px]">{step.topic}</code>
+            {step.responseTopic ? (
+              <>
+                {" "}
+                · respuesta en{" "}
+                <code className="font-mono text-[11px]">{step.responseTopic}</code>
+              </>
+            ) : null}
           </span>
         </span>
         <ChevronDown
@@ -99,8 +106,8 @@ export function EnajenacionStepsGuide() {
           <div className="space-y-2 text-card-foreground">
             <p>
               Este panel <strong>simula el firmware de la impresora</strong>: tú
-              publicas <code className="text-xs">ptrEnajenar</code> y las
-              respuestas fiscales en CmdServer, mientras AEG Core actúa como en
+              publicas <code className="text-xs">ptrEnajenar</code> en CmdServer y las
+              respuestas fiscales en Respuesta, mientras AEG Core actúa como en
               producción (valida datos y envía comandos en Comando).
             </p>
             <p className="text-muted">

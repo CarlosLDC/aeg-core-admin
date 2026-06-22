@@ -109,6 +109,12 @@ export function EnajenacionTechnicalDetailsModal({
               </dd>
             </div>
             <div>
+              <dt className="text-xs font-medium text-muted">Respuesta</dt>
+              <dd className="mt-0.5 font-mono break-all text-card-foreground">
+                {topics.respuesta}
+              </dd>
+            </div>
+            <div>
               <dt className="text-xs font-medium text-muted">Comando</dt>
               <dd className="mt-0.5 font-mono break-all text-card-foreground">
                 {topics.comando}

@@ -30,11 +30,13 @@ import {
   formatMqttPayloadForDisplay,
   fiscalCmdServerTopic,
   fiscalComandoTopic,
+  fiscalRespuestaTopic,
   fiscalTopicMatchesMac,
   flowStepById,
   generateTestFiscalSerial,
   isFiscalCmdServerTopic,
   isFiscalComandoTopic,
+  isFiscalRespuestaTopic,
   isPtrEnajenarPayload,
   isPrinterEligibleForEnajenacionTest,
   isTestFiscalSerial,
@@ -49,6 +51,9 @@ describe("enajenacion-mqtt-protocol", () => {
     expect(compactMac("20:6e:f1:88:4c:68")).toBe("206EF1884C68");
     expect(fiscalCmdServerTopic("206EF1884C68")).toBe(
       "/206EF1884C68/AEG_Fiscal/Integracion/CmdServer",
+    );
+    expect(fiscalRespuestaTopic("206EF1884C68")).toBe(
+      "/206EF1884C68/AEG_Fiscal/Integracion/Respuesta",
     );
   });
 
@@ -289,7 +294,7 @@ describe("enajenacion-mqtt-protocol", () => {
     });
   });
 
-  it("builds per-step printer simulation payloads for CmdServer", () => {
+  it("builds per-step printer simulation payloads on CmdServer and Respuesta", () => {
     const mac = "206EF1884C68";
     const ctx = buildEnajenacionCommandContextFromClientData({
       fiscalSerial: "GRA0000017",
@@ -300,15 +305,18 @@ describe("enajenacion-mqtt-protocol", () => {
       city: "Caracas",
       state: "Distrito Capital",
     });
-    const cmdServer = fiscalCmdServerTopic(mac);
+    const topics = {
+      cmdServer: fiscalCmdServerTopic(mac),
+      respuesta: fiscalRespuestaTopic(mac),
+    };
 
     const request = buildPrinterSimulationPayload(
       "request",
       ctx,
       "20:6E:F1:88:4C:68",
-      cmdServer,
+      topics,
     );
-    expect(request.topic).toBe(cmdServer);
+    expect(request.topic).toBe(topics.cmdServer);
     expect(request.payload).toEqual(
       buildPtrEnajenarPayload("GRA0000017", "20:6E:F1:88:4C:68"),
     );
@@ -317,9 +325,9 @@ describe("enajenacion-mqtt-protocol", () => {
       "fiscal-rif",
       ctx,
       "20:6E:F1:88:4C:68",
-      cmdServer,
+      topics,
     );
-    expect(fiscalRif.topic).toBe(cmdServer);
+    expect(fiscalRif.topic).toBe(topics.respuesta);
     expect(fiscalRif.payload).toEqual({
       cmd: "fiscalAEG",
       code: 0,
@@ -330,8 +338,9 @@ describe("enajenacion-mqtt-protocol", () => {
       "dnf",
       ctx,
       "20:6E:F1:88:4C:68",
-      cmdServer,
+      topics,
     );
+    expect(dnf.topic).toBe(topics.respuesta);
     expect(dnf.payload).toEqual(buildDnfSuccessResponse());
   });
 
@@ -345,7 +354,7 @@ describe("enajenacion-mqtt-protocol", () => {
         receivedAt: "2026-06-16T22:00:00.000Z",
       },
       {
-        topic: fiscalCmdServerTopic(mac),
+        topic: fiscalRespuestaTopic(mac),
         payload: JSON.stringify(buildDnfSuccessResponse()),
         receivedAt: "2026-06-16T22:00:05.000Z",
       },
@@ -376,12 +385,14 @@ describe("enajenacion-mqtt-protocol", () => {
     );
     expect(fiscalTopicMatchesMac("aeg/telemetry/device-1", "206EF1884C68")).toBe(false);
     expect(isFiscalCmdServerTopic("/206EF1884C68/AEG_Fiscal/Integracion/CmdServer")).toBe(true);
+    expect(isFiscalRespuestaTopic("/206EF1884C68/AEG_Fiscal/Integracion/Respuesta")).toBe(true);
     expect(isFiscalComandoTopic("/206EF1884C68/AEG_Fiscal/Integracion/Comando")).toBe(true);
   });
 
-  it("detects server comando and printer cmdserver steps", () => {
+  it("detects server comando and printer response topics", () => {
     const comandoTopic = "/206EF1884C68/AEG_Fiscal/Integracion/Comando";
     const cmdServerTopic = "/206EF1884C68/AEG_Fiscal/Integracion/CmdServer";
+    const respuestaTopic = "/206EF1884C68/AEG_Fiscal/Integracion/Respuesta";
 
     expect(
       detectServerCommandStep(
@@ -399,23 +410,33 @@ describe("enajenacion-mqtt-protocol", () => {
     expect(
       detectPrinterResponseStep(
         JSON.stringify({ cmd: "ptrEnajenar", data: { ptrReg: "X" } }),
+        cmdServerTopic,
       ),
     ).toBe("request");
     expect(
       detectPrinterResponseStep(
         JSON.stringify({ cmd: " fiscalAEG ", code: 0 }),
+        respuestaTopic,
       ),
     ).toBe("fiscal-rif");
     expect(
       detectPrinterResponseStep(
         JSON.stringify({ cmd: " StaInf ", code: 0, dataS: "GRA0000017" }),
+        respuestaTopic,
       ),
     ).toBe("reg-status");
     expect(
       detectPrinterResponseStep(
         JSON.stringify(buildDnfSuccessResponse()),
+        respuestaTopic,
       ),
     ).toBe("dnf");
+    expect(
+      detectPrinterResponseStep(
+        JSON.stringify(buildDnfSuccessResponse()),
+        cmdServerTopic,
+      ),
+    ).toBeNull();
 
     expect(resolveWfileResponseStep(0)).toBe("header");
     expect(resolveWfileResponseStep(1)).toBe("config");
@@ -469,7 +490,10 @@ describe("enajenacion-mqtt-protocol", () => {
           state: "DC",
         }),
         "20:6E:F1:88:4C:68",
-        fiscalCmdServerTopic(mac),
+        {
+          cmdServer: fiscalCmdServerTopic(mac),
+          respuesta: fiscalRespuestaTopic(mac),
+        },
       ).payload,
     ).toEqual({ cmd: "wFileSPIFF", code: 0, dataD: 0 });
   });

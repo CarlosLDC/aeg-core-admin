@@ -53,6 +53,8 @@ export type EnajenacionFlowStep = {
   name: string;
   direction: "Impresora → servidor" | "Servidor → impresora";
   topic: "CmdServer" | "Comando";
+  /** Tópico donde la impresora publica su respuesta (pasos 2–7). */
+  responseTopic?: "Respuesta";
   purpose: string;
   successCriteria: string[];
   /** Qué hace el panel de prueba en este paso (si aplica). */
@@ -91,7 +93,8 @@ export const ENAJENACION_FLOW_STEPS: EnajenacionFlowStep[] = [
       "Cualquier code ≠ 0 aborta la sesión.",
     ],
     panelSimulates:
-      "Envía la respuesta simulada del firmware (aperDNF … endDNF) en CmdServer.",
+      "Envía la respuesta simulada del firmware (aperDNF … endDNF) en Respuesta.",
+    responseTopic: "Respuesta",
   },
   {
     id: "fiscal-rif",
@@ -105,7 +108,8 @@ export const ENAJENACION_FLOW_STEPS: EnajenacionFlowStep[] = [
       "Comando fiscalAEG publicado en Comando.",
       "Respuesta simulada: fiscalAEG con code = 0.",
     ],
-    panelSimulates: "Publica { cmd: \"fiscalAEG\", code: 0 } en CmdServer.",
+    panelSimulates: "Publica { cmd: \"fiscalAEG\", code: 0 } en Respuesta.",
+    responseTopic: "Respuesta",
   },
   {
     id: "header",
@@ -119,7 +123,8 @@ export const ENAJENACION_FLOW_STEPS: EnajenacionFlowStep[] = [
       "wFileSPIFF con nameFile = paramFacSPIFF.json, Access = AeG-1968-2024 y pieFacFijo si está configurado.",
       "Respuesta simulada: wFileSPIFF con code = 0.",
     ],
-    panelSimulates: "Publica { cmd: \"wFileSPIFF\", code: 0 } en CmdServer.",
+    panelSimulates: "Publica { cmd: \"wFileSPIFF\", code: 0 } en Respuesta.",
+    responseTopic: "Respuesta",
   },
   {
     id: "config",
@@ -133,7 +138,8 @@ export const ENAJENACION_FLOW_STEPS: EnajenacionFlowStep[] = [
       "wFileSPIFF con nameFile = configSPIFFS.json.",
       "Respuesta simulada: wFileSPIFF con code = 0.",
     ],
-    panelSimulates: "Publica { cmd: \"wFileSPIFF\", code: 0 } en CmdServer.",
+    panelSimulates: "Publica { cmd: \"wFileSPIFF\", code: 0 } en Respuesta.",
+    responseTopic: "Respuesta",
   },
   {
     id: "reg-status",
@@ -148,7 +154,8 @@ export const ENAJENACION_FLOW_STEPS: EnajenacionFlowStep[] = [
       "Respuesta: StaInf con code = 0 y dataS = serial fiscal (ptrReg).",
     ],
     panelSimulates:
-      "Publica { cmd: \"StaInf\", code: 0, dataS: \"<serial>\" } en CmdServer.",
+      "Publica { cmd: \"StaInf\", code: 0, dataS: \"<serial>\" } en Respuesta.",
+    responseTopic: "Respuesta",
   },
   {
     id: "invoice",
@@ -164,7 +171,8 @@ export const ENAJENACION_FLOW_STEPS: EnajenacionFlowStep[] = [
       "endFac con dataD = 8 (INVOICE_END_OK).",
     ],
     panelSimulates:
-      "Publica el arreglo de respuestas (proF … endFac) en CmdServer.",
+      "Publica el arreglo de respuestas (proF … endFac) en Respuesta.",
+    responseTopic: "Respuesta",
   },
   {
     id: "credit-note",
@@ -180,7 +188,8 @@ export const ENAJENACION_FLOW_STEPS: EnajenacionFlowStep[] = [
       "endNC con dataD = 10 (CREDIT_NOTE_END_OK).",
     ],
     panelSimulates:
-      "Publica el arreglo de respuestas (nroFacNC … endNC) en CmdServer.",
+      "Publica el arreglo de respuestas (nroFacNC … endNC) en Respuesta.",
+    responseTopic: "Respuesta",
   },
   {
     id: "report-z",
@@ -196,7 +205,8 @@ export const ENAJENACION_FLOW_STEPS: EnajenacionFlowStep[] = [
       "Cualquier code ≠ 0 en cualquier paso impide el cambio de estatus.",
     ],
     panelSimulates:
-      "Publica { cmd: \"genImpRepZ\", code: 0 } en CmdServer; el panel consulta la BD hasta ver Enajenada.",
+      "Publica { cmd: \"genImpRepZ\", code: 0 } en Respuesta; el panel consulta la BD hasta ver Enajenada.",
+    responseTopic: "Respuesta",
   },
 ];
 
@@ -277,6 +287,10 @@ export function fiscalCmdServerTopic(compactMac: string): string {
   return `/${compactMac}/AEG_Fiscal/Integracion/CmdServer`;
 }
 
+export function fiscalRespuestaTopic(compactMac: string): string {
+  return `/${compactMac}/AEG_Fiscal/Integracion/Respuesta`;
+}
+
 export function fiscalComandoTopic(compactMac: string): string {
   return `/${compactMac}/AEG_Fiscal/Integracion/Comando`;
 }
@@ -296,6 +310,10 @@ export function fiscalTopicMatchesMac(topic: string, mac: string): boolean {
 
 export function isFiscalCmdServerTopic(topic: string): boolean {
   return topic.trim().endsWith("/AEG_Fiscal/Integracion/CmdServer");
+}
+
+export function isFiscalRespuestaTopic(topic: string): boolean {
+  return topic.trim().endsWith("/AEG_Fiscal/Integracion/Respuesta");
 }
 
 export function isFiscalComandoTopic(topic: string): boolean {
@@ -831,16 +849,16 @@ export function buildEnajenacionCommandContextFromClientData(params: {
   };
 }
 
-/** Payload que el panel publica en CmdServer para simular la impresora. */
+/** Payload que el panel publica para simular la impresora (CmdServer o Respuesta). */
 export function buildPrinterSimulationPayload(
   stepId: string,
   ctx: EnajenacionCommandContext,
   macAddress: string,
-  cmdServerTopic: string,
+  topics: { cmdServer: string; respuesta: string },
 ): PrinterSimulationPayload {
   if (stepId === "request") {
     return {
-      topic: cmdServerTopic,
+      topic: topics.cmdServer,
       payload: buildPtrEnajenarPayload(ctx.fiscalSerial, macAddress),
     };
   }
@@ -854,7 +872,7 @@ export function buildPrinterSimulationPayload(
     fiscalSerial: ctx.fiscalSerial,
   };
   return {
-    topic: cmdServerTopic,
+    topic: topics.respuesta,
     payload: responseStep.buildPayload(simulatorCtx),
   };
 }
@@ -936,14 +954,32 @@ export function detectServerCommandStep(
   }
 }
 
-type CmdServerResponseItem = {
+type PrinterResponseItem = {
   cmd?: string;
   code?: number;
   dataS?: string;
 };
 
-/** Respuesta que la impresora publicó en CmdServer (impresora → servidor). */
-export function detectPrinterResponseStep(payload: string): string | null {
+/** Respuesta que la impresora publicó en Respuesta (impresora → servidor). */
+export function detectPrinterResponseStep(
+  payload: string,
+  topic?: string,
+): string | null {
+  if (topic && !isFiscalRespuestaTopic(topic) && !isFiscalCmdServerTopic(topic)) {
+    return null;
+  }
+  if (topic && isFiscalCmdServerTopic(topic)) {
+    try {
+      const data: unknown = JSON.parse(payload);
+      if (!data || typeof data !== "object" || Array.isArray(data)) {
+        return null;
+      }
+      const obj = data as PrinterResponseItem;
+      return obj.cmd?.trim() === "ptrEnajenar" ? "request" : null;
+    } catch {
+      return null;
+    }
+  }
   try {
     const data: unknown = JSON.parse(payload);
     if (Array.isArray(data)) {
@@ -956,10 +992,10 @@ export function detectPrinterResponseStep(payload: string): string | null {
     if (!data || typeof data !== "object") {
       return null;
     }
-    const obj = data as CmdServerResponseItem;
+    const obj = data as PrinterResponseItem;
     const cmd = obj.cmd?.trim() ?? "";
     if (cmd === "ptrEnajenar") {
-      return "request";
+      return topic && isFiscalRespuestaTopic(topic) ? null : "request";
     }
     if (obj.code !== 0) {
       return null;

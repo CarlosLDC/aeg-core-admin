@@ -17,6 +17,7 @@ import {
   fiscalCmdServerTopic,
   fiscalComandoTopic,
   fiscalMonitorTopic,
+  fiscalRespuestaTopic,
   isPrinterEligibleForEnajenacionTest,
   type PrinterSimulationPayload,
 } from "@/lib/enajenacion-mqtt-protocol";
@@ -48,6 +49,7 @@ export type RitualStep = {
 export type RitualTopics = {
   mac: string;
   cmdServer: string;
+  respuesta: string;
   comando: string;
   monitor: string;
 };
@@ -125,6 +127,7 @@ export function useEnajenacionRitual() {
     return {
       mac,
       cmdServer: fiscalCmdServerTopic(mac),
+      respuesta: fiscalRespuestaTopic(mac),
       comando: fiscalComandoTopic(mac),
       monitor: fiscalMonitorTopic(mac),
     };
@@ -340,7 +343,10 @@ export function useEnajenacionRitual() {
               step.id,
               commandContext,
               activePrinter.macAddress,
-              topics.cmdServer,
+              {
+                cmdServer: topics.cmdServer,
+                respuesta: topics.respuesta,
+              },
             )
           : null;
       const canSimulatePrinterResponse =
@@ -367,7 +373,7 @@ export function useEnajenacionRitual() {
 
       const contextLine = step.isRequest
         ? "Publica ptrEnajenar en CmdServer para iniciar el ritual."
-        : "AEG Core publica en Comando → simula la respuesta de impresora en CmdServer.";
+        : "AEG Core publica en Comando → simula la respuesta de impresora en Respuesta.";
 
       return {
         status,
