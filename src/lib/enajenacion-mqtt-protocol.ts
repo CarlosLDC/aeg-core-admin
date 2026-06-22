@@ -89,7 +89,7 @@ export const ENAJENACION_FLOW_STEPS: EnajenacionFlowStep[] = [
       "Imprime un documento no fiscal que advierte al operador no usar el equipo hasta completar el Reporte Z.",
     successCriteria: [
       "Cada comando del bloque DNF responde con code = 0.",
-      "endDNF con code = 0 y dataD = 7 (constante DNF_END_OK).",
+      "dataD es dinámico (el firmware lo define); no se valida su valor.",
       "Cualquier code ≠ 0 aborta la sesión.",
     ],
     panelSimulates:
@@ -167,8 +167,7 @@ export const ENAJENACION_FLOW_STEPS: EnajenacionFlowStep[] = [
       "Emite una factura fiscal de prueba para validar la configuración antes del cierre.",
     successCriteria: [
       "5 × proF, subToF, fpaF y endFac, todos con code = 0.",
-      "subToF con dataD = 555.",
-      "endFac con dataD = 8 (INVOICE_END_OK).",
+      "dataD en cada ítem es dinámico; no se valida su valor.",
     ],
     panelSimulates:
       "Publica el arreglo de respuestas (proF … endFac) en Respuesta.",
@@ -183,9 +182,8 @@ export const ENAJENACION_FLOW_STEPS: EnajenacionFlowStep[] = [
     purpose:
       "Anula la factura de prueba mediante una nota de crédito fiscal.",
     successCriteria: [
-      "13 comandos NC; cada prodNC con code = 0 y dataD = 9.",
-      "endPoNC con dataD = 555.",
-      "endNC con dataD = 10 (CREDIT_NOTE_END_OK).",
+      "13 comandos NC; cada ítem con code = 0.",
+      "dataD es dinámico en cada respuesta.",
     ],
     panelSimulates:
       "Publica el arreglo de respuestas (nroFacNC … endNC) en Respuesta.",
@@ -200,7 +198,7 @@ export const ENAJENACION_FLOW_STEPS: EnajenacionFlowStep[] = [
     purpose:
       "Cierra el ritual fiscal con genImpRepZ. Tras el OK, AEG Core marca la impresora como Enajenada en base de datos.",
     successCriteria: [
-      "genImpRepZ con code = 0 y dataD = 0.",
+      "genImpRepZ con code = 0.",
       "Estado en BD pasa a Enajenada (éxito global del ritual).",
       "Cualquier code ≠ 0 en cualquier paso impide el cambio de estatus.",
     ],

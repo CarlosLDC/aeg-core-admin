@@ -13,7 +13,7 @@ const ENajenacionSteps = [
     direction: "Servidor → impresora",
     topic: "Comando",
     summary:
-      "Imprime un documento no fiscal advirtiendo que no debe usarse hasta el Reporte Z. Éxito: endDNF con dataD = 7.",
+      "Imprime un documento no fiscal advirtiendo que no debe usarse hasta el Reporte Z. Éxito: todos los ítems con code = 0.",
   },
   {
     step: "3a",
@@ -51,7 +51,7 @@ const ENajenacionSteps = [
     direction: "Servidor → impresora",
     topic: "Comando",
     summary:
-      "8 comandos (5 líneas proF, subToF, fpaF, endFac). Éxito: endFac dataD = 8, subToF dataD = 555.",
+      "8 comandos (5 líneas proF, subToF, fpaF, endFac). Éxito: todos los ítems con code = 0.",
   },
   {
     step: "6",
@@ -59,7 +59,7 @@ const ENajenacionSteps = [
     direction: "Servidor → impresora",
     topic: "Comando",
     summary:
-      "13 comandos que anulan la factura de prueba. Éxito: endNC dataD = 10, cada prodNC dataD = 9.",
+      "13 comandos que anulan la factura de prueba. Éxito: todos los ítems con code = 0.",
   },
   {
     step: "7",
@@ -211,14 +211,20 @@ export function EnajenacionMqttDocsContent() {
           </P>
         </Section>
 
-        <Section id="success-codes" title="Constantes de éxito (respuestas firmware)">
+        <Section id="success-codes" title="Criterio de éxito (respuestas firmware)">
+          <P>
+            El servidor valida que cada ítem de la respuesta tenga{" "}
+            <Code>code = 0</Code>. El campo <Code>dataD</Code> es dinámico: lo
+            envía el firmware y <strong className="font-semibold text-foreground">no</strong>{" "}
+            se compara con un valor fijo.
+          </P>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[20rem] text-left text-sm">
               <thead>
                 <tr className="border-b border-border text-muted">
                   <th className="py-2 pr-4 font-medium">Comando</th>
-                  <th className="py-2 pr-4 font-medium">code</th>
-                  <th className="py-2 font-medium">dataD</th>
+                  <th className="py-2 pr-4 font-medium">code (obligatorio)</th>
+                  <th className="py-2 font-medium">dataD (ejemplo)</th>
                 </tr>
               </thead>
               <tbody className="text-foreground">
