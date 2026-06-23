@@ -30,16 +30,15 @@ export function fiscalBooksHandoffUrl(
   remember: boolean,
 ): string {
   const handoff = new URL(FISCAL_BOOK_HANDOFF_PATH, FISCAL_BOOKS_APP_URL);
-  const hash = new URLSearchParams();
-  hash.set("token", token);
-  if (remember) hash.set("remember", "1");
+  const parts = [`token=${encodeURIComponent(token)}`];
+  if (remember) parts.push("remember=1");
 
   const next = getSafeRedirectPath(targetPath, "/");
   if (next !== "/") {
-    hash.set("next", next);
+    parts.push(`next=${encodeURIComponent(next)}`);
   }
 
-  handoff.hash = hash.toString();
+  handoff.hash = parts.join("&");
   return handoff.toString();
 }
 

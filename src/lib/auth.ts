@@ -20,7 +20,11 @@ export async function login(
 ): Promise<AuthResponse> {
   const data = await apiFetch<AuthResponse>("/api/auth/login", {
     method: "POST",
-    body: JSON.stringify(credentials),
+    body: JSON.stringify({
+      username: credentials.username,
+      password: credentials.password,
+      ...(credentials.portal ? { portal: credentials.portal } : {}),
+    }),
     auth: false,
   });
 

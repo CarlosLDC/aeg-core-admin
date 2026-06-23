@@ -1,6 +1,7 @@
 export type LoginRequest = {
   username: string;
   password: string;
+  portal?: "CORE_ADMIN" | "FISCAL_BOOK";
 };
 
 export type AuthResponse = {

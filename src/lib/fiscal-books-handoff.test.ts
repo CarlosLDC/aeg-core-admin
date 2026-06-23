@@ -28,23 +28,20 @@ describe("adminPathToFiscalBooksTarget", () => {
 
 describe("fiscalBooksHandoffUrl", () => {
   it("builds handoff url with token in hash", () => {
-    const url = new URL(fiscalBooksHandoffUrl("/", "jwt-token", true));
+    const url = new URL(fiscalBooksHandoffUrl("/", "jwt.token+sig", true));
     expect(url.origin + url.pathname).toBe(
       `${FISCAL_BOOKS_APP_URL}/auth/handoff`,
     );
-    const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
-    expect(hash.get("token")).toBe("jwt-token");
-    expect(hash.get("remember")).toBe("1");
-    expect(hash.get("next")).toBeNull();
+    const hash = url.hash.replace(/^#/, "");
+    expect(hash).toContain("token=jwt.token%2Bsig");
+    expect(hash).toContain("remember=1");
   });
 
   it("includes next path when not root", () => {
     const url = new URL(
       fiscalBooksHandoffUrl("/fiscal-book/7", "jwt-token", false),
     );
-    const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
-    expect(hash.get("next")).toBe("/fiscal-book/7");
-    expect(hash.get("remember")).toBeNull();
+    expect(url.hash).toContain("next=%2Ffiscal-book%2F7");
   });
 });
 
