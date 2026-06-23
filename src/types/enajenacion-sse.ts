@@ -13,6 +13,8 @@ export type EnajenacionSseEvent = {
   ptrReg?: string | null;
   acceptedStepId?: string | null;
   publishedStepId?: string | null;
+  acceptedRespuestaTopic?: string | null;
+  acceptedRespuestaPayload?: string | null;
   comandoTopic?: string | null;
   comandoPayload?: string | null;
   sessionState?: string | null;
@@ -21,6 +23,12 @@ export type EnajenacionSseEvent = {
 };
 
 export type EnajenacionSseServerCommand = {
+  topic: string;
+  payload: string;
+  receivedAt: string;
+};
+
+export type EnajenacionSsePrinterResponse = {
   topic: string;
   payload: string;
   receivedAt: string;

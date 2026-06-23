@@ -68,6 +68,26 @@ export function mergeServerCommandsFromSse(
   return next;
 }
 
+export function mergeAcceptedPrinterResponsesFromSse(
+  current: Record<string, { topic: string; payload: string; receivedAt: string }>,
+  event: EnajenacionSseEvent,
+): Record<string, { topic: string; payload: string; receivedAt: string }> {
+  const next = { ...current };
+  if (
+    event.type === "step_transition" &&
+    event.acceptedStepId &&
+    event.acceptedRespuestaTopic &&
+    event.acceptedRespuestaPayload
+  ) {
+    next[event.acceptedStepId] = {
+      topic: event.acceptedRespuestaTopic,
+      payload: event.acceptedRespuestaPayload,
+      receivedAt: event.at,
+    };
+  }
+  return next;
+}
+
 export function formatSseEventSummary(event: EnajenacionSseEvent): string {
   switch (event.type) {
     case "connected":

@@ -44,6 +44,9 @@ export function EnajenacionActiveStep({
   const commandText = stepState.serverCommand?.payload
     ? formatMqttPayloadForDisplay(stepState.serverCommand.payload)
     : "";
+  const acceptedResponseText = stepState.acceptedPrinterResponse?.payload
+    ? formatMqttPayloadForDisplay(stepState.acceptedPrinterResponse.payload)
+    : "";
 
   return (
     <article
@@ -88,9 +91,16 @@ export function EnajenacionActiveStep({
       )}
 
       {!step.isRequest && (
-        <div className="mt-4">
+        <div className="mt-4 space-y-3">
+          {acceptedResponseText ? (
+            <EnajenacionStepDetails
+              label="Respuesta de impresora aceptada (Respuesta)"
+              copyText={acceptedResponseText}
+              copyLabel="Respuesta"
+            />
+          ) : null}
           <EnajenacionStepDetails
-            label="Ver comando del servidor"
+            label="Comando del servidor (Comando)"
             copyText={commandText}
             copyLabel="Comando"
             emptyMessage="Aún no hay comando en Comando para este paso."

@@ -61,6 +61,7 @@ export type RitualStepActionState = {
   isActive: boolean;
   isReview: boolean;
   serverCommand: MqttInboundMessage | null;
+  acceptedPrinterResponse: MqttInboundMessage | null;
   simulation: PrinterSimulationPayload | null;
   simulateDisabled: boolean;
   simulateDisabledReason?: string;
@@ -420,6 +421,11 @@ export function useEnajenacionRitual() {
         step.isRequest || !sseCommand
           ? null
           : sseCommandToInbound(sseCommand);
+      const ssePrinterResponse = sse.acceptedPrinterResponsesByStepId[step.id];
+      const acceptedPrinterResponse =
+        step.isRequest || !ssePrinterResponse
+          ? null
+          : sseCommandToInbound(ssePrinterResponse);
       const simulation =
         commandContext && activePrinter?.macAddress
           ? buildPrinterSimulationPayload(
@@ -480,6 +486,7 @@ export function useEnajenacionRitual() {
         isActive,
         isReview,
         serverCommand,
+        acceptedPrinterResponse,
         simulation,
         simulateDisabled,
         simulateDisabledReason,
@@ -499,6 +506,7 @@ export function useEnajenacionRitual() {
       stepStatuses,
       topics,
       sse.serverCommandsByStepId,
+      sse.acceptedPrinterResponsesByStepId,
       sse.status,
       activeBackendSession,
       nowMs,

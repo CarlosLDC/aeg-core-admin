@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getEnajenacionSseUrl } from "@/lib/mqtt-api";
 import {
+  mergeAcceptedPrinterResponsesFromSse,
   mergeAcceptedStepsFromSse,
   mergeServerCommandsFromSse,
   parseEnajenacionSseMessage,
 } from "@/lib/enajenacion-sse";
 import type {
   EnajenacionSseEvent,
+  EnajenacionSsePrinterResponse,
   EnajenacionSseServerCommand,
   EnajenacionSseStatus,
 } from "@/types/enajenacion-sse";
@@ -26,6 +28,8 @@ export function useEnajenacionSse(mac: string | null, enabled = true) {
   const [serverCommandsByStepId, setServerCommandsByStepId] = useState<
     Record<string, EnajenacionSseServerCommand>
   >({});
+  const [acceptedPrinterResponsesByStepId, setAcceptedPrinterResponsesByStepId] =
+    useState<Record<string, EnajenacionSsePrinterResponse>>({});
   const [sessionError, setSessionError] = useState<string | null>(null);
 
   const sourceRef = useRef<EventSource | null>(null);
@@ -37,6 +41,7 @@ export function useEnajenacionSse(mac: string | null, enabled = true) {
     setEventLog([]);
     setAcceptedStepIds(new Set());
     setServerCommandsByStepId({});
+    setAcceptedPrinterResponsesByStepId({});
     setSessionError(null);
   }, []);
 
@@ -51,6 +56,9 @@ export function useEnajenacionSse(mac: string | null, enabled = true) {
     }
     setAcceptedStepIds((prev) => mergeAcceptedStepsFromSse(prev, event));
     setServerCommandsByStepId((prev) => mergeServerCommandsFromSse(prev, event));
+    setAcceptedPrinterResponsesByStepId((prev) =>
+      mergeAcceptedPrinterResponsesFromSse(prev, event),
+    );
   }, []);
 
   const disconnect = useCallback(() => {
@@ -143,6 +151,7 @@ export function useEnajenacionSse(mac: string | null, enabled = true) {
     eventLog,
     acceptedStepIds,
     serverCommandsByStepId,
+    acceptedPrinterResponsesByStepId,
     sessionError,
     reconnect: connect,
   };

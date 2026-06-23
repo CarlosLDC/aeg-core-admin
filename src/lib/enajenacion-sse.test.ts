@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatSseEventSummary,
+  mergeAcceptedPrinterResponsesFromSse,
   mergeAcceptedStepsFromSse,
   mergeServerCommandsFromSse,
   parseEnajenacionSseMessage,
@@ -63,6 +64,24 @@ describe("enajenacion-sse", () => {
 
     const commands = mergeServerCommandsFromSse({}, event);
     expect(commands["fiscal-rif"]?.payload).toContain("fiscalAEG");
+  });
+
+  it("stores accepted printer responses by accepted step id", () => {
+    const event: EnajenacionSseEvent = {
+      type: "step_transition",
+      mac: "206EF1884C68",
+      at: "2026-06-17T10:00:01Z",
+      acceptedStepId: "dnf",
+      acceptedRespuestaTopic: "/206EF1884C68/AEG_Fiscal/Integracion/Respuesta",
+      acceptedRespuestaPayload: "[{\"cmd\":\"endDNF\",\"code\":0}]",
+      publishedStepId: "fiscal-rif",
+      comandoTopic: "/206EF1884C68/AEG_Fiscal/Integracion/Comando",
+      comandoPayload: "{\"cmd\":\"fiscalAEG\"}",
+    };
+
+    const responses = mergeAcceptedPrinterResponsesFromSse({}, event);
+    expect(responses.dnf?.payload).toContain("endDNF");
+    expect(responses.dnf?.topic).toContain("Respuesta");
   });
 
   it("formats SSE event summaries", () => {
