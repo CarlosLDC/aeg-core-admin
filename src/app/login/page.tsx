@@ -15,8 +15,14 @@ import { LoginAnimatedBackdrop } from "@/components/auth/login-animated-backdrop
 import { BrandLogo } from "@/components/brand/logo";
 import { getLoginErrorMessage, useAuth } from "@/context/auth-provider";
 import { getSession } from "@/lib/auth";
+import { isRemembered } from "@/lib/auth-storage";
+import { completeSeniatHandoffFromAdmin } from "@/lib/fiscal-books-handoff";
 import { fiscalBooksAppUrl } from "@/lib/fiscal-books-app";
-import { postLoginRedirectPath } from "@/lib/safe-redirect";
+import {
+  FISCAL_BOOK_ENTRY_PATH,
+  getSafeRedirectPath,
+  postLoginRedirectPath,
+} from "@/lib/safe-redirect";
 import { FieldLabel } from "@/components/ui/field-label";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +39,23 @@ function LoginForm() {
 
   const redirectParam = searchParams.get("redirect");
 
+  function handoffSeniatSession() {
+    const session = getSession();
+    if (!session || session.role !== "SENIAT") return false;
+
+    completeSeniatHandoffFromAdmin({
+      token: session.token,
+      remember: isRemembered(),
+      adminPath: getSafeRedirectPath(redirectParam, FISCAL_BOOK_ENTRY_PATH),
+    });
+    return true;
+  }
+
   useEffect(() => {
+    if (!isLoading && user?.role === "SENIAT") {
+      handoffSeniatSession();
+      return;
+    }
     if (!isLoading && user) {
       router.replace(postLoginRedirectPath(user.role, redirectParam));
     }
@@ -46,6 +68,7 @@ function LoginForm() {
 
     try {
       await login({ username: username.trim(), password }, remember);
+      if (handoffSeniatSession()) return;
       const session = getSession();
       if (session) {
         router.replace(postLoginRedirectPath(session.role, redirectParam));

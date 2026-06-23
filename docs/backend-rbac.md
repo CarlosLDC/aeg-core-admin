@@ -115,7 +115,7 @@ Claims: `role`, `distributorId`, `nationalId`, `userId`.
 
 Ver `UnifiedAuthRbacIT`:
 
-- Login panel con usuario `SENIAT` → OK (token con `portal=FISCAL_BOOK`; el panel redirige a `/fiscal-book` y transfiere la sesión a la app de libros vía `/auth/handoff`)
+- Login panel con usuario `SENIAT` → OK (token con `portal=FISCAL_BOOK`; el panel transfiere la sesión al libro y **no conserva** sesión en aeg-admin.tech)
 - Login libro con `SENIAT` + `portal=FISCAL_BOOK` → OK
 - Token ADMIN panel → `GET /api/fiscal-books/**` → OK
 - Token `SENIAT` → `GET /api/admin/users` → 403

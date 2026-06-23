@@ -1,27 +1,25 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { getSession } from "@/lib/auth";
 import { isRemembered } from "@/lib/auth-storage";
-import {
-  fiscalBooksHandoffUrl,
-  fiscalBooksTargetPath,
-} from "@/lib/fiscal-books-handoff";
+import { completeSeniatHandoffFromAdmin } from "@/lib/fiscal-books-handoff";
 import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
 
-export default function FiscalBookHandoffPage() {
+type FiscalBookHandoffProps = {
+  pathSegments?: string[];
+};
+
+export function FiscalBookHandoff({ pathSegments }: FiscalBookHandoffProps) {
   const router = useRouter();
-  const params = useParams<{ path?: string[] }>();
-  const pathSegments = Array.isArray(params.path) ? params.path : undefined;
 
   useEffect(() => {
     const session = getSession();
-    const redirectPath =
-      pathSegments?.length
-        ? `${FISCAL_BOOK_ENTRY_PATH}/${pathSegments.join("/")}`
-        : FISCAL_BOOK_ENTRY_PATH;
+    const redirectPath = pathSegments?.length
+      ? `${FISCAL_BOOK_ENTRY_PATH}/${pathSegments.join("/")}`
+      : FISCAL_BOOK_ENTRY_PATH;
 
     if (!session) {
       router.replace(
@@ -30,10 +28,16 @@ export default function FiscalBookHandoffPage() {
       return;
     }
 
-    const target = fiscalBooksTargetPath(pathSegments);
-    window.location.replace(
-      fiscalBooksHandoffUrl(target, session.token, isRemembered()),
-    );
+    if (session.role !== "SENIAT") {
+      router.replace("/");
+      return;
+    }
+
+    completeSeniatHandoffFromAdmin({
+      token: session.token,
+      remember: isRemembered(),
+      pathSegments,
+    });
   }, [router, pathSegments]);
 
   return (
