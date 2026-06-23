@@ -1,7 +1,5 @@
 import type { NextConfig } from "next";
 
-const fiscalBooksAppUrl = "https://aeg-libros-fiscales.vercel.app";
-
 const apiUpstream =
   process.env.API_UPSTREAM_URL?.trim() ||
   process.env.NEXT_PUBLIC_API_URL?.trim() ||
@@ -12,20 +10,6 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_USE_API_PROXY:
       process.env.NEXT_PUBLIC_USE_API_PROXY ??
       (process.env.VERCEL ? "true" : "false"),
-  },
-  async redirects() {
-    return [
-      {
-        source: "/fiscal-book",
-        destination: fiscalBooksAppUrl,
-        permanent: false,
-      },
-      {
-        source: "/fiscal-book/:path*",
-        destination: `${fiscalBooksAppUrl}/fiscal-book/:path*`,
-        permanent: false,
-      },
-    ];
   },
   async rewrites() {
     const upstream = apiUpstream.replace(/\/$/, "");
