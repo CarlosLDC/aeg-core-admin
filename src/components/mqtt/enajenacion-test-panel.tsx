@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Info, Loader2, Printer } from "lucide-react";
+import { Info, Loader2, Printer, AlertTriangle } from "lucide-react";
 import {
   EnajenacionActiveStep,
   EnajenacionSuccessCard,
@@ -151,6 +151,16 @@ export function EnajenacionTestPanel() {
             {ritual.precheck.message}
           </p>
         )}
+
+        {ritual.persistentSessionError ? (
+          <p
+            role="alert"
+            className="mt-3 flex items-start gap-2 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-950 dark:text-rose-100"
+          >
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>{ritual.persistentSessionError}</span>
+          </p>
+        ) : null}
       </section>
 
       {ritual.eligiblePrinters.length === 0 && (

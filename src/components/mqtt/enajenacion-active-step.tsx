@@ -60,6 +60,18 @@ export function EnajenacionActiveStep({
       </h3>
       <p className="mt-2 text-sm text-muted">{stepState.contextLine}</p>
 
+      {stepState.isActive &&
+      stepState.waitingElapsedSeconds !== null &&
+      stepState.waitingTimeoutSeconds !== null ? (
+        <p className="mt-2 text-sm text-amber-800 dark:text-amber-200">
+          Esperando respuesta de impresora:{" "}
+          {stepState.waitingElapsedSeconds}s
+          {stepState.waitingTimeoutSeconds > 0
+            ? ` (timeout ~${stepState.waitingTimeoutSeconds}s)`
+            : null}
+        </p>
+      ) : null}
+
       {stepState.isReview && (
         <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200">
           <span>Paso completado.</span>

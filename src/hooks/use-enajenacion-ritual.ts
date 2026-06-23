@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "@/context/toast-provider";
 import { fetchPrinterById, fetchPrinters } from "@/lib/printers-api";
 import { fetchBranchById } from "@/lib/branches-api";
 import { fetchClientById, fetchClients } from "@/lib/clients-api";
 import { fetchCompanyById } from "@/lib/companies-api";
-import { getMqttErrorMessage, precheckEnajenacionMqtt } from "@/lib/mqtt-api";
+import { getMqttErrorMessage, precheckEnajenacionMqtt, getEnajenacionActiveSessions, getEnajenacionActivity } from "@/lib/mqtt-api";
 import { useEnajenacionSse } from "@/hooks/use-enajenacion-sse";
 import {
   ENAJENACION_FLOW_STEPS,
@@ -24,6 +24,7 @@ import {
 import type { PrinterResponse } from "@/types/printer";
 import type { ClientResponse } from "@/types/branch-role";
 import type { MqttInboundMessage } from "@/types/mqtt";
+import type { EnajenacionActiveSession } from "@/types/mqtt";
 import type { EnajenacionSseServerCommand } from "@/types/enajenacion-sse";
 
 function sseCommandToInbound(
@@ -64,6 +65,8 @@ export type RitualStepActionState = {
   simulateDisabled: boolean;
   simulateDisabledReason?: string;
   contextLine: string;
+  waitingElapsedSeconds: number | null;
+  waitingTimeoutSeconds: number | null;
 };
 
 export function useEnajenacionRitual() {
@@ -93,6 +96,15 @@ export function useEnajenacionRitual() {
     Set<string>
   >(() => new Set());
   const [displayStepIndex, setDisplayStepIndex] = useState(0);
+  const [persistentSessionError, setPersistentSessionError] = useState<string | null>(
+    null,
+  );
+  const [activeBackendSession, setActiveBackendSession] =
+    useState<EnajenacionActiveSession | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const hadActiveBackendSessionRef = useRef(false);
+
+  const SESSION_POLL_MS = 8_000;
 
   const eligiblePrinters = useMemo(
     () => printers.filter(isPrinterEligibleForEnajenacionTest),
@@ -175,6 +187,68 @@ export function useEnajenacionRitual() {
   }, [ritualSteps, stepStatuses]);
 
   const ritualComplete = activeStepIndex >= ritualSteps.length;
+
+  const ritualInProgress = Boolean(
+    topics &&
+      !ritualComplete &&
+      (sessionStartedAt !== null || panelAcknowledgedSteps.has("request")),
+  );
+
+  useEffect(() => {
+    if (!activeBackendSession?.awaitingResponse) return;
+    const id = window.setInterval(() => setNowMs(Date.now()), 1_000);
+    return () => window.clearInterval(id);
+  }, [activeBackendSession?.awaitingResponse]);
+
+  useEffect(() => {
+    if (!ritualInProgress || !topics?.mac) {
+      setActiveBackendSession(null);
+      return;
+    }
+    let cancelled = false;
+
+    async function pollSessions() {
+      try {
+        const sessions = await getEnajenacionActiveSessions();
+        if (cancelled) return;
+        const macUpper = topics!.mac.toUpperCase();
+        const match =
+          sessions.find((s) => s.mac.toUpperCase() === macUpper) ?? null;
+        if (match) {
+          hadActiveBackendSessionRef.current = true;
+          setActiveBackendSession(match);
+          return;
+        }
+        setActiveBackendSession(null);
+        if (
+          hadActiveBackendSessionRef.current ||
+          sse.acceptedStepIds.has("dnf")
+        ) {
+          const activity = await getEnajenacionActivity({
+            mac: topics!.mac,
+            limit: 30,
+          });
+          if (cancelled) return;
+          const failed = activity.entries.find((e) => e.result === "FAILED");
+          if (failed) {
+            setPersistentSessionError(
+              failed.detail?.trim() ||
+                "La sesión de enajenación falló en el servidor.",
+            );
+          }
+        }
+      } catch {
+        // Polling es best-effort; no bloquear el ritual por errores transitorios.
+      }
+    }
+
+    void pollSessions();
+    const id = window.setInterval(() => void pollSessions(), SESSION_POLL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [ritualInProgress, topics, sse.acceptedStepIds]);
 
   useEffect(() => {
     if (ritualComplete) return;
@@ -268,9 +342,18 @@ export function useEnajenacionRitual() {
 
   useEffect(() => {
     if (sse.sessionError) {
+      setPersistentSessionError(sse.sessionError);
       toast.error(sse.sessionError);
     }
   }, [sse.sessionError, toast]);
+
+  useEffect(() => {
+    if (sse.lastEvent?.type === "session_started") {
+      setPersistentSessionError(null);
+      hadActiveBackendSessionRef.current = false;
+      setActiveBackendSession(null);
+    }
+  }, [sse.lastEvent]);
 
   useEffect(() => {
     if (sse.lastEvent?.type === "session_completed" && activePrinter) {
@@ -375,6 +458,22 @@ export function useEnajenacionRitual() {
         ? "Publica ptrEnajenar en CmdServer para iniciar el ritual."
         : "AEG Core publica en Comando → simula la respuesta de impresora en Respuesta.";
 
+      const waitingElapsedSeconds =
+        isActive &&
+        activeBackendSession?.awaitingResponse &&
+        activeBackendSession.awaitingSince
+          ? Math.max(
+              0,
+              Math.floor(
+                (nowMs - Date.parse(activeBackendSession.awaitingSince)) / 1000,
+              ),
+            )
+          : null;
+      const waitingTimeoutSeconds =
+        isActive && activeBackendSession?.awaitingResponse
+          ? (activeBackendSession.timeoutSeconds ?? null)
+          : null;
+
       return {
         status,
         locked,
@@ -385,6 +484,8 @@ export function useEnajenacionRitual() {
         simulateDisabled,
         simulateDisabledReason,
         contextLine,
+        waitingElapsedSeconds,
+        waitingTimeoutSeconds,
       };
     },
     [
@@ -399,6 +500,8 @@ export function useEnajenacionRitual() {
       topics,
       sse.serverCommandsByStepId,
       sse.status,
+      activeBackendSession,
+      nowMs,
     ],
   );
 
@@ -410,6 +513,9 @@ export function useEnajenacionRitual() {
     setCommandContextError(null);
     setPanelAcknowledgedSteps(new Set());
     setDisplayStepIndex(0);
+    setPersistentSessionError(null);
+    setActiveBackendSession(null);
+    hadActiveBackendSessionRef.current = false;
   }
 
   function handleStepPublished(stepId: string) {
@@ -462,5 +568,7 @@ export function useEnajenacionRitual() {
     handleStepperSelect,
     refreshPrinterStatus,
     sseStatus: sse.status,
+    persistentSessionError,
+    activeBackendSession,
   };
 }

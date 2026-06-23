@@ -111,4 +111,6 @@ export type EnajenacionActiveSession = {
   startedAt: string;
   lastError: string | null;
   awaitingResponse: boolean;
+  awaitingSince: string | null;
+  timeoutSeconds: number | null;
 };
