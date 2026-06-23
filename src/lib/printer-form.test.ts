@@ -36,7 +36,7 @@ describe("printerToFormValues", () => {
 });
 
 describe("toPrinterEditRequest", () => {
-  it("preserves foreign keys when the wizard omits assignment fields", () => {
+  it("preserves software when the assignment field is left empty on edit", () => {
     const values = {
       ...printerToFormValues(assignedPrinter),
       distributorId: "",
@@ -51,10 +51,24 @@ describe("toPrinterEditRequest", () => {
     if (typeof body === "string") return;
 
     expect(body.paid).toBe(true);
-    expect(body.distributorId).toBe(40);
-    expect(body.clientId).toBe(30);
+    expect(body.distributorId).toBeNull();
+    expect(body.clientId).toBeNull();
     expect(body.softwareId).toBe(20);
     expect(body.installationDate).toBe(assignedPrinter.installationDate);
+  });
+
+  it("clears client when the form sends an empty client selection", () => {
+    const values = {
+      ...printerToFormValues(assignedPrinter),
+      clientId: "",
+    };
+
+    const body = toPrinterEditRequest(values, assignedPrinter);
+    expect(typeof body).not.toBe("string");
+    if (typeof body === "string") return;
+
+    expect(body.clientId).toBeNull();
+    expect(body.distributorId).toBe(40);
   });
 
   it("clears assignments when status changes to sin_asignar", () => {

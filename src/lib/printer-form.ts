@@ -260,12 +260,8 @@ export function toPrinterEditRequest(
 
   return {
     ...bodyOrError,
-    distributorId: clearAssignments
-      ? null
-      : (bodyOrError.distributorId ?? printer.distributorId),
-    clientId: clearAssignments
-      ? null
-      : (bodyOrError.clientId ?? printer.clientId),
+    distributorId: clearAssignments ? null : bodyOrError.distributorId,
+    clientId: clearAssignments ? null : bodyOrError.clientId,
     softwareId: bodyOrError.softwareId ?? printer.softwareId,
     installationDate:
       bodyOrError.installationDate ?? printer.installationDate ?? null,
