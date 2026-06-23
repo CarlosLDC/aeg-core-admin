@@ -218,7 +218,7 @@ export function PrinterWizardFields({
   if (section === "assignment") {
     return (
       <fieldset className="space-y-4">
-        <legend className="sr-only">Asignación</legend>
+        <legend className="sr-only">Distribución y cliente</legend>
         <div
           className={cn(
             "grid gap-4",
@@ -243,7 +243,7 @@ export function PrinterWizardFields({
             </div>
           ) : null}
           <div className="block">
-            <FieldLabel>Cliente</FieldLabel>
+            <FieldLabel>Cliente (enajenación)</FieldLabel>
             <SearchableSelect
               value={form.clientId}
               onChange={(clientId) => setForm((f) => ({ ...f, clientId }))}

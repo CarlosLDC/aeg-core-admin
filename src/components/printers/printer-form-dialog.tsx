@@ -332,7 +332,7 @@ export function PrinterFormDialog({
 
             <fieldset className="space-y-4 rounded-xl border border-border p-4">
               <legend className="px-1 text-sm font-semibold text-card-foreground">
-                Asignación
+                Distribución y cliente
               </legend>
               <div
                 className={
@@ -359,7 +359,7 @@ export function PrinterFormDialog({
                   </div>
                 ) : null}
                 <div className="block">
-                  <FieldLabel>Cliente</FieldLabel>
+                  <FieldLabel>Cliente (enajenación)</FieldLabel>
                   <SearchableSelect
                     value={form.clientId}
                     onChange={(clientId) =>
