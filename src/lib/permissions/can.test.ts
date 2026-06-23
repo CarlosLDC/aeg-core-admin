@@ -29,9 +29,9 @@ describe("can", () => {
     expect(can("ADMIN", "printers", "create")).toBe(true);
   });
 
-  it("allows TECHNICIAN field ops and printer model read", () => {
+  it("denies TECHNICIAN printer model catalog access", () => {
     expect(can("TECHNICIAN", "annualInspections", "update")).toBe(true);
-    expect(can("TECHNICIAN", "printerModels", "read")).toBe(true);
+    expect(can("TECHNICIAN", "printerModels", "read")).toBe(false);
     expect(can("TECHNICIAN", "printerModels", "create")).toBe(false);
   });
 
@@ -68,9 +68,10 @@ describe("canAccessRoute", () => {
     expect(canAccessRoute("TECHNICIAN", "/annual-inspections/42")).toBe(true);
   });
 
-  it("allows TECHNICIAN on printer models catalog", () => {
-    expect(canAccessRoute("TECHNICIAN", "/printer-models")).toBe(true);
-    expect(canAccessRoute("TECHNICIAN", "/printer-models/1")).toBe(true);
-    expect(can("TECHNICIAN", "printerModels", "read")).toBe(true);
+  it("blocks TECHNICIAN from printer models and seals sections", () => {
+    expect(canAccessRoute("TECHNICIAN", "/printer-models")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/printer-models/1")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/seals")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/seals/1")).toBe(false);
   });
 });

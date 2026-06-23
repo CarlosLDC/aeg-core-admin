@@ -9,7 +9,7 @@ Debe reflejar `docs/permissions-matrix.md` para el **panel** y las reglas del **
 | **aeg-core-admin** | `users` | `POST /api/auth/login` (default `portal=CORE_ADMIN`) | `CORE_ADMIN` |
 | **aeg-libros-fiscales** | `users` | `POST /api/auth/login` con `portal=FISCAL_BOOK` | `FISCAL_BOOK` |
 
-Ambos portales autentican contra la misma tabla `users`. El campo opcional `portal` en el login determina el claim JWT y las reglas de acceso inmediato (p. ej. `SENIAT` rechazado en panel).
+Ambos portales autentican contra la misma tabla `users`. El login del panel acepta cuentas `SENIAT` y emite JWT con `portal=FISCAL_BOOK`; el panel las redirige al libro fiscal.
 
 ### Roles unificados (`users.role`)
 
@@ -42,7 +42,7 @@ Claims comunes:
 
 Reglas de login:
 
-- `role == SENIAT` + `portal=CORE_ADMIN` → **403** (“Esta cuenta solo puede acceder al portal de libros fiscales”).
+- `role == SENIAT` + login sin `portal` (panel) → **200** con JWT `portal=FISCAL_BOOK` (el backend normaliza el portal).
 - Cualquier otro rol puede iniciar sesión en ambos portales (el JWT lleva el `portal` solicitado).
 
 ## Gestión ADMIN (solo panel)
@@ -115,7 +115,7 @@ Claims: `role`, `distributorId`, `nationalId`, `userId`.
 
 Ver `UnifiedAuthRbacIT`:
 
-- Login panel con usuario `SENIAT` → 403
+- Login panel con usuario `SENIAT` → OK (token con `portal=FISCAL_BOOK`; el panel redirige a `/fiscal-book`)
 - Login libro con `SENIAT` + `portal=FISCAL_BOOK` → OK
 - Token ADMIN panel → `GET /api/fiscal-books/**` → OK
 - Token `SENIAT` → `GET /api/admin/users` → 403

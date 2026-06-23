@@ -1,3 +1,4 @@
+import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
 import { mainNav } from "@/lib/navigation";
 import { can } from "@/lib/permissions/can";
 import type { Resource } from "@/lib/permissions/types";
@@ -85,6 +86,8 @@ export function canAccessRoute(role: Role, pathname: string): boolean {
 
 /** Primera ruta del menú a la que el rol puede acceder (fallback tras denegar). */
 export function defaultPathForRole(role: Role): string {
+  if (role === "SENIAT") return FISCAL_BOOK_ENTRY_PATH;
+
   for (const item of mainNav) {
     if (item.disabled) continue;
     if (!item.roles || item.roles.includes(role)) {

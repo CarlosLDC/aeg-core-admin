@@ -28,6 +28,19 @@ describe("navSectionsForRole", () => {
     );
   });
 
+  it("hides modelos and precintos sections from TECHNICIAN", () => {
+    const technicianItems = navItemsForRole("TECHNICIAN");
+    expect(technicianItems.some((i) => i.title === "Modelos fiscales")).toBe(
+      false,
+    );
+    expect(technicianItems.some((i) => i.title === "Precintos fiscales")).toBe(
+      false,
+    );
+    const adminItems = navItemsForRole("ADMIN");
+    expect(adminItems.some((i) => i.title === "Modelos fiscales")).toBe(true);
+    expect(adminItems.some((i) => i.title === "Precintos fiscales")).toBe(true);
+  });
+
   it("shows Libro fiscal for panel roles with external app URL", () => {
     const technicianItems = navItemsForRole("TECHNICIAN");
     const fiscalBook = technicianItems.find((i) => i.title === "Libro fiscal");

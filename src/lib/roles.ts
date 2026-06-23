@@ -9,7 +9,7 @@ export const ROLE_LABELS: Record<Role, string> = {
 export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   ADMIN: "Acceso completo a todas las secciones del panel",
   TECHNICIAN:
-    "Operaciones de distribuidora: clientes, impresoras, precintos e inspecciones",
+    "Operaciones de distribuidora: clientes, impresoras, servicios técnicos e inspecciones",
   SENIAT: "Solo lectura del libro fiscal (sin acceso al panel)",
 };
 

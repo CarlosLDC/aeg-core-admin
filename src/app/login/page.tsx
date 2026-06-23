@@ -14,8 +14,9 @@ import {
 import { LoginAnimatedBackdrop } from "@/components/auth/login-animated-backdrop";
 import { BrandLogo } from "@/components/brand/logo";
 import { getLoginErrorMessage, useAuth } from "@/context/auth-provider";
+import { getSession } from "@/lib/auth";
 import { fiscalBooksAppUrl } from "@/lib/fiscal-books-app";
-import { getSafeRedirectPath } from "@/lib/safe-redirect";
+import { postLoginRedirectPath } from "@/lib/safe-redirect";
 import { FieldLabel } from "@/components/ui/field-label";
 import { cn } from "@/lib/utils";
 
@@ -30,13 +31,13 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const redirectTo = getSafeRedirectPath(searchParams.get("redirect"));
+  const redirectParam = searchParams.get("redirect");
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.replace(redirectTo);
+      router.replace(postLoginRedirectPath(user.role, redirectParam));
     }
-  }, [isLoading, user, router, redirectTo]);
+  }, [isLoading, user, router, redirectParam]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,7 +46,10 @@ function LoginForm() {
 
     try {
       await login({ username: username.trim(), password }, remember);
-      router.replace(redirectTo);
+      const session = getSession();
+      if (session) {
+        router.replace(postLoginRedirectPath(session.role, redirectParam));
+      }
     } catch (err) {
       setError(getLoginErrorMessage(err));
     } finally {

@@ -7,7 +7,7 @@ Documento de referencia alineado con `src/lib/permissions/matrix.ts`. El backend
 | Rol | Descripción |
 |-----|-------------|
 | ADMIN | Acceso global; único que modifica/elimina catálogos sensibles y usuarios |
-| TECHNICIAN | Operaciones de distribuidora: clientes, impresoras (lectura), precintos, servicios técnicos e inspecciones en alcance de su `distributorId`; identidad de campo con cédula (`nationalId`) |
+| TECHNICIAN | Operaciones de distribuidora: clientes, impresoras (lectura), servicios técnicos e inspecciones en alcance de su `distributorId`; identidad de campo con cédula (`nationalId`) |
 | SENIAT | Auditor de libros fiscales: **solo** portal aeg-libros-fiscales, lectura global, sin altas ni edición |
 
 Los roles históricos `DISTRIBUTOR` y `SERVICE_CENTER` se consolidaron en `TECHNICIAN`.
@@ -20,8 +20,8 @@ Los roles históricos `DISTRIBUTOR` y `SERVICE_CENTER` se consolidaron en `TECHN
 | companies | ADMIN, TECHNICIAN | ADMIN, TECHNICIAN | ADMIN, TECHNICIAN | ADMIN | TECH: API filtra por distribuidora |
 | branches | ADMIN, TECHNICIAN | ADMIN, TECHNICIAN | ADMIN, TECHNICIAN | ADMIN | Wizard SENIAT: create company+branch |
 | printers | ADMIN, TECHNICIAN | ADMIN | ADMIN | ADMIN | TECH: solo su cartera (`distributorId`); solo lectura |
-| printerModels | ADMIN, TECHNICIAN | ADMIN | ADMIN | ADMIN | TECH: lectura de modelos de **sus** impresoras |
-| seals | ADMIN, TECHNICIAN | Igual lectura | Igual | Igual | Impresoras en scope |
+| printerModels | ADMIN | ADMIN | ADMIN | ADMIN | Catálogo solo administrador; TECH resuelve modelos vía API al ver impresoras |
+| seals | ADMIN (ruta `/seals`) | ADMIN, TECHNICIAN | Igual | Igual | TECH gestiona precintos en servicio técnico, no en el catálogo |
 | technicalServices | ADMIN, TECHNICIAN | Igual | Igual | Igual | `userId` = técnico (`users.id`) |
 | annualInspections | ADMIN, TECHNICIAN | Igual | Igual | Igual | Solo impresoras **asignada**; inspector = `userId` |
 | contracts | ADMIN | ADMIN | ADMIN | ADMIN | |

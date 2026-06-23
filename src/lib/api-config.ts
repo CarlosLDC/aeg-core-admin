@@ -9,6 +9,8 @@ const PRODUCTION_HOSTS = new Set([
   "aeg-core-admin.vercel.app",
   "aeg-admin.tech",
   "www.aeg-admin.tech",
+  "aeg-tech.com",
+  "www.aeg-tech.com",
 ]);
 
 function isProductionHost(hostname: string): boolean {

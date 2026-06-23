@@ -47,7 +47,7 @@ export function userFiscalBookWriteLabel(role: Role): string {
 
 export function userCreateSuccessMessage(name: string, role: Role): string {
   if (role === "SENIAT") {
-    return `Usuario "${name}" creado. Ya puede iniciar sesión en el libro fiscal.`;
+    return `Usuario "${name}" creado. Ya puede iniciar sesión en aeg-tech.com para consultar el libro fiscal.`;
   }
   return `Usuario "${name}" creado. Ya puede iniciar sesión en el panel y en el libro fiscal.`;
 }

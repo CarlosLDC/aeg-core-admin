@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { canAccessRoute, resourceForPath } from "@/lib/permissions/routes";
+import { canAccessRoute, defaultPathForRole, resourceForPath } from "@/lib/permissions/routes";
+import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
 import { can } from "@/lib/permissions/can";
 import type { Role } from "@/types/user";
 
@@ -45,5 +46,16 @@ describe("route permissions", () => {
     expect(canAccessRoute("TECHNICIAN", "/clients/42")).toBe(true);
     expect(canAccessRoute("TECHNICIAN", "/branches/99")).toBe(true);
     expect(canAccessRoute("TECHNICIAN", "/branches")).toBe(true);
+  });
+
+  it("defaults SENIAT to fiscal book entry", () => {
+    expect(defaultPathForRole("SENIAT")).toBe(FISCAL_BOOK_ENTRY_PATH);
+  });
+
+  it("blocks TECHNICIAN from admin-only catalog sections", () => {
+    expect(canAccessRoute("TECHNICIAN", "/printer-models")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/seals")).toBe(false);
+    expect(canAccessRoute("ADMIN", "/printer-models")).toBe(true);
+    expect(canAccessRoute("ADMIN", "/seals")).toBe(true);
   });
 });

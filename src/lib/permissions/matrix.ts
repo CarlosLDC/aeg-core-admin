@@ -30,7 +30,7 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     delete: ADMIN_ONLY,
   },
   printerModels: {
-    read: ADMIN_TECH,
+    read: ADMIN_ONLY,
     create: ADMIN_ONLY,
     update: ADMIN_ONLY,
     delete: ADMIN_ONLY,
