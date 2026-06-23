@@ -104,6 +104,7 @@ export function PrinterView() {
   const canDelete = user ? canDeletePrinterRecord(user.role) : false;
   const isAdmin = user?.role === "ADMIN";
   const isDistributor = user?.role === "TECHNICIAN";
+  const showSoftware = isAdmin;
   const canAssignInitialized = isAdmin && canModify;
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
   const canOpenFiscalBook = user
@@ -196,7 +197,9 @@ export function PrinterView() {
     setCatalogLoading(true);
     Promise.all([
       fetchPrinterModels().catch(() => [] as PrinterModelResponse[]),
-      fetchSoftware(),
+      showSoftware
+        ? fetchSoftware()
+        : Promise.resolve([] as Awaited<ReturnType<typeof fetchSoftware>>),
       scope ? Promise.resolve(scope.companies) : fetchCompanies(),
       scope ? Promise.resolve(scope.branches) : fetchBranches(),
       isDistributor
@@ -227,7 +230,7 @@ export function PrinterView() {
     return () => {
       cancelled = true;
     };
-  }, [scope, isDistributor]);
+  }, [scope, isDistributor, showSoftware]);
 
   useEffect(() => {
     if (!printer) return;
@@ -374,14 +377,6 @@ export function PrinterView() {
           }
         />
         <DetailField
-          label="Software"
-          value={
-            printer.softwareId != null
-              ? softwareLabelById.get(printer.softwareId) ?? "—"
-              : "Sin asignar"
-          }
-        />
-        <DetailField
           label="Firmware"
           value={printer.versionFirmware || "—"}
           mono
@@ -394,7 +389,6 @@ export function PrinterView() {
     user,
     clients,
     clientLabelById,
-    softwareLabelById,
     statusQuickAction,
   ]);
 
@@ -502,15 +496,17 @@ export function PrinterView() {
                   : undefined
               }
             />
-            <DetailField
-              label="Software"
-              value={
-                printer.softwareId != null
-                  ? softwareLabelById.get(printer.softwareId) ??
-                    "—"
-                  : "Sin asignar"
-              }
-            />
+            {showSoftware ? (
+              <DetailField
+                label="Software"
+                value={
+                  printer.softwareId != null
+                    ? softwareLabelById.get(printer.softwareId) ??
+                      "—"
+                    : "Sin asignar"
+                }
+              />
+            ) : null}
           </DetailSection>
         ),
       },
@@ -544,6 +540,7 @@ export function PrinterView() {
     clients,
     clientLabelById,
     softwareLabelById,
+    showSoftware,
     canAssignInitialized,
     canDisposeAssigned,
     statusQuickAction,
@@ -765,7 +762,7 @@ export function PrinterView() {
           distributorOptions={distributorOptions}
           modelsLoading={modelsLoading}
           catalogLoading={catalogLoading}
-          canPickSoftware={user?.role === "ADMIN"}
+          canPickSoftware={showSoftware}
           lockDistributor={lockDistributor}
           defaultDistributorId={distributorId}
           onClose={() => {
