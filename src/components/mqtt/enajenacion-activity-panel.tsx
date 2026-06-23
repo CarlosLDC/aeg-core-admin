@@ -23,7 +23,7 @@ function resultBadgeClass(result: EnajenacionActivityResult): string {
     case "PROCESSED":
     case "PUBLISHED":
     case "COMPLETED":
-      return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
+      return "bg-violet-500/10 text-violet-800 dark:text-violet-200";
     case "RECEIVED":
       return "bg-sky-500/10 text-sky-800 dark:text-sky-200";
     case "IGNORED":

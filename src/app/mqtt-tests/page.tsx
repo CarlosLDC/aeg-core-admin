@@ -6,7 +6,7 @@ export default function MqttTestsPage() {
   return (
     <AdminShell
       title="Herramientas MQTT"
-      description="Monitor en vivo, diagnóstico del broker y prueba de enajenación fiscal"
+      description="Diagnóstico del broker, actividad de enajenación y pruebas fiscales MQTT"
     >
       <RoleGuard path="/mqtt-tests">
         <MqttTestPanel />

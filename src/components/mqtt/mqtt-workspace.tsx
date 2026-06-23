@@ -1,15 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { EnajenacionActivityPanel } from "@/components/mqtt/enajenacion-activity-panel";
 import { EnajenacionTestPanel } from "@/components/mqtt/enajenacion-test-panel";
 import { MqttDiagnosticsPanel } from "@/components/mqtt/mqtt-diagnostics-panel";
-import { MqttMonitorPanel } from "@/components/mqtt/mqtt-monitor-panel";
 import { SegmentedToggle } from "@/components/ui/segmented-toggle";
-import { useMqttMonitor } from "@/hooks/use-mqtt-monitor";
 import { cn } from "@/lib/utils";
 
-type MqttTab = "monitor" | "diagnostics" | "enajenacion" | "activity";
+type MqttTab = "diagnostics" | "enajenacion" | "activity";
 
 const TAB_STORAGE_KEY = "mqtt-workspace-tab";
 
@@ -18,7 +16,10 @@ function readStoredTab(): MqttTab {
     return "diagnostics";
   }
   const stored = sessionStorage.getItem(TAB_STORAGE_KEY);
-  if (stored === "monitor" || stored === "diagnostics" || stored === "enajenacion" || stored === "activity") {
+  if (stored === "monitor") {
+    return "activity";
+  }
+  if (stored === "diagnostics" || stored === "enajenacion" || stored === "activity") {
     return stored;
   }
   return "diagnostics";
@@ -26,7 +27,6 @@ function readStoredTab(): MqttTab {
 
 export function MqttWorkspace() {
   const [tab, setTab] = useState<MqttTab>(readStoredTab);
-  const monitor = useMqttMonitor();
 
   const handleTabChange = useCallback((next: MqttTab) => {
     setTab(next);
@@ -42,16 +42,11 @@ export function MqttWorkspace() {
           ariaLabel="Sección MQTT"
           options={[
             { value: "diagnostics", label: "Diagnóstico" },
-            { value: "monitor", label: "Monitor" },
             { value: "activity", label: "Actividad" },
             { value: "enajenacion", label: "Enajenación" },
           ]}
           className="w-full max-w-lg"
         />
-      </div>
-
-      <div className={cn(tab !== "monitor" && "hidden")}>
-        <MqttMonitorPanel monitor={monitor} />
       </div>
 
       <div className={cn(tab !== "diagnostics" && "hidden")}>
