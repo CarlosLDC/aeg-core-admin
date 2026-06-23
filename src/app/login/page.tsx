@@ -4,7 +4,6 @@ import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
-  ExternalLink,
   Eye,
   EyeOff,
   Loader2,
@@ -17,7 +16,6 @@ import { getLoginErrorMessage, useAuth } from "@/context/auth-provider";
 import { getSession } from "@/lib/auth";
 import { isRemembered } from "@/lib/auth-storage";
 import { completeSeniatHandoffFromAdmin } from "@/lib/fiscal-books-handoff";
-import { fiscalBooksAppUrl } from "@/lib/fiscal-books-app";
 import {
   FISCAL_BOOK_ENTRY_PATH,
   getSafeRedirectPath,
@@ -219,16 +217,6 @@ function LoginForm() {
               )}
             </button>
           </form>
-
-          <p className="mt-5 text-center text-sm">
-            <a
-              href={fiscalBooksAppUrl()}
-              className="inline-flex items-center gap-1.5 font-medium text-accent transition-colors hover:text-accent/80 hover:underline"
-            >
-              Consultar Libro Fiscal
-              <ExternalLink className="size-4 shrink-0" aria-hidden />
-            </a>
-          </p>
 
           <p className="mt-6 text-center text-xs text-muted">
             Impresoras, empresas y servicios en campo — un solo lugar para
