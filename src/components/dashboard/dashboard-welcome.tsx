@@ -1,28 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, RefreshCw } from "lucide-react";
+import { ArrowRight, Building2, RefreshCw } from "lucide-react";
 import { navItemsForRole } from "@/lib/navigation";
-import { ROLE_DESCRIPTIONS, ROLE_LABELS, ROLE_STYLES } from "@/lib/roles";
 import type { DashboardSnapshot } from "@/lib/dashboard-data";
 import { isPrinterOperative } from "@/lib/printer-status";
 import type { Role } from "@/types/user";
 import { cn } from "@/lib/utils";
 
 type DashboardWelcomeProps = {
-  displayName: string;
   role: Role;
   snapshot: DashboardSnapshot;
+  technicianBranchLabel?: string | null;
   onRefresh: () => void;
   refreshing: boolean;
 };
-
-function greetingForHour(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Buenos días";
-  if (hour < 19) return "Buenas tardes";
-  return "Buenas noches";
-}
 
 const ROLE_CONTEXT: Record<Role, string> = {
   ADMIN: "Vista global del catálogo operativo y la flota fiscal.",
@@ -32,9 +24,9 @@ const ROLE_CONTEXT: Record<Role, string> = {
 };
 
 export function DashboardWelcome({
-  displayName,
   role,
   snapshot,
+  technicianBranchLabel,
   onRefresh,
   refreshing,
 }: DashboardWelcomeProps) {
@@ -68,24 +60,29 @@ export function DashboardWelcome({
       />
       <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-muted">
-            {greetingForHour()}, {displayName}
-          </p>
-          <h2 className="mt-1 text-xl font-semibold tracking-tight text-card-foreground sm:text-2xl">
+          <h2 className="text-xl font-semibold tracking-tight text-card-foreground sm:text-2xl">
             Panel de control
           </h2>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted">
             {ROLE_CONTEXT[role]} {printerLine}
           </p>
-          <span
-            className={cn(
-              "mt-3 inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
-              ROLE_STYLES[role],
-            )}
-            title={ROLE_DESCRIPTIONS[role]}
-          >
-            {ROLE_LABELS[role]}
-          </span>
+
+          {role === "TECHNICIAN" ? (
+            <div className="mt-4 inline-flex max-w-full items-start gap-2.5 rounded-lg border border-border bg-background/70 px-3 py-2.5">
+              <Building2
+                className="mt-0.5 size-4 shrink-0 text-accent"
+                aria-hidden
+              />
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted">
+                  Sucursal
+                </p>
+                <p className="mt-0.5 text-sm font-medium text-card-foreground">
+                  {technicianBranchLabel ?? "Sin sucursal asignada"}
+                </p>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <button

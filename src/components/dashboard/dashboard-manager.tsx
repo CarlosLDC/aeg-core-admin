@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Building2,
   Contact,
@@ -19,6 +19,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { fetchAuthMe } from "@/lib/auth-me-api";
+import { distributorLabel } from "@/lib/branch-roles";
 import {
   loadDashboardSnapshot,
   type DashboardSnapshot,
@@ -106,15 +107,25 @@ export function DashboardManager() {
   const canSeePrinters =
     user.role === "ADMIN" || user.role === "TECHNICIAN";
 
+  const technicianBranchLabel = useMemo(() => {
+    if (user.role !== "TECHNICIAN" || distributorId == null) return null;
+    const distributors = catalogRoles?.distributors ?? [];
+    const distributor = distributors.find((row) => row.id === distributorId);
+    if (!distributor) return null;
+    const branches = scope?.branches ?? [];
+    const companies = scope?.companies ?? [];
+    return distributorLabel(distributor, branches, companies);
+  }, [user.role, distributorId, catalogRoles, scope]);
+
   const showWelcome = snapshot && !loading;
 
   return (
     <div className="space-y-6 sm:space-y-8">
       {showWelcome && (
         <DashboardWelcome
-          displayName={user.displayName}
           role={user.role}
           snapshot={snapshot}
+          technicianBranchLabel={technicianBranchLabel}
           onRefresh={load}
           refreshing={loading}
         />
