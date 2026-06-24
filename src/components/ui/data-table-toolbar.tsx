@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  ChevronDown,
   Columns3,
   Filter,
   RotateCcw,
@@ -39,6 +40,9 @@ export type ColumnToggle = {
 
 const searchInputClass =
   "w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-ring/20";
+
+const nativeSelectClass =
+  "w-full appearance-none rounded-lg border border-border bg-background py-2 pl-3 pr-9 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-ring/20";
 
 type DataTableToolbarProps = {
   search: string;
@@ -89,20 +93,23 @@ function TableFilterField({ filter }: { filter: FilterSelect }) {
           modalTitle={filter.label}
         />
       ) : (
-        <div className="flex flex-wrap gap-2" role="group" aria-label={filter.label}>
-          {filter.options.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              aria-pressed={filter.value === opt.value}
-              onClick={() => filter.onChange(opt.value)}
-              className={filterToggleButtonClass(filter.value === opt.value, {
-                className: "rounded-md",
-              })}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="relative">
+          <select
+            id={`filter-${filter.id}`}
+            value={filter.value}
+            onChange={(e) => filter.onChange(e.target.value)}
+            className={nativeSelectClass}
+          >
+            {filter.options.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted"
+            aria-hidden
+          />
         </div>
       )}
     </div>
