@@ -9,7 +9,6 @@ import {
   X,
 } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { FILTER_ALL } from "@/lib/table-filter-options";
 import { filterToggleButtonClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
@@ -90,15 +89,21 @@ function TableFilterField({ filter }: { filter: FilterSelect }) {
           modalTitle={filter.label}
         />
       ) : (
-        <SegmentedToggle
-          value={filter.value}
-          onChange={filter.onChange}
-          ariaLabel={filter.label}
-          options={filter.options.map((opt) => ({
-            value: opt.value,
-            label: opt.label,
-          }))}
-        />
+        <div className="flex flex-wrap gap-2" role="group" aria-label={filter.label}>
+          {filter.options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              aria-pressed={filter.value === opt.value}
+              onClick={() => filter.onChange(opt.value)}
+              className={filterToggleButtonClass(filter.value === opt.value, {
+                className: "rounded-md",
+              })}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       )}
     </div>
   );
