@@ -1,5 +1,7 @@
-import { PRINTER_PENDING_MQTT_LABEL } from "@/lib/printer-enajenacion-ticket";
 import { cn } from "@/lib/utils";
+
+const PENDING_MQTT_TITLE =
+  "Pendiente enajenación MQTT: ticket fiscal guardado; falta completar el ritual en la impresora";
 
 type PrinterPendingMqttBadgeProps = {
   className?: string;
@@ -11,12 +13,12 @@ export function PrinterPendingMqttBadge({
   return (
     <span
       className={cn(
-        "inline-flex rounded-full border border-amber-500/35 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-900 dark:text-amber-100",
+        "inline-flex size-2 shrink-0 rounded-full bg-amber-400 shadow-[0_0_0_2px] shadow-amber-400/25 animate-pulse",
         className,
       )}
-      title="Ticket fiscal guardado; falta completar el ritual MQTT en la impresora"
-    >
-      {PRINTER_PENDING_MQTT_LABEL}
-    </span>
+      title={PENDING_MQTT_TITLE}
+      aria-label={PENDING_MQTT_TITLE}
+      role="status"
+    />
   );
 }
