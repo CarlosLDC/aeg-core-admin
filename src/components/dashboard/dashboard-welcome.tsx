@@ -5,7 +5,7 @@ import { ArrowRight, Building2, RefreshCw } from "lucide-react";
 import { navItemsForRole } from "@/lib/navigation";
 import type { DashboardSnapshot } from "@/lib/dashboard-data";
 import { isPrinterOperative } from "@/lib/printer-status";
-import type { Role } from "@/types/user";
+import { isDistributorPanelRole, type Role } from "@/types/user";
 import { cn } from "@/lib/utils";
 
 type DashboardWelcomeProps = {
@@ -18,8 +18,11 @@ type DashboardWelcomeProps = {
 
 const ROLE_CONTEXT: Record<Role, string> = {
   ADMIN: "Vista global del catálogo operativo y la flota fiscal.",
+  DISTRIBUTOR:
+    "Tu inventario de impresoras y empresas en tu distribuidora; inspecciones en el Libro fiscal.",
   TECHNICIAN:
-    "Tu inventario de impresoras y empresas en tu distribuidora; servicios e inspecciones en el Libro fiscal.",
+    "Tu inventario de impresoras y empresas en tu distribuidora; inspecciones y firma de servicios en el Libro fiscal.",
+  SERVICE_CENTER: "Operaciones de campo en el libro fiscal.",
   SENIAT: "Consulta del libro fiscal para auditoría tributaria.",
 };
 
@@ -44,7 +47,7 @@ export function DashboardWelcome({
     isPrinterOperative(p.status),
   ).length;
   const printerLine =
-    role === "TECHNICIAN"
+    isDistributorPanelRole(role)
       ? snapshot.printers.length > 0
         ? `${snapshot.printers.length} en tu inventario · ${assignedCount} asignada${assignedCount === 1 ? "" : "s"} · ${disposedCount} enajenada${disposedCount === 1 ? "" : "s"} a clientes.`
         : "Aún no hay impresoras en tu inventario."
@@ -67,7 +70,7 @@ export function DashboardWelcome({
             {ROLE_CONTEXT[role]} {printerLine}
           </p>
 
-          {role === "TECHNICIAN" ? (
+          {isDistributorPanelRole(role) ? (
             <div className="mt-4 inline-flex max-w-full items-center gap-2.5 rounded-lg border border-border bg-background/70 px-3 py-2.5">
               <Building2
                 className="size-4 shrink-0 text-accent"

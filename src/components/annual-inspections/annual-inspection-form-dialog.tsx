@@ -55,8 +55,12 @@ export function AnnualInspectionFormDialog({
 }: AnnualInspectionFormDialogProps) {
   const formId = useId();
   const isWizard = true;
-  const lockTechnicianField =
-    mode === "create" && currentUserRole === "TECHNICIAN" && currentUserId != null;
+  const lockInspectorField =
+    mode === "create" &&
+    (currentUserRole === "DISTRIBUTOR" ||
+      currentUserRole === "TECHNICIAN" ||
+      currentUserRole === "SERVICE_CENTER") &&
+    currentUserId != null;
   type WizardStep = 1 | 2 | 3;
   const [step, setStep] = useState<WizardStep>(1);
   const [stepError, setStepError] = useState<string | null>(null);
@@ -70,13 +74,13 @@ export function AnnualInspectionFormDialog({
       mode === "edit" && row
         ? annualInspectionToFormValues(row)
         : emptyAnnualInspectionForm();
-    if (lockTechnicianField && currentUserId != null) {
+    if (lockInspectorField && currentUserId != null) {
       base.userId = String(currentUserId);
     }
     setForm(base);
     setStep(1);
     setStepError(null);
-  }, [open, mode, row, lockTechnicianField, currentUserId]);
+  }, [open, mode, row, lockInspectorField, currentUserId]);
 
   if (!open) return null;
 
@@ -207,7 +211,7 @@ export function AnnualInspectionFormDialog({
               setForm((f) => ({ ...f, userId }))
             }
             options={technicianUserOptions}
-            disabled={disabled || lockTechnicianField}
+            disabled={disabled || lockInspectorField}
             loading={catalogLoading}
             required
             searchPlaceholder="Buscar técnico..."

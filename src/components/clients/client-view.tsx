@@ -52,6 +52,7 @@ import {
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
+import { isDistributorPanelRole } from "@/types/user";
 
 export function ClientView() {
   const id = useResourceId();
@@ -72,7 +73,7 @@ export function ClientView() {
     useState<Partial<ClientModificationProposedData> | null>(null);
   const canEditCompany = user ? canUpdateCompanyRecord(user.role) : false;
   const canEditBranch = user ? canUpdateBranchRecord(user.role) : false;
-  const canRequestReview = user?.role === "TECHNICIAN";
+  const canRequestReview = isDistributorPanelRole(user?.role);
   const canCancelReview = user ? canCancelModificationReview(user.role) : false;
 
   const load = useCallback(async () => {
@@ -87,7 +88,7 @@ export function ClientView() {
     try {
       const clientRow = await fetchClientById(id);
       if (
-        user?.role === "TECHNICIAN" &&
+        isDistributorPanelRole(user?.role) &&
         user.distributorId != null &&
         clientRow.distributorId !== user.distributorId
       ) {

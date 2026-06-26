@@ -198,9 +198,9 @@ export function AnnualInspectionView() {
                 href={printerPath(inspection.printerId)}
               />
               <DetailField
-                label="Técnico"
+                label="Inspector"
                 value={catalogOptionLabel(
-                  catalog.technicianUserOptions,
+                  catalog.inspectorUserOptions,
                   inspection.userId,
                   "—",
                 )}
@@ -258,7 +258,7 @@ export function AnnualInspectionView() {
           catalogLoading={catalog.loading}
           canLoadPrinters={catalog.canLoadPrinters}
           printerOptions={inspectionPrinterOptions}
-          technicianUserOptions={catalog.technicianUserOptions}
+          technicianUserOptions={catalog.inspectorUserOptions}
           currentUserRole={catalog.role}
           currentUserId={catalog.currentUserId}
           onClose={() => {

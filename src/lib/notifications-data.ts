@@ -38,7 +38,7 @@ import {
 } from "@/lib/resource-routes";
 import type { ClientResponse } from "@/types/branch-role";
 import type { AppNotification, NotificationKind } from "@/types/notification";
-import type { Role } from "@/types/user";
+import { isDistributorPanelRole, type Role } from "@/types/user";
 
 const MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
 const MAX_ITEMS = 50;
@@ -109,7 +109,7 @@ export async function loadNotifications(options: {
   const warnings: string[] = [];
   const items: AppNotification[] = [];
 
-  const canPrinters = role === "ADMIN" || role === "TECHNICIAN";
+  const canPrinters = role === "ADMIN" || isDistributorPanelRole(role);
   const canSeals = can(role, "seals", "read");
   const canTechnicalServices = can(role, "technicalServices", "read");
   const canAnnualInspections = can(role, "annualInspections", "read");
@@ -130,7 +130,7 @@ export async function loadNotifications(options: {
   ] = await Promise.all([
     settled(scope ? Promise.resolve(scope.companies) : fetchCompanies()),
     settled(scope ? Promise.resolve(scope.branches) : fetchBranches()),
-    role === "TECHNICIAN" ? settled(fetchClients()) : Promise.resolve(null),
+    isDistributorPanelRole(role) ? settled(fetchClients()) : Promise.resolve(null),
     canLoadUsers ? settled(fetchUsers()) : Promise.resolve(null),
     canPrinters ? settled(fetchPrinters()) : Promise.resolve(null),
     canSeals ? settled(fetchSeals()) : Promise.resolve(null),

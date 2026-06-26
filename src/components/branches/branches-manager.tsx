@@ -103,6 +103,7 @@ import { invalidateCatalogRoles } from "@/lib/catalog-roles-cache";
 import type { BranchWithRoles } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
+import { isDistributorPanelRole } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
@@ -201,7 +202,7 @@ export function BranchesManager() {
   const toast = useToast();
   const confirm = useConfirm();
   const { user } = useAuth();
-  const isTechnician = user?.role === "TECHNICIAN";
+  const isTechnician = isDistributorPanelRole(user?.role);
   const distributorId = useDistributorId();
   const canCreateBranch = user ? canCreateBranchRecord(user.role) : false;
   const canCreate = isTechnician ? distributorId != null : canCreateBranch;

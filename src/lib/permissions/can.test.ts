@@ -8,40 +8,38 @@ describe("can", () => {
     expect(can("ADMIN", "contracts", "read")).toBe(true);
   });
 
-  it("allows TECHNICIAN to create/update companies and branches but not delete", () => {
-    expect(can("TECHNICIAN", "companies", "create")).toBe(true);
-    expect(can("TECHNICIAN", "branches", "create")).toBe(true);
-    expect(can("TECHNICIAN", "companies", "update")).toBe(true);
-    expect(can("TECHNICIAN", "branches", "update")).toBe(true);
-    expect(can("TECHNICIAN", "companies", "delete")).toBe(false);
+  it("allows DISTRIBUTOR and TECHNICIAN panel mutations but not delete", () => {
+    for (const role of ["DISTRIBUTOR", "TECHNICIAN"] as const) {
+      expect(can(role, "companies", "create")).toBe(true);
+      expect(can(role, "branches", "create")).toBe(true);
+      expect(can(role, "companies", "update")).toBe(true);
+      expect(can(role, "branches", "update")).toBe(true);
+      expect(can(role, "companies", "delete")).toBe(false);
+      expect(can(role, "users", "read")).toBe(false);
+      expect(can(role, "contracts", "read")).toBe(false);
+      expect(can(role, "seals", "create")).toBe(true);
+      expect(can(role, "printers", "read")).toBe(true);
+      expect(can(role, "printers", "create")).toBe(false);
+    }
   });
 
-  it("denies TECHNICIAN users and contracts", () => {
-    expect(can("TECHNICIAN", "users", "read")).toBe(false);
-    expect(can("TECHNICIAN", "contracts", "read")).toBe(false);
-    expect(can("TECHNICIAN", "seals", "create")).toBe(true);
+  it("allows field roles to write annual inspections but not read admin panel section", () => {
+    for (const role of ["DISTRIBUTOR", "TECHNICIAN", "SERVICE_CENTER"] as const) {
+      expect(can(role, "annualInspections", "create")).toBe(true);
+      expect(can(role, "annualInspections", "read")).toBe(false);
+    }
   });
 
-  it("allows non-admin printer read but not mutations", () => {
-    expect(can("TECHNICIAN", "printers", "read")).toBe(true);
-    expect(can("TECHNICIAN", "printers", "create")).toBe(false);
-    expect(can("TECHNICIAN", "printers", "update")).toBe(false);
-    expect(can("ADMIN", "printers", "create")).toBe(true);
-  });
-
-  it("denies TECHNICIAN printer model catalog access", () => {
-    expect(can("TECHNICIAN", "annualInspections", "update")).toBe(false);
-    expect(can("TECHNICIAN", "printerModels", "read")).toBe(false);
-    expect(can("TECHNICIAN", "printerModels", "create")).toBe(false);
-  });
-
-  it("denies TECHNICIAN admin-panel technical services and annual inspections", () => {
-    expect(can("TECHNICIAN", "technicalServices", "read")).toBe(false);
+  it("allows only SERVICE_CENTER and ADMIN to write technical services", () => {
+    expect(can("ADMIN", "technicalServices", "create")).toBe(true);
+    expect(can("SERVICE_CENTER", "technicalServices", "create")).toBe(true);
+    expect(can("DISTRIBUTOR", "technicalServices", "create")).toBe(false);
     expect(can("TECHNICIAN", "technicalServices", "create")).toBe(false);
-    expect(can("TECHNICIAN", "annualInspections", "read")).toBe(false);
-    expect(can("TECHNICIAN", "annualInspections", "create")).toBe(false);
-    expect(can("ADMIN", "technicalServices", "read")).toBe(true);
-    expect(can("ADMIN", "annualInspections", "read")).toBe(true);
+  });
+
+  it("denies SERVICE_CENTER panel dashboard access", () => {
+    expect(can("SERVICE_CENTER", "dashboard", "read")).toBe(false);
+    expect(can("SERVICE_CENTER", "companies", "read")).toBe(false);
   });
 });
 
@@ -51,33 +49,19 @@ describe("canAccessRoute", () => {
     expect(resourceForPath("/")).toBe("dashboard");
   });
 
-  it("blocks TECHNICIAN from /users", () => {
+  it("blocks panel roles from /users", () => {
     expect(canAccessRoute("TECHNICIAN", "/users")).toBe(false);
+    expect(canAccessRoute("DISTRIBUTOR", "/users")).toBe(false);
   });
 
-  it("allows TECHNICIAN dashboard and branches, not companies list", () => {
-    expect(canAccessRoute("TECHNICIAN", "/")).toBe(true);
-    expect(canAccessRoute("TECHNICIAN", "/branches")).toBe(true);
-    expect(canAccessRoute("TECHNICIAN", "/companies")).toBe(false);
-  });
-
-  it("blocks TECHNICIAN from contracts", () => {
-    expect(canAccessRoute("TECHNICIAN", "/contracts")).toBe(false);
-  });
-
-  it("blocks TECHNICIAN from technical services and annual inspections", () => {
-    expect(canAccessRoute("TECHNICIAN", "/technical-services")).toBe(false);
-    expect(canAccessRoute("TECHNICIAN", "/technical-services/42")).toBe(false);
-    expect(canAccessRoute("TECHNICIAN", "/annual-inspections")).toBe(false);
-    expect(canAccessRoute("TECHNICIAN", "/annual-inspections/42")).toBe(false);
-    expect(canAccessRoute("ADMIN", "/technical-services")).toBe(true);
-    expect(canAccessRoute("ADMIN", "/annual-inspections")).toBe(true);
-  });
-
-  it("blocks TECHNICIAN from printer models and seals sections", () => {
-    expect(canAccessRoute("TECHNICIAN", "/printer-models")).toBe(false);
-    expect(canAccessRoute("TECHNICIAN", "/printer-models/1")).toBe(false);
-    expect(canAccessRoute("TECHNICIAN", "/seals")).toBe(false);
-    expect(canAccessRoute("TECHNICIAN", "/seals/1")).toBe(false);
+  it("allows DISTRIBUTOR and TECHNICIAN dashboard and branches, not companies list", () => {
+    for (const role of ["DISTRIBUTOR", "TECHNICIAN"] as const) {
+      expect(canAccessRoute(role, "/")).toBe(true);
+      expect(canAccessRoute(role, "/branches")).toBe(true);
+      expect(canAccessRoute(role, "/companies")).toBe(false);
+      expect(canAccessRoute(role, "/contracts")).toBe(false);
+      expect(canAccessRoute(role, "/technical-services")).toBe(false);
+      expect(canAccessRoute(role, "/annual-inspections")).toBe(false);
+    }
   });
 });

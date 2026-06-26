@@ -28,6 +28,7 @@ import {
 import {
   validateUserEditForm,
   resolveUserDistributorId,
+  resolveUserBranchId,
   resolveUserNationalId,
 } from "@/lib/user-form";
 import { ROLE_DESCRIPTIONS } from "@/lib/roles";
@@ -121,6 +122,7 @@ export function UserView() {
       values.role,
       values.distributorId,
     );
+    const branchId = resolveUserBranchId(values.role, values.branchId);
     const nationalId = resolveUserNationalId(values.role, values.nationalId);
     const name = values.name.trim();
     const email = values.email.trim().toLowerCase();
@@ -131,6 +133,7 @@ export function UserView() {
         email,
         role: values.role,
         distributorId,
+        branchId,
         nationalId,
         enabled: values.enabled,
       };

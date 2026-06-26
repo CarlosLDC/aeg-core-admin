@@ -67,6 +67,7 @@ import {
 } from "@/lib/seals-api";
 import type { SealColor, SealResponse, SealStatus } from "@/types/seal";
 import { SEAL_COLORS, SEAL_STATUSES } from "@/types/seal";
+import { isDistributorPanelRole } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
@@ -87,7 +88,7 @@ export function SealsManager() {
   const canDelete = user ? canDeleteSealRecord(user.role) : false;
 
   const canLoadPrinters =
-    user?.role === "ADMIN" || user?.role === "TECHNICIAN";
+    user?.role === "ADMIN" || isDistributorPanelRole(user?.role);
 
   const [seals, setSeals] = useState<SealResponse[]>([]);
   const [printerOptions, setPrinterOptions] = useState<PrinterSelectOption[]>(
@@ -197,7 +198,7 @@ export function SealsManager() {
     setPrintersLoading(true);
     try {
       let distributorId = user.distributorId;
-      if (user.role === "TECHNICIAN" && distributorId == null) {
+      if (isDistributorPanelRole(user.role) && distributorId == null) {
         try {
           const me = await fetchAuthMe();
           distributorId = me.distributorId ?? null;
@@ -257,7 +258,7 @@ export function SealsManager() {
     }
     try {
       let distributorId = user.distributorId;
-      if (user.role === "TECHNICIAN" && distributorId == null) {
+      if (isDistributorPanelRole(user.role) && distributorId == null) {
         try {
           const me = await fetchAuthMe();
           distributorId = me.distributorId ?? null;

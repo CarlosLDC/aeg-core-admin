@@ -26,7 +26,7 @@ import {
   type DashboardStat,
 } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils";
-import type { Role } from "@/types/user";
+import { isDistributorPanelRole, type Role } from "@/types/user";
 import type { LucideIcon } from "lucide-react";
 
 const STAT_ICONS: Record<string, LucideIcon> = {
@@ -53,7 +53,7 @@ export function DashboardManager() {
   );
 
   useEffect(() => {
-    if (user?.role !== "TECHNICIAN") {
+    if (!isDistributorPanelRole(user?.role)) {
       setDistributorId(user?.distributorId ?? null);
       return;
     }
@@ -105,10 +105,10 @@ export function DashboardManager() {
   if (!user) return null;
 
   const canSeePrinters =
-    user.role === "ADMIN" || user.role === "TECHNICIAN";
+    isDistributorPanelRole(user.role) || user.role === "ADMIN";
 
   const technicianBranchLabel = useMemo(() => {
-    if (user.role !== "TECHNICIAN" || distributorId == null) return null;
+    if (!isDistributorPanelRole(user.role) || distributorId == null) return null;
     const distributors = catalogRoles?.distributors ?? [];
     const distributor = distributors.find((row) => row.id === distributorId);
     if (!distributor) return null;
@@ -175,7 +175,7 @@ export function DashboardManager() {
             <h2 id="dashboard-overview" className="sr-only">
               Estadísticas
             </h2>
-            {user.role === "TECHNICIAN" ? (
+            {isDistributorPanelRole(user.role) ? (
               <DistributorSalesChart
                 className="min-w-0"
                 data={snapshot.monthlySales ?? []}
@@ -237,7 +237,7 @@ export function DashboardManager() {
               </h2>
               <DashboardRecentPrinters
                 printers={snapshot.recentPrinters}
-                variant={user.role === "TECHNICIAN" ? "distributor" : "default"}
+                variant={isDistributorPanelRole(user.role) ? "distributor" : "default"}
               />
             </section>
           )}

@@ -36,13 +36,17 @@ export const ACTION_COLUMN_LABELS: Record<Action, string> = {
 
 export const ROLE_LABELS: Record<Role, string> = {
   ADMIN: "Administrador",
+  DISTRIBUTOR: "Distribuidor",
   TECHNICIAN: "Técnico",
+  SERVICE_CENTER: "Centro de servicio",
   SENIAT: "Auditor SENIAT",
 };
 
 export const ROLE_ABBREV: Record<Role, string> = {
   ADMIN: "ADM",
+  DISTRIBUTOR: "DIS",
   TECHNICIAN: "TEC",
+  SERVICE_CENTER: "CS",
   SENIAT: "SEN",
 };
 

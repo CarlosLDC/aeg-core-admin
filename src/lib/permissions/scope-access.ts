@@ -8,7 +8,7 @@ import {
 } from "@/lib/scope-filters";
 import type { PrinterResponse } from "@/types/printer";
 import type { SealResponse } from "@/types/seal";
-import type { Role } from "@/types/user";
+import { isDistributorPanelRole, type Role } from "@/types/user";
 
 export function isCompanyInScope(
   scope: CompanyScope | null,
@@ -55,7 +55,7 @@ export function assertPrinterInScope(
 ): boolean {
   if (!printer) return false;
   if (role === "ADMIN") return true;
-  if (role === "TECHNICIAN" && distributorId != null) {
+  if (isDistributorPanelRole(role) && distributorId != null) {
     return printer.distributorId === distributorId;
   }
   if (!scope) return false;

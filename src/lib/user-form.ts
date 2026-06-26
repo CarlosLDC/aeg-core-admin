@@ -1,4 +1,4 @@
-import type { Role } from "@/types/user";
+import { isDistributorPanelRole, type Role } from "@/types/user";
 
 const MIN_PASSWORD_LENGTH = 6;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -9,11 +9,21 @@ type UserFormFields = {
   password: string;
   role: Role;
   distributorId: string;
+  branchId: string;
   nationalId: string;
 };
 
+export function roleRequiresDistributorProfile(role: Role): boolean {
+  return isDistributorPanelRole(role);
+}
+
+export function roleRequiresServiceCenterBranch(role: Role): boolean {
+  return role === "SERVICE_CENTER";
+}
+
+/** @deprecated use roleRequiresDistributorProfile */
 export function roleRequiresTechnicianProfile(role: Role): boolean {
-  return role === "TECHNICIAN";
+  return roleRequiresDistributorProfile(role);
 }
 
 export function normalizeNationalId(value: string): string {
@@ -26,29 +36,42 @@ function distributorIdToNumber(distributorId: string): number | null {
   return id;
 }
 
+function branchIdToNumber(branchId: string): number | null {
+  const id = Number(branchId);
+  if (!Number.isFinite(id) || id <= 0) return null;
+  return id;
+}
+
 export function resolveUserDistributorId(
   role: Role,
   distributorId: string,
 ): number | null {
-  if (!roleRequiresTechnicianProfile(role)) return null;
+  if (!roleRequiresDistributorProfile(role)) return null;
   return distributorIdToNumber(distributorId);
+}
+
+export function resolveUserBranchId(role: Role, branchId: string): number | null {
+  if (!roleRequiresServiceCenterBranch(role)) return null;
+  return branchIdToNumber(branchId);
 }
 
 export function resolveUserNationalId(
   role: Role,
   nationalId: string,
 ): string | null {
-  if (!roleRequiresTechnicianProfile(role)) return null;
+  if (!roleRequiresDistributorProfile(role) && !roleRequiresServiceCenterBranch(role)) {
+    return null;
+  }
   const normalized = normalizeNationalId(nationalId);
   return normalized || null;
 }
 
-function validateTechnicianProfile(
+function validateDistributorProfile(
   role: Role,
   distributorId: string,
   nationalId: string,
 ): string | null {
-  if (!roleRequiresTechnicianProfile(role)) return null;
+  if (!roleRequiresDistributorProfile(role)) return null;
 
   if (!distributorId.trim()) {
     return "Selecciona una distribuidora.";
@@ -57,7 +80,18 @@ function validateTechnicianProfile(
     return "La distribuidora seleccionada no es válida.";
   }
   if (!normalizeNationalId(nationalId)) {
-    return "La cédula es obligatoria para usuarios técnicos.";
+    return "La cédula es obligatoria para usuarios de distribuidora y técnicos.";
+  }
+  return null;
+}
+
+function validateServiceCenterProfile(role: Role, branchId: string): string | null {
+  if (!roleRequiresServiceCenterBranch(role)) return null;
+  if (!branchId.trim()) {
+    return "Selecciona la sucursal del centro de servicio.";
+  }
+  if (!branchIdToNumber(branchId)) {
+    return "La sucursal seleccionada no es válida.";
   }
   return null;
 }
@@ -74,12 +108,18 @@ export function validateUserCreateForm(values: UserFormFields): string | null {
     return `La clave debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
   }
 
-  const profileError = validateTechnicianProfile(
+  const distributorError = validateDistributorProfile(
     values.role,
     values.distributorId,
     values.nationalId,
   );
-  if (profileError) return profileError;
+  if (distributorError) return distributorError;
+
+  const serviceCenterError = validateServiceCenterProfile(
+    values.role,
+    values.branchId,
+  );
+  if (serviceCenterError) return serviceCenterError;
 
   return null;
 }
@@ -99,12 +139,18 @@ export function validateUserEditForm(values: UserFormFields): string | null {
     return `La clave debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
   }
 
-  const profileError = validateTechnicianProfile(
+  const distributorError = validateDistributorProfile(
     values.role,
     values.distributorId,
     values.nationalId,
   );
-  if (profileError) return profileError;
+  if (distributorError) return distributorError;
+
+  const serviceCenterError = validateServiceCenterProfile(
+    values.role,
+    values.branchId,
+  );
+  if (serviceCenterError) return serviceCenterError;
 
   return null;
 }

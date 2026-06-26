@@ -22,6 +22,7 @@ import {
   type NotificationPrefs,
 } from "@/lib/notifications-storage";
 import type { AppNotification } from "@/types/notification";
+import { isDistributorPanelRole } from "@/types/user";
 
 const POLL_MS = 90_000;
 
@@ -71,7 +72,7 @@ export function NotificationsProvider({
   }, [user?.username]);
 
   useEffect(() => {
-    if (user?.role !== "TECHNICIAN") {
+    if (!isDistributorPanelRole(user?.role)) {
       setDistributorId(user?.distributorId ?? null);
       return;
     }

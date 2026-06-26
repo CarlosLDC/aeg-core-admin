@@ -1,10 +1,11 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { SegmentedToggle } from "@/components/ui/segmented-toggle";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { DistributorIdSelect } from "@/components/users/distributor-id-select";
 import { PasswordInput } from "@/components/ui/password-input";
 import { ROLE_DESCRIPTIONS } from "@/lib/roles";
@@ -15,7 +16,11 @@ import {
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
-import type { Role, UserResponse } from "@/types/user";
+import {
+  isDistributorPanelRole,
+  type Role,
+  type UserResponse,
+} from "@/types/user";
 
 export type UserFormValues = {
   name: string;
@@ -23,9 +28,12 @@ export type UserFormValues = {
   password: string;
   role: Role;
   distributorId: string;
+  branchId: string;
   nationalId: string;
   enabled: boolean;
 };
+
+type OperationalSubRole = "DISTRIBUTOR" | "TECHNICIAN" | "SERVICE_CENTER";
 
 type UserFormDialogProps = {
   mode: "create" | "edit";
@@ -45,11 +53,17 @@ const emptyForm: UserFormValues = {
   name: "",
   email: "",
   password: "",
-  role: "TECHNICIAN",
+  role: "DISTRIBUTOR",
   distributorId: "",
+  branchId: "",
   nationalId: "",
   enabled: true,
 };
+
+function operationalSubRole(role: Role): OperationalSubRole {
+  if (role === "TECHNICIAN" || role === "SERVICE_CENTER") return role;
+  return "DISTRIBUTOR";
+}
 
 export function UserFormDialog({
   mode,
@@ -69,6 +83,23 @@ export function UserFormDialog({
   const isSeniatUser = form.role === "SENIAT";
   const needsOperationalAssignment = !isAdminUser && !isSeniatUser;
   const accessKind = isAdminUser ? "admin" : isSeniatUser ? "seniat" : "operativo";
+  const operationalRole = operationalSubRole(form.role);
+  const needsDistributorProfile = isDistributorPanelRole(form.role);
+  const needsServiceCenterBranch = form.role === "SERVICE_CENTER";
+
+  const serviceCenterBranchOptions = useMemo(
+    () =>
+      branches
+        .filter((branch) => branch.isServiceCenter)
+        .map((branch) => {
+          const company = companies.find((c) => c.id === branch.companyId);
+          const label = company
+            ? `${company.businessName} — ${branch.city}, ${branch.state}`
+            : `${branch.city}, ${branch.state}`;
+          return { value: String(branch.id), label };
+        }),
+    [branches, companies],
+  );
 
   function handleAccessKindChange(kind: "operativo" | "admin" | "seniat") {
     setForm((f) => {
@@ -77,6 +108,7 @@ export function UserFormDialog({
           ...f,
           role: "ADMIN",
           distributorId: "",
+          branchId: "",
           nationalId: "",
         };
       }
@@ -85,14 +117,24 @@ export function UserFormDialog({
           ...f,
           role: "SENIAT",
           distributorId: "",
+          branchId: "",
           nationalId: "",
         };
       }
       return {
         ...f,
-        role: "TECHNICIAN",
+        role: "DISTRIBUTOR",
       };
     });
+  }
+
+  function handleOperationalSubRoleChange(subRole: OperationalSubRole) {
+    setForm((f) => ({
+      ...f,
+      role: subRole,
+      distributorId: subRole === "SERVICE_CENTER" ? "" : f.distributorId,
+      branchId: subRole === "SERVICE_CENTER" ? f.branchId : "",
+    }));
   }
 
   useEffect(() => {
@@ -105,6 +147,7 @@ export function UserFormDialog({
         role: user.role,
         distributorId:
           user.distributorId != null ? String(user.distributorId) : "",
+        branchId: user.branchId != null ? String(user.branchId) : "",
         nationalId: user.nationalId ?? "",
         enabled: user.enabled,
       });
@@ -251,53 +294,104 @@ export function UserFormDialog({
                 ? ROLE_DESCRIPTIONS.ADMIN
                 : isSeniatUser
                   ? ROLE_DESCRIPTIONS.SENIAT
-                  : ROLE_DESCRIPTIONS.TECHNICIAN}
+                  : ROLE_DESCRIPTIONS[operationalRole]}
             </p>
           </fieldset>
 
           {needsOperationalAssignment && (
             <fieldset className="space-y-4 rounded-xl border border-border p-4">
               <legend className="px-1 text-sm font-semibold text-card-foreground">
-                Asignación operativa
+                Rol operativo
               </legend>
-              <div className="grid gap-4 md:grid-cols-2 md:items-start">
-                <div className="min-w-0">
-                  <FieldLabel required>Distribuidora</FieldLabel>
-                  <DistributorIdSelect
-                    value={form.distributorId}
-                    onChange={(distributorId) =>
-                      setForm((f) => ({ ...f, distributorId }))
+              <SegmentedToggle
+                value={operationalRole}
+                onChange={handleOperationalSubRoleChange}
+                ariaLabel="Rol operativo"
+                options={[
+                  {
+                    value: "DISTRIBUTOR",
+                    label: "Distribuidor",
+                    tone: USER_ROLE_TOGGLE_TONE.TECHNICIAN,
+                  },
+                  {
+                    value: "TECHNICIAN",
+                    label: "Técnico",
+                    tone: USER_ROLE_TOGGLE_TONE.TECHNICIAN,
+                  },
+                  {
+                    value: "SERVICE_CENTER",
+                    label: "Centro de servicio",
+                    tone: USER_ROLE_TOGGLE_TONE.TECHNICIAN,
+                  },
+                ]}
+              />
+
+              {needsDistributorProfile && (
+                <div className="grid gap-4 md:grid-cols-2 md:items-start">
+                  <div className="min-w-0">
+                    <FieldLabel required>Distribuidora</FieldLabel>
+                    <DistributorIdSelect
+                      value={form.distributorId}
+                      onChange={(distributorId) =>
+                        setForm((f) => ({ ...f, distributorId }))
+                      }
+                      distributors={distributors}
+                      branches={branches}
+                      companies={companies}
+                      loading={catalogLoading}
+                      disabled={catalogLoading}
+                      required
+                    />
+                  </div>
+
+                  <label className="block min-w-0">
+                    <FieldLabel required>Cédula</FieldLabel>
+                    <input
+                      type="text"
+                      required
+                      value={form.nationalId}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, nationalId: e.target.value }))
+                      }
+                      placeholder="Ej. V-12345678"
+                      className={formFieldInputClass}
+                    />
+                  </label>
+                </div>
+              )}
+
+              {needsServiceCenterBranch && (
+                <div>
+                  <FieldLabel required>Sucursal del centro de servicio</FieldLabel>
+                  <SearchableSelect
+                    value={form.branchId}
+                    onChange={(branchId) =>
+                      setForm((f) => ({ ...f, branchId }))
                     }
-                    distributors={distributors}
-                    branches={branches}
-                    companies={companies}
-                    loading={catalogLoading}
+                    options={serviceCenterBranchOptions}
                     disabled={catalogLoading}
+                    loading={catalogLoading}
                     required
+                    searchPlaceholder="Buscar sucursal..."
                   />
                 </div>
+              )}
 
-                <label className="block min-w-0">
-                  <FieldLabel required>Cédula</FieldLabel>
-                  <input
-                    type="text"
-                    required
-                    value={form.nationalId}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, nationalId: e.target.value }))
-                    }
-                    placeholder="Ej. V-12345678"
-                    className={formFieldInputClass}
-                  />
-                </label>
-              </div>
-
-              {distributors.length === 0 && !catalogLoading && (
+              {needsDistributorProfile && distributors.length === 0 && !catalogLoading && (
                 <p className="text-xs text-amber-700 dark:text-amber-300">
                   No hay distribuidoras registradas. Asigna el rol de distribuidor
-                  en Empresas antes de crear usuarios técnicos.
+                  en Empresas antes de crear usuarios operativos.
                 </p>
               )}
+
+              {needsServiceCenterBranch &&
+                serviceCenterBranchOptions.length === 0 &&
+                !catalogLoading && (
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                    No hay sucursales con rol de centro de servicio. Asígnalo en
+                    Empresas antes de crear este usuario.
+                  </p>
+                )}
             </fieldset>
           )}
 

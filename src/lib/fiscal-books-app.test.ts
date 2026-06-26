@@ -19,9 +19,11 @@ describe("fiscalBooksAppUrl", () => {
 });
 
 describe("canAccessFiscalBooksApp", () => {
-  it("allows panel roles except SENIAT", () => {
+  it("allows fiscal book roles", () => {
     expect(canAccessFiscalBooksApp("ADMIN")).toBe(true);
+    expect(canAccessFiscalBooksApp("DISTRIBUTOR")).toBe(true);
     expect(canAccessFiscalBooksApp("TECHNICIAN")).toBe(true);
+    expect(canAccessFiscalBooksApp("SERVICE_CENTER")).toBe(true);
   });
 
   it("denies SENIAT", () => {

@@ -36,7 +36,14 @@ export type NavSection = {
 export const navSections: NavSection[] = [
   {
     title: "Inicio",
-    items: [{ title: "Dashboard", href: "/", icon: LayoutDashboard }],
+    items: [
+      {
+        title: "Dashboard",
+        href: "/",
+        icon: LayoutDashboard,
+        roles: ["ADMIN", "DISTRIBUTOR", "TECHNICIAN"],
+      },
+    ],
   },
   {
     title: "Equipos fiscales",
@@ -45,7 +52,7 @@ export const navSections: NavSection[] = [
         title: "Impresoras",
         href: "/printers",
         icon: Printer,
-        roles: ["ADMIN", "TECHNICIAN"],
+        roles: ["ADMIN", "DISTRIBUTOR", "TECHNICIAN"],
       },
       {
         title: "Modelos fiscales",
@@ -68,7 +75,7 @@ export const navSections: NavSection[] = [
         title: "Empresas",
         href: "/branches",
         icon: Building2,
-        roles: ["ADMIN", "TECHNICIAN"],
+        roles: ["ADMIN", "DISTRIBUTOR", "TECHNICIAN"],
       },
       {
         title: "Contratos",
@@ -97,20 +104,20 @@ export const navSections: NavSection[] = [
         title: "Libro fiscal",
         href: FISCAL_BOOKS_APP_URL,
         icon: BookOpen,
-        roles: ["ADMIN", "TECHNICIAN"],
+        roles: ["ADMIN", "DISTRIBUTOR", "TECHNICIAN"],
       },
       {
         title: "Tools",
         href: "/tools",
         icon: Boxes,
-        roles: ["TECHNICIAN"],
+        roles: ["DISTRIBUTOR", "TECHNICIAN"],
         disabled: true,
       },
       {
         title: "Descargas",
         href: "/downloads",
         icon: Download,
-        roles: ["TECHNICIAN"],
+        roles: ["DISTRIBUTOR", "TECHNICIAN"],
         disabled: true,
       },
     ],

@@ -87,6 +87,7 @@ import type {
   DistributorResponse,
 } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
+import { isDistributorPanelRole } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
@@ -183,7 +184,7 @@ export function ClientsManager() {
   const { user } = useAuth();
   const canEditCompany = user ? canUpdateCompanyRecord(user.role) : false;
   const canEditBranch = user ? canUpdateBranchRecord(user.role) : false;
-  const canRequestReview = user?.role === "TECHNICIAN";
+  const canRequestReview = isDistributorPanelRole(user?.role);
   const canCancelReview = user ? canCancelModificationReview(user.role) : false;
   const canModify = canEditCompany && canEditBranch;
   const showActions = canModify || canRequestReview || canCancelReview;

@@ -6,7 +6,7 @@ import {
   CATALOG_UPDATE_FORBIDDEN_MESSAGE,
   getCatalogForbiddenMessage,
 } from "@/lib/permissions/messages";
-import type { Role } from "@/types/user";
+import { isDistributorPanelRole, type Role } from "@/types/user";
 
 export {
   CATALOG_CREATE_FORBIDDEN_MESSAGE,
@@ -15,6 +15,8 @@ export {
   CATALOG_UPDATE_FORBIDDEN_MESSAGE,
   getCatalogForbiddenMessage,
 };
+
+export { isDistributorPanelRole };
 
 /** POST empresas y sucursales (catálogo base). */
 export function canCreateCatalogRecord(role: Role): boolean {
@@ -40,14 +42,14 @@ export function canDeletePrinterRecord(role: Role): boolean {
   return can(role, "printers", "delete");
 }
 
-/** Enajenar impresoras asignadas: admin global, técnico dentro de su alcance. */
+/** Enajenar impresoras asignadas: admin global, distribuidor/técnico dentro de su alcance. */
 export function canDisposePrinterRecord(role: Role): boolean {
-  return role === "ADMIN" || role === "TECHNICIAN";
+  return role === "ADMIN" || isDistributorPanelRole(role);
 }
 
 /** Retirar una solicitud de revisión propia (clientes). */
 export function canCancelModificationReview(role: Role): boolean {
-  return role === "TECHNICIAN";
+  return isDistributorPanelRole(role);
 }
 
 export function canUpdateCompanyRecord(role: Role): boolean {

@@ -13,7 +13,7 @@ import type {
   DistributorResponse,
   ServiceCenterResponse,
 } from "@/types/branch-role";
-import type { Role } from "@/types/user";
+import { isDistributorPanelRole, type Role } from "@/types/user";
 
 function hrefIfAccessible(
   role: Role,
@@ -58,7 +58,7 @@ export function hrefForClient(
   const client = clients.find((c) => c.id === clientId);
   if (!client) return undefined;
   const paths =
-    role === "TECHNICIAN"
+    isDistributorPanelRole(role)
       ? [branchPath(client.branchId), clientPath(client.id)]
       : [clientPath(client.id), branchPath(client.branchId)];
   return hrefFirstAccessible(role, paths);

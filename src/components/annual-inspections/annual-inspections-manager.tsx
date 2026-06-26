@@ -94,8 +94,8 @@ export function AnnualInspectionsManager() {
     [catalog.printerOptions],
   );
   const technicianLabelById = useMemo(
-    () => new Map(catalog.technicianUserOptions.map((e) => [e.value, e.label])),
-    [catalog.technicianUserOptions],
+    () => new Map(catalog.inspectorUserOptions.map((e) => [e.value, e.label])),
+    [catalog.inspectorUserOptions],
   );
 
   const printerFilterOptions = useMemo(
@@ -104,8 +104,8 @@ export function AnnualInspectionsManager() {
   );
 
   const technicianFilterOptions = useMemo(
-    () => [filterAllOption("Todos los técnicos"), ...catalog.technicianUserOptions],
-    [catalog.technicianUserOptions],
+    () => [filterAllOption("Todos los inspectores"), ...catalog.inspectorUserOptions],
+    [catalog.inspectorUserOptions],
   );
 
   const inspectionPrinterOptions = useMemo(
@@ -494,7 +494,7 @@ export function AnnualInspectionsManager() {
         catalogLoading={catalog.loading}
         canLoadPrinters={catalog.canLoadPrinters}
         printerOptions={inspectionPrinterOptions}
-        technicianUserOptions={catalog.technicianUserOptions}
+        technicianUserOptions={catalog.inspectorUserOptions}
         currentUserRole={catalog.role}
         currentUserId={catalog.currentUserId}
         onClose={closeDialog}

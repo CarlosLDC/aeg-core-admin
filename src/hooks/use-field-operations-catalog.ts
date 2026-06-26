@@ -22,12 +22,15 @@ import { fetchSeals } from "@/lib/seals-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
 import { fetchUsers } from "@/lib/users-api";
 import type { PrinterResponse } from "@/types/printer";
+import { isDistributorPanelRole } from "@/types/user";
 
 export function useFieldOperationsCatalog() {
   const { user } = useAuth();
   const { scope } = useCompanyScope();
   const canLoadPrinters =
-    user?.role === "ADMIN" || user?.role === "TECHNICIAN";
+    user?.role === "ADMIN" ||
+    isDistributorPanelRole(user?.role) ||
+    user?.role === "SERVICE_CENTER";
 
   const [loading, setLoading] = useState(true);
   const [scopedPrinters, setScopedPrinters] = useState<PrinterResponse[]>([]);
@@ -44,6 +47,9 @@ export function useFieldOperationsCatalog() {
   const [technicianUserOptions, setTechnicianUserOptions] = useState<
     SearchableSelectOption[]
   >([]);
+  const [inspectorUserOptions, setInspectorUserOptions] = useState<
+    SearchableSelectOption[]
+  >([]);
   const [serviceCenterOptions, setServiceCenterOptions] = useState<
     SearchableSelectOption[]
   >([]);
@@ -58,8 +64,8 @@ export function useFieldOperationsCatalog() {
     setLoading(true);
     try {
       let distributorId = user.distributorId;
-      let authUserId: number | null = null;
-      if (user.role === "TECHNICIAN") {
+      let authUserId: number | null = user.id ?? null;
+      if (isDistributorPanelRole(user.role) || user.role === "SERVICE_CENTER") {
         try {
           const me = await fetchAuthMe();
           distributorId = me.distributorId ?? distributorId;
@@ -75,7 +81,7 @@ export function useFieldOperationsCatalog() {
         branches,
         printersRaw,
         sealsRaw,
-        technicianUsersRaw,
+        usersRaw,
         centersRaw,
         distributorsRaw,
         clientsRaw,
@@ -90,18 +96,29 @@ export function useFieldOperationsCatalog() {
         fetchClients().catch(() => []),
       ]);
 
+      const technicianUsersRaw = usersRaw.filter(
+        (row) => row.role === "TECHNICIAN" && row.enabled,
+      );
+      const inspectorUsersRaw = usersRaw.filter(
+        (row) =>
+          row.enabled &&
+          (row.role === "DISTRIBUTOR" ||
+            row.role === "TECHNICIAN" ||
+            row.role === "SERVICE_CENTER"),
+      );
+
       const scoped = applyScopedFieldCatalog({
         role: user.role,
         scope,
         distributorId,
+        currentUserId: authUserId,
         companies,
         branches,
         clients: clientsRaw,
         distributors: distributorsRaw,
         serviceCenters: centersRaw,
-        technicianUsers: technicianUsersRaw.filter(
-          (row) => row.role === "TECHNICIAN" && row.enabled,
-        ),
+        technicianUsers: technicianUsersRaw,
+        inspectorUsers: inspectorUsersRaw,
         printers: printersRaw,
         seals: sealsRaw,
       });
@@ -115,6 +132,9 @@ export function useFieldOperationsCatalog() {
       setSealOptions(sealSelectOptions(scoped.seals));
       setTechnicianUserOptions(
         technicianUserSelectOptions(scoped.technicianUsers),
+      );
+      setInspectorUserOptions(
+        technicianUserSelectOptions(scoped.inspectorUsers),
       );
       setServiceCenterOptions(
         serviceCenterSelectOptions(
@@ -148,6 +168,7 @@ export function useFieldOperationsCatalog() {
     scopedTechnicianUserIds,
     sealOptions,
     technicianUserOptions,
+    inspectorUserOptions,
     serviceCenterOptions,
     distributorOptions,
     canLoadPrinters,

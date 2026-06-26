@@ -25,7 +25,7 @@ import {
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterResponse, PrinterStatus } from "@/types/printer";
-import type { Role } from "@/types/user";
+import { isDistributorPanelRole, type Role } from "@/types/user";
 
 export { filterPrintersForUser } from "@/lib/scope-filters";
 
@@ -129,7 +129,7 @@ export function countPrintersByStatus(
     counts.set(status, (counts.get(status) ?? 0) + 1);
   }
   const statuses =
-    role === "TECHNICIAN" ? DISTRIBUTOR_PRINTER_STATUSES : ALL_PRINTER_STATUSES;
+    isDistributorPanelRole(role) ? DISTRIBUTOR_PRINTER_STATUSES : ALL_PRINTER_STATUSES;
   return statuses.map((status) => ({
     status,
     label: PRINTER_STATUS_LABELS[status],
@@ -353,6 +353,7 @@ function buildStats(
             .join(" · ") || undefined,
         },
       ];
+    case "DISTRIBUTOR":
     case "TECHNICIAN":
       return [
         {
@@ -431,7 +432,7 @@ export async function loadDashboardSnapshot(options: {
         : loadCatalogRoles().then((r) => r.serviceCenters),
     ),
     canLoadUsers ? settled(fetchUsers()) : Promise.resolve(null),
-    role === "ADMIN" || role === "TECHNICIAN"
+    role === "ADMIN" || isDistributorPanelRole(role)
       ? settled(fetchPrinters())
       : Promise.resolve(null),
     can(role, "contracts", "read")
@@ -515,9 +516,9 @@ export async function loadDashboardSnapshot(options: {
 
   const printerStatusCounts = countPrintersByStatus(printers, role);
   const monthlyStatusMix =
-    role === "TECHNICIAN" ? printersStatusMixByMonth(printers) : undefined;
+    isDistributorPanelRole(role) ? printersStatusMixByMonth(printers) : undefined;
   const monthlySales =
-    role === "TECHNICIAN" ? distributorSalesByMonth(printers) : undefined;
+    isDistributorPanelRole(role) ? distributorSalesByMonth(printers) : undefined;
   const monthlyPrinterRegistrations = printersByMonth(printers);
   const recentPrinters = [...printers]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt, "es"))

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-provider";
 import { fetchAuthMe } from "@/lib/auth-me-api";
+import { isDistributorPanelRole } from "@/types/user";
 
 export function useDistributorIdState(): {
   distributorId: number | null;
@@ -13,11 +14,11 @@ export function useDistributorIdState(): {
     user?.distributorId ?? null,
   );
   const [loading, setLoading] = useState<boolean>(
-    user?.role === "TECHNICIAN" && user.distributorId == null,
+    isDistributorPanelRole(user?.role) && user?.distributorId == null,
   );
 
   useEffect(() => {
-    if (user?.role !== "TECHNICIAN") {
+    if (!isDistributorPanelRole(user?.role)) {
       setDistributorId(null);
       setLoading(false);
       return;

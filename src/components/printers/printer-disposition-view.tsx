@@ -49,6 +49,7 @@ import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterResponse } from "@/types/printer";
+import { isDistributorPanelRole } from "@/types/user";
 import { cn } from "@/lib/utils";
 
 type PrinterDispositionViewProps = {
@@ -66,7 +67,7 @@ export function PrinterDispositionView({
   const { scope } = useCompanyScope();
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
   const isAdmin = user?.role === "ADMIN";
-  const isDistributor = user?.role === "TECHNICIAN";
+  const isDistributor = isDistributorPanelRole(user?.role);
 
   const [printer, setPrinter] = useState<PrinterResponse | null>(null);
   const [branches, setBranches] = useState<BranchResponse[]>([]);

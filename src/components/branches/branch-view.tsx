@@ -80,6 +80,7 @@ import type { BranchWithRoles } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { ClientModificationProposedData } from "@/types/client-modification-request";
 import type { CompanyResponse } from "@/types/company";
+import { isDistributorPanelRole } from "@/types/user";
 
 type BranchFormValues = {
   companyId: string;
@@ -154,7 +155,7 @@ export function BranchView() {
   const confirm = useConfirm();
   const { user } = useAuth();
   const { scope, refresh } = useCompanyScope();
-  const isTechnician = user?.role === "TECHNICIAN";
+  const isTechnician = isDistributorPanelRole(user?.role);
   const canModify = user ? canUpdateBranchRecord(user.role) : false;
   const canDelete = user ? canDeleteBranchRecord(user.role) : false;
   const canRequestReview = isTechnician;

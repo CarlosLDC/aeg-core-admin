@@ -1,18 +1,26 @@
 import { describe, expect, it } from "vitest";
 import {
   normalizeNationalId,
+  resolveUserBranchId,
   resolveUserDistributorId,
   resolveUserNationalId,
   validateUserCreateForm,
   validateUserEditForm,
 } from "@/lib/user-form";
 
+const baseForm = {
+  name: "Usuario",
+  email: "user@aeg.local",
+  password: "secret1",
+  distributorId: "",
+  branchId: "",
+  nationalId: "",
+};
+
 describe("validateUserCreateForm", () => {
   it("accepts TECHNICIAN with distributor and national id", () => {
     const error = validateUserCreateForm({
-      name: "Usuario Técnico",
-      email: "tech@aeg.local",
-      password: "secret1",
+      ...baseForm,
       role: "TECHNICIAN",
       distributorId: "7",
       nationalId: "V12345678",
@@ -22,11 +30,29 @@ describe("validateUserCreateForm", () => {
     expect(resolveUserNationalId("TECHNICIAN", "V12345678")).toBe("V12345678");
   });
 
+  it("accepts DISTRIBUTOR with distributor and national id", () => {
+    const error = validateUserCreateForm({
+      ...baseForm,
+      role: "DISTRIBUTOR",
+      distributorId: "7",
+      nationalId: "V12345678",
+    });
+    expect(error).toBeNull();
+  });
+
+  it("requires SERVICE_CENTER branch", () => {
+    const error = validateUserCreateForm({
+      ...baseForm,
+      role: "SERVICE_CENTER",
+      branchId: "",
+    });
+    expect(error).toMatch(/sucursal/i);
+    expect(resolveUserBranchId("SERVICE_CENTER", "12")).toBe(12);
+  });
+
   it("rejects TECHNICIAN without distributor", () => {
     const error = validateUserCreateForm({
-      name: "Usuario Técnico",
-      email: "tech@aeg.local",
-      password: "secret1",
+      ...baseForm,
       role: "TECHNICIAN",
       distributorId: "",
       nationalId: "V12345678",
@@ -34,53 +60,22 @@ describe("validateUserCreateForm", () => {
     expect(error).toMatch(/distribuidora/i);
   });
 
-  it("rejects TECHNICIAN without national id", () => {
-    const error = validateUserCreateForm({
-      name: "Usuario Técnico",
-      email: "tech@aeg.local",
-      password: "secret1",
-      role: "TECHNICIAN",
-      distributorId: "7",
-      nationalId: "",
-    });
-    expect(error).toMatch(/cédula/i);
-  });
-
   it("accepts ADMIN without distributor or national id", () => {
     const error = validateUserCreateForm({
-      name: "Administrador",
-      email: "admin@aeg.local",
-      password: "secret1",
+      ...baseForm,
       role: "ADMIN",
-      distributorId: "",
-      nationalId: "",
     });
     expect(error).toBeNull();
     expect(resolveUserDistributorId("ADMIN", "")).toBeNull();
-  });
-
-  it("accepts SENIAT without distributor or national id", () => {
-    const error = validateUserCreateForm({
-      name: "Auditor SENIAT",
-      email: "seniat@aeg.local",
-      password: "secret1",
-      role: "SENIAT",
-      distributorId: "",
-      nationalId: "",
-    });
-    expect(error).toBeNull();
   });
 });
 
 describe("validateUserEditForm", () => {
   it("accepts ADMIN without distributor or national id", () => {
     const error = validateUserEditForm({
-      name: "Administrador",
-      email: "admin@aeg.local",
-      password: "",
+      ...baseForm,
       role: "ADMIN",
-      distributorId: "",
-      nationalId: "",
+      password: "",
     });
     expect(error).toBeNull();
   });

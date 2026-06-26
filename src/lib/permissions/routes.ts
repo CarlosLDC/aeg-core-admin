@@ -2,7 +2,7 @@ import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
 import { mainNav } from "@/lib/navigation";
 import { can } from "@/lib/permissions/can";
 import type { Resource } from "@/lib/permissions/types";
-import type { Role } from "@/types/user";
+import { isDistributorPanelRole, type Role } from "@/types/user";
 
 /** Ruta → recurso para comprobar permiso read. */
 const ROUTE_RESOURCE: Array<{ prefix: string; resource: Resource }> = [
@@ -63,8 +63,8 @@ export function canAccessRoute(role: Role, pathname: string): boolean {
   const resource = resourceForPath(normalized);
   if (!can(role, resource, "read")) return false;
 
-  // Técnico: detalle de empresa sí; listado legacy /companies no.
-  if (role === "TECHNICIAN") {
+  // Distribuidor/técnico: detalle de empresa sí; listado legacy /companies no.
+  if (isDistributorPanelRole(role)) {
     if (normalized === "/companies") return false;
     if (normalized.startsWith("/companies/")) return true;
   }
@@ -72,7 +72,7 @@ export function canAccessRoute(role: Role, pathname: string): boolean {
   // Legacy /clients: listado redirige a /branches; detalle redirige a /branches/:id.
   if (normalized === "/clients" || normalized.startsWith("/clients/")) {
     if (role === "ADMIN") return false;
-    return role === "TECHNICIAN";
+    return isDistributorPanelRole(role);
   }
 
   const navPath = resolveNavPath(normalized);
@@ -82,7 +82,7 @@ export function canAccessRoute(role: Role, pathname: string): boolean {
       const isDetailRoute =
         normalized !== navPath && normalized.startsWith(`${navPath}/`);
       if (!isDetailRoute) return false;
-      if (navPath === "/branches" && role === "TECHNICIAN") return true;
+      if (navPath === "/branches" && isDistributorPanelRole(role)) return true;
       return false;
     }
   }

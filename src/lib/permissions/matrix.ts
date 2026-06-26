@@ -2,29 +2,35 @@ import type { Action, PermissionMatrix, Resource } from "@/lib/permissions/types
 import type { Role } from "@/types/user";
 
 const ADMIN_ONLY = ["ADMIN"] as const;
-const ADMIN_TECH = ["ADMIN", "TECHNICIAN"] as const;
-const FIELD_OPS = ["ADMIN", "TECHNICIAN"] as const;
-const ALL_PANEL_ROLES = ["ADMIN", "TECHNICIAN"] as const;
+const DISTRIBUTOR_PANEL = ["ADMIN", "DISTRIBUTOR", "TECHNICIAN"] as const;
+const SEAL_WRITE = ["ADMIN", "DISTRIBUTOR", "TECHNICIAN"] as const;
+const ANNUAL_INSPECTION_WRITE = [
+  "ADMIN",
+  "DISTRIBUTOR",
+  "TECHNICIAN",
+  "SERVICE_CENTER",
+] as const;
+const TECHNICAL_SERVICE_WRITE = ["ADMIN", "SERVICE_CENTER"] as const;
 
 /** Fuente única de verdad — mantener en sync con docs/permissions-matrix.md */
 export const PERMISSION_MATRIX: PermissionMatrix = {
   dashboard: {
-    read: ALL_PANEL_ROLES,
+    read: DISTRIBUTOR_PANEL,
   },
   companies: {
-    read: ADMIN_TECH,
-    create: ADMIN_TECH,
-    update: ADMIN_TECH,
+    read: DISTRIBUTOR_PANEL,
+    create: DISTRIBUTOR_PANEL,
+    update: DISTRIBUTOR_PANEL,
     delete: ADMIN_ONLY,
   },
   branches: {
-    read: ALL_PANEL_ROLES,
-    create: ADMIN_TECH,
-    update: ADMIN_TECH,
+    read: DISTRIBUTOR_PANEL,
+    create: DISTRIBUTOR_PANEL,
+    update: DISTRIBUTOR_PANEL,
     delete: ADMIN_ONLY,
   },
   printers: {
-    read: ADMIN_TECH,
+    read: DISTRIBUTOR_PANEL,
     create: ADMIN_ONLY,
     update: ADMIN_ONLY,
     delete: ADMIN_ONLY,
@@ -36,22 +42,22 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     delete: ADMIN_ONLY,
   },
   seals: {
-    read: FIELD_OPS,
-    create: FIELD_OPS,
-    update: FIELD_OPS,
-    delete: FIELD_OPS,
+    read: SEAL_WRITE,
+    create: SEAL_WRITE,
+    update: SEAL_WRITE,
+    delete: SEAL_WRITE,
   },
   technicalServices: {
     read: ADMIN_ONLY,
-    create: ADMIN_ONLY,
-    update: ADMIN_ONLY,
-    delete: ADMIN_ONLY,
+    create: TECHNICAL_SERVICE_WRITE,
+    update: TECHNICAL_SERVICE_WRITE,
+    delete: TECHNICAL_SERVICE_WRITE,
   },
   annualInspections: {
     read: ADMIN_ONLY,
-    create: ADMIN_ONLY,
-    update: ADMIN_ONLY,
-    delete: ADMIN_ONLY,
+    create: ANNUAL_INSPECTION_WRITE,
+    update: ANNUAL_INSPECTION_WRITE,
+    delete: ANNUAL_INSPECTION_WRITE,
   },
   contracts: {
     read: ADMIN_ONLY,
@@ -70,12 +76,12 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     create: ADMIN_ONLY,
   },
   seniatExtract: {
-    read: ADMIN_TECH,
-    create: ADMIN_TECH,
+    read: DISTRIBUTOR_PANEL,
+    create: DISTRIBUTOR_PANEL,
   },
   uploads: {
-    read: ADMIN_TECH,
-    create: ADMIN_TECH,
+    read: DISTRIBUTOR_PANEL,
+    create: DISTRIBUTOR_PANEL,
   },
 };
 

@@ -22,6 +22,7 @@ import {
   validateUserCreateForm,
   validateUserEditForm,
   resolveUserDistributorId,
+  resolveUserBranchId,
   resolveUserNationalId,
 } from "@/lib/user-form";
 import type { BranchResponse } from "@/types/branch";
@@ -246,6 +247,7 @@ export function UsersManager() {
       values.role,
       values.distributorId,
     );
+    const branchId = resolveUserBranchId(values.role, values.branchId);
     const nationalId = resolveUserNationalId(values.role, values.nationalId);
     const name = values.name.trim();
     const email = values.email.trim().toLowerCase();
@@ -258,6 +260,7 @@ export function UsersManager() {
           password: values.password,
           role: values.role,
           distributorId,
+          branchId,
           nationalId,
         });
         toast.success(userCreateSuccessMessage(name, values.role), {
@@ -269,6 +272,7 @@ export function UsersManager() {
           email,
           role: values.role,
           distributorId,
+          branchId,
           nationalId,
           enabled: values.enabled,
         };

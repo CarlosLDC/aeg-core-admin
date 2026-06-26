@@ -87,7 +87,7 @@ import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterModelResponse } from "@/types/printer-model";
-import type { PrinterResponse } from "@/types/printer";
+import { isDistributorPanelRole } from "@/types/user";
 
 function clientLabel(
   client: ClientResponse,
@@ -109,7 +109,7 @@ export function PrinterView() {
   const canModify = user ? canModifyPrinterRecord(user.role) : false;
   const canDelete = user ? canDeletePrinterRecord(user.role) : false;
   const isAdmin = user?.role === "ADMIN";
-  const isDistributor = user?.role === "TECHNICIAN";
+  const isDistributor = isDistributorPanelRole(user?.role);
   const showSoftware = isAdmin;
   const canAssignInitialized = isAdmin && canModify;
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
@@ -372,7 +372,7 @@ export function PrinterView() {
             value={printerPaidLabel(printer.paid)}
           />
           <DetailField
-            label="Fecha de configuración"
+            label="Fecha de enajenación"
             value={formatDate(printer.installationDate)}
           />
           <DetailField
@@ -486,7 +486,7 @@ export function PrinterView() {
               value={printerPaidLabel(printer.paid)}
             />
             <DetailField
-              label="Fecha de configuración"
+              label="Fecha de enajenación"
               value={formatDate(printer.installationDate)}
             />
           </DetailSection>

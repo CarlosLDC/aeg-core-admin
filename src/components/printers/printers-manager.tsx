@@ -102,6 +102,7 @@ import { isPrinterUnassigned } from "@/lib/printer-status";
 import { getPrinterStatusQuickAction } from "@/lib/printer-quick-actions";
 import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
 import { PRINTER_STATUSES } from "@/types/printer";
+import { isDistributorPanelRole } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
@@ -142,7 +143,7 @@ export function PrintersManager() {
   const canCreate = user ? canCreatePrinterRecord(user.role) : false;
   const canModify = user ? canModifyPrinterRecord(user.role) : false;
   const isAdmin = user?.role === "ADMIN";
-  const isDistributor = user?.role === "TECHNICIAN";
+  const isDistributor = isDistributorPanelRole(user?.role);
   const canAssignInitialized = isAdmin && canModify;
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
   const [authMeDistributorId, setAuthMeDistributorId] = useState<number | null>(

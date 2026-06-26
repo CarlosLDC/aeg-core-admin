@@ -32,6 +32,7 @@ import { formatDate } from "@/lib/datetime-form";
 import { companyPath } from "@/lib/resource-routes";
 import { cn } from "@/lib/utils";
 import type { CompanyResponse } from "@/types/company";
+import { isDistributorPanelRole } from "@/types/user";
 
 type CompanyDetailPanel = "company" | "branches";
 
@@ -42,7 +43,7 @@ export function CompanyView() {
   const confirm = useConfirm();
   const { user } = useAuth();
   const { scope, refresh } = useCompanyScope();
-  const isDistributor = user?.role === "TECHNICIAN";
+  const isDistributor = isDistributorPanelRole(user?.role);
   const canModify = user ? canUpdateCompanyRecord(user.role) : false;
   const canDelete = user ? canDeleteCompanyRecord(user.role) : false;
 

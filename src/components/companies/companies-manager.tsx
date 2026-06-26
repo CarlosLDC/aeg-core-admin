@@ -46,6 +46,7 @@ import {
   updateCompany,
 } from "@/lib/companies-api";
 import { CONTRIBUTOR_TYPES, type CompanyResponse } from "@/types/company";
+import { isDistributorPanelRole } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
@@ -75,7 +76,7 @@ export function CompaniesManager() {
 
   const canCreate = user ? canCreateCatalogRecord(user.role) : false;
   const canModify = user ? canUpdateCompanyRecord(user.role) : false;
-  const isDistributor = user?.role === "TECHNICIAN";
+  const isDistributor = isDistributorPanelRole(user?.role);
 
   useEffect(() => {
     if (!scope) return;

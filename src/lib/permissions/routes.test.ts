@@ -15,12 +15,13 @@ describe("route permissions", () => {
     expect(canAccessRoute("ADMIN", "/users")).toBe(true);
   });
 
-  it("denies TECHNICIAN from /users", () => {
+  it("denies distributor panel roles from /users", () => {
     expect(canAccessRoute("TECHNICIAN", "/users")).toBe(false);
+    expect(canAccessRoute("DISTRIBUTOR", "/users")).toBe(false);
   });
 
   it("respects nav role restrictions on /mqtt-tests", () => {
-    const roles: Role[] = ["ADMIN", "TECHNICIAN"];
+    const roles: Role[] = ["ADMIN", "TECHNICIAN", "DISTRIBUTOR"];
     expect(roles.filter((r) => canAccessRoute(r, "/mqtt-tests"))).toEqual(["ADMIN"]);
   });
 
@@ -28,38 +29,51 @@ describe("route permissions", () => {
     expect(canAccessRoute("ADMIN", "/docs/enajenacion-mqtt")).toBe(true);
     expect(resourceForPath("/docs/enajenacion-mqtt")).toBe("mqtt");
     expect(canAccessRoute("TECHNICIAN", "/docs/enajenacion-mqtt")).toBe(false);
+    expect(canAccessRoute("DISTRIBUTOR", "/docs/enajenacion-mqtt")).toBe(false);
   });
 
-  it("allows TECHNICIAN on /branches and legacy client detail redirect", () => {
-    expect(canAccessRoute("TECHNICIAN", "/clients")).toBe(true);
-    expect(resourceForPath("/clients")).toBe("branches");
-    expect(canAccessRoute("TECHNICIAN", "/companies")).toBe(false);
-    expect(canAccessRoute("TECHNICIAN", "/companies/42")).toBe(true);
+  it("allows distributor panel roles on /branches and legacy client detail redirect", () => {
+    for (const role of ["DISTRIBUTOR", "TECHNICIAN"] as const) {
+      expect(canAccessRoute(role, "/clients")).toBe(true);
+      expect(resourceForPath("/clients")).toBe("branches");
+      expect(canAccessRoute(role, "/companies")).toBe(false);
+      expect(canAccessRoute(role, "/companies/42")).toBe(true);
+    }
   });
 
-  it("allows ADMIN on /companies; legacy /clients is TECHNICIAN-only", () => {
+  it("allows ADMIN on /companies; legacy /clients is distributor panel only", () => {
     expect(canAccessRoute("ADMIN", "/companies")).toBe(true);
     expect(canAccessRoute("ADMIN", "/clients")).toBe(false);
   });
 
-  it("allows TECHNICIAN on client and branch detail routes", () => {
-    expect(canAccessRoute("TECHNICIAN", "/clients/42")).toBe(true);
-    expect(canAccessRoute("TECHNICIAN", "/branches/99")).toBe(true);
-    expect(canAccessRoute("TECHNICIAN", "/branches")).toBe(true);
+  it("allows distributor panel roles on client and branch detail routes", () => {
+    for (const role of ["DISTRIBUTOR", "TECHNICIAN"] as const) {
+      expect(canAccessRoute(role, "/clients/42")).toBe(true);
+      expect(canAccessRoute(role, "/branches/99")).toBe(true);
+      expect(canAccessRoute(role, "/branches")).toBe(true);
+    }
   });
 
   it("defaults SENIAT to fiscal book entry", () => {
     expect(defaultPathForRole("SENIAT")).toBe(FISCAL_BOOK_ENTRY_PATH);
   });
 
-  it("blocks TECHNICIAN from admin-only catalog sections", () => {
-    expect(canAccessRoute("TECHNICIAN", "/printer-models")).toBe(false);
-    expect(canAccessRoute("TECHNICIAN", "/seals")).toBe(false);
-    expect(canAccessRoute("TECHNICIAN", "/technical-services")).toBe(false);
-    expect(canAccessRoute("TECHNICIAN", "/annual-inspections")).toBe(false);
+  it("blocks distributor panel roles from admin-only catalog sections", () => {
+    for (const role of ["DISTRIBUTOR", "TECHNICIAN"] as const) {
+      expect(canAccessRoute(role, "/printer-models")).toBe(false);
+      expect(canAccessRoute(role, "/seals")).toBe(false);
+      expect(canAccessRoute(role, "/technical-services")).toBe(false);
+      expect(canAccessRoute(role, "/annual-inspections")).toBe(false);
+    }
     expect(canAccessRoute("ADMIN", "/printer-models")).toBe(true);
     expect(canAccessRoute("ADMIN", "/seals")).toBe(true);
     expect(canAccessRoute("ADMIN", "/technical-services")).toBe(true);
     expect(canAccessRoute("ADMIN", "/annual-inspections")).toBe(true);
+  });
+
+  it("blocks SERVICE_CENTER from panel routes", () => {
+    expect(canAccessRoute("SERVICE_CENTER", "/")).toBe(false);
+    expect(canAccessRoute("SERVICE_CENTER", "/companies")).toBe(false);
+    expect(canAccessRoute("SERVICE_CENTER", "/technical-services")).toBe(false);
   });
 });
