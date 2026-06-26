@@ -1,9 +1,6 @@
 import { isPrinterAssigned } from "@/lib/printer-status";
 import type { PrinterResponse, PrinterTicketSection } from "@/types/printer";
 
-export const PRINTER_PENDING_MQTT_LABEL =
-  "Pendiente enajenación";
-
 export const PRINTER_TICKET_RECONFIGURE_LABEL = "Reconfigurar ticket";
 
 export function hasPrinterTicketConfig(
