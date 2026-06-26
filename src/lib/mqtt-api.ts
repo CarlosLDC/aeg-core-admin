@@ -4,7 +4,9 @@ import { redirectToLoginAfterExpired } from "@/lib/session-expired";
 import { ApiError } from "@/types/auth";
 import type {
   EnajenacionMqttPrecheckResponse,
+  EnajenacionActivityDirection,
   EnajenacionActivityListResponse,
+  EnajenacionActivityResult,
   EnajenacionActiveSession,
   MqttConnectionProbeResult,
   MqttInboundMessage,
@@ -135,12 +137,30 @@ export async function precheckEnajenacionMqtt(
 
 export async function getEnajenacionActivity(options?: {
   limit?: number;
+  page?: number;
   mac?: string;
+  ptrReg?: string;
+  result?: EnajenacionActivityResult;
+  direction?: EnajenacionActivityDirection;
+  sessionOnly?: boolean;
 }): Promise<EnajenacionActivityListResponse> {
   const params = new URLSearchParams();
   params.set("limit", String(options?.limit ?? 100));
+  params.set("page", String(options?.page ?? 0));
   if (options?.mac?.trim()) {
     params.set("mac", options.mac.trim());
+  }
+  if (options?.ptrReg?.trim()) {
+    params.set("ptrReg", options.ptrReg.trim());
+  }
+  if (options?.result) {
+    params.set("result", options.result);
+  }
+  if (options?.direction) {
+    params.set("direction", options.direction);
+  }
+  if (options?.sessionOnly) {
+    params.set("sessionOnly", "true");
   }
   const { data, status } = await mqttFetch<EnajenacionActivityListResponse>(
     `${BASE}/enajenacion/activity?${params}`,

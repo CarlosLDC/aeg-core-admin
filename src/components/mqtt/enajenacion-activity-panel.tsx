@@ -15,6 +15,24 @@ import type {
   EnajenacionActivityResult,
 } from "@/types/mqtt";
 
+const RESULT_FILTER_OPTIONS: Array<EnajenacionActivityResult | ""> = [
+  "",
+  "RECEIVED",
+  "PROCESSED",
+  "PUBLISHED",
+  "IGNORED",
+  "REJECTED",
+  "FAILED",
+  "COMPLETED",
+];
+
+const DIRECTION_FILTER_OPTIONS = [
+  { value: "", label: "Todas" },
+  { value: "INBOUND", label: "Entrada" },
+  { value: "OUTBOUND", label: "Salida" },
+  { value: "SESSION", label: "Sesión" },
+] as const;
+
 const inputClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
 
@@ -65,23 +83,72 @@ export function EnajenacionActivityPanel() {
   return (
     <section className="mx-auto max-w-4xl space-y-4">
       <p className="rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-xs text-muted">
-        Intercambios MQTT de enajenación en el servidor: solicitudes de las
-        impresoras, comandos publicados y si cada mensaje fue procesado,
-        ignorado o falló.
+        Historial persistente de intercambios MQTT de enajenación: solicitudes de
+        las impresoras, comandos publicados y el resultado de cada mensaje. Los
+        registros se guardan en el servidor y no se eliminan por antigüedad.
       </p>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <label className="min-w-0 flex-1 space-y-1">
-          <span className="text-xs font-medium text-muted">Filtrar por MAC</span>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <label className="space-y-1">
+          <span className="text-xs font-medium text-muted">MAC</span>
           <input
             type="text"
             value={activity.macFilter}
             onChange={(e) => activity.setMacFilter(e.target.value)}
             className={cn(inputClass, "font-mono")}
-            placeholder="20:6E:F1:88:4C:68 o compacta"
+            placeholder="20:6E:F1:88:4C:68"
           />
         </label>
-        <div className="flex flex-wrap items-center gap-2">
+        <label className="space-y-1">
+          <span className="text-xs font-medium text-muted">Serial fiscal</span>
+          <input
+            type="text"
+            value={activity.serialFilter}
+            onChange={(e) => activity.setSerialFilter(e.target.value)}
+            className={cn(inputClass, "font-mono")}
+            placeholder="GRA0000017"
+          />
+        </label>
+        <label className="space-y-1">
+          <span className="text-xs font-medium text-muted">Resultado</span>
+          <select
+            value={activity.resultFilter}
+            onChange={(e) =>
+              activity.setResultFilter(
+                e.target.value as EnajenacionActivityResult | "",
+              )
+            }
+            className={inputClass}
+          >
+            <option value="">Todos</option>
+            {RESULT_FILTER_OPTIONS.filter(Boolean).map((result) => (
+              <option key={result} value={result}>
+                {activityResultLabel(result)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="space-y-1">
+          <span className="text-xs font-medium text-muted">Dirección</span>
+          <select
+            value={activity.directionFilter}
+            onChange={(e) =>
+              activity.setDirectionFilter(
+                e.target.value as typeof activity.directionFilter,
+              )
+            }
+            className={inputClass}
+          >
+            {DIRECTION_FILTER_OPTIONS.map((option) => (
+              <option key={option.value || "all"} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
           <span
             className={cn(
               "rounded-full px-2.5 py-0.5 text-xs font-medium",
@@ -110,9 +177,8 @@ export function EnajenacionActivityPanel() {
             ) : (
               <RefreshCw className="size-3.5" />
             )}
-            Actualizar
-          </button>
-        </div>
+          Actualizar
+        </button>
       </div>
 
       {activity.sessions.length > 0 ? (
@@ -148,7 +214,12 @@ export function EnajenacionActivityPanel() {
 
       <div>
         <h3 className="mb-2 text-sm font-medium text-card-foreground">
-          Actividad reciente ({activity.entries.length})
+          Actividad
+          {activity.total > 0
+            ? activity.entries.length < activity.total
+              ? ` (${activity.entries.length} de ${activity.total})`
+              : ` (${activity.total})`
+            : null}
         </h3>
 
         {activity.loading ? (
@@ -196,6 +267,22 @@ export function EnajenacionActivityPanel() {
             </table>
           </div>
         )}
+
+        {activity.hasMore ? (
+          <div className="mt-3 flex justify-center">
+            <button
+              type="button"
+              onClick={activity.loadMore}
+              disabled={activity.loadingMore}
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted hover:text-card-foreground disabled:opacity-50"
+            >
+              {activity.loadingMore ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
+              Cargar más
+            </button>
+          </div>
+        ) : null}
       </div>
     </section>
   );

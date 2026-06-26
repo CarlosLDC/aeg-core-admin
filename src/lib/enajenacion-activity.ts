@@ -3,21 +3,6 @@ import type {
   EnajenacionActivityResult,
 } from "@/types/mqtt";
 
-export function normalizeMacFilter(mac: string): string {
-  return mac.replace(/[^0-9A-Fa-f]/g, "").toUpperCase();
-}
-
-export function filterActivityByMac(
-  entries: EnajenacionActivityEntry[],
-  macFilter: string,
-): EnajenacionActivityEntry[] {
-  const normalized = normalizeMacFilter(macFilter);
-  if (!normalized) {
-    return entries;
-  }
-  return entries.filter((entry) => entry.mac.toUpperCase() === normalized);
-}
-
 export function activityResultLabel(result: EnajenacionActivityResult): string {
   switch (result) {
     case "RECEIVED":
