@@ -85,13 +85,13 @@ export const navSections: NavSection[] = [
         title: "Servicio técnico",
         href: "/technical-services",
         icon: Wrench,
-        roles: ["ADMIN", "TECHNICIAN"],
+        roles: ["ADMIN"],
       },
       {
         title: "Inspección anual",
         href: "/annual-inspections",
         icon: ClipboardCheck,
-        roles: ["ADMIN", "TECHNICIAN"],
+        roles: ["ADMIN"],
       },
       {
         title: "Libro fiscal",

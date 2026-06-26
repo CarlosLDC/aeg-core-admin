@@ -55,7 +55,11 @@ describe("route permissions", () => {
   it("blocks TECHNICIAN from admin-only catalog sections", () => {
     expect(canAccessRoute("TECHNICIAN", "/printer-models")).toBe(false);
     expect(canAccessRoute("TECHNICIAN", "/seals")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/technical-services")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/annual-inspections")).toBe(false);
     expect(canAccessRoute("ADMIN", "/printer-models")).toBe(true);
     expect(canAccessRoute("ADMIN", "/seals")).toBe(true);
+    expect(canAccessRoute("ADMIN", "/technical-services")).toBe(true);
+    expect(canAccessRoute("ADMIN", "/annual-inspections")).toBe(true);
   });
 });

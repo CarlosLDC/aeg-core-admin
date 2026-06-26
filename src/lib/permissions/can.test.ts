@@ -30,16 +30,18 @@ describe("can", () => {
   });
 
   it("denies TECHNICIAN printer model catalog access", () => {
-    expect(can("TECHNICIAN", "annualInspections", "update")).toBe(true);
+    expect(can("TECHNICIAN", "annualInspections", "update")).toBe(false);
     expect(can("TECHNICIAN", "printerModels", "read")).toBe(false);
     expect(can("TECHNICIAN", "printerModels", "create")).toBe(false);
   });
 
-  it("allows TECHNICIAN full annual inspection CRUD within API scope", () => {
-    expect(can("TECHNICIAN", "annualInspections", "read")).toBe(true);
-    expect(can("TECHNICIAN", "annualInspections", "create")).toBe(true);
-    expect(can("TECHNICIAN", "annualInspections", "update")).toBe(true);
-    expect(can("TECHNICIAN", "annualInspections", "delete")).toBe(true);
+  it("denies TECHNICIAN admin-panel technical services and annual inspections", () => {
+    expect(can("TECHNICIAN", "technicalServices", "read")).toBe(false);
+    expect(can("TECHNICIAN", "technicalServices", "create")).toBe(false);
+    expect(can("TECHNICIAN", "annualInspections", "read")).toBe(false);
+    expect(can("TECHNICIAN", "annualInspections", "create")).toBe(false);
+    expect(can("ADMIN", "technicalServices", "read")).toBe(true);
+    expect(can("ADMIN", "annualInspections", "read")).toBe(true);
   });
 });
 
@@ -63,9 +65,13 @@ describe("canAccessRoute", () => {
     expect(canAccessRoute("TECHNICIAN", "/contracts")).toBe(false);
   });
 
-  it("allows TECHNICIAN on annual inspections routes", () => {
-    expect(canAccessRoute("TECHNICIAN", "/annual-inspections")).toBe(true);
-    expect(canAccessRoute("TECHNICIAN", "/annual-inspections/42")).toBe(true);
+  it("blocks TECHNICIAN from technical services and annual inspections", () => {
+    expect(canAccessRoute("TECHNICIAN", "/technical-services")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/technical-services/42")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/annual-inspections")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/annual-inspections/42")).toBe(false);
+    expect(canAccessRoute("ADMIN", "/technical-services")).toBe(true);
+    expect(canAccessRoute("ADMIN", "/annual-inspections")).toBe(true);
   });
 
   it("blocks TECHNICIAN from printer models and seals sections", () => {

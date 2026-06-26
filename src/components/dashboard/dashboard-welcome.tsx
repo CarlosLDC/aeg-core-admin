@@ -19,7 +19,7 @@ type DashboardWelcomeProps = {
 const ROLE_CONTEXT: Record<Role, string> = {
   ADMIN: "Vista global del catálogo operativo y la flota fiscal.",
   TECHNICIAN:
-    "Tu inventario de impresoras, clientes, precintos e inspecciones en tu distribuidora.",
+    "Tu inventario de impresoras y empresas en tu distribuidora; servicios e inspecciones en el Libro fiscal.",
   SENIAT: "Consulta del libro fiscal para auditoría tributaria.",
 };
 

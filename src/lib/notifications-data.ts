@@ -110,8 +110,9 @@ export async function loadNotifications(options: {
   const items: AppNotification[] = [];
 
   const canPrinters = role === "ADMIN" || role === "TECHNICIAN";
-  const canFieldOps = role === "ADMIN" || role === "TECHNICIAN";
-  const canAnnualInspections = canFieldOps;
+  const canSeals = can(role, "seals", "read");
+  const canTechnicalServices = can(role, "technicalServices", "read");
+  const canAnnualInspections = can(role, "annualInspections", "read");
   const isAdmin = role === "ADMIN";
   const canLoadUsers = can(role, "users", "read");
 
@@ -132,8 +133,8 @@ export async function loadNotifications(options: {
     role === "TECHNICIAN" ? settled(fetchClients()) : Promise.resolve(null),
     canLoadUsers ? settled(fetchUsers()) : Promise.resolve(null),
     canPrinters ? settled(fetchPrinters()) : Promise.resolve(null),
-    canFieldOps ? settled(fetchSeals()) : Promise.resolve(null),
-    canFieldOps ? settled(fetchTechnicalServices()) : Promise.resolve(null),
+    canSeals ? settled(fetchSeals()) : Promise.resolve(null),
+    canTechnicalServices ? settled(fetchTechnicalServices()) : Promise.resolve(null),
     canAnnualInspections
       ? settled(fetchAnnualInspections())
       : Promise.resolve(null),

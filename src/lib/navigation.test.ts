@@ -36,9 +36,17 @@ describe("navSectionsForRole", () => {
     expect(technicianItems.some((i) => i.title === "Precintos fiscales")).toBe(
       false,
     );
+    expect(technicianItems.some((i) => i.title === "Servicio técnico")).toBe(
+      false,
+    );
+    expect(technicianItems.some((i) => i.title === "Inspección anual")).toBe(
+      false,
+    );
     const adminItems = navItemsForRole("ADMIN");
     expect(adminItems.some((i) => i.title === "Modelos fiscales")).toBe(true);
     expect(adminItems.some((i) => i.title === "Precintos fiscales")).toBe(true);
+    expect(adminItems.some((i) => i.title === "Servicio técnico")).toBe(true);
+    expect(adminItems.some((i) => i.title === "Inspección anual")).toBe(true);
   });
 
   it("shows Libro fiscal for panel roles with external app URL", () => {
