@@ -86,6 +86,7 @@ import { printerDispositionPath, printerPath } from "@/lib/resource-routes";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
+import type { PrinterResponse } from "@/types/printer";
 import type { PrinterModelResponse } from "@/types/printer-model";
 import { isDistributorPanelRole } from "@/types/user";
 
