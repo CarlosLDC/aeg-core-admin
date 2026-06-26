@@ -1,6 +1,12 @@
 import type { PrinterRequest, PrinterResponse } from "@/types/printer";
 import { isPrinterEligibleForMqttEnajenacion } from "@/lib/printer-status";
+import { normalizeFiscalTicketText } from "@/lib/fiscal-ticket-latin2";
+import { FISCAL_TICKET_WIDTH_CH } from "@/lib/venezuelan-fiscal-invoice";
 import type { ContributorType } from "@/types/company";
+
+export const DEFAULT_INVOICE_PRODUCT_DESCRIPTION = "PRODUCTO";
+export const DEFAULT_TEST_INVOICE_PRODUCT_DESCRIPTION =
+  "Producto de prueba — información técnica";
 
 export const DNF_END_OK = 7;
 export const INVOICE_END_OK = 8;
@@ -467,16 +473,32 @@ function invoiceDateForPayload(raw?: string): string {
   return `${day}/${month}/${date.getFullYear()}`;
 }
 
-function productLine(cmd: "proF" | "prodNC", imp: number): Record<string, unknown> {
+function productLine(
+  cmd: "proF" | "prodNC",
+  imp: number,
+  description = DEFAULT_INVOICE_PRODUCT_DESCRIPTION,
+): Record<string, unknown> {
   return {
     cmd,
     data: {
       pre: 100,
       cant: 1000,
       imp,
-      des01: "PRODUCTO",
+      des01: normalizeInvoiceProductDescription(description),
     },
   };
+}
+
+export function normalizeInvoiceProductDescription(
+  productDescription?: string,
+): string {
+  const raw =
+    productDescription?.trim() || DEFAULT_INVOICE_PRODUCT_DESCRIPTION;
+  const normalized = normalizeFiscalTicketText(raw);
+  if (normalized.length <= FISCAL_TICKET_WIDTH_CH) {
+    return normalized;
+  }
+  return normalized.slice(0, FISCAL_TICKET_WIDTH_CH);
 }
 
 export function buildDnfAlertCommandPayload(): Array<Record<string, string>> {
@@ -643,10 +665,13 @@ export function buildRegistrationStatusCommandPayload(): Record<string, unknown>
   };
 }
 
-export function buildInvoiceCommandPayload(): Array<Record<string, unknown>> {
+export function buildInvoiceCommandPayload(
+  productDescription?: string,
+): Array<Record<string, unknown>> {
+  const description = normalizeInvoiceProductDescription(productDescription);
   return [
     ...Array.from({ length: 5 }, (_, index) =>
-      productLine("proF", index + 1),
+      productLine("proF", index + 1, description),
     ),
     { cmd: "subToF", data: 1, valor: 0 },
     { cmd: "fpaF", data: { tipo: 1, monto: -1, tasaConv: 0 } },
@@ -910,6 +935,17 @@ export function isPrinterEligibleForEnajenacionTest(
 ): boolean {
   return (
     isPrinterEligibleForMqttEnajenacion(printer.status) &&
+    Boolean(printer.clientId) &&
+    Boolean(printer.macAddress?.trim()) &&
+    Boolean(printer.fiscalSerial?.trim())
+  );
+}
+
+export function isPrinterEligibleForTestInvoice(
+  printer: PrinterResponse,
+): boolean {
+  return (
+    printer.status === "enajenada" &&
     Boolean(printer.clientId) &&
     Boolean(printer.macAddress?.trim()) &&
     Boolean(printer.fiscalSerial?.trim())

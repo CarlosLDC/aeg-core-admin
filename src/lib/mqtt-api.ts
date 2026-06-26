@@ -8,6 +8,8 @@ import type {
   EnajenacionActivityListResponse,
   EnajenacionActivityResult,
   EnajenacionActiveSession,
+  EnajenacionTestInvoiceRequest,
+  EnajenacionTestInvoiceResponse,
   MqttConnectionProbeResult,
   MqttInboundMessage,
   MqttMonitorStatus,
@@ -129,6 +131,23 @@ export async function precheckEnajenacionMqtt(
     `${BASE}/enajenacion/precheck?${params}`,
   );
   ensureMqttSuccess(status, data, "No se pudo validar los requisitos de enajenación.");
+  if (data === undefined) {
+    throw new ApiError("Respuesta vacía del servidor", 500);
+  }
+  return data;
+}
+
+export async function sendEnajenacionTestInvoice(
+  body: EnajenacionTestInvoiceRequest,
+): Promise<EnajenacionTestInvoiceResponse> {
+  const { data, status } = await mqttFetch<EnajenacionTestInvoiceResponse>(
+    `${BASE}/enajenacion/test-invoice`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
+  ensureMqttSuccess(status, data, "No se pudo enviar la factura de prueba.");
   if (data === undefined) {
     throw new ApiError("Respuesta vacía del servidor", 500);
   }

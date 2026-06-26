@@ -4,10 +4,11 @@ import { useCallback, useState } from "react";
 import { EnajenacionActivityPanel } from "@/components/mqtt/enajenacion-activity-panel";
 import { EnajenacionTestPanel } from "@/components/mqtt/enajenacion-test-panel";
 import { MqttDiagnosticsPanel } from "@/components/mqtt/mqtt-diagnostics-panel";
+import { TestInvoicePanel } from "@/components/mqtt/test-invoice-panel";
 import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { cn } from "@/lib/utils";
 
-type MqttTab = "diagnostics" | "enajenacion" | "activity";
+type MqttTab = "diagnostics" | "enajenacion" | "activity" | "test-invoice";
 
 const TAB_STORAGE_KEY = "mqtt-workspace-tab";
 
@@ -19,7 +20,7 @@ function readStoredTab(): MqttTab {
   if (stored === "monitor") {
     return "activity";
   }
-  if (stored === "diagnostics" || stored === "enajenacion" || stored === "activity") {
+  if (stored === "diagnostics" || stored === "enajenacion" || stored === "activity" || stored === "test-invoice") {
     return stored;
   }
   return "diagnostics";
@@ -44,8 +45,9 @@ export function MqttWorkspace() {
             { value: "diagnostics", label: "Diagnóstico" },
             { value: "activity", label: "Actividad" },
             { value: "enajenacion", label: "Enajenación" },
+            { value: "test-invoice", label: "Factura de prueba" },
           ]}
-          className="w-full max-w-lg"
+          className="w-full max-w-2xl"
         />
       </div>
 
@@ -59,6 +61,10 @@ export function MqttWorkspace() {
 
       <div className={cn(tab !== "enajenacion" && "hidden")}>
         <EnajenacionTestPanel />
+      </div>
+
+      <div className={cn(tab !== "test-invoice" && "hidden")}>
+        <TestInvoicePanel onOpenActivity={() => handleTabChange("activity")} />
       </div>
     </div>
   );

@@ -38,6 +38,19 @@ export type EnajenacionMqttPrecheckResponse = {
   message: string | null;
 };
 
+export type EnajenacionTestInvoiceResponse = {
+  topic: string;
+  fiscalSerial: string;
+  mac: string;
+  payload: string;
+  publishedAt: string;
+};
+
+export type EnajenacionTestInvoiceRequest = {
+  printerId: number;
+  productDescription?: string;
+};
+
 export type MqttTestMessageResponse = {
   status: string;
   message: string;

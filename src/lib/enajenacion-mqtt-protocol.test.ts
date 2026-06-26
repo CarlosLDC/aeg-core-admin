@@ -40,6 +40,8 @@ import {
   isFiscalRespuestaTopic,
   isPtrEnajenarPayload,
   isPrinterEligibleForEnajenacionTest,
+  isPrinterEligibleForTestInvoice,
+  normalizeInvoiceProductDescription,
   isTestFiscalSerial,
   mergeMqttMessages,
   parseManualMacAddress,
@@ -269,6 +271,48 @@ describe("enajenacion-mqtt-protocol", () => {
       fiscalSerial: "GRA0000019",
     } as PrinterResponse;
     expect(isPrinterEligibleForEnajenacionTest(printer)).toBe(false);
+  });
+
+  it("builds invoice payload with latin-2 normalized product description", () => {
+    const payload = buildInvoiceCommandPayload(
+      "Producto de prueba — información técnica",
+    );
+
+    expect(payload).toHaveLength(8);
+    for (let index = 0; index < 5; index += 1) {
+      expect(payload[index]).toMatchObject({
+        cmd: "proF",
+        data: {
+          des01: "Producto de prueba - información técnica",
+        },
+      });
+    }
+    expect(normalizeInvoiceProductDescription("Información técnica")).toBe(
+      "Información técnica",
+    );
+  });
+
+  it("detects eligible enajenada printer for test invoice", () => {
+    const printer = {
+      id: 4,
+      status: "enajenada",
+      clientId: 10,
+      macAddress: "20:6E:F1:88:4C:68",
+      fiscalSerial: "GRA0000020",
+    } as PrinterResponse;
+    expect(isPrinterEligibleForTestInvoice(printer)).toBe(true);
+    expect(isPrinterEligibleForEnajenacionTest(printer)).toBe(false);
+  });
+
+  it("rejects assigned printer for test invoice", () => {
+    const printer = {
+      id: 5,
+      status: "asignada",
+      clientId: 10,
+      macAddress: "20:6E:F1:88:4C:68",
+      fiscalSerial: "GRA0000021",
+    } as PrinterResponse;
+    expect(isPrinterEligibleForTestInvoice(printer)).toBe(false);
   });
 
   it("defines the full enajenacion flow with success criteria", () => {
