@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, FileText, Loader2 } from "lucide-react";
+import { FileText, Loader2 } from "lucide-react";
 import { PrinterSelect } from "@/components/printers/printer-select";
 import { useToast } from "@/context/toast-provider";
 import {
@@ -164,17 +164,6 @@ export function TestInvoicePanel({ onOpenActivity }: TestInvoicePanelProps) {
           enajenada. El encabezado y pie impresos provienen de la configuración
           guardada en el equipo.
         </p>
-
-        <div
-          role="note"
-          className="mt-4 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100"
-        >
-          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-          <span>
-            Esta acción emite un documento fiscal real en la impresora. No incluye
-            nota de crédito ni reporte Z.
-          </span>
-        </div>
 
         <label className="mt-4 block">
           <span className="mb-1.5 block text-sm font-medium">Impresora</span>
