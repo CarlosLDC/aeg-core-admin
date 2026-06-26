@@ -15,6 +15,7 @@ import { ApiError } from "@/types/auth";
 import { ROLES, type Role } from "@/types/user";
 
 export type UserProfile = {
+  id: number;
   username: string;
   name: string | null;
   email: string;
@@ -26,9 +27,10 @@ export type UserProfile = {
 function profileFromMe(
   username: string,
   me: Awaited<ReturnType<typeof fetchAuthMe>>,
-): Pick<UserProfile, "name" | "email" | "role" | "branchId" | "distributorId"> {
+): Pick<UserProfile, "id" | "name" | "email" | "role" | "branchId" | "distributorId"> {
   const email = me.email?.trim() || me.username?.trim() || username;
   return {
+    id: me.id,
     name: me.name?.trim() || null,
     email,
     role: me.role,
@@ -51,6 +53,7 @@ export async function resolveAndStoreUserProfile(
   let distributorId = getDistributorIdFromToken(token);
   let name: string | null = null;
   let email = username;
+  let id = 0;
 
   try {
     const me = await fetchAuthMe();
@@ -60,8 +63,11 @@ export async function resolveAndStoreUserProfile(
     distributorId = distributorId ?? fromMe.distributorId;
     name = fromMe.name;
     email = fromMe.email;
-  } catch {
-    /* /api/auth/me no disponible */
+    id = fromMe.id;
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) {
+      throw err;
+    }
   }
 
   if (!role || !ROLES.includes(role)) {
@@ -72,6 +78,7 @@ export async function resolveAndStoreUserProfile(
   }
 
   const profile: UserProfile = {
+    id,
     username,
     name,
     email,
@@ -82,6 +89,7 @@ export async function resolveAndStoreUserProfile(
 
   setStoredProfile(
     {
+      id: profile.id,
       role: profile.role,
       branchId: profile.branchId,
       distributorId: profile.distributorId,
@@ -101,6 +109,7 @@ export function getProfileFromStorage(
   if (!role) return null;
 
   return {
+    id: stored?.id ?? 0,
     username,
     name: stored?.name ?? null,
     email: username,
@@ -122,6 +131,7 @@ export async function refreshUserProfileFromApi(
     const me = await fetchAuthMe();
     const fromMe = profileFromMe(username, me);
     const profile: UserProfile = {
+      id: fromMe.id,
       username,
       name: fromMe.name,
       email: fromMe.email,
@@ -132,6 +142,7 @@ export async function refreshUserProfileFromApi(
 
     setStoredProfile(
       {
+        id: profile.id,
         role: profile.role,
         branchId: profile.branchId,
         distributorId: profile.distributorId,

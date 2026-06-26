@@ -22,6 +22,7 @@ import { getLoginErrorMessage } from "@/lib/auth";
 import type { Role } from "@/types/user";
 
 type AuthUser = {
+  id: number;
   username: string;
   name: string | null;
   email: string;
@@ -49,6 +50,7 @@ function toAuthUser(session: NonNullable<ReturnType<typeof getSession>>): AuthUs
   });
 
   return {
+    id: session.id,
     username: session.username,
     name: session.name,
     email: session.email,

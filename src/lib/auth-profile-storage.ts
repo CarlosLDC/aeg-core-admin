@@ -1,6 +1,7 @@
 import type { Role } from "@/types/user";
 
 export type StoredUserProfile = {
+  id?: number | null;
   role: Role;
   branchId: number | null;
   distributorId: number | null;
@@ -27,6 +28,7 @@ export function getStoredProfile(): StoredUserProfile | null {
     const parsed = JSON.parse(raw) as Partial<StoredUserProfile>;
     if (!parsed.role) return null;
     return {
+      id: parsed.id ?? null,
       role: parsed.role,
       branchId: parsed.branchId ?? null,
       distributorId: parsed.distributorId ?? null,

@@ -221,6 +221,7 @@ export function SealsManager() {
         role: user.role,
         scope,
         distributorId,
+        currentUserId: user.id,
         companies,
         branches,
         clients,
@@ -228,6 +229,13 @@ export function SealsManager() {
         serviceCenters: [],
         technicianUsers: usersRaw.filter(
           (row) => row.role === "TECHNICIAN" && row.enabled,
+        ),
+        inspectorUsers: usersRaw.filter(
+          (row) =>
+            row.enabled &&
+            (row.role === "DISTRIBUTOR" ||
+              row.role === "TECHNICIAN" ||
+              row.role === "SERVICE_CENTER"),
         ),
         printers: printersRaw,
         seals: [],
@@ -282,6 +290,7 @@ export function SealsManager() {
         role: user.role,
         scope,
         distributorId,
+        currentUserId: user.id,
         companies,
         branches,
         clients,
@@ -289,6 +298,13 @@ export function SealsManager() {
         serviceCenters: [],
         technicianUsers: usersRaw.filter(
           (row) => row.role === "TECHNICIAN" && row.enabled,
+        ),
+        inspectorUsers: usersRaw.filter(
+          (row) =>
+            row.enabled &&
+            (row.role === "DISTRIBUTOR" ||
+              row.role === "TECHNICIAN" ||
+              row.role === "SERVICE_CENTER"),
         ),
         printers: printersRaw,
         seals: sealsRaw,

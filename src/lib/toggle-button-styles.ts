@@ -111,7 +111,9 @@ export const BRANCH_ROLE_TOGGLE_TONE = {
 
 export const USER_ROLE_TOGGLE_TONE: Record<Role, ToggleTone> = {
   ADMIN: "violet",
+  DISTRIBUTOR: "sky",
   TECHNICIAN: "emerald",
+  SERVICE_CENTER: "amber",
   SENIAT: "slate",
 };
 
