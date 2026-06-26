@@ -11,7 +11,9 @@ import {
   formatFiscalInvoiceDate,
   formatFiscalInvoiceTime,
   formatRifForFiscalDisplay,
+  invoiceProductDescriptionLinesForProf,
   splitAddressLines,
+  splitInvoiceProductDescriptionLines,
   syncInvoiceAmounts,
 } from "./venezuelan-fiscal-invoice";
 
@@ -179,6 +181,31 @@ describe("venezuelan fiscal invoice", () => {
 
   it("renders ticket separator with 68 characters", () => {
     expect(fiscalTicketSeparator()).toHaveLength(68);
+  });
+
+  it("limits single-line invoice product descriptions to 39 characters", () => {
+    expect(splitInvoiceProductDescriptionLines("A".repeat(50))).toEqual([
+      "A".repeat(39),
+    ]);
+    expect(
+      invoiceProductDescriptionLinesForProf(splitInvoiceProductDescriptionLines("A".repeat(50))),
+    ).toEqual(["A".repeat(39), "A".repeat(39), "A".repeat(39), "A".repeat(39), "A".repeat(39)]);
+  });
+
+  it("limits multi-line invoice product descriptions to 60 characters", () => {
+    const lines = splitInvoiceProductDescriptionLines(
+      `${"L".repeat(70)}\n${"M".repeat(70)}`,
+    );
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toHaveLength(60);
+    expect(lines[1]).toHaveLength(60);
+    expect(invoiceProductDescriptionLinesForProf(lines)).toEqual([
+      lines[0],
+      lines[1],
+      "",
+      "",
+      "",
+    ]);
   });
 
   it("recalculates taxes when item price changes", () => {

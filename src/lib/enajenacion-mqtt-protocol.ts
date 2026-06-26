@@ -1,12 +1,17 @@
 import type { PrinterRequest, PrinterResponse } from "@/types/printer";
 import { isPrinterEligibleForMqttEnajenacion } from "@/lib/printer-status";
-import { normalizeFiscalTicketText } from "@/lib/fiscal-ticket-latin2";
-import { FISCAL_TICKET_WIDTH_CH } from "@/lib/venezuelan-fiscal-invoice";
+import {
+  INVOICE_PRODUCT_MAX_LINES,
+  INVOICE_PRODUCT_MULTI_LINE_MAX_LENGTH,
+  INVOICE_PRODUCT_SINGLE_LINE_MAX_LENGTH,
+  invoiceProductDescriptionLinesForProf,
+  splitInvoiceProductDescriptionLines,
+} from "@/lib/venezuelan-fiscal-invoice";
 import type { ContributorType } from "@/types/company";
 
 export const DEFAULT_INVOICE_PRODUCT_DESCRIPTION = "PRODUCTO";
 export const DEFAULT_TEST_INVOICE_PRODUCT_DESCRIPTION =
-  "Producto de prueba — información técnica";
+  "Producto de prueba - info. técnica";
 
 export const DNF_END_OK = 7;
 export const INVOICE_END_OK = 8;
@@ -484,7 +489,7 @@ function productLine(
       pre: 100,
       cant: 1000,
       imp,
-      des01: normalizeInvoiceProductDescription(description),
+      des01: description,
     },
   };
 }
@@ -492,13 +497,23 @@ function productLine(
 export function normalizeInvoiceProductDescription(
   productDescription?: string,
 ): string {
-  const raw =
-    productDescription?.trim() || DEFAULT_INVOICE_PRODUCT_DESCRIPTION;
-  const normalized = normalizeFiscalTicketText(raw);
-  if (normalized.length <= FISCAL_TICKET_WIDTH_CH) {
-    return normalized;
+  return splitInvoiceProductDescriptionLines(
+    productDescription,
+    DEFAULT_INVOICE_PRODUCT_DESCRIPTION,
+  ).join("\n");
+}
+
+export function invoiceProductDescriptionLimitLabel(
+  productDescription?: string,
+): string {
+  const lineCount = (productDescription ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean).length;
+  if (lineCount <= 1) {
+    return `Máximo ${INVOICE_PRODUCT_SINGLE_LINE_MAX_LENGTH} caracteres en una sola línea (el precio ocupa el resto del ancho).`;
   }
-  return normalized.slice(0, FISCAL_TICKET_WIDTH_CH);
+  return `Máximo ${INVOICE_PRODUCT_MULTI_LINE_MAX_LENGTH} caracteres por línea, hasta ${INVOICE_PRODUCT_MAX_LINES} líneas.`;
 }
 
 export function buildDnfAlertCommandPayload(): Array<Record<string, string>> {
@@ -668,9 +683,13 @@ export function buildRegistrationStatusCommandPayload(): Record<string, unknown>
 export function buildInvoiceCommandPayload(
   productDescription?: string,
 ): Array<Record<string, unknown>> {
-  const description = normalizeInvoiceProductDescription(productDescription);
+  const descriptionLines = splitInvoiceProductDescriptionLines(
+    productDescription,
+    DEFAULT_INVOICE_PRODUCT_DESCRIPTION,
+  );
+  const profDescriptions = invoiceProductDescriptionLinesForProf(descriptionLines);
   return [
-    ...Array.from({ length: 5 }, (_, index) =>
+    ...profDescriptions.map((description, index) =>
       productLine("proF", index + 1, description),
     ),
     { cmd: "subToF", data: 1, valor: 0 },

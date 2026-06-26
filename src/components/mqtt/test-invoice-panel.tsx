@@ -10,6 +10,7 @@ import {
   fiscalComandoTopic,
   compactMac,
   formatMqttPayloadForDisplay,
+  invoiceProductDescriptionLimitLabel,
   isPrinterEligibleForTestInvoice,
 } from "@/lib/enajenacion-mqtt-protocol";
 import { fetchClients } from "@/lib/clients-api";
@@ -208,19 +209,19 @@ export function TestInvoicePanel({ onOpenActivity }: TestInvoicePanelProps) {
           <span className="mb-1.5 block text-sm font-medium">
             Descripción de producto (des01)
           </span>
-          <input
-            type="text"
+          <textarea
             value={productDescription}
             onChange={(e) => {
               setProductDescription(e.target.value);
               setLastResult(null);
             }}
-            maxLength={68}
+            rows={3}
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
             placeholder={DEFAULT_TEST_INVOICE_PRODUCT_DESCRIPTION}
           />
           <span className="mt-1 block text-xs text-muted">
-            Se normaliza a ISO-8859-2 (Latin-2) antes de publicar por MQTT.
+            {invoiceProductDescriptionLimitLabel(productDescription)} Se normaliza a
+            ISO-8859-2 (Latin-2) antes de publicar por MQTT.
           </span>
         </label>
 

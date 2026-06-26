@@ -13,12 +13,75 @@ import type { CompanyResponse } from "@/types/company";
 import type { PrinterResponse } from "@/types/printer";
 
 export const FISCAL_TICKET_WIDTH_CH = 68;
+export const INVOICE_PRODUCT_SINGLE_LINE_MAX_LENGTH = 39;
+export const INVOICE_PRODUCT_MULTI_LINE_MAX_LENGTH = 60;
+export const INVOICE_PRODUCT_MAX_LINES = 5;
 
 const IVA_GENERAL_PORCENTAJE = 16;
 const ITEM_ALICUOTA = "G";
 
 export function fiscalTicketSeparator(): string {
   return "-".repeat(FISCAL_TICKET_WIDTH_CH);
+}
+
+function truncateInvoiceProductLine(value: string, maxLength: number): string {
+  if (value.length <= maxLength) {
+    return value;
+  }
+  return value.slice(0, maxLength);
+}
+
+export function splitInvoiceProductDescriptionLines(
+  productDescription?: string,
+  defaultDescription = "PRODUCTO",
+): string[] {
+  const raw = productDescription?.trim() || defaultDescription;
+  const sourceLines = raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  if (sourceLines.length === 0) {
+    return [
+      truncateInvoiceProductLine(
+        normalizeFiscalTicketText(defaultDescription),
+        INVOICE_PRODUCT_SINGLE_LINE_MAX_LENGTH,
+      ),
+    ];
+  }
+
+  if (sourceLines.length === 1) {
+    return [
+      truncateInvoiceProductLine(
+        normalizeFiscalTicketText(sourceLines[0]),
+        INVOICE_PRODUCT_SINGLE_LINE_MAX_LENGTH,
+      ),
+    ];
+  }
+
+  return sourceLines
+    .slice(0, INVOICE_PRODUCT_MAX_LINES)
+    .map((line) =>
+      truncateInvoiceProductLine(
+        normalizeFiscalTicketText(line),
+        INVOICE_PRODUCT_MULTI_LINE_MAX_LENGTH,
+      ),
+    );
+}
+
+export function invoiceProductDescriptionLinesForProf(
+  descriptionLines: string[],
+): string[] {
+  if (descriptionLines.length === 0) {
+    return ["", "", "", "", ""];
+  }
+  const singleLine = descriptionLines.length === 1;
+  return Array.from({ length: INVOICE_PRODUCT_MAX_LINES }, (_, index) => {
+    if (singleLine) {
+      return descriptionLines[0];
+    }
+    return index < descriptionLines.length ? descriptionLines[index] : "";
+  });
 }
 
 export function buildEncabezadoLineas(input: {

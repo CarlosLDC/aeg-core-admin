@@ -283,13 +283,23 @@ describe("enajenacion-mqtt-protocol", () => {
       expect(payload[index]).toMatchObject({
         cmd: "proF",
         data: {
-          des01: "Producto de prueba - información técnica",
+          des01: "Producto de prueba - información técnic",
         },
       });
     }
     expect(normalizeInvoiceProductDescription("Información técnica")).toBe(
       "Información técnica",
     );
+  });
+
+  it("maps multi-line product description across proF commands", () => {
+    const payload = buildInvoiceCommandPayload(
+      `${"L".repeat(70)}\n${"M".repeat(70)}`,
+    );
+
+    expect((payload[0] as { data: { des01: string } }).data.des01).toHaveLength(60);
+    expect((payload[1] as { data: { des01: string } }).data.des01).toHaveLength(60);
+    expect((payload[2] as { data: { des01: string } }).data.des01).toBe("");
   });
 
   it("detects eligible enajenada printer for test invoice", () => {
