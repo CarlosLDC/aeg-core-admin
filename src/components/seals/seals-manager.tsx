@@ -67,7 +67,7 @@ import {
 } from "@/lib/seals-api";
 import type { SealColor, SealResponse, SealStatus } from "@/types/seal";
 import { SEAL_COLORS, SEAL_STATUSES } from "@/types/seal";
-import { isDistributorPanelRole } from "@/types/user";
+import { isDistributorPanelRole, isServiceCenterStaff } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
@@ -221,6 +221,7 @@ export function SealsManager() {
         role: user.role,
         scope,
         distributorId,
+        branchId: user.branchId,
         currentUserId: user.id,
         companies,
         branches,
@@ -228,14 +229,12 @@ export function SealsManager() {
         distributors,
         serviceCenters: [],
         technicianUsers: usersRaw.filter(
-          (row) => row.role === "TECHNICIAN" && row.enabled,
+          (row) => isServiceCenterStaff(row) && row.enabled,
         ),
         inspectorUsers: usersRaw.filter(
           (row) =>
             row.enabled &&
-            (row.role === "DISTRIBUTOR" ||
-              row.role === "TECHNICIAN" ||
-              row.role === "SERVICE_CENTER"),
+            (row.role === "DISTRIBUTOR" || isServiceCenterStaff(row)),
         ),
         printers: printersRaw,
         seals: [],
@@ -290,6 +289,7 @@ export function SealsManager() {
         role: user.role,
         scope,
         distributorId,
+        branchId: user.branchId,
         currentUserId: user.id,
         companies,
         branches,
@@ -297,14 +297,12 @@ export function SealsManager() {
         distributors,
         serviceCenters: [],
         technicianUsers: usersRaw.filter(
-          (row) => row.role === "TECHNICIAN" && row.enabled,
+          (row) => isServiceCenterStaff(row) && row.enabled,
         ),
         inspectorUsers: usersRaw.filter(
           (row) =>
             row.enabled &&
-            (row.role === "DISTRIBUTOR" ||
-              row.role === "TECHNICIAN" ||
-              row.role === "SERVICE_CENTER"),
+            (row.role === "DISTRIBUTOR" || isServiceCenterStaff(row)),
         ),
         printers: printersRaw,
         seals: sealsRaw,

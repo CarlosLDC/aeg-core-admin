@@ -9,14 +9,28 @@ export const ROLES = [
 
 export type Role = (typeof ROLES)[number];
 
-export const DISTRIBUTOR_PANEL_ROLES = ["DISTRIBUTOR", "TECHNICIAN"] as const;
+export const DISTRIBUTOR_PANEL_ROLES = ["DISTRIBUTOR"] as const;
 
 export type DistributorPanelRole = (typeof DISTRIBUTOR_PANEL_ROLES)[number];
 
 export function isDistributorPanelRole(
   role: Role | null | undefined,
 ): role is DistributorPanelRole {
-  return role === "DISTRIBUTOR" || role === "TECHNICIAN";
+  return role === "DISTRIBUTOR";
+}
+
+export function isServiceCenterStaffRole(role: Role | null | undefined): boolean {
+  return role === "TECHNICIAN" || role === "SERVICE_CENTER";
+}
+
+export function isServiceCenterStaff(
+  user: Pick<UserResponse, "role" | "branchId"> | null | undefined,
+): boolean {
+  return (
+    user != null &&
+    isServiceCenterStaffRole(user.role) &&
+    user.branchId != null
+  );
 }
 
 export type UserResponse = {

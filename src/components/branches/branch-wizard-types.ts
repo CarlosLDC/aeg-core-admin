@@ -1,4 +1,5 @@
 import type { ContributorType } from "@/types/company";
+import type { BranchOrganizationRole } from "@/types/organization";
 
 export type BranchWizardContractDraft = {
   startDate: string;
@@ -23,9 +24,8 @@ export type BranchWizardValues = {
   contactPersonName: string;
   phone: string;
   email: string;
+  organizationRole: BranchOrganizationRole;
   isClient: boolean;
-  isDistributor: boolean;
-  isServiceCenter: boolean;
   clientDistributorId: string;
   distributorContract: BranchWizardContractDraft;
   serviceCenterContract: BranchWizardContractDraft;
@@ -42,9 +42,8 @@ export const emptyBranchWizardForm = (): BranchWizardValues => ({
   contactPersonName: "",
   phone: "",
   email: "",
+  organizationRole: "NONE",
   isClient: false,
-  isDistributor: false,
-  isServiceCenter: false,
   clientDistributorId: "",
   distributorContract: emptyBranchWizardContractDraft(),
   serviceCenterContract: emptyBranchWizardContractDraft(),

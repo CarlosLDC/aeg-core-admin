@@ -18,15 +18,15 @@ const baseForm = {
 };
 
 describe("validateUserCreateForm", () => {
-  it("accepts TECHNICIAN with distributor and national id", () => {
+  it("accepts TECHNICIAN with branch and national id", () => {
     const error = validateUserCreateForm({
       ...baseForm,
       role: "TECHNICIAN",
-      distributorId: "7",
+      branchId: "12",
       nationalId: "V12345678",
     });
     expect(error).toBeNull();
-    expect(resolveUserDistributorId("TECHNICIAN", "7")).toBe(7);
+    expect(resolveUserBranchId("TECHNICIAN", "12")).toBe(12);
     expect(resolveUserNationalId("TECHNICIAN", "V12345678")).toBe("V12345678");
   });
 
@@ -40,24 +40,25 @@ describe("validateUserCreateForm", () => {
     expect(error).toBeNull();
   });
 
-  it("requires SERVICE_CENTER branch", () => {
-    const error = validateUserCreateForm({
-      ...baseForm,
-      role: "SERVICE_CENTER",
-      branchId: "",
-    });
-    expect(error).toMatch(/sucursal/i);
-    expect(resolveUserBranchId("SERVICE_CENTER", "12")).toBe(12);
-  });
-
-  it("rejects TECHNICIAN without distributor", () => {
+  it("requires TECHNICIAN branch", () => {
     const error = validateUserCreateForm({
       ...baseForm,
       role: "TECHNICIAN",
-      distributorId: "",
+      branchId: "",
       nationalId: "V12345678",
     });
-    expect(error).toMatch(/distribuidora/i);
+    expect(error).toMatch(/sucursal/i);
+    expect(resolveUserBranchId("TECHNICIAN", "12")).toBe(12);
+  });
+
+  it("rejects TECHNICIAN without branch", () => {
+    const error = validateUserCreateForm({
+      ...baseForm,
+      role: "TECHNICIAN",
+      branchId: "",
+      nationalId: "V12345678",
+    });
+    expect(error).toMatch(/sucursal/i);
   });
 
   it("accepts ADMIN without distributor or national id", () => {

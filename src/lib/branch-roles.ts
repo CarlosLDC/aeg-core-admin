@@ -17,6 +17,7 @@ import {
   fetchServiceCenters,
 } from "@/lib/service-centers-api";
 import { getCatalogForbiddenMessage } from "@/lib/api-permissions";
+import { organizationRoleFromBranch } from "@/lib/organization-roles";
 import { ApiError } from "@/types/auth";
 import { formatBranchShort } from "@/lib/branches";
 import type { BranchResponse, BranchWithRoles } from "@/types/branch";
@@ -26,11 +27,11 @@ import type {
   ServiceCenterResponse,
 } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
+import type { BranchOrganizationRole } from "@/types/organization";
 
 export type BranchRoleFormState = {
-  isDistributor: boolean;
+  organizationRole: BranchOrganizationRole;
   isClient: boolean;
-  isServiceCenter: boolean;
   clientDistributorId: string;
 };
 
@@ -53,6 +54,11 @@ export function mergeBranchesWithRoles(
     distributor: distributorByBranch.get(branch.id),
     client: clientByBranch.get(branch.id),
     serviceCenter: serviceCenterByBranch.get(branch.id),
+    organizationRole: organizationRoleFromBranch({
+      organizationRole: branch.organizationRole,
+      distributor: distributorByBranch.get(branch.id),
+      serviceCenter: serviceCenterByBranch.get(branch.id),
+    }),
   }));
 }
 
@@ -96,24 +102,38 @@ export async function syncBranchRoles(
       phone: "",
       email: "",
       createdAt: "",
+      organizationRole: "NONE",
     } satisfies BranchResponse);
+
+  const prevRole = organizationRoleFromBranch(prev);
+  const nextRole = roles.organizationRole;
 
   let clientDistributorId = roles.clientDistributorId
     ? Number(roles.clientDistributorId)
     : undefined;
 
-  if (roles.isDistributor && !prev.distributor) {
+  if (nextRole === "DISTRIBUTOR" && prevRole !== "DISTRIBUTOR") {
     const created = await createDistributor({ branchId });
     if (roles.isClient && clientDistributorId == null) {
       clientDistributorId = created.id;
     }
-  } else if (!roles.isDistributor && prev.distributor) {
+    if (prevRole === "SERVICE_CENTER" && prev.serviceCenter) {
+      await deleteServiceCenter(prev.serviceCenter.id);
+    }
+  } else if (nextRole !== "DISTRIBUTOR" && prevRole === "DISTRIBUTOR" && prev.distributor) {
     await deleteDistributor(prev.distributor.id);
   }
 
-  if (roles.isServiceCenter && !prev.serviceCenter) {
+  if (nextRole === "SERVICE_CENTER" && prevRole !== "SERVICE_CENTER") {
     await createServiceCenter({ branchId });
-  } else if (!roles.isServiceCenter && prev.serviceCenter) {
+    if (prevRole === "DISTRIBUTOR" && prev.distributor) {
+      await deleteDistributor(prev.distributor.id);
+    }
+  } else if (
+    nextRole !== "SERVICE_CENTER" &&
+    prevRole === "SERVICE_CENTER" &&
+    prev.serviceCenter
+  ) {
     await deleteServiceCenter(prev.serviceCenter.id);
   }
 

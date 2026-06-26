@@ -41,6 +41,12 @@ import {
 import { formatBranchShort } from "@/lib/branches";
 import { getCatalogErrorMessage } from "@/lib/api-error-message";
 import { toBranchRequest } from "@/lib/branch-request";
+import {
+  branchToWizardValues,
+  toBranchFormValues,
+  toBranchRoleFormState,
+} from "@/lib/branch-form-mappers";
+import type { BranchFormValues } from "@/components/branches/branch-form-dialog";
 import { invalidateCatalogRoles } from "@/lib/catalog-roles-cache";
 import { createBranch, deleteBranch, updateBranch } from "@/lib/branches-api";
 import { fetchBranchRoleIds } from "@/lib/client-onboarding";
@@ -83,72 +89,6 @@ const TYPE_FILTER_OPTIONS = [
 ] as const;
 
 type CompanyBranchSortKey = "id" | "createdAt";
-
-type BranchFormValues = {
-  companyId: string;
-  city: string;
-  state: string;
-  address: string;
-  contactPersonName: string;
-  phone: string;
-  email: string;
-  isClient: boolean;
-  isDistributor: boolean;
-  isServiceCenter: boolean;
-  clientDistributorId: string;
-};
-
-function toRoleFormState(values: BranchFormValues) {
-  return {
-    isClient: values.isClient,
-    isDistributor: values.isDistributor,
-    isServiceCenter: values.isServiceCenter,
-    clientDistributorId: values.clientDistributorId,
-  };
-}
-
-function toBranchFormValues(values: BranchWizardValues): BranchFormValues {
-  return {
-    companyId: values.linkedCompanyId != null ? String(values.linkedCompanyId) : "",
-    city: values.city,
-    state: values.state,
-    address: values.address,
-    contactPersonName: values.contactPersonName,
-    phone: values.phone,
-    email: values.email,
-    isClient: values.isClient,
-    isDistributor: values.isDistributor,
-    isServiceCenter: values.isServiceCenter,
-    clientDistributorId: values.clientDistributorId,
-  };
-}
-
-function branchToWizardValues(
-  branch: BranchWithRoles,
-  companies: CompanyResponse[],
-): BranchWizardValues {
-  const company = companies.find((row) => row.id === branch.companyId);
-  return {
-    rif: company?.rif ?? "",
-    businessName: company?.businessName ?? "",
-    contributorType: company?.contributorType ?? "ordinario",
-    linkedCompanyId: branch.companyId,
-    city: branch.city,
-    state: branch.state,
-    address: branch.address ?? "",
-    contactPersonName: branch.contactPersonName ?? "",
-    phone: branch.phone ?? "",
-    email: branch.email ?? "",
-    isClient: Boolean(branch.client),
-    isDistributor: Boolean(branch.distributor),
-    isServiceCenter: Boolean(branch.serviceCenter),
-    clientDistributorId: branch.client?.distributorId
-      ? String(branch.client.distributorId)
-      : "",
-    distributorContract: emptyBranchWizardContractDraft(),
-    serviceCenterContract: emptyBranchWizardContractDraft(),
-  };
-}
 
 type CompanyBranchesTableProps = {
   companyId: number;
@@ -329,12 +269,7 @@ export function CompanyBranchesTable({
       ...formValues,
       companyId: String(companyId),
     });
-    const roles = {
-      isClient: formValues.isClient,
-      isDistributor: formValues.isDistributor,
-      isServiceCenter: formValues.isServiceCenter,
-      clientDistributorId: formValues.clientDistributorId,
-    };
+    const roles = toBranchRoleFormState(formValues);
     const label = `${values.city}, ${values.state}`;
 
     try {

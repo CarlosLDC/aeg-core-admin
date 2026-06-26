@@ -67,9 +67,8 @@ export type ClientOnboardingValues = {
 };
 
 export type ClientOnboardingRoleOptions = {
+  organizationRole: import("@/types/organization").BranchOrganizationRole;
   isClient: boolean;
-  isDistributor: boolean;
-  isServiceCenter: boolean;
   clientDistributorId: string;
 };
 
@@ -362,9 +361,8 @@ export function distributorClientRoles(
   distributorId: number,
 ): ClientOnboardingRoleOptions {
   return {
+    organizationRole: "NONE",
     isClient: true,
-    isDistributor: false,
-    isServiceCenter: false,
     clientDistributorId: String(distributorId),
   };
 }

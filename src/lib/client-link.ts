@@ -126,8 +126,7 @@ export function isDistributorClientOnlyRoles(
 ): boolean {
   return (
     roles.isClient &&
-    !roles.isDistributor &&
-    !roles.isServiceCenter &&
+    roles.organizationRole === "NONE" &&
     Boolean(roles.clientDistributorId?.trim())
   );
 }

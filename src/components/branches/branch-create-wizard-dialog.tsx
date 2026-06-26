@@ -161,7 +161,9 @@ export function BranchCreateWizardDialog({
     canCreateContractRecord(user.role);
 
   const needsContractStep =
-    canShowContractStep && (form.isDistributor || form.isServiceCenter);
+    canShowContractStep &&
+    (form.organizationRole === "DISTRIBUTOR" ||
+      form.organizationRole === "SERVICE_CENTER");
 
   const visibleFormSteps = useMemo(
     () =>
@@ -289,8 +291,7 @@ export function BranchCreateWizardDialog({
     }
     if (needsContractStep) {
       const contractErr = validateBranchWizardContracts(form, {
-        isDistributor: form.isDistributor,
-        isServiceCenter: form.isServiceCenter,
+        organizationRole: form.organizationRole,
       });
       if (contractErr) {
         setStepError(contractErr);
@@ -466,6 +467,7 @@ export function BranchCreateWizardDialog({
                   branches={branches}
                   distributors={distributors}
                   companies={companies}
+                  companyOrganizationType={linkedCompany?.organizationType}
                 />
               ) : isContractStep ? (
                 <BranchWizardContractFields

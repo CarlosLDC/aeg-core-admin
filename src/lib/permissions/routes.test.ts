@@ -32,13 +32,17 @@ describe("route permissions", () => {
     expect(canAccessRoute("DISTRIBUTOR", "/docs/enajenacion-mqtt")).toBe(false);
   });
 
-  it("allows distributor panel roles on /branches and legacy client detail redirect", () => {
-    for (const role of ["DISTRIBUTOR", "TECHNICIAN"] as const) {
-      expect(canAccessRoute(role, "/clients")).toBe(true);
-      expect(resourceForPath("/clients")).toBe("branches");
-      expect(canAccessRoute(role, "/companies")).toBe(false);
-      expect(canAccessRoute(role, "/companies/42")).toBe(true);
-    }
+  it("allows DISTRIBUTOR on /branches and legacy client detail redirect", () => {
+    expect(canAccessRoute("DISTRIBUTOR", "/clients")).toBe(true);
+    expect(resourceForPath("/clients")).toBe("branches");
+    expect(canAccessRoute("DISTRIBUTOR", "/companies")).toBe(false);
+    expect(canAccessRoute("DISTRIBUTOR", "/companies/42")).toBe(true);
+  });
+
+  it("blocks TECHNICIAN from panel routes", () => {
+    expect(canAccessRoute("TECHNICIAN", "/clients")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/branches")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/")).toBe(false);
   });
 
   it("allows ADMIN on /companies; legacy /clients is distributor panel only", () => {
@@ -46,32 +50,31 @@ describe("route permissions", () => {
     expect(canAccessRoute("ADMIN", "/clients")).toBe(false);
   });
 
-  it("allows distributor panel roles on client and branch detail routes", () => {
-    for (const role of ["DISTRIBUTOR", "TECHNICIAN"] as const) {
-      expect(canAccessRoute(role, "/clients/42")).toBe(true);
-      expect(canAccessRoute(role, "/branches/99")).toBe(true);
-      expect(canAccessRoute(role, "/branches")).toBe(true);
-    }
+  it("allows DISTRIBUTOR on client and branch detail routes", () => {
+    expect(canAccessRoute("DISTRIBUTOR", "/clients/42")).toBe(true);
+    expect(canAccessRoute("DISTRIBUTOR", "/branches/99")).toBe(true);
+    expect(canAccessRoute("DISTRIBUTOR", "/branches")).toBe(true);
   });
 
   it("defaults SENIAT to fiscal book entry", () => {
     expect(defaultPathForRole("SENIAT")).toBe(FISCAL_BOOK_ENTRY_PATH);
   });
 
-  it("blocks distributor panel roles from admin-only catalog sections", () => {
-    for (const role of ["DISTRIBUTOR", "TECHNICIAN"] as const) {
-      expect(canAccessRoute(role, "/printer-models")).toBe(false);
-      expect(canAccessRoute(role, "/seals")).toBe(false);
-      expect(canAccessRoute(role, "/technical-services")).toBe(false);
-      expect(canAccessRoute(role, "/annual-inspections")).toBe(false);
-    }
+  it("blocks panel roles from admin-only catalog sections", () => {
+    expect(canAccessRoute("DISTRIBUTOR", "/printer-models")).toBe(false);
+    expect(canAccessRoute("DISTRIBUTOR", "/seals")).toBe(false);
+    expect(canAccessRoute("DISTRIBUTOR", "/technical-services")).toBe(false);
+    expect(canAccessRoute("DISTRIBUTOR", "/annual-inspections")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/printer-models")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/seals")).toBe(false);
     expect(canAccessRoute("ADMIN", "/printer-models")).toBe(true);
     expect(canAccessRoute("ADMIN", "/seals")).toBe(true);
     expect(canAccessRoute("ADMIN", "/technical-services")).toBe(true);
     expect(canAccessRoute("ADMIN", "/annual-inspections")).toBe(true);
   });
 
-  it("blocks SERVICE_CENTER from panel routes", () => {
+  it("blocks service center staff from panel routes", () => {
+    expect(canAccessRoute("TECHNICIAN", "/")).toBe(false);
     expect(canAccessRoute("SERVICE_CENTER", "/")).toBe(false);
     expect(canAccessRoute("SERVICE_CENTER", "/companies")).toBe(false);
     expect(canAccessRoute("SERVICE_CENTER", "/technical-services")).toBe(false);

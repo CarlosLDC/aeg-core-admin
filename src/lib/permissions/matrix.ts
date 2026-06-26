@@ -2,15 +2,15 @@ import type { Action, PermissionMatrix, Resource } from "@/lib/permissions/types
 import type { Role } from "@/types/user";
 
 const ADMIN_ONLY = ["ADMIN"] as const;
-const DISTRIBUTOR_PANEL = ["ADMIN", "DISTRIBUTOR", "TECHNICIAN"] as const;
-const SEAL_WRITE = ["ADMIN", "DISTRIBUTOR", "TECHNICIAN"] as const;
+const DISTRIBUTOR_PANEL = ["ADMIN", "DISTRIBUTOR"] as const;
+const SEAL_WRITE = ["ADMIN", "DISTRIBUTOR"] as const;
 const ANNUAL_INSPECTION_WRITE = [
   "ADMIN",
   "DISTRIBUTOR",
   "TECHNICIAN",
   "SERVICE_CENTER",
 ] as const;
-const TECHNICAL_SERVICE_WRITE = ["ADMIN", "SERVICE_CENTER"] as const;
+const TECHNICAL_SERVICE_WRITE = ["ADMIN", "TECHNICIAN", "SERVICE_CENTER"] as const;
 
 /** Fuente única de verdad — mantener en sync con docs/permissions-matrix.md */
 export const PERMISSION_MATRIX: PermissionMatrix = {

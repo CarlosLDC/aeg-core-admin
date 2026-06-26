@@ -6,14 +6,15 @@ import {
 } from "@/lib/safe-redirect";
 
 describe("postLoginRedirectPath", () => {
-  it("sends SENIAT to the fiscal book entry", () => {
+  it("sends SENIAT and service center technicians to the fiscal book entry", () => {
     expect(postLoginRedirectPath("SENIAT", "/users")).toBe(FISCAL_BOOK_ENTRY_PATH);
     expect(postLoginRedirectPath("SENIAT", null)).toBe(FISCAL_BOOK_ENTRY_PATH);
+    expect(postLoginRedirectPath("TECHNICIAN", null)).toBe(FISCAL_BOOK_ENTRY_PATH);
   });
 
   it("respects safe redirect for panel roles", () => {
     expect(postLoginRedirectPath("ADMIN", "/printers")).toBe("/printers");
-    expect(postLoginRedirectPath("TECHNICIAN", null)).toBe("/");
+    expect(postLoginRedirectPath("DISTRIBUTOR", null)).toBe("/");
   });
 });
 

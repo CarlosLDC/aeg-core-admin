@@ -14,9 +14,8 @@ describe("branchFormSchema", () => {
       contactPersonName: "",
       phone: "",
       email: "",
+      organizationRole: "NONE",
       isClient: false,
-      isDistributor: false,
-      isServiceCenter: false,
       clientDistributorId: "",
     });
     expect(result.success).toBe(true);
@@ -31,9 +30,8 @@ describe("branchFormSchema", () => {
       contactPersonName: "María Pérez",
       phone: "04121234567",
       email: "sucursal@aeg.local",
+      organizationRole: "NONE",
       isClient: true,
-      isDistributor: false,
-      isServiceCenter: false,
       clientDistributorId: "5",
     });
     expect(result.success).toBe(true);
@@ -50,9 +48,8 @@ describe("branchCreateFormSchema", () => {
       contactPersonName: "",
       phone: "",
       email: "",
+      organizationRole: "NONE",
       isClient: false,
-      isDistributor: false,
-      isServiceCenter: false,
       clientDistributorId: "",
     });
     expect(result.success).toBe(false);

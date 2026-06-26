@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { BRANCH_ORGANIZATION_ROLES } from "@/types/organization";
 
 const branchFormBaseSchema = z.object({
   companyId: z
@@ -16,9 +17,8 @@ const branchFormBaseSchema = z.object({
     .refine((v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), {
       message: "Correo electrónico no válido.",
     }),
+  organizationRole: z.enum(BRANCH_ORGANIZATION_ROLES),
   isClient: z.boolean(),
-  isDistributor: z.boolean(),
-  isServiceCenter: z.boolean(),
   clientDistributorId: z.string(),
 });
 

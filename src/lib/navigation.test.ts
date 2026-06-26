@@ -9,7 +9,7 @@ import {
 } from "./navigation";
 
 describe("navSectionsForRole", () => {
-  it.each(["ADMIN", "DISTRIBUTOR", "TECHNICIAN"] as const)(
+  it.each(["ADMIN", "DISTRIBUTOR"] as const)(
     "places Organización before Operaciones for %s",
     (role) => {
       const titles = navSectionsForRole(role).map((s) => s.title);
@@ -29,13 +29,12 @@ describe("navSectionsForRole", () => {
   });
 
   it("hides modelos and precintos sections from distributor panel roles", () => {
-    for (const role of ["DISTRIBUTOR", "TECHNICIAN"] as const) {
-      const items = navItemsForRole(role);
-      expect(items.some((i) => i.title === "Modelos fiscales")).toBe(false);
-      expect(items.some((i) => i.title === "Precintos fiscales")).toBe(false);
-      expect(items.some((i) => i.title === "Servicio técnico")).toBe(false);
-      expect(items.some((i) => i.title === "Inspección anual")).toBe(false);
-    }
+    const items = navItemsForRole("DISTRIBUTOR");
+    expect(items.some((i) => i.title === "Modelos fiscales")).toBe(false);
+    expect(items.some((i) => i.title === "Precintos fiscales")).toBe(false);
+    expect(items.some((i) => i.title === "Servicio técnico")).toBe(false);
+    expect(items.some((i) => i.title === "Inspección anual")).toBe(false);
+
     const adminItems = navItemsForRole("ADMIN");
     expect(adminItems.some((i) => i.title === "Modelos fiscales")).toBe(true);
     expect(adminItems.some((i) => i.title === "Precintos fiscales")).toBe(true);
@@ -43,20 +42,19 @@ describe("navSectionsForRole", () => {
     expect(adminItems.some((i) => i.title === "Inspección anual")).toBe(true);
   });
 
-  it("shows Libro fiscal for panel roles with external app URL", () => {
-    for (const role of ["DISTRIBUTOR", "TECHNICIAN"] as const) {
-      const items = navItemsForRole(role);
-      const fiscalBook = items.find((i) => i.title === "Libro fiscal");
-      expect(fiscalBook?.href).toBe(FISCAL_BOOKS_APP_URL);
-      expect(items.some((i) => i.title === "Clientes")).toBe(false);
-      expect(items.some((i) => i.title === "Empresas")).toBe(true);
-    }
+  it("shows Libro fiscal for DISTRIBUTOR with external app URL", () => {
+    const items = navItemsForRole("DISTRIBUTOR");
+    const fiscalBook = items.find((i) => i.title === "Libro fiscal");
+    expect(fiscalBook?.href).toBe(FISCAL_BOOKS_APP_URL);
+    expect(items.some((i) => i.title === "Clientes")).toBe(false);
+    expect(items.some((i) => i.title === "Empresas")).toBe(true);
     expect(navItemsForRole("SENIAT").some((i) => i.title === "Libro fiscal")).toBe(
       false,
     );
   });
 
-  it("hides panel navigation from SERVICE_CENTER", () => {
+  it("hides panel navigation from service center technicians", () => {
+    expect(navItemsForRole("TECHNICIAN")).toEqual([]);
     expect(navItemsForRole("SERVICE_CENTER")).toEqual([]);
   });
 });

@@ -14,11 +14,11 @@ type UserFormFields = {
 };
 
 export function roleRequiresDistributorProfile(role: Role): boolean {
-  return isDistributorPanelRole(role);
+  return role === "DISTRIBUTOR";
 }
 
 export function roleRequiresServiceCenterBranch(role: Role): boolean {
-  return role === "SERVICE_CENTER";
+  return role === "TECHNICIAN";
 }
 
 /** @deprecated use roleRequiresDistributorProfile */
@@ -80,18 +80,25 @@ function validateDistributorProfile(
     return "La distribuidora seleccionada no es válida.";
   }
   if (!normalizeNationalId(nationalId)) {
-    return "La cédula es obligatoria para usuarios de distribuidora y técnicos.";
+    return "La cédula es obligatoria para usuarios de distribuidora.";
   }
   return null;
 }
 
-function validateServiceCenterProfile(role: Role, branchId: string): string | null {
+function validateServiceCenterProfile(
+  role: Role,
+  branchId: string,
+  nationalId: string,
+): string | null {
   if (!roleRequiresServiceCenterBranch(role)) return null;
   if (!branchId.trim()) {
     return "Selecciona la sucursal del centro de servicio.";
   }
   if (!branchIdToNumber(branchId)) {
     return "La sucursal seleccionada no es válida.";
+  }
+  if (role === "TECHNICIAN" && !normalizeNationalId(nationalId)) {
+    return "La cédula es obligatoria para técnicos.";
   }
   return null;
 }
@@ -118,6 +125,7 @@ export function validateUserCreateForm(values: UserFormFields): string | null {
   const serviceCenterError = validateServiceCenterProfile(
     values.role,
     values.branchId,
+    values.nationalId,
   );
   if (serviceCenterError) return serviceCenterError;
 
@@ -149,6 +157,7 @@ export function validateUserEditForm(values: UserFormFields): string | null {
   const serviceCenterError = validateServiceCenterProfile(
     values.role,
     values.branchId,
+    values.nationalId,
   );
   if (serviceCenterError) return serviceCenterError;
 

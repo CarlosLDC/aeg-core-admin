@@ -1,4 +1,5 @@
 import { branchWizardNeedsContracts } from "@/lib/branch-wizard-contracts";
+import { organizationRoleFromBranch } from "@/lib/organization-roles";
 import type { BranchWithRoles } from "@/types/branch";
 import type {
   DistributorContractResponse,
@@ -37,8 +38,7 @@ export function getBranchMissingContractKinds(
 ): MissingContractKind[] {
   if (
     !branchWizardNeedsContracts({
-      isDistributor: Boolean(branch.distributor),
-      isServiceCenter: Boolean(branch.serviceCenter),
+      organizationRole: organizationRoleFromBranch(branch),
     })
   ) {
     return [];

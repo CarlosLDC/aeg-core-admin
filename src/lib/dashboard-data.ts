@@ -25,7 +25,7 @@ import {
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterResponse, PrinterStatus } from "@/types/printer";
-import { isDistributorPanelRole, type Role } from "@/types/user";
+import { isDistributorPanelRole, isServiceCenterStaffRole, type Role } from "@/types/user";
 
 export { filterPrintersForUser } from "@/lib/scope-filters";
 
@@ -129,7 +129,9 @@ export function countPrintersByStatus(
     counts.set(status, (counts.get(status) ?? 0) + 1);
   }
   const statuses =
-    isDistributorPanelRole(role) ? DISTRIBUTOR_PRINTER_STATUSES : ALL_PRINTER_STATUSES;
+    isDistributorPanelRole(role) || isServiceCenterStaffRole(role)
+      ? DISTRIBUTOR_PRINTER_STATUSES
+      : ALL_PRINTER_STATUSES;
   return statuses.map((status) => ({
     status,
     label: PRINTER_STATUS_LABELS[status],
@@ -400,7 +402,7 @@ export async function loadDashboardSnapshot(options: {
   distributorId: number | null;
   userBranchId: number | null;
 }): Promise<DashboardSnapshot> {
-  const { role, scope, catalogRoles, distributorId } = options;
+  const { role, scope, catalogRoles, distributorId, userBranchId } = options;
   const loadWarnings: string[] = [];
   const canLoadUsers = can(role, "users", "read");
 
@@ -481,6 +483,7 @@ export async function loadDashboardSnapshot(options: {
     usersP?.ok ? usersP.value : [],
     role,
     distributorId,
+    userBranchId,
   );
 
   let printers: PrinterResponse[] = [];

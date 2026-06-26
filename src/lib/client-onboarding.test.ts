@@ -78,9 +78,8 @@ const branchRow = {
 describe("distributorClientRoles", () => {
   it("marks branch as client of the distributor", () => {
     expect(distributorClientRoles(42)).toEqual({
+      organizationRole: "NONE",
       isClient: true,
-      isDistributor: false,
-      isServiceCenter: false,
       clientDistributorId: "42",
     });
   });
@@ -243,9 +242,8 @@ describe("createClientOnboarding", () => {
       },
       companies: [],
       roles: {
+        organizationRole: "DISTRIBUTOR",
         isClient: true,
-        isDistributor: true,
-        isServiceCenter: false,
         clientDistributorId: "5",
       },
     });

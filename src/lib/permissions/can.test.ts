@@ -8,19 +8,23 @@ describe("can", () => {
     expect(can("ADMIN", "contracts", "read")).toBe(true);
   });
 
-  it("allows DISTRIBUTOR and TECHNICIAN panel mutations but not delete", () => {
-    for (const role of ["DISTRIBUTOR", "TECHNICIAN"] as const) {
-      expect(can(role, "companies", "create")).toBe(true);
-      expect(can(role, "branches", "create")).toBe(true);
-      expect(can(role, "companies", "update")).toBe(true);
-      expect(can(role, "branches", "update")).toBe(true);
-      expect(can(role, "companies", "delete")).toBe(false);
-      expect(can(role, "users", "read")).toBe(false);
-      expect(can(role, "contracts", "read")).toBe(false);
-      expect(can(role, "seals", "create")).toBe(true);
-      expect(can(role, "printers", "read")).toBe(true);
-      expect(can(role, "printers", "create")).toBe(false);
-    }
+  it("allows DISTRIBUTOR panel mutations but not delete", () => {
+    expect(can("DISTRIBUTOR", "companies", "create")).toBe(true);
+    expect(can("DISTRIBUTOR", "branches", "create")).toBe(true);
+    expect(can("DISTRIBUTOR", "companies", "update")).toBe(true);
+    expect(can("DISTRIBUTOR", "branches", "update")).toBe(true);
+    expect(can("DISTRIBUTOR", "companies", "delete")).toBe(false);
+    expect(can("DISTRIBUTOR", "users", "read")).toBe(false);
+    expect(can("DISTRIBUTOR", "contracts", "read")).toBe(false);
+    expect(can("DISTRIBUTOR", "seals", "create")).toBe(true);
+    expect(can("DISTRIBUTOR", "printers", "read")).toBe(true);
+    expect(can("DISTRIBUTOR", "printers", "create")).toBe(false);
+  });
+
+  it("denies TECHNICIAN panel access", () => {
+    expect(can("TECHNICIAN", "dashboard", "read")).toBe(false);
+    expect(can("TECHNICIAN", "companies", "read")).toBe(false);
+    expect(can("TECHNICIAN", "seals", "create")).toBe(false);
   });
 
   it("allows field roles to write annual inspections but not read admin panel section", () => {
@@ -30,14 +34,15 @@ describe("can", () => {
     }
   });
 
-  it("allows only SERVICE_CENTER and ADMIN to write technical services", () => {
+  it("allows ADMIN and TECHNICIAN to write technical services", () => {
     expect(can("ADMIN", "technicalServices", "create")).toBe(true);
+    expect(can("TECHNICIAN", "technicalServices", "create")).toBe(true);
     expect(can("SERVICE_CENTER", "technicalServices", "create")).toBe(true);
     expect(can("DISTRIBUTOR", "technicalServices", "create")).toBe(false);
-    expect(can("TECHNICIAN", "technicalServices", "create")).toBe(false);
   });
 
-  it("denies SERVICE_CENTER panel dashboard access", () => {
+  it("denies service center staff panel dashboard access", () => {
+    expect(can("TECHNICIAN", "dashboard", "read")).toBe(false);
     expect(can("SERVICE_CENTER", "dashboard", "read")).toBe(false);
     expect(can("SERVICE_CENTER", "companies", "read")).toBe(false);
   });
@@ -54,14 +59,11 @@ describe("canAccessRoute", () => {
     expect(canAccessRoute("DISTRIBUTOR", "/users")).toBe(false);
   });
 
-  it("allows DISTRIBUTOR and TECHNICIAN dashboard and branches, not companies list", () => {
-    for (const role of ["DISTRIBUTOR", "TECHNICIAN"] as const) {
-      expect(canAccessRoute(role, "/")).toBe(true);
-      expect(canAccessRoute(role, "/branches")).toBe(true);
-      expect(canAccessRoute(role, "/companies")).toBe(false);
-      expect(canAccessRoute(role, "/contracts")).toBe(false);
-      expect(canAccessRoute(role, "/technical-services")).toBe(false);
-      expect(canAccessRoute(role, "/annual-inspections")).toBe(false);
-    }
+  it("allows DISTRIBUTOR dashboard and branches, not TECHNICIAN panel", () => {
+    expect(canAccessRoute("DISTRIBUTOR", "/")).toBe(true);
+    expect(canAccessRoute("DISTRIBUTOR", "/branches")).toBe(true);
+    expect(canAccessRoute("DISTRIBUTOR", "/companies")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/branches")).toBe(false);
   });
 });

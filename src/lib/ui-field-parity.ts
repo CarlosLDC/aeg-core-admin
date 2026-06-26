@@ -48,7 +48,10 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
   },
   {
     resource: "branches",
-    formPath: "src/components/branches/branch-form-dialog.tsx",
+    formPath: [
+      "src/components/branches/branch-form-dialog.tsx",
+      "src/components/branches/branch-operational-role-fields.tsx",
+    ],
     viewPath: "src/components/branches/branch-view.tsx",
     fields: [
       { formLabels: ["Empresa"], viewLabels: ["Empresa"] },
@@ -406,8 +409,8 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
     fields: [
       { formLabels: ["Impresora"], viewLabels: ["Impresora"] },
       {
-        formLabels: ["Técnico"],
-        viewLabels: ["Técnico"],
+        formLabels: ["Técnico", "Inspector"],
+        viewLabels: ["Técnico", "Inspector"],
         formBindings: ["form.userId"],
         viewBindings: ["inspection.userId"],
       },

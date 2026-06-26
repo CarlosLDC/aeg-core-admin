@@ -31,8 +31,7 @@ describe("isDistributorClientOnlyRoles", () => {
     expect(
       isDistributorClientOnlyRoles({
         isClient: true,
-        isDistributor: true,
-        isServiceCenter: false,
+        organizationRole: "DISTRIBUTOR",
         clientDistributorId: "1",
       }),
     ).toBe(false);

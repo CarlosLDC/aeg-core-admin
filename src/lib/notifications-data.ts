@@ -255,6 +255,7 @@ export async function loadNotifications(options: {
             technicianUsersP.value,
             role,
             distributorId,
+            userBranchId,
           ).map((user) => user.id),
         )
       : new Set<number>();

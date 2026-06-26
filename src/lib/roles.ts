@@ -3,7 +3,7 @@ import type { Role } from "@/types/user";
 export const ROLE_LABELS: Record<Role, string> = {
   ADMIN: "Administrador",
   DISTRIBUTOR: "Distribuidor",
-  TECHNICIAN: "Técnico",
+  TECHNICIAN: "Técnico (centro de servicio)",
   SERVICE_CENTER: "Centro de servicio",
   SENIAT: "Auditor SENIAT",
 };
@@ -13,9 +13,9 @@ export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   DISTRIBUTOR:
     "Operaciones de distribuidora: empresas, impresoras e inspecciones anuales",
   TECHNICIAN:
-    "Igual que distribuidor y único rol que puede firmar servicios técnicos",
+    "Personal de centro de servicio: servicios técnicos e inspecciones en el libro fiscal",
   SERVICE_CENTER:
-    "Registra servicios técnicos e inspecciones anuales en el libro fiscal",
+    "Legacy — migrado a Técnico (centro de servicio)",
   SENIAT: "Solo lectura del libro fiscal (sin acceso al panel)",
 };
 
@@ -27,8 +27,4 @@ export const ROLE_STYLES: Record<Role, string> = {
   SENIAT: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
 };
 
-export const OPERATIONAL_ROLES: Role[] = [
-  "DISTRIBUTOR",
-  "TECHNICIAN",
-  "SERVICE_CENTER",
-];
+export const OPERATIONAL_ROLES: Role[] = ["DISTRIBUTOR", "TECHNICIAN"];

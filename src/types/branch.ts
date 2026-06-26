@@ -3,6 +3,7 @@ import type {
   DistributorResponse,
   ServiceCenterResponse,
 } from "@/types/branch-role";
+import type { BranchOrganizationRole } from "@/types/organization";
 
 export type BranchResponse = {
   id: number;
@@ -13,7 +14,10 @@ export type BranchResponse = {
   phone: string;
   email: string;
   contactPersonName?: string;
+  isClient?: boolean;
+  isDistributor?: boolean;
   isServiceCenter?: boolean;
+  organizationRole?: BranchOrganizationRole;
   createdAt: string;
 };
 
@@ -25,7 +29,10 @@ export type BranchRequest = {
   phone?: string;
   email?: string;
   contactPersonName?: string;
+  isClient?: boolean;
+  isDistributor?: boolean;
   isServiceCenter?: boolean;
+  organizationRole?: BranchOrganizationRole;
 };
 
 export type BranchWithRoles = BranchResponse & {

@@ -22,7 +22,7 @@ import { fetchSeals } from "@/lib/seals-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
 import { fetchUsers } from "@/lib/users-api";
 import type { PrinterResponse } from "@/types/printer";
-import { isDistributorPanelRole } from "@/types/user";
+import { isDistributorPanelRole, isServiceCenterStaff, isServiceCenterStaffRole } from "@/types/user";
 
 export function useFieldOperationsCatalog() {
   const { user } = useAuth();
@@ -30,7 +30,7 @@ export function useFieldOperationsCatalog() {
   const canLoadPrinters =
     user?.role === "ADMIN" ||
     isDistributorPanelRole(user?.role) ||
-    user?.role === "SERVICE_CENTER";
+    isServiceCenterStaffRole(user?.role);
 
   const [loading, setLoading] = useState(true);
   const [scopedPrinters, setScopedPrinters] = useState<PrinterResponse[]>([]);
@@ -64,11 +64,13 @@ export function useFieldOperationsCatalog() {
     setLoading(true);
     try {
       let distributorId = user.distributorId;
+      let branchId = user.branchId;
       let authUserId: number | null = user.id ?? null;
-      if (isDistributorPanelRole(user.role) || user.role === "SERVICE_CENTER") {
+      if (isDistributorPanelRole(user.role) || isServiceCenterStaffRole(user.role)) {
         try {
           const me = await fetchAuthMe();
           distributorId = me.distributorId ?? distributorId;
+          branchId = me.branchId ?? branchId;
           authUserId = me.id;
         } catch {
           /* sin /api/auth/me */
@@ -97,20 +99,19 @@ export function useFieldOperationsCatalog() {
       ]);
 
       const technicianUsersRaw = usersRaw.filter(
-        (row) => row.role === "TECHNICIAN" && row.enabled,
+        (row) => isServiceCenterStaff(row) && row.enabled,
       );
       const inspectorUsersRaw = usersRaw.filter(
         (row) =>
           row.enabled &&
-          (row.role === "DISTRIBUTOR" ||
-            row.role === "TECHNICIAN" ||
-            row.role === "SERVICE_CENTER"),
+          (row.role === "DISTRIBUTOR" || isServiceCenterStaff(row)),
       );
 
       const scoped = applyScopedFieldCatalog({
         role: user.role,
         scope,
         distributorId,
+        branchId,
         currentUserId: authUserId,
         companies,
         branches,

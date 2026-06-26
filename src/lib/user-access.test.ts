@@ -19,8 +19,10 @@ describe("userAccessKind", () => {
 });
 
 describe("userPortalAccessLabel", () => {
-  it("distinguishes SENIAT and SERVICE_CENTER from panel roles", () => {
-    expect(userPortalAccessLabel("TECHNICIAN")).toBe("Panel + libro fiscal");
+  it("distinguishes SENIAT and service center technicians from panel roles", () => {
+    expect(userPortalAccessLabel("TECHNICIAN")).toBe(
+      "Solo libro fiscal (operaciones de campo)",
+    );
     expect(userPortalAccessLabel("DISTRIBUTOR")).toBe("Panel + libro fiscal");
     expect(userPortalAccessLabel("SENIAT")).toBe("Solo libro fiscal");
     expect(userPortalAccessLabel("SERVICE_CENTER")).toBe(
@@ -33,6 +35,7 @@ describe("userCreateSuccessMessage", () => {
   it("mentions the correct portal on create", () => {
     expect(userCreateSuccessMessage("Ana", "SENIAT")).toMatch(/libro fiscal/i);
     expect(userCreateSuccessMessage("Ana", "ADMIN")).toMatch(/panel/i);
+    expect(userCreateSuccessMessage("Ana", "TECHNICIAN")).toMatch(/libro fiscal/i);
     expect(userCreateSuccessMessage("Ana", "SERVICE_CENTER")).toMatch(/libro fiscal/i);
   });
 });
@@ -41,11 +44,14 @@ describe("access helpers", () => {
   it("flags panel access and write scope", () => {
     expect(canAccessPanel("SENIAT")).toBe(false);
     expect(canAccessPanel("SERVICE_CENTER")).toBe(false);
-    expect(canAccessPanel("TECHNICIAN")).toBe(true);
+    expect(canAccessPanel("TECHNICIAN")).toBe(false);
     expect(canAccessPanel("DISTRIBUTOR")).toBe(true);
     expect(roleHasGlobalScope("TECHNICIAN")).toBe(false);
     expect(userFiscalBookWriteLabel("SENIAT")).toBe("Solo lectura");
     expect(userFiscalBookWriteLabel("ADMIN")).toBe("Escritura global");
+    expect(userFiscalBookWriteLabel("TECHNICIAN")).toBe(
+      "Servicios técnicos e inspecciones",
+    );
     expect(userFiscalBookWriteLabel("SERVICE_CENTER")).toBe(
       "Servicios técnicos e inspecciones",
     );

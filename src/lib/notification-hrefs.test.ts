@@ -27,27 +27,23 @@ const client: ClientResponse = {
 };
 
 describe("notification hrefs", () => {
-  it("allows technician detail routes", () => {
-    expect(resolveNotificationHref("TECHNICIAN", "/branches/99")).toBe(
-      "/branches/99",
-    );
-    expect(resolveNotificationHref("TECHNICIAN", "/printers/12")).toBe(
-      "/printers/12",
-    );
+  it("blocks service center technicians from panel notification routes", () => {
+    expect(resolveNotificationHref("TECHNICIAN", "/branches/99")).toBeNull();
+    expect(resolveNotificationHref("TECHNICIAN", "/printers/12")).toBeNull();
   });
 
-  it("links technician branch notifications to branch detail", () => {
+  it("does not link technician branch notifications to panel routes", () => {
     expect(
       notificationHrefForBranch(branch, "TECHNICIAN", [client]),
-    ).toBe("/branches/99");
+    ).toBeNull();
   });
 
-  it("links company notifications to an accessible branch detail", () => {
+  it("links company notifications to an accessible branch detail for panel roles", () => {
     expect(
       notificationHrefForCompany(10, "ADMIN", [branch], []),
     ).toBe("/branches/99");
     expect(
       notificationHrefForCompany(10, "TECHNICIAN", [branch], [client]),
-    ).toBe("/branches/99");
+    ).toBeNull();
   });
 });

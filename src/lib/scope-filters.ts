@@ -8,7 +8,13 @@ import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterResponse } from "@/types/printer";
 import type { SealResponse } from "@/types/seal";
-import { isDistributorPanelRole, type Role, type UserResponse } from "@/types/user";
+import {
+  isDistributorPanelRole,
+  isServiceCenterStaff,
+  isServiceCenterStaffRole,
+  type Role,
+  type UserResponse,
+} from "@/types/user";
 
 export function branchIdsFromScope(
   scope: CompanyScope | null,
@@ -38,7 +44,7 @@ export function filterPrintersForUser(
   if (isDistributorPanelRole(role) && distributorId != null) {
     return printers.filter((p) => p.distributorId === distributorId);
   }
-  if (role === "SERVICE_CENTER") {
+  if (isServiceCenterStaffRole(role)) {
     return printers.filter(
       (p) => p.status === "asignada" && p.clientId != null,
     );
@@ -53,7 +59,11 @@ export function filterPrintersByBranchScope(
   clients: ClientResponse[],
   distributors: DistributorResponse[],
 ): PrinterResponse[] {
-  if (role === "ADMIN" || isDistributorPanelRole(role) || role === "SERVICE_CENTER") {
+  if (
+    role === "ADMIN" ||
+    isDistributorPanelRole(role) ||
+    isServiceCenterStaffRole(role)
+  ) {
     return printers;
   }
   if (branchIds.size === 0) return [];
@@ -78,13 +88,16 @@ export function filterTechnicianUsersInScope(
   users: UserResponse[],
   role: Role,
   distributorId: number | null,
+  branchId: number | null = null,
 ): UserResponse[] {
-  const technicians = users.filter((user) => user.role === "TECHNICIAN");
+  const technicians = users.filter((user) => isServiceCenterStaff(user));
   if (role === "ADMIN") return technicians;
-  if (isDistributorPanelRole(role) && distributorId != null) {
-    return technicians.filter((user) => user.distributorId === distributorId);
+  if (isServiceCenterStaffRole(role) && branchId != null) {
+    return technicians.filter((user) => user.branchId === branchId);
   }
-  if (role === "SERVICE_CENTER") return technicians;
+  if (isDistributorPanelRole(role)) {
+    return [];
+  }
   return technicians;
 }
 
@@ -93,13 +106,12 @@ export function filterInspectorUsersInScope(
   role: Role,
   distributorId: number | null,
   currentUserId: number | null,
+  branchId: number | null = null,
 ): UserResponse[] {
   const inspectors = users.filter(
     (user) =>
       user.enabled &&
-      (user.role === "DISTRIBUTOR" ||
-        user.role === "TECHNICIAN" ||
-        user.role === "SERVICE_CENTER"),
+      (user.role === "DISTRIBUTOR" || isServiceCenterStaff(user)),
   );
   if (role === "ADMIN") return inspectors;
   if (currentUserId != null) {
@@ -109,12 +121,13 @@ export function filterInspectorUsersInScope(
   if (isDistributorPanelRole(role) && distributorId != null) {
     return inspectors.filter(
       (user) =>
-        user.role === "SERVICE_CENTER" ||
-        user.distributorId === distributorId,
+        user.role === "DISTRIBUTOR" && user.distributorId === distributorId,
     );
   }
-  if (role === "SERVICE_CENTER" && currentUserId != null) {
-    return inspectors.filter((user) => user.id === currentUserId);
+  if (isServiceCenterStaffRole(role) && branchId != null) {
+    return inspectors.filter(
+      (user) => isServiceCenterStaff(user) && user.branchId === branchId,
+    );
   }
   return inspectors;
 }
@@ -125,7 +138,7 @@ export function filterSealsByPrinterScope(
   role: Role,
 ): SealResponse[] {
   if (role === "ADMIN") return seals;
-  if (role === "SERVICE_CENTER") return [];
+  if (isServiceCenterStaffRole(role)) return [];
   if (printerIds.size === 0) {
     return seals.filter((s) => s.printerId == null);
   }
@@ -162,7 +175,7 @@ export function filterAnnualInspectionsInScope<
   T extends { printerId: number; userId: number },
 >(rows: T[], printerIds: Set<number>, inspectorUserIds: Set<number>, role: Role): T[] {
   if (role === "ADMIN") return rows;
-  if (isDistributorPanelRole(role) || role === "SERVICE_CENTER") {
+  if (isDistributorPanelRole(role) || isServiceCenterStaffRole(role)) {
     return filterByPrinterIds(rows, printerIds, role);
   }
   return rows.filter(
@@ -175,6 +188,7 @@ export type ScopedFieldCatalogInput = {
   role: Role;
   scope: CompanyScope | null;
   distributorId: number | null;
+  branchId: number | null;
   currentUserId: number | null;
   companies: CompanyResponse[];
   branches: BranchResponse[];
@@ -192,6 +206,7 @@ export function applyScopedFieldCatalog(input: ScopedFieldCatalogInput) {
     role,
     scope,
     distributorId,
+    branchId,
     currentUserId,
     companies,
     branches,
@@ -220,12 +235,14 @@ export function applyScopedFieldCatalog(input: ScopedFieldCatalogInput) {
     technicianUsers,
     role,
     distributorId,
+    branchId,
   );
   const scopedInspectorUsers = filterInspectorUsersInScope(
     inspectorUsers,
     role,
     distributorId,
     currentUserId,
+    branchId,
   );
 
   let scopedPrinters = filterPrintersForUser(printers, role, distributorId);

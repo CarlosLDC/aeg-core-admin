@@ -13,12 +13,12 @@ import { createDistributorContract } from "@/lib/distributor-contracts-api";
 import { createServiceCenterContract } from "@/lib/service-center-contracts-api";
 
 export function branchWizardNeedsContracts(
-  roles: Pick<
-    ClientOnboardingRoleOptions,
-    "isDistributor" | "isServiceCenter"
-  >,
+  roles: Pick<ClientOnboardingRoleOptions, "organizationRole">,
 ): boolean {
-  return roles.isDistributor || roles.isServiceCenter;
+  return (
+    roles.organizationRole === "DISTRIBUTOR" ||
+    roles.organizationRole === "SERVICE_CENTER"
+  );
 }
 
 function draftToFormValues(
@@ -55,12 +55,9 @@ function validateDraftWithPartyId(
 
 export function validateBranchWizardContracts(
   values: BranchWizardValues,
-  roles: Pick<
-    ClientOnboardingRoleOptions,
-    "isDistributor" | "isServiceCenter"
-  >,
+  roles: Pick<ClientOnboardingRoleOptions, "organizationRole">,
 ): string | null {
-  if (roles.isDistributor) {
+  if (roles.organizationRole === "DISTRIBUTOR") {
     const formErr = validateWizardDraft(
       values.distributorContract,
       "distributor",
@@ -68,7 +65,7 @@ export function validateBranchWizardContracts(
     if (formErr) return `Contrato de distribuidora: ${formErr}`;
   }
 
-  if (roles.isServiceCenter) {
+  if (roles.organizationRole === "SERVICE_CENTER") {
     const formErr = validateWizardDraft(
       values.serviceCenterContract,
       "serviceCenter",
@@ -81,10 +78,7 @@ export function validateBranchWizardContracts(
 
 export type CreateBranchWizardContractsInput = {
   values: BranchWizardValues;
-  roles: Pick<
-    ClientOnboardingRoleOptions,
-    "isDistributor" | "isServiceCenter"
-  >;
+  roles: Pick<ClientOnboardingRoleOptions, "organizationRole">;
   distributorId?: number | null;
   serviceCenterId?: number | null;
 };
@@ -100,7 +94,7 @@ export async function createBranchWizardContracts(
   const { values, roles, distributorId, serviceCenterId } = input;
   const result: CreateBranchWizardContractsResult = {};
 
-  if (roles.isDistributor) {
+  if (roles.organizationRole === "DISTRIBUTOR") {
     const validationError = validateDraftWithPartyId(
       values.distributorContract,
       distributorId,
@@ -119,7 +113,7 @@ export async function createBranchWizardContracts(
     result.distributorContractId = created.id;
   }
 
-  if (roles.isServiceCenter) {
+  if (roles.organizationRole === "SERVICE_CENTER") {
     const validationError = validateDraftWithPartyId(
       values.serviceCenterContract,
       serviceCenterId,

@@ -32,6 +32,7 @@ import { formatDate } from "@/lib/datetime-form";
 import { companyPath } from "@/lib/resource-routes";
 import { cn } from "@/lib/utils";
 import type { CompanyResponse } from "@/types/company";
+import { isFactoryCompany } from "@/lib/organization-roles";
 import { isDistributorPanelRole } from "@/types/user";
 
 type CompanyDetailPanel = "company" | "branches";
@@ -208,6 +209,18 @@ export function CompanyView() {
                 <DetailField
                   label="Tipo de contribuyente"
                   value={<ContributorBadge type={company.contributorType} />}
+                />
+                <DetailField
+                  label="Tipo de organización"
+                  value={
+                    isFactoryCompany(company.organizationType) ? (
+                      <span className="inline-flex rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:text-emerald-200">
+                        Fábrica (AEG)
+                      </span>
+                    ) : (
+                      "Estándar"
+                    )
+                  }
                 />
                 <DetailField
                   label="Registrada"

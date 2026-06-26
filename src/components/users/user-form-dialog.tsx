@@ -9,6 +9,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { DistributorIdSelect } from "@/components/users/distributor-id-select";
 import { PasswordInput } from "@/components/ui/password-input";
 import { ROLE_DESCRIPTIONS } from "@/lib/roles";
+import { organizationRoleFromBranch } from "@/lib/organization-roles";
 import {
   USER_ROLE_TOGGLE_TONE,
   formFieldInputClass,
@@ -17,7 +18,6 @@ import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import {
-  isDistributorPanelRole,
   type Role,
   type UserResponse,
 } from "@/types/user";
@@ -33,7 +33,7 @@ export type UserFormValues = {
   enabled: boolean;
 };
 
-type OperationalSubRole = "DISTRIBUTOR" | "TECHNICIAN" | "SERVICE_CENTER";
+type OperationalSubRole = "DISTRIBUTOR" | "TECHNICIAN";
 
 type UserFormDialogProps = {
   mode: "create" | "edit";
@@ -61,7 +61,7 @@ const emptyForm: UserFormValues = {
 };
 
 function operationalSubRole(role: Role): OperationalSubRole {
-  if (role === "TECHNICIAN" || role === "SERVICE_CENTER") return role;
+  if (role === "TECHNICIAN" || role === "SERVICE_CENTER") return "TECHNICIAN";
   return "DISTRIBUTOR";
 }
 
@@ -84,13 +84,15 @@ export function UserFormDialog({
   const needsOperationalAssignment = !isAdminUser && !isSeniatUser;
   const accessKind = isAdminUser ? "admin" : isSeniatUser ? "seniat" : "operativo";
   const operationalRole = operationalSubRole(form.role);
-  const needsDistributorProfile = isDistributorPanelRole(form.role);
-  const needsServiceCenterBranch = form.role === "SERVICE_CENTER";
+  const needsDistributorProfile = form.role === "DISTRIBUTOR";
+  const needsServiceCenterBranch = form.role === "TECHNICIAN";
 
   const serviceCenterBranchOptions = useMemo(
     () =>
       branches
-        .filter((branch) => branch.isServiceCenter)
+        .filter(
+          (branch) => organizationRoleFromBranch(branch) === "SERVICE_CENTER",
+        )
         .map((branch) => {
           const company = companies.find((c) => c.id === branch.companyId);
           const label = company
@@ -132,8 +134,8 @@ export function UserFormDialog({
     setForm((f) => ({
       ...f,
       role: subRole,
-      distributorId: subRole === "SERVICE_CENTER" ? "" : f.distributorId,
-      branchId: subRole === "SERVICE_CENTER" ? f.branchId : "",
+      distributorId: subRole === "DISTRIBUTOR" ? f.distributorId : "",
+      branchId: subRole === "TECHNICIAN" ? f.branchId : "",
     }));
   }
 
@@ -144,7 +146,7 @@ export function UserFormDialog({
         name: user.name ?? "",
         email: user.email ?? user.username ?? "",
         password: "",
-        role: user.role,
+        role: user.role === "SERVICE_CENTER" ? "TECHNICIAN" : user.role,
         distributorId:
           user.distributorId != null ? String(user.distributorId) : "",
         branchId: user.branchId != null ? String(user.branchId) : "",
@@ -318,22 +320,22 @@ export function UserFormDialog({
                     label: "Técnico",
                     tone: USER_ROLE_TOGGLE_TONE.TECHNICIAN,
                   },
-                  {
-                    value: "SERVICE_CENTER",
-                    label: "Centro de servicio",
-                    tone: USER_ROLE_TOGGLE_TONE.TECHNICIAN,
-                  },
                 ]}
               />
 
-              {needsDistributorProfile && (
+              {form.role === "DISTRIBUTOR" && (
                 <div className="grid gap-4 md:grid-cols-2 md:items-start">
                   <div className="min-w-0">
                     <FieldLabel required>Distribuidora</FieldLabel>
                     <DistributorIdSelect
                       value={form.distributorId}
                       onChange={(distributorId) =>
-                        setForm((f) => ({ ...f, distributorId }))
+                        setForm((f) => ({
+                          ...f,
+                          role: "DISTRIBUTOR",
+                          distributorId,
+                          branchId: "",
+                        }))
                       }
                       distributors={distributors}
                       branches={branches}
@@ -360,20 +362,41 @@ export function UserFormDialog({
                 </div>
               )}
 
-              {needsServiceCenterBranch && (
-                <div>
-                  <FieldLabel required>Sucursal del centro de servicio</FieldLabel>
-                  <SearchableSelect
-                    value={form.branchId}
-                    onChange={(branchId) =>
-                      setForm((f) => ({ ...f, branchId }))
-                    }
-                    options={serviceCenterBranchOptions}
-                    disabled={catalogLoading}
-                    loading={catalogLoading}
-                    required
-                    searchPlaceholder="Buscar sucursal..."
-                  />
+              {form.role === "TECHNICIAN" && (
+                <div className="grid gap-4 md:grid-cols-2 md:items-start">
+                  <div className="min-w-0">
+                    <FieldLabel required>Sucursal del centro de servicio</FieldLabel>
+                    <SearchableSelect
+                      value={form.branchId}
+                      onChange={(branchId) =>
+                        setForm((f) => ({
+                          ...f,
+                          role: "TECHNICIAN",
+                          branchId,
+                          distributorId: "",
+                        }))
+                      }
+                      options={serviceCenterBranchOptions}
+                      disabled={catalogLoading}
+                      loading={catalogLoading}
+                      required
+                      searchPlaceholder="Buscar sucursal..."
+                    />
+                  </div>
+
+                  <label className="block min-w-0">
+                    <FieldLabel required>Cédula</FieldLabel>
+                    <input
+                      type="text"
+                      required
+                      value={form.nationalId}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, nationalId: e.target.value }))
+                      }
+                      placeholder="Ej. V-12345678"
+                      className={formFieldInputClass}
+                    />
+                  </label>
                 </div>
               )}
 

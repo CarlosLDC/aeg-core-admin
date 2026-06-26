@@ -5,17 +5,16 @@ import { X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { CompanySelect } from "@/components/companies/company-select";
-import { DistributorSelect } from "@/components/branches/distributor-select";
+import { BranchOperationalRoleFields } from "@/components/branches/branch-operational-role-fields";
 import { zodFieldErrors } from "@/lib/form-zod";
+import { organizationRoleFromBranch } from "@/lib/organization-roles";
 import { branchCreateFormSchema, branchFormSchema } from "@/lib/schemas/branch-form-schema";
-import {
-  BRANCH_ROLE_TOGGLE_TONE,
-  toggleButtonClass,
-} from "@/lib/toggle-button-styles";
 import type { BranchRoleFormState } from "@/lib/branch-roles";
 import type { BranchResponse, BranchWithRoles } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
+import type { BranchOrganizationRole } from "@/types/organization";
+
 export type BranchFormValues = {
   companyId: string;
   city: string;
@@ -24,9 +23,8 @@ export type BranchFormValues = {
   contactPersonName: string;
   phone: string;
   email: string;
+  organizationRole: BranchOrganizationRole;
   isClient: boolean;
-  isDistributor: boolean;
-  isServiceCenter: boolean;
   clientDistributorId: string;
 };
 
@@ -53,17 +51,15 @@ const emptyForm: BranchFormValues = {
   contactPersonName: "",
   phone: "",
   email: "",
+  organizationRole: "NONE",
   isClient: false,
-  isDistributor: false,
-  isServiceCenter: false,
   clientDistributorId: "",
 };
 
 function rolesFromBranch(branch: BranchWithRoles): BranchRoleFormState {
   return {
-    isDistributor: Boolean(branch.distributor),
+    organizationRole: organizationRoleFromBranch(branch),
     isClient: Boolean(branch.client),
-    isServiceCenter: Boolean(branch.serviceCenter),
     clientDistributorId: branch.client?.distributorId
       ? String(branch.client.distributorId)
       : "",
@@ -106,9 +102,8 @@ export function BranchFormDialog({
         contactPersonName: branch.contactPersonName ?? "",
         phone: branch.phone ?? "",
         email: branch.email ?? "",
+        organizationRole: roles.organizationRole,
         isClient: roles.isClient,
-        isDistributor: roles.isDistributor,
-        isServiceCenter: roles.isServiceCenter,
         clientDistributorId: roles.clientDistributorId,
       });
     } else {
@@ -151,6 +146,9 @@ export function BranchFormDialog({
 
   const branchIdForExclude =
     mode === "edit" && branch ? branch.id : undefined;
+  const selectedCompany = companies.find(
+    (company) => company.id === Number(forcedCompanyId ?? form.companyId),
+  );
 
   const inputClass =
     "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
@@ -321,60 +319,20 @@ export function BranchFormDialog({
 
           <fieldset className="space-y-3 rounded-lg border border-border p-4">
             <legend className="px-1 text-sm font-medium">Roles de empresa</legend>
-            <p className="text-xs text-muted">
-              Cada rol crea un registro en su tabla (<code className="text-[11px]">branchId</code>
-              ). El cliente puede vincularse a un distribuidor existente.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {(
-                [
-                  ["isDistributor", "Distribuidor"],
-                  ["isServiceCenter", "Centro de servicio"],
-                  ["isClient", "Cliente"],
-                ] as const
-              ).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  disabled={saving}
-                  aria-pressed={form[key]}
-                  onClick={() =>
-                    setForm((f) => ({
-                      ...f,
-                      [key]: !f[key],
-                      ...(key === "isClient" && f[key]
-                        ? { clientDistributorId: "" }
-                        : {}),
-                    }))
-                  }
-                  className={toggleButtonClass(form[key], BRANCH_ROLE_TOGGLE_TONE[key], {
-                    disabled: saving,
-                  })}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {form.isClient && (
-              <label className="block pt-1">
-                <FieldLabel>Distribuidor del cliente</FieldLabel>
-                <span className="mb-1.5 block text-xs text-muted">
-                  Opcional. Referencia al registro de distribuidor, no a la
-                  empresa.
-                </span>
-                <DistributorSelect
-                  value={form.clientDistributorId}
-                  onChange={(clientDistributorId) =>
-                    setForm((f) => ({ ...f, clientDistributorId }))
-                  }
-                  distributors={distributors}
-                  branches={branches}
-                  companies={companies}
-                  excludeBranchId={branchIdForExclude}
-                />
-              </label>
-            )}
+            <BranchOperationalRoleFields
+              values={{
+                organizationRole: form.organizationRole,
+                isClient: form.isClient,
+                clientDistributorId: form.clientDistributorId,
+              }}
+              onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+              disabled={saving}
+              branches={branches}
+              distributors={distributors}
+              companies={companies}
+              companyOrganizationType={selectedCompany?.organizationType}
+              excludeBranchId={branchIdForExclude}
+            />
           </fieldset>
 
           <FormDialogFooter

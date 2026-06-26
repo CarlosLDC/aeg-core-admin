@@ -10,7 +10,9 @@ export function postLoginRedirectPath(
   role: Role,
   raw: string | null | undefined,
 ): string {
-  if (role === "SENIAT") return FISCAL_BOOK_ENTRY_PATH;
+  if (role === "SENIAT" || role === "TECHNICIAN" || role === "SERVICE_CENTER") {
+    return FISCAL_BOOK_ENTRY_PATH;
+  }
   return getSafeRedirectPath(raw);
 }
 

@@ -14,7 +14,7 @@ describe("filterAnnualInspectionsInScope", () => {
     ).toEqual(rows);
   });
 
-  it("filters distributor panel roles by printer only when user set is empty", () => {
+  it("filters distributor and service center roles by printer only when user set is empty", () => {
     const printerIds = new Set([10]);
     for (const role of ["DISTRIBUTOR", "TECHNICIAN"] as const) {
       expect(
@@ -31,14 +31,13 @@ describe("filterAnnualInspectionsInScope", () => {
     }
   });
 
-  it("filters distributor panel roles by scoped printers", () => {
+  it("filters service center technicians by scoped printers", () => {
     const printerIds = new Set([10]);
-    const userIds = new Set([100]);
     expect(
       filterAnnualInspectionsInScope(
         rows,
         printerIds,
-        userIds,
+        new Set(),
         "TECHNICIAN",
       ),
     ).toEqual([

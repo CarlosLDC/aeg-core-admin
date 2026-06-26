@@ -18,8 +18,8 @@ const client: ClientResponse = {
 };
 
 describe("hrefForClient", () => {
-  it("links TECHNICIAN to branch detail", () => {
-    expect(hrefForClient(10, [client], "TECHNICIAN")).toBe("/branches/99");
+  it("does not link service center technicians to panel client routes", () => {
+    expect(hrefForClient(10, [client], "TECHNICIAN")).toBeUndefined();
   });
 
   it("links ADMIN to branch detail when client route is denied", () => {

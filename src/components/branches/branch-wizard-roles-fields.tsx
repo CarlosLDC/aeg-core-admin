@@ -3,10 +3,7 @@
 import { DistributorSelect } from "@/components/branches/distributor-select";
 import { FieldLabel } from "@/components/ui/field-label";
 import type { BranchWizardValues } from "@/components/branches/branch-wizard-types";
-import {
-  BRANCH_ROLE_TOGGLE_TONE,
-  toggleButtonClass,
-} from "@/lib/toggle-button-styles";
+import { BranchOperationalRoleFields } from "@/components/branches/branch-operational-role-fields";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -18,6 +15,7 @@ type BranchWizardRolesFieldsProps = {
   branches: BranchResponse[];
   distributors: DistributorResponse[];
   companies: CompanyResponse[];
+  companyOrganizationType?: CompanyResponse["organizationType"];
 };
 
 export function BranchWizardRolesFields({
@@ -27,58 +25,24 @@ export function BranchWizardRolesFields({
   branches,
   distributors,
   companies,
+  companyOrganizationType,
 }: BranchWizardRolesFieldsProps) {
   return (
     <fieldset className="space-y-4">
       <legend className="sr-only">Roles de empresa</legend>
-      <p className="text-xs text-muted">
-        Cada rol crea un registro vinculado a la empresa.
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {(
-          [
-            ["isDistributor", "Distribuidor"],
-            ["isServiceCenter", "Centro de servicio"],
-            ["isClient", "Cliente"],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={form[key]}
-            disabled={saving}
-            onClick={() =>
-              setForm((f) => ({
-                ...f,
-                [key]: !f[key],
-                ...(key === "isClient" && f[key]
-                  ? { clientDistributorId: "" }
-                  : {}),
-              }))
-            }
-            className={toggleButtonClass(form[key], BRANCH_ROLE_TOGGLE_TONE[key], {
-              disabled: saving,
-            })}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {form.isClient && (
-        <label className="block">
-          <FieldLabel>Distribuidor del cliente</FieldLabel>
-          <DistributorSelect
-            value={form.clientDistributorId}
-            onChange={(clientDistributorId) =>
-              setForm((f) => ({ ...f, clientDistributorId }))
-            }
-            distributors={distributors}
-            branches={branches}
-            companies={companies}
-          />
-        </label>
-      )}
+      <BranchOperationalRoleFields
+        values={{
+          organizationRole: form.organizationRole,
+          isClient: form.isClient,
+          clientDistributorId: form.clientDistributorId,
+        }}
+        onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+        disabled={saving}
+        branches={branches}
+        distributors={distributors}
+        companies={companies}
+        companyOrganizationType={companyOrganizationType}
+      />
     </fieldset>
   );
 }

@@ -82,72 +82,13 @@ import type { ClientModificationProposedData } from "@/types/client-modification
 import type { CompanyResponse } from "@/types/company";
 import { isDistributorPanelRole } from "@/types/user";
 
-type BranchFormValues = {
-  companyId: string;
-  city: string;
-  state: string;
-  address: string;
-  contactPersonName: string;
-  phone: string;
-  email: string;
-  isClient: boolean;
-  isDistributor: boolean;
-  isServiceCenter: boolean;
-  clientDistributorId: string;
-};
-
-function toRoleFormState(values: BranchFormValues) {
-  return {
-    isClient: values.isClient,
-    isDistributor: values.isDistributor,
-    isServiceCenter: values.isServiceCenter,
-    clientDistributorId: values.clientDistributorId,
-  };
-}
-
-function toBranchFormValues(values: BranchWizardValues): BranchFormValues {
-  return {
-    companyId: values.linkedCompanyId != null ? String(values.linkedCompanyId) : "",
-    city: values.city,
-    state: values.state,
-    address: values.address,
-    contactPersonName: values.contactPersonName,
-    phone: values.phone,
-    email: values.email,
-    isClient: values.isClient,
-    isDistributor: values.isDistributor,
-    isServiceCenter: values.isServiceCenter,
-    clientDistributorId: values.clientDistributorId,
-  };
-}
-
-function branchToWizardValues(
-  branch: BranchWithRoles,
-  companies: CompanyResponse[],
-): BranchWizardValues {
-  const company = companies.find((row) => row.id === branch.companyId);
-  return {
-    rif: company?.rif ?? "",
-    businessName: company?.businessName ?? "",
-    contributorType: company?.contributorType ?? "ordinario",
-    linkedCompanyId: branch.companyId,
-    city: branch.city,
-    state: branch.state,
-    address: branch.address ?? "",
-    contactPersonName: branch.contactPersonName ?? "",
-    phone: branch.phone ?? "",
-    email: branch.email ?? "",
-    isClient: Boolean(branch.client),
-    isDistributor: Boolean(branch.distributor),
-    isServiceCenter: Boolean(branch.serviceCenter),
-    clientDistributorId: branch.client?.distributorId
-      ? String(branch.client.distributorId)
-      : "",
-    distributorContract: emptyBranchWizardContractDraft(),
-    serviceCenterContract: emptyBranchWizardContractDraft(),
-  };
-}
-
+import {
+  branchToWizardValues,
+  toBranchFormValues,
+  toBranchRoleFormState,
+} from "@/lib/branch-form-mappers";
+import type { BranchFormValues } from "@/components/branches/branch-form-dialog";
+import type { BranchRoleFormState } from "@/lib/branch-roles";
 export function BranchView() {
   const id = useResourceId();
   const router = useRouter();
@@ -301,7 +242,7 @@ export function BranchView() {
     setFormError(null);
     const formValues = toBranchFormValues(values);
     const body = toBranchRequest(formValues);
-    const roles = toRoleFormState(formValues);
+    const roles = toBranchRoleFormState(formValues);
     const label = `${values.city}, ${values.state}`;
 
     try {
