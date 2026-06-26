@@ -21,6 +21,7 @@ const inputClass =
 function resultBadgeClass(result: EnajenacionActivityResult): string {
   switch (result) {
     case "PROCESSED":
+      return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
     case "PUBLISHED":
     case "COMPLETED":
       return "bg-violet-500/10 text-violet-800 dark:text-violet-200";
