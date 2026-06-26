@@ -94,7 +94,7 @@ export function BranchWizardContractFields({
 }: BranchWizardContractFieldsProps) {
   const steps = useMemo((): ContractStepMeta[] => {
     const list: ContractStepMeta[] = [];
-    if (form.isDistributor) {
+    if (form.organizationRole === "DISTRIBUTOR") {
       list.push({
         id: "distributor",
         title: "Contrato de distribuidora",
@@ -103,7 +103,7 @@ export function BranchWizardContractFields({
         kind: "distributor",
       });
     }
-    if (form.isServiceCenter) {
+    if (form.organizationRole === "SERVICE_CENTER") {
       list.push({
         id: "serviceCenter",
         title: "Contrato de centro de servicio",
@@ -113,13 +113,13 @@ export function BranchWizardContractFields({
       });
     }
     return list;
-  }, [form.isDistributor, form.isServiceCenter]);
+  }, [form.organizationRole]);
 
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
     setIndex(0);
-  }, [steps.length, form.isDistributor, form.isServiceCenter]);
+  }, [steps.length, form.organizationRole]);
 
   const stepCount = steps.length;
   const safeIndex = stepCount === 0 ? 0 : Math.min(index, stepCount - 1);
