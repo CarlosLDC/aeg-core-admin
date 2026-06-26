@@ -68,19 +68,14 @@ export function DashboardWelcome({
           </p>
 
           {role === "TECHNICIAN" ? (
-            <div className="mt-4 inline-flex max-w-full items-start gap-2.5 rounded-lg border border-border bg-background/70 px-3 py-2.5">
+            <div className="mt-4 inline-flex max-w-full items-center gap-2.5 rounded-lg border border-border bg-background/70 px-3 py-2.5">
               <Building2
-                className="mt-0.5 size-4 shrink-0 text-accent"
+                className="size-4 shrink-0 text-accent"
                 aria-hidden
               />
-              <div className="min-w-0">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted">
-                  Sucursal
-                </p>
-                <p className="mt-0.5 text-sm font-medium text-card-foreground">
-                  {technicianBranchLabel ?? "Sin sucursal asignada"}
-                </p>
-              </div>
+              <p className="min-w-0 text-sm font-medium text-card-foreground">
+                {technicianBranchLabel ?? "Sin empresa asignada"}
+              </p>
             </div>
           ) : null}
         </div>
