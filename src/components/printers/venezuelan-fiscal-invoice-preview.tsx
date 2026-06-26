@@ -121,8 +121,11 @@ function TicketText({
         ticketEditableField,
         inline ? "inline-block w-auto min-w-[4ch]" : "block",
         alignClass,
+        "select-text",
         className,
       )}
+      draggable={false}
+      onDragStart={(event) => event.preventDefault()}
       style={{ fontFamily: FISCAL_TICKET_FONT }}
       placeholder="Escriba una línea…"
     />
@@ -339,11 +342,6 @@ function EditableTicketLineList({
         return (
           <div
             key={`${lineLabelPrefix}-edit-${index}`}
-            draggable
-            onDragStart={() => {
-              setDragIndex(index);
-              setDragOverIndex(index);
-            }}
             onDragOver={(event) => {
               event.preventDefault();
               setDragOverIndex(index);
@@ -351,10 +349,6 @@ function EditableTicketLineList({
             onDrop={(event) => {
               event.preventDefault();
               if (dragIndex != null) onMoveLine(dragIndex, index);
-              setDragIndex(null);
-              setDragOverIndex(null);
-            }}
-            onDragEnd={() => {
               setDragIndex(null);
               setDragOverIndex(null);
             }}
@@ -368,9 +362,19 @@ function EditableTicketLineList({
           >
             <button
               type="button"
+              draggable
               className="inline-flex shrink-0 cursor-grab touch-none rounded p-0.5 text-muted/60 active:cursor-grabbing hover:text-foreground"
               aria-label={`Mover ${ariaLabel.toLowerCase()}`}
-              onMouseDown={(event) => event.stopPropagation()}
+              onDragStart={(event) => {
+                setDragIndex(index);
+                setDragOverIndex(index);
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", String(index));
+              }}
+              onDragEnd={() => {
+                setDragIndex(null);
+                setDragOverIndex(null);
+              }}
             >
               <GripVertical className="size-3.5" aria-hidden />
             </button>
@@ -394,14 +398,16 @@ function EditableTicketLineList({
                 <ChevronDown className="size-3" aria-hidden />
               </button>
             </div>
+            <div className="min-w-0 flex-1 select-text">
             <TicketText
               editable
               value={line}
               onChange={(value) => onChangeLine(index, value)}
               ariaLabel={ariaLabel}
               centered={centered}
-              className="min-w-0 flex-1"
+              className="w-full"
             />
+            </div>
             {canRemove ? (
               <button
                 type="button"

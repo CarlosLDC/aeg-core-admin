@@ -201,52 +201,49 @@ export function BranchView() {
       setBranch(branchData);
       setDistributors(distributorRows);
 
-      if (isTechnician && branchData.client) {
+      if (isTechnician) {
+        setClient(null);
+        setPendingProposed(null);
         try {
-          const clientRow = await fetchClientByBranchId(branchData.id);
-          if (!clientRow) {
-            setClient(null);
-            setCompany(null);
-            setPendingProposed(null);
-            return;
-          }
-          if (
-            user?.distributorId != null &&
-            clientRow.distributorId !== user.distributorId
-          ) {
-            setError("No tienes acceso a esta empresa.");
-            setClient(null);
-            setCompany(null);
-            return;
-          }
-          setClient(clientRow);
-          if (
-            clientRow.reviewStatus === "PENDING_REVIEW" &&
-            clientRow.activeModificationRequestId != null
-          ) {
-            try {
-              const detail = await fetchClientModificationRequestById(
-                clientRow.activeModificationRequestId,
-              );
-              setPendingProposed(
-                detail.actionType === "UPDATE" ? detail.proposedData : null,
-              );
-            } catch {
-              setPendingProposed(null);
-            }
-          } else {
-            setPendingProposed(null);
-          }
-          try {
-            const companyRow = await fetchCompanyById(branchData.companyId);
-            setCompany(companyRow);
-          } catch {
-            setCompany(null);
-          }
+          const companyRow = await fetchCompanyById(branchData.companyId);
+          setCompany(companyRow);
         } catch {
-          setClient(null);
           setCompany(null);
-          setPendingProposed(null);
+        }
+        if (branchData.client) {
+          try {
+            const clientRow = await fetchClientByBranchId(branchData.id);
+            if (!clientRow) {
+              return;
+            }
+            if (
+              user?.distributorId != null &&
+              clientRow.distributorId !== user.distributorId
+            ) {
+              setError("No tienes acceso a esta empresa.");
+              setClient(null);
+              return;
+            }
+            setClient(clientRow);
+            if (
+              clientRow.reviewStatus === "PENDING_REVIEW" &&
+              clientRow.activeModificationRequestId != null
+            ) {
+              try {
+                const detail = await fetchClientModificationRequestById(
+                  clientRow.activeModificationRequestId,
+                );
+                setPendingProposed(
+                  detail.actionType === "UPDATE" ? detail.proposedData : null,
+                );
+              } catch {
+                setPendingProposed(null);
+              }
+            }
+          } catch {
+            setClient(null);
+            setPendingProposed(null);
+          }
         }
       } else {
         setClient(null);
@@ -415,20 +412,22 @@ export function BranchView() {
   const companyLabel = branch
     ? companyNameById(companies, branch.companyId)
     : "";
+  const companyRecord =
+    company ?? companies.find((row) => row.id === branch?.companyId);
   const businessName =
     pendingProposed?.businessName?.trim() ||
-    company?.businessName?.trim() ||
+    companyRecord?.businessName?.trim() ||
     client?.companyBusinessName?.trim() ||
     companyLabel;
   const rif =
     pendingProposed?.rif?.trim() ||
-    company?.rif?.trim() ||
+    companyRecord?.rif?.trim() ||
     client?.companyRif?.trim() ||
     "—";
   const contributorType =
-    pendingProposed?.contributorType ?? company?.contributorType;
+    pendingProposed?.contributorType ?? companyRecord?.contributorType;
   const pendingReview = client?.reviewStatus === "PENDING_REVIEW";
-  const technicianClientView = isTechnician && client != null && company != null;
+  const technicianEmpresaView = isTechnician && branch != null;
 
   const technicianDetailContent = useMemo(() => {
     if (!client || !branch) return null;
@@ -480,12 +479,12 @@ export function BranchView() {
   }, [branch, businessName, client, contributorType, pendingProposed, rif]);
 
   const title = branch
-    ? technicianClientView
+    ? technicianEmpresaView
       ? businessName || `${branch.city}, ${branch.state}`
       : companyLabel || `${branch.city}, ${branch.state}`
     : "Empresa";
   const detailSteps = useMemo(() => {
-    if (!branch) return [];
+    if (!branch || isTechnician) return [];
 
     return [
       {
@@ -560,7 +559,7 @@ export function BranchView() {
         ),
       },
     ];
-  }, [branch, branches, companies, companyLabel, distributors, user]);
+  }, [branch, branches, companies, companyLabel, distributors, isTechnician, user]);
 
   const missingContractLabelsForBranch = useMemo(() => {
     if (!branch || !contractCoverage) return [];
@@ -576,7 +575,7 @@ export function BranchView() {
         backLabel="Volver a empresas"
         title={title}
         subtitle={
-          branch && technicianClientView
+          branch && technicianEmpresaView
             ? rif !== "—"
               ? rif
               : `${branch.city}, ${branch.state}`
@@ -590,8 +589,8 @@ export function BranchView() {
           branch ? (
             <ResourceViewActions
               onEdit={
-                technicianClientView
-                  ? !pendingReview
+                technicianEmpresaView
+                  ? client != null && !pendingReview
                     ? () => {
                         setFormError(null);
                         setEditOpen(true);
@@ -605,8 +604,8 @@ export function BranchView() {
                     : undefined
               }
               onDelete={
-                technicianClientView
-                  ? canRequestReview && !pendingReview
+                technicianEmpresaView
+                  ? client != null && canRequestReview && !pendingReview
                     ? () => void handleClientDelete()
                     : undefined
                   : canDelete
@@ -614,7 +613,10 @@ export function BranchView() {
                     : undefined
               }
               onCancelReview={
-                technicianClientView && canCancelReview && pendingReview
+                technicianEmpresaView &&
+                client != null &&
+                canCancelReview &&
+                pendingReview
                   ? () => void handleCancelReview()
                   : undefined
               }
@@ -625,7 +627,7 @@ export function BranchView() {
       >
         {branch ? (
           <div className="space-y-4">
-            {pendingReview && technicianClientView && (
+            {pendingReview && technicianEmpresaView && (
               <p
                 role="status"
                 className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200"
@@ -634,13 +636,13 @@ export function BranchView() {
                 solicitud.
               </p>
             )}
-            {missingContractLabelsForBranch.length > 0 ? (
+            {!isTechnician && missingContractLabelsForBranch.length > 0 ? (
               <BranchMissingContractNotice
                 missingLabels={missingContractLabelsForBranch}
                 showContractsLink={canReadContracts}
               />
             ) : null}
-            {technicianClientView ? (
+            {technicianEmpresaView ? (
               technicianDetailContent
             ) : (
               <DetailSectionsPager key={branch.id} steps={detailSteps} />
@@ -649,21 +651,26 @@ export function BranchView() {
         ) : null}
       </ResourceViewShell>
 
-      {branch && editOpen && technicianClientView && company ? (
+      {branch && editOpen && technicianEmpresaView && client ? (() => {
+        const editCompany =
+          company ?? companies.find((row) => row.id === branch.companyId);
+        if (!editCompany) return null;
+        return (
         <ClientEditDialog
           open={editOpen}
           saving={saving}
           error={formError}
-          company={company}
+          company={editCompany}
           branch={branch}
           onClose={() => {
             if (!saving) setEditOpen(false);
           }}
           onSubmit={(values) => void handleClientEdit(values)}
         />
-      ) : null}
+        );
+      })() : null}
 
-      {branch && editOpen && !technicianClientView && (
+      {branch && editOpen && !technicianEmpresaView && (
         <BranchCreateWizardDialog
           mode="edit"
           initialValues={branchToWizardValues(branch, companies)}

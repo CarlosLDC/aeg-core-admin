@@ -68,26 +68,6 @@ export function normalizeFiscalTicketText(value: string): string {
     .join("");
 }
 
-/** True when the string contains tildes or characters outside ISO-8859-2. */
-export function hasAccentedOrNonLatin2TicketChar(value: string): boolean {
-  for (const char of value) {
-    if (char !== normalizeFiscalTicketText(char)) return true;
-    const codePoint = char.codePointAt(0);
-    if (codePoint == null) continue;
-    if (codePoint < 0x80) continue;
-    if (!UNICODE_TO_ISO_8859_2_BYTE.has(codePoint)) return true;
-    if (char.normalize("NFD").length > 1) return true;
-  }
-  return false;
-}
-
-/** Caracteres permitidos en el número de factura (ASCII, sin tildes). */
-export const FACTURA_NRO_PATTERN = /^[0-9A-Za-z.\-/ ]+$/;
-
-export function sanitizeFacturaNroInput(value: string): string {
-  return value.replace(/[^0-9A-Za-z.\-/ ]/g, "");
-}
-
 export function encodeLatin2(text: string): Uint8Array {
   const normalized = normalizeFiscalTicketText(text);
   const bytes = new Uint8Array(normalized.length);

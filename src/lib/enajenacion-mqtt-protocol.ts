@@ -510,6 +510,20 @@ export function buildFiscalRifCommandPayload(
   };
 }
 
+export function buildEncFacFijoLines(
+  addressLine1: string,
+  addressLine2: string,
+  cityStateLine: string,
+  contributorLine: string,
+): string[] {
+  const lines = [addressLine1];
+  if (addressLine2.trim()) {
+    lines.push(addressLine2);
+  }
+  lines.push(cityStateLine, contributorLine);
+  return lines;
+}
+
 export function buildHeaderCommandPayload(
   ctx: EnajenacionCommandContext,
 ): Record<string, unknown> {
@@ -520,12 +534,12 @@ export function buildHeaderCommandPayload(
       Access: "AeG-1968-2024",
       nameFile: "paramFacSPIFF.json",
       contenido: {
-        encFacFijo: [
+        encFacFijo: buildEncFacFijoLines(
           addressLine1,
           addressLine2,
           `${ctx.city.trim()}, ${ctx.state.trim()}`,
           contributorTypeLine(ctx.contributorType),
-        ],
+        ),
       },
     },
   };

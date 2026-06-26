@@ -13,7 +13,7 @@ import {
   BranchCreateWizardDialog,
   type BranchWizardValues,
 } from "@/components/branches/branch-create-wizard-dialog";
-import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { DataTableToolbar, type FilterSelect } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import {
   PageToolbar,
@@ -119,11 +119,6 @@ const TYPE_FILTER_OPTIONS = [
   { value: "client", label: "Cliente" },
   { value: "distributor", label: "Distribuidor" },
   { value: "serviceCenter", label: "Centro de servicio" },
-] as const;
-
-const TECHNICIAN_TYPE_FILTER_OPTIONS = [
-  { value: "all", label: "Todas las empresas" },
-  { value: "client", label: "Clientes" },
 ] as const;
 
 function isPendingClientReview(client: ClientResponse): boolean {
@@ -246,7 +241,7 @@ export function BranchesManager() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("branches");
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState(isTechnician ? "client" : "all");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
   const [companyFilter, setCompanyFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<BranchSortKey>>(null);
@@ -256,9 +251,6 @@ export function BranchesManager() {
     () => new Map(clients.map((client) => [client.branchId, client])),
     [clients],
   );
-  const typeFilterOptions = isTechnician
-    ? TECHNICIAN_TYPE_FILTER_OPTIONS
-    : TYPE_FILTER_OPTIONS;
 
   const stateFilterOptions = useMemo(
     () => [
@@ -280,13 +272,61 @@ export function BranchesManager() {
     [companies],
   );
 
+  const tableFilters = useMemo((): FilterSelect[] => {
+    const sharedFilters: FilterSelect[] = [
+      {
+        id: "state",
+        label: "Estado",
+        value: stateFilter,
+        onChange: setStateFilter,
+        options: stateFilterOptions,
+        searchable: true,
+        searchPlaceholder: "Buscar estado…",
+      },
+      {
+        id: "company",
+        label: "Empresa",
+        value: companyFilter,
+        onChange: setCompanyFilter,
+        options: companyFilterOptions,
+        searchable: true,
+        searchPlaceholder: "Buscar empresa o RIF…",
+      },
+    ];
+    if (isTechnician) {
+      return sharedFilters;
+    }
+    return [
+      {
+        id: "type",
+        label: "Tipo",
+        value: typeFilter,
+        onChange: setTypeFilter,
+        options: TYPE_FILTER_OPTIONS.map((o) => ({
+          value: o.value,
+          label: o.label,
+        })),
+      },
+      ...sharedFilters,
+    ];
+  }, [
+    isTechnician,
+    typeFilter,
+    stateFilter,
+    stateFilterOptions,
+    companyFilter,
+    companyFilterOptions,
+  ]);
+
   const filteredBranches = useMemo(() => {
     const q = search.trim().toLowerCase();
     return branches.filter((branch) => {
-      if (typeFilter === "client" && !branch.client) return false;
-      if (typeFilter === "distributor" && !branch.distributor) return false;
-      if (typeFilter === "serviceCenter" && !branch.serviceCenter) {
-        return false;
+      if (!isTechnician) {
+        if (typeFilter === "client" && !branch.client) return false;
+        if (typeFilter === "distributor" && !branch.distributor) return false;
+        if (typeFilter === "serviceCenter" && !branch.serviceCenter) {
+          return false;
+        }
       }
       if (stateFilter !== "all" && !statesMatch(branch.state, stateFilter)) {
         return false;
@@ -319,6 +359,7 @@ export function BranchesManager() {
     stateFilter,
     companyFilter,
     companies,
+    isTechnician,
   ]);
 
   const sortedBranches = useMemo(
@@ -809,39 +850,14 @@ export function BranchesManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por empresa, RIF, ciudad, distribuidor…"
+              searchPlaceholder={
+                isTechnician
+                  ? "Buscar por empresa, RIF, ciudad…"
+                  : "Buscar por empresa, RIF, ciudad, distribuidor…"
+              }
               resultCount={filteredBranches.length}
               totalCount={branches.length}
-              filters={[
-                {
-                  id: "type",
-                  label: "Tipo",
-                  value: typeFilter,
-                  onChange: setTypeFilter,
-                  options: typeFilterOptions.map((o) => ({
-                    value: o.value,
-                    label: o.label,
-                  })),
-                },
-                {
-                  id: "state",
-                  label: "Estado",
-                  value: stateFilter,
-                  onChange: setStateFilter,
-                  options: stateFilterOptions,
-                  searchable: true,
-                  searchPlaceholder: "Buscar estado…",
-                },
-                {
-                  id: "company",
-                  label: "Empresa",
-                  value: companyFilter,
-                  onChange: setCompanyFilter,
-                  options: companyFilterOptions,
-                  searchable: true,
-                  searchPlaceholder: "Buscar empresa o RIF…",
-                },
-              ]}
+              filters={tableFilters}
               columns={tableColumns.toolbarColumns}
             />
             {filteredBranches.length === 0 ? (
@@ -849,7 +865,12 @@ export function BranchesManager() {
             ) : (
               <>
                 <TableScroll>
-                  <table className="w-full min-w-[880px] text-left text-sm">
+                  <table
+                    className={cn(
+                      "w-full text-left text-sm",
+                      isTechnician ? "min-w-[720px]" : "min-w-[880px]",
+                    )}
+                  >
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <TableRowMetaHeaders
@@ -882,29 +903,30 @@ export function BranchesManager() {
                         <th className="px-5 py-3 font-medium">Razón social</th>
                         <th className="px-5 py-3 font-medium">Ubicación</th>
                         <th className="px-5 py-3 font-medium">Contacto</th>
-                        <th className="px-5 py-3 font-medium">Roles</th>
+                        {!isTechnician ? (
+                          <th className="px-5 py-3 font-medium">Roles</th>
+                        ) : null}
                         </TableRowMetaHeaders>
                       </tr>
                     </thead>
                     <tbody>
                       {pagination.paginatedItems.map((branch) => {
-                        const missingContractLabelsForBranch = contractCoverage
-                          ? missingContractLabels(
-                              getBranchMissingContractKinds(
-                                branch,
-                                contractCoverage,
-                              ),
-                            )
-                          : [];
                         const client = clientByBranchId.get(branch.id);
-                        const technicianClient =
-                          isTechnician && client != null;
                         const pendingReview =
                           client != null && isPendingClientReview(client);
                         const companyName = companyNameById(
                           companies,
                           branch.companyId,
                         );
+                        const missingContractLabelsForBranch =
+                          !isTechnician && contractCoverage
+                            ? missingContractLabels(
+                                getBranchMissingContractKinds(
+                                  branch,
+                                  contractCoverage,
+                                ),
+                              )
+                            : [];
 
                         return (
                         <ClickableTableRow
@@ -917,24 +939,26 @@ export function BranchesManager() {
                             id={branch.id}
                             createdAt={branch.createdAt}
                             actions={
-                              technicianClient && showClientActions ? (
+                              isTechnician && showClientActions ? (
                                 <td className="px-5 py-3.5" data-row-click="ignore">
                                   <TableRowActionsMenu
                                     viewHref={branchPath(branch.id)}
                                     viewLabel={`Ver empresa ${companyName}`}
                                     onEdit={
-                                      !pendingReview
+                                      client != null && !pendingReview
                                         ? () => openClientEdit(branch, client)
                                         : undefined
                                     }
                                     onDelete={
-                                      !pendingReview
+                                      client != null && !pendingReview
                                         ? () =>
                                             void handleClientDelete(branch, client)
                                         : undefined
                                     }
                                     onCancelReview={
-                                      canCancelReview && pendingReview
+                                      client != null &&
+                                      canCancelReview &&
+                                      pendingReview
                                         ? () =>
                                             void handleCancelClientReview(
                                               branch,
@@ -985,17 +1009,19 @@ export function BranchesManager() {
                                 "—"}
                             </TruncatedText>
                           </td>
-                          <td className="px-5 py-3.5">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <BranchTypeBadges branch={branch} />
-                              {missingContractLabelsForBranch.length > 0 ? (
-                                <BranchMissingContractNotice
-                                  variant="inline"
-                                  missingLabels={missingContractLabelsForBranch}
-                                />
-                              ) : null}
-                            </div>
-                          </td>
+                          {!isTechnician ? (
+                            <td className="px-5 py-3.5">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <BranchTypeBadges branch={branch} />
+                                {missingContractLabelsForBranch.length > 0 ? (
+                                  <BranchMissingContractNotice
+                                    variant="inline"
+                                    missingLabels={missingContractLabelsForBranch}
+                                  />
+                                ) : null}
+                              </div>
+                            </td>
+                          ) : null}
                           </TableRowMetaCells>
                         </ClickableTableRow>
                         );

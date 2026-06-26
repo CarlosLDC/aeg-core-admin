@@ -12,7 +12,6 @@ import {
   resolveClientCompanyRif,
   validateFacturaNroInput,
 } from "@/lib/venezuelan-fiscal-invoice";
-import { sanitizeFacturaNroInput } from "@/lib/fiscal-ticket-latin2";
 import { cn } from "@/lib/utils";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
@@ -326,7 +325,7 @@ export function PrinterDispositionDialog({
               autoFocus
               value={facturaNro}
               onChange={(e) => {
-                setFacturaNro(sanitizeFacturaNroInput(e.target.value));
+                setFacturaNro(e.target.value);
                 setFieldError(null);
               }}
               disabled={disabled}

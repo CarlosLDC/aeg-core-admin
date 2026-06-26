@@ -11,6 +11,7 @@ import {
   buildInvoiceCommandPayload,
   buildInvoiceSuccessResponse,
   buildEnajenacionCommandContextFromClientData,
+  buildEncFacFijoLines,
   buildPrinterSimulationPayload,
   buildPtrEnajenarPayload,
   buildRegistrationStatusCommandPayload,
@@ -97,7 +98,6 @@ describe("enajenacion-mqtt-protocol", () => {
         contenido: {
           encFacFijo: [
             "Av. Principal Edif. Demo Piso 1",
-            "",
             "Caracas, Distrito Capital",
             "CONTRIBUYENTE ORDINARIO",
           ],
@@ -124,6 +124,21 @@ describe("enajenacion-mqtt-protocol", () => {
       { cmd: "razSocNC", data: ["Cliente Demo C.A."] },
     ]);
     expect(buildReportZCommandPayload()).toEqual({ cmd: "genImpRepZ", data: 1 });
+  });
+
+  it("omits blank second address line in encFacFijo", () => {
+    expect(
+      buildEncFacFijoLines(
+        "AV SANTA CRUZ LOCAL NRO 13 SECTOR POZUELOS",
+        "",
+        "PUERTO LA CRUZ, ANZOATEGUI",
+        "CONTRIBUYENTE ORDINARIO",
+      ),
+    ).toEqual([
+      "AV SANTA CRUZ LOCAL NRO 13 SECTOR POZUELOS",
+      "PUERTO LA CRUZ, ANZOATEGUI",
+      "CONTRIBUYENTE ORDINARIO",
+    ]);
   });
 
   it("validates DNF response shape", () => {

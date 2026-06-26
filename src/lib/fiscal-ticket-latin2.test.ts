@@ -3,9 +3,7 @@ import {
   decodeLatin2,
   encodeLatin2,
   FISCAL_TICKET_CHARSET,
-  hasAccentedOrNonLatin2TicketChar,
   normalizeFiscalTicketText,
-  sanitizeFacturaNroInput,
 } from "./fiscal-ticket-latin2";
 import {
   buildDispositionInvoiceData,
@@ -34,18 +32,6 @@ describe("fiscal ticket latin-2", () => {
     const bytes = encodeLatin2(text);
     expect(decodeLatin2(bytes)).toBe(text);
     expect(bytes.every((byte) => byte <= 0xff)).toBe(true);
-  });
-
-  it("detects tildes and unsupported characters", () => {
-    expect(hasAccentedOrNonLatin2TicketChar("00012345")).toBe(false);
-    expect(hasAccentedOrNonLatin2TicketChar("factura")).toBe(false);
-    expect(hasAccentedOrNonLatin2TicketChar("factúra")).toBe(true);
-    expect(hasAccentedOrNonLatin2TicketChar("™")).toBe(true);
-  });
-
-  it("sanitizes invoice numbers to latin-2 safe ascii", () => {
-    expect(sanitizeFacturaNroInput("00012á45")).toBe("0001245");
-    expect(sanitizeFacturaNroInput("F-01/26")).toBe("F-01/26");
   });
 
   it("builds invoice data tagged with latin-2 encoding", () => {
