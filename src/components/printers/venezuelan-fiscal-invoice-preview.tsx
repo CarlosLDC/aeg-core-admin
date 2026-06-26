@@ -335,18 +335,23 @@ function EditableTicketLineList({
     <>
       {lines.map((line, index) => {
         const ariaLabel = `${lineLabelPrefix} línea ${index + 1}`;
-        const canRemove = lines.length > minLines;
-        const canMoveUp = index > 0;
-        const canMoveDown = index < lines.length - 1;
+        const isLineLocked = lineLabelPrefix === "Encabezado" && index < 3;
+        const canRemove = !isLineLocked && lines.length > minLines;
+        const canMoveUp =
+          !isLineLocked &&
+          (lineLabelPrefix === "Encabezado" ? index > 3 : index > 0);
+        const canMoveDown = !isLineLocked && index < lines.length - 1;
 
         return (
           <div
             key={`${lineLabelPrefix}-edit-${index}`}
             onDragOver={(event) => {
+              if (isLineLocked) return;
               event.preventDefault();
               setDragOverIndex(index);
             }}
             onDrop={(event) => {
+              if (isLineLocked) return;
               event.preventDefault();
               if (dragIndex != null) onMoveLine(dragIndex, index);
               setDragIndex(null);
@@ -360,47 +365,53 @@ function EditableTicketLineList({
                 "bg-accent/10 ring-1 ring-accent/30",
             )}
           >
-            <button
-              type="button"
-              draggable
-              className="inline-flex shrink-0 cursor-grab touch-none rounded p-0.5 text-muted/60 active:cursor-grabbing hover:text-foreground"
-              aria-label={`Mover ${ariaLabel.toLowerCase()}`}
-              onDragStart={(event) => {
-                setDragIndex(index);
-                setDragOverIndex(index);
-                event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData("text/plain", String(index));
-              }}
-              onDragEnd={() => {
-                setDragIndex(null);
-                setDragOverIndex(null);
-              }}
-            >
-              <GripVertical className="size-3.5" aria-hidden />
-            </button>
-            <div className="flex shrink-0 flex-col">
-              <button
-                type="button"
-                disabled={!canMoveUp}
-                onClick={() => onMoveLine(index, index - 1)}
-                aria-label={`Subir ${ariaLabel.toLowerCase()}`}
-                className="inline-flex rounded p-0.5 text-muted/70 enabled:hover:bg-foreground/5 enabled:hover:text-foreground disabled:opacity-30"
-              >
-                <ChevronUp className="size-3" aria-hidden />
-              </button>
-              <button
-                type="button"
-                disabled={!canMoveDown}
-                onClick={() => onMoveLine(index, index + 1)}
-                aria-label={`Bajar ${ariaLabel.toLowerCase()}`}
-                className="inline-flex rounded p-0.5 text-muted/70 enabled:hover:bg-foreground/5 enabled:hover:text-foreground disabled:opacity-30"
-              >
-                <ChevronDown className="size-3" aria-hidden />
-              </button>
-            </div>
+            {isLineLocked ? (
+              <div className="w-[38px] shrink-0" aria-hidden />
+            ) : (
+              <>
+                <button
+                  type="button"
+                  draggable
+                  className="inline-flex shrink-0 cursor-grab touch-none rounded p-0.5 text-muted/60 active:cursor-grabbing hover:text-foreground"
+                  aria-label={`Mover ${ariaLabel.toLowerCase()}`}
+                  onDragStart={(event) => {
+                    setDragIndex(index);
+                    setDragOverIndex(index);
+                    event.dataTransfer.effectAllowed = "move";
+                    event.dataTransfer.setData("text/plain", String(index));
+                  }}
+                  onDragEnd={() => {
+                    setDragIndex(null);
+                    setDragOverIndex(null);
+                  }}
+                >
+                  <GripVertical className="size-3.5" aria-hidden />
+                </button>
+                <div className="flex shrink-0 flex-col">
+                  <button
+                    type="button"
+                    disabled={!canMoveUp}
+                    onClick={() => onMoveLine(index, index - 1)}
+                    aria-label={`Subir ${ariaLabel.toLowerCase()}`}
+                    className="inline-flex rounded p-0.5 text-muted/70 enabled:hover:bg-foreground/5 enabled:hover:text-foreground disabled:opacity-30"
+                  >
+                    <ChevronUp className="size-3" aria-hidden />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!canMoveDown}
+                    onClick={() => onMoveLine(index, index + 1)}
+                    aria-label={`Bajar ${ariaLabel.toLowerCase()}`}
+                    className="inline-flex rounded p-0.5 text-muted/70 enabled:hover:bg-foreground/5 enabled:hover:text-foreground disabled:opacity-30"
+                  >
+                    <ChevronDown className="size-3" aria-hidden />
+                  </button>
+                </div>
+              </>
+            )}
             <div className="min-w-0 flex-1 select-text">
             <TicketText
-              editable
+              editable={!isLineLocked}
               value={line}
               onChange={(value) => onChangeLine(index, value)}
               ariaLabel={ariaLabel}
@@ -408,7 +419,9 @@ function EditableTicketLineList({
               className="w-full"
             />
             </div>
-            {canRemove ? (
+            {isLineLocked ? (
+              <span className="size-5 shrink-0" aria-hidden />
+            ) : canRemove ? (
               <button
                 type="button"
                 onClick={() => onRemoveLine(index)}
@@ -472,6 +485,7 @@ export function VenezuelanFiscalInvoicePreview({
   }
 
   function patchHeaderLine(index: number, value: string) {
+    if (index < 3) return;
     patch((current) => {
       const lineas = [...current.encabezado.lineas];
       lineas[index] = value;
@@ -487,6 +501,7 @@ export function VenezuelanFiscalInvoicePreview({
   }
 
   function removeHeaderLine(index: number) {
+    if (index < 3) return;
     patch((current) => ({
       ...current,
       encabezado: {
@@ -496,6 +511,7 @@ export function VenezuelanFiscalInvoicePreview({
   }
 
   function moveHeaderLine(fromIndex: number, toIndex: number) {
+    if (fromIndex < 3 || toIndex < 3) return;
     patch((current) => ({
       ...current,
       encabezado: {
