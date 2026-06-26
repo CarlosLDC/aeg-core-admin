@@ -15,8 +15,7 @@ import type {
   EnajenacionActivityResult,
 } from "@/types/mqtt";
 
-const RESULT_FILTER_OPTIONS: Array<EnajenacionActivityResult | ""> = [
-  "",
+const RESULT_FILTER_VALUES: EnajenacionActivityResult[] = [
   "RECEIVED",
   "PROCESSED",
   "PUBLISHED",
@@ -121,7 +120,7 @@ export function EnajenacionActivityPanel() {
             className={inputClass}
           >
             <option value="">Todos</option>
-            {RESULT_FILTER_OPTIONS.filter(Boolean).map((result) => (
+            {RESULT_FILTER_VALUES.map((result) => (
               <option key={result} value={result}>
                 {activityResultLabel(result)}
               </option>
