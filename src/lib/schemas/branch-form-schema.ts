@@ -1,13 +1,12 @@
 import { z } from "zod";
 
-export const branchFormSchema = z.object({
+const branchFormBaseSchema = z.object({
   companyId: z
     .string()
     .trim()
     .min(1, "Selecciona una empresa."),
   city: z.string().trim().min(1, "La ciudad es obligatoria."),
   state: z.string().trim().min(1, "El estado es obligatorio."),
-  address: z.string().optional(),
   contactPersonName: z.string().trim().optional(),
   phone: z.string().optional(),
   email: z
@@ -23,4 +22,13 @@ export const branchFormSchema = z.object({
   clientDistributorId: z.string(),
 });
 
+export const branchFormSchema = branchFormBaseSchema.extend({
+  address: z.string().optional(),
+});
+
+export const branchCreateFormSchema = branchFormBaseSchema.extend({
+  address: z.string().trim().min(1, "La dirección es obligatoria."),
+});
+
 export type BranchFormSchemaValues = z.infer<typeof branchFormSchema>;
+export type BranchCreateFormSchemaValues = z.infer<typeof branchCreateFormSchema>;

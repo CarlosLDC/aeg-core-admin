@@ -7,7 +7,7 @@ import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { CompanySelect } from "@/components/companies/company-select";
 import { DistributorSelect } from "@/components/branches/distributor-select";
 import { zodFieldErrors } from "@/lib/form-zod";
-import { branchFormSchema } from "@/lib/schemas/branch-form-schema";
+import { branchCreateFormSchema, branchFormSchema } from "@/lib/schemas/branch-form-schema";
 import {
   BRANCH_ROLE_TOGGLE_TONE,
   toggleButtonClass,
@@ -123,7 +123,8 @@ export function BranchFormDialog({
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const parsed = branchFormSchema.safeParse({
+    const schema = mode === "create" ? branchCreateFormSchema : branchFormSchema;
+    const parsed = schema.safeParse({
       ...form,
       companyId: (forcedCompanyId ?? form.companyId).trim(),
       city: form.city.trim(),
@@ -249,15 +250,22 @@ export function BranchFormDialog({
               </label>
 
               <label className="block sm:col-span-2">
-                <FieldLabel>Dirección</FieldLabel>
+                <FieldLabel required={mode === "create"}>Dirección</FieldLabel>
                 <input
                   type="text"
+                  required={mode === "create"}
                   value={form.address}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, address: e.target.value }))
                   }
+                  aria-invalid={Boolean(fieldErrors.address)}
                   className={inputClass}
                 />
+                {fieldErrors.address ? (
+                  <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+                    {fieldErrors.address}
+                  </p>
+                ) : null}
               </label>
             </div>
           </fieldset>

@@ -256,7 +256,10 @@ export function BranchCreateWizardDialog({
   }
 
   function validateSection(section: OnboardingStepSection): string | null {
-    return validateOnboardingSection(section, form);
+    return validateOnboardingSection(section, form, {
+      requireContributorType: !isEdit,
+      requireAddress: !isEdit,
+    });
   }
 
   function goToStep(target: 1 | 2 | 3 | 4 | 5) {
@@ -313,6 +316,14 @@ export function BranchCreateWizardDialog({
   function handleFormSubmit(e: FormEvent) {
     e.preventDefault();
     if (step < lastFormStep) {
+      const section = currentFormStep?.section;
+      if (section && isClientFormSection(section)) {
+        const err = validateSection(section);
+        if (err) {
+          setStepError(err);
+          return;
+        }
+      }
       setStepError(null);
       setStep((step + 1) as WizardStep);
       return;
@@ -473,6 +484,8 @@ export function BranchCreateWizardDialog({
                   inputMode={inputMode}
                   aiFields={aiFields}
                   section={currentFormStep.section}
+                  requireContributorType={!isEdit}
+                  requireAddress={!isEdit}
                 />
               ) : null}
             </form>

@@ -15,7 +15,7 @@ export const companyFormSchema = z.object({
       message: "Formato: letra V, E, J, P o G seguida de 7 a 9 dígitos.",
     }),
   contributorType: z.enum(CONTRIBUTOR_TYPES, {
-    message: "Tipo de contribuyente no válido.",
+    message: "El tipo de contribuyente es obligatorio.",
   }),
 });
 
