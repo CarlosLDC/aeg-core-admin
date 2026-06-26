@@ -26,6 +26,7 @@ type PrinterDispositionDialogProps = {
   companies: CompanyResponse[];
   distributors: DistributorResponse[];
   catalogLoading: boolean;
+  reconfigure?: boolean;
   onClose: () => void;
   onContinue: (payload: { clientId: number; facturaNro: string }) => void;
 };
@@ -49,12 +50,16 @@ function resolveDefaultClientId(printer: PrinterResponse): string {
   return "";
 }
 
-function stepSubtitle(step: WizardStep): string {
+function stepSubtitle(step: WizardStep, reconfigure: boolean): string {
   switch (step) {
     case 1:
-      return "Selecciona el cliente que recibirá la impresora.";
+      return reconfigure
+        ? "Confirma el cliente antes de editar el ticket fiscal."
+        : "Selecciona el cliente que recibirá la impresora.";
     case 2:
-      return "Ingresa el número de factura fiscal de la enajenación.";
+      return reconfigure
+        ? "Confirma o actualiza el número de factura y continúa a la edición del ticket."
+        : "Ingresa el número de factura fiscal de la enajenación.";
     default:
       return "";
   }
@@ -68,11 +73,14 @@ export function PrinterDispositionDialog({
   companies,
   distributors,
   catalogLoading,
+  reconfigure = false,
   onClose,
   onContinue,
 }: PrinterDispositionDialogProps) {
   const titleId = useId();
-  const [step, setStep] = useState<WizardStep>(1);
+  const [step, setStep] = useState<WizardStep>(() =>
+    reconfigure && printer.clientId != null ? 2 : 1,
+  );
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [clientOverride, setClientOverride] = useState<string | null>(null);
   const [clientQuery, setClientQuery] = useState("");
@@ -235,7 +243,7 @@ export function PrinterDispositionDialog({
       cancelLabel={step === 1 ? "Cancelar" : "Atrás"}
       onCancel={handleBack}
     >
-      <p className="mb-4 text-sm text-muted">{stepSubtitle(step)}</p>
+      <p className="mb-4 text-sm text-muted">{stepSubtitle(step, reconfigure)}</p>
 
       <nav
         className="mb-4 flex gap-1"

@@ -40,7 +40,10 @@ import {
   isDistributorSelfClient,
 } from "@/lib/distributor-scope";
 import { isPrinterUnassigned } from "@/lib/printer-status";
-import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
+import {
+  isPrinterPendingMqttEnajenacion,
+  PRINTER_TICKET_RECONFIGURE_LABEL,
+} from "@/lib/printer-enajenacion-ticket";
 import { getPrinterStatusQuickAction } from "@/lib/printer-quick-actions";
 import { assertPrinterInScope } from "@/lib/permissions/scope-access";
 import { useDistributorStaffBranchId } from "@/hooks/use-distributor-staff-branch-id";
@@ -392,6 +395,21 @@ export function PrinterView() {
           />
           <DetailField label="MAC" value={printer.macAddress || "—"} mono />
         </DetailCard>
+        {isPrinterPendingMqttEnajenacion(printer) && canDisposeAssigned ? (
+          <button
+            type="button"
+            onClick={() => {
+              if (!isPrinterPaidForDisposition(printer)) {
+                toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+                return;
+              }
+              setDispositionOpen(true);
+            }}
+            className="inline-flex rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-500/15 dark:text-amber-100"
+          >
+            {PRINTER_TICKET_RECONFIGURE_LABEL}
+          </button>
+        ) : null}
         <PrinterTicketConfigPanel
           header={printer.header}
           trailer={printer.trailer}
@@ -404,6 +422,8 @@ export function PrinterView() {
     clients,
     clientLabelById,
     statusQuickAction,
+    canDisposeAssigned,
+    toast,
   ]);
 
   const adminDetailSteps = useMemo(() => {
@@ -477,6 +497,23 @@ export function PrinterView() {
         label: "Ticket MQTT",
         content: (
           <DetailSection title="Campos JSON del ticket">
+            {isPrinterPendingMqttEnajenacion(printer) && canDisposeAssigned ? (
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isPrinterPaidForDisposition(printer)) {
+                      toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+                      return;
+                    }
+                    setDispositionOpen(true);
+                  }}
+                  className="inline-flex rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-500/15 dark:text-amber-100"
+                >
+                  {PRINTER_TICKET_RECONFIGURE_LABEL}
+                </button>
+              </div>
+            ) : null}
             <PrinterTicketConfigPanel
               header={printer.header}
               trailer={printer.trailer}
@@ -580,6 +617,7 @@ export function PrinterView() {
     canAssignInitialized,
     canDisposeAssigned,
     statusQuickAction,
+    toast,
   ]);
 
   async function handleAssignmentSubmit({
@@ -782,6 +820,7 @@ export function PrinterView() {
           companies={companies}
           distributors={distributors}
           catalogLoading={catalogLoading}
+          reconfigure={isPrinterPendingMqttEnajenacion(printer)}
           onClose={() => setDispositionOpen(false)}
           onContinue={handleDispositionContinue}
         />

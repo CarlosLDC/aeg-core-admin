@@ -52,12 +52,26 @@ export function extractEnajenacionHeaderLines(
     cityStateLine = tail[2] ?? "";
   }
 
-  return buildEncFacFijoLines(
+  const baseLines = buildEncFacFijoLines(
     addressLine1,
     addressLine2,
     cityStateLine,
     contributor,
   );
+  if (tail.length <= 3) {
+    return baseLines;
+  }
+
+  const extraLines = tail
+    .slice(3)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  if (extraLines.length === 0) {
+    return baseLines;
+  }
+
+  const contributorLine = baseLines.at(-1) ?? contributor;
+  return [...baseLines.slice(0, -1), ...extraLines, contributorLine];
 }
 
 export function extractEnajenacionTrailerLines(
@@ -79,6 +93,60 @@ export function extractEnajenacionTicketFromInvoice(
     },
     trailer: {
       lines: extractEnajenacionTrailerLines(invoice.piePagina.mensajes),
+    },
+  };
+}
+
+export function encFacFijoLinesToEncabezadoTail(
+  encFacFijoLines: string[],
+  contributorType: ContributorType | string,
+): string[] {
+  const contributor = contributorTypeLine(contributorType);
+  let lines = encFacFijoLines
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  if (lines.length > 0 && lines.at(-1)!.toUpperCase() === contributor) {
+    lines = lines.slice(0, -1);
+  }
+  if (lines.length === 0) {
+    return ["", "", ""];
+  }
+  if (lines.length === 1) {
+    return [lines[0]!, "", ""];
+  }
+  if (lines.length === 2) {
+    return [lines[0]!, "", lines[1]!];
+  }
+  if (lines[1]!.includes(", ")) {
+    return [lines[0]!, "", ...lines.slice(1)];
+  }
+  return lines;
+}
+
+export function applyPrinterTicketToDispositionInvoice(
+  invoice: VenezuelanFiscalInvoiceData,
+  header: PrinterTicketSection | null | undefined,
+  trailer: PrinterTicketSection | null | undefined,
+  contributorType: ContributorType | string,
+): VenezuelanFiscalInvoiceData {
+  const prefix = invoice.encabezado.lineas.slice(0, FIXED_ENCABEZADO_PREFIX_LINES);
+  const addressTail =
+    header?.lines?.length
+      ? encFacFijoLinesToEncabezadoTail(header.lines, contributorType)
+      : invoice.encabezado.lineas.slice(FIXED_ENCABEZADO_PREFIX_LINES);
+  const trailerLines =
+    trailer?.lines?.length
+      ? trailer.lines.map((line) => line.trim()).filter((line) => line.length > 0)
+      : invoice.piePagina.mensajes;
+
+  return {
+    ...invoice,
+    encabezado: {
+      lineas: [...prefix, ...addressTail],
+    },
+    piePagina: {
+      ...invoice.piePagina,
+      mensajes: trailerLines,
     },
   };
 }

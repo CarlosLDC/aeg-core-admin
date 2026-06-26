@@ -40,7 +40,11 @@ import {
   validateFacturaNroInput,
   type VenezuelanFiscalInvoiceData,
 } from "@/lib/venezuelan-fiscal-invoice";
-import { extractEnajenacionTicketFromInvoice } from "@/lib/enajenacion-ticket";
+import {
+  applyPrinterTicketToDispositionInvoice,
+  extractEnajenacionTicketFromInvoice,
+} from "@/lib/enajenacion-ticket";
+import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -225,19 +229,25 @@ export function PrinterDispositionView({
   ]);
 
   useEffect(() => {
-    if (!invoiceData) {
+    if (!invoiceData || !printer) {
       queueMicrotask(() => {
         setInvoiceDraft(null);
         setInvoiceBaseline(null);
       });
       return;
     }
+    const merged = applyPrinterTicketToDispositionInvoice(
+      invoiceData,
+      printer.header,
+      printer.trailer,
+      selectedContributorType,
+    );
     queueMicrotask(() => {
-      setInvoiceDraft(invoiceData);
-      setInvoiceBaseline(invoiceData);
+      setInvoiceDraft(merged);
+      setInvoiceBaseline(merged);
       setInvoiceEditSessionKey((current) => current + 1);
     });
-  }, [invoiceData]);
+  }, [invoiceData, printer, selectedContributorType]);
 
   const hasInvoiceChanges = useMemo(() => {
     if (!invoiceDraft || !invoiceBaseline) return false;
@@ -320,7 +330,9 @@ export function PrinterDispositionView({
         trailer: ticket.trailer,
       });
       toast.success(
-        `Configuración de ticket guardada para ${printer.fiscalSerial}. La impresora puede iniciar el ritual MQTT.`,
+        isPrinterPendingMqttEnajenacion(printer)
+          ? `Configuración de ticket actualizada para ${printer.fiscalSerial}.`
+          : `Configuración de ticket guardada para ${printer.fiscalSerial}. La impresora puede iniciar el ritual MQTT.`,
         {
           href: printerPath(printer.id),
         },
@@ -397,7 +409,9 @@ export function PrinterDispositionView({
               )}
             >
               {saving && <Loader2 className="size-4 animate-spin" />}
-              Confirmar configuración de ticket
+              {printer.header?.lines?.length
+                ? "Guardar cambios de ticket"
+                : "Confirmar configuración de ticket"}
             </button>
           </div>
         </form>

@@ -996,6 +996,7 @@ export function PrintersManager() {
           companies={companies}
           distributors={distributors}
           catalogLoading={catalogLoading}
+          reconfigure={isPrinterPendingMqttEnajenacion(dispositionPrinter)}
           onClose={closeDisposition}
           onContinue={handleDispositionContinue}
         />
