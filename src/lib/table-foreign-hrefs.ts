@@ -48,7 +48,7 @@ export function hrefForPrinter(
   );
 }
 
-/** Distribuidor: detalle de cliente; admin/técnico: sucursal del cliente. */
+/** Técnico: sucursal del cliente; admin: detalle de cliente si aplica. */
 export function hrefForClient(
   clientId: number | null | undefined,
   clients: ClientResponse[],
@@ -57,10 +57,11 @@ export function hrefForClient(
   if (clientId == null) return undefined;
   const client = clients.find((c) => c.id === clientId);
   if (!client) return undefined;
-  return hrefFirstAccessible(role, [
-    clientPath(client.id),
-    branchPath(client.branchId),
-  ]);
+  const paths =
+    role === "TECHNICIAN"
+      ? [branchPath(client.branchId), clientPath(client.id)]
+      : [clientPath(client.id), branchPath(client.branchId)];
+  return hrefFirstAccessible(role, paths);
 }
 
 export function hrefForBranch(

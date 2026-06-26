@@ -18,8 +18,8 @@ const client: ClientResponse = {
 };
 
 describe("hrefForClient", () => {
-  it("links TECHNICIAN to client detail", () => {
-    expect(hrefForClient(10, [client], "TECHNICIAN")).toBe("/clients/10");
+  it("links TECHNICIAN to branch detail", () => {
+    expect(hrefForClient(10, [client], "TECHNICIAN")).toBe("/branches/99");
   });
 
   it("links ADMIN to branch detail when client route is denied", () => {

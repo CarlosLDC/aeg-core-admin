@@ -425,8 +425,8 @@ export function ClientView() {
   return (
     <>
       <ResourceViewShell
-        backHref="/clients"
-        backLabel="Volver a clientes"
+        backHref="/branches"
+        backLabel="Volver a empresas"
         title={title}
         subtitle={rif !== "—" ? rif : undefined}
         loading={loading}

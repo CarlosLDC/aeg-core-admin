@@ -53,9 +53,9 @@ describe("canAccessRoute", () => {
     expect(canAccessRoute("TECHNICIAN", "/users")).toBe(false);
   });
 
-  it("allows TECHNICIAN dashboard and clients, not companies list", () => {
+  it("allows TECHNICIAN dashboard and branches, not companies list", () => {
     expect(canAccessRoute("TECHNICIAN", "/")).toBe(true);
-    expect(canAccessRoute("TECHNICIAN", "/clients")).toBe(true);
+    expect(canAccessRoute("TECHNICIAN", "/branches")).toBe(true);
     expect(canAccessRoute("TECHNICIAN", "/companies")).toBe(false);
   });
 

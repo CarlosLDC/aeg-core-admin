@@ -39,7 +39,7 @@ export type DashboardStat = {
 const STAT_HREFS: Record<string, string> = {
   Empresas: "/branches",
   Impresoras: "/printers",
-  Clientes: "/clients",
+  Clientes: "/branches",
   Usuarios: "/users",
   Distribuidores: "/branches",
   "Centros de servicio": "/branches",

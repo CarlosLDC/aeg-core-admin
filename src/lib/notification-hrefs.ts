@@ -10,7 +10,6 @@ import {
   serviceCenterContractPath,
   technicalServicePath,
 } from "@/lib/resource-routes";
-import { hrefForClient } from "@/lib/table-foreign-hrefs";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse } from "@/types/branch-role";
 import type { Role } from "@/types/user";
@@ -26,17 +25,8 @@ export function resolveNotificationHref(
 export function notificationHrefForBranch(
   branch: BranchResponse,
   role: Role,
-  clients: ClientResponse[],
+  _clients: ClientResponse[],
 ): string | null {
-  if (role === "TECHNICIAN") {
-    const client = clients.find((c) => c.branchId === branch.id);
-    if (client) {
-      return resolveNotificationHref(
-        role,
-        hrefForClient(client.id, clients, role),
-      );
-    }
-  }
   return resolveNotificationHref(role, branchPath(branch.id));
 }
 

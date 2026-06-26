@@ -63,10 +63,16 @@ export function canAccessRoute(role: Role, pathname: string): boolean {
   const resource = resourceForPath(normalized);
   if (!can(role, resource, "read")) return false;
 
-  // Técnico: detalle de empresa de cliente sí; listado /companies no (menú /clients).
+  // Técnico: detalle de empresa sí; listado legacy /companies no.
   if (role === "TECHNICIAN") {
     if (normalized === "/companies") return false;
     if (normalized.startsWith("/companies/")) return true;
+  }
+
+  // Legacy /clients: listado redirige a /branches; detalle redirige a /branches/:id.
+  if (normalized === "/clients" || normalized.startsWith("/clients/")) {
+    if (role === "ADMIN") return false;
+    return role === "TECHNICIAN";
   }
 
   const navPath = resolveNavPath(normalized);

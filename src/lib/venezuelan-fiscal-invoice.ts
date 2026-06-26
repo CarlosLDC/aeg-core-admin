@@ -1,7 +1,10 @@
 import {
   FISCAL_TICKET_CHARSET,
   encodeLatin2,
+  FACTURA_NRO_PATTERN,
+  hasAccentedOrNonLatin2TicketChar,
   normalizeFiscalTicketText,
+  sanitizeFacturaNroInput,
 } from "@/lib/fiscal-ticket-latin2";
 import { normalizeRif } from "@/lib/seniat-extract";
 
@@ -165,14 +168,20 @@ function resolveCompanyAddress(branch: BranchResponse | undefined): string {
 }
 
 export function normalizeFacturaNroInput(value: string): string {
-  return value.trim();
+  return sanitizeFacturaNroInput(value.trim());
 }
 
 export function validateFacturaNroInput(value: string): string | null {
-  const normalized = normalizeFacturaNroInput(value);
-  if (!normalized) return "Ingresa el número de factura.";
-  if (normalized.length > 20) {
+  const trimmed = value.trim();
+  if (!trimmed) return "Ingresa el número de factura.";
+  if (trimmed.length > 20) {
     return "El número de factura no puede superar 20 caracteres.";
+  }
+  if (!FACTURA_NRO_PATTERN.test(trimmed)) {
+    return "El número de factura solo puede usar letras sin tilde, dígitos y símbolos básicos.";
+  }
+  if (hasAccentedOrNonLatin2TicketChar(trimmed)) {
+    return "El número de factura no puede contener tildes ni caracteres fuera de Latin-2.";
   }
   return null;
 }

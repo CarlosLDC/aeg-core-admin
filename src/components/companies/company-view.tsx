@@ -136,8 +136,8 @@ export function CompanyView() {
   return (
     <>
       <ResourceViewShell
-        backHref={isDistributor ? "/clients" : "/companies"}
-        backLabel={isDistributor ? "Volver a clientes" : "Volver a empresas"}
+        backHref={isDistributor ? "/branches" : "/companies"}
+        backLabel="Volver a empresas"
         title={title}
         subtitle={company?.businessName || undefined}
         loading={loading}

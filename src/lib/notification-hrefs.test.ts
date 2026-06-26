@@ -36,10 +36,10 @@ describe("notification hrefs", () => {
     );
   });
 
-  it("links technician branch notifications to client detail when available", () => {
+  it("links technician branch notifications to branch detail", () => {
     expect(
       notificationHrefForBranch(branch, "TECHNICIAN", [client]),
-    ).toBe("/clients/7");
+    ).toBe("/branches/99");
   });
 
   it("links company notifications to an accessible branch detail", () => {
@@ -48,6 +48,6 @@ describe("notification hrefs", () => {
     ).toBe("/branches/99");
     expect(
       notificationHrefForCompany(10, "TECHNICIAN", [branch], [client]),
-    ).toBe("/clients/7");
+    ).toBe("/branches/99");
   });
 });

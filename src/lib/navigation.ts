@@ -5,7 +5,6 @@ import {
   Settings,
   Printer,
   FileDigit,
-  UserRound,
   FileText,
   Stamp,
   Wrench,
@@ -65,12 +64,6 @@ export const navSections: NavSection[] = [
   {
     title: "Organización",
     items: [
-      {
-        title: "Clientes",
-        href: "/clients",
-        icon: UserRound,
-        roles: ["TECHNICIAN"],
-      },
       {
         title: "Empresas",
         href: "/branches",

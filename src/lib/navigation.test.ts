@@ -45,9 +45,8 @@ describe("navSectionsForRole", () => {
     const technicianItems = navItemsForRole("TECHNICIAN");
     const fiscalBook = technicianItems.find((i) => i.title === "Libro fiscal");
     expect(fiscalBook?.href).toBe(FISCAL_BOOKS_APP_URL);
-    expect(navItemsForRole("TECHNICIAN").some((i) => i.title === "Libro fiscal")).toBe(
-      true,
-    );
+    expect(technicianItems.some((i) => i.title === "Clientes")).toBe(false);
+    expect(technicianItems.some((i) => i.title === "Empresas")).toBe(true);
     expect(navItemsForRole("SENIAT").some((i) => i.title === "Libro fiscal")).toBe(
       false,
     );

@@ -13,6 +13,7 @@ import {
   formatRifForFiscalDisplay,
   splitAddressLines,
   syncInvoiceAmounts,
+  validateFacturaNroInput,
 } from "./venezuelan-fiscal-invoice";
 
 const branch: BranchResponse = {
@@ -179,6 +180,14 @@ describe("venezuelan fiscal invoice", () => {
 
   it("renders ticket separator with 68 characters", () => {
     expect(fiscalTicketSeparator()).toHaveLength(68);
+  });
+
+  it("rejects invoice numbers with tildes or unsupported characters", () => {
+    expect(validateFacturaNroInput("00012345")).toBeNull();
+    expect(validateFacturaNroInput("F-2026/01")).toBeNull();
+    expect(validateFacturaNroInput("factúra")).not.toBeNull();
+    expect(validateFacturaNroInput("00012ñ45")).not.toBeNull();
+    expect(validateFacturaNroInput("factura™")).not.toBeNull();
   });
 
   it("recalculates taxes when item price changes", () => {

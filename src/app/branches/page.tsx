@@ -8,7 +8,7 @@ export default function BranchesPage() {
       title="Empresas"
       description="Empresas registradas y sus roles operativos"
     >
-      <RoleGuard path="/branches" redirectTo="/clients">
+      <RoleGuard path="/branches">
         <BranchesManager />
       </RoleGuard>
     </AdminShell>

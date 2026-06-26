@@ -10,6 +10,12 @@ import {
 } from "@/components/branches/branch-create-wizard-dialog";
 import { emptyBranchWizardContractDraft } from "@/components/branches/branch-wizard-types";
 import {
+  ClientEditDialog,
+  type ClientEditValues,
+} from "@/components/clients/client-edit-dialog";
+import { ContributorBadge } from "@/components/companies/contributor-badge";
+import {
+  DetailCard,
   DetailField,
   DetailSection,
 } from "@/components/resource-view/detail-fields";
@@ -23,6 +29,7 @@ import { useConfirm } from "@/context/confirm-provider";
 import { useContractPartyCoverage } from "@/hooks/use-contract-party-coverage";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
+  canCancelModificationReview,
   canDeleteBranchRecord,
   canUpdateBranchRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
@@ -41,6 +48,23 @@ import {
   getBranchesErrorMessage,
   updateBranch,
 } from "@/lib/branches-api";
+import { toClientModificationProposedData } from "@/lib/client-form";
+import {
+  fetchClientByBranchId,
+  getClientsErrorMessage,
+  requestClientDelete,
+  requestClientUpdate,
+} from "@/lib/clients-api";
+import {
+  cancelClientModificationRequest,
+  fetchClientModificationRequestById,
+  getClientModificationRequestsErrorMessage,
+} from "@/lib/client-modification-requests-api";
+import {
+  fetchCompanyById,
+  getCompaniesErrorMessage,
+  updateCompany,
+} from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { formatDate } from "@/lib/datetime-form";
 import {
@@ -53,7 +77,8 @@ import { hrefForBranchClientDistributor } from "@/lib/table-foreign-hrefs";
 import { toBranchRequest } from "@/lib/branch-request";
 import { invalidateCatalogRoles } from "@/lib/catalog-roles-cache";
 import type { BranchWithRoles } from "@/types/branch";
-import type { DistributorResponse } from "@/types/branch-role";
+import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
+import type { ClientModificationProposedData } from "@/types/client-modification-request";
 import type { CompanyResponse } from "@/types/company";
 
 type BranchFormValues = {
@@ -129,20 +154,27 @@ export function BranchView() {
   const confirm = useConfirm();
   const { user } = useAuth();
   const { scope, refresh } = useCompanyScope();
-  const isDistributor = user?.role === "TECHNICIAN";
+  const isTechnician = user?.role === "TECHNICIAN";
   const canModify = user ? canUpdateBranchRecord(user.role) : false;
   const canDelete = user ? canDeleteBranchRecord(user.role) : false;
+  const canRequestReview = isTechnician;
+  const canCancelReview = user ? canCancelModificationReview(user.role) : false;
   const canReadContracts = user ? can(user.role, "contracts", "read") : false;
   const contractCoverage = useContractPartyCoverage(canReadContracts);
 
   const [branch, setBranch] = useState<BranchWithRoles | null>(null);
+  const [client, setClient] = useState<ClientResponse | null>(null);
+  const [company, setCompany] = useState<CompanyResponse | null>(null);
   const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [cancellingReview, setCancellingReview] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [pendingProposed, setPendingProposed] =
+    useState<Partial<ClientModificationProposedData> | null>(null);
 
   const companies: CompanyResponse[] = scope?.companies ?? [];
   const branches = scope?.branches ?? [];
@@ -168,6 +200,59 @@ export function BranchView() {
       }
       setBranch(branchData);
       setDistributors(distributorRows);
+
+      if (isTechnician && branchData.client) {
+        try {
+          const clientRow = await fetchClientByBranchId(branchData.id);
+          if (!clientRow) {
+            setClient(null);
+            setCompany(null);
+            setPendingProposed(null);
+            return;
+          }
+          if (
+            user?.distributorId != null &&
+            clientRow.distributorId !== user.distributorId
+          ) {
+            setError("No tienes acceso a esta empresa.");
+            setClient(null);
+            setCompany(null);
+            return;
+          }
+          setClient(clientRow);
+          if (
+            clientRow.reviewStatus === "PENDING_REVIEW" &&
+            clientRow.activeModificationRequestId != null
+          ) {
+            try {
+              const detail = await fetchClientModificationRequestById(
+                clientRow.activeModificationRequestId,
+              );
+              setPendingProposed(
+                detail.actionType === "UPDATE" ? detail.proposedData : null,
+              );
+            } catch {
+              setPendingProposed(null);
+            }
+          } else {
+            setPendingProposed(null);
+          }
+          try {
+            const companyRow = await fetchCompanyById(branchData.companyId);
+            setCompany(companyRow);
+          } catch {
+            setCompany(null);
+          }
+        } catch {
+          setClient(null);
+          setCompany(null);
+          setPendingProposed(null);
+        }
+      } else {
+        setClient(null);
+        setCompany(null);
+        setPendingProposed(null);
+      }
     } catch (err) {
       setError(
         getBranchesErrorMessage(err) || getBranchRolesErrorMessage(err),
@@ -175,11 +260,38 @@ export function BranchView() {
     } finally {
       setLoading(false);
     }
-  }, [id, scope, user]);
+  }, [id, scope, user, isTechnician]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  async function handleDelete() {
+    if (!branch || !canDelete) {
+      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+      return;
+    }
+    const label = `${branch.city}, ${branch.state}`;
+    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la empresa "${label}"? Se quitarán también sus roles (cliente, distribuidor, centro de servicio) si existen.`, destructive: true }))) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await deleteBranchRoles(branch);
+      await deleteBranch(branch.id);
+      invalidateCatalogRoles();
+      await refresh();
+      toast.success(`Empresa "${label}" eliminada.`);
+      router.push("/branches");
+    } catch (err) {
+      const message =
+        getBranchesErrorMessage(err) || getBranchRolesErrorMessage(err);
+      toast.error(message);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function handleSubmit(values: BranchWizardValues) {
     if (!branch || !canModify) {
@@ -215,38 +327,162 @@ export function BranchView() {
     }
   }
 
-  async function handleDelete() {
-    if (!branch || !canDelete) {
-      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+  async function handleClientEdit(values: ClientEditValues) {
+    if (!client || !branch || !company) {
+      setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
-    const label = `${branch.city}, ${branch.state}`;
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la empresa "${label}"? Se quitarán también sus roles (cliente, distribuidor, centro de servicio) si existen.`, destructive: true }))) {
+    if (client.reviewStatus === "PENDING_REVIEW") {
+      setFormError("Esta empresa tiene una solicitud pendiente de aprobación.");
       return;
     }
 
-    setDeleting(true);
+    setSaving(true);
+    setFormError(null);
     try {
-      await deleteBranchRoles(branch);
-      await deleteBranch(branch.id);
-      invalidateCatalogRoles();
-      await refresh();
-      toast.success(`Empresa "${label}" eliminada.`);
-      router.push("/branches");
+      await requestClientUpdate(
+        client.id,
+        toClientModificationProposedData(values, client.distributorId),
+      );
+      setEditOpen(false);
+      await load();
+      toast.success("Solicitud de actualización enviada a revisión.", {
+        href: branchPath(branch.id),
+      });
     } catch (err) {
       const message =
-        getBranchesErrorMessage(err) || getBranchRolesErrorMessage(err);
+        getCompaniesErrorMessage(err) || getClientsErrorMessage(err);
+      setFormError(message);
       toast.error(message);
     } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleClientDelete() {
+    if (!client || !canRequestReview) return;
+    if (client.reviewStatus === "PENDING_REVIEW") {
+      toast.error("Esta empresa ya tiene una solicitud pendiente de aprobación.");
+      return;
+    }
+    const accepted = await confirm({
+      title: "Eliminar",
+      message:
+        "¿Eliminar esta empresa? Un administrador debe aprobar la solicitud.",
+      destructive: true,
+    });
+    if (!accepted) return;
+    setDeleting(true);
+    try {
+      await requestClientDelete(client.id);
+      await load();
+      toast.success("Solicitud de eliminación enviada a revisión.");
+    } catch (err) {
+      toast.error(getClientsErrorMessage(err));
+    } finally {
       setDeleting(false);
+    }
+  }
+
+  async function handleCancelReview() {
+    if (!client || !canCancelReview) return;
+    const requestId = client.activeModificationRequestId;
+    if (requestId == null) {
+      toast.error("No hay una solicitud de revisión activa para cancelar.");
+      return;
+    }
+    const accepted = await confirm({
+      title: "Cancelar revisión",
+      message:
+        "¿Deseas retirar la solicitud pendiente? La empresa volverá a estar activa sin cambios.",
+      destructive: true,
+      confirmLabel: "Cancelar revisión",
+    });
+    if (!accepted) return;
+
+    setCancellingReview(true);
+    try {
+      await cancelClientModificationRequest(requestId);
+      await load();
+      toast.success("Solicitud de revisión cancelada.");
+    } catch (err) {
+      toast.error(getClientModificationRequestsErrorMessage(err));
+    } finally {
+      setCancellingReview(false);
     }
   }
 
   const companyLabel = branch
     ? companyNameById(companies, branch.companyId)
     : "";
+  const businessName =
+    pendingProposed?.businessName?.trim() ||
+    company?.businessName?.trim() ||
+    client?.companyBusinessName?.trim() ||
+    companyLabel;
+  const rif =
+    pendingProposed?.rif?.trim() ||
+    company?.rif?.trim() ||
+    client?.companyRif?.trim() ||
+    "—";
+  const contributorType =
+    pendingProposed?.contributorType ?? company?.contributorType;
+  const pendingReview = client?.reviewStatus === "PENDING_REVIEW";
+  const technicianClientView = isTechnician && client != null && company != null;
+
+  const technicianDetailContent = useMemo(() => {
+    if (!client || !branch) return null;
+
+    return (
+      <DetailCard>
+        <DetailField
+          label="Tipo de contribuyente"
+          value={
+            contributorType ? (
+              <ContributorBadge type={contributorType} />
+            ) : (
+              "—"
+            )
+          }
+        />
+        <DetailField label="RIF" value={rif} mono />
+        <DetailField label="Razón social" value={businessName} />
+        <DetailField label="Estado" value={branch.state} />
+        <DetailField label="Ciudad" value={branch.city} />
+        <DetailField
+          label="Dirección"
+          value={
+            pendingProposed?.address?.trim() || branch.address?.trim() || "—"
+          }
+        />
+        <DetailField
+          label="Persona de contacto"
+          value={
+            pendingProposed?.contactPersonName?.trim() ||
+            branch.contactPersonName?.trim() ||
+            "—"
+          }
+        />
+        <DetailField
+          label="Teléfono"
+          value={
+            pendingProposed?.phone?.trim() || branch.phone?.trim() || "—"
+          }
+        />
+        <DetailField
+          label="Correo"
+          value={
+            pendingProposed?.email?.trim() || branch.email?.trim() || "—"
+          }
+        />
+      </DetailCard>
+    );
+  }, [branch, businessName, client, contributorType, pendingProposed, rif]);
+
   const title = branch
-    ? companyLabel || `${branch.city}, ${branch.state}`
+    ? technicianClientView
+      ? businessName || `${branch.city}, ${branch.state}`
+      : companyLabel || `${branch.city}, ${branch.state}`
     : "Empresa";
   const detailSteps = useMemo(() => {
     if (!branch) return [];
@@ -336,13 +572,17 @@ export function BranchView() {
   return (
     <>
       <ResourceViewShell
-        backHref={isDistributor ? "/clients" : "/branches"}
-        backLabel={isDistributor ? "Volver a clientes" : "Volver a empresas"}
+        backHref="/branches"
+        backLabel="Volver a empresas"
         title={title}
         subtitle={
-          branch && companyLabel
-            ? `${branch.city}, ${branch.state}`
-            : undefined
+          branch && technicianClientView
+            ? rif !== "—"
+              ? rif
+              : `${branch.city}, ${branch.state}`
+            : branch && companyLabel
+              ? `${branch.city}, ${branch.state}`
+              : undefined
         }
         loading={loading}
         error={error}
@@ -350,33 +590,80 @@ export function BranchView() {
           branch ? (
             <ResourceViewActions
               onEdit={
-                canModify
-                  ? () => {
-                      setFormError(null);
-                      setEditOpen(true);
-                    }
+                technicianClientView
+                  ? !pendingReview
+                    ? () => {
+                        setFormError(null);
+                        setEditOpen(true);
+                      }
+                    : undefined
+                  : canModify
+                    ? () => {
+                        setFormError(null);
+                        setEditOpen(true);
+                      }
+                    : undefined
+              }
+              onDelete={
+                technicianClientView
+                  ? canRequestReview && !pendingReview
+                    ? () => void handleClientDelete()
+                    : undefined
+                  : canDelete
+                    ? () => void handleDelete()
+                    : undefined
+              }
+              onCancelReview={
+                technicianClientView && canCancelReview && pendingReview
+                  ? () => void handleCancelReview()
                   : undefined
               }
-              onDelete={canDelete ? () => void handleDelete() : undefined}
-              deleting={deleting}
+              deleting={saving || deleting || cancellingReview}
             />
           ) : undefined
         }
       >
         {branch ? (
           <div className="space-y-4">
+            {pendingReview && technicianClientView && (
+              <p
+                role="status"
+                className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200"
+              >
+                En revisión: espera la decisión del administrador o cancela la
+                solicitud.
+              </p>
+            )}
             {missingContractLabelsForBranch.length > 0 ? (
               <BranchMissingContractNotice
                 missingLabels={missingContractLabelsForBranch}
                 showContractsLink={canReadContracts}
               />
             ) : null}
-            <DetailSectionsPager key={branch.id} steps={detailSteps} />
+            {technicianClientView ? (
+              technicianDetailContent
+            ) : (
+              <DetailSectionsPager key={branch.id} steps={detailSteps} />
+            )}
           </div>
         ) : null}
       </ResourceViewShell>
 
-      {branch && editOpen && (
+      {branch && editOpen && technicianClientView && company ? (
+        <ClientEditDialog
+          open={editOpen}
+          saving={saving}
+          error={formError}
+          company={company}
+          branch={branch}
+          onClose={() => {
+            if (!saving) setEditOpen(false);
+          }}
+          onSubmit={(values) => void handleClientEdit(values)}
+        />
+      ) : null}
+
+      {branch && editOpen && !technicianClientView && (
         <BranchCreateWizardDialog
           mode="edit"
           initialValues={branchToWizardValues(branch, companies)}

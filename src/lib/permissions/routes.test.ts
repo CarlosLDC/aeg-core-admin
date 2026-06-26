@@ -30,14 +30,14 @@ describe("route permissions", () => {
     expect(canAccessRoute("TECHNICIAN", "/docs/enajenacion-mqtt")).toBe(false);
   });
 
-  it("allows TECHNICIAN on /clients and denies /companies list", () => {
+  it("allows TECHNICIAN on /branches and legacy client detail redirect", () => {
     expect(canAccessRoute("TECHNICIAN", "/clients")).toBe(true);
     expect(resourceForPath("/clients")).toBe("branches");
     expect(canAccessRoute("TECHNICIAN", "/companies")).toBe(false);
     expect(canAccessRoute("TECHNICIAN", "/companies/42")).toBe(true);
   });
 
-  it("allows ADMIN on /companies; /clients is TECHNICIAN-only in nav", () => {
+  it("allows ADMIN on /companies; legacy /clients is TECHNICIAN-only", () => {
     expect(canAccessRoute("ADMIN", "/companies")).toBe(true);
     expect(canAccessRoute("ADMIN", "/clients")).toBe(false);
   });

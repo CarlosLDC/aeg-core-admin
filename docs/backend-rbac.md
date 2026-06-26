@@ -109,6 +109,7 @@ Claims: `role`, `distributorId`, `nationalId`, `userId`.
 - `/api/distributor-contracts`, `/api/service-center-contracts` — solo ADMIN
 - `/api/printer-models` GET — ADMIN, TECHNICIAN
 - `/api/companies`, `/api/branches`, `/api/printers`, `/api/annual-inspections/**` — según `docs/permissions-matrix.md`
+- `POST /api/printers/{id}/enajenar` — `ADMIN`, `TECHNICIAN` (alcance por `distributorId`)
 - `POST`/`PUT` `/api/annual-inspections` — la impresora debe existir, estar en alcance y tener estatus `asignada` (400 si no)
 
 ## Pruebas de integración
