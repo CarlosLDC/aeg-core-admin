@@ -15,6 +15,7 @@ import {
 } from "@/components/printers/printer-form-dialog";
 import { runSerialBatch } from "@/lib/batch-create";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
+import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-mqtt-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import {
@@ -99,6 +100,7 @@ import type { PrinterModelResponse } from "@/types/printer-model";
 import type { PrinterResponse, PrinterStatus } from "@/types/printer";
 import { isPrinterUnassigned } from "@/lib/printer-status";
 import { getPrinterStatusQuickAction } from "@/lib/printer-quick-actions";
+import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
@@ -925,11 +927,16 @@ export function PrintersManager() {
                             {printer.fiscalSerial}
                           </td>
                           <td className="px-5 py-3.5" data-row-click="ignore">
-                            <PrinterStatusBadge
-                              status={printer.status}
-                              onClick={statusQuickAction?.onClick}
-                              actionLabel={statusQuickAction?.label}
-                            />
+                            <div className="flex flex-wrap items-center gap-2">
+                              <PrinterStatusBadge
+                                status={printer.status}
+                                onClick={statusQuickAction?.onClick}
+                                actionLabel={statusQuickAction?.label}
+                              />
+                              {isPrinterPendingMqttEnajenacion(printer) ? (
+                                <PrinterPendingMqttBadge />
+                              ) : null}
+                            </div>
                           </td>
                           {!isDistributor ? (
                             <td className="max-w-[160px] px-5 py-3.5 text-muted">

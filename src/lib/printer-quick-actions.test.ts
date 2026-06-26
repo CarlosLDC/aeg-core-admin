@@ -43,6 +43,22 @@ describe("getPrinterStatusQuickAction", () => {
     expect(action).toBeNull();
   });
 
+  it("hides dispose when ticket is saved and MQTT is pending", () => {
+    const action = getPrinterStatusQuickAction({
+      status: "asignada",
+      printer: {
+        ...paidPrinter,
+        status: "asignada",
+        clientId: 10,
+        header: { lines: ["ENCABEZADO"] },
+      },
+      canAssign: false,
+      canDispose: true,
+      ...handlers,
+    });
+    expect(action).toBeNull();
+  });
+
   it("returns null when no action is allowed", () => {
     const action = getPrinterStatusQuickAction({
       status: "asignada",

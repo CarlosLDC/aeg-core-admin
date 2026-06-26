@@ -1,5 +1,6 @@
 import { isPrinterAssigned, isPrinterUnassigned } from "@/lib/printer-status";
 import { isPrinterPaidForDisposition } from "@/lib/printer-form";
+import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
 import type { PrinterResponse } from "@/types/printer";
 
 export type PrinterStatusQuickAction = {
@@ -20,6 +21,9 @@ export function getPrinterStatusQuickAction(params: {
     return { onClick: params.onAssign, label: "Asignar impresora" };
   }
   if (params.canDispose && isPrinterAssigned(params.status)) {
+    if (params.printer != null && isPrinterPendingMqttEnajenacion(params.printer)) {
+      return null;
+    }
     const paid =
       params.printer != null
         ? isPrinterPaidForDisposition(params.printer)

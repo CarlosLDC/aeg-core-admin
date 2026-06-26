@@ -19,6 +19,8 @@ import {
 } from "@/lib/table-foreign-hrefs";
 import { DetailSectionsPager } from "@/components/resource-view/detail-sections-pager";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
+import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-mqtt-badge";
+import { PrinterTicketConfigPanel } from "@/components/printers/printer-ticket-json-preview";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -38,6 +40,7 @@ import {
   isDistributorSelfClient,
 } from "@/lib/distributor-scope";
 import { isPrinterUnassigned } from "@/lib/printer-status";
+import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
 import { getPrinterStatusQuickAction } from "@/lib/printer-quick-actions";
 import { assertPrinterInScope } from "@/lib/permissions/scope-access";
 import { useDistributorStaffBranchId } from "@/hooks/use-distributor-staff-branch-id";
@@ -340,61 +343,60 @@ export function PrinterView() {
     if (!printer) return null;
 
     return (
-      <DetailCard>
-        <DetailField
-          label="Tipo de equipo"
-          value={DEVICE_TYPE_LABELS[printer.deviceType]}
-        />
-        <DetailField
-          label="Estatus"
-          value={
-            <PrinterStatusBadge
-              status={printer.status}
-              onClick={statusQuickAction?.onClick}
-              actionLabel={statusQuickAction?.label}
-            />
-          }
-        />
-        <DetailField
-          label="Estado de pago"
-          value={printerPaidLabel(printer.paid)}
-        />
-        <DetailField
-          label="Fecha de configuración"
-          value={formatDate(printer.installationDate)}
-        />
-        {printer.header?.lines?.length ? (
+      <>
+        <DetailCard>
           <DetailField
-            label="Encabezado MQTT"
-            value={printer.header.lines.join(" · ")}
+            label="Tipo de equipo"
+            value={DEVICE_TYPE_LABELS[printer.deviceType]}
           />
-        ) : null}
-        {printer.trailer?.lines?.length ? (
           <DetailField
-            label="Pie MQTT"
-            value={printer.trailer.lines.join(" · ")}
+            label="Estatus"
+            value={
+              <div className="flex flex-wrap items-center gap-2">
+                <PrinterStatusBadge
+                  status={printer.status}
+                  onClick={statusQuickAction?.onClick}
+                  actionLabel={statusQuickAction?.label}
+                />
+                {isPrinterPendingMqttEnajenacion(printer) ? (
+                  <PrinterPendingMqttBadge />
+                ) : null}
+              </div>
+            }
           />
-        ) : null}
-        <DetailField
-          label="Cliente"
-          value={
-            printer.clientId != null
-              ? clientLabelById.get(printer.clientId) ?? "—"
-              : "Sin asignar"
-          }
-          href={
-            user
-              ? hrefForClient(printer.clientId, clients, user.role)
-              : undefined
-          }
+          <DetailField
+            label="Estado de pago"
+            value={printerPaidLabel(printer.paid)}
+          />
+          <DetailField
+            label="Fecha de configuración"
+            value={formatDate(printer.installationDate)}
+          />
+          <DetailField
+            label="Cliente"
+            value={
+              printer.clientId != null
+                ? clientLabelById.get(printer.clientId) ?? "—"
+                : "Sin asignar"
+            }
+            href={
+              user
+                ? hrefForClient(printer.clientId, clients, user.role)
+                : undefined
+            }
+          />
+          <DetailField
+            label="Firmware"
+            value={printer.versionFirmware || "—"}
+            mono
+          />
+          <DetailField label="MAC" value={printer.macAddress || "—"} mono />
+        </DetailCard>
+        <PrinterTicketConfigPanel
+          header={printer.header}
+          trailer={printer.trailer}
         />
-        <DetailField
-          label="Firmware"
-          value={printer.versionFirmware || "—"}
-          mono
-        />
-        <DetailField label="MAC" value={printer.macAddress || "—"} mono />
-      </DetailCard>
+      </>
     );
   }, [
     printer,
@@ -447,11 +449,16 @@ export function PrinterView() {
             <DetailField
               label="Estatus"
               value={
-                <PrinterStatusBadge
-                  status={printer.status}
-                  onClick={statusQuickAction?.onClick}
-                  actionLabel={statusQuickAction?.label}
-                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <PrinterStatusBadge
+                    status={printer.status}
+                    onClick={statusQuickAction?.onClick}
+                    actionLabel={statusQuickAction?.label}
+                  />
+                  {isPrinterPendingMqttEnajenacion(printer) ? (
+                    <PrinterPendingMqttBadge />
+                  ) : null}
+                </div>
               }
             />
             <DetailField
@@ -459,9 +466,26 @@ export function PrinterView() {
               value={printerPaidLabel(printer.paid)}
             />
             <DetailField
-              label="Fecha de enajenación"
+              label="Fecha de configuración"
               value={formatDate(printer.installationDate)}
             />
+          </DetailSection>
+        ),
+      },
+      {
+        id: "ticket-mqtt",
+        label: "Ticket MQTT",
+        content: (
+          <DetailSection title="Campos JSON del ticket">
+            <PrinterTicketConfigPanel
+              header={printer.header}
+              trailer={printer.trailer}
+            />
+            {!printer.header?.lines?.length && !printer.trailer?.lines?.length ? (
+              <p className="text-sm text-muted">
+                Aún no hay configuración de ticket guardada para esta impresora.
+              </p>
+            ) : null}
           </DetailSection>
         ),
       },
@@ -723,7 +747,9 @@ export function PrinterView() {
       >
         {printer &&
           (isDistributor ? (
-            distributorDetailContent
+            <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+              {distributorDetailContent}
+            </div>
           ) : (
             <DetailSectionsPager key={printer.id} steps={adminDetailSteps} />
           ))}
