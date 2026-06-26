@@ -27,6 +27,11 @@ describe("fiscal ticket latin-2", () => {
     );
   });
 
+  it("encodes spanish i acute as single latin-2 byte", () => {
+    const bytes = encodeLatin2("í");
+    expect(bytes).toEqual(new Uint8Array([0xed]));
+  });
+
   it("encodes and decodes spanish accents in latin-2", () => {
     const text = "ENAJENACION EN CARACAS";
     const bytes = encodeLatin2(text);

@@ -1,6 +1,7 @@
 import type { ContributorType } from "@/types/company";
 import type { VenezuelanFiscalInvoiceData } from "@/lib/venezuelan-fiscal-invoice";
 import type { PrinterTicketSection } from "@/types/printer";
+import { normalizeFiscalTicketText } from "@/lib/fiscal-ticket-latin2";
 import { buildEncFacFijoLines } from "@/lib/enajenacion-mqtt-protocol";
 
 export const FIXED_ENCABEZADO_PREFIX_LINES = 3;
@@ -31,7 +32,7 @@ export function extractEnajenacionHeaderLines(
 
   let tail = encabezadoLineas
     .slice(FIXED_ENCABEZADO_PREFIX_LINES)
-    .map((line) => line.trim());
+    .map((line) => normalizeFiscalTicketText(line.trim()));
   const contributor = contributorTypeLine(contributorType);
   if (tail.length > 0 && tail.at(-1)?.toUpperCase() === contributor) {
     tail = tail.slice(0, -1);
@@ -77,7 +78,9 @@ export function extractEnajenacionHeaderLines(
 export function extractEnajenacionTrailerLines(
   pieMensajes: string[],
 ): string[] {
-  return pieMensajes.map((line) => line.trim()).filter((line) => line.length > 0);
+  return pieMensajes
+    .map((line) => normalizeFiscalTicketText(line.trim()))
+    .filter((line) => line.length > 0);
 }
 
 export function extractEnajenacionTicketFromInvoice(
