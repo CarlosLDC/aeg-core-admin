@@ -51,6 +51,97 @@ export type EnajenacionTestInvoiceRequest = {
   productDescription?: string;
 };
 
+export type AnnualInspectionStaInfRequest = {
+  printerId: number;
+};
+
+export type AnnualInspectionStaInfResponse = {
+  registroImpresora: string;
+  topic: string;
+  fiscalSerial: string;
+  macAddress: string;
+  commandPayload: string;
+  response: {
+    cmd?: string | null;
+    code?: number | null;
+    dataD?: number | null;
+    dataS?: string | null;
+  };
+  publishedAt: string;
+};
+
+export type AnnualInspectionTestInvoiceRequest = {
+  printerId: number;
+  productDescription?: string;
+};
+
+export type AnnualInspectionTestInvoiceResponse = {
+  numeroFacturaPrueba: number;
+  topic: string;
+  fiscalSerial: string;
+  macAddress: string;
+  commandPayload: string;
+  response: Array<{
+    cmd?: string | null;
+    code?: number | null;
+    dataD?: number | null;
+    dataS?: string | null;
+  }>;
+  publishedAt: string;
+};
+
+export type AnnualInspectionTestCreditNoteRequest = {
+  printerId: number;
+  numeroFacturaPrueba: number;
+  registroImpresora: string;
+  productDescription?: string;
+};
+
+export type AnnualInspectionTestCreditNoteResponse = {
+  topic: string;
+  fiscalSerial: string;
+  macAddress: string;
+  commandPayload: string;
+  response: Array<{
+    cmd?: string | null;
+    code?: number | null;
+    dataD?: number | null;
+    dataS?: string | null;
+  }>;
+  publishedAt: string;
+};
+
+export type AnnualInspectionSubmitRequest = {
+  printerId: number;
+  chkPrecinto: boolean;
+  chkEtiquetaFiscal: boolean;
+  chkFactura: boolean;
+  chkNotaCredito: boolean;
+  chkSensorPapel: boolean;
+};
+
+export type AnnualInspectionSubmitResponse = {
+  dataTimestamp: number;
+  inspAo: {
+    precinto: string;
+    etiqFisc: string;
+    impFact: string;
+    impNC: string;
+    sensPapel: string;
+  };
+  topic: string;
+  fiscalSerial: string;
+  macAddress: string;
+  commandPayload: string;
+  response: {
+    cmd?: string | null;
+    code?: number | null;
+    dataD?: number | null;
+    dataS?: string | null;
+  };
+  publishedAt: string;
+};
+
 export type MqttTestMessageResponse = {
   status: string;
   message: string;

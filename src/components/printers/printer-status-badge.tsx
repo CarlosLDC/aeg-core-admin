@@ -22,18 +22,22 @@ type PrinterStatusBadgeProps = {
   status: PrinterStatus | string;
   onClick?: () => void;
   actionLabel?: string;
+  title?: string;
 };
 
 export function PrinterStatusBadge({
   status,
   onClick,
   actionLabel,
+  title,
 }: PrinterStatusBadgeProps) {
   const normalized = normalizePrinterStatus(status);
   const label = printerStatusLabel(status);
+  const hoverTitle = title ?? (onClick ? actionLabel : undefined);
   const className = cn(
     "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium",
     STATUS_STYLES[normalized] ?? STATUS_STYLES.desincorporada,
+    hoverTitle && !onClick && "cursor-help",
   );
 
   if (onClick) {
@@ -49,7 +53,7 @@ export function PrinterStatusBadge({
           "cursor-pointer transition hover:ring-2 hover:ring-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
         )}
         aria-label={actionLabel ?? `Acción de impresora (${label})`}
-        title={actionLabel}
+        title={hoverTitle}
       >
         <span className="inline-flex items-center gap-1">
           {label}
@@ -59,5 +63,9 @@ export function PrinterStatusBadge({
     );
   }
 
-  return <span className={className}>{label}</span>;
+  return (
+    <span className={className} title={hoverTitle}>
+      {label}
+    </span>
+  );
 }

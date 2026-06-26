@@ -153,6 +153,7 @@ describe("enajenacion-ticket", () => {
       "",
       "PUERTO LA CRUZ, ANZOATEGUI",
       "LINEA DE EJEMPLO HEADER",
+      "CONTRIBUYENTE ORDINARIO",
     ]);
     expect(restored.piePagina.mensajes).toEqual(["PIE DE EJEMPLO"]);
     expect(extractEnajenacionTicketFromInvoice(restored, "ordinario")).toEqual({

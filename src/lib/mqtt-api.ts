@@ -10,6 +10,14 @@ import type {
   EnajenacionActiveSession,
   EnajenacionTestInvoiceRequest,
   EnajenacionTestInvoiceResponse,
+  AnnualInspectionStaInfRequest,
+  AnnualInspectionStaInfResponse,
+  AnnualInspectionTestInvoiceRequest,
+  AnnualInspectionTestInvoiceResponse,
+  AnnualInspectionTestCreditNoteRequest,
+  AnnualInspectionTestCreditNoteResponse,
+  AnnualInspectionSubmitRequest,
+  AnnualInspectionSubmitResponse,
   MqttConnectionProbeResult,
   MqttInboundMessage,
   MqttMonitorStatus,
@@ -148,6 +156,74 @@ export async function sendEnajenacionTestInvoice(
     },
   );
   ensureMqttSuccess(status, data, "No se pudo enviar la factura de prueba.");
+  if (data === undefined) {
+    throw new ApiError("Respuesta vacía del servidor", 500);
+  }
+  return data;
+}
+
+export async function requestAnnualInspectionStaInf(
+  body: AnnualInspectionStaInfRequest,
+): Promise<AnnualInspectionStaInfResponse> {
+  const { data, status } = await mqttFetch<AnnualInspectionStaInfResponse>(
+    `${BASE}/annual-inspection/sta-inf`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
+  ensureMqttSuccess(status, data, "No se pudo consultar StaInf en la impresora.");
+  if (data === undefined) {
+    throw new ApiError("Respuesta vacía del servidor", 500);
+  }
+  return data;
+}
+
+export async function requestAnnualInspectionTestInvoice(
+  body: AnnualInspectionTestInvoiceRequest,
+): Promise<AnnualInspectionTestInvoiceResponse> {
+  const { data, status } = await mqttFetch<AnnualInspectionTestInvoiceResponse>(
+    `${BASE}/annual-inspection/test-invoice`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
+  ensureMqttSuccess(status, data, "No se pudo enviar la factura de prueba de inspección anual.");
+  if (data === undefined) {
+    throw new ApiError("Respuesta vacía del servidor", 500);
+  }
+  return data;
+}
+
+export async function requestAnnualInspectionTestCreditNote(
+  body: AnnualInspectionTestCreditNoteRequest,
+): Promise<AnnualInspectionTestCreditNoteResponse> {
+  const { data, status } = await mqttFetch<AnnualInspectionTestCreditNoteResponse>(
+    `${BASE}/annual-inspection/test-credit-note`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
+  ensureMqttSuccess(status, data, "No se pudo enviar la nota de crédito de prueba de inspección anual.");
+  if (data === undefined) {
+    throw new ApiError("Respuesta vacía del servidor", 500);
+  }
+  return data;
+}
+
+export async function submitAnnualInspectionMqtt(
+  body: AnnualInspectionSubmitRequest,
+): Promise<AnnualInspectionSubmitResponse> {
+  const { data, status } = await mqttFetch<AnnualInspectionSubmitResponse>(
+    `${BASE}/annual-inspection/submit`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
+  ensureMqttSuccess(status, data, "No se pudo registrar la inspección anual en la impresora.");
   if (data === undefined) {
     throw new ApiError("Respuesta vacía del servidor", 500);
   }

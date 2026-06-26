@@ -99,7 +99,7 @@ import type { CompanyResponse } from "@/types/company";
 import type { PrinterModelResponse } from "@/types/printer-model";
 import type { PrinterResponse, PrinterStatus } from "@/types/printer";
 import { isPrinterUnassigned } from "@/lib/printer-status";
-import { getPrinterStatusQuickAction } from "@/lib/printer-quick-actions";
+import { getPrinterStatusQuickAction, getPrinterStatusBadgeTitle } from "@/lib/printer-quick-actions";
 import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { isDistributorPanelRole } from "@/types/user";
@@ -895,6 +895,11 @@ export function PrintersManager() {
                           onAssign: () => openAssignment(printer),
                           onDispose: () => openDisposition(printer),
                         });
+                        const statusBadgeTitle = getPrinterStatusBadgeTitle({
+                          status: printer.status,
+                          printer,
+                          canDispose: canDisposeAssigned,
+                        });
 
                         return (
                         <ClickableTableRow
@@ -933,6 +938,7 @@ export function PrintersManager() {
                                 status={printer.status}
                                 onClick={statusQuickAction?.onClick}
                                 actionLabel={statusQuickAction?.label}
+                                title={statusBadgeTitle}
                               />
                               {isPrinterPendingMqttEnajenacion(printer) ? (
                                 <PrinterPendingMqttBadge />

@@ -117,6 +117,7 @@ describe("venezuelan fiscal invoice", () => {
     expect(data?.pagos.totalGeneral).toBe(849.53);
     expect(data?.piePagina.serialFiscal).toBe("GRA0000017");
     expect(data?.piePagina.codigoImpresora).toBe("GR");
+    expect(data?.encabezado.lineas[6]).toBe("CONTRIBUYENTE ORDINARIO");
   });
 
   it("falls back to company and branch location when client fields are missing", () => {
@@ -133,6 +134,7 @@ describe("venezuelan fiscal invoice", () => {
     expect(data?.encabezado.lineas[1]).toBe("J-315694205");
     expect(data?.encabezado.lineas[2]).toBe("Cliente Demo C.A.");
     expect(data?.encabezado.lineas[5]).toBe("Caracas, Distrito Capital");
+    expect(data?.encabezado.lineas[6]).toBe("CONTRIBUYENTE ORDINARIO");
   });
 
   it("returns null for unknown client", () => {

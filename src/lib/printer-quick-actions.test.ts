@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { getPrinterStatusQuickAction } from "./printer-quick-actions";
+import {
+  getPrinterStatusBadgeTitle,
+  getPrinterStatusQuickAction,
+} from "./printer-quick-actions";
+import { PRINTER_UNPAID_DISPOSITION_MESSAGE } from "./printer-form";
 import type { PrinterResponse } from "@/types/printer";
 
 describe("getPrinterStatusQuickAction", () => {
@@ -67,5 +71,29 @@ describe("getPrinterStatusQuickAction", () => {
       ...handlers,
     });
     expect(action).toBeNull();
+  });
+});
+
+describe("getPrinterStatusBadgeTitle", () => {
+  const unpaidPrinter = { paid: false } as PrinterResponse;
+
+  it("explains why unpaid assigned printers cannot be disposed", () => {
+    expect(
+      getPrinterStatusBadgeTitle({
+        status: "asignada",
+        printer: unpaidPrinter,
+        canDispose: true,
+      }),
+    ).toBe(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+  });
+
+  it("returns undefined for paid assigned printers", () => {
+    expect(
+      getPrinterStatusBadgeTitle({
+        status: "asignada",
+        printer: { paid: true } as PrinterResponse,
+        canDispose: true,
+      }),
+    ).toBeUndefined();
   });
 });

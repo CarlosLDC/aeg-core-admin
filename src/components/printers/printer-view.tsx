@@ -44,7 +44,7 @@ import {
   isPrinterPendingMqttEnajenacion,
   PRINTER_TICKET_RECONFIGURE_LABEL,
 } from "@/lib/printer-enajenacion-ticket";
-import { getPrinterStatusQuickAction } from "@/lib/printer-quick-actions";
+import { getPrinterStatusQuickAction, getPrinterStatusBadgeTitle } from "@/lib/printer-quick-actions";
 import { assertPrinterInScope } from "@/lib/permissions/scope-access";
 import { useDistributorStaffBranchId } from "@/hooks/use-distributor-staff-branch-id";
 import { distributorLabel } from "@/lib/branch-roles";
@@ -342,6 +342,13 @@ export function PrinterView() {
         },
       })
     : null;
+  const statusBadgeTitle = printer
+    ? getPrinterStatusBadgeTitle({
+        status: printer.status,
+        printer,
+        canDispose: canDisposeAssigned,
+      })
+    : undefined;
 
   const distributorDetailContent = useMemo(() => {
     if (!printer) return null;
@@ -361,6 +368,7 @@ export function PrinterView() {
                   status={printer.status}
                   onClick={statusQuickAction?.onClick}
                   actionLabel={statusQuickAction?.label}
+                  title={statusBadgeTitle}
                 />
                 {isPrinterPendingMqttEnajenacion(printer) ? (
                   <PrinterPendingMqttBadge />
@@ -475,6 +483,7 @@ export function PrinterView() {
                     status={printer.status}
                     onClick={statusQuickAction?.onClick}
                     actionLabel={statusQuickAction?.label}
+                    title={statusBadgeTitle}
                   />
                   {isPrinterPendingMqttEnajenacion(printer) ? (
                     <PrinterPendingMqttBadge />

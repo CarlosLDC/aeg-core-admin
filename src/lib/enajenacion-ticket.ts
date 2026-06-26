@@ -1,23 +1,26 @@
 import type { ContributorType } from "@/types/company";
-import type { VenezuelanFiscalInvoiceData } from "@/lib/venezuelan-fiscal-invoice";
+import {
+  contributorTypeFiscalLine,
+  isContributorTypeHeaderLine,
+  type VenezuelanFiscalInvoiceData,
+} from "@/lib/venezuelan-fiscal-invoice";
 import type { PrinterTicketSection } from "@/types/printer";
 import { normalizeFiscalTicketText } from "@/lib/fiscal-ticket-latin2";
 import { buildEncFacFijoLines } from "@/lib/enajenacion-mqtt-protocol";
 
 export const FIXED_ENCABEZADO_PREFIX_LINES = 3;
 
-export function contributorTypeLine(
+/** @deprecated Use contributorTypeFiscalLine from venezuelan-fiscal-invoice */
+export const contributorTypeLine = contributorTypeFiscalLine;
+
+function ensureContributorTypeInEncabezadoTail(
+  tail: string[],
   contributorType: ContributorType | string,
-): string {
-  switch (contributorType) {
-    case "especial":
-      return "CONTRIBUYENTE ESPECIAL";
-    case "formal":
-      return "CONTRIBUYENTE FORMAL";
-    case "ordinario":
-    default:
-      return "CONTRIBUYENTE ORDINARIO";
-  }
+): string[] {
+  const withoutContributor = tail.filter(
+    (line) => !isContributorTypeHeaderLine(line),
+  );
+  return [...withoutContributor, contributorTypeFiscalLine(contributorType)];
 }
 
 export function extractEnajenacionHeaderLines(
@@ -33,7 +36,7 @@ export function extractEnajenacionHeaderLines(
   let tail = encabezadoLineas
     .slice(FIXED_ENCABEZADO_PREFIX_LINES)
     .map((line) => normalizeFiscalTicketText(line.trim()));
-  const contributor = contributorTypeLine(contributorType);
+  const contributor = contributorTypeFiscalLine(contributorType);
   if (tail.length > 0 && tail.at(-1)?.toUpperCase() === contributor) {
     tail = tail.slice(0, -1);
   }
@@ -104,7 +107,7 @@ export function encFacFijoLinesToEncabezadoTail(
   encFacFijoLines: string[],
   contributorType: ContributorType | string,
 ): string[] {
-  const contributor = contributorTypeLine(contributorType);
+  const contributor = contributorTypeFiscalLine(contributorType);
   let lines = encFacFijoLines
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
@@ -112,18 +115,27 @@ export function encFacFijoLinesToEncabezadoTail(
     lines = lines.slice(0, -1);
   }
   if (lines.length === 0) {
-    return ["", "", ""];
+    return ensureContributorTypeInEncabezadoTail(["", "", ""], contributorType);
   }
   if (lines.length === 1) {
-    return [lines[0]!, "", ""];
+    return ensureContributorTypeInEncabezadoTail(
+      [lines[0]!, "", ""],
+      contributorType,
+    );
   }
   if (lines.length === 2) {
-    return [lines[0]!, "", lines[1]!];
+    return ensureContributorTypeInEncabezadoTail(
+      [lines[0]!, "", lines[1]!],
+      contributorType,
+    );
   }
   if (lines[1]!.includes(", ")) {
-    return [lines[0]!, "", ...lines.slice(1)];
+    return ensureContributorTypeInEncabezadoTail(
+      [lines[0]!, "", ...lines.slice(1)],
+      contributorType,
+    );
   }
-  return lines;
+  return ensureContributorTypeInEncabezadoTail(lines, contributorType);
 }
 
 export function applyPrinterTicketToDispositionInvoice(
@@ -133,10 +145,12 @@ export function applyPrinterTicketToDispositionInvoice(
   contributorType: ContributorType | string,
 ): VenezuelanFiscalInvoiceData {
   const prefix = invoice.encabezado.lineas.slice(0, FIXED_ENCABEZADO_PREFIX_LINES);
-  const addressTail =
-    header?.lines?.length
-      ? encFacFijoLinesToEncabezadoTail(header.lines, contributorType)
-      : invoice.encabezado.lineas.slice(FIXED_ENCABEZADO_PREFIX_LINES);
+  const addressTail = header?.lines?.length
+    ? encFacFijoLinesToEncabezadoTail(header.lines, contributorType)
+    : ensureContributorTypeInEncabezadoTail(
+        invoice.encabezado.lineas.slice(FIXED_ENCABEZADO_PREFIX_LINES),
+        contributorType,
+      );
   const trailerLines =
     trailer?.lines?.length
       ? trailer.lines.map((line) => line.trim()).filter((line) => line.length > 0)

@@ -9,8 +9,34 @@ export { FISCAL_TICKET_CHARSET } from "@/lib/fiscal-ticket-latin2";
 export { encodeLatin2, normalizeFiscalTicketText } from "@/lib/fiscal-ticket-latin2";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
-import type { CompanyResponse } from "@/types/company";
+import type { CompanyResponse, ContributorType } from "@/types/company";
 import type { PrinterResponse } from "@/types/printer";
+
+const CONTRIBUTOR_TYPE_HEADER_LINES = new Set([
+  "CONTRIBUYENTE ORDINARIO",
+  "CONTRIBUYENTE ESPECIAL",
+  "CONTRIBUYENTE FORMAL",
+]);
+
+export function contributorTypeFiscalLine(
+  contributorType: ContributorType | string,
+): string {
+  switch (contributorType) {
+    case "especial":
+      return "CONTRIBUYENTE ESPECIAL";
+    case "formal":
+      return "CONTRIBUYENTE FORMAL";
+    case "ordinario":
+    default:
+      return "CONTRIBUYENTE ORDINARIO";
+  }
+}
+
+export function isContributorTypeHeaderLine(line: string): boolean {
+  return CONTRIBUTOR_TYPE_HEADER_LINES.has(
+    normalizeFiscalTicketText(line.trim()).toUpperCase(),
+  );
+}
 
 export const FISCAL_TICKET_WIDTH_CH = 68;
 export const INVOICE_PRODUCT_SINGLE_LINE_MAX_LENGTH = 39;
@@ -90,8 +116,9 @@ export function buildEncabezadoLineas(input: {
   direccionLinea1: string;
   direccionLinea2: string;
   ubicacion: string;
+  contributorType?: ContributorType | string;
 }): string[] {
-  return [
+  const lines = [
     "SENIAT",
     input.rifEmpresa,
     input.razonSocialEmpresa,
@@ -99,6 +126,10 @@ export function buildEncabezadoLineas(input: {
     input.direccionLinea2,
     input.ubicacion,
   ];
+  if (input.contributorType != null) {
+    lines.push(contributorTypeFiscalLine(input.contributorType));
+  }
+  return lines;
 }
 
 export type VenezuelanFiscalInvoiceItem = {
@@ -186,6 +217,16 @@ export function resolveClientCompanyName(
   if (!branch) return "-";
   const company = companies.find((c) => c.id === branch.companyId);
   return company?.businessName?.trim() || "-";
+}
+
+export function resolveClientContributorType(
+  client: ClientResponse,
+  branch: BranchResponse | undefined,
+  companies: CompanyResponse[],
+): ContributorType {
+  if (!branch) return "ordinario";
+  const company = companies.find((c) => c.id === branch.companyId);
+  return company?.contributorType ?? "ordinario";
 }
 
 function resolveBranchCompany(
@@ -489,6 +530,11 @@ export function buildDispositionInvoiceData(
     clientBranch,
     input.companies,
   );
+  const contributorType = resolveClientContributorType(
+    client,
+    clientBranch,
+    input.companies,
+  );
 
   return normalizeFiscalInvoiceData({
     encoding: FISCAL_TICKET_CHARSET,
@@ -499,6 +545,7 @@ export function buildDispositionInvoiceData(
         direccionLinea1,
         direccionLinea2,
         ubicacion: resolveBranchLocation(clientBranch),
+        contributorType,
       }),
     },
     metadatos: {

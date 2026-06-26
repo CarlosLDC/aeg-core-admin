@@ -16,6 +16,7 @@ import {
   FISCAL_TICKET_WIDTH_CH,
   fiscalTicketSeparator,
   formatVenezuelanMoneyAmount,
+  isContributorTypeHeaderLine,
   normalizeFiscalInvoiceData,
   parseFiscalMoneyInput,
   type VenezuelanFiscalInvoiceData,
@@ -335,7 +336,9 @@ function EditableTicketLineList({
     <>
       {lines.map((line, index) => {
         const ariaLabel = `${lineLabelPrefix} línea ${index + 1}`;
-        const isLineLocked = lineLabelPrefix === "Encabezado" && index < 3;
+        const isLineLocked =
+          lineLabelPrefix === "Encabezado" &&
+          (index < 3 || isContributorTypeHeaderLine(line));
         const canRemove = !isLineLocked && lines.length > minLines;
         const canMoveUp =
           !isLineLocked &&
@@ -485,7 +488,7 @@ export function VenezuelanFiscalInvoicePreview({
   }
 
   function patchHeaderLine(index: number, value: string) {
-    if (index < 3) return;
+    if (index < 3 || isContributorTypeHeaderLine(headerLines[index] ?? "")) return;
     patch((current) => {
       const lineas = [...current.encabezado.lineas];
       lineas[index] = value;
@@ -501,7 +504,7 @@ export function VenezuelanFiscalInvoicePreview({
   }
 
   function removeHeaderLine(index: number) {
-    if (index < 3) return;
+    if (index < 3 || isContributorTypeHeaderLine(headerLines[index] ?? "")) return;
     patch((current) => ({
       ...current,
       encabezado: {
@@ -511,7 +514,14 @@ export function VenezuelanFiscalInvoicePreview({
   }
 
   function moveHeaderLine(fromIndex: number, toIndex: number) {
-    if (fromIndex < 3 || toIndex < 3) return;
+    if (
+      fromIndex < 3 ||
+      toIndex < 3 ||
+      isContributorTypeHeaderLine(headerLines[fromIndex] ?? "") ||
+      isContributorTypeHeaderLine(headerLines[toIndex] ?? "")
+    ) {
+      return;
+    }
     patch((current) => ({
       ...current,
       encabezado: {
