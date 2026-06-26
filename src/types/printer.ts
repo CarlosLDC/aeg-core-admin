@@ -11,6 +11,10 @@ export type PrinterStatus = (typeof PRINTER_STATUSES)[number];
 export const DEVICE_TYPES = ["interno", "externo"] as const;
 export type DeviceType = (typeof DEVICE_TYPES)[number];
 
+export type PrinterTicketSection = {
+  lines: string[];
+};
+
 export type PrinterResponse = {
   id: number;
   modelId: number;
@@ -26,6 +30,20 @@ export type PrinterResponse = {
   versionFirmware: string | null;
   macAddress: string | null;
   deviceType: DeviceType;
+  header: PrinterTicketSection | null;
+  trailer: PrinterTicketSection | null;
+};
+
+export type PrinterDispositionRequest = {
+  clientId: number;
+  installationDate?: string | null;
+  header: PrinterTicketSection;
+  trailer: PrinterTicketSection;
+};
+
+export type PrinterEnajenacionTicketResponse = {
+  header: PrinterTicketSection;
+  trailer: PrinterTicketSection;
 };
 
 export type PrinterRequest = {

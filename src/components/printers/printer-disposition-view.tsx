@@ -40,6 +40,7 @@ import {
   validateFacturaNroInput,
   type VenezuelanFiscalInvoiceData,
 } from "@/lib/venezuelan-fiscal-invoice";
+import { extractEnajenacionTicketFromInvoice } from "@/lib/enajenacion-ticket";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -191,6 +192,15 @@ export function PrinterDispositionView({
     };
   }, [scope]);
 
+  const selectedContributorType = useMemo(() => {
+    if (clientId == null) return "ordinario" as const;
+    const client = scopedClients.find((entry) => entry.id === clientId);
+    if (!client) return "ordinario" as const;
+    const branch = branches.find((entry) => entry.id === client.branchId);
+    const company = companies.find((entry) => entry.id === branch?.companyId);
+    return company?.contributorType ?? "ordinario";
+  }, [clientId, scopedClients, branches, companies]);
+
   const invoiceData = useMemo(() => {
     if (!printer || clientId == null || facturaNro == null) {
       return null;
@@ -291,7 +301,7 @@ export function PrinterDispositionView({
       setFormError(clientValidationError ?? "Cliente no válido.");
       return;
     }
-    if (!invoiceData) {
+    if (!invoiceDraft) {
       setFormError(invoiceGenerationError ?? "Factura no disponible.");
       return;
     }
@@ -300,10 +310,21 @@ export function PrinterDispositionView({
     setSaving(true);
 
     try {
-      await disposePrinter(printer.id, { clientId });
-      toast.success(`Impresora ${printer.fiscalSerial} enajenada correctamente.`, {
-        href: printerPath(printer.id),
+      const ticket = extractEnajenacionTicketFromInvoice(
+        invoiceDraft,
+        selectedContributorType,
+      );
+      await disposePrinter(printer.id, {
+        clientId,
+        header: ticket.header,
+        trailer: ticket.trailer,
       });
+      toast.success(
+        `Configuración de ticket guardada para ${printer.fiscalSerial}. La impresora puede iniciar el ritual MQTT.`,
+        {
+          href: printerPath(printer.id),
+        },
+      );
       router.push(printerPath(printer.id));
     } catch (err) {
       const message = getPrintersErrorMessage(err);
@@ -376,7 +397,7 @@ export function PrinterDispositionView({
               )}
             >
               {saving && <Loader2 className="size-4 animate-spin" />}
-              Confirmar enajenación
+              Confirmar configuración de ticket
             </button>
           </div>
         </form>

@@ -126,6 +126,37 @@ describe("enajenacion-mqtt-protocol", () => {
     expect(buildReportZCommandPayload()).toEqual({ cmd: "genImpRepZ", data: 1 });
   });
 
+  it("builds header payload from stored printer ticket lines", () => {
+    const payload = buildHeaderCommandPayload({
+      fiscalSerial: "GRA0000017",
+      rif: "J315694205",
+      businessName: "Cliente Demo C.A.",
+      contributorType: "ordinario",
+      address: "Av. Principal Edif. Demo Piso 1",
+      city: "Caracas",
+      state: "Distrito Capital",
+      encFacFijoLines: [
+        "AV SANTA CRUZ LOCAL NRO 13 SECTOR POZUELOS",
+        "PUERTO LA CRUZ, ANZOATEGUI",
+        "CONTRIBUYENTE ORDINARIO",
+      ],
+      pieFacFijoLines: ["GRACIAS POR SU COMPRA"],
+    });
+
+    expect(payload).toMatchObject({
+      data: {
+        contenido: {
+          encFacFijo: [
+            "AV SANTA CRUZ LOCAL NRO 13 SECTOR POZUELOS",
+            "PUERTO LA CRUZ, ANZOATEGUI",
+            "CONTRIBUYENTE ORDINARIO",
+          ],
+          pieFacFijo: ["GRACIAS POR SU COMPRA"],
+        },
+      },
+    });
+  });
+
   it("omits blank second address line in encFacFijo", () => {
     expect(
       buildEncFacFijoLines(

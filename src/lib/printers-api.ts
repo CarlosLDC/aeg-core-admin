@@ -1,13 +1,15 @@
 import { apiFetch } from "@/lib/api";
 import { ApiError } from "@/types/auth";
-import type { PrinterRequest, PrinterResponse } from "@/types/printer";
+import type {
+  PrinterDispositionRequest,
+  PrinterEnajenacionTicketResponse,
+  PrinterRequest,
+  PrinterResponse,
+} from "@/types/printer";
 
 const BASE = "/api/printers";
 
-export type PrinterDispositionRequest = {
-  clientId: number;
-  installationDate?: string | null;
-};
+export type { PrinterDispositionRequest };
 
 export async function fetchPrinters(): Promise<PrinterResponse[]> {
   return apiFetch<PrinterResponse[]>(BASE);
@@ -44,6 +46,15 @@ export async function disposePrinter(
     method: "POST",
     body: JSON.stringify(body),
   });
+}
+
+export async function fetchEnajenacionTicketPreview(
+  printerId: number,
+  clientId: number,
+): Promise<PrinterEnajenacionTicketResponse> {
+  return apiFetch<PrinterEnajenacionTicketResponse>(
+    `${BASE}/${printerId}/enajenacion-ticket?clientId=${clientId}`,
+  );
 }
 
 export async function deletePrinter(id: number): Promise<void> {

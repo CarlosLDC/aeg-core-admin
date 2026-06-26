@@ -307,6 +307,8 @@ export function useEnajenacionRitual() {
             address: branch.address,
             city: branch.city,
             state: branch.state,
+            encFacFijoLines: activePrinter?.header?.lines,
+            pieFacFijoLines: activePrinter?.trailer?.lines,
           }),
         );
       } catch (err) {
@@ -321,7 +323,7 @@ export function useEnajenacionRitual() {
     return () => {
       cancelled = true;
     };
-  }, [activePrinter?.clientId, activePrinter?.fiscalSerial]);
+  }, [activePrinter?.clientId, activePrinter?.fiscalSerial, activePrinter?.header, activePrinter?.trailer]);
 
   useEffect(() => {
     if (completedRitualSteps.size === 0) {

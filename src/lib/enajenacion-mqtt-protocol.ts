@@ -38,6 +38,8 @@ export type EnajenacionCommandContext = {
   state: string;
   invoiceNumber?: number;
   invoiceDate?: string;
+  encFacFijoLines?: string[];
+  pieFacFijoLines?: string[];
 };
 
 export type EnajenacionCommandStep = {
@@ -528,19 +530,25 @@ export function buildHeaderCommandPayload(
   ctx: EnajenacionCommandContext,
 ): Record<string, unknown> {
   const [addressLine1, addressLine2] = splitAddress(ctx.address);
+  const encFacFijo =
+    ctx.encFacFijoLines && ctx.encFacFijoLines.length > 0
+      ? ctx.encFacFijoLines
+      : buildEncFacFijoLines(
+          addressLine1,
+          addressLine2,
+          `${ctx.city.trim()}, ${ctx.state.trim()}`,
+          contributorTypeLine(ctx.contributorType),
+        );
+  const contenido: Record<string, unknown> = { encFacFijo };
+  if (ctx.pieFacFijoLines && ctx.pieFacFijoLines.length > 0) {
+    contenido.pieFacFijo = ctx.pieFacFijoLines;
+  }
   return {
     cmd: "wFileSPIFF",
     data: {
       Access: "AeG-1968-2024",
       nameFile: "paramFacSPIFF.json",
-      contenido: {
-        encFacFijo: buildEncFacFijoLines(
-          addressLine1,
-          addressLine2,
-          `${ctx.city.trim()}, ${ctx.state.trim()}`,
-          contributorTypeLine(ctx.contributorType),
-        ),
-      },
+      contenido,
     },
   };
 }
@@ -848,6 +856,8 @@ export function buildEnajenacionCommandContextFromClientData(params: {
   address: string;
   city: string;
   state: string;
+  encFacFijoLines?: string[];
+  pieFacFijoLines?: string[];
 }): EnajenacionCommandContext {
   return {
     fiscalSerial: params.fiscalSerial.trim(),
@@ -858,6 +868,8 @@ export function buildEnajenacionCommandContextFromClientData(params: {
     city: params.city.trim(),
     state: params.state.trim(),
     invoiceNumber: 1,
+    encFacFijoLines: params.encFacFijoLines,
+    pieFacFijoLines: params.pieFacFijoLines,
   };
 }
 

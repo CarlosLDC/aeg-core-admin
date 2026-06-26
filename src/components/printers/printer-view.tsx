@@ -360,9 +360,21 @@ export function PrinterView() {
           value={printerPaidLabel(printer.paid)}
         />
         <DetailField
-          label="Fecha de enajenación"
+          label="Fecha de configuración"
           value={formatDate(printer.installationDate)}
         />
+        {printer.header?.lines?.length ? (
+          <DetailField
+            label="Encabezado MQTT"
+            value={printer.header.lines.join(" · ")}
+          />
+        ) : null}
+        {printer.trailer?.lines?.length ? (
+          <DetailField
+            label="Pie MQTT"
+            value={printer.trailer.lines.join(" · ")}
+          />
+        ) : null}
         <DetailField
           label="Cliente"
           value={
