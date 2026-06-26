@@ -1,4 +1,5 @@
 import type { PrinterRequest, PrinterResponse } from "@/types/printer";
+import { isPrinterEligibleForAnnualInspectionMqtt } from "@aeg/annual-inspection-mqtt";
 import { isPrinterEligibleForMqttEnajenacion } from "@/lib/printer-status";
 import {
   INVOICE_PRODUCT_MAX_LINES,
@@ -963,12 +964,12 @@ export function isPrinterEligibleForEnajenacionTest(
 export function isPrinterEligibleForTestInvoice(
   printer: PrinterResponse,
 ): boolean {
-  return (
-    printer.status === "enajenada" &&
-    Boolean(printer.clientId) &&
-    Boolean(printer.macAddress?.trim()) &&
-    Boolean(printer.fiscalSerial?.trim())
-  );
+  return isPrinterEligibleForAnnualInspectionMqtt({
+    status: printer.status,
+    clientId: printer.clientId,
+    macAddress: printer.macAddress,
+    fiscalSerial: printer.fiscalSerial,
+  });
 }
 
 export function classifyFiscalCommand(payload: string): string {

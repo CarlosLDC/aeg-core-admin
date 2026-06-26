@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@aeg/annual-inspection-mqtt": ["./packages/annual-inspection-mqtt/src/index.ts"]
     }
   },
   "include": [

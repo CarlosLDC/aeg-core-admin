@@ -6,6 +6,7 @@ const apiUpstream =
   "https://core-xgfvw.ondigitalocean.app";
 
 const nextConfig: NextConfig = {
+  transpilePackages: ["@aeg/annual-inspection-mqtt"],
   env: {
     NEXT_PUBLIC_USE_API_PROXY:
       process.env.NEXT_PUBLIC_USE_API_PROXY ??
