@@ -92,7 +92,7 @@ function validateServiceCenterProfile(
 ): string | null {
   if (!roleRequiresServiceCenterBranch(role)) return null;
   if (!branchId.trim()) {
-    return "Selecciona la sucursal del centro de servicio.";
+    return "Selecciona la sucursal.";
   }
   if (!branchIdToNumber(branchId)) {
     return "La sucursal seleccionada no es válida.";

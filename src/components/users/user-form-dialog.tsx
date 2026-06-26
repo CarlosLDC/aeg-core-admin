@@ -303,7 +303,7 @@ export function UserFormDialog({
             {needsServiceCenterBranch && (
               <div className="grid gap-4 md:grid-cols-2 md:items-start">
                 <div className="min-w-0">
-                  <FieldLabel required>Sucursal del centro de servicio</FieldLabel>
+                  <FieldLabel required>Sucursal</FieldLabel>
                   <SearchableSelect
                     value={form.branchId}
                     onChange={(branchId) =>
@@ -349,7 +349,7 @@ export function UserFormDialog({
               serviceCenterBranchOptions.length === 0 &&
               !catalogLoading && (
                 <p className="text-xs text-amber-700 dark:text-amber-300">
-                  No hay sucursales con rol de centro de servicio. Asígnalo en
+                  No hay sucursales aptas para técnicos. Asígnalo en
                   Empresas antes de crear este usuario.
                 </p>
               )}
