@@ -33,6 +33,10 @@ import {
   formatMqttSetDateRevOAt,
   hasAnnualInspectionMqttAudit,
 } from "@/lib/annual-inspection-mqtt-display";
+import {
+  annualInspectionChecklistRows,
+  hasAnnualInspectionChecklistDisplay,
+} from "@/lib/annual-inspection-checklist-display";
 import { catalogOptionLabel } from "@/lib/record-labels";
 import {
   annualInspectionPath,
@@ -215,18 +219,28 @@ export function AnnualInspectionView() {
                 value={formatDate(inspection.inspectionDate)}
               />
               <DetailField
-                label="Precinto violado"
-                value={inspection.sealTampered ? "Sí" : "No"}
+                label="Registrada"
+                value={formatDate(inspection.createdAt)}
               />
               <DetailField
                 label="Notas"
                 value={inspection.notes || "—"}
               />
-              <DetailField
-                label="Registrada"
-                value={formatDate(inspection.createdAt)}
-              />
             </DetailSection>
+            {hasAnnualInspectionChecklistDisplay(inspection) ? (
+              <DetailSection title="Checklist de inspección" layout="quad">
+                {annualInspectionChecklistRows(inspection).map((row) => (
+                  <DetailField key={row.label} label={row.label} value={row.value} />
+                ))}
+              </DetailSection>
+            ) : (
+              <DetailSection title="Precinto">
+                <DetailField
+                  label="Precinto violado"
+                  value={inspection.sealTampered ? "Sí" : "No"}
+                />
+              </DetailSection>
+            )}
             {hasAnnualInspectionMqttAudit(inspection) ? (
               <DetailSection title="Auditoría Remoto (SetDateRevO)" layout="quad">
                 <DetailField

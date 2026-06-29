@@ -63,6 +63,15 @@ export type AnnualInspectionChecklistState = Record<
   boolean
 >;
 
+/** Checklist almacenado en inspecciones_anuales (null = legacy sin dato). */
+export type AnnualInspectionChecklistPersisted = {
+  chkPrecinto: boolean | null;
+  chkEtiquetaFiscal: boolean | null;
+  chkFactura: boolean | null;
+  chkNotaCredito: boolean | null;
+  chkSensorPapel: boolean | null;
+};
+
 export type AnnualInspectionMqttFlowState = {
   registroImpresora: string;
   fiscalSerial: string;
@@ -72,7 +81,7 @@ export type AnnualInspectionMqttFlowState = {
   checklist: AnnualInspectionChecklistState;
 };
 
-/** Resultado del ritual MQTT listo para persistir en inspecciones_anuales. */
+/** Resultado del ritual Remoto listo para persistir en inspecciones_anuales. */
 export type AnnualInspectionMqttCompletion = {
   checklist: AnnualInspectionChecklistState;
   registroImpresora: string;

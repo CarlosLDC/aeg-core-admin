@@ -1,5 +1,6 @@
 import type {
   AnnualInspectionChecklistKey,
+  AnnualInspectionChecklistPersisted,
   AnnualInspectionChecklistState,
   AnnualInspectionMqttFlowState,
   AnnualInspectionMqttPrinterRef,
@@ -52,6 +53,67 @@ export const emptyAnnualInspectionChecklist = (): AnnualInspectionChecklistState
   chkNotaCredito: false,
   chkSensorPapel: false,
 });
+
+export function checklistToSealTampered(checklist: AnnualInspectionChecklistState): boolean {
+  return !checklist.chkPrecinto;
+}
+
+export function sealTamperedToChkPrecinto(sealTampered: boolean): boolean {
+  return !sealTampered;
+}
+
+export function checklistToPersisted(
+  checklist: AnnualInspectionChecklistState,
+): AnnualInspectionChecklistPersisted {
+  return {
+    chkPrecinto: checklist.chkPrecinto,
+    chkEtiquetaFiscal: checklist.chkEtiquetaFiscal,
+    chkFactura: checklist.chkFactura,
+    chkNotaCredito: checklist.chkNotaCredito,
+    chkSensorPapel: checklist.chkSensorPapel,
+  };
+}
+
+export function checklistFromPersisted(input: {
+  chkPrecinto?: boolean | null;
+  chkEtiquetaFiscal?: boolean | null;
+  chkFactura?: boolean | null;
+  chkNotaCredito?: boolean | null;
+  chkSensorPapel?: boolean | null;
+  sealTampered?: boolean | null;
+}): AnnualInspectionChecklistState {
+  const chkPrecinto =
+    input.chkPrecinto ??
+    (input.sealTampered != null ? !input.sealTampered : false);
+  return {
+    chkPrecinto,
+    chkEtiquetaFiscal: input.chkEtiquetaFiscal ?? false,
+    chkFactura: input.chkFactura ?? false,
+    chkNotaCredito: input.chkNotaCredito ?? false,
+    chkSensorPapel: input.chkSensorPapel ?? false,
+  };
+}
+
+export function formatChecklistItemValue(
+  key: AnnualInspectionChecklistKey,
+  checked: boolean | null | undefined,
+): string {
+  if (checked == null) return "—";
+  if (key === "chkPrecinto" || key === "chkEtiquetaFiscal") {
+    return checked ? ANNUAL_INSPECTION_INSP_AO_OK : ANNUAL_INSPECTION_INSP_AO_VIOLATED;
+  }
+  return checked ? ANNUAL_INSPECTION_INSP_AO_OK : ANNUAL_INSPECTION_INSP_AO_DEFECTIVE;
+}
+
+export function hasPersistedChecklist(input: Partial<AnnualInspectionChecklistPersisted>): boolean {
+  return (
+    input.chkPrecinto != null ||
+    input.chkEtiquetaFiscal != null ||
+    input.chkFactura != null ||
+    input.chkNotaCredito != null ||
+    input.chkSensorPapel != null
+  );
+}
 
 export function createAnnualInspectionMqttFlowState(input: {
   registroImpresora: string;

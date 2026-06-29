@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useId, useState } from "react";
 import { Camera, ClipboardCheck, Link2, Loader2, X } from "lucide-react";
-import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
 import { PhotoDocumentUpload } from "@/components/ui/photo-document-upload";
 import { SearchableSelect } from "@/components/ui/searchable-select";
@@ -11,11 +10,12 @@ import {
   formFieldInputClass,
   FORM_FIELD_TEXTAREA_ROWS,
   formFieldTextareaClass,
-  SEAL_TAMPERED_TOGGLE_TONE,
 } from "@/lib/toggle-button-styles";
 import {
+  ANNUAL_INSPECTION_CHECKLIST_ROWS,
   annualInspectionToFormValues,
   emptyAnnualInspectionForm,
+  setAnnualInspectionChecklistField,
   type AnnualInspectionFormValues,
 } from "@/lib/annual-inspection-form";
 import type { AnnualInspectionResponse } from "@/types/annual-inspection";
@@ -223,35 +223,56 @@ export function AnnualInspectionFormDialog({
 
   const resultSection = (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block">
-          <FieldLabel>Fecha de inspección</FieldLabel>
-          <input
-            type="date"
-            value={form.inspectionDate}
-            disabled={disabled}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, inspectionDate: e.target.value }))
-            }
-            className={inputClass}
-          />
-        </label>
-        <div className="block">
-          <FieldLabel>Precinto violentado</FieldLabel>
-          <BooleanToggle
-            value={form.sealTampered}
-            onChange={(sealTampered) =>
-              setForm((f) => ({ ...f, sealTampered }))
-            }
-            disabled={disabled}
-            falseLabel="Intacto"
-            trueLabel="Violentado"
-            falseTone={SEAL_TAMPERED_TOGGLE_TONE.false}
-            trueTone={SEAL_TAMPERED_TOGGLE_TONE.true}
-            ariaLabel="Estado del precinto"
-          />
-        </div>
-      </div>
+      <label className="block">
+        <FieldLabel>Fecha de inspección</FieldLabel>
+        <input
+          type="date"
+          value={form.inspectionDate}
+          disabled={disabled}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, inspectionDate: e.target.value }))
+          }
+          className={inputClass}
+        />
+      </label>
+
+      <fieldset className="space-y-3 rounded-lg border border-border p-4">
+        <legend className="px-1 text-sm font-medium text-card-foreground">
+          Checklist de inspección
+        </legend>
+        <p className="text-xs text-muted">
+          Marque cada ítem como conforme (Bien). Desmarcado equivale a Violentado o
+          Defectuoso según el ítem.
+        </p>
+        <ul className="space-y-2">
+          {ANNUAL_INSPECTION_CHECKLIST_ROWS.map((row) => (
+            <li key={row.key} className="flex items-start gap-3">
+              <input
+                id={`${formId}-${row.key}`}
+                type="checkbox"
+                checked={form.checklist[row.key]}
+                disabled={disabled}
+                onChange={(event) =>
+                  setForm((current) =>
+                    setAnnualInspectionChecklistField(
+                      current,
+                      row.key,
+                      event.target.checked,
+                    ),
+                  )
+                }
+                className="mt-0.5 size-4 rounded border-border"
+              />
+              <label
+                htmlFor={`${formId}-${row.key}`}
+                className="text-sm text-card-foreground"
+              >
+                {row.label}
+              </label>
+            </li>
+          ))}
+        </ul>
+      </fieldset>
 
       <label className="block">
         <FieldLabel>Observaciones</FieldLabel>

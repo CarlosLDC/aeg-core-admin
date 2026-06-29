@@ -34,6 +34,7 @@ import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { formatDate } from "@/lib/datetime-form";
 import { hasAnnualInspectionMqttAudit } from "@/lib/annual-inspection-mqtt-display";
+import { summarizeAnnualInspectionChecklist } from "@/lib/annual-inspection-checklist-display";
 import {
   compareDateValues,
   compareNumberValues,
@@ -404,7 +405,7 @@ export function AnnualInspectionsManager() {
                             )
                           }
                         />
-                        <th className="px-5 py-3 font-medium">Precinto</th>
+                        <th className="px-5 py-3 font-medium">Checklist</th>
                         <th className="px-5 py-3 font-medium">Registro Remoto</th>
                         <SortableTableHeader
                           label="Fotos"
@@ -469,7 +470,7 @@ export function AnnualInspectionsManager() {
                             {formatDate(row.inspectionDate)}
                           </td>
                           <td className="px-5 py-3.5 text-muted">
-                            {row.sealTampered ? "Violentado" : "OK"}
+                            {summarizeAnnualInspectionChecklist(row)}
                           </td>
                           <td className="max-w-[120px] px-5 py-3.5 font-mono text-xs text-muted">
                             {hasAnnualInspectionMqttAudit(row)

@@ -3,8 +3,14 @@ import {
   applyFailedTestInvoice,
   applySuccessfulTestInvoice,
   canSendAnnualInspectionTestCreditNote,
+  checklistFromPersisted,
+  checklistToPersisted,
+  checklistToSealTampered,
   createAnnualInspectionMqttFlowState,
+  formatChecklistItemValue,
+  hasPersistedChecklist,
   isPrinterEligibleForAnnualInspectionMqtt,
+  sealTamperedToChkPrecinto,
 } from "./state";
 
 describe("@aeg/annual-inspection-mqtt state", () => {
@@ -61,5 +67,33 @@ describe("@aeg/annual-inspection-mqtt state", () => {
     expect(next.numeroFacturaPrueba).toBeNull();
     expect(next.checklist.chkFactura).toBe(false);
     expect(next.checklist.chkNotaCredito).toBe(false);
+  });
+
+  it("derives sealTampered from checklist precinto", () => {
+    expect(checklistToSealTampered({ chkPrecinto: true, chkEtiquetaFiscal: false, chkFactura: false, chkNotaCredito: false, chkSensorPapel: false })).toBe(false);
+    expect(checklistToSealTampered({ chkPrecinto: false, chkEtiquetaFiscal: false, chkFactura: false, chkNotaCredito: false, chkSensorPapel: false })).toBe(true);
+    expect(sealTamperedToChkPrecinto(true)).toBe(false);
+    expect(sealTamperedToChkPrecinto(false)).toBe(true);
+  });
+
+  it("round-trips persisted checklist and infers legacy precinto", () => {
+    const checklist = {
+      chkPrecinto: true,
+      chkEtiquetaFiscal: true,
+      chkFactura: false,
+      chkNotaCredito: false,
+      chkSensorPapel: true,
+    };
+    expect(checklistToPersisted(checklist)).toEqual(checklist);
+    expect(checklistFromPersisted({ sealTampered: true }).chkPrecinto).toBe(false);
+    expect(hasPersistedChecklist(checklist)).toBe(true);
+    expect(hasPersistedChecklist({})).toBe(false);
+  });
+
+  it("formats checklist values for display", () => {
+    expect(formatChecklistItemValue("chkPrecinto", true)).toBe("Bien");
+    expect(formatChecklistItemValue("chkPrecinto", false)).toBe("Violentado");
+    expect(formatChecklistItemValue("chkFactura", false)).toBe("Defectuoso");
+    expect(formatChecklistItemValue("chkFactura", null)).toBe("—");
   });
 });
