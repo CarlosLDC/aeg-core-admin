@@ -419,10 +419,6 @@ export function PrinterView() {
             {PRINTER_TICKET_RECONFIGURE_LABEL}
           </button>
         ) : null}
-        <PrinterTicketConfigPanel
-          header={printer.header}
-          trailer={printer.trailer}
-        />
       </>
     );
   }, [
@@ -431,6 +427,7 @@ export function PrinterView() {
     clients,
     clientLabelById,
     statusQuickAction,
+    statusBadgeTitle,
     canDisposeAssigned,
     toast,
   ]);

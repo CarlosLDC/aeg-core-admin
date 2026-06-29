@@ -2,6 +2,7 @@
 
 import { useState, type MouseEvent } from "react";
 import { Check, Copy } from "lucide-react";
+import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
 import { formatPrinterTicketSectionJson } from "@/lib/printer-enajenacion-ticket";
 import type { PrinterTicketSection } from "@/types/printer";
@@ -83,6 +84,10 @@ export function PrinterTicketConfigPanel({
   header,
   trailer,
 }: PrinterTicketConfigPanelProps) {
+  const { user } = useAuth();
+  if (user?.role !== "ADMIN") {
+    return null;
+  }
   if (!hasTicketPreview(header, trailer)) {
     return null;
   }
