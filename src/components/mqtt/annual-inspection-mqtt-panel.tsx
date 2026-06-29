@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ClipboardCheck, Loader2 } from "lucide-react";
 import { FiscalMqttTopicGuide } from "@/components/mqtt/fiscal-mqtt-topic-guide";
 import { AnnualInspectionMqttModal } from "@/components/mqtt/annual-inspection-mqtt-modal";
+import { AnnualInspectionStepsGuide } from "@/components/mqtt/annual-inspection-steps-guide";
 import { PrinterSelect } from "@/components/printers/printer-select";
 import { useToast } from "@/context/toast-provider";
 import {
@@ -322,15 +323,18 @@ export function AnnualInspectionMqttPanel() {
       />
 
       <div className="mx-auto max-w-2xl space-y-4">
+        <AnnualInspectionStepsGuide />
+
         <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-card-foreground">
             <ClipboardCheck className="size-5 text-accent" />
             Inspección anual obligatoria (MQTT)
           </h2>
           <p className="mt-2 text-sm text-muted">
-            Paso 1: consulta el número de registro en la impresora con el comando{" "}
-            <code className="rounded bg-foreground/5 px-1 py-0.5 font-mono text-xs">StaInf</code>{" "}
-            y abre el modal de inspección.
+            Prueba manual con la misma API que el libro fiscal. Paso 1: consulta el
+            número de registro con <code className="rounded bg-foreground/5 px-1 py-0.5 font-mono text-xs">StaInf</code>{" "}
+            y abre el modal. No persiste inspección en BD — use el libro fiscal para
+            registros oficiales.
           </p>
 
           <FiscalMqttTopicGuide

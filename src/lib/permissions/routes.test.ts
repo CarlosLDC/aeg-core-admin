@@ -32,6 +32,14 @@ describe("route permissions", () => {
     expect(canAccessRoute("DISTRIBUTOR", "/docs/enajenacion-mqtt")).toBe(false);
   });
 
+  it("allows ADMIN on annual inspection MQTT docs", () => {
+    expect(canAccessRoute("ADMIN", "/docs/annual-inspection-mqtt")).toBe(true);
+    expect(resourceForPath("/docs/annual-inspection-mqtt")).toBe("mqtt");
+    expect(canAccessRoute("TECHNICIAN", "/docs/annual-inspection-mqtt")).toBe(
+      false,
+    );
+  });
+
   it("allows DISTRIBUTOR on /branches and legacy client detail redirect", () => {
     expect(canAccessRoute("DISTRIBUTOR", "/clients")).toBe(true);
     expect(resourceForPath("/clients")).toBe("branches");
