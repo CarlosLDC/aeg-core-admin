@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   emptyPrinterForm,
+  printerToAssignmentRequest,
   printerToFormValues,
   toPrinterEditRequest,
 } from "@/lib/printer-form";
@@ -22,6 +23,24 @@ const assignedPrinter: PrinterResponse = {
   macAddress: "AA:BB:CC:DD:EE:FF",
   deviceType: "interno",
 };
+
+describe("printerToAssignmentRequest", () => {
+  it("uses en_consignacion when assigning unpaid printers", () => {
+    const body = printerToAssignmentRequest(assignedPrinter, 99, false);
+    expect(body.status).toBe("en_consignacion");
+    expect(body.distributorId).toBe(99);
+    expect(body.paid).toBe(false);
+  });
+
+  it("uses asignada when assigning paid printers", () => {
+    const body = printerToAssignmentRequest(
+      { ...assignedPrinter, paid: true },
+      99,
+      true,
+    );
+    expect(body.status).toBe("asignada");
+  });
+});
 
 describe("printerToFormValues", () => {
   it("ignores undefined defaults so edit forms keep existing assignments", () => {

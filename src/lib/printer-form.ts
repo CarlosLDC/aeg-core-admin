@@ -56,6 +56,7 @@ export const PRINTER_STATUS_LABELS: Record<PrinterStatus, string> = {
   de_fabrica: "De fábrica",
   sin_asignar: "Sin asignar",
   asignada: "Asignada",
+  en_consignacion: "En consignación",
   enajenada: "Enajenada",
   desincorporada: "Desincorporada",
   laboratorio: "Laboratorio",
@@ -110,6 +111,26 @@ export const emptyPrinterForm = (
   ...definedPrinterFormDefaults(defaults),
 });
 
+function reconcileDistributorAssignmentStatus(
+  status: PrinterStatus,
+  distributorId: number | null,
+  paid: boolean,
+): PrinterStatus {
+  if (distributorId == null) {
+    return status;
+  }
+  if (
+    status === "enajenada" ||
+    status === "desincorporada" ||
+    status === "laboratorio" ||
+    status === "de_fabrica" ||
+    status === "sin_asignar"
+  ) {
+    return status;
+  }
+  return paid ? "asignada" : "en_consignacion";
+}
+
 export function printerToAssignmentRequest(
   printer: PrinterResponse,
   distributorId: number,
@@ -126,7 +147,7 @@ export function printerToAssignmentRequest(
     installationDate: printer.installationDate,
     versionFirmware: printer.versionFirmware,
     macAddress: printer.macAddress,
-    status: "asignada",
+    status: paid ? "asignada" : "en_consignacion",
     deviceType: printer.deviceType,
   };
 }
@@ -238,7 +259,11 @@ export function toPrinterRequest(
     installationDate,
     versionFirmware: versionFirmware || null,
     macAddress: macAddress || null,
-    status: values.status,
+    status: reconcileDistributorAssignmentStatus(
+      values.status,
+      distributorId,
+      values.paid,
+    ),
     deviceType: values.deviceType,
   };
 }

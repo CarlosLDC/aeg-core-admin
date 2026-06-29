@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   isPrinterAssigned,
+  isPrinterAssignedToDistributor,
   isPrinterEligibleForMqttEnajenacion,
+  isPrinterOnConsignment,
   isPrinterOperative,
   isPrinterUnassigned,
   normalizePrinterStatus,
@@ -22,6 +24,10 @@ describe("printer-status", () => {
     expect(isPrinterUnassigned("sin_asignar")).toBe(true);
     expect(isPrinterUnassigned("inicializada")).toBe(true);
     expect(isPrinterAssigned("asignada")).toBe(true);
+    expect(isPrinterOnConsignment("en_consignacion")).toBe(true);
+    expect(isPrinterAssignedToDistributor("en_consignacion")).toBe(true);
+    expect(isPrinterAssignedToDistributor("asignada")).toBe(true);
+    expect(isPrinterAssignedToDistributor("sin_asignar")).toBe(false);
     expect(isPrinterOperative("sin_asignar")).toBe(true);
     expect(isPrinterOperative("laboratorio")).toBe(false);
   });
@@ -31,6 +37,7 @@ describe("printer-status", () => {
     expect(isPrinterEligibleForMqttEnajenacion("laboratorio")).toBe(true);
     expect(isPrinterEligibleForMqttEnajenacion("de_demostracion")).toBe(true);
     expect(isPrinterEligibleForMqttEnajenacion("sin_asignar")).toBe(false);
+    expect(isPrinterEligibleForMqttEnajenacion("en_consignacion")).toBe(false);
     expect(isPrinterEligibleForMqttEnajenacion("enajenada")).toBe(false);
   });
 });

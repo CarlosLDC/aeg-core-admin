@@ -40,6 +40,9 @@ export function DashboardWelcome({
   const assignedCount = snapshot.printers.filter(
     (p) => p.status === "asignada",
   ).length;
+  const consignmentCount = snapshot.printers.filter(
+    (p) => p.status === "en_consignacion",
+  ).length;
   const disposedCount = snapshot.printers.filter(
     (p) => p.status === "enajenada",
   ).length;
@@ -49,7 +52,7 @@ export function DashboardWelcome({
   const printerLine =
     isDistributorPanelRole(role)
       ? snapshot.printers.length > 0
-        ? `${snapshot.printers.length} en tu inventario · ${assignedCount} asignada${assignedCount === 1 ? "" : "s"} · ${disposedCount} enajenada${disposedCount === 1 ? "" : "s"} a clientes.`
+        ? `${snapshot.printers.length} en tu inventario · ${assignedCount} disponible${assignedCount === 1 ? "" : "s"}${consignmentCount > 0 ? ` · ${consignmentCount} en consignación` : ""} · ${disposedCount} enajenada${disposedCount === 1 ? "" : "s"} a clientes.`
         : "Aún no hay impresoras en tu inventario."
       : snapshot.printers.length > 0
         ? `${snapshot.printers.length} impresora${snapshot.printers.length === 1 ? "" : "s"} en tu ámbito · ${activePrinters} operativa${activePrinters === 1 ? "" : "s"}.`

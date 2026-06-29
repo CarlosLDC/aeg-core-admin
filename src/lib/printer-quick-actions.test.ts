@@ -47,6 +47,17 @@ describe("getPrinterStatusQuickAction", () => {
     expect(action).toBeNull();
   });
 
+  it("blocks dispose for printers on consignment", () => {
+    const action = getPrinterStatusQuickAction({
+      status: "en_consignacion",
+      printer: unpaidPrinter,
+      canAssign: false,
+      canDispose: true,
+      ...handlers,
+    });
+    expect(action).toBeNull();
+  });
+
   it("offers ticket reconfigure when MQTT is pending", () => {
     const action = getPrinterStatusQuickAction({
       status: "asignada",
@@ -81,6 +92,16 @@ describe("getPrinterStatusBadgeTitle", () => {
     expect(
       getPrinterStatusBadgeTitle({
         status: "asignada",
+        printer: unpaidPrinter,
+        canDispose: true,
+      }),
+    ).toBe(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+  });
+
+  it("explains why consignment printers cannot be disposed", () => {
+    expect(
+      getPrinterStatusBadgeTitle({
+        status: "en_consignacion",
         printer: unpaidPrinter,
         canDispose: true,
       }),

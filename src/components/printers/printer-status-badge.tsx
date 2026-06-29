@@ -10,6 +10,8 @@ const STATUS_STYLES: Record<PrinterStatus, string> = {
     "border-violet-500/30 bg-violet-500/10 text-violet-800 dark:text-violet-200",
   asignada:
     "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200",
+  en_consignacion:
+    "border-indigo-500/30 bg-indigo-500/10 text-indigo-800 dark:text-indigo-200",
   enajenada:
     "border-orange-500/30 bg-orange-500/10 text-orange-800 dark:text-orange-200",
   desincorporada:

@@ -6,13 +6,18 @@ import {
 } from "./distributor-printer-filters";
 
 describe("distributor printer filters", () => {
-  it("limits statuses to asignada and enajenada", () => {
-    expect(DISTRIBUTOR_PRINTER_STATUSES).toEqual(["asignada", "enajenada"]);
+  it("limits statuses to consignment, asignada and enajenada", () => {
+    expect(DISTRIBUTOR_PRINTER_STATUSES).toEqual([
+      "en_consignacion",
+      "asignada",
+      "enajenada",
+    ]);
   });
 
-  it("exposes quick filters for all, disponibles and vendidas", () => {
+  it("exposes quick filters for all, consignment, disponibles and vendidas", () => {
     expect(DISTRIBUTOR_PRINTER_QUICK_FILTERS.map((f) => f.label)).toEqual([
       "Todas",
+      "En consignación",
       "Disponibles",
       "Vendidas",
     ]);

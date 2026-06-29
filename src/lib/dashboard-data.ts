@@ -84,7 +84,11 @@ export type MonthlySalesBucket = {
   revenue: number;
 };
 
-const DISTRIBUTOR_PRINTER_STATUSES = ["asignada", "enajenada"] as const;
+const DISTRIBUTOR_PRINTER_STATUSES = [
+  "en_consignacion",
+  "asignada",
+  "enajenada",
+] as const;
 
 export type DashboardSnapshot = {
   stats: DashboardStat[];
@@ -114,6 +118,7 @@ const ALL_PRINTER_STATUSES = [
   "de_fabrica",
   "sin_asignar",
   "asignada",
+  "en_consignacion",
   "enajenada",
   "desincorporada",
   "laboratorio",

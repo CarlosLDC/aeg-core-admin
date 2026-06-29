@@ -1,4 +1,4 @@
-import { isPrinterAssigned, isPrinterUnassigned } from "@/lib/printer-status";
+import { isPrinterAssigned, isPrinterOnConsignment, isPrinterUnassigned } from "@/lib/printer-status";
 import {
   isPrinterPaidForDisposition,
   PRINTER_UNPAID_DISPOSITION_MESSAGE,
@@ -48,7 +48,13 @@ export function getPrinterStatusBadgeTitle(params: {
   printer?: PrinterResponse;
   canDispose: boolean;
 }): string | undefined {
-  if (!params.canDispose || !isPrinterAssigned(params.status)) {
+  if (!params.canDispose) {
+    return undefined;
+  }
+  if (isPrinterOnConsignment(params.status)) {
+    return PRINTER_UNPAID_DISPOSITION_MESSAGE;
+  }
+  if (!isPrinterAssigned(params.status)) {
     return undefined;
   }
   const paid =

@@ -2,6 +2,7 @@ export const PRINTER_STATUSES = [
   "de_fabrica",
   "sin_asignar",
   "asignada",
+  "en_consignacion",
   "enajenada",
   "desincorporada",
   "laboratorio",
