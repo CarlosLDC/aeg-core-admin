@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FISCAL_BOOKS_APP_URL } from "@/lib/fiscal-books-app";
+import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
 import {
   activeNavHref,
   isNavItemActive,
@@ -42,10 +42,10 @@ describe("navSectionsForRole", () => {
     expect(adminItems.some((i) => i.title === "Inspección anual")).toBe(true);
   });
 
-  it("shows Libro fiscal for DISTRIBUTOR with external app URL", () => {
+  it("shows Libro fiscal for DISTRIBUTOR via admin handoff path", () => {
     const items = navItemsForRole("DISTRIBUTOR");
     const fiscalBook = items.find((i) => i.title === "Libro fiscal");
-    expect(fiscalBook?.href).toBe(FISCAL_BOOKS_APP_URL);
+    expect(fiscalBook?.href).toBe(FISCAL_BOOK_ENTRY_PATH);
     expect(items.some((i) => i.title === "Clientes")).toBe(false);
     expect(items.some((i) => i.title === "Empresas")).toBe(true);
     expect(navItemsForRole("SENIAT").some((i) => i.title === "Libro fiscal")).toBe(

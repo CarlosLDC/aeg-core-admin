@@ -5,16 +5,15 @@ import {
   FISCAL_BOOKS_APP_URL,
   isExternalNavHref,
 } from "@/lib/fiscal-books-app";
+import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
 
 describe("fiscalBooksAppUrl", () => {
-  it("returns the app root", () => {
-    expect(fiscalBooksAppUrl()).toBe(FISCAL_BOOKS_APP_URL);
+  it("returns the admin handoff entry path", () => {
+    expect(fiscalBooksAppUrl()).toBe(FISCAL_BOOK_ENTRY_PATH);
   });
 
-  it("deep-links to a printer book", () => {
-    expect(fiscalBooksAppUrl(42)).toBe(
-      `${FISCAL_BOOKS_APP_URL}/fiscal-book/42`,
-    );
+  it("deep-links to a printer book via handoff", () => {
+    expect(fiscalBooksAppUrl(42)).toBe(`${FISCAL_BOOK_ENTRY_PATH}/42`);
   });
 });
 

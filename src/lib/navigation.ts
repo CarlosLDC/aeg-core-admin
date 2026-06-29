@@ -15,7 +15,7 @@ import {
   Radio,
   type LucideIcon,
 } from "lucide-react";
-import { FISCAL_BOOKS_APP_URL } from "@/lib/fiscal-books-app";
+import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
 import type { Role } from "@/types/user";
 
 export type NavItem = {
@@ -102,7 +102,7 @@ export const navSections: NavSection[] = [
       },
       {
         title: "Libro fiscal",
-        href: FISCAL_BOOKS_APP_URL,
+        href: FISCAL_BOOK_ENTRY_PATH,
         icon: BookOpen,
         roles: ["ADMIN", "DISTRIBUTOR"],
       },

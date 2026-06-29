@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { getSession } from "@/lib/auth";
 import { isRemembered } from "@/lib/auth-storage";
-import { completeSeniatHandoffFromAdmin } from "@/lib/fiscal-books-handoff";
+import { canAccessFiscalBooksApp } from "@/lib/fiscal-books-app";
+import { completeFiscalBooksHandoffFromAdmin } from "@/lib/fiscal-books-handoff";
 import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
 
 type FiscalBookHandoffProps = {
@@ -28,15 +29,18 @@ export function FiscalBookHandoff({ pathSegments }: FiscalBookHandoffProps) {
       return;
     }
 
-    if (session.role !== "SENIAT") {
+    const isSeniat = session.role === "SENIAT";
+    if (!isSeniat && !canAccessFiscalBooksApp(session.role)) {
       router.replace("/");
       return;
     }
 
-    completeSeniatHandoffFromAdmin({
+    completeFiscalBooksHandoffFromAdmin({
       token: session.token,
       remember: isRemembered(),
       pathSegments,
+      adminPath: redirectPath,
+      clearAdminSession: isSeniat,
     });
   }, [router, pathSegments]);
 

@@ -42,12 +42,13 @@ export function fiscalBooksHandoffUrl(
   return handoff.toString();
 }
 
-/** Envía al auditor al libro fiscal y deja el panel sin sesión activa. */
-export function completeSeniatHandoffFromAdmin(params: {
+/** Envía al libro fiscal con el JWT del panel (fragmento, no viaja al servidor). */
+export function completeFiscalBooksHandoffFromAdmin(params: {
   token: string;
   remember: boolean;
   adminPath?: string;
   pathSegments?: string[];
+  clearAdminSession?: boolean;
 }): void {
   const target =
     params.pathSegments !== undefined
@@ -57,6 +58,21 @@ export function completeSeniatHandoffFromAdmin(params: {
         );
 
   const url = fiscalBooksHandoffUrl(target, params.token, params.remember);
-  logout();
+  if (params.clearAdminSession) {
+    logout();
+  }
   window.location.replace(url);
+}
+
+/** Envía al auditor al libro fiscal y deja el panel sin sesión activa. */
+export function completeSeniatHandoffFromAdmin(params: {
+  token: string;
+  remember: boolean;
+  adminPath?: string;
+  pathSegments?: string[];
+}): void {
+  completeFiscalBooksHandoffFromAdmin({
+    ...params,
+    clearAdminSession: true,
+  });
 }

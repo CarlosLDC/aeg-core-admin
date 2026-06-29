@@ -1,4 +1,5 @@
 import type { Role } from "@/types/user";
+import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
 
 export const FISCAL_BOOKS_APP_URL = "https://aeg-libros-fiscales.vercel.app";
 
@@ -14,8 +15,8 @@ export function canAccessFiscalBooksApp(role: Role): boolean {
 }
 
 export function fiscalBooksAppUrl(printerId?: number): string {
-  if (printerId == null) return FISCAL_BOOKS_APP_URL;
-  return `${FISCAL_BOOKS_APP_URL}/fiscal-book/${printerId}`;
+  if (printerId == null) return FISCAL_BOOK_ENTRY_PATH;
+  return `${FISCAL_BOOK_ENTRY_PATH}/${printerId}`;
 }
 
 export function isExternalNavHref(href: string): boolean {

@@ -3,6 +3,7 @@ import * as auth from "@/lib/auth";
 import { FISCAL_BOOKS_APP_URL } from "@/lib/fiscal-books-app";
 import {
   adminPathToFiscalBooksTarget,
+  completeFiscalBooksHandoffFromAdmin,
   completeSeniatHandoffFromAdmin,
   fiscalBooksHandoffUrl,
   fiscalBooksTargetPath,
@@ -63,5 +64,28 @@ describe("completeSeniatHandoffFromAdmin", () => {
     expect(logoutSpy).toHaveBeenCalledTimes(1);
     expect(replace).toHaveBeenCalledTimes(1);
     expect(String(replace.mock.calls[0][0])).toContain("/auth/handoff");
+  });
+});
+
+describe("completeFiscalBooksHandoffFromAdmin", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("keeps admin session for panel users opening the libro fiscal", () => {
+    const replace = vi.fn();
+    vi.stubGlobal("window", { location: { replace } });
+    const logoutSpy = vi.spyOn(auth, "logout").mockImplementation(() => {});
+
+    completeFiscalBooksHandoffFromAdmin({
+      token: "jwt-token",
+      remember: false,
+      pathSegments: ["42"],
+      clearAdminSession: false,
+    });
+
+    expect(logoutSpy).not.toHaveBeenCalled();
+    expect(replace).toHaveBeenCalledTimes(1);
+    expect(String(replace.mock.calls[0][0])).toContain("next=%2Ffiscal-book%2F42");
   });
 });
