@@ -71,7 +71,7 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     update: ADMIN_ONLY,
     delete: ADMIN_ONLY,
   },
-  mqtt: {
+  remoto: {
     read: ADMIN_ONLY,
     create: ADMIN_ONLY,
   },

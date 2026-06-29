@@ -389,7 +389,7 @@ export function useAnnualInspectionRitual() {
                 : undefined;
 
       const contextLine = step.isChecklist
-        ? "Revise el equipo y marque el checklist. Las pruebas MQTT de factura y NC pueden marcar ítems automáticamente."
+        ? "Revise el equipo y marque el checklist. Las pruebas Remoto de factura y NC pueden marcar ítems automáticamente."
         : "AEG Core publica en Comando → simula la respuesta de impresora en Respuesta.";
 
       return {

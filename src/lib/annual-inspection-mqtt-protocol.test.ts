@@ -6,7 +6,7 @@ import {
 } from "@/lib/annual-inspection-mqtt-protocol";
 
 describe("annual-inspection-mqtt-protocol", () => {
-  it("defines five MQTT protocol steps", () => {
+  it("defines five Remoto protocol steps", () => {
     expect(ANNUAL_INSPECTION_FLOW_STEPS).toHaveLength(5);
     expect(ANNUAL_INSPECTION_FLOW_STEPS.map((s) => s.step)).toEqual([
       "1",

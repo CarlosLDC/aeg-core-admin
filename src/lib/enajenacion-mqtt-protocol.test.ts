@@ -598,14 +598,14 @@ describe("enajenacion-mqtt-protocol", () => {
     ).toEqual({ cmd: "wFileSPIFF", code: 0, dataD: 0 });
   });
 
-  it("formats MQTT JSON payloads for display", () => {
+  it("formats Remoto JSON payloads for display", () => {
     expect(formatMqttPayloadForDisplay('{"cmd":"aperDNF","code":0}')).toBe(
       '{\n  "cmd": "aperDNF",\n  "code": 0\n}',
     );
     expect(formatMqttPayloadForDisplay("not-json")).toBe("not-json");
   });
 
-  it("merges MQTT message buffers without duplicates", () => {
+  it("merges Remoto message buffers without duplicates", () => {
     const first = [
       {
         topic: "/206EF1884C68/AEG_Fiscal/Integracion/Comando",

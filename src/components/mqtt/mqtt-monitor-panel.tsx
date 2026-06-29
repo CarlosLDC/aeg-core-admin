@@ -67,7 +67,7 @@ export function MqttMonitorPanel({
   return (
     <section className="mx-auto max-w-2xl space-y-4">
       <p className="rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-xs text-muted">
-        AEG Core escucha el broker MQTT en el servidor. Elige un tópico para ver
+        AEG Core escucha el broker Remoto en el servidor. Elige un tópico para ver
         los mensajes entrantes.
       </p>
 
@@ -77,7 +77,7 @@ export function MqttMonitorPanel({
           value={monitor.monitorTopic}
           onChange={(e) => monitor.setMonitorTopic(e.target.value)}
           className={cn(inputClass, "min-w-0 flex-1 font-mono")}
-          placeholder="tópico MQTT (# permitido)"
+          placeholder="tópico Remoto (# permitido)"
           disabled={monitor.subscribeLoading}
           aria-label="Tópico a escuchar"
         />

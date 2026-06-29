@@ -177,7 +177,7 @@ export function EnajenacionSuccessCard({
           <p className="mt-1 text-sm text-muted">
             {enajenada
               ? "La impresora está marcada como Enajenada en AEG Core."
-              : "Todos los pasos MQTT finalizaron. Comprueba el estado en BD."}
+              : "Todos los pasos Remoto finalizaron. Comprueba el estado en BD."}
           </p>
           <p className="mt-2 text-sm">
             Estado actual:{" "}

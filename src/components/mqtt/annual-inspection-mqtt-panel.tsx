@@ -46,7 +46,7 @@ export function AnnualInspectionMqttPanel() {
         <div className="flex items-start justify-between gap-3">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-card-foreground">
             <Printer className="size-5 text-accent" />
-            Inspección anual MQTT
+            Inspección anual Remoto
           </h2>
           {ritual.activePrinter && ritual.topics ? (
             <button

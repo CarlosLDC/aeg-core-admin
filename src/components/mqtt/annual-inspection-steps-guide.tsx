@@ -158,7 +158,7 @@ export function AnnualInspectionStepsGuide() {
 
         <div className="border-t border-border pt-4">
           <h3 className="text-sm font-semibold text-card-foreground">
-            Instrucciones del protocolo MQTT (pasos 1–5)
+            Instrucciones del protocolo Remoto (pasos 1–5)
           </h3>
           <p className="mt-1 text-sm text-muted">
             Detalle de cada comando, respuesta esperada y acción en libro fiscal vs.

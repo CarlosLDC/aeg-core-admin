@@ -58,7 +58,7 @@ describe("getPrinterStatusQuickAction", () => {
     expect(action).toBeNull();
   });
 
-  it("offers ticket reconfigure when MQTT is pending", () => {
+  it("offers ticket reconfigure when Remoto is pending", () => {
     const action = getPrinterStatusQuickAction({
       status: "asignada",
       printer: {

@@ -228,7 +228,7 @@ export function AnnualInspectionView() {
               />
             </DetailSection>
             {hasAnnualInspectionMqttAudit(inspection) ? (
-              <DetailSection title="Auditoría MQTT (SetDateRevO)" layout="quad">
+              <DetailSection title="Auditoría Remoto (SetDateRevO)" layout="quad">
                 <DetailField
                   label="Registro impresora"
                   value={inspection.mqttRegistroImpresora ?? "—"}

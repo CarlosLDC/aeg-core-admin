@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 const PENDING_MQTT_TITLE =
-  "Pendiente enajenación MQTT: ticket fiscal guardado; falta completar el ritual en la impresora";
+  "Pendiente enajenación Remoto: ticket fiscal guardado; falta completar el ritual en la impresora";
 
 type PrinterPendingMqttBadgeProps = {
   className?: string;

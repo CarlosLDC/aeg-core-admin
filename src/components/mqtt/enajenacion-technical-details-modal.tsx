@@ -121,7 +121,7 @@ export function EnajenacionTechnicalDetailsModal({
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium text-muted">Monitor MQTT</dt>
+              <dt className="text-xs font-medium text-muted">Monitor Remoto</dt>
               <dd className="mt-0.5 font-mono break-all text-card-foreground">
                 {topics.monitor}
               </dd>

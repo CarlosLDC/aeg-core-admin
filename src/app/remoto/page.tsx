@@ -5,10 +5,10 @@ import { MqttTestPanel } from "@/components/mqtt/mqtt-test-panel";
 export default function MqttTestsPage() {
   return (
     <AdminShell
-      title="Herramientas MQTT"
-      description="Diagnóstico del broker, actividad de enajenación, inspección anual (libro fiscal) y pruebas fiscales MQTT"
+      title="Herramientas Remoto"
+      description="Diagnóstico del broker, actividad de enajenación, inspección anual (libro fiscal) y pruebas fiscales Remoto"
     >
-      <RoleGuard path="/mqtt-tests">
+      <RoleGuard path="/remoto">
         <MqttTestPanel />
       </RoleGuard>
     </AdminShell>

@@ -26,7 +26,7 @@ Los roles históricos `DISTRIBUTOR` y `SERVICE_CENTER` se consolidaron en `TECHN
 | annualInspections | ADMIN, TECHNICIAN | Igual | Igual | Igual | Solo impresoras **asignada**; inspector = `userId` |
 | contracts | ADMIN | ADMIN | ADMIN | ADMIN | |
 | users | ADMIN | ADMIN | ADMIN | ADMIN | Incluye rol SENIAT (auditor libro, sin acceso panel) |
-| mqtt | ADMIN | ADMIN | — | — | |
+| remoto | ADMIN | ADMIN | — | — | |
 | seniatExtract | ADMIN, TECHNICIAN | — | — | — | Solo API Next |
 | uploads | Quien adjunta fotos en módulos permitidos | — | — | — | |
 

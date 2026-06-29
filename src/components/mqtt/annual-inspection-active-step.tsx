@@ -275,7 +275,7 @@ export function AnnualInspectionSuccessCard({
             Ritual completado
           </h3>
           <p className="mt-1 text-sm text-muted">
-            Todos los pasos MQTT finalizaron. Esta pestaña no persiste en BD —
+            Todos los pasos Remoto finalizaron. Esta pestaña no persiste en BD —
             use el libro fiscal para registros oficiales.
           </p>
           <dl className="mt-3 space-y-1 text-sm">
@@ -287,7 +287,7 @@ export function AnnualInspectionSuccessCard({
             </div>
             {registroImpresora ? (
               <div className="flex flex-wrap gap-x-2">
-                <dt className="text-muted">Registro MQTT:</dt>
+                <dt className="text-muted">Registro Remoto:</dt>
                 <dd className="font-mono">{registroImpresora}</dd>
               </div>
             ) : null}

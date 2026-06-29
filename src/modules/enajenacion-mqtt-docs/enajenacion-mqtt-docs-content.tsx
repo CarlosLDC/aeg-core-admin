@@ -110,10 +110,10 @@ export function EnajenacionMqttDocsContent() {
           AEG Core · Referencia técnica
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Protocolo de enajenación automática (MQTT)
+          Protocolo de enajenación automática (Remoto)
         </h1>
         <P>
-          Flujo fiscal entre impresora, broker MQTT y AEG Core. Detalle completo
+          Flujo fiscal entre impresora, broker Remoto y AEG Core. Detalle completo
           en el repositorio backend: <Code>docs/ENAJENACION_MQTT.md</Code>.
         </P>
       </header>
@@ -133,11 +133,11 @@ export function EnajenacionMqttDocsContent() {
             <strong className="font-semibold text-foreground">
               impresora al arrancar
             </strong>{" "}
-            cuando detecta que aún no está enajenada y tiene conectividad MQTT.
+            cuando detecta que aún no está enajenada y tiene conectividad Remoto.
           </P>
         </Section>
 
-        <Section id="actors" title="Actores y tópicos MQTT">
+        <Section id="actors" title="Actores y tópicos Remoto">
           <ul className="list-disc space-y-2 pl-5">
             <li>
               <strong className="font-semibold text-foreground">Impresora:</strong>{" "}
@@ -145,7 +145,7 @@ export function EnajenacionMqttDocsContent() {
               DNF, factura, NC y Reporte Z.
             </li>
             <li>
-              <strong className="font-semibold text-foreground">Broker MQTT:</strong>{" "}
+              <strong className="font-semibold text-foreground">Broker Remoto:</strong>{" "}
               transporte pub/sub (p. ej. red privada en DigitalOcean).
             </li>
             <li>
@@ -203,7 +203,7 @@ export function EnajenacionMqttDocsContent() {
               <Code>clientId</Code> asignado; cliente con sucursal, RIF, razón
               social y dirección completa.
             </li>
-            <li>Sin otra sesión MQTT activa para la misma MAC.</li>
+            <li>Sin otra sesión Remoto activa para la misma MAC.</li>
           </ul>
           <P>
             Si falla alguna validación, el servidor registra el error y no inicia
@@ -269,7 +269,7 @@ export function EnajenacionMqttDocsContent() {
 
         <Section id="manual-test" title="Cómo usar la prueba manual">
           <P>
-            En <strong className="font-semibold text-foreground">Herramientas MQTT → Enajenación</strong>{" "}
+            En <strong className="font-semibold text-foreground">Herramientas Remoto → Enajenación</strong>{" "}
             el admin simula la impresora: publica ptrEnajenar en CmdServer y respuestas en Respuesta. Los
             comandos en Comando son siempre los que genera AEG Core (solo
             lectura en el panel).
@@ -309,7 +309,7 @@ export function EnajenacionMqttDocsContent() {
           <P>
             Alternativa fuera del panel: script{" "}
             <Code>scripts/enajenacion_printer_simulator.py</Code> en aeg-core,
-            conectado directamente al broker MQTT.
+            conectado directamente al broker Remoto.
           </P>
         </Section>
       </div>

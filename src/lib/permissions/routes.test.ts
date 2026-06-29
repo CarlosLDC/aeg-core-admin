@@ -20,22 +20,22 @@ describe("route permissions", () => {
     expect(canAccessRoute("DISTRIBUTOR", "/users")).toBe(false);
   });
 
-  it("respects nav role restrictions on /mqtt-tests", () => {
+  it("respects nav role restrictions on /remoto", () => {
     const roles: Role[] = ["ADMIN", "TECHNICIAN", "DISTRIBUTOR"];
-    expect(roles.filter((r) => canAccessRoute(r, "/mqtt-tests"))).toEqual(["ADMIN"]);
+    expect(roles.filter((r) => canAccessRoute(r, "/remoto"))).toEqual(["ADMIN"]);
   });
 
-  it("allows ADMIN on enajenación MQTT docs", () => {
-    expect(canAccessRoute("ADMIN", "/docs/enajenacion-mqtt")).toBe(true);
-    expect(resourceForPath("/docs/enajenacion-mqtt")).toBe("mqtt");
-    expect(canAccessRoute("TECHNICIAN", "/docs/enajenacion-mqtt")).toBe(false);
-    expect(canAccessRoute("DISTRIBUTOR", "/docs/enajenacion-mqtt")).toBe(false);
+  it("allows ADMIN on enajenación Remoto docs", () => {
+    expect(canAccessRoute("ADMIN", "/docs/enajenacion-remoto")).toBe(true);
+    expect(resourceForPath("/docs/enajenacion-remoto")).toBe("remoto");
+    expect(canAccessRoute("TECHNICIAN", "/docs/enajenacion-remoto")).toBe(false);
+    expect(canAccessRoute("DISTRIBUTOR", "/docs/enajenacion-remoto")).toBe(false);
   });
 
-  it("allows ADMIN on annual inspection MQTT docs", () => {
-    expect(canAccessRoute("ADMIN", "/docs/annual-inspection-mqtt")).toBe(true);
-    expect(resourceForPath("/docs/annual-inspection-mqtt")).toBe("mqtt");
-    expect(canAccessRoute("TECHNICIAN", "/docs/annual-inspection-mqtt")).toBe(
+  it("allows ADMIN on annual inspection Remoto docs", () => {
+    expect(canAccessRoute("ADMIN", "/docs/annual-inspection-remoto")).toBe(true);
+    expect(resourceForPath("/docs/annual-inspection-remoto")).toBe("remoto");
+    expect(canAccessRoute("TECHNICIAN", "/docs/annual-inspection-remoto")).toBe(
       false,
     );
   });

@@ -32,7 +32,7 @@ describe("printer-status", () => {
     expect(isPrinterOperative("laboratorio")).toBe(false);
   });
 
-  it("detects printers eligible for MQTT enajenacion", () => {
+  it("detects printers eligible for Remoto enajenacion", () => {
     expect(isPrinterEligibleForMqttEnajenacion("asignada")).toBe(true);
     expect(isPrinterEligibleForMqttEnajenacion("laboratorio")).toBe(true);
     expect(isPrinterEligibleForMqttEnajenacion("de_demostracion")).toBe(true);

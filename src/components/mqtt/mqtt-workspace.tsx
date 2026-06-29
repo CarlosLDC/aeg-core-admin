@@ -10,13 +10,16 @@ import { cn } from "@/lib/utils";
 
 type MqttTab = "diagnostics" | "enajenacion" | "activity" | "annual-inspection";
 
-const TAB_STORAGE_KEY = "mqtt-workspace-tab";
+const TAB_STORAGE_KEY = "remoto-workspace-tab";
+const LEGACY_TAB_STORAGE_KEY = "mqtt-workspace-tab";
 
 function readStoredTab(): MqttTab {
   if (typeof window === "undefined") {
     return "diagnostics";
   }
-  const stored = sessionStorage.getItem(TAB_STORAGE_KEY);
+  const stored =
+    sessionStorage.getItem(TAB_STORAGE_KEY) ??
+    sessionStorage.getItem(LEGACY_TAB_STORAGE_KEY);
   if (stored === "monitor") {
     return "activity";
   }
@@ -40,7 +43,7 @@ export function MqttWorkspace() {
         <SegmentedToggle
           value={tab}
           onChange={handleTabChange}
-          ariaLabel="Sección MQTT"
+          ariaLabel="Sección Remoto"
           options={[
             { value: "diagnostics", label: "Diagnóstico" },
             { value: "activity", label: "Actividad" },

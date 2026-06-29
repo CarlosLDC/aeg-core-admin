@@ -198,7 +198,7 @@ export function buildAnnualInspectionServerCommandPayload(
     case "set-date-rev-o":
       return buildSetDateRevOCommandPayload(ctx.checklist);
     default:
-      throw new Error(`Paso sin comando MQTT: ${stepId}`);
+      throw new Error(`Paso sin comando Remoto: ${stepId}`);
   }
 }
 

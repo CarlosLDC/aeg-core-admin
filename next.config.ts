@@ -24,6 +24,21 @@ const nextConfig: NextConfig = {
       ],
     };
   },
+  async redirects() {
+    return [
+      { source: "/mqtt-tests", destination: "/remoto", permanent: true },
+      {
+        source: "/docs/enajenacion-mqtt",
+        destination: "/docs/enajenacion-remoto",
+        permanent: true,
+      },
+      {
+        source: "/docs/annual-inspection-mqtt",
+        destination: "/docs/annual-inspection-remoto",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

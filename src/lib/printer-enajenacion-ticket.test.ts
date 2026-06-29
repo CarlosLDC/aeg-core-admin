@@ -39,7 +39,7 @@ describe("printer-enajenacion-ticket", () => {
     );
   });
 
-  it("flags printers waiting for MQTT enajenacion", () => {
+  it("flags printers waiting for Remoto enajenacion", () => {
     expect(
       isPrinterPendingMqttEnajenacion(
         printer({

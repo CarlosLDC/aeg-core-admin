@@ -65,7 +65,7 @@ async function mqttFetch<T>(
   }
 
   if (response.status === 403) {
-    throw new ApiError("Solo un administrador puede usar las pruebas MQTT.", 403);
+    throw new ApiError("Solo un administrador puede usar las pruebas Remoto.", 403);
   }
 
   return { data, status: response.status };
@@ -123,7 +123,7 @@ export async function publishMqttMessage(
     throw new ApiError(
       typeof data === "object" && data && "message" in data
         ? String((data as { message?: string }).message)
-        : "No se pudo publicar en MQTT",
+        : "No se pudo publicar en Remoto",
       status,
     );
   }
@@ -290,7 +290,7 @@ export async function getMqttSubscription(): Promise<MqttSubscriptionResponse> {
   const { data, status } = await mqttFetch<MqttSubscriptionResponse>(
     `${BASE}/subscription`,
   );
-  ensureMqttSuccess(status, data, "No se pudo leer la suscripción MQTT.");
+  ensureMqttSuccess(status, data, "No se pudo leer la suscripción Remoto.");
   if (data === undefined) {
     throw new ApiError("Respuesta vacía del servidor", 500);
   }
@@ -309,7 +309,7 @@ export async function updateMqttSubscription(
   );
   if (status === 503) {
     throw new ApiError(
-      "La suscripción entrante MQTT no está activa en el servidor.",
+      "La suscripción entrante Remoto no está activa en el servidor.",
       503,
     );
   }

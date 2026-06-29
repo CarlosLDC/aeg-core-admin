@@ -1,6 +1,16 @@
 import { toDateInputValue } from "@/lib/datetime-form";
 import { printerSelectOptions } from "@/lib/field-operations-catalog";
 import { isPrinterAssigned } from "@/lib/printer-status";
+import {
+  ANNUAL_INSPECTION_CHECKLIST_ROWS,
+  checklistFromPersisted,
+  checklistToPersisted,
+  checklistToSealTampered,
+  emptyAnnualInspectionChecklist,
+  sealTamperedToChkPrecinto,
+  type AnnualInspectionChecklistKey,
+  type AnnualInspectionChecklistState,
+} from "@/lib/annual-inspection-mqtt-state";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 import type {
   AnnualInspectionRequest,
@@ -15,6 +25,7 @@ export type AnnualInspectionFormValues = {
   notes: string;
   photoUrls: string[];
   inspectionDate: string;
+  checklist: AnnualInspectionChecklistState;
 };
 
 export const ANNUAL_INSPECTION_ASSIGNED_PRINTER_MESSAGE =
@@ -27,6 +38,7 @@ export const emptyAnnualInspectionForm = (): AnnualInspectionFormValues => ({
   notes: "",
   photoUrls: [],
   inspectionDate: "",
+  checklist: emptyAnnualInspectionChecklist(),
 });
 
 export function printersEligibleForAnnualInspection(
@@ -69,16 +81,52 @@ export function validateAnnualInspectionPrinter(
   return null;
 }
 
+export function setAnnualInspectionChecklistField(
+  form: AnnualInspectionFormValues,
+  key: AnnualInspectionChecklistKey,
+  checked: boolean,
+): AnnualInspectionFormValues {
+  const checklist = { ...form.checklist, [key]: checked };
+  return {
+    ...form,
+    checklist,
+    sealTampered: checklistToSealTampered(checklist),
+  };
+}
+
+export function setAnnualInspectionSealTampered(
+  form: AnnualInspectionFormValues,
+  sealTampered: boolean,
+): AnnualInspectionFormValues {
+  return {
+    ...form,
+    sealTampered,
+    checklist: {
+      ...form.checklist,
+      chkPrecinto: sealTamperedToChkPrecinto(sealTampered),
+    },
+  };
+}
+
 export function annualInspectionToFormValues(
   row: AnnualInspectionResponse,
 ): AnnualInspectionFormValues {
+  const checklist = checklistFromPersisted({
+    chkPrecinto: row.chkPrecinto,
+    chkEtiquetaFiscal: row.chkEtiquetaFiscal,
+    chkFactura: row.chkFactura,
+    chkNotaCredito: row.chkNotaCredito,
+    chkSensorPapel: row.chkSensorPapel,
+    sealTampered: row.sealTampered,
+  });
   return {
     printerId: String(row.printerId),
     userId: String(row.userId),
-    sealTampered: row.sealTampered,
+    sealTampered: checklistToSealTampered(checklist),
     notes: row.notes ?? "",
     photoUrls: [...(row.photoUrls ?? [])],
     inspectionDate: toDateInputValue(row.inspectionDate),
+    checklist,
   };
 }
 
@@ -107,12 +155,17 @@ export function toAnnualInspectionRequest(
     return "Añade al menos una foto o documento.";
   }
 
+  const persistedChecklist = checklistToPersisted(values.checklist);
+
   return {
     printerId,
     userId,
-    sealTampered: values.sealTampered,
+    sealTampered: checklistToSealTampered(values.checklist),
     notes: values.notes.trim() || null,
     photoUrls: values.photoUrls,
     inspectionDate: values.inspectionDate.trim() || null,
+    ...persistedChecklist,
   };
 }
+
+export { ANNUAL_INSPECTION_CHECKLIST_ROWS };

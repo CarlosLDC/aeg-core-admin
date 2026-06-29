@@ -373,7 +373,7 @@ export function isPtrEnajenarPayload(payload: string): boolean {
   return detectPrinterResponseStep(payload) === "request";
 }
 
-/** Marca de tiempo del ptrEnajenar más reciente para esta MAC (inicio de sesión MQTT). */
+/** Marca de tiempo del ptrEnajenar más reciente para esta MAC (inicio de sesión Remoto). */
 export function findLatestPtrEnajenarReceivedAt(
   messages: { topic: string; payload: string; receivedAt: string }[],
   mac: string,

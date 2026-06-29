@@ -488,8 +488,8 @@ export function PrinterView() {
         ),
       },
       {
-        id: "ticket-mqtt",
-        label: "Ticket MQTT",
+        id: "ticket-remoto",
+        label: "Ticket Remoto",
         content: (
           <DetailSection title="Campos JSON del ticket">
             <PrinterTicketConfigPanel

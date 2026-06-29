@@ -50,7 +50,7 @@ export function AnnualInspectionMqttDocsContent() {
           AEG Core · Referencia técnica
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Inspección anual obligatoria (MQTT) — Libro fiscal
+          Inspección anual obligatoria (Remoto) — Libro fiscal
         </h1>
         <P>
           Ritual fiscal que registra en la impresora el estado del precinto, etiqueta,
@@ -65,7 +65,7 @@ export function AnnualInspectionMqttDocsContent() {
             href={ENAJENACION_MQTT_DOCS_PATH}
             className="font-medium text-accent hover:underline"
           >
-            protocolo de enajenación MQTT
+            protocolo de enajenación Remoto
           </Link>
           .
         </P>
@@ -117,7 +117,7 @@ export function AnnualInspectionMqttDocsContent() {
           </div>
         </Section>
 
-        <Section id="protocol" title="Protocolo MQTT — pasos 1 a 5">
+        <Section id="protocol" title="Protocolo Remoto — pasos 1 a 5">
           <ol className="space-y-8">
             {ANNUAL_INSPECTION_FLOW_STEPS.map((step) => (
               <li key={step.id} className="rounded-lg border border-border bg-foreground/[0.02] p-5">

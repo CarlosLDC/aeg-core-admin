@@ -1,4 +1,4 @@
-/** Referencia del ritual MQTT de inspección anual obligatoria (libro fiscal + pruebas admin). */
+/** Referencia del ritual Remoto de inspección anual obligatoria (libro fiscal + pruebas admin). */
 
 export type AnnualInspectionStateVariable = {
   name: string;
@@ -28,7 +28,7 @@ export const ANNUAL_INSPECTION_LIBRO_FISCAL_INTRO =
   "En producción el ritual se ejecuta desde el libro fiscal (aeg-core-fiscalbooks), en la ruta «Nueva inspección anual» de cada equipo. El formulario del libro no se puede guardar hasta que SetDateRevO responda con code = 0 en la impresora.";
 
 export const ANNUAL_INSPECTION_ADMIN_PANEL_INTRO =
-  "Esta pestaña del panel admin usa los mismos endpoints MQTT que el libro fiscal. Sirve para diagnosticar la impresora sin crear un registro en inspecciones_anuales. Tras SetDateRevO exitoso aquí solo se muestra confirmación; la persistencia ocurre en el libro fiscal.";
+  "Esta pestaña del panel admin usa los mismos endpoints Remoto que el libro fiscal. Sirve para diagnosticar la impresora sin crear un registro en inspecciones_anuales. Tras SetDateRevO exitoso aquí solo se muestra confirmación; la persistencia ocurre en el libro fiscal.";
 
 export const ANNUAL_INSPECTION_GLOBAL_RULES = [
   "El orden de los comandos en cada arreglo (factura y nota de crédito) es obligatorio: la impresora los ejecuta secuencialmente.",
@@ -88,11 +88,11 @@ export const LIBRO_FISCAL_INSPECTION_WORKFLOW = [
     order: 2,
     title: "Iniciar «Nueva inspección anual»",
     detail:
-      "Complete fecha, técnico responsable y observaciones del formulario reglamentario. La sección MQTT aparece al inicio: debe completarse antes de guardar.",
+      "Complete fecha, técnico responsable y observaciones del formulario reglamentario. La sección Remoto aparece al inicio: debe completarse antes de guardar.",
   },
   {
     order: 3,
-    title: "Paso 1 MQTT — Inspección Anual Obligatoria",
+    title: "Paso 1 Remoto — Inspección Anual Obligatoria",
     detail:
       "Pulse el botón de ancho completo. AEG Core envía StaInf con status NroRegMa, guarda registroImpresora y abre el modal de checklist.",
   },
@@ -104,7 +104,7 @@ export const LIBRO_FISCAL_INSPECTION_WORKFLOW = [
   },
   {
     order: 5,
-    title: "Paso 5 MQTT — Enviar inspección",
+    title: "Paso 5 Remoto — Enviar inspección",
     detail:
       "Pulse «Enviar Inspección Anual Obligatoria». AEG Core publica SetDateRevO con inspAO según los checkboxes y timestamp Venezuela (UTC−4 naive). Debe responder code = 0.",
   },
@@ -112,7 +112,7 @@ export const LIBRO_FISCAL_INSPECTION_WORKFLOW = [
     order: 6,
     title: "Guardar en el libro fiscal",
     detail:
-      "Solo tras SetDateRevO exitoso se habilita el guardado. El registro persiste registro MQTT, timestamp SetDateRevO y número de factura de prueba (si hubo) junto a la inspección anual.",
+      "Solo tras SetDateRevO exitoso se habilita el guardado. El registro persiste registro Remoto, timestamp SetDateRevO y número de factura de prueba (si hubo) junto a la inspección anual.",
   },
 ] as const;
 
@@ -140,7 +140,7 @@ export const ANNUAL_INSPECTION_FLOW_STEPS: AnnualInspectionFlowStep[] = [
       "Tras éxito se abre el modal con checklist y botones de prueba.",
     ],
     libroFiscalAction:
-      "Pulsar «Inspección Anual Obligatoria» en la sección MQTT del formulario de nueva inspección.",
+      "Pulsar «Inspección Anual Obligatoria» en la sección Remoto del formulario de nueva inspección.",
     adminPanelAction:
       "Seleccionar impresora enajenada y pulsar «Inspección Anual Obligatoria» en esta pestaña.",
   },
@@ -152,13 +152,13 @@ export const ANNUAL_INSPECTION_FLOW_STEPS: AnnualInspectionFlowStep[] = [
     topic: "Comando",
     responseTopic: "Respuesta",
     purpose:
-      "El modal muestra registro de impresora, botón Actualizar (repite StaInf), descripción de producto para pruebas, cinco filas de checklist y el botón final SetDateRevO. Los checkboxes solo actualizan variables booleanas; no envían MQTT por sí solos.",
+      "El modal muestra registro de impresora, botón Actualizar (repite StaInf), descripción de producto para pruebas, cinco filas de checklist y el botón final SetDateRevO. Los checkboxes solo actualizan variables booleanas; no envían Remoto por sí solos.",
     successCriteria: [
       "Cinco filas: Precinto, Etiqueta Fiscal, Factura (+ botón factura prueba), Nota de Crédito (+ botón NC prueba), Sensor de Papel.",
       "Actualizar vuelve a consultar StaInf y refresca registroImpresora.",
     ],
     libroFiscalAction:
-      "Revisar visualmente el equipo y marcar cada ítem del checklist, o dejar que las pruebas MQTT marquen Factura y NC.",
+      "Revisar visualmente el equipo y marcar cada ítem del checklist, o dejar que las pruebas Remoto marquen Factura y NC.",
     adminPanelAction: "Mismo modal; «Actualizar» llama de nuevo a StaInf.",
   },
   {

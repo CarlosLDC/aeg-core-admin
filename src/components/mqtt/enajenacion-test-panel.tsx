@@ -76,7 +76,7 @@ export function EnajenacionTestPanel() {
         <div className="flex items-start justify-between gap-3">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-card-foreground">
             <Printer className="size-5 text-accent" />
-            Enajenación MQTT
+            Enajenación Remoto
           </h2>
           {ritual.activePrinter && (
             <div className="flex shrink-0 items-center gap-2">

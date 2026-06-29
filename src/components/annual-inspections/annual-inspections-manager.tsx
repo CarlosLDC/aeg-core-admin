@@ -405,7 +405,7 @@ export function AnnualInspectionsManager() {
                           }
                         />
                         <th className="px-5 py-3 font-medium">Precinto</th>
-                        <th className="px-5 py-3 font-medium">Registro MQTT</th>
+                        <th className="px-5 py-3 font-medium">Registro Remoto</th>
                         <SortableTableHeader
                           label="Fotos"
                           sortDirection={

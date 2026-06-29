@@ -21,7 +21,7 @@ export const RESOURCES = [
   "annualInspections",
   "contracts",
   "users",
-  "mqtt",
+  "remoto",
   "seniatExtract",
   "uploads",
 ] as const;

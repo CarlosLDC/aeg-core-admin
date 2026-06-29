@@ -333,7 +333,7 @@ export function PrinterDispositionView({
       toast.success(
         isPrinterPendingMqttEnajenacion(printer)
           ? `Configuración de ticket actualizada para ${printer.fiscalSerial}.`
-          : `Configuración de ticket guardada para ${printer.fiscalSerial}. La impresora puede iniciar el ritual MQTT.`,
+          : `Configuración de ticket guardada para ${printer.fiscalSerial}. La impresora puede iniciar el ritual Remoto.`,
         {
           href: printerPath(printer.id),
         },

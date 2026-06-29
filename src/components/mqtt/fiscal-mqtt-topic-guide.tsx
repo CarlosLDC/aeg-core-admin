@@ -18,7 +18,7 @@ export function FiscalMqttTopicGuide({ macAddress, className }: FiscalMqttTopicG
   return (
     <div
       className={className}
-      aria-label="Patrón de tópicos MQTT fiscal"
+      aria-label="Patrón de tópicos Remoto fiscal"
     >
       <p className="text-sm text-muted">{FISCAL_MQTT_COMANDO_RESPUESTA_GUIDE}</p>
       <dl className="mt-2 space-y-1.5 text-xs text-card-foreground">

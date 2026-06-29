@@ -82,7 +82,7 @@ export function EnajenacionActivityPanel() {
   return (
     <section className="mx-auto max-w-4xl space-y-4">
       <p className="rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 text-xs text-muted">
-        Historial persistente de intercambios MQTT de enajenación: solicitudes de
+        Historial persistente de intercambios Remoto de enajenación: solicitudes de
         las impresoras, comandos publicados y el resultado de cada mensaje. Los
         registros se guardan en el servidor y no se eliminan por antigüedad.
       </p>

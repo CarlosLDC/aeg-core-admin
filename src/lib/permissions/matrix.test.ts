@@ -28,7 +28,7 @@ describe("PERMISSION_MATRIX completeness", () => {
   it("covers standard CRUD or documented exceptions", () => {
     const crudExceptions: Partial<Record<(typeof RESOURCES)[number], Action[]>> = {
       dashboard: ["read"],
-      mqtt: ["read", "create"],
+      remoto: ["read", "create"],
       seniatExtract: ["read", "create"],
       uploads: ["read", "create"],
     };
