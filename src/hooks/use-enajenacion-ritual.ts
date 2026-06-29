@@ -45,6 +45,7 @@ export type RitualStep = {
   step: string;
   name: string;
   isRequest: boolean;
+  isChecklist?: boolean;
 };
 
 export type RitualTopics = {
@@ -68,6 +69,9 @@ export type RitualStepActionState = {
   contextLine: string;
   waitingElapsedSeconds: number | null;
   waitingTimeoutSeconds: number | null;
+  serverCommandSimulation?: PrinterSimulationPayload | null;
+  publishDisabled?: boolean;
+  publishDisabledReason?: string;
 };
 
 export function useEnajenacionRitual() {

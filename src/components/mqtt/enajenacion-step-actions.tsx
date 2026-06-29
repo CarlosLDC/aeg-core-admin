@@ -112,13 +112,14 @@ export function ServerCommandBlock({
   );
 }
 
-export function SimulatePrinterButton({
+export function PublishServerCommandButton({
   stepId,
   simulation,
   disabled,
   disabledReason,
   onPublished,
   fullWidth,
+  buttonLabel,
 }: {
   stepId: string;
   simulation: PrinterSimulationPayload;
@@ -126,6 +127,69 @@ export function SimulatePrinterButton({
   disabledReason?: string;
   onPublished?: (stepId: string) => void;
   fullWidth?: boolean;
+  buttonLabel?: string;
+}) {
+  const toast = useToast();
+  const [loading, setLoading] = useState(false);
+
+  async function handlePublish() {
+    setLoading(true);
+    try {
+      await publishMqttMessage({
+        topic: simulation.topic,
+        payload: simulation.payload as MqttPublishPayload,
+      });
+      toast.success("Comando publicado en Comando");
+      onPublished?.(stepId);
+    } catch (err) {
+      toast.error(getMqttErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={() => void handlePublish()}
+        disabled={disabled || loading}
+        className={cn(
+          "inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground",
+          "hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50",
+          fullWidth && "w-full",
+        )}
+      >
+        {loading ? (
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+        ) : (
+          <Send className="size-4" aria-hidden />
+        )}
+        {buttonLabel ?? "Publicar comando en Comando"}
+      </button>
+      {disabled && disabledReason ? (
+        <p className="text-xs text-muted">{disabledReason}</p>
+      ) : null}
+    </div>
+  );
+}
+
+export function SimulatePrinterButton({
+  stepId,
+  simulation,
+  disabled,
+  disabledReason,
+  onPublished,
+  fullWidth,
+  buttonLabel,
+}: {
+  stepId: string;
+  simulation: PrinterSimulationPayload;
+  disabled?: boolean;
+  disabledReason?: string;
+  onPublished?: (stepId: string) => void;
+  fullWidth?: boolean;
+  buttonLabel?: string;
 }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
@@ -167,7 +231,7 @@ export function SimulatePrinterButton({
         ) : (
           <Send className="size-4" aria-hidden />
         )}
-        {printerSimulationButtonLabel(stepId)}
+        {buttonLabel ?? printerSimulationButtonLabel(stepId)}
       </button>
       {disabled && disabledReason ? (
         <p className="text-xs text-muted">{disabledReason}</p>
