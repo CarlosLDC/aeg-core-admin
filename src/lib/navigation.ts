@@ -26,6 +26,8 @@ export type NavItem = {
   roles?: Role[];
   /** Visible en el menú pero sin navegación */
   disabled?: boolean;
+  /** Abre el enlace en una pestaña nueva (p. ej. handoff al libro fiscal). */
+  openInNewTab?: boolean;
 };
 
 export type NavSection = {
@@ -105,6 +107,7 @@ export const navSections: NavSection[] = [
         href: FISCAL_BOOK_ENTRY_PATH,
         icon: BookOpen,
         roles: ["ADMIN", "DISTRIBUTOR"],
+        openInNewTab: true,
       },
       {
         title: "Tools",

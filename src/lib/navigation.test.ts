@@ -46,6 +46,7 @@ describe("navSectionsForRole", () => {
     const items = navItemsForRole("DISTRIBUTOR");
     const fiscalBook = items.find((i) => i.title === "Libro fiscal");
     expect(fiscalBook?.href).toBe(FISCAL_BOOK_ENTRY_PATH);
+    expect(fiscalBook?.openInNewTab).toBe(true);
     expect(items.some((i) => i.title === "Clientes")).toBe(false);
     expect(items.some((i) => i.title === "Empresas")).toBe(true);
     expect(navItemsForRole("SENIAT").some((i) => i.title === "Libro fiscal")).toBe(

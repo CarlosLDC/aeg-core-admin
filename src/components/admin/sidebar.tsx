@@ -95,6 +95,7 @@ function NavRow({
   }
 
   const external = isExternalNavHref(item.href);
+  const openInNewTab = item.openInNewTab === true;
   const iconClass = cn(
     "size-5 shrink-0",
     isActive
@@ -105,7 +106,7 @@ function NavRow({
     <>
       <Icon className={iconClass} />
       {!isCollapsed && <span>{item.title}</span>}
-      {!isCollapsed && external ? (
+      {!isCollapsed && (external || openInNewTab) ? (
         <ExternalLink
           className="ml-auto size-3.5 shrink-0 text-sidebar-muted/80"
           aria-hidden
@@ -143,6 +144,8 @@ function NavRow({
   return (
     <Link
       href={item.href}
+      target={openInNewTab ? "_blank" : undefined}
+      rel={openInNewTab ? "noopener noreferrer" : undefined}
       onClick={() => {
         onBeforeNavigate?.();
         onNavigate?.();

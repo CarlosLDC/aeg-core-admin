@@ -81,6 +81,7 @@ import { fetchSoftware } from "@/lib/software-api";
 import {
   canAccessFiscalBooksApp,
   fiscalBooksAppUrl,
+  fiscalBookLinkProps,
 } from "@/lib/fiscal-books-app";
 import { printerDispositionPath, printerPath } from "@/lib/resource-routes";
 import type { BranchResponse } from "@/types/branch";
@@ -745,6 +746,7 @@ export function PrinterView() {
               {canOpenFiscalBook ? (
                 <a
                   href={fiscalBooksAppUrl(printer.id)}
+                  {...fiscalBookLinkProps}
                   className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
                 >
                   <BookOpen className="size-4" aria-hidden />

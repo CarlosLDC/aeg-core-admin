@@ -19,6 +19,11 @@ export function fiscalBooksAppUrl(printerId?: number): string {
   return `${FISCAL_BOOK_ENTRY_PATH}/${printerId}`;
 }
 
+export const fiscalBookLinkProps = {
+  target: "_blank",
+  rel: "noopener noreferrer",
+} as const;
+
 export function isExternalNavHref(href: string): boolean {
   return href.startsWith("https://") || href.startsWith("http://");
 }
