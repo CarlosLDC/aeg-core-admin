@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen } from "lucide-react";
+import { BookOpen, RefreshCw } from "lucide-react";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
@@ -144,6 +144,10 @@ export function PrinterView() {
   const lockDistributor = isDistributor && distributorId != null;
   const canDisposeAssigned =
     canDispose && (isAdmin || (isDistributor && distributorId != null));
+  const showTicketReconfigure =
+    printer != null &&
+    isPrinterPendingMqttEnajenacion(printer) &&
+    canDisposeAssigned;
   const distributorStaffBranchId = useDistributorStaffBranchId(
     isDistributor ? distributorId : null,
   );
@@ -404,21 +408,6 @@ export function PrinterView() {
           />
           <DetailField label="MAC" value={printer.macAddress || "—"} mono />
         </DetailCard>
-        {isPrinterPendingMqttEnajenacion(printer) && canDisposeAssigned ? (
-          <button
-            type="button"
-            onClick={() => {
-              if (!isPrinterPaidForDisposition(printer)) {
-                toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
-                return;
-              }
-              setDispositionOpen(true);
-            }}
-            className="inline-flex rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-500/15 dark:text-amber-100"
-          >
-            {PRINTER_TICKET_RECONFIGURE_LABEL}
-          </button>
-        ) : null}
       </>
     );
   }, [
@@ -428,8 +417,6 @@ export function PrinterView() {
     clientLabelById,
     statusQuickAction,
     statusBadgeTitle,
-    canDisposeAssigned,
-    toast,
   ]);
 
   const adminDetailSteps = useMemo(() => {
@@ -504,23 +491,6 @@ export function PrinterView() {
         label: "Ticket MQTT",
         content: (
           <DetailSection title="Campos JSON del ticket">
-            {isPrinterPendingMqttEnajenacion(printer) && canDisposeAssigned ? (
-              <div className="mb-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!isPrinterPaidForDisposition(printer)) {
-                      toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
-                      return;
-                    }
-                    setDispositionOpen(true);
-                  }}
-                  className="inline-flex rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-500/15 dark:text-amber-100"
-                >
-                  {PRINTER_TICKET_RECONFIGURE_LABEL}
-                </button>
-              </div>
-            ) : null}
             <PrinterTicketConfigPanel
               header={printer.header}
               trailer={printer.trailer}
@@ -622,9 +592,7 @@ export function PrinterView() {
     softwareLabelById,
     showSoftware,
     canAssignInitialized,
-    canDisposeAssigned,
     statusQuickAction,
-    toast,
   ]);
 
   async function handleAssignmentSubmit({
@@ -732,6 +700,15 @@ export function PrinterView() {
     }
   }
 
+  function openTicketReconfigure() {
+    if (!printer) return;
+    if (!isPrinterPaidForDisposition(printer)) {
+      toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+      return;
+    }
+    setDispositionOpen(true);
+  }
+
   async function handleDelete() {
     if (!printer || !canDelete) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
@@ -773,6 +750,16 @@ export function PrinterView() {
                   <BookOpen className="size-4" aria-hidden />
                   Libro fiscal
                 </a>
+              ) : null}
+              {showTicketReconfigure ? (
+                <button
+                  type="button"
+                  onClick={openTicketReconfigure}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
+                >
+                  <RefreshCw className="size-4" aria-hidden />
+                  {PRINTER_TICKET_RECONFIGURE_LABEL}
+                </button>
               ) : null}
               <ResourceViewActions
                 onEdit={
