@@ -29,6 +29,10 @@ import {
   updateAnnualInspection,
 } from "@/lib/annual-inspections-api";
 import { formatDate } from "@/lib/datetime-form";
+import {
+  formatMqttSetDateRevOAt,
+  hasAnnualInspectionMqttAudit,
+} from "@/lib/annual-inspection-mqtt-display";
 import { catalogOptionLabel } from "@/lib/record-labels";
 import {
   annualInspectionPath,
@@ -223,6 +227,29 @@ export function AnnualInspectionView() {
                 value={formatDate(inspection.createdAt)}
               />
             </DetailSection>
+            {hasAnnualInspectionMqttAudit(inspection) ? (
+              <DetailSection title="Auditoría MQTT (SetDateRevO)" layout="quad">
+                <DetailField
+                  label="Registro impresora"
+                  value={inspection.mqttRegistroImpresora ?? "—"}
+                  mono
+                />
+                <DetailField
+                  label="SetDateRevO"
+                  value={formatMqttSetDateRevOAt(inspection.mqttSetDateRevOAt)}
+                  mono
+                />
+                <DetailField
+                  label="Nº factura de prueba"
+                  value={
+                    inspection.mqttNumeroFacturaPrueba != null
+                      ? String(inspection.mqttNumeroFacturaPrueba)
+                      : "—"
+                  }
+                  mono
+                />
+              </DetailSection>
+            ) : null}
             {inspection.photoUrls.length > 0 && (
               <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
                 <h3 className="text-sm font-medium text-card-foreground">
