@@ -24,8 +24,8 @@ describe("annualInspectionChecklistRows", () => {
       ...baseInspection,
       sealTampered: true,
     });
-    expect(rows.find((row) => row.label === "Estado del Precinto")?.value).toBe(
-      "Violentado",
+    expect(rows.find((row) => row.label === "Precinto")?.value).toBe(
+      "Precinto violentado",
     );
   });
 
@@ -39,8 +39,8 @@ describe("annualInspectionChecklistRows", () => {
       chkNotaCredito: true,
       chkSensorPapel: true,
     });
-    expect(rows.find((row) => row.label === "Estado de la Factura")?.value).toBe(
-      "Defectuoso",
+    expect(rows.find((row) => row.label === "Impresión de factura")?.value).toBe(
+      "Impresión de factura defectuosa",
     );
   });
 });
@@ -57,7 +57,7 @@ describe("summarizeAnnualInspectionChecklist", () => {
         chkNotaCredito: true,
         chkSensorPapel: true,
       }),
-    ).toBe("5/5 Bien");
+    ).toBe("5/5 conformes");
   });
 
   it("falls back to legacy precinto summary", () => {
@@ -66,6 +66,6 @@ describe("summarizeAnnualInspectionChecklist", () => {
         ...baseInspection,
         sealTampered: true,
       }),
-    ).toBe("Violentado");
+    ).toBe("Precinto violentado");
   });
 });

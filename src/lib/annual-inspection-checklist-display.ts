@@ -1,7 +1,6 @@
 import type { AnnualInspectionResponse } from "@/types/annual-inspection";
 import {
   ANNUAL_INSPECTION_CHECKLIST_ROWS,
-  ANNUAL_INSPECTION_INSP_AO_OK,
   formatChecklistItemValue,
   hasPersistedChecklist,
   type AnnualInspectionChecklistKey,
@@ -27,7 +26,7 @@ export function hasAnnualInspectionChecklistDisplay(
 
 export function annualInspectionChecklistRows(inspection: AnnualInspectionResponse) {
   return ANNUAL_INSPECTION_CHECKLIST_ROWS.map((row) => ({
-    label: row.label,
+    label: row.title,
     value: formatChecklistItemValue(row.key, checklistValue(inspection, row.key)),
   }));
 }
@@ -36,16 +35,18 @@ export function summarizeAnnualInspectionChecklist(
   inspection: AnnualInspectionResponse,
 ): string {
   if (!hasPersistedChecklist(inspection)) {
-    return inspection.sealTampered ? "Violentado" : "OK";
+    return inspection.sealTampered ? "Precinto violentado" : "Precinto en buen estado";
   }
   const rows = annualInspectionChecklistRows(inspection);
   const assessed = rows.filter((row) => row.value !== "—");
   if (assessed.length === 0) {
-    return inspection.sealTampered ? "Violentado" : "OK";
+    return inspection.sealTampered ? "Precinto violentado" : "Precinto en buen estado";
   }
-  const okCount = assessed.filter((row) => row.value === ANNUAL_INSPECTION_INSP_AO_OK).length;
-  if (okCount === rows.length) {
-    return "5/5 Bien";
+  const okCount = ANNUAL_INSPECTION_CHECKLIST_ROWS.filter(
+    (row) => checklistValue(inspection, row.key) === true,
+  ).length;
+  if (okCount === ANNUAL_INSPECTION_CHECKLIST_ROWS.length) {
+    return "5/5 conformes";
   }
-  return `${okCount}/${assessed.length} Bien`;
+  return `${okCount}/${assessed.length} conformes`;
 }

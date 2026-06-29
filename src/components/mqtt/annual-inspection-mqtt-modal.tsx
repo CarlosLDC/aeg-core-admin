@@ -142,24 +142,36 @@ export function AnnualInspectionMqttModal({
             </span>
           </label>
 
-          <ul className="divide-y divide-border rounded-lg border border-border">
+          <div className="space-y-4">
             {ANNUAL_INSPECTION_CHECKLIST_ROWS.map((row) => (
-              <li
+              <fieldset
                 key={row.key}
-                className="flex flex-wrap items-center gap-3 px-3 py-3 sm:flex-nowrap"
+                className="space-y-2 rounded-lg border border-border px-3 py-3"
               >
-                <input
-                  id={`annual-inspection-${row.key}`}
-                  type="checkbox"
-                  checked={checklist[row.key]}
-                  onChange={(event) => onChecklistChange(row.key, event.target.checked)}
-                  className="size-4 shrink-0 rounded border-border text-accent focus:ring-accent"
-                />
-                <label
-                  htmlFor={`annual-inspection-${row.key}`}
-                  className="min-w-0 flex-1 cursor-pointer text-sm text-card-foreground"
-                >
-                  {row.label}
+                <legend className="text-sm font-medium text-card-foreground">
+                  {row.title}
+                </legend>
+                <label className="flex items-center gap-3">
+                  <input
+                    id={`annual-inspection-${row.key}-ok`}
+                    type="radio"
+                    name={`annual-inspection-${row.key}`}
+                    checked={checklist[row.key]}
+                    onChange={() => onChecklistChange(row.key, true)}
+                    className="size-4 shrink-0 border-border text-accent focus:ring-accent"
+                  />
+                  <span className="text-sm text-card-foreground">{row.okLabel}</span>
+                </label>
+                <label className="flex items-center gap-3">
+                  <input
+                    id={`annual-inspection-${row.key}-not-ok`}
+                    type="radio"
+                    name={`annual-inspection-${row.key}`}
+                    checked={!checklist[row.key]}
+                    onChange={() => onChecklistChange(row.key, false)}
+                    className="size-4 shrink-0 border-border text-accent focus:ring-accent"
+                  />
+                  <span className="text-sm text-card-foreground">{row.notOkLabel}</span>
                 </label>
                 {row.action === "test-invoice" ? (
                   <button
@@ -167,7 +179,7 @@ export function AnnualInspectionMqttModal({
                     onClick={onSendTestInvoice}
                     disabled={sendingTestInvoice}
                     className={cn(
-                      "w-full shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5 sm:w-auto",
+                      "rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5",
                       sendingTestInvoice && "cursor-not-allowed opacity-70",
                     )}
                   >
@@ -188,7 +200,7 @@ export function AnnualInspectionMqttModal({
                     disabled={sendingTestCreditNote || creditNoteDisabled}
                     title={creditNoteDisabledReason ?? undefined}
                     className={cn(
-                      "w-full shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5 sm:w-auto",
+                      "rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-foreground/5",
                       (sendingTestCreditNote || creditNoteDisabled) &&
                         "cursor-not-allowed opacity-70",
                     )}
@@ -203,9 +215,9 @@ export function AnnualInspectionMqttModal({
                     )}
                   </button>
                 ) : null}
-              </li>
+              </fieldset>
             ))}
-          </ul>
+          </div>
 
           {error ? (
             <p

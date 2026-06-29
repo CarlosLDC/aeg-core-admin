@@ -236,42 +236,54 @@ export function AnnualInspectionFormDialog({
         />
       </label>
 
-      <fieldset className="space-y-3 rounded-lg border border-border p-4">
+      <fieldset className="space-y-4 rounded-lg border border-border p-4">
         <legend className="px-1 text-sm font-medium text-card-foreground">
           Checklist de inspección
         </legend>
         <p className="text-xs text-muted">
-          Marque cada ítem como conforme (Bien). Desmarcado equivale a Violentado o
-          Defectuoso según el ítem.
+          Seleccione el resultado verificado para cada ítem.
         </p>
-        <ul className="space-y-2">
+        <div className="space-y-4">
           {ANNUAL_INSPECTION_CHECKLIST_ROWS.map((row) => (
-            <li key={row.key} className="flex items-start gap-3">
-              <input
-                id={`${formId}-${row.key}`}
-                type="checkbox"
-                checked={form.checklist[row.key]}
-                disabled={disabled}
-                onChange={(event) =>
-                  setForm((current) =>
-                    setAnnualInspectionChecklistField(
-                      current,
-                      row.key,
-                      event.target.checked,
-                    ),
-                  )
-                }
-                className="mt-0.5 size-4 rounded border-border"
-              />
-              <label
-                htmlFor={`${formId}-${row.key}`}
-                className="text-sm text-card-foreground"
-              >
-                {row.label}
+            <fieldset key={row.key} disabled={disabled} className="space-y-2">
+              <legend className="text-sm font-medium text-card-foreground">
+                {row.title}
+              </legend>
+              <label className="flex items-center gap-3">
+                <input
+                  id={`${formId}-${row.key}-ok`}
+                  type="radio"
+                  name={`${formId}-${row.key}`}
+                  checked={form.checklist[row.key]}
+                  disabled={disabled}
+                  onChange={() =>
+                    setForm((current) =>
+                      setAnnualInspectionChecklistField(current, row.key, true),
+                    )
+                  }
+                  className="size-4 border-border"
+                />
+                <span className="text-sm text-card-foreground">{row.okLabel}</span>
               </label>
-            </li>
+              <label className="flex items-center gap-3">
+                <input
+                  id={`${formId}-${row.key}-not-ok`}
+                  type="radio"
+                  name={`${formId}-${row.key}`}
+                  checked={!form.checklist[row.key]}
+                  disabled={disabled}
+                  onChange={() =>
+                    setForm((current) =>
+                      setAnnualInspectionChecklistField(current, row.key, false),
+                    )
+                  }
+                  className="size-4 border-border"
+                />
+                <span className="text-sm text-card-foreground">{row.notOkLabel}</span>
+              </label>
+            </fieldset>
           ))}
-        </ul>
+        </div>
       </fieldset>
 
       <label className="block">

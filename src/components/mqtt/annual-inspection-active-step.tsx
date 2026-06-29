@@ -149,30 +149,40 @@ export function AnnualInspectionActiveStep({
             </span>
           </label>
 
-          <ul className="space-y-2">
+          <div className="space-y-4">
             {ANNUAL_INSPECTION_CHECKLIST_ROWS.map((row) => (
-              <li
+              <fieldset
                 key={row.key}
-                className="flex items-start gap-3 rounded-lg border border-border/60 px-3 py-2.5"
+                className="space-y-2 rounded-lg border border-border/60 px-3 py-2.5"
               >
-                <input
-                  id={`annual-step-checklist-${row.key}`}
-                  type="checkbox"
-                  checked={checklist[row.key]}
-                  onChange={(event) =>
-                    onChecklistChange(row.key, event.target.checked)
-                  }
-                  className="mt-0.5 size-4 rounded border-border"
-                />
-                <label
-                  htmlFor={`annual-step-checklist-${row.key}`}
-                  className="min-w-0 flex-1 text-sm text-card-foreground"
-                >
-                  {row.label}
+                <legend className="text-sm font-medium text-card-foreground">
+                  {row.title}
+                </legend>
+                <label className="flex items-center gap-3">
+                  <input
+                    id={`annual-step-checklist-${row.key}-ok`}
+                    type="radio"
+                    name={`annual-step-checklist-${row.key}`}
+                    checked={checklist[row.key]}
+                    onChange={() => onChecklistChange(row.key, true)}
+                    className="size-4 border-border"
+                  />
+                  <span className="text-sm text-card-foreground">{row.okLabel}</span>
                 </label>
-              </li>
+                <label className="flex items-center gap-3">
+                  <input
+                    id={`annual-step-checklist-${row.key}-not-ok`}
+                    type="radio"
+                    name={`annual-step-checklist-${row.key}`}
+                    checked={!checklist[row.key]}
+                    onChange={() => onChecklistChange(row.key, false)}
+                    className="size-4 border-border"
+                  />
+                  <span className="text-sm text-card-foreground">{row.notOkLabel}</span>
+                </label>
+              </fieldset>
             ))}
-          </ul>
+          </div>
 
           {numeroFacturaPrueba != null ? (
             <p className="text-sm text-muted">

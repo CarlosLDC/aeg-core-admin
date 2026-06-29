@@ -98,11 +98,9 @@ export function formatChecklistItemValue(
   key: AnnualInspectionChecklistKey,
   checked: boolean | null | undefined,
 ): string {
-  if (checked == null) return "—";
-  if (key === "chkPrecinto" || key === "chkEtiquetaFiscal") {
-    return checked ? ANNUAL_INSPECTION_INSP_AO_OK : ANNUAL_INSPECTION_INSP_AO_VIOLATED;
-  }
-  return checked ? ANNUAL_INSPECTION_INSP_AO_OK : ANNUAL_INSPECTION_INSP_AO_DEFECTIVE;
+  const row = getAnnualInspectionChecklistRow(key);
+  if (!row || checked == null) return "—";
+  return checked ? row.okLabel : row.notOkLabel;
 }
 
 export function hasPersistedChecklist(input: Partial<AnnualInspectionChecklistPersisted>): boolean {
@@ -222,18 +220,51 @@ export function isPrinterEligibleForAnnualInspectionMqtt(
   );
 }
 
-export const ANNUAL_INSPECTION_CHECKLIST_ROWS: ReadonlyArray<{
+export type AnnualInspectionChecklistRow = {
   key: AnnualInspectionChecklistKey;
-  label: string;
+  title: string;
+  okLabel: string;
+  notOkLabel: string;
   action?: "test-invoice" | "test-credit-note";
-}> = [
-  { key: "chkPrecinto", label: "Estado del Precinto" },
-  { key: "chkEtiquetaFiscal", label: "Estado de la Etiqueta Fiscal" },
-  { key: "chkFactura", label: "Estado de la Factura", action: "test-invoice" },
+};
+
+export const ANNUAL_INSPECTION_CHECKLIST_ROWS: ReadonlyArray<AnnualInspectionChecklistRow> = [
+  {
+    key: "chkPrecinto",
+    title: "Precinto",
+    okLabel: "Precinto en buen estado",
+    notOkLabel: "Precinto violentado",
+  },
+  {
+    key: "chkEtiquetaFiscal",
+    title: "Etiqueta fiscal",
+    okLabel: "Etiqueta fiscal en buen estado",
+    notOkLabel: "Etiqueta fiscal violentada",
+  },
+  {
+    key: "chkFactura",
+    title: "Impresión de factura",
+    okLabel: "Impresión de factura en buen estado",
+    notOkLabel: "Impresión de factura defectuosa",
+    action: "test-invoice",
+  },
   {
     key: "chkNotaCredito",
-    label: "Estado de la Nota de Crédito",
+    title: "Impresión de nota de crédito",
+    okLabel: "Impresión de nota de crédito en buen estado",
+    notOkLabel: "Impresión de nota de crédito defectuosa",
     action: "test-credit-note",
   },
-  { key: "chkSensorPapel", label: "Estado Sensor de Papel" },
+  {
+    key: "chkSensorPapel",
+    title: "Sensor de papel",
+    okLabel: "Sensor de papel en buen estado",
+    notOkLabel: "Sensor de papel defectuoso",
+  },
 ];
+
+export function getAnnualInspectionChecklistRow(
+  key: AnnualInspectionChecklistKey,
+): AnnualInspectionChecklistRow | undefined {
+  return ANNUAL_INSPECTION_CHECKLIST_ROWS.find((row) => row.key === key);
+}
