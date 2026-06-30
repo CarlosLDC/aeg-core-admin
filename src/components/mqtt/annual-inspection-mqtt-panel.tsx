@@ -8,7 +8,6 @@ import {
 } from "@/components/mqtt/annual-inspection-active-step";
 import { EnajenacionRitualStepper } from "@/components/mqtt/enajenacion-ritual-stepper";
 import { EnajenacionTechnicalDetailsModal } from "@/components/mqtt/enajenacion-technical-details-modal";
-import { AnnualInspectionQrDecodeTester } from "@/components/mqtt/annual-inspection-qr-decode-tester";
 import { PrinterSelect } from "@/components/printers/printer-select";
 import { useAnnualInspectionRitual } from "@/hooks/use-annual-inspection-ritual";
 import { printerStatusLabel } from "@/lib/printer-status";
@@ -170,11 +169,6 @@ export function AnnualInspectionMqttPanel() {
           sessionStartedAt={ritual.sessionStartedAt}
         />
       ) : null}
-
-      <AnnualInspectionQrDecodeTester
-        printerId={ritual.activePrinter?.id ?? null}
-        registroImpresora={ritual.registroImpresora || null}
-      />
     </div>
   );
 }
