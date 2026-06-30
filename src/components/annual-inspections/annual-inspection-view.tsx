@@ -34,6 +34,10 @@ import {
   hasAnnualInspectionMqttAudit,
 } from "@/lib/annual-inspection-mqtt-display";
 import {
+  hasAnnualInspectionQrProof,
+  truncateQrCodigo,
+} from "@/lib/annual-inspection-qr-display";
+import {
   annualInspectionChecklistRows,
   hasAnnualInspectionChecklistDisplay,
 } from "@/lib/annual-inspection-checklist-display";
@@ -260,6 +264,30 @@ export function AnnualInspectionView() {
                       ? String(inspection.mqttNumeroFacturaPrueba)
                       : "—"
                   }
+                  mono
+                />
+              </DetailSection>
+            ) : null}
+            {hasAnnualInspectionQrProof(inspection) ? (
+              <DetailSection title="Comprobante QR" layout="quad">
+                <DetailField
+                  label="Registro impresora"
+                  value={inspection.mqttQrRegistro ?? "—"}
+                  mono
+                />
+                <DetailField
+                  label="MAC"
+                  value={inspection.mqttQrMac ?? "—"}
+                  mono
+                />
+                <DetailField
+                  label="Fecha (firmware)"
+                  value={inspection.mqttQrFecha ?? "—"}
+                  mono
+                />
+                <DetailField
+                  label="Código QR"
+                  value={truncateQrCodigo(inspection.mqttQrCodigo)}
                   mono
                 />
               </DetailSection>
