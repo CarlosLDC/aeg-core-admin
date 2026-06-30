@@ -142,6 +142,23 @@ export type AnnualInspectionSubmitResponse = {
   publishedAt: string;
 };
 
+export type AnnualInspectionDecodeQrRequest = {
+  qrCodigo: string;
+};
+
+export type AnnualInspectionVerifyQrResponse = {
+  valido: boolean;
+  registro: string;
+  mac: string;
+  fecha: string;
+};
+
+export type AnnualInspectionVerifyQrRequest = {
+  printerId: number;
+  qrCodigo: string;
+  registroImpresora: string;
+};
+
 export type MqttTestMessageResponse = {
   status: string;
   message: string;

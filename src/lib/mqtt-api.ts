@@ -18,6 +18,9 @@ import type {
   AnnualInspectionTestCreditNoteResponse,
   AnnualInspectionSubmitRequest,
   AnnualInspectionSubmitResponse,
+  AnnualInspectionDecodeQrRequest,
+  AnnualInspectionVerifyQrRequest,
+  AnnualInspectionVerifyQrResponse,
   MqttConnectionProbeResult,
   MqttInboundMessage,
   MqttMonitorStatus,
@@ -224,6 +227,40 @@ export async function submitAnnualInspectionMqtt(
     },
   );
   ensureMqttSuccess(status, data, "No se pudo registrar la inspección anual en la impresora.");
+  if (data === undefined) {
+    throw new ApiError("Respuesta vacía del servidor", 500);
+  }
+  return data;
+}
+
+export async function decodeAnnualInspectionQr(
+  body: AnnualInspectionDecodeQrRequest,
+): Promise<AnnualInspectionVerifyQrResponse> {
+  const { data, status } = await mqttFetch<AnnualInspectionVerifyQrResponse>(
+    `${BASE}/annual-inspection/decode-qr`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
+  ensureMqttSuccess(status, data, "No se pudo desencriptar el código QR.");
+  if (data === undefined) {
+    throw new ApiError("Respuesta vacía del servidor", 500);
+  }
+  return data;
+}
+
+export async function verifyAnnualInspectionQr(
+  body: AnnualInspectionVerifyQrRequest,
+): Promise<AnnualInspectionVerifyQrResponse> {
+  const { data, status } = await mqttFetch<AnnualInspectionVerifyQrResponse>(
+    `${BASE}/annual-inspection/verify-qr`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
+  ensureMqttSuccess(status, data, "No se pudo verificar el código QR.");
   if (data === undefined) {
     throw new ApiError("Respuesta vacía del servidor", 500);
   }
