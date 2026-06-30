@@ -27,6 +27,22 @@ describe("fiscal ticket latin-2", () => {
     );
   });
 
+  it("preserves spanish enye in header and trailer text", () => {
+    expect(normalizeFiscalTicketText("Niño pequeño")).toBe("Niño pequeño");
+    expect(normalizeFiscalTicketText("AÑO NUEVO")).toBe("AÑO NUEVO");
+  });
+
+  it("encodes spanish enye as latin-1 byte positions", () => {
+    expect([...encodeLatin2("ñ")]).toEqual([0xf1]);
+    expect([...encodeLatin2("Ñ")]).toEqual([0xd1]);
+    expect([...encodeLatin2("íñ")]).toEqual([0xed, 0xf1]);
+  });
+
+  it("decodes spanish enye bytes for ticket display", () => {
+    expect(decodeLatin2(new Uint8Array([0xf1]))).toBe("ñ");
+    expect(decodeLatin2(new Uint8Array([0xd1]))).toBe("Ñ");
+  });
+
   it("encodes spanish i acute as single latin-2 byte", () => {
     const bytes = encodeLatin2("í");
     expect(bytes).toEqual(new Uint8Array([0xed]));

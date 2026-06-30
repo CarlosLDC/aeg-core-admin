@@ -8,6 +8,7 @@ import { completeFiscalBooksHandoffFromAdmin } from "@/lib/fiscal-books-handoff"
 import {
   getQrLookupErrorMessage,
   lookupInspectionByQr,
+  QR_INVALID_CODE_MESSAGE,
 } from "@/lib/annual-inspection-qr-lookup-api";
 import { canUseQrCamera, QrCodeScanner } from "@/components/qr-code-scanner";
 import { QrScannerErrorBoundary } from "@/components/qr-scanner-error-boundary";
@@ -42,7 +43,7 @@ export function AnnualInspectionQrLookupPanel() {
     async (code: string) => {
       const trimmed = code.trim();
       if (!trimmed) {
-        setError("Ingrese o escanee un código QR válido.");
+        setError(QR_INVALID_CODE_MESSAGE);
         return;
       }
 

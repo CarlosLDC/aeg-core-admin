@@ -1,5 +1,4 @@
 import { apiFetch } from "@/lib/api";
-import { ApiError } from "@/types/auth";
 
 export type FiscalBookLookupInspectionByQrResponse = {
   inspectionId: number;
@@ -9,6 +8,8 @@ export type FiscalBookLookupInspectionByQrResponse = {
   mac: string;
   fecha: string;
 };
+
+export const QR_INVALID_CODE_MESSAGE = "Código QR no válido";
 
 export async function lookupInspectionByQr(
   qrCodigo: string,
@@ -22,12 +23,6 @@ export async function lookupInspectionByQr(
   );
 }
 
-export function getQrLookupErrorMessage(error: unknown): string {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return "No se pudo verificar el comprobante QR.";
+export function getQrLookupErrorMessage(_error: unknown): string {
+  return QR_INVALID_CODE_MESSAGE;
 }

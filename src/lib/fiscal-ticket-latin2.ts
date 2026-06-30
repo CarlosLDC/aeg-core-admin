@@ -28,6 +28,32 @@ for (let index = 0; index < ISO_8859_2_CODEPOINTS.length; index += 1) {
   UNICODE_TO_ISO_8859_2_BYTE.set(codePoint, index + 0x80);
 }
 
+/**
+ * Ñ/ñ no están en ISO-8859-2, pero las impresoras fiscales venezolanas
+ * las emiten en las posiciones Latin-1 habituales (0xD1 / 0xF1).
+ */
+const SPANISH_FISCAL_LATIN1_BYTE_OVERRIDES = new Map<number, number>([
+  [0x00d1, 0xd1],
+  [0x00f1, 0xf1],
+]);
+
+const FISCAL_LATIN1_BYTE_TO_UNICODE = new Map<number, number>([
+  [0xd1, 0x00d1],
+  [0xf1, 0x00f1],
+]);
+
+function fiscalTicketByteForCodePoint(codePoint: number): number | undefined {
+  if (codePoint < 0x80) return codePoint;
+  return (
+    UNICODE_TO_ISO_8859_2_BYTE.get(codePoint) ??
+    SPANISH_FISCAL_LATIN1_BYTE_OVERRIDES.get(codePoint)
+  );
+}
+
+function isFiscalTicketEncodableCodePoint(codePoint: number): boolean {
+  return fiscalTicketByteForCodePoint(codePoint) != null;
+}
+
 const UNSUPPORTED_CHAR_REPLACEMENTS: Readonly<Record<string, string>> = {
   "\u2014": "-",
   "\u2013": "-",
@@ -56,7 +82,7 @@ export function normalizeFiscalTicketText(value: string): string {
       const codePoint = char.codePointAt(0);
       if (codePoint == null) return "";
       if (codePoint < 0x80) return char;
-      if (UNICODE_TO_ISO_8859_2_BYTE.has(codePoint)) return char;
+      if (isFiscalTicketEncodableCodePoint(codePoint)) return char;
       if (codePoint <= 0xffff) {
         const decomposed = char.normalize("NFD");
         if (decomposed.length > 1 && /^[\x00-\x7f]+$/.test(decomposed)) {
@@ -79,7 +105,7 @@ export function encodeLatin2(text: string): Uint8Array {
       bytes[index] = codePoint;
       continue;
     }
-    bytes[index] = UNICODE_TO_ISO_8859_2_BYTE.get(codePoint) ?? 0x3f;
+    bytes[index] = fiscalTicketByteForCodePoint(codePoint) ?? 0x3f;
   }
 
   return bytes;
@@ -89,6 +115,10 @@ export function decodeLatin2(bytes: Uint8Array): string {
   return Array.from(bytes)
     .map((byte) => {
       if (byte < 0x80) return String.fromCharCode(byte);
+      const latin1Override = FISCAL_LATIN1_BYTE_TO_UNICODE.get(byte);
+      if (latin1Override != null) {
+        return String.fromCodePoint(latin1Override);
+      }
       const codePoint = ISO_8859_2_CODEPOINTS[byte - 0x80];
       return codePoint != null ? String.fromCodePoint(codePoint) : "?";
     })

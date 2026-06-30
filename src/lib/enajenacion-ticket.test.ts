@@ -57,6 +57,12 @@ describe("enajenacion-ticket", () => {
     ]);
   });
 
+  it("preserves spanish enye in trailer extraction", () => {
+    expect(
+      extractEnajenacionTrailerLines(["Año nuevo — gracias"]),
+    ).toEqual(["Año nuevo - gracias"]);
+  });
+
   it("extracts header and trailer from invoice draft", () => {
     const invoice: VenezuelanFiscalInvoiceData = {
       encoding: "ISO-8859-2",

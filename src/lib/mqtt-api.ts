@@ -243,7 +243,7 @@ export async function decodeAnnualInspectionQr(
       body: JSON.stringify(body),
     },
   );
-  ensureMqttSuccess(status, data, "No se pudo desencriptar el código QR.");
+  ensureMqttSuccess(status, data, "Código QR no válido.");
   if (data === undefined) {
     throw new ApiError("Respuesta vacía del servidor", 500);
   }
@@ -260,7 +260,7 @@ export async function verifyAnnualInspectionQr(
       body: JSON.stringify(body),
     },
   );
-  ensureMqttSuccess(status, data, "No se pudo verificar el código QR.");
+  ensureMqttSuccess(status, data, "Código QR no válido.");
   if (data === undefined) {
     throw new ApiError("Respuesta vacía del servidor", 500);
   }
