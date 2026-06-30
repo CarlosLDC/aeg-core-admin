@@ -1,4 +1,5 @@
 type Html5QrcodeInstance = import("html5-qrcode").Html5Qrcode;
+type CameraConfig = string | { facingMode: string };
 
 let scannerCleanupChain: Promise<void> = Promise.resolve();
 
@@ -94,7 +95,8 @@ export async function startQrScannerWithFallback(
 ): Promise<void> {
   const attempts = await buildCameraAttempts(Html5Qrcode);
   const scanConfig = {
-    fps: 10,
+    fps: 8,
+    disableFlip: true,
     qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
       const edge = Math.min(viewfinderWidth, viewfinderHeight);
       const size = Math.max(180, Math.min(250, Math.floor(edge * 0.72)));
@@ -107,6 +109,7 @@ export async function startQrScannerWithFallback(
   for (const cameraConfig of attempts) {
     try {
       let handled = false;
+      await warmupCamera(cameraConfig);
 
       await scanner.start(
         cameraConfig,
@@ -139,7 +142,44 @@ export async function startQrScannerWithFallback(
     }
   }
 
+  if (isAbortTimeoutError(lastError)) {
+    throw new Error(
+      "La cámara tardó demasiado en iniciar (Timeout). Cierre otras apps que usen la cámara y reintente.",
+    );
+  }
+
   throw lastError ?? new Error("No se pudo acceder a la cámara. Use la entrada manual.");
 }
 
 export { toErrorMessage };
+
+function isAbortTimeoutError(err: unknown): boolean {
+  if (err instanceof Error) {
+    const message = `${err.name} ${err.message}`.toLowerCase();
+    return (
+      message.includes("aborterror") && message.includes("timeout starting video source")
+    );
+  }
+
+  if (typeof err === "string") {
+    const message = err.toLowerCase();
+    return message.includes("aborterror") && message.includes("timeout starting video source");
+  }
+
+  return false;
+}
+
+async function warmupCamera(cameraConfig: CameraConfig): Promise<void> {
+  if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) return;
+
+  const videoConstraints: MediaTrackConstraints =
+    typeof cameraConfig === "string"
+      ? { deviceId: { exact: cameraConfig } }
+      : { facingMode: cameraConfig.facingMode };
+
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: videoConstraints,
+  });
+  stream.getTracks().forEach((track) => track.stop());
+}
