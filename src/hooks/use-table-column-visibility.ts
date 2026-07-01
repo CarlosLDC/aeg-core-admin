@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColumnToggle } from "@/components/ui/data-table-toolbar";
+import { useAuth } from "@/context/auth-provider";
 import {
   META_COLUMN_DEFAULT_VISIBLE,
   META_COLUMN_LABELS,
@@ -42,6 +43,8 @@ export function useTableColumnVisibility(
   tableId: string,
   options: UseTableColumnVisibilityOptions = {},
 ) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
   const storageKey = storageKeyForTable(tableId);
   const { showUpdatedAt = false, includeCreatedAt = true } = options;
 
@@ -54,8 +57,11 @@ export function useTableColumnVisibility(
   }, [storageKey]);
 
   const isVisible = useCallback(
-    (columnId: MetaColumnId) => resolveVisible(stored, columnId),
-    [stored],
+    (columnId: MetaColumnId) => {
+      if (!isAdmin) return false;
+      return resolveVisible(stored, columnId);
+    },
+    [stored, isAdmin],
   );
 
   const setColumnVisible = useCallback(
@@ -74,6 +80,8 @@ export function useTableColumnVisibility(
   );
 
   const toolbarColumns = useMemo((): ColumnToggle[] => {
+    if (!isAdmin) return [];
+
     const columnIds: MetaColumnId[] = [
       "id",
       ...(includeCreatedAt ? (["createdAt"] as const) : []),
@@ -86,7 +94,7 @@ export function useTableColumnVisibility(
       visible: isVisible(id),
       onVisibleChange: (visible) => setColumnVisible(id, visible),
     }));
-  }, [isVisible, setColumnVisible, showUpdatedAt, includeCreatedAt]);
+  }, [isVisible, setColumnVisible, showUpdatedAt, includeCreatedAt, isAdmin]);
 
   return {
     showId: isVisible("id"),
