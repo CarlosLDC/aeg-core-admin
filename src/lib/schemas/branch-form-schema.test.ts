@@ -5,7 +5,7 @@ import {
 } from "@/lib/schemas/branch-form-schema";
 
 describe("branchFormSchema", () => {
-  it("allows empty address on edit", () => {
+  it("rejects empty address on edit", () => {
     const result = branchFormSchema.safeParse({
       companyId: "1",
       city: "Caracas",
@@ -18,7 +18,7 @@ describe("branchFormSchema", () => {
       isClient: false,
       clientDistributorId: "",
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
   });
 
   it("accepts valid branch payload", () => {

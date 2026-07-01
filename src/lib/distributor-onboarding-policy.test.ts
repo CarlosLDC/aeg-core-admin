@@ -23,14 +23,14 @@ describe("validateOnboardingSection", () => {
     ).toBe("El tipo de contribuyente es obligatorio.");
   });
 
-  it("allows missing contributor type when editing legacy records", () => {
+  it("requires contributor type when editing an existing company", () => {
     expect(
       validateOnboardingSection(
         "fiscal",
-        { ...baseForm, contributorType: undefined as never },
-        { requireContributorType: false },
+        { ...baseForm, contributorType: undefined as never, linkedCompanyId: 42 },
+        { requireContributorType: true },
       ),
-    ).toBeNull();
+    ).toBe("El tipo de contribuyente es obligatorio.");
   });
 
   it("requires address when creating a branch", () => {
@@ -43,13 +43,13 @@ describe("validateOnboardingSection", () => {
     ).toBe("La dirección es obligatoria.");
   });
 
-  it("allows empty address when editing legacy records", () => {
+  it("requires address when editing a branch", () => {
     expect(
       validateOnboardingSection(
         "location",
         { ...baseForm, address: "" },
-        { requireAddress: false },
+        { requireAddress: true },
       ),
-    ).toBeNull();
+    ).toBe("La dirección es obligatoria.");
   });
 });

@@ -164,6 +164,11 @@ export function CompanyFormDialog({
               setForm((f) => ({ ...f, contributorType }))
             }
           />
+          {fieldErrors.contributorType ? (
+            <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
+              {fieldErrors.contributorType}
+            </span>
+          ) : null}
 
           <FormDialogFooter
             mode={mode}

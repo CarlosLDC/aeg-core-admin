@@ -259,8 +259,8 @@ export function BranchCreateWizardDialog({
 
   function validateSection(section: OnboardingStepSection): string | null {
     return validateOnboardingSection(section, form, {
-      requireContributorType: !isEdit,
-      requireAddress: !isEdit,
+      requireContributorType: true,
+      requireAddress: true,
     });
   }
 
@@ -486,8 +486,8 @@ export function BranchCreateWizardDialog({
                   inputMode={inputMode}
                   aiFields={aiFields}
                   section={currentFormStep.section}
-                  requireContributorType={!isEdit}
-                  requireAddress={!isEdit}
+                  requireContributorType
+                  requireAddress
                 />
               ) : null}
             </form>

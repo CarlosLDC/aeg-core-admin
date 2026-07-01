@@ -43,7 +43,6 @@ export function validateOnboardingSection(
     }
     if (
       requireContributorType &&
-      !companyLocked &&
       !CONTRIBUTOR_TYPES.includes(form.contributorType)
     ) {
       return "El tipo de contribuyente es obligatorio.";

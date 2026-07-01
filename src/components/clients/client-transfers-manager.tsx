@@ -189,13 +189,13 @@ export function ClientTransfersManager() {
   }
 
   if (error) {
-    return <EmptyState title="No se pudieron cargar los clientes" message={error} />;
+    return <EmptyState title="No se pudieron cargar los clientes" description={error} />;
   }
 
   return (
     <div className="space-y-4">
       <DataTableToolbar
-        searchValue={search}
+        search={search}
         onSearchChange={setSearch}
         searchPlaceholder="Buscar por empresa, sede o distribuidor…"
       />
@@ -234,7 +234,7 @@ export function ClientTransfersManager() {
                           href={branchPath(client.branchId)}
                           className="font-medium text-primary hover:underline"
                         >
-                          <TruncatedText text={clientCompanyLabel(client)} />
+                          <TruncatedText>{clientCompanyLabel(client)}</TruncatedText>
                         </Link>
                         {pending ? (
                           <p className="mt-1 text-xs text-muted">
@@ -243,17 +243,17 @@ export function ClientTransfersManager() {
                         ) : null}
                       </td>
                       <td className="px-3 py-3 align-middle text-muted">
-                        <TruncatedText text={clientBranchLabel(client)} />
+                        <TruncatedText>{clientBranchLabel(client)}</TruncatedText>
                       </td>
                       <td className="px-3 py-3 align-middle">
-                        <TruncatedText
-                          text={distributorName(
+                        <TruncatedText>
+                          {distributorName(
                             currentDistributorId,
                             distributors,
                             branches,
                             companies,
                           )}
-                        />
+                        </TruncatedText>
                       </td>
                       <td className="px-3 py-3 align-middle">
                         <DistributorSelect

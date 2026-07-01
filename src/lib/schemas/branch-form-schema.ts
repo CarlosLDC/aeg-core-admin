@@ -23,7 +23,7 @@ const branchFormBaseSchema = z.object({
 });
 
 export const branchFormSchema = branchFormBaseSchema.extend({
-  address: z.string().optional(),
+  address: z.string().trim().min(1, "La dirección es obligatoria."),
 });
 
 export const branchCreateFormSchema = branchFormBaseSchema.extend({

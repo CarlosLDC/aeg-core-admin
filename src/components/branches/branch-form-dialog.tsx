@@ -8,7 +8,7 @@ import { CompanySelect } from "@/components/companies/company-select";
 import { BranchOperationalRoleFields } from "@/components/branches/branch-operational-role-fields";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { organizationRoleFromBranch } from "@/lib/organization-roles";
-import { branchCreateFormSchema, branchFormSchema } from "@/lib/schemas/branch-form-schema";
+import { branchFormSchema } from "@/lib/schemas/branch-form-schema";
 import type { BranchRoleFormState } from "@/lib/branch-roles";
 import type { BranchResponse, BranchWithRoles } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
@@ -118,8 +118,7 @@ export function BranchFormDialog({
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const schema = mode === "create" ? branchCreateFormSchema : branchFormSchema;
-    const parsed = schema.safeParse({
+    const parsed = branchFormSchema.safeParse({
       ...form,
       companyId: (forcedCompanyId ?? form.companyId).trim(),
       city: form.city.trim(),
@@ -248,10 +247,10 @@ export function BranchFormDialog({
               </label>
 
               <label className="block sm:col-span-2">
-                <FieldLabel required={mode === "create"}>Dirección</FieldLabel>
+                <FieldLabel required>Dirección</FieldLabel>
                 <input
                   type="text"
-                  required={mode === "create"}
+                  required
                   value={form.address}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, address: e.target.value }))

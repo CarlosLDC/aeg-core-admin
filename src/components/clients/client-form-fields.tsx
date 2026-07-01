@@ -123,7 +123,7 @@ export function ClientFormFields({
 
         <ContributorTypeToggle
           label="Tipo de contribuyente"
-          required={requireContributorType && !companyLocked}
+          required={requireContributorType}
           value={form.contributorType}
           disabled={
             saving ||
