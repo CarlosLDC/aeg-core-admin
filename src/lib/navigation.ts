@@ -13,6 +13,7 @@ import {
   Download,
   Boxes,
   Radio,
+  ArrowRightLeft,
   type LucideIcon,
 } from "lucide-react";
 import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
@@ -133,6 +134,12 @@ export const navSections: NavSection[] = [
         title: "Revisiones",
         href: "/reviews",
         icon: ClipboardCheck,
+        roles: ["ADMIN"],
+      },
+      {
+        title: "Transferencia de clientes",
+        href: "/client-transfers",
+        icon: ArrowRightLeft,
         roles: ["ADMIN"],
       },
       {

@@ -6,6 +6,7 @@ import { ApiError } from "@/types/auth";
 import type { ClientRequest, ClientResponse } from "@/types/branch-role";
 
 const BASE = "/api/clients";
+const ADMIN_BASE = "/api/admin/clients";
 const MOD_BASE = "/api/client-modification-requests";
 
 export async function fetchClients(): Promise<ClientResponse[]> {
@@ -46,6 +47,19 @@ export async function updateClient(
   });
 }
 
+export async function transferClientDistributor(
+  clientId: number,
+  distributorId: number,
+): Promise<ClientResponse> {
+  return apiFetch<ClientResponse>(
+    `${ADMIN_BASE}/${clientId}/transfer-distributor`,
+    {
+      method: "POST",
+      body: JSON.stringify({ distributorId }),
+    },
+  );
+}
+
 export async function deleteClient(id: number): Promise<void> {
   return apiFetch<void>(`${BASE}/${id}`, { method: "DELETE" });
 }
@@ -73,6 +87,16 @@ export function getClientsErrorMessage(error: unknown): string {
       return getCatalogForbiddenMessage("MODIFY");
     }
     if (error.status === 404) return "Cliente no encontrado.";
+    const lower = error.message.toLowerCase();
+    if (lower.includes("pending review")) {
+      return "El cliente tiene una solicitud de revisión pendiente.";
+    }
+    if (lower.includes("already assigned")) {
+      return "El cliente ya está asignado a esa distribuidora.";
+    }
+    if (lower.includes("only administrators")) {
+      return "Solo un administrador puede transferir clientes.";
+    }
     return error.message;
   }
   return getCatalogErrorMessage(error);

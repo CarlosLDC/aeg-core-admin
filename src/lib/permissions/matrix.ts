@@ -71,6 +71,10 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     update: ADMIN_ONLY,
     delete: ADMIN_ONLY,
   },
+  clientTransfers: {
+    read: ADMIN_ONLY,
+    update: ADMIN_ONLY,
+  },
   remoto: {
     read: ADMIN_ONLY,
     create: ADMIN_ONLY,

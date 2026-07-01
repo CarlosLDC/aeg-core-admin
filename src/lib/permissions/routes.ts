@@ -16,6 +16,7 @@ const ROUTE_RESOURCE: Array<{ prefix: string; resource: Resource }> = [
   { prefix: "/annual-inspections", resource: "annualInspections" },
   { prefix: "/contracts", resource: "contracts" },
   { prefix: "/users", resource: "users" },
+  { prefix: "/client-transfers", resource: "clientTransfers" },
   { prefix: "/remoto", resource: "remoto" },
   { prefix: "/docs/enajenacion-remoto", resource: "remoto" },
   { prefix: "/docs/annual-inspection-remoto", resource: "remoto" },
