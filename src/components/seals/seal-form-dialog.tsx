@@ -6,6 +6,7 @@ import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { sealFormSchema } from "@/lib/schemas/seal-form-schema";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import {
   emptySealForm,
   SEAL_COLOR_LABELS,
@@ -76,8 +77,7 @@ export function SealFormDialog({
     onSubmit(form);
   }
 
-  const inputClass =
-    "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
+  const inputClass = formFieldInputClass;
   const disabled = saving || printersLoading;
 
   return (

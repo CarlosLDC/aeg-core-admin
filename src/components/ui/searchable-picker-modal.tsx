@@ -3,6 +3,7 @@
 import { useEffect, useId, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 
 type SearchablePickerModalProps = {
   open: boolean;
@@ -82,7 +83,7 @@ export function SearchablePickerModal({
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder={searchPlaceholder}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20"
+            className={formFieldInputClass}
             autoFocus
           />
         </div>

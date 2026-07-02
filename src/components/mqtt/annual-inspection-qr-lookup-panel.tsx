@@ -12,6 +12,8 @@ import {
 } from "@/lib/annual-inspection-qr-lookup-api";
 import { canUseQrCamera, QrCodeScanner } from "@/components/qr-code-scanner";
 import { QrScannerErrorBoundary } from "@/components/qr-scanner-error-boundary";
+import { formFieldTextareaClass } from "@/lib/toggle-button-styles";
+import { cn } from "@/lib/utils";
 
 type InputMode = "manual" | "camera";
 
@@ -161,7 +163,7 @@ export function AnnualInspectionQrLookupPanel() {
                 setError(null);
               }}
               placeholder="Pegue aquí el contenido del QR…"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs"
+              className={cn(formFieldTextareaClass, "font-mono text-xs")}
             />
             <button
               type="button"

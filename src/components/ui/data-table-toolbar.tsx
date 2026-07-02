@@ -11,7 +11,11 @@ import {
 } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { FILTER_ALL } from "@/lib/table-filter-options";
-import { filterToggleButtonClass } from "@/lib/toggle-button-styles";
+import {
+  filterToggleButtonClass,
+  formFieldNativeSelectClass,
+  formFieldSearchInputClass,
+} from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 export type FilterSelectOption = {
@@ -38,11 +42,9 @@ export type ColumnToggle = {
   onVisibleChange: (visible: boolean) => void;
 };
 
-const searchInputClass =
-  "w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-ring/20";
+const searchInputClass = formFieldSearchInputClass;
 
-const nativeSelectClass =
-  "w-full appearance-none rounded-lg border border-border bg-background py-2 pl-3 pr-9 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-ring/20";
+const nativeSelectClass = formFieldNativeSelectClass;
 
 type DataTableToolbarProps = {
   search: string;

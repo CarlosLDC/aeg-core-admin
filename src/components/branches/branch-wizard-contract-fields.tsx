@@ -9,6 +9,7 @@ import type {
   BranchWizardValues,
 } from "@/components/branches/branch-wizard-types";
 import type { ContractKind } from "@/types/contract";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 type BranchWizardContractFieldsProps = {
@@ -18,8 +19,7 @@ type BranchWizardContractFieldsProps = {
   className?: string;
 };
 
-const inputClass =
-  "w-full rounded-lg border border-border bg-background px-3 py-1.5 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:opacity-60";
+const inputClass = formFieldInputClass;
 
 type ContractStepMeta = {
   id: "distributor" | "serviceCenter";

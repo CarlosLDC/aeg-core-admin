@@ -4,11 +4,11 @@ import { Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { useToast } from "@/context/toast-provider";
 import { useMqttMonitor, type MqttLiveStatus } from "@/hooks/use-mqtt-monitor";
 import { getMqttErrorMessage } from "@/lib/mqtt-api";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 import type { MqttInboundMessage } from "@/types/mqtt";
 
-const inputClass =
-  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
+const inputClass = formFieldInputClass;
 
 type MqttMonitorState = ReturnType<typeof useMqttMonitor>;
 

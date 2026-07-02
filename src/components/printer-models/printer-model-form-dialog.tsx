@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import type { PrinterModelFormValues } from "@/lib/printer-model-form";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import type { PrinterModelResponse } from "@/types/printer-model";
 
 type PrinterModelFormDialogProps = {
@@ -66,8 +67,7 @@ export function PrinterModelFormDialog({
     onSubmit(form);
   }
 
-  const inputClass =
-    "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
+  const inputClass = formFieldInputClass;
 
   return (
     <div

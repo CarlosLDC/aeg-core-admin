@@ -12,6 +12,7 @@ import {
   resolveClientCompanyRif,
   validateFacturaNroInput,
 } from "@/lib/venezuelan-fiscal-invoice";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
@@ -337,7 +338,7 @@ export function PrinterDispositionDialog({
                 setFieldError(null);
               }}
               disabled={disabled}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm tabular-nums disabled:opacity-50"
+              className={cn(formFieldInputClass, "tabular-nums disabled:opacity-50")}
               placeholder="Ej. 00012345"
             />
           </div>

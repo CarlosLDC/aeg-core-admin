@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, type WheelEvent } from "react";
 import { Check, Loader2 } from "lucide-react";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 type PrinterActionPickerPanelProps = {
@@ -93,7 +94,7 @@ export function PrinterActionPickerPanel({
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder={searchPlaceholder}
           disabled={disabled || loading}
-          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:opacity-60"
+          className={formFieldInputClass}
         />
       </div>
 

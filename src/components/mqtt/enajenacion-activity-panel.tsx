@@ -9,6 +9,7 @@ import {
   directionLabel,
 } from "@/lib/enajenacion-activity";
 import { getMqttErrorMessage } from "@/lib/mqtt-api";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 import type {
   EnajenacionActivityEntry,
@@ -32,8 +33,7 @@ const DIRECTION_FILTER_OPTIONS = [
   { value: "SESSION", label: "Sesión" },
 ] as const;
 
-const inputClass =
-  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
+const inputClass = formFieldInputClass;
 
 function resultBadgeClass(result: EnajenacionActivityResult): string {
   switch (result) {

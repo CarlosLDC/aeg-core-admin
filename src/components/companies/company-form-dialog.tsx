@@ -6,6 +6,7 @@ import { ContributorTypeToggle } from "@/components/companies/contributor-type-t
 import { FieldLabel } from "@/components/ui/field-label";
 import { PrefixedDocumentInput } from "@/components/ui/prefixed-document-input";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { companyFormSchema } from "@/lib/schemas/company-form-schema";
 import { type CompanyResponse, type ContributorType } from "@/types/company";
@@ -145,7 +146,7 @@ export function CompanyFormDialog({
               onChange={(e) =>
                 setForm((f) => ({ ...f, businessName: e.target.value }))
               }
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20"
+              className={formFieldInputClass}
             />
             {fieldErrors.businessName ? (
               <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">

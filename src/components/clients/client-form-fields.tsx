@@ -12,6 +12,7 @@ import {
 import type { CompanyResponse } from "@/types/company";
 import {
   FORM_FIELD_TEXTAREA_ROWS,
+  formFieldInputClass,
   formFieldTextareaClass,
 } from "@/lib/toggle-button-styles";
 import {
@@ -22,8 +23,10 @@ import { cn } from "@/lib/utils";
 
 const stateSelectOptions = venezuelanStateSelectOptions();
 
-export const clientFormInputClass =
-  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:bg-foreground/[0.03] disabled:text-muted";
+export const clientFormInputClass = cn(
+  formFieldInputClass,
+  "disabled:bg-foreground/[0.03] disabled:text-muted disabled:opacity-100",
+);
 
 export type ClientFormSection = "fiscal" | "location" | "contact";
 

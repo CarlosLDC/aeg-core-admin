@@ -14,6 +14,7 @@ import type {
   MqttPublishResponse,
 } from "@/types/mqtt";
 import { formatJsonText } from "@/lib/format-json-paste";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_TOPIC = "aeg/test/manual";
@@ -80,8 +81,7 @@ export function MqttDiagnosticsPanel() {
   const [payloadText, setPayloadText] = useState(DEFAULT_PAYLOAD);
   const payloadTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const inputClass =
-    "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
+  const inputClass = formFieldInputClass;
 
   function syncPayloadTextareaHeight(textarea: HTMLTextAreaElement) {
     textarea.style.height = "auto";

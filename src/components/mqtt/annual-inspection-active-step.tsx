@@ -23,6 +23,10 @@ import {
 } from "@/lib/enajenacion-mqtt-protocol";
 import { printerStatusLabel } from "@/lib/printer-status";
 import { printerPath } from "@/lib/resource-routes";
+import {
+  formFieldInputClass,
+  formFieldTextareaClass,
+} from "@/lib/toggle-button-styles";
 import type { PrinterResponse } from "@/types/printer";
 import { cn } from "@/lib/utils";
 
@@ -129,7 +133,10 @@ export function AnnualInspectionActiveStep({
               type="text"
               readOnly
               value={registroImpresora || "—"}
-              className="w-full rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 font-mono text-sm"
+              className={cn(
+                formFieldInputClass,
+                "bg-foreground/[0.02] font-mono text-card-foreground",
+              )}
             />
           </label>
 
@@ -141,7 +148,7 @@ export function AnnualInspectionActiveStep({
               value={productDescription}
               onChange={(event) => onProductDescriptionChange(event.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              className={formFieldTextareaClass}
             />
             <span className="mt-1 block text-xs text-muted">
               {invoiceProductDescriptionLimitLabel(productDescription)} Se usa en la

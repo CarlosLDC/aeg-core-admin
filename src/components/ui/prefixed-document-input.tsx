@@ -81,7 +81,7 @@ export function PrefixedDocumentInput({
   return (
     <div
       className={cn(
-        "flex w-full overflow-hidden rounded-lg border border-border bg-background transition-shadow focus-within:border-accent focus-within:ring-2 focus-within:ring-ring/20",
+        "flex h-10 w-full overflow-hidden rounded-lg border border-border bg-background transition-shadow focus-within:border-accent focus-within:ring-2 focus-within:ring-ring/20",
         disabled && "cursor-not-allowed opacity-60",
         className,
       )}

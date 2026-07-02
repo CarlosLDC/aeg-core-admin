@@ -3,10 +3,10 @@
 import { FormEvent, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Loader2, X } from "lucide-react";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
-export const BATCH_FORM_INPUT_CLASS =
-  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm shadow-sm outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-ring/20";
+export const BATCH_FORM_INPUT_CLASS = `${formFieldInputClass} shadow-sm`;
 
 export type BatchWizardStep = {
   label: string;

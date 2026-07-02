@@ -7,6 +7,7 @@ import {
   type AnnualInspectionChecklistState,
 } from "@/lib/annual-inspection-mqtt-state";
 import { invoiceProductDescriptionLimitLabel } from "@/lib/enajenacion-mqtt-protocol";
+import { formFieldInputClass, formFieldTextareaClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 type AnnualInspectionMqttModalProps = {
@@ -98,7 +99,10 @@ export function AnnualInspectionMqttModal({
                 type="text"
                 readOnly
                 value={registroImpresora}
-                className="w-full rounded-lg border border-border bg-foreground/[0.02] px-3 py-2 font-mono text-sm text-card-foreground"
+                className={cn(
+                  formFieldInputClass,
+                  "bg-foreground/[0.02] font-mono text-card-foreground",
+                )}
               />
             </label>
             <button
@@ -134,7 +138,7 @@ export function AnnualInspectionMqttModal({
               value={productDescription}
               onChange={(event) => onProductDescriptionChange(event.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              className={formFieldTextareaClass}
             />
             <span className="mt-1 block text-xs text-muted">
               {invoiceProductDescriptionLimitLabel(productDescription)} Se usa en la factura y

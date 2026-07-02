@@ -7,6 +7,7 @@ import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { ContractDocumentUpload } from "@/components/contracts/contract-document-upload";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { type ContractFormValues } from "@/lib/contract-form";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import type { ContractKind } from "@/types/contract";
 import type {
   DistributorContractResponse,
@@ -91,8 +92,7 @@ export function ContractFormDialog({
     onSubmit(form);
   }
 
-  const inputClass =
-    "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
+  const inputClass = formFieldInputClass;
 
   return (
     <div

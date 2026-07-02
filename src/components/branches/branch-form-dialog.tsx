@@ -6,6 +6,7 @@ import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { CompanySelect } from "@/components/companies/company-select";
 import { BranchOperationalRoleFields } from "@/components/branches/branch-operational-role-fields";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { organizationRoleFromBranch } from "@/lib/organization-roles";
 import { branchFormSchema } from "@/lib/schemas/branch-form-schema";
@@ -149,8 +150,7 @@ export function BranchFormDialog({
     (company) => company.id === Number(forcedCompanyId ?? form.companyId),
   );
 
-  const inputClass =
-    "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20";
+  const inputClass = formFieldInputClass;
 
   return (
     <div

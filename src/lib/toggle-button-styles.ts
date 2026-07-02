@@ -160,6 +160,10 @@ export const FORM_FIELD_TEXTAREA_ROWS = 3;
 
 export const formFieldInputClass = `${FORM_FIELD_HEIGHT_CLASS} w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60`;
 
+export const formFieldNativeSelectClass = `${formFieldInputClass} appearance-none pr-9`;
+
+export const formFieldSearchInputClass = `${formFieldInputClass} pl-9`;
+
 export const formFieldTextareaClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60";
 

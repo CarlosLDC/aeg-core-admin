@@ -37,10 +37,10 @@ const FISCAL_TICKET_FONT =
   '"Liberation Mono", "Courier New", Courier, monospace';
 
 const ticketFieldBase =
-  "border-0 bg-transparent p-0 text-[11px] leading-tight text-black outline-none focus:bg-white/50 focus:ring-1 focus:ring-black/15";
+  "h-6 border-0 bg-transparent p-0 text-[11px] leading-tight text-black outline-none focus:bg-white/50 focus:ring-1 focus:ring-black/15";
 
 const ticketEditableField =
-  "w-full min-w-0 rounded border border-dashed border-accent/45 bg-white/70 px-1.5 py-0.5 text-[11px] leading-tight text-black outline-none transition-colors placeholder:text-black/35 focus:border-accent focus:bg-white focus:ring-1 focus:ring-accent/25";
+  "h-6 w-full min-w-0 rounded border border-dashed border-accent/45 bg-white/70 px-1.5 text-[11px] leading-tight text-black outline-none transition-colors placeholder:text-black/35 focus:border-accent focus:bg-white focus:ring-1 focus:ring-accent/25";
 
 /** Columna fija: Bs alineado a la izquierda de la cifra, montos al borde derecho del ticket. */
 const ticketAmountColumnClass =
