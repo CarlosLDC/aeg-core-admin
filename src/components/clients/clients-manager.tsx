@@ -74,6 +74,10 @@ import {
 import type { ClientModificationProposedData } from "@/types/client-modification-request";
 import { getCatalogErrorMessage } from "@/lib/api-error-message";
 import {
+  isClientReassignmentRequiredError,
+  showClientReassignmentModal,
+} from "@/lib/client-reassignment";
+import {
   getCompaniesErrorMessage,
   updateCompany,
 } from "@/lib/companies-api";
@@ -432,6 +436,11 @@ export function ClientsManager() {
       await refreshScope();
       await loadClients();
     } catch (err) {
+      if (isClientReassignmentRequiredError(err)) {
+        await showClientReassignmentModal(confirm);
+        setFormError(null);
+        return;
+      }
       const resumeId =
         err instanceof Error
           ? (err as Error & { resumeBranchId?: number }).resumeBranchId

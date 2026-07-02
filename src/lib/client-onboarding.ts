@@ -13,6 +13,10 @@ import {
 } from "@/lib/branches-api";
 import { fetchClientByBranchId, fetchClients } from "@/lib/clients-api";
 import { CLIENT_RE_REGISTRATION_FORBIDDEN_MESSAGE } from "@/lib/distributor-scope";
+import {
+  ClientReassignmentRequiredError,
+} from "@/lib/client-reassignment";
+import { organizationRoleFromBranch } from "@/lib/organization-roles";
 import { ApiError } from "@/types/auth";
 import { updateCompany } from "@/lib/companies-api";
 import { resolveCompanyIdForRif } from "@/lib/company-rif";
@@ -149,6 +153,33 @@ async function createOnboardingBranch(
   });
 }
 
+/** Impide registrar como cliente una sucursal ya operativa o de otra distribuidora. */
+export async function assertBranchAvailableForDistributorClient(
+  branchId: number,
+  distributorId: number,
+): Promise<void> {
+  const branch = await loadBranchWithRoles(branchId);
+  if (!branch) {
+    return;
+  }
+  const role = organizationRoleFromBranch(branch);
+  if (
+    role === "DISTRIBUTOR" ||
+    role === "SERVICE_CENTER" ||
+    branch.distributor ||
+    branch.serviceCenter
+  ) {
+    throw new ClientReassignmentRequiredError();
+  }
+  const linkedDistributorId = branch.client?.distributorId;
+  if (
+    linkedDistributorId != null &&
+    linkedDistributorId !== distributorId
+  ) {
+    throw new ClientReassignmentRequiredError();
+  }
+}
+
 /** Impide re-vincular una sucursal huérfana tras eliminación aprobada del cliente. */
 async function assertDistributorMayReuseBranch(
   branchId: number,
@@ -177,6 +208,9 @@ export async function createClientOnboarding(
   const branchLabel = `${values.city.trim()}, ${values.state.trim()}`;
   const distributorOnly = isDistributorClientOnlyRoles(roles);
   const canUpdateCatalog = !distributorOnly;
+  const linkingDistributorId = distributorOnly
+    ? Number(roles.clientDistributorId)
+    : null;
   if (
     resumeBranchId != null &&
     resumeBranchId > 0 &&
@@ -190,6 +224,12 @@ export async function createClientOnboarding(
         resumeBranchId,
         values,
         { syncCompany: true },
+      );
+    }
+    if (linkingDistributorId != null) {
+      await assertBranchAvailableForDistributorClient(
+        resumeBranchId,
+        linkingDistributorId,
       );
     }
     await linkDistributorClientWithRetry(resumeBranchId, roles);
@@ -248,6 +288,12 @@ export async function createClientOnboarding(
           values.state,
         );
         if (existing) {
+          if (linkingDistributorId != null) {
+            await assertBranchAvailableForDistributorClient(
+              existing.id,
+              linkingDistributorId,
+            );
+          }
           await assertDistributorMayReuseBranch(existing.id);
           created = existing;
           branchLinkedExisting = true;
@@ -315,12 +361,22 @@ export async function createClientOnboarding(
     );
   }
 
-  if (distributorOnly && branchLinkedExisting) {
+  if (distributorOnly && branchLinkedExisting && linkingDistributorId != null) {
+    await assertBranchAvailableForDistributorClient(
+      created.id,
+      linkingDistributorId,
+    );
     await assertDistributorMayReuseBranch(created.id);
   }
 
   try {
     if (isDistributorClientOnlyRoles(roles)) {
+      if (linkingDistributorId != null) {
+        await assertBranchAvailableForDistributorClient(
+          created.id,
+          linkingDistributorId,
+        );
+      }
       await linkDistributorClientWithRetry(created.id, roles);
     } else {
       const previous = await loadBranchWithRoles(created.id);

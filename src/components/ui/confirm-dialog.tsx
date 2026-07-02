@@ -11,6 +11,8 @@ export type ConfirmDialogOptions = {
   confirmLabel?: string;
   cancelLabel?: string;
   destructive?: boolean;
+  /** Solo muestra el botón de confirmación (avisos informativos). */
+  alert?: boolean;
 };
 
 type ConfirmDialogProps = ConfirmDialogOptions & {
@@ -28,6 +30,7 @@ export function ConfirmDialog({
   confirmLabel = "Confirmar",
   cancelLabel = "Cancelar",
   destructive = false,
+  alert = false,
   loading = false,
   onConfirm,
   onCancel,
@@ -65,15 +68,24 @@ export function ConfirmDialog({
             {message}
           </p>
         ) : null}
-        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={loading}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
-          >
-            {cancelLabel}
-          </button>
+        <div
+          className={cn(
+            "mt-6 flex gap-2",
+            alert
+              ? "justify-center"
+              : "flex-col-reverse sm:flex-row sm:justify-end",
+          )}
+        >
+          {!alert ? (
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={loading}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
+            >
+              {cancelLabel}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={onConfirm}

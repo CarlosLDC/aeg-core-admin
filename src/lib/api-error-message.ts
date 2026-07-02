@@ -1,4 +1,5 @@
 import { ApiError } from "@/types/auth";
+import { CLIENT_REASSIGNMENT_MODAL } from "@/lib/client-reassignment";
 
 const REFERENTIAL_INTEGRITY_MESSAGE =
   "No se puede realizar la operación porque el registro está siendo referenciado o hace referencia a un registro inexistente.";
@@ -92,7 +93,13 @@ function mapCatalogApiMessage(message: string): string {
     return "No tienes permiso sobre esa sucursal.";
   }
   if (lower.includes("branch already assigned to another distributor")) {
-    return "Esta sucursal ya es cliente de otra distribuidora.";
+    return CLIENT_REASSIGNMENT_MODAL.message;
+  }
+  if (lower.includes("branch already linked to another distributor")) {
+    return CLIENT_REASSIGNMENT_MODAL.message;
+  }
+  if (lower.includes("administrator reassignment")) {
+    return CLIENT_REASSIGNMENT_MODAL.message;
   }
   if (lower.includes("not allowed to create client for this distributor")) {
     return "No puedes registrar clientes para otra distribuidora.";
@@ -104,7 +111,7 @@ function mapCatalogApiMessage(message: string): string {
     return "La sucursal ya existe; se reintentará completar el vínculo como cliente automáticamente.";
   }
   if (lower.includes("branch already linked")) {
-    return "Esta sucursal ya es cliente de otra distribuidora.";
+    return CLIENT_REASSIGNMENT_MODAL.message;
   }
   if (lower.includes("ya está registrada") && lower.includes("sucursal")) {
     return message;

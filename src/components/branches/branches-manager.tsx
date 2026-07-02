@@ -70,6 +70,10 @@ import {
   formatBranchShort,
 } from "@/lib/branches";
 import { getCatalogErrorMessage } from "@/lib/api-error-message";
+import {
+  isClientReassignmentRequiredError,
+  showClientReassignmentModal,
+} from "@/lib/client-reassignment";
 import { deleteBranch, updateBranch } from "@/lib/branches-api";
 import {
   createClientOnboarding,
@@ -474,6 +478,11 @@ export function BranchesManager() {
       await refreshScope();
       await loadBranches({ silent: true });
     } catch (err) {
+      if (isClientReassignmentRequiredError(err)) {
+        await showClientReassignmentModal(confirm);
+        setFormError(null);
+        return;
+      }
       const resumeId =
         err instanceof Error
           ? (err as Error & { resumeBranchId?: number }).resumeBranchId
