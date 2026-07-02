@@ -1,14 +1,16 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { PAGE_SIZE_OPTIONS, type UsePaginationReturn } from "@/hooks/use-pagination";
-import { formFieldNativeSelectClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 type TablePaginationProps<T> = {
   pagination: UsePaginationReturn<T>;
   className?: string;
 };
+
+const pageSizeSelectClass =
+  "h-10 w-full appearance-none rounded-lg border border-border bg-background pl-3 pr-9 text-sm text-foreground outline-none focus:border-accent focus:ring-1 focus:ring-ring/30 sm:w-auto sm:min-w-[4.5rem]";
 
 export function TablePagination<T>({
   pagination,
@@ -42,23 +44,26 @@ export function TablePagination<T>({
       </p>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <label className="flex min-h-10 items-center justify-between gap-3 rounded-lg border border-border bg-foreground/[0.02] px-3 text-sm text-muted sm:min-h-0 sm:justify-start sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:px-0">
+        <label className="flex w-full flex-col gap-2 rounded-lg border border-border bg-foreground/[0.02] p-3 text-sm text-muted sm:w-auto sm:flex-row sm:items-center sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0">
           <span className="shrink-0">Filas por página</span>
-          <select
-            value={pageSize}
-            onChange={(e) => setPageSize(Number(e.target.value))}
-            className={cn(
-              formFieldNativeSelectClass,
-              "h-9 w-[4.5rem] shrink-0 px-2 sm:h-10 sm:w-auto sm:min-w-[4.5rem]",
-            )}
-            aria-label="Filas por página"
-          >
-            {PAGE_SIZE_OPTIONS.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
+          <div className="relative w-full sm:w-auto">
+            <select
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+              className={pageSizeSelectClass}
+              aria-label="Filas por página"
+            >
+              {PAGE_SIZE_OPTIONS.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted"
+              aria-hidden
+            />
+          </div>
         </label>
 
         <nav
