@@ -279,27 +279,6 @@ export function TechnicalServiceView() {
                 />
               </DetailSection>
             </div>
-            {service.photoUrls.length > 0 && (
-              <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-                <h3 className="text-sm font-medium text-card-foreground">
-                  Fotos ({service.photoUrls.length})
-                </h3>
-                <ul className="mt-3 space-y-2 text-sm">
-                  {service.photoUrls.map((url, index) => (
-                    <li key={url}>
-                      <a
-                        href={`/api/uploads/documents?url=${encodeURIComponent(url)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-accent underline-offset-2 hover:underline"
-                      >
-                        Foto {index + 1}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </>
         )}
       </ResourceViewShell>

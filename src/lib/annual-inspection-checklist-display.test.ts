@@ -10,7 +10,6 @@ const baseInspection = {
   printerId: 1,
   userId: 10,
   notes: null,
-  photoUrls: [],
   inspectionDate: "2026-01-01",
   createdAt: "2026-01-01T00:00:00Z",
   mqttRegistroImpresora: null,

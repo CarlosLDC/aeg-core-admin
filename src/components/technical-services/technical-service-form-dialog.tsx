@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useId, useState } from "react";
 import {
-  Camera,
   ClipboardCheck,
   ClipboardList,
   FileText,
@@ -13,7 +12,6 @@ import {
 } from "lucide-react";
 import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
-import { PhotoDocumentUpload } from "@/components/ui/photo-document-upload";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 import {
@@ -49,14 +47,13 @@ type TechnicalServiceFormDialogProps = {
   onSubmit: (values: TechnicalServiceFormValues) => void;
 };
 
-type WizardStep = 1 | 2 | 3 | 4 | 5 | 6;
+type WizardStep = 1 | 2 | 3 | 4 | 5;
 type WizardSection =
   | "assignment"
   | "visit"
   | "outcome"
   | "zReports"
-  | "seals"
-  | "evidence";
+  | "seals";
 
 const FORM_STEPS: { step: WizardStep; section: WizardSection; label: string }[] = [
   { step: 1, section: "assignment", label: "Asignacion" },
@@ -64,7 +61,6 @@ const FORM_STEPS: { step: WizardStep; section: WizardSection; label: string }[] 
   { step: 3, section: "outcome", label: "Resultado" },
   { step: 4, section: "zReports", label: "Reportes Z" },
   { step: 5, section: "seals", label: "Precintos" },
-  { step: 6, section: "evidence", label: "Evidencia" },
 ];
 
 const STEP_ICONS = {
@@ -73,10 +69,9 @@ const STEP_ICONS = {
   3: ClipboardCheck,
   4: FileText,
   5: ShieldAlert,
-  6: Camera,
 } as const;
 
-const LAST_WIZARD_STEP: WizardStep = 6;
+const LAST_WIZARD_STEP: WizardStep = 5;
 
 function stepSubtitle(step: WizardStep): string {
   switch (step) {
@@ -90,8 +85,6 @@ function stepSubtitle(step: WizardStep): string {
       return "Completa los reportes Z inicial y final.";
     case 5:
       return "Asocia precintos instalados o retirados.";
-    case 6:
-      return "Adjunta evidencia fotografica del servicio.";
     default:
       return "";
   }
@@ -189,10 +182,6 @@ export function TechnicalServiceFormDialog({
       }
       if (!hasValue(form.finalZDate)) return "Indica la fecha del Z final.";
       return null;
-    }
-
-    if (targetStep === LAST_WIZARD_STEP && form.photoUrls.length === 0) {
-      return "Se requiere al menos una foto.";
     }
 
     return null;
@@ -516,31 +505,13 @@ export function TechnicalServiceFormDialog({
     </div>
   );
 
-  const evidenceSection = (
-    <div className={sectionClass}>
-      <div className="block">
-        <FieldLabel required>Fotos</FieldLabel>
-        <PhotoDocumentUpload
-          folder="technical-services"
-          urls={form.photoUrls}
-          onChange={(photoUrls) => setForm((f) => ({ ...f, photoUrls }))}
-          disabled={disabled}
-          ariaLabel="Subir fotos del servicio tecnico"
-          addLabel="Anadir fotos"
-          requiredHint="Se requiere al menos una foto."
-        />
-      </div>
-    </div>
-  );
-
   function renderWizardSection() {
     const currentSection = FORM_STEPS.find((item) => item.step === step)?.section;
     if (currentSection === "assignment") return assignmentSection;
     if (currentSection === "visit") return visitSection;
     if (currentSection === "outcome") return outcomeSection;
     if (currentSection === "zReports") return zReportsSection;
-    if (currentSection === "seals") return sealsSection;
-    return evidenceSection;
+    return sealsSection;
   }
 
   return (
@@ -565,7 +536,7 @@ export function TechnicalServiceFormDialog({
               <p className="mt-1 text-sm text-muted">
                 {isWizard
                   ? stepSubtitle(step)
-                  : "Visita de servicio con reportes Z, precintos y evidencia fotografica."}
+                  : "Visita de servicio con reportes Z y precintos."}
               </p>
             </div>
             <button

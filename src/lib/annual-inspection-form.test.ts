@@ -42,7 +42,6 @@ describe("toAnnualInspectionRequest", () => {
         userId: "10",
         sealTampered: false,
         notes: "",
-        photoUrls: ["https://example.com/photo.jpg"],
         inspectionDate: "",
         checklist: emptyAnnualInspectionForm().checklist,
       },
@@ -66,7 +65,6 @@ describe("toAnnualInspectionRequest", () => {
     let form = emptyAnnualInspectionForm();
     form.printerId = "1";
     form.userId = "10";
-    form.photoUrls = ["https://example.com/photo.jpg"];
     form = setAnnualInspectionChecklistField(form, "chkPrecinto", true);
     form = setAnnualInspectionChecklistField(form, "chkEtiquetaFiscal", true);
     form = setAnnualInspectionChecklistField(form, "chkFactura", true);

@@ -6,7 +6,7 @@ export default function AnnualInspectionsPage() {
   return (
     <AdminShell
       title="Inspección anual"
-      description="Revisiones anuales de impresoras fiscales con evidencia fotográfica"
+      description="Revisiones anuales de impresoras fiscales"
     >
       <RoleGuard path="/annual-inspections">
         <AnnualInspectionsManager />

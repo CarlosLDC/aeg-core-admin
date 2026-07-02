@@ -62,7 +62,6 @@ import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 
 type AnnualInspectionSortKey =
   | "inspectionDate"
-  | "photoCount"
   | "id"
   | "createdAt";
 
@@ -162,8 +161,6 @@ export function AnnualInspectionsManager() {
       sortTableRows(filteredRows, sort, {
         inspectionDate: (a, b) =>
           compareDateValues(a.inspectionDate, b.inspectionDate),
-        photoCount: (a, b) =>
-          compareNumberValues(a.photoUrls?.length ?? 0, b.photoUrls?.length ?? 0),
         id: (a, b) => compareNumberValues(a.id, b.id),
         createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
       }),
@@ -407,17 +404,6 @@ export function AnnualInspectionsManager() {
                         />
                         <th className="px-5 py-3 font-medium">Checklist</th>
                         <th className="px-5 py-3 font-medium">Registro Remoto</th>
-                        <SortableTableHeader
-                          label="Fotos"
-                          sortDirection={
-                            sort?.key === "photoCount" ? sort.direction : null
-                          }
-                          onToggle={() =>
-                            setSort((current) =>
-                              toggleTableSort(current, "photoCount"),
-                            )
-                          }
-                        />
                         </TableRowMetaHeaders>
                       </tr>
                     </thead>
@@ -476,9 +462,6 @@ export function AnnualInspectionsManager() {
                             {hasAnnualInspectionMqttAudit(row)
                               ? row.mqttRegistroImpresora?.trim() || "SetDateRevO"
                               : "—"}
-                          </td>
-                          <td className="px-5 py-3.5 text-muted">
-                            {row.photoUrls?.length ?? 0}
                           </td>
                           </TableRowMetaCells>
                         </ClickableTableRow>

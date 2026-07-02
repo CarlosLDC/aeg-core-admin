@@ -1,9 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useId, useState } from "react";
-import { Camera, ClipboardCheck, Link2, Loader2, X } from "lucide-react";
+import { ClipboardCheck, Link2, Loader2, X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
-import { PhotoDocumentUpload } from "@/components/ui/photo-document-upload";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 import {
@@ -61,7 +60,7 @@ export function AnnualInspectionFormDialog({
       currentUserRole === "TECHNICIAN" ||
       currentUserRole === "SERVICE_CENTER") &&
     currentUserId != null;
-  type WizardStep = 1 | 2 | 3;
+  type WizardStep = 1 | 2;
   const [step, setStep] = useState<WizardStep>(1);
   const [stepError, setStepError] = useState<string | null>(null);
   const [form, setForm] = useState<AnnualInspectionFormValues>(
@@ -91,13 +90,11 @@ export function AnnualInspectionFormDialog({
   const FORM_STEPS: { step: WizardStep; label: string }[] = [
     { step: 1, label: "Asignacion" },
     { step: 2, label: "Resultado" },
-    { step: 3, label: "Evidencia" },
   ];
 
   const STEP_ICONS = {
     1: Link2,
     2: ClipboardCheck,
-    3: Camera,
   } as const;
 
   function stepSubtitle(targetStep: WizardStep): string {
@@ -106,8 +103,6 @@ export function AnnualInspectionFormDialog({
         return "Selecciona una impresora asignada y el técnico responsable.";
       case 2:
         return "Registra el resultado y observaciones de la revision.";
-      case 3:
-        return "Adjunta la evidencia fotografica de la inspeccion.";
       default:
         return "";
     }
@@ -122,10 +117,6 @@ export function AnnualInspectionFormDialog({
       if (!hasValue(form.printerId)) return "Selecciona una impresora.";
       if (!hasValue(form.userId)) return "Selecciona un técnico.";
       return null;
-    }
-
-    if (targetStep === 3 && form.photoUrls.length === 0) {
-      return "Se requiere al menos una foto.";
     }
 
     return null;
@@ -150,7 +141,7 @@ export function AnnualInspectionFormDialog({
       return;
     }
 
-    if (step < 3) {
+    if (step < 2) {
       setStepError(null);
       setStep((current) => (current + 1) as WizardStep);
       return;
@@ -301,27 +292,9 @@ export function AnnualInspectionFormDialog({
     </div>
   );
 
-  const evidenceSection = (
-    <div className="space-y-3">
-      <div className="block">
-        <FieldLabel required>Fotos</FieldLabel>
-        <PhotoDocumentUpload
-          folder="annual-inspections"
-          urls={form.photoUrls}
-          onChange={(photoUrls) => setForm((f) => ({ ...f, photoUrls }))}
-          disabled={disabled}
-          ariaLabel="Subir fotos de la inspeccion anual"
-          addLabel="Anadir fotos"
-          requiredHint="Se requiere al menos una foto."
-        />
-      </div>
-    </div>
-  );
-
   function renderWizardSection() {
     if (step === 1) return assignmentSection;
-    if (step === 2) return resultSection;
-    return evidenceSection;
+    return resultSection;
   }
 
   return (
@@ -348,7 +321,7 @@ export function AnnualInspectionFormDialog({
             <p className="mt-1 text-sm text-muted">
               {isWizard
                 ? stepSubtitle(step)
-                : "Documenta la revisión anual con datos técnicos y evidencia."}
+                : "Documenta la revisión anual con datos técnicos."}
             </p>
           </div>
           <button
@@ -425,7 +398,7 @@ export function AnnualInspectionFormDialog({
               >
                 Cancelar
               </button>
-              {step < 3 ? (
+              {step < 2 ? (
                 <button
                   type="submit"
                   form={formId}

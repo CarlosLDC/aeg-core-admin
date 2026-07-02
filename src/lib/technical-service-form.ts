@@ -17,7 +17,6 @@ export type TechnicalServiceFormValues = {
   notes: string;
   startAt: string;
   endAt: string;
-  photoUrls: string[];
   installedSealId: string;
   removedSealId: string;
   initialZReport: string;
@@ -38,7 +37,6 @@ export const emptyTechnicalServiceForm = (): TechnicalServiceFormValues => ({
   notes: "",
   startAt: "",
   endAt: "",
-  photoUrls: [],
   installedSealId: "",
   removedSealId: "",
   initialZReport: "",
@@ -64,7 +62,6 @@ export function technicalServiceToFormValues(
     notes: row.notes ?? "",
     startAt: toDatetimeLocalValue(row.startAt),
     endAt: toDatetimeLocalValue(row.endAt),
-    photoUrls: [...(row.photoUrls ?? [])],
     installedSealId:
       row.installedSealId != null ? String(row.installedSealId) : "",
     removedSealId: row.removedSealId != null ? String(row.removedSealId) : "",
@@ -151,10 +148,6 @@ export function toTechnicalServiceRequest(
     return "El costo debe ser un número mayor o igual a 0.";
   }
 
-  if (values.photoUrls.length === 0) {
-    return "Añade al menos una foto o documento.";
-  }
-
   if (values.sealTampered === null) {
     return "Indica si el precinto fue violentado.";
   }
@@ -171,7 +164,6 @@ export function toTechnicalServiceRequest(
     notes,
     startAt,
     endAt,
-    photoUrls: values.photoUrls,
     installedSealId,
     removedSealId,
     initialZReport,

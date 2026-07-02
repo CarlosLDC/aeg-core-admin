@@ -1,8 +1,4 @@
-export const BLOB_UPLOAD_FOLDERS = [
-  "contracts",
-  "annual-inspections",
-  "technical-services",
-] as const;
+export const BLOB_UPLOAD_FOLDERS = ["contracts"] as const;
 
 export type BlobUploadFolder = (typeof BLOB_UPLOAD_FOLDERS)[number];
 

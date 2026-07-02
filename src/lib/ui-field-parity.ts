@@ -394,12 +394,6 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         formBindings: ["form.removedSealId"],
         viewBindings: ["service.removedSealId"],
       },
-      {
-        formLabels: ["Fotos"],
-        viewLabels: ["Fotos"],
-        formBindings: ["form.photoUrls"],
-        viewBindings: ["service.photoUrls"],
-      },
     ],
   },
   {
@@ -417,7 +411,6 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
       { formLabels: ["Fecha de inspección"], viewLabels: ["Fecha inspección"] },
       { formLabels: ["Precinto violentado"], viewLabels: ["Precinto violado"] },
       { formLabels: ["Observaciones"], viewLabels: ["Notas"] },
-      { formLabels: ["Fotos"], viewLabels: ["Fotos"] },
     ],
   },
   {

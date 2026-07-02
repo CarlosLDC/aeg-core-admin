@@ -23,7 +23,6 @@ export type AnnualInspectionFormValues = {
   userId: string;
   sealTampered: boolean;
   notes: string;
-  photoUrls: string[];
   inspectionDate: string;
   checklist: AnnualInspectionChecklistState;
 };
@@ -36,7 +35,6 @@ export const emptyAnnualInspectionForm = (): AnnualInspectionFormValues => ({
   userId: "",
   sealTampered: false,
   notes: "",
-  photoUrls: [],
   inspectionDate: "",
   checklist: emptyAnnualInspectionChecklist(),
 });
@@ -124,7 +122,6 @@ export function annualInspectionToFormValues(
     userId: String(row.userId),
     sealTampered: checklistToSealTampered(checklist),
     notes: row.notes ?? "",
-    photoUrls: [...(row.photoUrls ?? [])],
     inspectionDate: toDateInputValue(row.inspectionDate),
     checklist,
   };
@@ -151,10 +148,6 @@ export function toAnnualInspectionRequest(
     return "Selecciona un técnico.";
   }
 
-  if (values.photoUrls.length === 0) {
-    return "Añade al menos una foto o documento.";
-  }
-
   const persistedChecklist = checklistToPersisted(values.checklist);
 
   return {
@@ -162,7 +155,6 @@ export function toAnnualInspectionRequest(
     userId,
     sealTampered: checklistToSealTampered(values.checklist),
     notes: values.notes.trim() || null,
-    photoUrls: values.photoUrls,
     inspectionDate: values.inspectionDate.trim() || null,
     ...persistedChecklist,
   };

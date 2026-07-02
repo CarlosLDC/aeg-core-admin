@@ -5,7 +5,6 @@ export type AnnualInspectionResponse = {
   sealTampered: boolean;
   notes: string | null;
   createdAt: string;
-  photoUrls: string[];
   inspectionDate: string;
   mqttRegistroImpresora?: string | null;
   mqttSetDateRevOAt?: number | null;
@@ -26,7 +25,6 @@ export type AnnualInspectionRequest = {
   userId: number;
   sealTampered: boolean;
   notes?: string | null;
-  photoUrls: string[];
   inspectionDate?: string | null;
   mqttRegistroImpresora?: string | null;
   mqttSetDateRevOAt?: number | null;
