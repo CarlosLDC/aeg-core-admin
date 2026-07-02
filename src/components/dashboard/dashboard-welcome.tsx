@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Building2, RefreshCw } from "lucide-react";
+import { ArrowRight, Building2, ExternalLink, RefreshCw } from "lucide-react";
 import { navItemsForRole } from "@/lib/navigation";
 import type { DashboardSnapshot } from "@/lib/dashboard-data";
 import { isPrinterOperative } from "@/lib/printer-status";
@@ -104,15 +104,22 @@ export function DashboardWelcome({
         >
           {quickLinks.map((item) => {
             const Icon = item.icon;
+            const openInNewTab = item.openInNewTab === true;
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                target={openInNewTab ? "_blank" : undefined}
+                rel={openInNewTab ? "noopener noreferrer" : undefined}
                 className="inline-flex items-center gap-2 rounded-lg border border-border bg-background/80 px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-accent/40 hover:bg-accent/5"
               >
                 <Icon className="size-4 text-accent" aria-hidden />
                 {item.title}
-                <ArrowRight className="size-3.5 text-muted" aria-hidden />
+                {openInNewTab ? (
+                  <ExternalLink className="size-3.5 text-muted" aria-hidden />
+                ) : (
+                  <ArrowRight className="size-3.5 text-muted" aria-hidden />
+                )}
               </Link>
             );
           })}
