@@ -39,6 +39,7 @@ export function isContributorTypeHeaderLine(line: string): boolean {
 }
 
 export const FISCAL_TICKET_WIDTH_CH = 68;
+export const FISCAL_HEADER_ADDRESS_LINE_MAX_LENGTH = 42;
 export const INVOICE_PRODUCT_SINGLE_LINE_MAX_LENGTH = 39;
 export const INVOICE_PRODUCT_MULTI_LINE_MAX_LENGTH = 60;
 export const INVOICE_PRODUCT_MAX_LINES = 5;
@@ -113,17 +114,18 @@ export function invoiceProductDescriptionLinesForProf(
 export function buildEncabezadoLineas(input: {
   rifEmpresa: string;
   razonSocialEmpresa: string;
-  direccionLinea1: string;
-  direccionLinea2: string;
+  direccionLineas: string[];
   ubicacion: string;
   contributorType?: ContributorType | string;
 }): string[] {
+  const addressLines = input.direccionLineas
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
   const lines = [
     "SENIAT",
     input.rifEmpresa,
     input.razonSocialEmpresa,
-    input.direccionLinea1,
-    input.direccionLinea2,
+    ...addressLines,
     input.ubicacion,
   ];
   if (input.contributorType != null) {
@@ -245,27 +247,73 @@ function resolveBranchLocation(branch: BranchResponse | undefined): string {
   return city || state || "-";
 }
 
-export function splitAddressLines(address: string): [string, string] {
-  const trimmed = address.trim();
-  if (!trimmed) return ["", ""];
-  const commaIndex = trimmed.indexOf(",");
-  if (commaIndex > 0) {
-    return [
-      trimmed.slice(0, commaIndex).trim(),
-      trimmed.slice(commaIndex + 1).trim(),
-    ];
+function wrapFiscalHeaderTextLine(
+  text: string,
+  maxLineLength: number,
+): string[] {
+  const trimmed = text.trim();
+  if (!trimmed) return [];
+  if (trimmed.length <= maxLineLength) return [trimmed];
+
+  const lines: string[] = [];
+  let start = 0;
+  while (start < trimmed.length) {
+    let end = Math.min(start + maxLineLength, trimmed.length);
+    if (end < trimmed.length) {
+      const space = trimmed.lastIndexOf(" ", end);
+      if (space > start) {
+        end = space;
+      }
+    }
+    const chunk = trimmed.slice(start, end).trim();
+    if (chunk) lines.push(chunk);
+    start = end;
+    while (start < trimmed.length && trimmed[start] === " ") {
+      start += 1;
+    }
   }
-  if (trimmed.length <= 42) return [trimmed, ""];
-  const splitAt = trimmed.lastIndexOf(" ", 42);
-  const index = splitAt > 20 ? splitAt : 42;
-  return [trimmed.slice(0, index).trim(), trimmed.slice(index).trim()];
+  return lines;
 }
 
-function resolveCompanyAddress(branch: BranchResponse | undefined): string {
-  if (!branch) return "-";
-  const address = branch.address?.trim();
-  if (address) return address;
-  return resolveBranchLocation(branch);
+/** Divide la dirección fiscal en varias líneas para el encabezado del ticket. */
+export function splitFiscalAddressLines(
+  address: string,
+  maxLineLength = FISCAL_HEADER_ADDRESS_LINE_MAX_LENGTH,
+): string[] {
+  const trimmed = address.trim();
+  if (!trimmed) return [];
+
+  const paragraphs = trimmed
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  const sourceParagraphs = paragraphs.length > 0 ? paragraphs : [trimmed];
+  const lines: string[] = [];
+
+  for (const paragraph of sourceParagraphs) {
+    const commaIndex = paragraph.indexOf(",");
+    if (commaIndex > 0) {
+      const beforeComma = paragraph.slice(0, commaIndex).trim();
+      const afterComma = paragraph.slice(commaIndex + 1).trim();
+      lines.push(...wrapFiscalHeaderTextLine(beforeComma, maxLineLength));
+      lines.push(...wrapFiscalHeaderTextLine(afterComma, maxLineLength));
+      continue;
+    }
+    lines.push(...wrapFiscalHeaderTextLine(paragraph, maxLineLength));
+  }
+
+  return lines;
+}
+
+/** @deprecated Prefer splitFiscalAddressLines for multi-line fiscal headers. */
+export function splitAddressLines(address: string): [string, string] {
+  const lines = splitFiscalAddressLines(address);
+  return [lines[0] ?? "", lines[1] ?? ""];
+}
+
+function resolveCompanyFiscalAddress(branch: BranchResponse | undefined): string {
+  if (!branch) return "";
+  return branch.address?.trim() ?? "";
 }
 
 export function normalizeFacturaNroInput(value: string): string {
@@ -514,8 +562,8 @@ export function buildDispositionInvoiceData(
 
   const clientBranch = input.branches.find((b) => b.id === client.branchId);
   const issuedAt = input.issuedAt ?? new Date();
-  const [direccionLinea1, direccionLinea2] = splitAddressLines(
-    resolveCompanyAddress(clientBranch),
+  const direccionLineas = splitFiscalAddressLines(
+    resolveCompanyFiscalAddress(clientBranch),
   );
   const itemPrice = roundMoney(input.printer.finalSalePrice ?? 0);
   const taxes = buildTaxesFromItemPrice(itemPrice);
@@ -542,8 +590,7 @@ export function buildDispositionInvoiceData(
       lineas: buildEncabezadoLineas({
         rifEmpresa,
         razonSocialEmpresa,
-        direccionLinea1,
-        direccionLinea2,
+        direccionLineas,
         ubicacion: resolveBranchLocation(clientBranch),
         contributorType,
       }),

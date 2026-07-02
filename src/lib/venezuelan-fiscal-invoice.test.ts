@@ -13,6 +13,7 @@ import {
   formatRifForFiscalDisplay,
   invoiceProductDescriptionLinesForProf,
   splitAddressLines,
+  splitFiscalAddressLines,
   splitInvoiceProductDescriptionLines,
   syncInvoiceAmounts,
 } from "./venezuelan-fiscal-invoice";
@@ -73,10 +74,43 @@ describe("venezuelan fiscal invoice", () => {
     expect(formatRifForFiscalDisplay("V-12345678")).toBe("V-12345678");
   });
 
-  it("splits long addresses into two lines", () => {
+  it("splits long addresses into multiple lines", () => {
+    const lines = splitFiscalAddressLines(distributorBranch.address);
+    expect(lines.length).toBeGreaterThan(2);
+    expect(lines.join(" ")).toContain("BICENTENARIO");
+    expect(lines.join(" ")).toContain("MIRANDA");
     const [line1, line2] = splitAddressLines(distributorBranch.address);
     expect(line1).toContain("AV. BICENTENARIO");
-    expect(line2).toContain("MIRANDA");
+    expect(line2.length).toBeGreaterThan(0);
+  });
+
+  it("includes multi-line fiscal address in disposition invoice header", () => {
+    const data = buildDispositionInvoiceData({
+      clientId: 1,
+      clients: [
+        mockClient({
+          id: 1,
+          branchId: 20,
+          companyRif: "J504594369",
+          companyBusinessName: "ALPHA ENGINEER GROUP",
+        }),
+      ],
+      branches: [distributorBranch],
+      companies: [distributorCompany],
+      printer: { ...printer, distributorId: null },
+    });
+
+    expect(data?.encabezado.lineas[0]).toBe("SENIAT");
+    expect(data?.encabezado.lineas[1]).toBe("J-504594369");
+    expect(data?.encabezado.lineas[2]).toBe("ALPHA ENGINEER GROUP");
+    expect(data?.encabezado.lineas.length).toBeGreaterThan(6);
+    expect(
+      data?.encabezado.lineas
+        .slice(3, -2)
+        .join(" "),
+    ).toContain("BICENTENARIO");
+    expect(data?.encabezado.lineas.at(-2)).toBe("Los Teques, Miranda");
+    expect(data?.encabezado.lineas.at(-1)).toBe("CONTRIBUYENTE ORDINARIO");
   });
 
   it("builds structured invoice data for disposition", () => {
@@ -133,8 +167,8 @@ describe("venezuelan fiscal invoice", () => {
     expect(data?.cliente.razonSocial).toBe("Cliente Demo C.A.");
     expect(data?.encabezado.lineas[1]).toBe("J-315694205");
     expect(data?.encabezado.lineas[2]).toBe("Cliente Demo C.A.");
-    expect(data?.encabezado.lineas[5]).toBe("Caracas, Distrito Capital");
-    expect(data?.encabezado.lineas[6]).toBe("CONTRIBUYENTE ORDINARIO");
+    expect(data?.encabezado.lineas[3]).toBe("Caracas, Distrito Capital");
+    expect(data?.encabezado.lineas[4]).toBe("CONTRIBUYENTE ORDINARIO");
   });
 
   it("returns null for unknown client", () => {
