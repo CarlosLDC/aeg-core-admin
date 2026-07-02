@@ -66,8 +66,11 @@ export function distributorLabel(
   distributor: DistributorResponse,
   branches: BranchResponse[],
   companies: CompanyResponse[],
+  extraBranches: BranchResponse[] = [],
 ): string {
-  const branch = branches.find((b) => b.id === distributor.branchId);
+  const branch =
+    branches.find((b) => b.id === distributor.branchId) ??
+    extraBranches.find((b) => b.id === distributor.branchId);
   if (!branch) return "Distribuidor desconocido";
   return formatBranchShort(branch, companies);
 }

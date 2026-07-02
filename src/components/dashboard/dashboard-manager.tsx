@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
+import { useDistributorStaffBranches } from "@/hooks/use-distributor-staff-branches";
 import { fetchAuthMe } from "@/lib/auth-me-api";
 import { distributorLabel } from "@/lib/branch-roles";
 import {
@@ -50,6 +51,9 @@ export function DashboardManager() {
   const [loading, setLoading] = useState(true);
   const [distributorId, setDistributorId] = useState<number | null>(
     user?.distributorId ?? null,
+  );
+  const { staffBranches } = useDistributorStaffBranches(
+    user != null && isDistributorPanelRole(user.role) ? distributorId : null,
   );
 
   useEffect(() => {
@@ -114,8 +118,8 @@ export function DashboardManager() {
     if (!distributor) return null;
     const branches = scope?.branches ?? [];
     const companies = scope?.companies ?? [];
-    return distributorLabel(distributor, branches, companies);
-  }, [user.role, distributorId, catalogRoles, scope]);
+    return distributorLabel(distributor, branches, companies, staffBranches);
+  }, [user.role, distributorId, catalogRoles, scope, staffBranches]);
 
   const showWelcome = snapshot && !loading;
 
