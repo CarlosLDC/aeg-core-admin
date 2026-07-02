@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PAGE_SIZE_OPTIONS, type UsePaginationReturn } from "@/hooks/use-pagination";
+import { formFieldNativeSelectClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 type TablePaginationProps<T> = {
@@ -33,20 +34,23 @@ export function TablePagination<T>({
         className,
       )}
     >
-      <p className="text-sm text-muted">
+      <p className="text-center text-sm text-muted sm:text-left">
         Mostrando{" "}
         <span className="font-medium text-foreground">{startIndex}</span>–
         <span className="font-medium text-foreground">{endIndex}</span> de{" "}
         <span className="font-medium text-foreground">{totalItems}</span>
       </p>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-2 text-sm text-muted">
-          Filas por página
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <label className="flex min-h-10 items-center justify-between gap-3 rounded-lg border border-border bg-foreground/[0.02] px-3 text-sm text-muted sm:min-h-0 sm:justify-start sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:px-0">
+          <span className="shrink-0">Filas por página</span>
           <select
             value={pageSize}
             onChange={(e) => setPageSize(Number(e.target.value))}
-            className="rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground outline-none focus:border-accent focus:ring-1 focus:ring-ring/30"
+            className={cn(
+              formFieldNativeSelectClass,
+              "h-9 w-[4.5rem] shrink-0 px-2 sm:h-10 sm:w-auto sm:min-w-[4.5rem]",
+            )}
             aria-label="Filas por página"
           >
             {PAGE_SIZE_OPTIONS.map((size) => (
@@ -57,7 +61,10 @@ export function TablePagination<T>({
           </select>
         </label>
 
-        <div className="flex items-center gap-1">
+        <nav
+          aria-label="Paginación de la tabla"
+          className="flex min-h-10 items-center justify-between gap-1 rounded-lg border border-border bg-foreground/[0.02] px-1 sm:min-h-0 sm:justify-center sm:rounded-none sm:border-0 sm:bg-transparent sm:px-0"
+        >
           <button
             type="button"
             onClick={() => setPage(page - 1)}
@@ -67,7 +74,7 @@ export function TablePagination<T>({
           >
             <ChevronLeft className="size-4" />
           </button>
-          <span className="min-w-[7rem] px-2 text-center text-sm text-foreground">
+          <span className="min-w-0 flex-1 px-2 text-center text-sm text-foreground sm:min-w-[7rem] sm:flex-none">
             Página {page} de {totalPages}
           </span>
           <button
@@ -79,7 +86,7 @@ export function TablePagination<T>({
           >
             <ChevronRight className="size-4" />
           </button>
-        </div>
+        </nav>
       </div>
     </div>
   );

@@ -220,8 +220,8 @@ export function DataTableToolbar({
 
   return (
     <div className={cn("border-b border-border", className)}>
-      <div className="flex flex-wrap items-center gap-2 px-4 py-3 sm:px-5">
-        <label className="relative min-w-0 flex-1">
+      <div className="flex flex-col gap-2.5 px-3 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 sm:px-5">
+        <label className="relative min-w-0 w-full sm:min-w-[12rem] sm:flex-1">
           <span className="sr-only">Buscar en la tabla</span>
           <Search
             className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted"
@@ -237,30 +237,30 @@ export function DataTableToolbar({
         </label>
 
         {hasPanel && (
-          <>
+          <div className="flex w-full min-w-0 flex-wrap items-stretch gap-2 sm:w-auto sm:flex-nowrap sm:items-center">
             <button
               type="button"
               onClick={() => setPanelOpen((open) => !open)}
               aria-expanded={panelOpen}
               className={cn(
-                "inline-flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                "inline-flex min-h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors sm:flex-none sm:justify-start",
                 panelOpen || activeCount > 0 || visibleOptionalColumns > 0
                   ? "border-accent/40 bg-accent/10 text-accent"
                   : "border-border bg-card text-foreground hover:bg-foreground/5",
               )}
             >
-              <Filter className="size-4" aria-hidden />
-              Filtros
+              <Filter className="size-4 shrink-0" aria-hidden />
+              <span className="truncate">Filtros</span>
               {activeCount > 0 && (
-                <span className="flex size-5 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-accent-foreground">
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-accent-foreground">
                   {activeFilterFields}
                 </span>
               )}
             </button>
 
             {columns.length > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-muted">
-                <Columns3 className="size-3.5" aria-hidden />
+              <span className="inline-flex min-h-10 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border border-border bg-card px-2.5 text-xs text-muted sm:flex-none">
+                <Columns3 className="size-3.5 shrink-0" aria-hidden />
                 {visibleOptionalColumns}/{columns.length}
               </span>
             )}
@@ -269,22 +269,22 @@ export function DataTableToolbar({
               <button
                 type="button"
                 onClick={clearFilters}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
+                className="inline-flex min-h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-foreground/5 hover:text-foreground sm:flex-none"
               >
                 {filters.length > 0 ? (
-                  <X className="size-4" aria-hidden />
+                  <X className="size-4 shrink-0" aria-hidden />
                 ) : (
-                  <RotateCcw className="size-4" aria-hidden />
+                  <RotateCcw className="size-4 shrink-0" aria-hidden />
                 )}
-                Limpiar filtros
+                <span className="truncate">Limpiar</span>
               </button>
             )}
-          </>
+          </div>
         )}
       </div>
 
       {panelOpen && hasPanel && (
-        <div className="space-y-4 border-t border-border bg-foreground/[0.02] px-4 py-3 sm:px-5">
+        <div className="space-y-4 border-t border-border bg-foreground/[0.02] px-3 py-3 sm:px-5">
           {filters.length > 0 && (
             <section
               aria-labelledby="table-filters-heading"
@@ -311,7 +311,7 @@ export function DataTableToolbar({
       )}
 
       {showCount && (
-        <p className="px-4 pb-3 text-xs text-muted sm:px-5">
+        <p className="px-3 pb-3 text-xs text-muted sm:px-5">
           <span className="font-medium text-card-foreground">{resultCount}</span>
           {" "}resultado{resultCount !== 1 ? "s" : ""} de{" "}
           <span className="font-medium text-card-foreground">{totalCount}</span>

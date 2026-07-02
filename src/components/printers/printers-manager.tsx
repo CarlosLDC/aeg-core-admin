@@ -17,6 +17,10 @@ import { runSerialBatch } from "@/lib/batch-create";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-mqtt-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import {
+  TableQuickFilterButton,
+  TableQuickFilters,
+} from "@/components/ui/table-quick-filters";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import {
   PageToolbar,
@@ -34,7 +38,6 @@ import {
   type DistributorPrinterQuickFilter,
 } from "@/lib/distributor-printer-filters";
 import { filterAllOption } from "@/lib/table-filter-options";
-import { filterToggleButtonClass } from "@/lib/toggle-button-styles";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import {
@@ -783,25 +786,17 @@ export function PrintersManager() {
         ) : (
           <>
             {isDistributor ? (
-              <div className="flex flex-wrap items-center gap-2 border-b border-border bg-foreground/[0.02] px-4 py-2.5 sm:px-5">
-                <span className="mr-0.5 text-xs font-medium text-muted">
-                  Filtros rápidos
-                </span>
+              <TableQuickFilters>
                 {DISTRIBUTOR_PRINTER_QUICK_FILTERS.map((filter) => (
-                  <button
+                  <TableQuickFilterButton
                     key={filter.value}
-                    type="button"
-                    aria-pressed={statusFilter === filter.value}
+                    active={statusFilter === filter.value}
                     onClick={() => setStatusFilter(filter.value)}
-                    className={filterToggleButtonClass(
-                      statusFilter === filter.value,
-                      { className: "rounded-md" },
-                    )}
                   >
                     {filter.label}
-                  </button>
+                  </TableQuickFilterButton>
                 ))}
-              </div>
+              </TableQuickFilters>
             ) : null}
             <DataTableToolbar
               search={search}
