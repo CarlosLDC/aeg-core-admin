@@ -17,10 +17,17 @@ export const BRANCH_OPERATIONAL_ROLE_OPTIONS: {
   { value: "SERVICE_CENTER", label: "Centro de servicio" },
 ];
 
-export function isFactoryCompany(
-  organizationType?: OrganizationType | null,
-): boolean {
-  return organizationType === "FACTORY";
+export function findFactoryCompany<T extends { organizationType?: OrganizationType | null }>(
+  companies: T[],
+): T | null {
+  return companies.find((c) => isFactoryCompany(c.organizationType)) ?? null;
+}
+
+export function factoryCompanyDisplayLabel(company: {
+  businessName: string;
+  rif: string;
+}): string {
+  return `${company.businessName} — RIF ${company.rif}`;
 }
 
 export function organizationRoleFromBranch(branch: {

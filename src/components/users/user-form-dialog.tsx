@@ -10,7 +10,11 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { DistributorIdSelect } from "@/components/users/distributor-id-select";
 import { PasswordInput } from "@/components/ui/password-input";
 import { ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/roles";
-import { organizationRoleFromBranch } from "@/lib/organization-roles";
+import {
+  factoryCompanyDisplayLabel,
+  findFactoryCompany,
+  organizationRoleFromBranch,
+} from "@/lib/organization-roles";
 import {
   USER_ROLE_TOGGLE_TONE,
   formFieldInputClass,
@@ -99,7 +103,15 @@ export function UserFormDialog({
   const selectedRole = selectableRole(form.role);
   const needsDistributorProfile = form.role === "DISTRIBUTOR";
   const needsServiceCenterBranch = form.role === "TECHNICIAN";
-  const needsFieldAssignment = needsDistributorProfile || needsServiceCenterBranch;
+  const needsAdminEmployeeProfile = form.role === "ADMIN";
+  const needsFieldAssignment =
+    needsDistributorProfile ||
+    needsServiceCenterBranch ||
+    needsAdminEmployeeProfile;
+  const factoryCompany = useMemo(
+    () => findFactoryCompany(companies),
+    [companies],
+  );
 
   const serviceCenterBranchOptions = useMemo(
     () =>
@@ -124,7 +136,9 @@ export function UserFormDialog({
       distributorId: role === "DISTRIBUTOR" ? f.distributorId : "",
       branchId: role === "TECHNICIAN" ? f.branchId : "",
       nationalId:
-        role === "DISTRIBUTOR" || role === "TECHNICIAN" ? f.nationalId : "",
+        role === "DISTRIBUTOR" || role === "TECHNICIAN" || role === "ADMIN"
+          ? f.nationalId
+          : "",
     }));
   }
 
@@ -292,10 +306,44 @@ export function UserFormDialog({
                   Asignación
                 </legend>
                 <p className="text-xs text-muted">
-                  {needsDistributorProfile
-                    ? "Vincula el usuario a la distribuidora que operará en el panel."
-                    : "Vincula el técnico a la sucursal del centro de servicio."}
+                  {needsAdminEmployeeProfile
+                    ? "Los administradores son empleados de la empresa fabricante (AEG)."
+                    : needsDistributorProfile
+                      ? "Vincula el usuario a la distribuidora que operará en el panel."
+                      : "Vincula el técnico a la sucursal del centro de servicio."}
                 </p>
+
+                {needsAdminEmployeeProfile && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="block min-w-0 sm:col-span-2 lg:col-span-1">
+                      <FieldLabel>Empresa</FieldLabel>
+                      <input
+                        type="text"
+                        readOnly
+                        disabled
+                        value={
+                          factoryCompany
+                            ? factoryCompanyDisplayLabel(factoryCompany)
+                            : "ALPHA ENGINEER GROUP, C.A. — RIF J504594369"
+                        }
+                        className={`${formFieldInputClass} cursor-not-allowed opacity-80`}
+                      />
+                    </label>
+
+                    <label className="block min-w-0">
+                      <FieldLabel required>Cédula</FieldLabel>
+                      <PrefixedDocumentInput
+                        kind="cedula"
+                        required
+                        value={form.nationalId}
+                        disabled={catalogLoading}
+                        onChange={(nationalId) =>
+                          setForm((f) => ({ ...f, nationalId }))
+                        }
+                      />
+                    </label>
+                  </div>
+                )}
 
                 {needsDistributorProfile && (
                   <div className="grid gap-4 sm:grid-cols-2">

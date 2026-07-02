@@ -22,6 +22,18 @@ export function roleRequiresServiceCenterBranch(role: Role): boolean {
   return role === "TECHNICIAN";
 }
 
+export function roleRequiresAdminEmployeeProfile(role: Role): boolean {
+  return role === "ADMIN";
+}
+
+export function roleRequiresNationalId(role: Role): boolean {
+  return (
+    roleRequiresDistributorProfile(role) ||
+    roleRequiresServiceCenterBranch(role) ||
+    roleRequiresAdminEmployeeProfile(role)
+  );
+}
+
 /** @deprecated use roleRequiresDistributorProfile */
 export function roleRequiresTechnicianProfile(role: Role): boolean {
   return roleRequiresDistributorProfile(role);
@@ -61,11 +73,19 @@ export function resolveUserNationalId(
   role: Role,
   nationalId: string,
 ): string | null {
-  if (!roleRequiresDistributorProfile(role) && !roleRequiresServiceCenterBranch(role)) {
+  if (!roleRequiresNationalId(role)) {
     return null;
   }
   const normalized = normalizeNationalId(nationalId);
   return normalized || null;
+}
+
+function validateAdminEmployeeProfile(role: Role, nationalId: string): string | null {
+  if (!roleRequiresAdminEmployeeProfile(role)) return null;
+  if (!normalizeNationalId(nationalId)) {
+    return "La cédula es obligatoria para administradores.";
+  }
+  return null;
 }
 
 function validateDistributorProfile(
@@ -117,6 +137,9 @@ export function validateUserCreateForm(values: UserFormFields): string | null {
     return `La clave debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
   }
 
+  const adminError = validateAdminEmployeeProfile(values.role, values.nationalId);
+  if (adminError) return adminError;
+
   const distributorError = validateDistributorProfile(
     values.role,
     values.distributorId,
@@ -148,6 +171,9 @@ export function validateUserEditForm(values: UserFormFields): string | null {
   ) {
     return `La clave debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
   }
+
+  const adminError = validateAdminEmployeeProfile(values.role, values.nationalId);
+  if (adminError) return adminError;
 
   const distributorError = validateDistributorProfile(
     values.role,

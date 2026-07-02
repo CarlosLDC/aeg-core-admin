@@ -61,22 +61,44 @@ describe("validateUserCreateForm", () => {
     expect(error).toMatch(/sucursal/i);
   });
 
-  it("accepts ADMIN without distributor or national id", () => {
+  it("requires ADMIN national id", () => {
     const error = validateUserCreateForm({
       ...baseForm,
       role: "ADMIN",
+      nationalId: "",
+    });
+    expect(error).toMatch(/cédula/i);
+  });
+
+  it("accepts ADMIN with national id", () => {
+    const error = validateUserCreateForm({
+      ...baseForm,
+      role: "ADMIN",
+      nationalId: "V12345678",
     });
     expect(error).toBeNull();
+    expect(resolveUserNationalId("ADMIN", "V12345678")).toBe("V12345678");
     expect(resolveUserDistributorId("ADMIN", "")).toBeNull();
   });
 });
 
 describe("validateUserEditForm", () => {
-  it("accepts ADMIN without distributor or national id", () => {
+  it("requires ADMIN national id on edit", () => {
     const error = validateUserEditForm({
       ...baseForm,
       role: "ADMIN",
       password: "",
+      nationalId: "",
+    });
+    expect(error).toMatch(/cédula/i);
+  });
+
+  it("accepts ADMIN with national id on edit", () => {
+    const error = validateUserEditForm({
+      ...baseForm,
+      role: "ADMIN",
+      password: "",
+      nationalId: "V12345678",
     });
     expect(error).toBeNull();
   });
