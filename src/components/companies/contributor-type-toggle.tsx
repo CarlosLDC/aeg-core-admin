@@ -20,7 +20,7 @@ export function ContributorTypeToggle({
   value,
   onChange,
   disabled = false,
-  required = false,
+  required = true,
   label = "Tipo de contribuyente",
   showLabel = true,
   className,

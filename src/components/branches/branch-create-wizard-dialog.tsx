@@ -258,10 +258,7 @@ export function BranchCreateWizardDialog({
   }
 
   function validateSection(section: OnboardingStepSection): string | null {
-    return validateOnboardingSection(section, form, {
-      requireContributorType: true,
-      requireAddress: true,
-    });
+    return validateOnboardingSection(section, form);
   }
 
   function goToStep(target: 1 | 2 | 3 | 4 | 5) {
@@ -486,8 +483,6 @@ export function BranchCreateWizardDialog({
                   inputMode={inputMode}
                   aiFields={aiFields}
                   section={currentFormStep.section}
-                  requireContributorType
-                  requireAddress
                 />
               ) : null}
             </form>

@@ -15,41 +15,38 @@ const baseForm = {
 describe("validateOnboardingSection", () => {
   it("requires contributor type when creating a new company", () => {
     expect(
-      validateOnboardingSection(
-        "fiscal",
-        { ...baseForm, contributorType: undefined as never },
-        { requireContributorType: true },
-      ),
+      validateOnboardingSection("fiscal", {
+        ...baseForm,
+        contributorType: undefined as never,
+      }),
     ).toBe("El tipo de contribuyente es obligatorio.");
   });
 
   it("requires contributor type when editing an existing company", () => {
     expect(
-      validateOnboardingSection(
-        "fiscal",
-        { ...baseForm, contributorType: undefined as never, linkedCompanyId: 42 },
-        { requireContributorType: true },
-      ),
+      validateOnboardingSection("fiscal", {
+        ...baseForm,
+        contributorType: undefined as never,
+        linkedCompanyId: 42,
+      }),
     ).toBe("El tipo de contribuyente es obligatorio.");
   });
 
   it("requires address when creating a branch", () => {
     expect(
-      validateOnboardingSection(
-        "location",
-        { ...baseForm, address: "   " },
-        { requireAddress: true },
-      ),
+      validateOnboardingSection("location", {
+        ...baseForm,
+        address: "   ",
+      }),
     ).toBe("La dirección es obligatoria.");
   });
 
   it("requires address when editing a branch", () => {
     expect(
-      validateOnboardingSection(
-        "location",
-        { ...baseForm, address: "" },
-        { requireAddress: true },
-      ),
+      validateOnboardingSection("location", {
+        ...baseForm,
+        address: "",
+      }),
     ).toBe("La dirección es obligatoria.");
   });
 });

@@ -34,8 +34,6 @@ type ClientFormFieldsProps = {
   inputMode: "ai" | "manual";
   aiFields: Set<SeniatLockableField>;
   section: ClientFormSection;
-  requireContributorType?: boolean;
-  requireAddress?: boolean;
 };
 
 function fieldLocked(
@@ -61,8 +59,6 @@ export function ClientFormFields({
   inputMode,
   aiFields,
   section,
-  requireContributorType = true,
-  requireAddress = true,
 }: ClientFormFieldsProps) {
   const companyLocked = Boolean(linkedCompany);
 
@@ -123,7 +119,7 @@ export function ClientFormFields({
 
         <ContributorTypeToggle
           label="Tipo de contribuyente"
-          required={requireContributorType}
+          required
           value={form.contributorType}
           disabled={
             saving ||
@@ -175,10 +171,10 @@ export function ClientFormFields({
         </div>
 
         <label className="block">
-          <FieldLabel required={requireAddress}>Dirección</FieldLabel>
+          <FieldLabel required>Dirección</FieldLabel>
           <textarea
             rows={FORM_FIELD_TEXTAREA_ROWS}
-            required={requireAddress}
+            required
             value={form.address}
             disabled={
               saving || fieldLocked("address", inputMode, aiFields, false)

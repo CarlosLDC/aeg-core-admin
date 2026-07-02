@@ -134,10 +134,7 @@ export function ClientEditDialog({
   }
 
   function validateSection(section: ClientFormSection): string | null {
-    return validateOnboardingSection(section, form, {
-      requireContributorType: false,
-      requireAddress: false,
-    });
+    return validateOnboardingSection(section, form);
   }
 
   function submitRegistration() {
@@ -268,8 +265,6 @@ export function ClientEditDialog({
               inputMode="manual"
               aiFields={new Set()}
               section={currentSection}
-              requireContributorType={false}
-              requireAddress={false}
             />
           </form>
         </div>
