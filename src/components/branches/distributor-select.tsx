@@ -15,6 +15,9 @@ type DistributorSelectProps = {
   companies: CompanyResponse[];
   disabled?: boolean;
   excludeBranchId?: number;
+  emptyLabel?: string;
+  searchPlaceholder?: string;
+  modalTitle?: string;
 };
 
 export function DistributorSelect({
@@ -25,6 +28,9 @@ export function DistributorSelect({
   companies,
   disabled,
   excludeBranchId,
+  emptyLabel = "Sin distribuidor",
+  searchPlaceholder = "Buscar distribuidor…",
+  modalTitle = "Seleccionar distribuidor",
 }: DistributorSelectProps) {
   const options = useMemo(
     () =>
@@ -44,9 +50,9 @@ export function DistributorSelect({
       onChange={onChange}
       options={options}
       disabled={disabled}
-      emptyLabel="Sin distribuidor"
-      searchPlaceholder="Buscar distribuidor…"
-      modalTitle="Seleccionar distribuidor"
+      emptyLabel={emptyLabel}
+      searchPlaceholder={searchPlaceholder}
+      modalTitle={modalTitle}
     />
   );
 }

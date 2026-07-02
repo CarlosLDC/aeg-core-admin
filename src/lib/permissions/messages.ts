@@ -12,7 +12,7 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   annualInspections: "inspecciones anuales",
   contracts: "contratos",
   users: "usuarios",
-  clientTransfers: "transferencias de clientes",
+  clientTransfers: "transferir cliente",
   remoto: "pruebas Remoto",
   seniatExtract: "extracción SENIAT",
   uploads: "documentos adjuntos",

@@ -5,8 +5,8 @@ import { ClientTransfersManager } from "@/components/clients/client-transfers-ma
 export default function ClientTransfersPage() {
   return (
     <AdminShell
-      title="Transferencia de clientes"
-      description="Reasigna la distribuidora de un cliente. Solo cambia la relación cliente–distribuidor; las impresoras del cliente conservan su distribuidora actual."
+      title="Transferir cliente"
+      description="Reasigna clientes entre distribuidoras."
     >
       <RoleGuard allow={["ADMIN"]}>
         <ClientTransfersManager />

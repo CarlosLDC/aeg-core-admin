@@ -8,6 +8,7 @@ type FormDialogFooterProps = {
   onClose: () => void;
   createLabel?: string;
   saveLabel?: string;
+  formId?: string;
 };
 
 export function FormDialogFooter({
@@ -17,6 +18,7 @@ export function FormDialogFooter({
   onClose,
   createLabel = "Crear",
   saveLabel = "Guardar",
+  formId,
 }: FormDialogFooterProps) {
   const submitBlocked = saving || submitDisabled;
 
@@ -32,6 +34,7 @@ export function FormDialogFooter({
       </button>
       <button
         type="submit"
+        form={formId}
         disabled={submitBlocked}
         className={cn(
           "flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",

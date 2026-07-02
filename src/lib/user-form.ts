@@ -1,4 +1,5 @@
 import { isDistributorPanelRole, type Role } from "@/types/user";
+import { formatCedula, parseCedula } from "@/lib/venezuelan-id";
 
 const MIN_PASSWORD_LENGTH = 6;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -27,7 +28,8 @@ export function roleRequiresTechnicianProfile(role: Role): boolean {
 }
 
 export function normalizeNationalId(value: string): string {
-  return value.trim().replace(/\s+/g, "");
+  const { letter, digits } = parseCedula(value);
+  return formatCedula(letter, digits);
 }
 
 function distributorIdToNumber(distributorId: string): number | null {

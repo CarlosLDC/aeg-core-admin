@@ -58,8 +58,8 @@ export function BranchOperationalRoleFields({
         </p>
       ) : null}
       <div className="space-y-2">
-        <FieldLabel>Rol operativo</FieldLabel>
-        <div className="flex flex-wrap gap-2">
+        <FieldLabel>Roles de la empresa</FieldLabel>
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {BRANCH_OPERATIONAL_ROLE_OPTIONS.map((option) => (
             <button
               key={option.value}
@@ -69,34 +69,39 @@ export function BranchOperationalRoleFields({
               onClick={() => onChange({ organizationRole: option.value })}
               className={toggleButtonClass(
                 values.organizationRole === option.value,
-                BRANCH_ROLE_TOGGLE_TONE.isDistributor,
-                { disabled: operationalDisabled },
+                option.value === "SERVICE_CENTER"
+                  ? BRANCH_ROLE_TOGGLE_TONE.isServiceCenter
+                  : option.value === "DISTRIBUTOR"
+                    ? BRANCH_ROLE_TOGGLE_TONE.isDistributor
+                    : "slate",
+                {
+                  disabled: operationalDisabled,
+                  className: "w-full justify-center",
+                },
               )}
             >
               {option.label}
             </button>
           ))}
+          <button
+            type="button"
+            aria-pressed={values.isClient}
+            disabled={disabled}
+            onClick={() =>
+              onChange({
+                isClient: !values.isClient,
+                ...(values.isClient ? { clientDistributorId: "" } : {}),
+              })
+            }
+            className={toggleButtonClass(
+              values.isClient,
+              BRANCH_ROLE_TOGGLE_TONE.isClient,
+              { disabled, className: "w-full justify-center" },
+            )}
+          >
+            Cliente
+          </button>
         </div>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          aria-pressed={values.isClient}
-          disabled={disabled}
-          onClick={() =>
-            onChange({
-              isClient: !values.isClient,
-              ...(values.isClient ? { clientDistributorId: "" } : {}),
-            })
-          }
-          className={toggleButtonClass(
-            values.isClient,
-            BRANCH_ROLE_TOGGLE_TONE.isClient,
-            { disabled },
-          )}
-        >
-          Cliente
-        </button>
       </div>
       {values.isClient ? (
         <label className="block">

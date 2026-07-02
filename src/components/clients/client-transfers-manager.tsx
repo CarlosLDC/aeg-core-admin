@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRightLeft, Loader2 } from "lucide-react";
+import { ArrowRight, ArrowRightLeft, Info, Loader2 } from "lucide-react";
 import { DistributorSelect } from "@/components/branches/distributor-select";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
@@ -23,16 +24,26 @@ import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { branchPath } from "@/lib/resource-routes";
 import { reportListTableError } from "@/lib/api-error-message";
+import {
+  FILTER_ALL,
+  filterAllOption,
+  uniqueFilterOptions,
+} from "@/lib/table-filter-options";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import { cn } from "@/lib/utils";
 
-function clientCompanyLabel(client: ClientResponse): string {
-  const name = client.companyBusinessName?.trim();
-  const rif = client.companyRif?.trim();
-  if (name && rif) return `${name} (${rif})`;
-  return name || rif || `Cliente #${client.id}`;
+function clientBusinessName(client: ClientResponse): string {
+  return (
+    client.companyBusinessName?.trim() ||
+    client.companyRif?.trim() ||
+    `Cliente #${client.id}`
+  );
+}
+
+function clientRif(client: ClientResponse): string {
+  return client.companyRif?.trim() || "—";
 }
 
 function clientBranchLabel(client: ClientResponse): string {
@@ -54,6 +65,59 @@ function distributorName(
   return distributorLabel(distributor, branches, companies);
 }
 
+function PendingReviewBadge() {
+  return (
+    <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-200">
+      En revisión
+    </span>
+  );
+}
+
+function TransferGuide() {
+  const steps = [
+    "Busca el cliente en la tabla.",
+    "Elige la nueva distribuidora de destino.",
+    "Confirma la transferencia.",
+  ];
+
+  return (
+    <div className="rounded-xl border border-accent/20 bg-accent/5 p-4 sm:p-5">
+      <div className="flex gap-3">
+        <div
+          className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent"
+          aria-hidden
+        >
+          <Info className="size-4" />
+        </div>
+        <div className="min-w-0 space-y-3">
+          <div>
+            <h2 className="text-sm font-semibold text-card-foreground">
+              Cómo transferir un cliente
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              Solo cambia la relación cliente–distribuidor. Las impresoras del
+              cliente conservan su distribuidora actual.
+            </p>
+          </div>
+          <ol className="grid gap-2 sm:grid-cols-3">
+            {steps.map((step, index) => (
+              <li
+                key={step}
+                className="flex items-start gap-2 rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-sm text-card-foreground"
+              >
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent/15 text-[11px] font-semibold text-accent">
+                  {index + 1}
+                </span>
+                <span className="min-w-0 leading-snug">{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ClientTransfersManager() {
   const toast = useToast();
   const confirm = useConfirm();
@@ -64,6 +128,7 @@ export function ClientTransfersManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [distributorFilter, setDistributorFilter] = useState<string>(FILTER_ALL);
   const [targetByClientId, setTargetByClientId] = useState<
     Record<number, string>
   >({});
@@ -100,12 +165,45 @@ export function ClientTransfersManager() {
     void load();
   }, [load]);
 
+  const distributorFilterOptions = useMemo(() => {
+    const labels = new Map<string, string>();
+    for (const client of clients) {
+      if (!client.distributorId) continue;
+      const value = String(client.distributorId);
+      if (!labels.has(value)) {
+        labels.set(
+          value,
+          distributorName(
+            client.distributorId,
+            distributors,
+            branches,
+            companies,
+          ),
+        );
+      }
+    }
+    return [
+      filterAllOption("Todas las distribuidoras"),
+      ...uniqueFilterOptions(labels.keys(), (value) => labels.get(value) ?? value),
+    ];
+  }, [clients, distributors, branches, companies]);
+
   const filteredClients = useMemo(() => {
+    let rows = clients;
+
+    if (distributorFilter !== FILTER_ALL) {
+      rows = rows.filter(
+        (client) => String(client.distributorId ?? "") === distributorFilter,
+      );
+    }
+
     const q = search.trim().toLowerCase();
-    if (!q) return clients;
-    return clients.filter((client) => {
+    if (!q) return rows;
+
+    return rows.filter((client) => {
       const haystack = [
-        clientCompanyLabel(client),
+        clientBusinessName(client),
+        clientRif(client),
         clientBranchLabel(client),
         distributorName(
           client.distributorId,
@@ -119,13 +217,26 @@ export function ClientTransfersManager() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [clients, search, distributors, branches, companies]);
+  }, [clients, search, distributorFilter, distributors, branches, companies]);
 
   const pagination = usePagination(filteredClients, 25);
   const pageClients = pagination.paginatedItems;
 
+  const pendingCount = useMemo(
+    () => clients.filter((c) => c.reviewStatus === "PENDING_REVIEW").length,
+    [clients],
+  );
+
   const handleTargetChange = (clientId: number, value: string) => {
     setTargetByClientId((prev) => ({ ...prev, [clientId]: value }));
+  };
+
+  const clearTarget = (clientId: number) => {
+    setTargetByClientId((prev) => {
+      const next = { ...prev };
+      delete next[clientId];
+      return next;
+    });
   };
 
   const handleTransfer = async (client: ClientResponse) => {
@@ -155,7 +266,7 @@ export function ClientTransfersManager() {
 
     const accepted = await confirm({
       title: "Transferir cliente",
-      message: `¿Reasignar «${clientCompanyLabel(client)}» de «${fromLabel}» a «${toLabel}»? Las impresoras del cliente no cambiarán de distribuidora.`,
+      message: `¿Reasignar «${clientBusinessName(client)}» de «${fromLabel}» a «${toLabel}»? Las impresoras del cliente no cambiarán de distribuidora.`,
       confirmLabel: "Transferir",
     });
     if (!accepted) return;
@@ -166,11 +277,7 @@ export function ClientTransfersManager() {
       setClients((prev) =>
         prev.map((row) => (row.id === updated.id ? updated : row)),
       );
-      setTargetByClientId((prev) => {
-        const next = { ...prev };
-        delete next[client.id];
-        return next;
-      });
+      clearTarget(client.id);
       toast.success("Cliente transferido correctamente.");
     } catch (err) {
       toast.error(getClientsErrorMessage(err));
@@ -179,131 +286,213 @@ export function ClientTransfersManager() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16 text-muted">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Cargando clientes…
-      </div>
-    );
-  }
-
-  if (error) {
-    return <EmptyState title="No se pudieron cargar los clientes" description={error} />;
-  }
-
   return (
     <div className="space-y-4">
-      <DataTableToolbar
-        search={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Buscar por empresa, sede o distribuidor…"
-      />
+      <TransferGuide />
 
-      {filteredClients.length === 0 ? (
-        <TableFilterEmptyState />
-      ) : (
-        <>
-          <TableScroll>
-            <table className="w-full min-w-[56rem] text-left text-sm">
-              <thead>
-                <tr className="border-b border-border text-muted">
-                  <th className="px-3 py-2 font-medium">Empresa</th>
-                  <th className="px-3 py-2 font-medium">Sede</th>
-                  <th className="px-3 py-2 font-medium">Distribuidor actual</th>
-                  <th className="px-3 py-2 font-medium">Nueva distribuidora</th>
-                  <th className="px-3 py-2 font-medium text-right">Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageClients.map((client) => {
-                  const pending = client.reviewStatus === "PENDING_REVIEW";
-                  const currentDistributorId = client.distributorId;
-                  const busy = transferringId === client.id;
+      {error ? (
+        <ErrorState
+          message={error}
+          onRetry={() => void load()}
+          retrying={loading}
+        />
+      ) : null}
 
-                  return (
-                    <tr
-                      key={client.id}
-                      className={cn(
-                        "border-b border-border/60",
-                        pending && "opacity-60",
-                      )}
-                    >
-                      <td className="px-3 py-3 align-middle">
-                        <Link
-                          href={branchPath(client.branchId)}
-                          className="font-medium text-primary hover:underline"
-                        >
-                          <TruncatedText>{clientCompanyLabel(client)}</TruncatedText>
-                        </Link>
-                        {pending ? (
-                          <p className="mt-1 text-xs text-muted">
-                            Solicitud de revisión pendiente
-                          </p>
-                        ) : null}
-                      </td>
-                      <td className="px-3 py-3 align-middle text-muted">
-                        <TruncatedText>{clientBranchLabel(client)}</TruncatedText>
-                      </td>
-                      <td className="px-3 py-3 align-middle">
-                        <TruncatedText>
-                          {distributorName(
-                            currentDistributorId,
-                            distributors,
-                            branches,
-                            companies,
-                          )}
-                        </TruncatedText>
-                      </td>
-                      <td className="px-3 py-3 align-middle">
-                        <DistributorSelect
-                          value={targetByClientId[client.id] ?? ""}
-                          onChange={(value) =>
-                            handleTargetChange(client.id, value)
-                          }
-                          distributors={distributors.filter(
-                            (d) => d.id !== currentDistributorId,
-                          )}
-                          branches={branches}
-                          companies={companies}
-                          disabled={pending || busy}
-                          excludeBranchId={client.branchId}
-                        />
-                      </td>
-                      <td className="px-3 py-3 align-middle text-right">
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-surface-elevated disabled:cursor-not-allowed disabled:opacity-50"
-                          disabled={
-                            pending ||
-                            busy ||
-                            !(targetByClientId[client.id] ?? "").trim()
-                          }
-                          title={
-                            pending
-                              ? "Solicitud de revisión pendiente"
-                              : undefined
-                          }
-                          onClick={() => void handleTransfer(client)}
-                        >
-                          {busy ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <ArrowRightLeft className="h-4 w-4" />
-                          )}
-                          Transferir
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </TableScroll>
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 py-16 text-muted">
+            <Loader2 className="size-5 animate-spin" />
+            Cargando clientes…
+          </div>
+        ) : clients.length === 0 ? (
+          <EmptyState
+            icon={ArrowRightLeft}
+            title="No hay clientes para transferir"
+            description="Cuando existan clientes registrados podrás reasignarlos entre distribuidoras desde aquí."
+          />
+        ) : (
+          <>
+            <DataTableToolbar
+              search={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="Buscar por empresa, RIF, sede o distribuidor…"
+              resultCount={filteredClients.length}
+              totalCount={clients.length}
+              filters={[
+                {
+                  id: "distributor",
+                  label: "Distribuidora actual",
+                  value: distributorFilter,
+                  onChange: setDistributorFilter,
+                  options: distributorFilterOptions,
+                  searchable: true,
+                  searchPlaceholder: "Buscar distribuidora…",
+                },
+              ]}
+            />
 
-          <TablePagination pagination={pagination} />
-        </>
-      )}
+            {pendingCount > 0 ? (
+              <p className="border-b border-border bg-amber-500/5 px-4 py-2.5 text-xs text-amber-900 dark:text-amber-100 sm:px-5">
+                <span className="font-medium">{pendingCount}</span>{" "}
+                {pendingCount === 1 ? "cliente tiene" : "clientes tienen"} una
+                solicitud en revisión y no se pueden transferir hasta resolverla.
+              </p>
+            ) : null}
+
+            {filteredClients.length === 0 ? (
+              <TableFilterEmptyState />
+            ) : (
+              <>
+                <TableScroll>
+                  <table className="w-full min-w-[52rem] text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+                        <th className="px-5 py-3 font-medium">Cliente</th>
+                        <th className="px-5 py-3 font-medium">Sede</th>
+                        <th className="px-5 py-3 font-medium">Reasignación</th>
+                        <th className="px-5 py-3 text-right font-medium">
+                          Acción
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pageClients.map((client) => {
+                        const pending =
+                          client.reviewStatus === "PENDING_REVIEW";
+                        const currentDistributorId = client.distributorId;
+                        const busy = transferringId === client.id;
+                        const targetValue = targetByClientId[client.id] ?? "";
+                        const hasTarget = Boolean(targetValue.trim());
+                        const currentLabel = distributorName(
+                          currentDistributorId,
+                          distributors,
+                          branches,
+                          companies,
+                        );
+
+                        return (
+                          <tr
+                            key={client.id}
+                            className={cn(
+                              "border-b border-border/60 transition-colors",
+                              hasTarget &&
+                                !pending &&
+                                "bg-accent/[0.03]",
+                            )}
+                          >
+                            <td className="px-5 py-3.5 align-middle">
+                              <div className="space-y-1">
+                                <Link
+                                  href={branchPath(client.branchId)}
+                                  className="font-medium text-primary hover:underline"
+                                >
+                                  <TruncatedText maxClassName="max-w-[220px]">
+                                    {clientBusinessName(client)}
+                                  </TruncatedText>
+                                </Link>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="font-mono text-xs text-muted">
+                                    {clientRif(client)}
+                                  </span>
+                                  {pending ? <PendingReviewBadge /> : null}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="max-w-[200px] px-5 py-3.5 align-middle text-muted">
+                              <TruncatedText maxClassName="max-w-[180px]">
+                                {clientBranchLabel(client)}
+                              </TruncatedText>
+                            </td>
+                            <td className="px-5 py-3.5 align-middle">
+                              <div className="flex min-w-[18rem] flex-col gap-2 lg:min-w-[24rem]">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span
+                                    className={cn(
+                                      "inline-flex max-w-full items-center rounded-lg border px-2.5 py-1.5 text-xs font-medium",
+                                      pending
+                                        ? "border-border bg-foreground/[0.03] text-muted"
+                                        : "border-border bg-background text-card-foreground",
+                                    )}
+                                    title="Distribuidora actual"
+                                  >
+                                    <TruncatedText maxClassName="max-w-[160px]">
+                                      {currentLabel}
+                                    </TruncatedText>
+                                  </span>
+                                  <ArrowRight
+                                    className="size-4 shrink-0 text-muted"
+                                    aria-hidden
+                                  />
+                                  <div className="min-w-[12rem] flex-1">
+                                    <DistributorSelect
+                                      value={targetValue}
+                                      onChange={(value) =>
+                                        handleTargetChange(client.id, value)
+                                      }
+                                      distributors={distributors.filter(
+                                        (d) => d.id !== currentDistributorId,
+                                      )}
+                                      branches={branches}
+                                      companies={companies}
+                                      disabled={pending || busy}
+                                      excludeBranchId={client.branchId}
+                                      emptyLabel="Nueva distribuidora"
+                                      searchPlaceholder="Buscar distribuidora…"
+                                      modalTitle="Nueva distribuidora"
+                                    />
+                                  </div>
+                                </div>
+                                {hasTarget && !pending ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => clearTarget(client.id)}
+                                    className="self-start text-xs font-medium text-muted transition-colors hover:text-foreground"
+                                  >
+                                    Quitar selección
+                                  </button>
+                                ) : null}
+                              </div>
+                            </td>
+                            <td className="px-5 py-3.5 align-middle text-right">
+                              <button
+                                type="button"
+                                className={cn(
+                                  "inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                                  hasTarget && !pending
+                                    ? "bg-accent text-accent-foreground hover:opacity-90"
+                                    : "border border-border text-card-foreground hover:bg-foreground/5",
+                                )}
+                                disabled={pending || busy || !hasTarget}
+                                title={
+                                  pending
+                                    ? "Solicitud de revisión pendiente"
+                                    : !hasTarget
+                                      ? "Selecciona una distribuidora de destino"
+                                      : undefined
+                                }
+                                onClick={() => void handleTransfer(client)}
+                              >
+                                {busy ? (
+                                  <Loader2 className="size-4 animate-spin" />
+                                ) : (
+                                  <ArrowRightLeft className="size-4" />
+                                )}
+                                Transferir
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </TableScroll>
+
+                <TablePagination pagination={pagination} />
+              </>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

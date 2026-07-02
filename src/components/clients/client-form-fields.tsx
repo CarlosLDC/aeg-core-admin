@@ -2,6 +2,7 @@
 
 import { ContributorTypeToggle } from "@/components/companies/contributor-type-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
+import { PrefixedDocumentInput } from "@/components/ui/prefixed-document-input";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { ClientOnboardingValues } from "@/lib/client-onboarding";
 import {
@@ -81,22 +82,20 @@ export function ClientFormFields({
 
         <label className="block">
           <FieldLabel required>RIF</FieldLabel>
-          <input
-            type="text"
+          <PrefixedDocumentInput
+            kind="rif"
             required
             value={form.rif}
             disabled={
               saving || fieldLocked("rif", inputMode, aiFields, companyLocked)
             }
-            onChange={(e) =>
+            onChange={(rif) =>
               setForm((f) => ({
                 ...f,
-                rif: e.target.value.toUpperCase(),
+                rif,
                 linkedCompanyId: null,
               }))
             }
-            placeholder="J123456789"
-            className={cn(clientFormInputClass, "font-mono uppercase")}
           />
         </label>
 

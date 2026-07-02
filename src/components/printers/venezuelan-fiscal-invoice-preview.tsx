@@ -343,7 +343,13 @@ function EditableTicketLineList({
         const canMoveUp =
           !isLineLocked &&
           (lineLabelPrefix === "Encabezado" ? index > 3 : index > 0);
-        const canMoveDown = !isLineLocked && index < lines.length - 1;
+        const canMoveDown =
+          !isLineLocked &&
+          index < lines.length - 1 &&
+          !(
+            lineLabelPrefix === "Encabezado" &&
+            isContributorTypeHeaderLine(lines[index + 1] ?? "")
+          );
 
         return (
           <div

@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import { ContributorTypeToggle } from "@/components/companies/contributor-type-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
+import { PrefixedDocumentInput } from "@/components/ui/prefixed-document-input";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { companyFormSchema } from "@/lib/schemas/company-form-schema";
@@ -122,15 +123,11 @@ export function CompanyFormDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block">
             <FieldLabel required>RIF</FieldLabel>
-            <input
-              type="text"
+            <PrefixedDocumentInput
+              kind="rif"
               required
               value={form.rif}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, rif: e.target.value.toUpperCase() }))
-              }
-              placeholder="J123456789"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm uppercase outline-none focus:border-accent focus:ring-2 focus:ring-ring/20"
+              onChange={(rif) => setForm((f) => ({ ...f, rif }))}
             />
             {fieldErrors.rif ? (
               <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">

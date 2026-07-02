@@ -137,7 +137,7 @@ export const navSections: NavSection[] = [
         roles: ["ADMIN"],
       },
       {
-        title: "Transferencia de clientes",
+        title: "Transferir cliente",
         href: "/client-transfers",
         icon: ArrowRightLeft,
         roles: ["ADMIN"],
