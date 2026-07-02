@@ -19,6 +19,7 @@ import { can } from "@/lib/permissions/can";
 import {
   branchIdsFromScope,
   filterByBranchScope,
+  filterClientsInScope,
   filterPrintersForUser,
   filterTechnicianUsersInScope,
 } from "@/lib/scope-filters";
@@ -473,7 +474,13 @@ export async function loadDashboardSnapshot(options: {
     branchIds.size > 0
       ? branches.filter((b) => branchIds.has(b.id))
       : branches;
-  const scopedClients = filterByBranchScope(clients, branchIds, role);
+  const scopedClients = filterClientsInScope(
+    clients,
+    branchIds,
+    role,
+    distributorId,
+    distributors,
+  );
   const scopedDistributors = filterByBranchScope(
     distributors,
     branchIds,

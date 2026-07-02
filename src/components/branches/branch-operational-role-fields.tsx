@@ -57,6 +57,11 @@ export function BranchOperationalRoleFields({
           distribuidora ni centro de servicio.
         </p>
       ) : null}
+      {values.organizationRole === "DISTRIBUTOR" ? (
+        <p className="text-xs text-muted">
+          Una distribuidora no puede registrarse como cliente de sí misma.
+        </p>
+      ) : null}
       <div className="space-y-2">
         <FieldLabel>Roles de la empresa</FieldLabel>
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
@@ -66,7 +71,14 @@ export function BranchOperationalRoleFields({
               type="button"
               aria-pressed={values.organizationRole === option.value}
               disabled={operationalDisabled}
-              onClick={() => onChange({ organizationRole: option.value })}
+              onClick={() =>
+                onChange({
+                  organizationRole: option.value,
+                  ...(option.value === "DISTRIBUTOR"
+                    ? { isClient: false, clientDistributorId: "" }
+                    : {}),
+                })
+              }
               className={toggleButtonClass(
                 values.organizationRole === option.value,
                 option.value === "SERVICE_CENTER"
@@ -86,7 +98,7 @@ export function BranchOperationalRoleFields({
           <button
             type="button"
             aria-pressed={values.isClient}
-            disabled={disabled}
+            disabled={disabled || values.organizationRole === "DISTRIBUTOR"}
             onClick={() =>
               onChange({
                 isClient: !values.isClient,

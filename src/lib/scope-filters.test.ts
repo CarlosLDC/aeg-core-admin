@@ -1,5 +1,32 @@
 import { describe, expect, it } from "vitest";
-import { filterAnnualInspectionsInScope } from "./scope-filters";
+import {
+  filterAnnualInspectionsInScope,
+  filterClientsInScope,
+} from "./scope-filters";
+
+describe("filterClientsInScope", () => {
+  const clients = [
+    { id: 1, branchId: 10 },
+    { id: 2, branchId: 20 },
+    { id: 3, branchId: 99 },
+  ];
+  const distributors = [{ id: 7, branchId: 99, createdAt: "" }];
+
+  it("excludes distributor staff branch from client list", () => {
+    expect(
+      filterClientsInScope(
+        clients,
+        new Set([10, 20, 99]),
+        "DISTRIBUTOR",
+        7,
+        distributors,
+      ),
+    ).toEqual([
+      { id: 1, branchId: 10 },
+      { id: 2, branchId: 20 },
+    ]);
+  });
+});
 
 describe("filterAnnualInspectionsInScope", () => {
   const rows = [

@@ -117,9 +117,6 @@ export async function syncBranchRoles(
 
   if (nextRole === "DISTRIBUTOR" && prevRole !== "DISTRIBUTOR") {
     const created = await createDistributor({ branchId });
-    if (roles.isClient && clientDistributorId == null) {
-      clientDistributorId = created.id;
-    }
     if (prevRole === "SERVICE_CENTER" && prev.serviceCenter) {
       await deleteServiceCenter(prev.serviceCenter.id);
     }
@@ -140,7 +137,13 @@ export async function syncBranchRoles(
     await deleteServiceCenter(prev.serviceCenter.id);
   }
 
-  if (roles.isClient && !prev.client) {
+  const isDistributorBranch = nextRole === "DISTRIBUTOR";
+
+  if (isDistributorBranch) {
+    if (prev.client) {
+      await deleteClient(prev.client.id);
+    }
+  } else if (roles.isClient && !prev.client) {
     await createClient({ branchId, distributorId: clientDistributorId });
   } else if (!roles.isClient && prev.client) {
     await deleteClient(prev.client.id);

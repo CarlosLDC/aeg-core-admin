@@ -1,4 +1,8 @@
 import type { CompanyScope } from "@/lib/company-scope";
+import {
+  excludeDistributorSelfClients,
+  resolveDistributorStaffBranchId,
+} from "@/lib/distributor-scope";
 import type {
   ClientResponse,
   DistributorResponse,
@@ -34,6 +38,24 @@ export function filterByBranchScope<T extends { branchId: number }>(
   if (role === "ADMIN") return items;
   if (branchIds.size === 0) return [];
   return items.filter((item) => branchIds.has(item.branchId));
+}
+
+export function filterClientsInScope<T extends { branchId: number }>(
+  clients: T[],
+  branchIds: Set<number>,
+  role: Role,
+  distributorId: number | null,
+  distributors: DistributorResponse[],
+): T[] {
+  const scoped = filterByBranchScope(clients, branchIds, role);
+  if (!isDistributorPanelRole(role) || distributorId == null) {
+    return scoped;
+  }
+  const staffBranchId = resolveDistributorStaffBranchId(
+    distributors,
+    distributorId,
+  );
+  return excludeDistributorSelfClients(scoped, staffBranchId);
 }
 
 export function filterPrintersForUser(
@@ -220,7 +242,13 @@ export function applyScopedFieldCatalog(input: ScopedFieldCatalogInput) {
   } = input;
 
   const branchIds = branchIdsFromScope(scope, branches);
-  const scopedClients = filterByBranchScope(clients, branchIds, role);
+  const scopedClients = filterClientsInScope(
+    clients,
+    branchIds,
+    role,
+    distributorId,
+    distributors,
+  );
   const scopedDistributors = filterByBranchScope(
     distributors,
     branchIds,
