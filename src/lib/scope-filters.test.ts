@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   filterAnnualInspectionsInScope,
+  filterBranchesForDistributorPanel,
   filterClientsInScope,
 } from "./scope-filters";
 
@@ -25,6 +26,25 @@ describe("filterClientsInScope", () => {
       { id: 1, branchId: 10 },
       { id: 2, branchId: 20 },
     ]);
+  });
+});
+
+describe("filterBranchesForDistributorPanel", () => {
+  const branches = [
+    { id: 10, companyId: 1 },
+    { id: 99, companyId: 2 },
+  ];
+  const distributors = [{ id: 7, branchId: 99, createdAt: "" }];
+
+  it("excludes distributor staff branch from empresa list", () => {
+    expect(
+      filterBranchesForDistributorPanel(
+        branches,
+        "DISTRIBUTOR",
+        7,
+        distributors,
+      ),
+    ).toEqual([{ id: 10, companyId: 1 }]);
   });
 });
 

@@ -19,6 +19,7 @@ import { can } from "@/lib/permissions/can";
 import {
   branchIdsFromScope,
   filterByBranchScope,
+  filterBranchesForDistributorPanel,
   filterClientsInScope,
   filterPrintersForUser,
   filterTechnicianUsersInScope,
@@ -474,6 +475,12 @@ export async function loadDashboardSnapshot(options: {
     branchIds.size > 0
       ? branches.filter((b) => branchIds.has(b.id))
       : branches;
+  const panelBranches = filterBranchesForDistributorPanel(
+    scopedBranches,
+    role,
+    distributorId,
+    distributors,
+  );
   const scopedClients = filterClientsInScope(
     clients,
     branchIds,
@@ -519,7 +526,7 @@ export async function loadDashboardSnapshot(options: {
 
   const stats = buildStats(role, {
     companies,
-    branches: scopedBranches,
+    branches: panelBranches,
     clients: scopedClients.length,
     distributors: scopedDistributors.length,
     serviceCenters: scopedServiceCenters.length,
@@ -539,7 +546,7 @@ export async function loadDashboardSnapshot(options: {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt, "es"))
     .slice(0, 6);
 
-  const activity = buildActivity(printers, scopedBranches);
+  const activity = buildActivity(printers, panelBranches);
 
   return {
     stats: stats.slice(0, 4).map(withStatHref),

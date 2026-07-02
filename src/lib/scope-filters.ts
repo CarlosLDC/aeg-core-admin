@@ -1,6 +1,7 @@
 import type { CompanyScope } from "@/lib/company-scope";
 import {
   excludeDistributorSelfClients,
+  excludeDistributorStaffBranches,
   resolveDistributorStaffBranchId,
 } from "@/lib/distributor-scope";
 import type {
@@ -56,6 +57,22 @@ export function filterClientsInScope<T extends { branchId: number }>(
     distributorId,
   );
   return excludeDistributorSelfClients(scoped, staffBranchId);
+}
+
+export function filterBranchesForDistributorPanel<T extends { id: number }>(
+  branches: T[],
+  role: Role,
+  distributorId: number | null,
+  distributors: DistributorResponse[],
+): T[] {
+  if (!isDistributorPanelRole(role) || distributorId == null) {
+    return branches;
+  }
+  const staffBranchId = resolveDistributorStaffBranchId(
+    distributors,
+    distributorId,
+  );
+  return excludeDistributorStaffBranches(branches, staffBranchId);
 }
 
 export function filterPrintersForUser(

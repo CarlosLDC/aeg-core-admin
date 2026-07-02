@@ -33,6 +33,21 @@ export function excludeDistributorSelfClients<T extends { branchId: number }>(
   return clients.filter((client) => client.branchId !== staffBranchId);
 }
 
+export function excludeDistributorStaffBranches<T extends { id: number }>(
+  branches: T[],
+  staffBranchId: number | null,
+): T[] {
+  if (staffBranchId == null) return branches;
+  return branches.filter((branch) => branch.id !== staffBranchId);
+}
+
+export function isDistributorStaffBranch(
+  branchId: number | null | undefined,
+  staffBranchId: number | null,
+): boolean {
+  return staffBranchId != null && branchId === staffBranchId;
+}
+
 export function isDistributorSelfClient(
   clientId: number,
   clients: ClientResponse[],

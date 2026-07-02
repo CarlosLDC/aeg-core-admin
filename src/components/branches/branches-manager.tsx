@@ -45,6 +45,10 @@ import { useConfirm } from "@/context/confirm-provider";
 import { reportListTableError } from "@/lib/api-error-message";
 import { useContractPartyCoverage } from "@/hooks/use-contract-party-coverage";
 import { useDistributorId } from "@/hooks/use-distributor-id";
+import {
+  excludeDistributorStaffBranches,
+  resolveDistributorStaffBranchId,
+} from "@/lib/distributor-scope";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import {
@@ -348,8 +352,16 @@ export function BranchesManager() {
               scope.branches.some((allowed) => allowed.id === b.id),
             );
 
+      const staffBranchId = resolveDistributorStaffBranchId(
+        catalogRoles.distributors,
+        distributorId,
+      );
+      const visibleMerged = isTechnician
+        ? excludeDistributorStaffBranches(scopedMerged, staffBranchId)
+        : scopedMerged;
+
       setBranches(
-        scopedMerged.sort((a, b) => {
+        visibleMerged.sort((a, b) => {
           const companyCmp = companyNameById(
             companyList,
             a.companyId,
@@ -370,7 +382,7 @@ export function BranchesManager() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [scope, catalogRoles, toast]);
+  }, [scope, catalogRoles, toast, isTechnician, distributorId]);
 
   useEffect(() => {
     if (scopeLoading) return;

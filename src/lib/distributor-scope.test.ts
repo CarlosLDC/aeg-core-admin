@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   distributorStaffBranchIds,
   excludeDistributorSelfClients,
+  excludeDistributorStaffBranches,
   filterPrinterModelsForDistributor,
   isDistributorSelfClient,
   loadDistributorStaffBranches,
@@ -60,6 +61,15 @@ describe("distributor-scope", () => {
       100,
     );
     expect(rows.map((row) => row.id)).toEqual([2]);
+  });
+
+  it("excludes distributor staff branch from branch lists", () => {
+    expect(
+      excludeDistributorStaffBranches(
+        [{ id: 100 }, { id: 200 }],
+        100,
+      ).map((row) => row.id),
+    ).toEqual([200]);
   });
 
   it("detects distributor self client by branch", () => {

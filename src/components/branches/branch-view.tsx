@@ -27,6 +27,7 @@ import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { useContractPartyCoverage } from "@/hooks/use-contract-party-coverage";
+import { useDistributorStaffBranchId } from "@/hooks/use-distributor-staff-branch-id";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
   canCancelModificationReview,
@@ -72,6 +73,7 @@ import {
   missingContractLabels,
 } from "@/lib/branch-contract-coverage";
 import { can } from "@/lib/permissions/can";
+import { isDistributorStaffBranch } from "@/lib/distributor-scope";
 import { branchPath } from "@/lib/resource-routes";
 import { hrefForBranchClientDistributor } from "@/lib/table-foreign-hrefs";
 import { toBranchRequest } from "@/lib/branch-request";
@@ -97,6 +99,7 @@ export function BranchView() {
   const { user } = useAuth();
   const { scope, refresh } = useCompanyScope();
   const isTechnician = isDistributorPanelRole(user?.role);
+  const staffBranchId = useDistributorStaffBranchId(user?.distributorId ?? null);
   const canModify = user ? canUpdateBranchRecord(user.role) : false;
   const canDelete = user ? canDeleteBranchRecord(user.role) : false;
   const canRequestReview = isTechnician;
@@ -146,46 +149,48 @@ export function BranchView() {
       if (isTechnician) {
         setClient(null);
         setPendingProposed(null);
+        const isStaffBranch = isDistributorStaffBranch(branchData.id, staffBranchId);
         try {
           const companyRow = await fetchCompanyById(branchData.companyId);
           setCompany(companyRow);
         } catch {
           setCompany(null);
         }
-        if (branchData.client) {
-          try {
-            const clientRow = await fetchClientByBranchId(branchData.id);
-            if (!clientRow) {
-              return;
-            }
-            if (
-              user?.distributorId != null &&
-              clientRow.distributorId !== user.distributorId
-            ) {
-              setError("No tienes acceso a esta empresa.");
-              setClient(null);
-              return;
-            }
-            setClient(clientRow);
-            if (
-              clientRow.reviewStatus === "PENDING_REVIEW" &&
-              clientRow.activeModificationRequestId != null
-            ) {
-              try {
-                const detail = await fetchClientModificationRequestById(
-                  clientRow.activeModificationRequestId,
-                );
-                setPendingProposed(
-                  detail.actionType === "UPDATE" ? detail.proposedData : null,
-                );
-              } catch {
-                setPendingProposed(null);
-              }
-            }
-          } catch {
-            setClient(null);
-            setPendingProposed(null);
+        if (isStaffBranch || !branchData.client) {
+          return;
+        }
+        try {
+          const clientRow = await fetchClientByBranchId(branchData.id);
+          if (!clientRow) {
+            return;
           }
+          if (
+            user?.distributorId != null &&
+            clientRow.distributorId !== user.distributorId
+          ) {
+            setError("No tienes acceso a esta empresa.");
+            setClient(null);
+            return;
+          }
+          setClient(clientRow);
+          if (
+            clientRow.reviewStatus === "PENDING_REVIEW" &&
+            clientRow.activeModificationRequestId != null
+          ) {
+            try {
+              const detail = await fetchClientModificationRequestById(
+                clientRow.activeModificationRequestId,
+              );
+              setPendingProposed(
+                detail.actionType === "UPDATE" ? detail.proposedData : null,
+              );
+            } catch {
+              setPendingProposed(null);
+            }
+          }
+        } catch {
+          setClient(null);
+          setPendingProposed(null);
         }
       } else {
         setClient(null);
@@ -199,7 +204,7 @@ export function BranchView() {
     } finally {
       setLoading(false);
     }
-  }, [id, scope, user, isTechnician]);
+  }, [id, scope, user, isTechnician, staffBranchId]);
 
   useEffect(() => {
     void load();
@@ -369,10 +374,12 @@ export function BranchView() {
   const contributorType =
     pendingProposed?.contributorType ?? companyRecord?.contributorType;
   const pendingReview = client?.reviewStatus === "PENDING_REVIEW";
-  const technicianEmpresaView = isTechnician && branch != null;
+  const isStaffBranch = isDistributorStaffBranch(branch?.id, staffBranchId);
+  const technicianEmpresaView = isTechnician && branch != null && !isStaffBranch;
 
   const technicianDetailContent = useMemo(() => {
-    if (!client || !branch) return null;
+    if (!branch) return null;
+    if (!client && !isStaffBranch) return null;
 
     return (
       <DetailCard>
@@ -418,7 +425,7 @@ export function BranchView() {
         />
       </DetailCard>
     );
-  }, [branch, businessName, client, contributorType, pendingProposed, rif]);
+  }, [branch, businessName, client, contributorType, isStaffBranch, pendingProposed, rif]);
 
   const title = branch
     ? technicianEmpresaView
@@ -586,6 +593,11 @@ export function BranchView() {
             ) : null}
             {technicianEmpresaView ? (
               technicianDetailContent
+            ) : isStaffBranch && branch ? (
+              <p className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted">
+                Esta es la sede de tu distribuidora. No aparece en el listado de
+                clientes; gestiona usuarios y operación desde el panel principal.
+              </p>
             ) : (
               <DetailSectionsPager key={branch.id} steps={detailSteps} />
             )}
