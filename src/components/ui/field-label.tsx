@@ -19,3 +19,15 @@ export function FieldLabel({ children, required, className }: FieldLabelProps) {
     </span>
   );
 }
+
+/** Leyenda minimalista para modales con campos obligatorios marcados con *. */
+export function RequiredFieldsLegend({ className }: { className?: string }) {
+  return (
+    <p className={cn("text-xs text-muted", className)}>
+      <span className="text-rose-600 dark:text-rose-400" aria-hidden="true">
+        *
+      </span>{" "}
+      Campos obligatorios
+    </p>
+  );
+}

@@ -160,7 +160,7 @@ export function SealBatchFormDialog({
       onClose={onClose}
       onSubmit={handleSubmit}
       footer={
-        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border px-4 py-4 sm:flex-row sm:justify-between sm:px-6 [&_button]:w-full sm:[&_button]:w-auto">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between [&_button]:w-full sm:[&_button]:w-auto">
           <button
             type="button"
             onClick={goBack}

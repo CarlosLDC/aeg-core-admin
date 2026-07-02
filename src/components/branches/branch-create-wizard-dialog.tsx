@@ -21,6 +21,7 @@ import {
   type ClientFormSection,
 } from "@/components/clients/client-form-fields";
 import { SeniatDocumentScan } from "@/components/seniat/seniat-document-scan";
+import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import { useAuth } from "@/context/auth-provider";
 import { canCreateContractRecord } from "@/lib/api-permissions";
 import { validateBranchWizardContracts } from "@/lib/branch-wizard-contracts";
@@ -489,7 +490,9 @@ export function BranchCreateWizardDialog({
           )}
         </div>
 
-        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border px-4 py-4 sm:flex-row sm:justify-between sm:px-6 [&_button]:w-full sm:[&_button]:w-auto">
+        <div className="flex shrink-0 flex-col gap-3 border-t border-border px-4 py-4 sm:px-6">
+          <FormDialogFooterBar>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between [&_button]:w-full sm:[&_button]:w-auto">
           {step === 0 ? (
             <button
               type="button"
@@ -543,6 +546,8 @@ export function BranchCreateWizardDialog({
               </div>
             </>
           )}
+          </div>
+          </FormDialogFooterBar>
         </div>
       </div>
     </div>

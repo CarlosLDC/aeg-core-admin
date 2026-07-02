@@ -3,6 +3,7 @@
 import { FormEvent, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Loader2, X } from "lucide-react";
+import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
@@ -175,14 +176,19 @@ export function BatchFormDialog({
           </form>
         </div>
 
-        {footer ?? (
-          <BatchFormDialogFooter
-            busy={busy}
-            submitDisabled={submitDisabled}
-            onClose={onClose}
-            formId={formId}
-          />
-        )}
+        <div className="shrink-0 border-t border-border px-4 py-4 sm:px-6">
+          <FormDialogFooterBar>
+            {footer ?? (
+              <BatchFormDialogFooter
+                busy={busy}
+                submitDisabled={submitDisabled}
+                onClose={onClose}
+                formId={formId}
+                embedded
+              />
+            )}
+          </FormDialogFooterBar>
+        </div>
       </div>
     </div>
   );
@@ -193,6 +199,8 @@ type BatchFormDialogFooterProps = {
   submitDisabled?: boolean;
   onClose: () => void;
   formId?: string;
+  /** Sin borde ni padding; el contenedor del modal ya los aplica. */
+  embedded?: boolean;
 };
 
 export function BatchFormDialogFooter({
@@ -200,11 +208,12 @@ export function BatchFormDialogFooter({
   submitDisabled = false,
   onClose,
   formId,
+  embedded = false,
 }: BatchFormDialogFooterProps) {
   const blocked = busy || submitDisabled;
 
-  return (
-    <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border px-4 py-4 sm:flex-row sm:justify-end sm:px-6 [&_button]:w-full sm:[&_button]:w-auto">
+  const buttons = (
+    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
       <button
         type="button"
         onClick={onClose}
@@ -225,6 +234,14 @@ export function BatchFormDialogFooter({
         {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
         Crear lote
       </button>
+    </div>
+  );
+
+  if (embedded) return buttons;
+
+  return (
+    <div className="flex shrink-0 flex-col gap-3 border-t border-border px-4 py-4 sm:px-6">
+      <FormDialogFooterBar>{buttons}</FormDialogFooterBar>
     </div>
   );
 }

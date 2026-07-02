@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useId, useState } from "react";
 import { ClipboardCheck, Link2, Loader2, X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
+import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 import {
@@ -381,6 +382,7 @@ export function AnnualInspectionFormDialog({
         </div>
 
         <div className="shrink-0 border-t border-border px-4 py-4 sm:px-6">
+          <FormDialogFooterBar>
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between [&_button]:w-full sm:[&_button]:w-auto">
             <button
               type="button"
@@ -426,6 +428,7 @@ export function AnnualInspectionFormDialog({
               )}
             </div>
           </div>
+          </FormDialogFooterBar>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import type { FormEvent, ReactNode } from "react";
 import { Loader2, X } from "lucide-react";
 import type { PrinterResponse } from "@/types/printer";
+import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import { cn } from "@/lib/utils";
 
 export type PrinterActionDialogSize = "md" | "lg" | "receipt";
@@ -116,7 +117,8 @@ export function PrinterActionDialogShell({
           </div>
 
           <div className="shrink-0 border-t border-border px-4 py-4 sm:px-5">
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
+            <FormDialogFooterBar>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
               <button
                 type="button"
                 onClick={handleCancel}
@@ -142,7 +144,8 @@ export function PrinterActionDialogShell({
                 )}
                 {submitLabel}
               </button>
-            </div>
+              </div>
+            </FormDialogFooterBar>
           </div>
         </form>
       </div>

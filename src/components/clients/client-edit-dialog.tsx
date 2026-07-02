@@ -11,6 +11,7 @@ import { validateOnboardingSection } from "@/lib/distributor-onboarding-policy";
 import { normalizeStateName } from "@/lib/state-label";
 import type { BranchResponse } from "@/types/branch";
 import { type CompanyResponse, type ContributorType } from "@/types/company";
+import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import { cn } from "@/lib/utils";
 
 export type ClientEditValues = {
@@ -269,7 +270,9 @@ export function ClientEditDialog({
           </form>
         </div>
 
-        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border px-4 py-4 sm:flex-row sm:justify-between sm:px-6 [&_button]:w-full sm:[&_button]:w-auto">
+        <div className="shrink-0 border-t border-border px-4 py-4 sm:px-6">
+          <FormDialogFooterBar>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between [&_button]:w-full sm:[&_button]:w-auto">
           <button
             type="button"
             onClick={goBack}
@@ -310,6 +313,8 @@ export function ClientEditDialog({
               </button>
             )}
           </div>
+            </div>
+          </FormDialogFooterBar>
         </div>
       </div>
     </div>

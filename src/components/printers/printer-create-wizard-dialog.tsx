@@ -7,6 +7,7 @@ import {
   type PrinterWizardSection,
 } from "@/components/printers/printer-wizard-fields";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
+import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import {
   emptyPrinterForm,
   type PrinterFormValues,
@@ -299,7 +300,9 @@ export function PrinterCreateWizardDialog({
           </form>
         </div>
 
-        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border px-4 py-4 sm:flex-row sm:justify-between sm:px-6 [&_button]:w-full sm:[&_button]:w-auto">
+        <div className="shrink-0 border-t border-border px-4 py-4 sm:px-6">
+          <FormDialogFooterBar>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between [&_button]:w-full sm:[&_button]:w-auto">
           <button
             type="button"
             onClick={goBack}
@@ -340,6 +343,8 @@ export function PrinterCreateWizardDialog({
               </button>
             )}
           </div>
+            </div>
+          </FormDialogFooterBar>
         </div>
       </div>
     </div>

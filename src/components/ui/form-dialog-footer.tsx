@@ -1,5 +1,7 @@
 import { Loader2 } from "lucide-react";
+import { RequiredFieldsLegend } from "@/components/ui/field-label";
 import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
 type FormDialogFooterProps = {
   mode: "create" | "edit";
@@ -10,6 +12,15 @@ type FormDialogFooterProps = {
   saveLabel?: string;
   formId?: string;
 };
+
+export function FormDialogFooterBar({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <RequiredFieldsLegend />
+      {children}
+    </div>
+  );
+}
 
 export function FormDialogFooter({
   mode,
@@ -23,7 +34,8 @@ export function FormDialogFooter({
   const submitBlocked = saving || submitDisabled;
 
   return (
-    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
+    <FormDialogFooterBar>
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end [&_button]:w-full sm:[&_button]:w-auto">
       <button
         type="button"
         onClick={onClose}
@@ -44,6 +56,7 @@ export function FormDialogFooter({
         {saving && <Loader2 className="size-4 animate-spin" />}
         {mode === "create" ? createLabel : saveLabel}
       </button>
-    </div>
+      </div>
+    </FormDialogFooterBar>
   );
 }

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
+import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 import {
@@ -596,6 +597,7 @@ export function TechnicalServiceFormDialog({
         </div>
 
         <div className="shrink-0 border-t border-border px-4 py-4 sm:px-6">
+          <FormDialogFooterBar>
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between [&_button]:w-full sm:[&_button]:w-auto">
             <button
               type="button"
@@ -640,6 +642,7 @@ export function TechnicalServiceFormDialog({
               )}
             </div>
           </div>
+          </FormDialogFooterBar>
         </div>
       </div>
     </div>
