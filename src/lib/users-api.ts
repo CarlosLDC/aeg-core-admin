@@ -56,6 +56,9 @@ export function getUsersErrorMessage(error: unknown): string {
     if (error.status === 404) {
       return "Usuario o sucursal no encontrados.";
     }
+    if (error.status === 400) {
+      return "Datos de usuario inválidos. Verifica distribuidora, sucursal y cédula según el rol.";
+    }
     return error.message;
   }
   if (error instanceof TypeError) {
