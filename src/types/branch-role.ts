@@ -17,6 +17,7 @@ export type ClientResponse = {
   activeModificationRequestId?: number | null;
   branchCity?: string | null;
   branchState?: string | null;
+  branchAddress?: string | null;
   companyBusinessName?: string | null;
   companyRif?: string | null;
   branchPhone?: string | null;

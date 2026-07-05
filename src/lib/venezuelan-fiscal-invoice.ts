@@ -311,9 +311,24 @@ export function splitAddressLines(address: string): [string, string] {
   return [lines[0] ?? "", lines[1] ?? ""];
 }
 
-function resolveCompanyFiscalAddress(branch: BranchResponse | undefined): string {
-  if (!branch) return "";
-  return branch.address?.trim() ?? "";
+function resolveClientBranchFiscalAddress(
+  client: ClientResponse,
+  branch: BranchResponse | undefined,
+): string {
+  const fromBranch = branch?.address?.trim();
+  if (fromBranch) return fromBranch;
+  return client.branchAddress?.trim() ?? "";
+}
+
+function resolveClientBranchLocation(
+  client: ClientResponse,
+  branch: BranchResponse | undefined,
+): string {
+  if (branch) return resolveBranchLocation(branch);
+  const city = client.branchCity?.trim();
+  const state = client.branchState?.trim();
+  if (city && state) return `${city}, ${state}`;
+  return city || state || "-";
 }
 
 export function normalizeFacturaNroInput(value: string): string {
@@ -547,6 +562,8 @@ export type BuildDispositionInvoiceInput = {
   clientId: number;
   clients: ClientResponse[];
   branches: BranchResponse[];
+  /** Sucursal del cliente cuando no está en el catálogo en memoria (p. ej. alcance distribuidor). */
+  clientBranch?: BranchResponse;
   companies: CompanyResponse[];
   distributors?: DistributorResponse[];
   printer: PrinterResponse;
@@ -560,10 +577,12 @@ export function buildDispositionInvoiceData(
   const client = input.clients.find((c) => c.id === input.clientId);
   if (!client) return null;
 
-  const clientBranch = input.branches.find((b) => b.id === client.branchId);
+  const clientBranch =
+    input.clientBranch ??
+    input.branches.find((b) => b.id === client.branchId);
   const issuedAt = input.issuedAt ?? new Date();
   const direccionLineas = splitFiscalAddressLines(
-    resolveCompanyFiscalAddress(clientBranch),
+    resolveClientBranchFiscalAddress(client, clientBranch),
   );
   const itemPrice = roundMoney(input.printer.finalSalePrice ?? 0);
   const taxes = buildTaxesFromItemPrice(itemPrice);
@@ -591,7 +610,7 @@ export function buildDispositionInvoiceData(
         rifEmpresa,
         razonSocialEmpresa,
         direccionLineas,
-        ubicacion: resolveBranchLocation(clientBranch),
+        ubicacion: resolveClientBranchLocation(client, clientBranch),
         contributorType,
       }),
     },

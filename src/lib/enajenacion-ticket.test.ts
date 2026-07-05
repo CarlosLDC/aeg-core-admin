@@ -106,7 +106,7 @@ describe("enajenacion-ticket", () => {
     });
   });
 
-  it("restores saved ticket into disposition invoice draft", () => {
+  it("applies saved trailer without overwriting client address from printer header", () => {
     const invoice: VenezuelanFiscalInvoiceData = {
       encoding: "ISO-8859-2",
       encabezado: {
@@ -139,14 +139,6 @@ describe("enajenacion-ticket", () => {
 
     const restored = applyPrinterTicketToDispositionInvoice(
       invoice,
-      {
-        lines: [
-          "AV SANTA CRUZ LOCAL NRO 13 SECTOR POZUELOS",
-          "PUERTO LA CRUZ, ANZOATEGUI",
-          "LINEA DE EJEMPLO HEADER",
-          "CONTRIBUYENTE ORDINARIO",
-        ],
-      },
       { lines: ["PIE DE EJEMPLO"] },
       "ordinario",
     );
@@ -158,20 +150,8 @@ describe("enajenacion-ticket", () => {
       "AV SANTA CRUZ LOCAL NRO 13 SECTOR POZUELOS",
       "",
       "PUERTO LA CRUZ, ANZOATEGUI",
-      "LINEA DE EJEMPLO HEADER",
       "CONTRIBUYENTE ORDINARIO",
     ]);
     expect(restored.piePagina.mensajes).toEqual(["PIE DE EJEMPLO"]);
-    expect(extractEnajenacionTicketFromInvoice(restored, "ordinario")).toEqual({
-      header: {
-        lines: [
-          "AV SANTA CRUZ LOCAL NRO 13 SECTOR POZUELOS",
-          "PUERTO LA CRUZ, ANZOATEGUI",
-          "LINEA DE EJEMPLO HEADER",
-          "CONTRIBUYENTE ORDINARIO",
-        ],
-      },
-      trailer: { lines: ["PIE DE EJEMPLO"] },
-    });
   });
 });

@@ -154,6 +154,30 @@ describe("venezuelan fiscal invoice", () => {
     expect(data?.encabezado.lineas[6]).toBe("CONTRIBUYENTE ORDINARIO");
   });
 
+  it("falls back to branchAddress and branchCity when branch is not in catalog", () => {
+    const data = buildDispositionInvoiceData({
+      clientId: 1,
+      clients: [
+        mockClient({
+          id: 1,
+          branchId: 99,
+          branchAddress: "Av. Cliente 456, Sector Norte",
+          branchCity: "Valencia",
+          branchState: "Carabobo",
+          companyRif: "J315694205",
+          companyBusinessName: "Cliente Demo C.A.",
+        }),
+      ],
+      branches: [],
+      companies: [company],
+      printer: { ...printer, distributorId: null },
+    });
+
+    expect(data?.encabezado.lineas[3]).toBe("Av. Cliente 456");
+    expect(data?.encabezado.lineas[4]).toBe("Sector Norte");
+    expect(data?.encabezado.lineas.at(-2)).toBe("Valencia, Carabobo");
+  });
+
   it("falls back to company and branch location when client fields are missing", () => {
     const data = buildDispositionInvoiceData({
       clientId: 2,

@@ -15,7 +15,7 @@ import {
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
 import { assertPrinterInScope } from "@/lib/permissions/scope-access";
-import { fetchBranches } from "@/lib/branches-api";
+import { fetchBranches, fetchBranchById } from "@/lib/branches-api";
 import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
@@ -206,6 +206,44 @@ export function PrinterDispositionView({
     return company?.contributorType ?? "ordinario";
   }, [clientId, scopedClients, branches, companies]);
 
+  const [resolvedClientBranch, setResolvedClientBranch] =
+    useState<BranchResponse | undefined>();
+
+  useEffect(() => {
+    if (clientId == null) {
+      queueMicrotask(() => setResolvedClientBranch(undefined));
+      return;
+    }
+    const client = scopedClients.find((entry) => entry.id === clientId);
+    if (!client) return;
+    const cached = branches.find((entry) => entry.id === client.branchId);
+    if (cached) {
+      queueMicrotask(() => setResolvedClientBranch(cached));
+      return;
+    }
+    let cancelled = false;
+    void fetchBranchById(client.branchId)
+      .then((branch) => {
+        if (!cancelled) setResolvedClientBranch(branch);
+      })
+      .catch(() => {
+        if (!cancelled) setResolvedClientBranch(undefined);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId, scopedClients, branches]);
+
+  const clientBranch = useMemo(() => {
+    if (clientId == null) return undefined;
+    const client = scopedClients.find((entry) => entry.id === clientId);
+    if (!client) return undefined;
+    return (
+      branches.find((entry) => entry.id === client.branchId) ??
+      resolvedClientBranch
+    );
+  }, [clientId, scopedClients, branches, resolvedClientBranch]);
+
   const invoiceData = useMemo(() => {
     if (!printer || clientId == null || facturaNro == null) {
       return null;
@@ -214,6 +252,7 @@ export function PrinterDispositionView({
       clientId,
       clients: scopedClients,
       branches,
+      clientBranch,
       companies,
       distributors,
       printer,
@@ -225,6 +264,7 @@ export function PrinterDispositionView({
     facturaNro,
     scopedClients,
     branches,
+    clientBranch,
     companies,
     distributors,
   ]);
@@ -239,7 +279,6 @@ export function PrinterDispositionView({
     }
     const merged = applyPrinterTicketToDispositionInvoice(
       invoiceData,
-      printer.header,
       printer.trailer,
       selectedContributorType,
     );

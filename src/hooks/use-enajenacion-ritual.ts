@@ -311,7 +311,6 @@ export function useEnajenacionRitual() {
             address: branch.address,
             city: branch.city,
             state: branch.state,
-            encFacFijoLines: activePrinter?.header?.lines,
             pieFacFijoLines: activePrinter?.trailer?.lines,
           }),
         );
