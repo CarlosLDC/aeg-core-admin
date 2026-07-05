@@ -272,7 +272,7 @@ function EditableTicketZone({
               <button
                 type="button"
                 onClick={onFinishEditing}
-                className="inline-flex items-center gap-1 rounded-md border border-accent/40 bg-card px-2 py-0.5 text-[10px] font-medium text-accent transition-colors hover:bg-accent/10"
+                className="inline-flex items-center gap-1 rounded-md border border-accent bg-accent px-2 py-0.5 text-[10px] font-medium text-accent-foreground shadow-sm transition-colors hover:bg-accent/90"
               >
                 <Check className="size-3" aria-hidden />
                 Listo
