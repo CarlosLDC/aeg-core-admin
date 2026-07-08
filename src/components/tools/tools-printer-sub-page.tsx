@@ -1,13 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useToolsPrinters } from "@/modules/tools/printers/use-tools-printers";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
-import { toolsListPath, toolsPrinterPath } from "@/lib/resource-routes";
+import { toolsPrinterPath } from "@/lib/resource-routes";
 
 type ToolsPrinterSubPageProps = {
   title: string;
@@ -15,7 +14,11 @@ type ToolsPrinterSubPageProps = {
   children: (printer: ToolsPrinter) => React.ReactNode;
 };
 
-export function ToolsPrinterSubPage({ title, description, children }: ToolsPrinterSubPageProps) {
+export function ToolsPrinterSubPage({
+  title,
+  description,
+  children,
+}: ToolsPrinterSubPageProps) {
   const params = useParams();
   const serial = typeof params.serial === "string" ? params.serial : "";
   const { loading, error, reload, findBySerial } = useToolsPrinters();
@@ -23,14 +26,16 @@ export function ToolsPrinterSubPage({ title, description, children }: ToolsPrint
 
   if (loading && !printer) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="size-6 animate-spin text-muted" />
-      </div>
+      <ResourceViewShell loading title={title}>
+        {null}
+      </ResourceViewShell>
     );
   }
 
   if (error) {
-    return <ErrorState message={error} onRetry={() => void reload()} retrying={loading} />;
+    return (
+      <ErrorState message={error} onRetry={() => void reload()} retrying={loading} />
+    );
   }
 
   if (!printer) {
@@ -43,22 +48,14 @@ export function ToolsPrinterSubPage({ title, description, children }: ToolsPrint
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link
-          href={toolsPrinterPath(printer.serial)}
-          className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" aria-hidden />
-          Volver al detalle
-        </Link>
-        <h2 className="mt-3 text-2xl font-semibold text-foreground">{title}</h2>
-        <p className="mt-1 text-sm text-muted">
-          {description} — {printer.serial}
-        </p>
-      </div>
+    <ResourceViewShell
+      backHref={toolsPrinterPath(printer.serial)}
+      backLabel="Volver al detalle"
+      title={title}
+      subtitle={`${description} — ${printer.serial}`}
+    >
       {children(printer)}
-    </div>
+    </ResourceViewShell>
   );
 }
 

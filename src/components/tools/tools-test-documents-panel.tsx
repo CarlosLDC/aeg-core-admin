@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import {
+  ToolsActionButton,
+  ToolsPanelActions,
+  ToolsPanelSection,
+} from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import {
@@ -14,6 +18,13 @@ import {
 import { useToast } from "@/context/toast-provider";
 
 type TestAction = "invoice" | "credit-note" | "debit-note" | "generate-z";
+
+const TEST_ACTIONS = [
+  ["invoice", "Factura de prueba"],
+  ["credit-note", "NC de prueba"],
+  ["debit-note", "ND de prueba"],
+  ["generate-z", "Generar Z de prueba"],
+] as const;
 
 export function ToolsTestDocumentsPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
@@ -59,36 +70,24 @@ export function ToolsTestDocumentsPanel({ printer }: { printer: ToolsPrinter }) 
 
   return (
     <ToolsPrinterMacGuard macAddress={printer.macAddress}>
-      <section className="rounded-xl border bg-card p-4">
-        <h3 className="font-medium">Documentos de prueba</h3>
-        <p className="mt-1 text-sm text-muted">
-          Genera documentos fiscales de prueba en la impresora física. Las notas
-          de crédito y débito requieren serial fiscal registrado.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {(
-            [
-              ["invoice", "Factura de prueba"],
-              ["credit-note", "NC de prueba"],
-              ["debit-note", "ND de prueba"],
-              ["generate-z", "Generar Z de prueba"],
-            ] as const
-          ).map(([action, label]) => (
-            <button
+      <ToolsPanelSection
+        title="Documentos de prueba"
+        description="Genera documentos fiscales de prueba en la impresora física. Las notas de crédito y débito requieren serial fiscal registrado."
+      >
+        <ToolsPanelActions>
+          {TEST_ACTIONS.map(([action, label]) => (
+            <ToolsActionButton
               key={action}
-              type="button"
+              loading={loading === action}
               disabled={loading != null}
+              variant={action === "invoice" ? "primary" : "default"}
               onClick={() => void run(action)}
-              className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-foreground/[0.03] disabled:opacity-50"
             >
-              {loading === action ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : null}
               {label}
-            </button>
+            </ToolsActionButton>
           ))}
-        </div>
-      </section>
+        </ToolsPanelActions>
+      </ToolsPanelSection>
     </ToolsPrinterMacGuard>
   );
 }

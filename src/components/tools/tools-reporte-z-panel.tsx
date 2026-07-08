@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { FieldLabel } from "@/components/ui/field-label";
+import {
+  ToolsActionButton,
+  ToolsPanelActions,
+  ToolsPanelSection,
+} from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import {
@@ -12,13 +17,24 @@ import {
   reprintToolsDocument,
   transmitToolsReportZ,
 } from "@/lib/tools-mqtt-api";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
+
+const REPORT_ACTIONS = [
+  ["list", "Consultar último Z"],
+  ["generate", "Generar Z"],
+  ["get", "Obtener Z específico"],
+  ["transmit", "Transmitir a SENIAT"],
+  ["reprint", "Reimprimir Z"],
+] as const;
+
+type ReportAction = (typeof REPORT_ACTIONS)[number][0];
 
 export function ToolsReporteZPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
   const [reportNumber, setReportNumber] = useState("");
   const [reportJson, setReportJson] = useState<string | null>(null);
-  const [loading, setLoading] = useState<string | null>(null);
+  const [loading, setLoading] = useState<ReportAction | null>(null);
 
   const showReport = (report: Record<string, unknown> | undefined) => {
     if (report) {
@@ -26,7 +42,7 @@ export function ToolsReporteZPanel({ printer }: { printer: ToolsPrinter }) {
     }
   };
 
-  const run = async (action: "list" | "generate" | "get" | "transmit" | "reprint") => {
+  const run = async (action: ReportAction) => {
     setLoading(action);
     try {
       if (action === "list") {
@@ -78,44 +94,39 @@ export function ToolsReporteZPanel({ printer }: { printer: ToolsPrinter }) {
   return (
     <ToolsPrinterMacGuard macAddress={printer.macAddress}>
       <div className="space-y-4">
-        <section className="rounded-xl border bg-card p-4">
-          <h3 className="font-medium">Reportes Z</h3>
-          <label className="mt-4 block text-sm">
-            <span className="text-muted">Número de reporte (opcional)</span>
+        <ToolsPanelSection title="Reportes Z">
+          <label className="block max-w-xs">
+            <FieldLabel className="text-muted">
+              Número de reporte (opcional)
+            </FieldLabel>
             <input
               type="number"
               value={reportNumber}
               onChange={(e) => setReportNumber(e.target.value)}
-              className="mt-1 w-full max-w-xs rounded-lg border bg-background px-3 py-2"
+              className={formFieldInputClass}
             />
           </label>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {(["list", "generate", "get", "transmit", "reprint"] as const).map((action) => (
-              <button
+          <ToolsPanelActions className="mt-4">
+            {REPORT_ACTIONS.map(([action, label]) => (
+              <ToolsActionButton
                 key={action}
-                type="button"
+                loading={loading === action}
                 disabled={loading != null}
+                variant={action === "generate" ? "primary" : "default"}
                 onClick={() => void run(action)}
-                className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-foreground/[0.03] disabled:opacity-50"
               >
-                {loading === action ? <Loader2 className="size-4 animate-spin" /> : null}
-                {action === "list" && "Consultar último Z"}
-                {action === "generate" && "Generar Z"}
-                {action === "get" && "Obtener Z específico"}
-                {action === "transmit" && "Transmitir a SENIAT"}
-                {action === "reprint" && "Reimprimir Z"}
-              </button>
+                {label}
+              </ToolsActionButton>
             ))}
-          </div>
-        </section>
+          </ToolsPanelActions>
+        </ToolsPanelSection>
 
         {reportJson ? (
-          <section className="rounded-xl border bg-card p-4">
-            <h3 className="font-medium">Datos del reporte</h3>
-            <pre className="mt-3 max-h-96 overflow-auto rounded-lg bg-foreground/[0.03] p-3 text-xs">
+          <ToolsPanelSection title="Datos del reporte">
+            <pre className="max-h-96 overflow-auto rounded-lg border border-border bg-foreground/[0.03] p-3 text-xs">
               {reportJson}
             </pre>
-          </section>
+          </ToolsPanelSection>
         ) : null}
       </div>
     </ToolsPrinterMacGuard>

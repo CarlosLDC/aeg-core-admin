@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { FieldLabel } from "@/components/ui/field-label";
+import {
+  ToolsActionButton,
+  ToolsPanelActions,
+  ToolsPanelSection,
+  toolsListItemClass,
+} from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import {
@@ -10,13 +16,21 @@ import {
   resetToolsWifi,
   scanToolsWifi,
 } from "@/lib/tools-mqtt-api";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
+import { cn } from "@/lib/utils";
 
-export function ToolsWifiPanel({ printer }: { printer: ToolsPrinter }) {
+type ToolsWifiPanelProps = {
+  printer: ToolsPrinter;
+};
+
+export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const toast = useToast();
   const [ssid, setSsid] = useState("");
   const [password, setPassword] = useState("");
-  const [networks, setNetworks] = useState<Array<{ ssid: string; signal: number | null }>>([]);
+  const [networks, setNetworks] = useState<
+    Array<{ ssid: string; signal: number | null }>
+  >([]);
   const [loading, setLoading] = useState<string | null>(null);
 
   const run = async (action: "scan" | "connect" | "reset") => {
@@ -51,30 +65,30 @@ export function ToolsWifiPanel({ printer }: { printer: ToolsPrinter }) {
   return (
     <ToolsPrinterMacGuard macAddress={printer.macAddress}>
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border bg-card p-4">
-          <h3 className="font-medium">Escanear redes</h3>
-          <p className="mt-1 text-sm text-muted">
-            Consulta las redes WiFi detectadas por la impresora.
-          </p>
-          <button
-            type="button"
+        <ToolsPanelSection
+          title="Escanear redes"
+          description="Consulta las redes WiFi detectadas por la impresora."
+        >
+          <ToolsActionButton
+            loading={loading === "scan"}
             disabled={loading != null}
             onClick={() => void run("scan")}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-foreground/[0.03] disabled:opacity-50"
           >
-            {loading === "scan" ? <Loader2 className="size-4 animate-spin" /> : null}
             Escanear WiFi
-          </button>
+          </ToolsActionButton>
           {networks.length > 0 ? (
             <ul className="mt-4 space-y-2 text-sm">
               {networks.map((network) => (
                 <li
                   key={network.ssid}
-                  className="flex items-center justify-between rounded-lg border px-3 py-2"
+                  className={cn(
+                    toolsListItemClass,
+                    "flex items-center justify-between",
+                  )}
                 >
                   <button
                     type="button"
-                    className="font-medium hover:underline"
+                    className="font-medium text-card-foreground hover:text-accent"
                     onClick={() => setSsid(network.ssid)}
                   >
                     {network.ssid}
@@ -86,50 +100,47 @@ export function ToolsWifiPanel({ printer }: { printer: ToolsPrinter }) {
               ))}
             </ul>
           ) : null}
-        </section>
+        </ToolsPanelSection>
 
-        <section className="rounded-xl border bg-card p-4">
-          <h3 className="font-medium">Conectar / reiniciar</h3>
-          <div className="mt-4 space-y-3">
-            <label className="block text-sm">
-              <span className="text-muted">SSID</span>
+        <ToolsPanelSection title="Conectar / reiniciar">
+          <div className="space-y-3">
+            <label className="block">
+              <FieldLabel className="text-muted">SSID</FieldLabel>
               <input
                 value={ssid}
                 onChange={(e) => setSsid(e.target.value)}
-                className="mt-1 w-full rounded-lg border bg-background px-3 py-2"
+                className={formFieldInputClass}
               />
             </label>
-            <label className="block text-sm">
-              <span className="text-muted">Contraseña</span>
+            <label className="block">
+              <FieldLabel className="text-muted">Contraseña</FieldLabel>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 w-full rounded-lg border bg-background px-3 py-2"
+                className={formFieldInputClass}
               />
             </label>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
+          <ToolsPanelActions className="mt-4">
+            <ToolsActionButton
+              variant="primary"
+              loading={loading === "connect"}
               disabled={loading != null || !ssid.trim()}
               onClick={() => void run("connect")}
-              className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-foreground/[0.03] disabled:opacity-50"
             >
-              {loading === "connect" ? <Loader2 className="size-4 animate-spin" /> : null}
               Conectar
-            </button>
-            <button
-              type="button"
+            </ToolsActionButton>
+            <ToolsActionButton
+              variant="danger"
+              loading={loading === "reset"}
               disabled={loading != null}
               onClick={() => void run("reset")}
-              className="inline-flex items-center gap-2 rounded-lg border border-rose-500/30 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-500/10 disabled:opacity-50 dark:text-rose-300"
             >
-              {loading === "reset" ? <Loader2 className="size-4 animate-spin" /> : null}
               Reiniciar impresora
-            </button>
-          </div>
-        </section>
+            </ToolsActionButton>
+          </ToolsPanelActions>
+        </ToolsPanelSection>
       </div>
     </ToolsPrinterMacGuard>
   );

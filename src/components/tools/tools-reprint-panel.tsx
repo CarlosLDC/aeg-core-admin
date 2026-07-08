@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
+import { FieldLabel } from "@/components/ui/field-label";
+import {
+  ToolsActionButton,
+  ToolsPanelActions,
+  ToolsPanelSection,
+  toolsPanelSectionClass,
+} from "@/components/tools/tools-ui";
 import { escPosToHtml } from "@/modules/tools/escpos/esc-pos-to-html";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import {
@@ -13,7 +20,13 @@ import {
   writeToolsFooter,
   writeToolsHeader,
 } from "@/lib/tools-mqtt-api";
+import {
+  formFieldInputClass,
+  formFieldNativeSelectClass,
+  formFieldTextareaClass,
+} from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
+import { cn } from "@/lib/utils";
 
 type ToolsReprintPanelProps = {
   printer: ToolsPrinter;
@@ -69,7 +82,9 @@ export function ToolsReprintPanel({ printer }: ToolsReprintPanelProps) {
     }
   };
 
-  const runHeaderFooter = async (kind: "header-read" | "header-write" | "footer-read" | "footer-write") => {
+  const runHeaderFooter = async (
+    kind: "header-read" | "header-write" | "footer-read" | "footer-write",
+  ) => {
     setLoading(kind);
     try {
       if (kind === "header-read") {
@@ -96,15 +111,14 @@ export function ToolsReprintPanel({ printer }: ToolsReprintPanelProps) {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-xl border bg-card p-4">
-        <h3 className="font-medium">Reimpresión de documentos</h3>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <label className="block text-sm">
-            <span className="text-muted">Tipo</span>
+      <ToolsPanelSection title="Reimpresión de documentos">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <label className="block">
+            <FieldLabel className="text-muted">Tipo</FieldLabel>
             <select
               value={docType}
               onChange={(e) => setDocType(e.target.value)}
-              className="mt-1 w-full rounded-lg border bg-background px-3 py-2"
+              className={formFieldNativeSelectClass}
             >
               <option value="FAC">Factura</option>
               <option value="NC">Nota de crédito</option>
@@ -113,87 +127,119 @@ export function ToolsReprintPanel({ printer }: ToolsReprintPanelProps) {
               <option value="RX">Reporte X (RX)</option>
             </select>
           </label>
-          <label className="block text-sm sm:col-span-2">
-            <span className="text-muted">Número</span>
+          <label className="block sm:col-span-2">
+            <FieldLabel className="text-muted">Número</FieldLabel>
             <input
               type="number"
               value={number}
               onChange={(e) => setNumber(e.target.value)}
-              className="mt-1 w-full rounded-lg border bg-background px-3 py-2"
+              className={formFieldInputClass}
             />
           </label>
         </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
+        <ToolsPanelActions className="mt-4">
+          <ToolsActionButton
+            loading={loading === "visualize"}
             disabled={loading != null}
             onClick={() => void runReprint("visualize")}
-            className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-foreground/[0.03] disabled:opacity-50"
           >
-            {loading === "visualize" ? <Loader2 className="size-4 animate-spin" /> : null}
             Visualizar
-          </button>
-          <button
-            type="button"
+          </ToolsActionButton>
+          <ToolsActionButton
+            variant="primary"
+            loading={loading === "reprint"}
             disabled={loading != null}
             onClick={() => void runReprint("reprint")}
-            className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-foreground/[0.03] disabled:opacity-50"
           >
-            {loading === "reprint" ? <Loader2 className="size-4 animate-spin" /> : null}
             Reimprimir
-          </button>
-          <button
-            type="button"
+          </ToolsActionButton>
+          <ToolsActionButton
+            loading={loading === "report-x"}
             disabled={loading != null}
             onClick={() => void runReportX()}
-            className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-foreground/[0.03] disabled:opacity-50"
           >
-            {loading === "report-x" ? <Loader2 className="size-4 animate-spin" /> : null}
             Generar reporte X
-          </button>
-        </div>
-      </section>
+          </ToolsActionButton>
+        </ToolsPanelActions>
+      </ToolsPanelSection>
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border bg-card p-4">
-          <h3 className="font-medium">Encabezado fiscal</h3>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ToolsPanelSection title="Encabezado fiscal">
           <textarea
             value={headerContent}
             onChange={(e) => setHeaderContent(e.target.value)}
             rows={4}
-            className="mt-3 w-full rounded-lg border bg-background px-3 py-2 text-sm"
+            className={formFieldTextareaClass}
           />
-          <div className="mt-3 flex gap-2">
-            <button type="button" disabled={loading != null} onClick={() => void runHeaderFooter("header-read")} className="rounded-lg border px-3 py-2 text-sm">Leer</button>
-            <button type="button" disabled={loading != null} onClick={() => void runHeaderFooter("header-write")} className="rounded-lg border px-3 py-2 text-sm">Guardar</button>
-          </div>
-        </div>
-        <div className="rounded-xl border bg-card p-4">
-          <h3 className="font-medium">Pie de página</h3>
+          <ToolsPanelActions className="mt-3">
+            <ToolsActionButton
+              loading={loading === "header-read"}
+              disabled={loading != null}
+              onClick={() => void runHeaderFooter("header-read")}
+            >
+              Leer
+            </ToolsActionButton>
+            <ToolsActionButton
+              variant="primary"
+              loading={loading === "header-write"}
+              disabled={loading != null}
+              onClick={() => void runHeaderFooter("header-write")}
+            >
+              Guardar
+            </ToolsActionButton>
+          </ToolsPanelActions>
+        </ToolsPanelSection>
+
+        <ToolsPanelSection title="Pie de página">
           <textarea
             value={footerContent}
             onChange={(e) => setFooterContent(e.target.value)}
             rows={4}
-            className="mt-3 w-full rounded-lg border bg-background px-3 py-2 text-sm"
+            className={formFieldTextareaClass}
           />
-          <div className="mt-3 flex gap-2">
-            <button type="button" disabled={loading != null} onClick={() => void runHeaderFooter("footer-read")} className="rounded-lg border px-3 py-2 text-sm">Leer</button>
-            <button type="button" disabled={loading != null} onClick={() => void runHeaderFooter("footer-write")} className="rounded-lg border px-3 py-2 text-sm">Guardar</button>
-          </div>
-        </div>
-      </section>
+          <ToolsPanelActions className="mt-3">
+            <ToolsActionButton
+              loading={loading === "footer-read"}
+              disabled={loading != null}
+              onClick={() => void runHeaderFooter("footer-read")}
+            >
+              Leer
+            </ToolsActionButton>
+            <ToolsActionButton
+              variant="primary"
+              loading={loading === "footer-write"}
+              disabled={loading != null}
+              onClick={() => void runHeaderFooter("footer-write")}
+            >
+              Guardar
+            </ToolsActionButton>
+          </ToolsPanelActions>
+        </ToolsPanelSection>
+      </div>
 
       {previewHtml ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-xl border bg-card shadow-lg">
-            <div className="flex items-center justify-between border-b px-4 py-3">
-              <h3 className="font-medium">Vista previa del documento</h3>
-              <button type="button" onClick={() => setPreviewHtml(null)} aria-label="Cerrar">
+          <div
+            className={cn(
+              toolsPanelSectionClass,
+              "max-h-[90vh] w-full max-w-2xl overflow-hidden p-0",
+            )}
+          >
+            <div className="flex items-center justify-between border-b border-border px-5 py-3">
+              <h3 className="text-sm font-semibold text-card-foreground">
+                Vista previa del documento
+              </h3>
+              <button
+                type="button"
+                onClick={() => setPreviewHtml(null)}
+                aria-label="Cerrar"
+                className="rounded-lg p-1 text-muted transition-colors hover:bg-foreground/[0.03] hover:text-foreground"
+              >
                 <X className="size-5" />
               </button>
             </div>
             <div
-              className="max-h-[70vh] overflow-auto p-4 font-mono text-xs"
+              className="max-h-[70vh] overflow-auto p-5 font-mono text-xs"
               dangerouslySetInnerHTML={{ __html: previewHtml }}
             />
           </div>

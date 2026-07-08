@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { FieldLabel } from "@/components/ui/field-label";
+import {
+  ToolsActionButton,
+  ToolsPanelActions,
+  ToolsPanelSection,
+  toolsListItemClass,
+} from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import {
@@ -10,7 +16,9 @@ import {
   writeToolsFormasPago,
 } from "@/lib/tools-mqtt-api";
 import type { ToolsFormasPagoItem } from "@/types/tools-mqtt";
+import { formFieldInputClass, formFieldTextareaClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
+import { cn } from "@/lib/utils";
 
 export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
@@ -39,7 +47,11 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
     }
     setLoading("write");
     try {
-      const result = await writeToolsFormasPago(printer.id, selectedNro, descripcion.trim());
+      const result = await writeToolsFormasPago(
+        printer.id,
+        selectedNro,
+        descripcion.trim(),
+      );
       if (result.success) {
         toast.success(result.message ?? "Forma de pago actualizada.");
         await load();
@@ -56,22 +68,20 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
   return (
     <ToolsPrinterMacGuard macAddress={printer.macAddress}>
       <div className="space-y-4">
-        <section className="rounded-xl border bg-card p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className="font-medium">Formas de pago</h3>
-            <button
-              type="button"
+        <ToolsPanelSection
+          title="Formas de pago"
+          headerActions={
+            <ToolsActionButton
+              loading={loading === "read"}
               disabled={loading != null}
               onClick={() => void load()}
-              className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-foreground/[0.03] disabled:opacity-50"
             >
-              {loading === "read" ? <Loader2 className="size-4 animate-spin" /> : null}
               Leer de impresora
-            </button>
-          </div>
-
+            </ToolsActionButton>
+          }
+        >
           {items.length > 0 ? (
-            <ul className="mt-4 space-y-2 text-sm">
+            <ul className="space-y-2 text-sm">
               {items.map((item) => (
                 <li key={item.nro}>
                   <button
@@ -80,54 +90,64 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
                       setSelectedNro(item.nro);
                       setDescripcion(item.descripcion);
                     }}
-                    className="w-full rounded-lg border px-3 py-2 text-left hover:bg-foreground/[0.03]"
+                    className={cn(
+                      toolsListItemClass,
+                      "w-full text-left",
+                      selectedNro === item.nro &&
+                        "border-accent/35 bg-accent/[0.04]",
+                    )}
                   >
-                    <span className="font-medium">#{item.nro}</span> — {item.descripcion}
+                    <span className="font-medium text-card-foreground">
+                      #{item.nro}
+                    </span>{" "}
+                    <span className="text-muted">— {item.descripcion}</span>
                   </button>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="mt-3 text-sm text-muted">
+            <p className="text-sm text-muted">
               Pulse «Leer de impresora» para cargar las formas de pago actuales.
             </p>
           )}
-        </section>
+        </ToolsPanelSection>
 
-        <section className="rounded-xl border bg-card p-4">
-          <h3 className="font-medium">Editar descripción</h3>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <label className="block text-sm">
-              <span className="text-muted">Número FP</span>
+        <ToolsPanelSection title="Editar descripción">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block">
+              <FieldLabel className="text-muted">Número FP</FieldLabel>
               <input
                 type="number"
                 value={selectedNro}
                 onChange={(e) =>
-                  setSelectedNro(e.target.value === "" ? "" : Number(e.target.value))
+                  setSelectedNro(
+                    e.target.value === "" ? "" : Number(e.target.value),
+                  )
                 }
-                className="mt-1 w-full rounded-lg border bg-background px-3 py-2"
+                className={formFieldInputClass}
               />
             </label>
-            <label className="block text-sm sm:col-span-2">
-              <span className="text-muted">Descripción</span>
+            <label className="block sm:col-span-2">
+              <FieldLabel className="text-muted">Descripción</FieldLabel>
               <textarea
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
                 rows={3}
-                className="mt-1 w-full rounded-lg border bg-background px-3 py-2"
+                className={formFieldTextareaClass}
               />
             </label>
           </div>
-          <button
-            type="button"
-            disabled={loading != null}
-            onClick={() => void save()}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-foreground/[0.03] disabled:opacity-50"
-          >
-            {loading === "write" ? <Loader2 className="size-4 animate-spin" /> : null}
-            Guardar en impresora
-          </button>
-        </section>
+          <ToolsPanelActions className="mt-4">
+            <ToolsActionButton
+              variant="primary"
+              loading={loading === "write"}
+              disabled={loading != null}
+              onClick={() => void save()}
+            >
+              Guardar en impresora
+            </ToolsActionButton>
+          </ToolsPanelActions>
+        </ToolsPanelSection>
       </div>
     </ToolsPrinterMacGuard>
   );
