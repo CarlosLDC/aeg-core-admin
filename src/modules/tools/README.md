@@ -1,51 +1,59 @@
-# AEG Tools Migration Skeleton
+# AEG Tools — módulo admin
 
-Este directorio define el inventario y el esqueleto inicial para migrar `aeg-tools/aeg-tools-next` a `aeg-core-admin` sin portar lógica todavía.
+Migración de `aeg-tools/aeg-tools-next` a `aeg-core-admin`. Prioriza **comportamiento** (lógica Tools) sobre apariencia Electron; reutiliza componentes y auth del admin.
 
-## Alcance de esta fase
+## Fase 1 (completada)
 
-- Registrar los módulos que se migrarán.
-- Reservar carpetas destino por dominio.
-- Exponer rutas `\/tools` vacías y protegidas.
-- Dejar documentados los TBD de auth, API y proxy MQTT para el siguiente prompt.
+- Lógica compartida: `shared/types.ts`, `shared/formatters.ts`, `escpos/esc-pos-to-html.ts`
+- Adaptador aeg-core → Tools: `shared/map-core-printer.ts`
+- Hook de datos: `printers/use-tools-printers.ts` (fetch aeg-core + scope + búsqueda)
+- UI funcional:
+  - `/tools` — `ToolsPrintersManager` (tabla, búsqueda, contadores distribuidor)
+  - `/tools/printers/[serial]` — detalle con cliente y enlaces a submódulos
+- Auth: sesión JWT admin existente (sin login Tools ni API Seenode)
+- MQTT: solo tipos + documentación del gap; broker en fase 2
 
 ## Módulos registrados
 
-| ID | Estado | Prioridad | Ruta | Destino |
-|---|---|---|---|---|
-| `tools-shared-formatters` | `skeleton` | `foundation` | — | `src/modules/tools/shared` |
-| `tools-shared-escpos` | `skeleton` | `foundation` | — | `src/modules/tools/escpos` |
-| `tools-shared-api` | `skeleton` | `foundation` | — | `src/modules/tools/shared` |
-| `tools-auth` | `skeleton` | `foundation` | — | `src/modules/tools/auth` |
-| `tools-printers-dashboard` | `skeleton` | `high` | `/tools` | `src/modules/tools/printers` |
-| `tools-printers-table` | `planned` | `high` | `/tools` | `src/modules/tools/printers` |
-| `tools-printer-detail` | `skeleton` | `high` | `/tools/printers/[serial]` | `src/modules/tools/printers` |
-| `tools-mqtt-core` | `skeleton` | `foundation` | — | `src/modules/tools/mqtt` |
-| `tools-reprint` | `skeleton` | `high` | `/tools/printers/[serial]` | `src/modules/tools/reprint` |
-| `tools-reporte-z` | `skeleton` | `high` | `/tools/printers/[serial]/reporte-z` | `src/modules/tools/reporte-z` |
-| `tools-report-x` | `planned` | `medium` | `/tools/printers/[serial]` | `src/modules/tools/report-x` |
-| `tools-wifi` | `skeleton` | `high` | `/tools/printers/[serial]/wifi` | `src/modules/tools/wifi` |
-| `tools-formas-pago` | `skeleton` | `high` | `/tools/printers/[serial]/formas-pago` | `src/modules/tools/formas-pago` |
-| `tools-header-footer` | `planned` | `medium` | `/tools/printers/[serial]` | `src/modules/tools/header-footer` |
-| `tools-pdf` | `planned` | `medium` | — | `src/modules/tools/pdf` |
-| `tools-ui-kit` | `planned` | `low` | — | `src/modules/tools/shared` |
-| `tools-test-documents` | `planned` | `medium` | `/tools/printers/[serial]` | `src/modules/tools/reprint` |
-| `tools-theme` | `planned` | `low` | — | `src/modules/tools/shared` |
-| `tools-pagination` | `planned` | `low` | `/tools` | `src/modules/tools/shared` |
+| ID | Estado | Ruta |
+|---|---|---|
+| `tools-shared-formatters` | `migrated` | — |
+| `tools-shared-escpos` | `migrated` | — |
+| `tools-shared-api` | `migrated` | — |
+| `tools-auth` | `migrated` | — |
+| `tools-printers-dashboard` | `migrated` | `/tools` |
+| `tools-printers-table` | `migrated` | `/tools` |
+| `tools-printer-detail` | `migrated` | `/tools/printers/[serial]` |
+| `tools-mqtt-core` | `skeleton` | — |
+| `tools-reprint` | `skeleton` | `/tools/printers/[serial]` |
+| `tools-reporte-z` | `skeleton` | `/tools/printers/[serial]/reporte-z` |
+| `tools-wifi` | `skeleton` | `/tools/printers/[serial]/wifi` |
+| `tools-formas-pago` | `skeleton` | `/tools/printers/[serial]/formas-pago` |
+| Resto | `planned` | ver `tools-registry.ts` |
 
-## Fases sugeridas
+## API pública
 
-1. Esqueleto, registry y rutas placeholder.
-2. Decidir auth/API y forma final del proxy MQTT.
-3. Portar shared libs (`formatters`, `escpos`, boundary de API).
-4. Levantar dashboard de impresoras.
-5. Levantar detalle de impresora.
-6. Portar operaciones MQTT por dominio.
-7. Cerrar pendientes (`report-x`, `header-footer`, `pdf`, `test-documents`).
+Importar desde `@/modules/tools`:
+
+```ts
+import {
+  useToolsPrinters,
+  filterPrinters,
+  mapCorePrinterToTools,
+  escPosToHtml,
+} from "@/modules/tools";
+```
+
+## Fase 2 (siguiente)
+
+1. Proxy MQTT `/api/tools/mqtt/*` y correlación publish → respuesta
+2. `PrinterStatusBar` real y paneles wifi / reporte-z / reimpresión / formas de pago
+3. PDF + ESC/POS en flujos de visualización
+
+Ver `mqtt/README.md` para el gap documentado.
 
 ## Notas
 
-- `aeg-tools-next` es la fuente principal.
-- El código Electron sigue siendo referencia secundaria para lo que aún no exista en `aeg-tools-next`.
-- Los módulos `tools-auth`, `tools-shared-api` y `tools-mqtt-core` quedan documentados pero sin implementación funcional en esta fase.
-- `/downloads` sigue fuera de alcance.
+- `/printers` = catálogo CRUD aeg-core; `/tools` = operaciones de campo
+- Scope: `filterPrintersForUser` igual que catálogo
+- `/downloads` fuera de alcance

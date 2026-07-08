@@ -65,3 +65,21 @@ export function clientModificationReviewPath(requestId: number): string {
 }
 
 export const clientModificationReviewsListPath = "/reviews";
+
+export const toolsListPath = "/tools";
+
+export function toolsPrinterPath(serial: string): string {
+  return `/tools/printers/${encodeURIComponent(serial)}`;
+}
+
+export function toolsPrinterWifiPath(serial: string): string {
+  return `${toolsPrinterPath(serial)}/wifi`;
+}
+
+export function toolsPrinterReporteZPath(serial: string): string {
+  return `${toolsPrinterPath(serial)}/reporte-z`;
+}
+
+export function toolsPrinterFormasPagoPath(serial: string): string {
+  return `${toolsPrinterPath(serial)}/formas-pago`;
+}

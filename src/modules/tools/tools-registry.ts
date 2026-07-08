@@ -25,7 +25,7 @@ export const TOOLS_MODULES: ToolsModule[] = [
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\shared",
     route: null,
-    status: "skeleton",
+    status: "migrated",
     dependsOn: [],
     priority: "foundation",
   },
@@ -39,7 +39,7 @@ export const TOOLS_MODULES: ToolsModule[] = [
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\escpos",
     route: null,
-    status: "skeleton",
+    status: "migrated",
     dependsOn: [],
     priority: "foundation",
   },
@@ -53,11 +53,11 @@ export const TOOLS_MODULES: ToolsModule[] = [
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\shared",
     route: null,
-    status: "skeleton",
+    status: "migrated",
     dependsOn: ["tools-auth"],
     priority: "foundation",
     notes:
-      "Auth and API integration are intentionally TBD in this prompt; do not implement runtime calls yet.",
+      "Usa fetchPrinters/fetchClients de aeg-core con JWT admin; no API legacy Seenode.",
   },
   {
     id: "tools-auth",
@@ -69,11 +69,10 @@ export const TOOLS_MODULES: ToolsModule[] = [
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\auth",
     route: null,
-    status: "skeleton",
+    status: "migrated",
     dependsOn: [],
     priority: "foundation",
-    notes:
-      "Whether Tools reuses admin auth or keeps its own session remains TBD for the next structure prompt.",
+    notes: "Reutiliza auth admin; no sesión Tools separada.",
   },
   {
     id: "tools-printers-dashboard",
@@ -85,9 +84,10 @@ export const TOOLS_MODULES: ToolsModule[] = [
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\printers",
     route: "/tools",
-    status: "skeleton",
+    status: "migrated",
     dependsOn: ["tools-shared-formatters", "tools-shared-api"],
     priority: "high",
+    notes: "UI en src/components/tools/tools-printers-manager.tsx",
   },
   {
     id: "tools-printers-table",
@@ -99,9 +99,10 @@ export const TOOLS_MODULES: ToolsModule[] = [
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\printers",
     route: "/tools",
-    status: "planned",
+    status: "migrated",
     dependsOn: ["tools-printers-dashboard", "tools-shared-formatters"],
     priority: "high",
+    notes: "Integrado en ToolsPrintersManager con DataTableToolbar admin.",
   },
   {
     id: "tools-printer-detail",
@@ -113,9 +114,11 @@ export const TOOLS_MODULES: ToolsModule[] = [
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\printers",
     route: "/tools/printers/[serial]",
-    status: "skeleton",
+    status: "migrated",
     dependsOn: ["tools-printers-dashboard", "tools-mqtt-core", "tools-shared-escpos"],
     priority: "high",
+    notes:
+      "Shell funcional en tools-printer-detail-view; operaciones MQTT deshabilitadas hasta fase 2.",
   },
   {
     id: "tools-mqtt-core",
@@ -131,7 +134,7 @@ export const TOOLS_MODULES: ToolsModule[] = [
     dependsOn: ["tools-auth"],
     priority: "foundation",
     notes:
-      "Server proxy shape is documented only; implementation is deferred to the next prompt.",
+      "Tipos en mqtt/types.ts; gap publish→respuesta documentado en mqtt/README.md. Broker en fase 2.",
   },
   {
     id: "tools-reprint",
