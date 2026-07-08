@@ -606,7 +606,7 @@ export function PrintersManager() {
 
     const result = await runSerialBatch(
       serials,
-      async (fiscalSerial) => {
+      async (fiscalSerial, creationBatchId) => {
         const bodyOrError = toPrinterRequest({ ...base, fiscalSerial });
         if (typeof bodyOrError === "string") {
           throw new Error(bodyOrError);
@@ -614,7 +614,7 @@ export function PrintersManager() {
         if (lockDistributor && distributorId != null) {
           bodyOrError.distributorId = distributorId;
         }
-        await createPrinter(bodyOrError);
+        await createPrinter({ ...bodyOrError, creationBatchId });
       },
       (p) => setBatchProgress({ done: p.done, total: p.total }),
     );

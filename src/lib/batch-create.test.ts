@@ -8,6 +8,9 @@ describe("runSerialBatch", () => {
     expect(result.succeeded).toBe(2);
     expect(result.failed).toHaveLength(0);
     expect(createOne).toHaveBeenCalledTimes(2);
+    const batchId = createOne.mock.calls[0]?.[1];
+    expect(batchId).toBeTruthy();
+    expect(createOne.mock.calls[1]?.[1]).toBe(batchId);
   });
 
   it("collects failures without stopping the batch", async () => {

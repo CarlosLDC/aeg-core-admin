@@ -24,6 +24,7 @@ export type PrinterResponse = {
   fiscalSerial: string;
   finalSalePrice: number | null;
   createdAt: string;
+  creationBatchId?: string | null;
   status: PrinterStatus | "inicializada" | "de_demostracion";
   distributorId: number | null;
   paid: boolean;
@@ -60,4 +61,5 @@ export type PrinterRequest = {
   macAddress?: string | null;
   status: PrinterStatus;
   deviceType: DeviceType;
+  creationBatchId?: string | null;
 };

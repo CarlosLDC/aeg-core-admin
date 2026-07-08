@@ -9,6 +9,7 @@ export type SealResponse = {
   printerId: number | null;
   serial: string;
   createdAt: string;
+  creationBatchId?: string | null;
   installationDate: string | null;
   removalDate: string | null;
   color: SealColor;
@@ -22,4 +23,5 @@ export type SealRequest = {
   removalDate?: string | null;
   color: SealColor;
   status: SealStatus;
+  creationBatchId?: string | null;
 };

@@ -376,12 +376,12 @@ export function SealsManager() {
 
     const result = await runSerialBatch(
       serials,
-      async (serial) => {
+      async (serial, creationBatchId) => {
         const bodyOrError = toSealRequest({ ...base, serial });
         if (typeof bodyOrError === "string") {
           throw new Error(bodyOrError);
         }
-        await createSeal(bodyOrError);
+        await createSeal({ ...bodyOrError, creationBatchId });
       },
       (p) => setBatchProgress({ done: p.done, total: p.total }),
     );

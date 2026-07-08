@@ -20,6 +20,8 @@ export function printerPath(id: number): string {
   return `/printers/${id}`;
 }
 
+export const printersListPath = "/printers";
+
 export function printerDispositionPath(
   id: number,
   clientId: number,
@@ -39,6 +41,8 @@ export function printerModelPath(id: number): string {
 export function sealPath(id: number): string {
   return `/seals/${id}`;
 }
+
+export const sealsListPath = "/seals";
 
 export function distributorContractPath(id: number): string {
   return `/contracts/distributor/${id}`;

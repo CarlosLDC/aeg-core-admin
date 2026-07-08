@@ -32,10 +32,13 @@ import {
   distributorContractPath,
   printerModelPath,
   printerPath,
+  printersListPath,
   sealPath,
+  sealsListPath,
   serviceCenterContractPath,
   technicalServicePath,
 } from "@/lib/resource-routes";
+import { pushBatchableCreationNotifications } from "@/lib/notification-batch";
 import type { ClientResponse } from "@/types/branch-role";
 import type { AppNotification, NotificationKind } from "@/types/notification";
 import { isDistributorPanelRole, type Role } from "@/types/user";
@@ -190,17 +193,23 @@ export async function loadNotifications(options: {
 
   if (printersP?.ok) {
     const printers = filterPrintersForUser(printersP.value, role, distributorId);
-    for (const p of printers) {
-      const statusLabel = printerStatusLabel(p.status);
-      pushNotification(items, {
-        id: `printer-${p.id}`,
+    pushBatchableCreationNotifications(
+      items,
+      printers,
+      {
         kind: "printer",
-        title: "Nueva impresora",
-        message: `Serial ${p.fiscalSerial} registrada (${statusLabel}).`,
-        href: resolveNotificationHref(role, printerPath(p.id)),
-        createdAt: p.createdAt,
-      });
-    }
+        idPrefix: "printer",
+        titleSingular: "Nueva impresora",
+        titlePlural: "Nuevas impresoras",
+        messageSingular: (p) =>
+          `Serial ${p.fiscalSerial} registrada (${printerStatusLabel(p.status)}).`,
+        messagePlural: (count) =>
+          `Se crearon ${count} impresora${count === 1 ? "" : "s"}.`,
+        hrefForOne: (p) => resolveNotificationHref(role, printerPath(p.id)),
+        hrefForBatch: resolveNotificationHref(role, printersListPath),
+      },
+      pushNotification,
+    );
   } else if (canPrinters && printersP && !printersP.ok) {
     warnings.push("No se pudieron cargar impresoras para notificaciones.");
   }
@@ -215,16 +224,22 @@ export async function loadNotifications(options: {
 
   if (sealsP?.ok) {
     const scoped = filterSealsByPrinterScope(sealsP.value, printerIds, role);
-    for (const s of scoped) {
-      pushNotification(items, {
-        id: `seal-${s.id}`,
+    pushBatchableCreationNotifications(
+      items,
+      scoped,
+      {
         kind: "seal",
-        title: "Nuevo precinto",
-        message: `Precinto ${s.serial} registrado en inventario.`,
-        href: resolveNotificationHref(role, sealPath(s.id)),
-        createdAt: s.createdAt,
-      });
-    }
+        idPrefix: "seal",
+        titleSingular: "Nuevo precinto",
+        titlePlural: "Nuevos precintos",
+        messageSingular: (s) => `Precinto ${s.serial} registrado en inventario.`,
+        messagePlural: (count) =>
+          `Se crearon ${count} precinto${count === 1 ? "" : "s"}.`,
+        hrefForOne: (s) => resolveNotificationHref(role, sealPath(s.id)),
+        hrefForBatch: resolveNotificationHref(role, sealsListPath),
+      },
+      pushNotification,
+    );
   }
 
   if (servicesP?.ok) {

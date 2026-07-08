@@ -30,19 +30,25 @@ export type BatchRunResult = {
   failed: BatchRunFailure[];
 };
 
+export function createCreationBatchId(): string {
+  return crypto.randomUUID();
+}
+
 export async function runSerialBatch<T>(
   serials: string[],
-  createOne: (serial: string) => Promise<T>,
+  createOne: (serial: string, creationBatchId: string) => Promise<T>,
   onProgress?: (progress: BatchCreateProgress) => void,
+  options?: { creationBatchId?: string },
 ): Promise<BatchCreateResult> {
   const failed: BatchItemFailure[] = [];
   let succeeded = 0;
+  const creationBatchId = options?.creationBatchId ?? createCreationBatchId();
 
   for (let i = 0; i < serials.length; i++) {
     const serial = serials[i]!;
     onProgress?.({ done: i, total: serials.length, currentSerial: serial });
     try {
-      await createOne(serial);
+      await createOne(serial, creationBatchId);
       succeeded++;
     } catch (error) {
       const message =
