@@ -77,7 +77,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
             Escanear WiFi
           </ToolsActionButton>
           {networks.length > 0 ? (
-            <ul className="mt-4 space-y-2 text-sm">
+            <ul className="mt-4 space-y-2 text-sm" aria-label="Redes detectadas">
               {networks.map((network) => (
                 <li
                   key={network.ssid}
@@ -88,7 +88,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
                 >
                   <button
                     type="button"
-                    className="font-medium text-card-foreground hover:text-accent"
+                    className="w-full text-left font-medium text-card-foreground transition-colors hover:text-accent"
                     onClick={() => setSsid(network.ssid)}
                   >
                     {network.ssid}

@@ -106,7 +106,7 @@ export function ToolsReporteZPanel({ printer }: { printer: ToolsPrinter }) {
               className={formFieldInputClass}
             />
           </label>
-          <ToolsPanelActions className="mt-4">
+          <ToolsPanelActions className="mt-4" hint="Los comandos se envían de inmediato a la impresora.">
             {REPORT_ACTIONS.map(([action, label]) => (
               <ToolsActionButton
                 key={action}

@@ -7,6 +7,7 @@ import {
   ToolsPanelActions,
   ToolsPanelSection,
   toolsListItemClass,
+  toolsSelectableListItemClass,
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
@@ -18,7 +19,6 @@ import {
 import type { ToolsFormasPagoItem } from "@/types/tools-mqtt";
 import { formFieldInputClass, formFieldTextareaClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
-import { cn } from "@/lib/utils";
 
 export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
@@ -82,20 +82,18 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
         >
           {items.length > 0 ? (
             <ul className="space-y-2 text-sm">
-              {items.map((item) => (
+              {items.map((item) => {
+                const selected = selectedNro === item.nro;
+                return (
                 <li key={item.nro}>
                   <button
                     type="button"
+                    aria-pressed={selected}
                     onClick={() => {
                       setSelectedNro(item.nro);
                       setDescripcion(item.descripcion);
                     }}
-                    className={cn(
-                      toolsListItemClass,
-                      "w-full text-left",
-                      selectedNro === item.nro &&
-                        "border-accent/35 bg-accent/[0.04]",
-                    )}
+                    className={toolsSelectableListItemClass(selected)}
                   >
                     <span className="font-medium text-card-foreground">
                       #{item.nro}
@@ -103,7 +101,8 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
                     <span className="text-muted">— {item.descripcion}</span>
                   </button>
                 </li>
-              ))}
+              );
+              })}
             </ul>
           ) : (
             <p className="text-sm text-muted">

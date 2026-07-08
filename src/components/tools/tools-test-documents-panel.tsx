@@ -74,13 +74,12 @@ export function ToolsTestDocumentsPanel({ printer }: { printer: ToolsPrinter }) 
         title="Documentos de prueba"
         description="Genera documentos fiscales de prueba en la impresora física. Las notas de crédito y débito requieren serial fiscal registrado."
       >
-        <ToolsPanelActions>
+        <ToolsPanelActions hint="Cada botón envía un comando a la impresora.">
           {TEST_ACTIONS.map(([action, label]) => (
             <ToolsActionButton
               key={action}
               loading={loading === action}
               disabled={loading != null}
-              variant={action === "invoice" ? "primary" : "default"}
               onClick={() => void run(action)}
             >
               {label}

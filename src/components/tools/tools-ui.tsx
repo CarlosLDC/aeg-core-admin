@@ -3,36 +3,49 @@
 import Link from "next/link";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
-import {
-  TOGGLE_BUTTON_DISABLED,
-  TOGGLE_BUTTON_PRIMARY_ACTIVE,
-} from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 export const toolsPanelSectionClass =
   "rounded-xl border border-border bg-card p-5 shadow-sm";
 
-export const toolsActionButtonClass = cn(
+const toolsActionButtonDisabledClass =
+  "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100";
+
+/** Base for MQTT action controls — solid/outline buttons, not filter toggles. */
+const toolsActionButtonBaseClass = cn(
   pageToolbarButtonClass,
-  "border border-border bg-card text-card-foreground hover:bg-foreground/[0.03]",
-  TOGGLE_BUTTON_DISABLED,
+  "border shadow-sm transition-[color,background-color,box-shadow,transform] active:scale-[0.98]",
+  toolsActionButtonDisabledClass,
+);
+
+export const toolsActionButtonClass = cn(
+  toolsActionButtonBaseClass,
+  "border-border bg-card text-card-foreground hover:bg-foreground/[0.04]",
 );
 
 export const toolsPrimaryButtonClass = cn(
-  pageToolbarButtonClass,
-  "border",
-  TOGGLE_BUTTON_PRIMARY_ACTIVE,
-  "hover:bg-accent/15",
-  TOGGLE_BUTTON_DISABLED,
+  toolsActionButtonBaseClass,
+  "border-transparent bg-accent text-accent-foreground hover:bg-accent/90",
 );
 
 export const toolsDangerButtonClass = cn(
-  toolsActionButtonClass,
-  "border-rose-500/35 text-rose-700 hover:bg-rose-500/10 dark:text-rose-300",
+  toolsActionButtonBaseClass,
+  "border-transparent bg-rose-600 text-white hover:bg-rose-700",
 );
 
 export const toolsListItemClass =
-  "rounded-lg border border-border px-3 py-2 transition-colors hover:bg-foreground/[0.03]";
+  "rounded-lg border border-border bg-background px-3 py-2 transition-colors hover:border-border/80 hover:bg-foreground/[0.03]";
+
+/** List rows that represent a persistent selection (not one-shot actions). */
+export function toolsSelectableListItemClass(selected: boolean): string {
+  return cn(
+    toolsListItemClass,
+    "w-full text-left",
+    selected
+      ? "border-accent/50 bg-accent/[0.06] ring-1 ring-accent/20"
+      : "hover:border-border",
+  );
+}
 
 type ToolsPanelSectionProps = {
   title: string;
@@ -68,12 +81,19 @@ export function ToolsPanelSection({
 export function ToolsPanelActions({
   children,
   className,
+  hint,
 }: {
   children: React.ReactNode;
   className?: string;
+  hint?: string;
 }) {
   return (
-    <div className={cn("flex flex-wrap gap-2", className)}>{children}</div>
+    <div className={cn("space-y-2", className)}>
+      {hint ? (
+        <p className="text-xs text-muted">{hint}</p>
+      ) : null}
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
   );
 }
 
