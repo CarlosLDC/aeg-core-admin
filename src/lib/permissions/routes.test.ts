@@ -3,6 +3,7 @@ import { canAccessRoute, defaultPathForRole, resourceForPath } from "@/lib/permi
 import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
 import { can } from "@/lib/permissions/can";
 import type { Role } from "@/types/user";
+import { ROLES } from "@/types/user";
 
 describe("route permissions", () => {
   it("maps /settings to dashboard read for ADMIN", () => {
@@ -25,11 +26,11 @@ describe("route permissions", () => {
     expect(roles.filter((r) => canAccessRoute(r, "/remoto"))).toEqual(["ADMIN"]);
   });
 
-  it("allows ADMIN and DISTRIBUTOR on /tools", () => {
+  it("allows every role on /tools", () => {
     expect(resourceForPath("/tools")).toBe("tools");
-    expect(canAccessRoute("ADMIN", "/tools")).toBe(true);
-    expect(canAccessRoute("DISTRIBUTOR", "/tools")).toBe(true);
-    expect(canAccessRoute("TECHNICIAN", "/tools")).toBe(false);
+    for (const role of ROLES) {
+      expect(canAccessRoute(role, "/tools")).toBe(true);
+    }
   });
 
   it("allows ADMIN on enajenación Remoto docs", () => {

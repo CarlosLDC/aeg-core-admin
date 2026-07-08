@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ROLES } from "@/types/user";
 import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
 import {
   activeNavHref,
@@ -54,19 +55,19 @@ describe("navSectionsForRole", () => {
     );
   });
 
-  it("shows Tools for ADMIN and DISTRIBUTOR", () => {
-    expect(navItemsForRole("ADMIN").some((i) => i.href === "/tools")).toBe(true);
-    expect(navItemsForRole("DISTRIBUTOR").some((i) => i.href === "/tools")).toBe(
-      true,
-    );
-    expect(navItemsForRole("TECHNICIAN").some((i) => i.href === "/tools")).toBe(
-      false,
-    );
+  it("shows Tools for every role", () => {
+    for (const role of ROLES) {
+      expect(navItemsForRole(role).some((i) => i.href === "/tools")).toBe(true);
+    }
   });
 
-  it("hides panel navigation from service center technicians", () => {
-    expect(navItemsForRole("TECHNICIAN")).toEqual([]);
-    expect(navItemsForRole("SERVICE_CENTER")).toEqual([]);
+  it("hides panel navigation from service center technicians except Tools", () => {
+    expect(navItemsForRole("TECHNICIAN")).toEqual([
+      expect.objectContaining({ href: "/tools" }),
+    ]);
+    expect(navItemsForRole("SERVICE_CENTER")).toEqual([
+      expect.objectContaining({ href: "/tools" }),
+    ]);
   });
 });
 

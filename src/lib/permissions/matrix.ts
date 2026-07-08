@@ -1,5 +1,5 @@
 import type { Action, PermissionMatrix, Resource } from "@/lib/permissions/types";
-import type { Role } from "@/types/user";
+import { ROLES, type Role } from "@/types/user";
 
 const ADMIN_ONLY = ["ADMIN"] as const;
 const DISTRIBUTOR_PANEL = ["ADMIN", "DISTRIBUTOR"] as const;
@@ -76,7 +76,7 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     update: ADMIN_ONLY,
   },
   tools: {
-    read: DISTRIBUTOR_PANEL,
+    read: ROLES,
   },
   remoto: {
     read: ADMIN_ONLY,
