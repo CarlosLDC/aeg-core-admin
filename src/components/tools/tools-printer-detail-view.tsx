@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Loader2, Wifi } from "lucide-react";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { ToolsPrinterStatusBar } from "@/components/tools/tools-printer-status-bar";
+import { ToolsReprintPanel } from "@/components/tools/tools-reprint-panel";
 import { useToolsPrinters } from "@/modules/tools/printers/use-tools-printers";
 import {
   toolsListPath,
@@ -42,8 +44,8 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
 
   if (loading && !printer) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="size-6 animate-spin text-muted" />
+      <div className="flex items-center justify-center py-16 text-muted">
+        Cargando impresora…
       </div>
     );
   }
@@ -97,19 +99,20 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
           <p>
             Esta impresora no tiene dirección MAC registrada. Las operaciones MQTT
-            estarán disponibles cuando exista MAC en el catálogo.
+            requieren MAC en el catálogo.
           </p>
         </div>
       )}
 
+      <ToolsPrinterStatusBar
+        printerId={printer.id}
+        macAddress={printer.macAddress}
+      />
+
       <section className="rounded-xl border bg-card p-4">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
-          Estado operativo
+          Resumen
         </h3>
-        <p className="mt-2 text-sm text-foreground">
-          La conexión MQTT en tiempo real se habilitará en la siguiente fase de
-          migración.
-        </p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <p className="text-xs text-muted">Estado</p>
@@ -124,8 +127,8 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
             <p className="font-medium">{printer.firmware}</p>
           </div>
           <div>
-            <p className="text-xs text-muted">Reporte X</p>
-            <p className="font-medium">{String(printer.reporteX)}</p>
+            <p className="text-xs text-muted">Ubicación</p>
+            <p className="font-medium">{printer.ubicacion}</p>
           </div>
         </div>
       </section>
@@ -159,7 +162,7 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           <OptionLink
             title="Configurar WiFi"
-            description="Acceder al flujo de configuración WiFi."
+            description="Escanear redes y conectar la impresora."
             href={toolsPrinterWifiPath(printer.serial)}
           />
           <OptionLink
@@ -175,16 +178,7 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
         </div>
       </section>
 
-      <section className="rounded-xl border border-dashed bg-background/60 p-4">
-        <div className="flex items-center gap-2 text-sm font-medium text-muted">
-          <Wifi className="size-4" aria-hidden />
-          Próximamente vía MQTT
-        </div>
-        <p className="mt-2 text-sm text-muted">
-          Reporte X, reimpresión de documentos, encabezado/pie y documentos de
-          prueba se activarán cuando se porte el proxy MQTT en la fase 2.
-        </p>
-      </section>
+      {printer.macAddress ? <ToolsReprintPanel printer={printer} /> : null}
     </div>
   );
 }

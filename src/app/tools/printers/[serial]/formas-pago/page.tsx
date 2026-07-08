@@ -1,19 +1,23 @@
+"use client";
+
 import { AdminShell } from "@/components/admin/admin-shell";
 import { RoleGuard } from "@/components/auth/role-guard";
-import { ToolsMigrationPlaceholder } from "@/components/tools/tools-migration-placeholder";
+import { ToolsPrinterSubPage } from "@/components/tools/tools-printer-sub-page";
+import { ToolsFormasPagoPanel } from "@/components/tools/tools-formas-pago-panel";
 
 export default function ToolsPrinterFormasPagoPage() {
   return (
     <AdminShell
       title="AEG Tools"
-      description="Formas de pago dentro del espacio de migración de Tools."
+      description="Formas de pago de la impresora fiscal."
     >
       <RoleGuard path="/tools">
-        <ToolsMigrationPlaceholder
+        <ToolsPrinterSubPage
           title="Formas de pago"
-          message="Esta ruta hospedará el panel de formas de pago y su integración MQTT cuando se dé estructura al módulo."
-          moduleIds={["tools-formas-pago", "tools-mqtt-core"]}
-        />
+          description="Consultar y editar medios de pago"
+        >
+          {(printer) => <ToolsFormasPagoPanel printer={printer} />}
+        </ToolsPrinterSubPage>
       </RoleGuard>
     </AdminShell>
   );

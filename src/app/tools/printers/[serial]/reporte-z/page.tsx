@@ -1,19 +1,23 @@
+"use client";
+
 import { AdminShell } from "@/components/admin/admin-shell";
 import { RoleGuard } from "@/components/auth/role-guard";
-import { ToolsMigrationPlaceholder } from "@/components/tools/tools-migration-placeholder";
+import { ToolsPrinterSubPage } from "@/components/tools/tools-printer-sub-page";
+import { ToolsReporteZPanel } from "@/components/tools/tools-reporte-z-panel";
 
 export default function ToolsPrinterReporteZPage() {
   return (
     <AdminShell
       title="AEG Tools"
-      description="Reporte Z dentro del espacio de migración de Tools."
+      description="Reportes Z y transmisión SENIAT."
     >
       <RoleGuard path="/tools">
-        <ToolsMigrationPlaceholder
+        <ToolsPrinterSubPage
           title="Reporte Z"
-          message="Esta ruta reservará el flujo para consultar, transmitir y visualizar Reportes Z cuando se migre la capa MQTT."
-          moduleIds={["tools-reporte-z", "tools-mqtt-core"]}
-        />
+          description="Generar, consultar y transmitir reportes Z"
+        >
+          {(printer) => <ToolsReporteZPanel printer={printer} />}
+        </ToolsPrinterSubPage>
       </RoleGuard>
     </AdminShell>
   );

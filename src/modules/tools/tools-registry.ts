@@ -118,7 +118,7 @@ export const TOOLS_MODULES: ToolsModule[] = [
     dependsOn: ["tools-printers-dashboard", "tools-mqtt-core", "tools-shared-escpos"],
     priority: "high",
     notes:
-      "Shell funcional en tools-printer-detail-view; operaciones MQTT deshabilitadas hasta fase 2.",
+      "Detalle con status bar MQTT, reimpresión y subrutas operativas.",
   },
   {
     id: "tools-mqtt-core",
@@ -130,11 +130,11 @@ export const TOOLS_MODULES: ToolsModule[] = [
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\mqtt",
     route: null,
-    status: "skeleton",
+    status: "migrated",
     dependsOn: ["tools-auth"],
     priority: "foundation",
     notes:
-      "Tipos en mqtt/types.ts; gap publish→respuesta documentado en mqtt/README.md. Broker en fase 2.",
+      "Proxy en aeg-core /api/mqtt/tools/*; cliente admin en tools-mqtt-api.ts.",
   },
   {
     id: "tools-reprint",
@@ -146,9 +146,10 @@ export const TOOLS_MODULES: ToolsModule[] = [
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\reprint",
     route: "/tools/printers/[serial]",
-    status: "skeleton",
+    status: "migrated",
     dependsOn: ["tools-mqtt-core", "tools-shared-escpos", "tools-printer-detail"],
     priority: "high",
+    notes: "tools-reprint-panel.tsx en detalle de impresora.",
   },
   {
     id: "tools-reporte-z",
@@ -160,9 +161,10 @@ export const TOOLS_MODULES: ToolsModule[] = [
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\reporte-z",
     route: "/tools/printers/[serial]/reporte-z",
-    status: "skeleton",
+    status: "migrated",
     dependsOn: ["tools-mqtt-core", "tools-printer-detail"],
     priority: "high",
+    notes: "tools-reporte-z-panel.tsx",
   },
   {
     id: "tools-report-x",
@@ -174,9 +176,10 @@ export const TOOLS_MODULES: ToolsModule[] = [
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\report-x",
     route: "/tools/printers/[serial]",
-    status: "planned",
+    status: "migrated",
     dependsOn: ["tools-mqtt-core", "tools-printer-detail"],
     priority: "medium",
+    notes: "Integrado en tools-reprint-panel.",
   },
   {
     id: "tools-wifi",
@@ -188,9 +191,10 @@ export const TOOLS_MODULES: ToolsModule[] = [
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\wifi",
     route: "/tools/printers/[serial]/wifi",
-    status: "skeleton",
+    status: "migrated",
     dependsOn: ["tools-mqtt-core", "tools-printer-detail"],
     priority: "high",
+    notes: "tools-wifi-panel.tsx",
   },
   {
     id: "tools-formas-pago",
@@ -202,9 +206,10 @@ export const TOOLS_MODULES: ToolsModule[] = [
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\formas-pago",
     route: "/tools/printers/[serial]/formas-pago",
-    status: "skeleton",
+    status: "migrated",
     dependsOn: ["tools-mqtt-core", "tools-printer-detail"],
     priority: "high",
+    notes: "tools-formas-pago-panel.tsx",
   },
   {
     id: "tools-header-footer",
@@ -216,9 +221,10 @@ export const TOOLS_MODULES: ToolsModule[] = [
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\header-footer",
     route: "/tools/printers/[serial]",
-    status: "planned",
+    status: "migrated",
     dependsOn: ["tools-mqtt-core", "tools-printer-detail"],
     priority: "medium",
+    notes: "Header/footer en tools-reprint-panel.",
   },
   {
     id: "tools-pdf",

@@ -1,6 +1,9 @@
+"use client";
+
 import { AdminShell } from "@/components/admin/admin-shell";
 import { RoleGuard } from "@/components/auth/role-guard";
-import { ToolsMigrationPlaceholder } from "@/components/tools/tools-migration-placeholder";
+import { ToolsPrinterSubPage } from "@/components/tools/tools-printer-sub-page";
+import { ToolsWifiPanel } from "@/components/tools/tools-wifi-panel";
 
 export default function ToolsPrinterWifiPage() {
   return (
@@ -9,11 +12,12 @@ export default function ToolsPrinterWifiPage() {
       description="Configuración WiFi de impresoras dentro del espacio Tools."
     >
       <RoleGuard path="/tools">
-        <ToolsMigrationPlaceholder
+        <ToolsPrinterSubPage
           title="Configuración WiFi"
-          message="Esta ruta alojará la configuración WiFi y sus comandos MQTT cuando se porte la estructura funcional."
-          moduleIds={["tools-wifi", "tools-mqtt-core"]}
-        />
+          description="Escanear redes y conectar la impresora"
+        >
+          {(printer) => <ToolsWifiPanel printer={printer} />}
+        </ToolsPrinterSubPage>
       </RoleGuard>
     </AdminShell>
   );

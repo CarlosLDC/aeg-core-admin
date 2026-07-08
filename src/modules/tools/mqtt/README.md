@@ -1,41 +1,43 @@
-# Tools MQTT core (fase 2)
+# Tools MQTT core
 
-Infraestructura MQTT para operaciones de campo. En **fase 1** solo existen tipos TypeScript (`types.ts`); no hay broker ni rutas API activas.
+Operaciones MQTT de campo expuestas por **aeg-core** en `/api/mqtt/tools/*`. El admin consume estas rutas vía [`src/lib/tools-mqtt-api.ts`](../../../lib/tools-mqtt-api.ts) con JWT.
 
-## Origen a portar
+## Roles
 
-- `aeg-tools/aeg-tools-next/lib/mqtt/*`
-- `aeg-tools/aeg-tools-next/app/api/mqtt/*`
-- Referencia Electron: `shared/modules/mqttStatus.js`, `*Mqtt.js`
+`ADMIN`, `DISTRIBUTOR`, `TECHNICIAN`, `SERVICE_CENTER` — configurado en `SecurityConfig` (`TOOLS_MQTT_ROLES`).
 
-## Gap principal (fase 2)
+Cada endpoint valida `printerId` + `SecurityScopeService.assertPrinterInScope`.
 
-`aeg-tools-next` publica comandos MQTT pero **no correlaciona** la respuesta del broker (`dataS`) con la petición original. La fase 2 debe implementar:
+## Endpoints
 
-1. Proxy server-side bajo `/api/tools/mqtt/*` (sin exponer credenciales al cliente).
-2. Correlación publish → respuesta (request id / timeout / cola de eventos).
-3. `PrinterStatusBar` real en el detalle de impresora.
-4. Paneles wifi, reporte-z, reimpresión y formas de pago con datos del broker.
-
-## Auth
-
-Reutilizar la sesión JWT del admin. **No** se usa `AEG_API_KEY` ni login Tools separado.
-
-## Variables de entorno (fase 2)
-
-Documentar en despliegue; no commitear secretos:
-
-| Variable | Default | Uso |
+| Método | Ruta | Descripción |
 |---|---|---|
-| `MQTT_BROKER_URL` | `mqtt://13.51.138.105` | URL del broker |
+| POST | `/status` | Estado SENIAT / IP / WiFi |
+| POST | `/wifi/scan` | Escaneo GetAccPoi |
+| POST | `/wifi/connect` | Conexión wifiConf |
+| POST | `/wifi/reset` | resetMF |
+| POST | `/reports-z/list` | Último reporte Z |
+| POST | `/reports-z/generate` | Generar RepZ |
+| POST | `/reports-z/get` | Reporte Z por número |
+| POST | `/reports-z/transmit` | UltZTxSeni |
+| POST | `/report-x` | impRepX |
+| POST | `/formas-pago/read` | MediosPagos |
+| POST | `/formas-pago/write` | descFP |
+| POST | `/header/read` | staEncFij |
+| POST | `/header/write` | wFileSPIFF |
+| POST | `/footer/read` | staPieFij |
+| POST | `/footer/write` | pieTiF |
+| POST | `/reprint` | reimRep (visualize / reprint) |
 
-## Dependencias nuevas (fase 2)
+## Correlación
 
-- `mqtt` — cliente broker en el proxy server-side
-- `pdfkit` — generación PDF en flujos de reimpresión (cuando se active)
+Backend: `ToolsMqttService` + `FiscalMqttSyncResponseAwaiter` (modos matcher y text-chunks para StaInf y reimpresión).
 
-## Estado actual
+## Timeouts (configurables)
 
-- `src/modules/tools/mqtt/types.ts` — interfaces portadas desde `aeg-tools-next/types/mqtt.ts`
-- Subrutas `/tools/printers/[serial]/wifi`, `reporte-z`, `formas-pago` — placeholder navegable desde el detalle
-- Operaciones en detalle (Report X, reimpresión, header/footer) — deshabilitadas con mensaje "Próximamente"
+`app.mqtt.tools.timeout.*` en application properties (defaults: status 15s, wifi 30s, report-z 20s, reprint 60s).
+
+## Cliente admin
+
+- Hook: `useToolsMqtt`
+- UI: `ToolsPrinterStatusBar`, paneles wifi / reporte-z / formas-pago / reimpresión
