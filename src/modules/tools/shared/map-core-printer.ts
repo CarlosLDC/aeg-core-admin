@@ -8,7 +8,7 @@ import type {
   ToolsPrinterClientSummary,
 } from "@/modules/tools/shared/types";
 import { printerModelLabel } from "@/lib/printer-form";
-import { printerStatusLabel } from "@/lib/printer-status";
+import { printerStatusLabel, normalizePrinterStatus } from "@/lib/printer-status";
 import type { ClientResponse } from "@/types/branch-role";
 import type { PrinterModelResponse } from "@/types/printer-model";
 import type { PrinterResponse } from "@/types/printer";
@@ -70,6 +70,7 @@ export function mapCorePrinterToTools(options: {
     modelo,
     marca,
     estado,
+    status: normalizePrinterStatus(printer.status),
     firmware: printer.versionFirmware?.trim() || "N/A",
     ubicacion,
     rifCliente: client?.companyRif?.trim() || "",

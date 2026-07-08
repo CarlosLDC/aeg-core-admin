@@ -1,3 +1,5 @@
+import type { PrinterStatus } from "@/types/printer";
+
 export type ToolsPrinterClientSummary = {
   name: string;
   phone: string;
@@ -11,6 +13,7 @@ export type ToolsPrinter = {
   modelo: string;
   marca: string;
   estado: string;
+  status: PrinterStatus;
   firmware: string;
   ubicacion: string;
   rifCliente: string;

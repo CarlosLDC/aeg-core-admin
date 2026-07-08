@@ -6,13 +6,14 @@ export type {
   ToolsPrinterLocationSource,
 } from "./shared/types";
 
-export type { PrinterStatusCounts } from "./shared/formatters";
+export type { PrinterStatusCounts, ToolsStatusBucket } from "./shared/formatters";
 
 export {
   filterPrinters,
   extractLocation,
   adaptStatusTerminology,
   countPrintersByStatus,
+  filterToolsPrintersByStatus,
   formatDate,
 } from "./shared/formatters";
 

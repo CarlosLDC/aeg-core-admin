@@ -65,6 +65,7 @@ describe("mapCorePrinterToTools", () => {
     expect(mapped.marca).toBe("MarcaX");
     expect(mapped.modelo).toBe("MX-100");
     expect(mapped.estado).toBe("Enajenada");
+    expect(mapped.status).toBe("enajenada");
     expect(mapped.rifCliente).toBe("J-12345678-9");
     expect(mapped.ubicacion).toBe("Distrito Capital");
     expect(mapped.clientSummary?.email).toBe("demo@example.com");

@@ -3,6 +3,7 @@ import {
   adaptStatusTerminology,
   countPrintersByStatus,
   filterPrinters,
+  filterToolsPrintersByStatus,
   toolsRoleTerminologyKey,
 } from "@/modules/tools/shared/formatters";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
@@ -14,6 +15,7 @@ const samplePrinter = (overrides: Partial<ToolsPrinter> = {}): ToolsPrinter => (
   modelo: "X1",
   marca: "Brand",
   estado: "Enajenada",
+  status: "enajenada",
   firmware: "1.0.0",
   ubicacion: "Caracas",
   rifCliente: "J-123",
@@ -58,5 +60,17 @@ describe("tools formatters", () => {
       enConsignacion: 1,
       noEnajenadas: 1,
     });
+  });
+
+  it("filters printers by status bucket", () => {
+    const printers = [
+      samplePrinter({ status: "enajenada" }),
+      samplePrinter({ id: 2, status: "asignada", estado: "Asignada" }),
+      samplePrinter({ id: 3, status: "sin_asignar", estado: "Sin asignar" }),
+    ];
+
+    expect(filterToolsPrintersByStatus(printers, "enajenada")).toHaveLength(1);
+    expect(filterToolsPrintersByStatus(printers, "no_enajenada")).toHaveLength(1);
+    expect(filterToolsPrintersByStatus(printers, "sin_asignar")).toHaveLength(1);
   });
 });
