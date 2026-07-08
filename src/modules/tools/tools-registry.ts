@@ -149,7 +149,7 @@ export const TOOLS_MODULES: ToolsModule[] = [
     status: "migrated",
     dependsOn: ["tools-mqtt-core", "tools-shared-escpos", "tools-printer-detail"],
     priority: "high",
-    notes: "tools-reprint-panel.tsx en detalle de impresora.",
+    notes: "tools-reprint-panel.tsx en detalle de impresora; soporta NF/RX además de FAC/NC/ND.",
   },
   {
     id: "tools-reporte-z",
@@ -267,9 +267,10 @@ export const TOOLS_MODULES: ToolsModule[] = [
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\reprint",
     route: "/tools/printers/[serial]",
-    status: "planned",
+    status: "migrated",
     dependsOn: ["tools-mqtt-core", "tools-reprint"],
     priority: "medium",
+    notes: "tools-test-documents-panel.tsx en detalle de impresora.",
   },
   {
     id: "tools-theme",

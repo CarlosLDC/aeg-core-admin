@@ -20,24 +20,28 @@ Cada endpoint valida `printerId` + `SecurityScopeService.assertPrinterInScope`.
 | POST | `/reports-z/generate` | Generar RepZ |
 | POST | `/reports-z/get` | Reporte Z por número |
 | POST | `/reports-z/transmit` | UltZTxSeni |
-| POST | `/report-x` | impRepX |
+| POST | `/report-x` | impRepX (generar en impresora) |
 | POST | `/formas-pago/read` | MediosPagos |
 | POST | `/formas-pago/write` | descFP |
 | POST | `/header/read` | staEncFij |
 | POST | `/header/write` | wFileSPIFF |
 | POST | `/footer/read` | staPieFij |
 | POST | `/footer/write` | pieTiF |
-| POST | `/reprint` | reimRep (visualize / reprint) |
+| POST | `/reprint` | reimRep (visualize / reprint; tipos FAC/NC/ND/NF/RX) |
+| POST | `/test-documents/invoice` | Factura de prueba (secuencia proF/endFac) |
+| POST | `/test-documents/credit-note` | NC de prueba (requiere serial fiscal) |
+| POST | `/test-documents/debit-note` | ND de prueba (requiere serial fiscal) |
+| POST | `/test-documents/generate-z` | genImpRepZ (distinto de RepZ operacional) |
 
 ## Correlación
 
-Backend: `ToolsMqttService` + `FiscalMqttSyncResponseAwaiter` (modos matcher y text-chunks para StaInf y reimpresión).
+Backend: `ToolsMqttService` + `ToolsTestDocumentsService` + `FiscalMqttSyncResponseAwaiter` (modos matcher y text-chunks para StaInf y reimpresión).
 
 ## Timeouts (configurables)
 
-`app.mqtt.tools.timeout.*` en application properties (defaults: status 15s, wifi 30s, report-z 20s, reprint 60s).
+`app.mqtt.tools.timeout.*` en application properties (defaults: status 15s, wifi 30s, report-z 20s, reprint 60s, test-invoice 5s, test-note 6s, test-generate-z 5s).
 
 ## Cliente admin
 
 - Hook: `useToolsMqtt`
-- UI: `ToolsPrinterStatusBar`, paneles wifi / reporte-z / formas-pago / reimpresión
+- UI: `ToolsPrinterStatusBar`, paneles wifi / reporte-z / formas-pago / reimpresión / documentos de prueba

@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { ToolsPrinterStatusBar } from "@/components/tools/tools-printer-status-bar";
 import { ToolsReprintPanel } from "@/components/tools/tools-reprint-panel";
+import { ToolsTestDocumentsPanel } from "@/components/tools/tools-test-documents-panel";
 import { useToolsPrinters } from "@/modules/tools/printers/use-tools-printers";
 import {
   toolsListPath,
@@ -178,7 +179,12 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
         </div>
       </section>
 
-      {printer.macAddress ? <ToolsReprintPanel printer={printer} /> : null}
+      {printer.macAddress ? (
+        <>
+          <ToolsTestDocumentsPanel printer={printer} />
+          <ToolsReprintPanel printer={printer} />
+        </>
+      ) : null}
     </div>
   );
 }

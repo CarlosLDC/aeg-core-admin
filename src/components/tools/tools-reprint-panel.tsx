@@ -109,6 +109,8 @@ export function ToolsReprintPanel({ printer }: ToolsReprintPanelProps) {
               <option value="FAC">Factura</option>
               <option value="NC">Nota de crédito</option>
               <option value="ND">Nota de débito</option>
+              <option value="NF">No fiscal (NF)</option>
+              <option value="RX">Reporte X (RX)</option>
             </select>
           </label>
           <label className="block text-sm sm:col-span-2">
@@ -147,7 +149,7 @@ export function ToolsReprintPanel({ printer }: ToolsReprintPanelProps) {
             className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-foreground/[0.03] disabled:opacity-50"
           >
             {loading === "report-x" ? <Loader2 className="size-4 animate-spin" /> : null}
-            Reporte X
+            Generar reporte X
           </button>
         </div>
       </section>

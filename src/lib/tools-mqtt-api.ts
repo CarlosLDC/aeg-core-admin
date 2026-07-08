@@ -277,6 +277,50 @@ export async function reprintToolsDocument(
   return data;
 }
 
+export async function sendToolsTestInvoice(
+  printerId: number,
+): Promise<ToolsMqttSimpleResponse> {
+  const { data, status } = await toolsMqttFetch<ToolsMqttSimpleResponse>(
+    `${BASE}/test-documents/invoice`,
+    { method: "POST", body: printerBody(printerId) },
+  );
+  ensureSuccess(status, data, "No se pudo generar la factura de prueba.");
+  return data;
+}
+
+export async function sendToolsTestCreditNote(
+  printerId: number,
+): Promise<ToolsMqttSimpleResponse> {
+  const { data, status } = await toolsMqttFetch<ToolsMqttSimpleResponse>(
+    `${BASE}/test-documents/credit-note`,
+    { method: "POST", body: printerBody(printerId) },
+  );
+  ensureSuccess(status, data, "No se pudo generar la nota de crédito de prueba.");
+  return data;
+}
+
+export async function sendToolsTestDebitNote(
+  printerId: number,
+): Promise<ToolsMqttSimpleResponse> {
+  const { data, status } = await toolsMqttFetch<ToolsMqttSimpleResponse>(
+    `${BASE}/test-documents/debit-note`,
+    { method: "POST", body: printerBody(printerId) },
+  );
+  ensureSuccess(status, data, "No se pudo generar la nota de débito de prueba.");
+  return data;
+}
+
+export async function sendToolsTestGenerateZ(
+  printerId: number,
+): Promise<ToolsMqttSimpleResponse> {
+  const { data, status } = await toolsMqttFetch<ToolsMqttSimpleResponse>(
+    `${BASE}/test-documents/generate-z`,
+    { method: "POST", body: printerBody(printerId) },
+  );
+  ensureSuccess(status, data, "No se pudo generar el reporte Z de prueba.");
+  return data;
+}
+
 export function getToolsMqttErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     return error.message;
