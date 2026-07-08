@@ -13,6 +13,7 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   contracts: "contratos",
   users: "usuarios",
   clientTransfers: "transferir cliente",
+  tools: "AEG Tools",
   remoto: "pruebas Remoto",
   seniatExtract: "extracción SENIAT",
   uploads: "documentos adjuntos",

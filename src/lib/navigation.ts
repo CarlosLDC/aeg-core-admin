@@ -114,8 +114,7 @@ export const navSections: NavSection[] = [
         title: "Tools",
         href: "/tools",
         icon: Boxes,
-        roles: ["DISTRIBUTOR"],
-        disabled: true,
+        roles: ["ADMIN", "DISTRIBUTOR"],
       },
       {
         title: "Descargas",

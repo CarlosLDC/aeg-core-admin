@@ -6,9 +6,7 @@ import {
 } from "@/lib/printer-enajenacion-ticket";
 import type { PrinterResponse } from "@/types/printer";
 
-function printer(
-  partial: Partial<PrinterResponse> & Pick<PrinterResponse, "status">,
-): PrinterResponse {
+function printer(partial: Partial<PrinterResponse>): PrinterResponse {
   return {
     id: 1,
     modelId: 1,
@@ -18,6 +16,8 @@ function printer(
     finalSalePrice: null,
     createdAt: "2026-01-01T00:00:00Z",
     distributorId: 1,
+    creationBatchId: null,
+    status: "sin_asignar",
     paid: true,
     installationDate: null,
     versionFirmware: null,

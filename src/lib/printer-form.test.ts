@@ -16,12 +16,15 @@ const assignedPrinter: PrinterResponse = {
   fiscalSerial: "ABC1234567",
   finalSalePrice: null,
   createdAt: "2026-01-01T00:00:00.000Z",
+  creationBatchId: null,
   status: "asignada",
   paid: false,
   installationDate: "2026-02-01T12:00:00.000Z",
   versionFirmware: "1.0.0",
   macAddress: "AA:BB:CC:DD:EE:FF",
   deviceType: "interno",
+  header: null,
+  trailer: null,
 };
 
 describe("printerToAssignmentRequest", () => {

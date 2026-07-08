@@ -119,6 +119,8 @@ describe("distributor-scope", () => {
         versionFirmware: "",
         macAddress: "",
         deviceType: "interno",
+        header: null,
+        trailer: null,
       },
     ];
     expect(filterPrinterModelsForDistributor(models, printers).map((m) => m.id)).toEqual([

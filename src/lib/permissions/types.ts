@@ -22,6 +22,7 @@ export const RESOURCES = [
   "contracts",
   "users",
   "clientTransfers",
+  "tools",
   "remoto",
   "seniatExtract",
   "uploads",

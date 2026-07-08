@@ -65,7 +65,7 @@ describe("enajenacion-ticket", () => {
 
   it("extracts header and trailer from invoice draft", () => {
     const invoice: VenezuelanFiscalInvoiceData = {
-      encoding: "ISO-8859-2",
+      encoding: "iso-8859-2",
       encabezado: {
         lineas: [
           "SENIAT",
@@ -108,7 +108,7 @@ describe("enajenacion-ticket", () => {
 
   it("applies saved trailer without overwriting client address from printer header", () => {
     const invoice: VenezuelanFiscalInvoiceData = {
-      encoding: "ISO-8859-2",
+      encoding: "iso-8859-2",
       encabezado: {
         lineas: [
           "SENIAT",

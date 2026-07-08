@@ -25,6 +25,13 @@ describe("route permissions", () => {
     expect(roles.filter((r) => canAccessRoute(r, "/remoto"))).toEqual(["ADMIN"]);
   });
 
+  it("allows ADMIN and DISTRIBUTOR on /tools", () => {
+    expect(resourceForPath("/tools")).toBe("tools");
+    expect(canAccessRoute("ADMIN", "/tools")).toBe(true);
+    expect(canAccessRoute("DISTRIBUTOR", "/tools")).toBe(true);
+    expect(canAccessRoute("TECHNICIAN", "/tools")).toBe(false);
+  });
+
   it("allows ADMIN on enajenación Remoto docs", () => {
     expect(canAccessRoute("ADMIN", "/docs/enajenacion-remoto")).toBe(true);
     expect(resourceForPath("/docs/enajenacion-remoto")).toBe("remoto");

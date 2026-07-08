@@ -54,6 +54,16 @@ describe("navSectionsForRole", () => {
     );
   });
 
+  it("shows Tools for ADMIN and DISTRIBUTOR", () => {
+    expect(navItemsForRole("ADMIN").some((i) => i.href === "/tools")).toBe(true);
+    expect(navItemsForRole("DISTRIBUTOR").some((i) => i.href === "/tools")).toBe(
+      true,
+    );
+    expect(navItemsForRole("TECHNICIAN").some((i) => i.href === "/tools")).toBe(
+      false,
+    );
+  });
+
   it("hides panel navigation from service center technicians", () => {
     expect(navItemsForRole("TECHNICIAN")).toEqual([]);
     expect(navItemsForRole("SERVICE_CENTER")).toEqual([]);
@@ -80,6 +90,10 @@ describe("activeNavHref", () => {
 
   it("highlights printer detail under /printers", () => {
     expect(activeNavHref("/printers/abc-123", adminItems)).toBe("/printers");
+  });
+
+  it("highlights nested Tools routes under /tools", () => {
+    expect(activeNavHref("/tools/printers/ABC1234567", adminItems)).toBe("/tools");
   });
 
   it("does not treat /printer-models as /printers", () => {

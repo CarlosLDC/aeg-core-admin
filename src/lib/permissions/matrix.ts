@@ -75,6 +75,9 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     read: ADMIN_ONLY,
     update: ADMIN_ONLY,
   },
+  tools: {
+    read: DISTRIBUTOR_PANEL,
+  },
   remoto: {
     read: ADMIN_ONLY,
     create: ADMIN_ONLY,
