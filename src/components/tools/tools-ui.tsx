@@ -94,7 +94,8 @@ export function ToolsSectionGrid({
   return (
     <div
       className={cn(
-        "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3",
+        "grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3",
+        "[&>*]:h-full",
         className,
       )}
     >
@@ -205,7 +206,7 @@ export function ToolsNavCard({
     <Link
       href={href}
       className={cn(
-        "group flex h-full flex-col rounded-xl border border-border bg-card p-4 shadow-sm transition-colors",
+        "group flex h-full min-h-[10.25rem] flex-col rounded-xl border border-border bg-card p-4 shadow-sm transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
         toolsToneHoverBorderClass[tone],
       )}
@@ -217,9 +218,11 @@ export function ToolsNavCard({
           aria-hidden
         />
       </div>
-      <div className="mt-4 min-w-0 flex-1">
+      <div className="mt-4 flex min-h-0 flex-1 flex-col">
         <p className="font-medium text-card-foreground">{title}</p>
-        <p className="mt-1 text-sm leading-snug text-muted">{description}</p>
+        <p className="mt-1 line-clamp-2 min-h-[2.5rem] flex-1 text-sm leading-snug text-muted">
+          {description}
+        </p>
       </div>
     </Link>
   );

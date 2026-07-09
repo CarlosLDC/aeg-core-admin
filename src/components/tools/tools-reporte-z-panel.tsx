@@ -127,7 +127,6 @@ export function ToolsReporteZPanel({ printer }: { printer: ToolsPrinter }) {
             {REPORT_ACTIONS.map(([action, label, Icon]) => (
               <ToolsActionButton
                 key={action}
-                variant={action === "generate" ? "primary" : "default"}
                 loading={loading === action}
                 disabled={loading != null}
                 onClick={() => void run(action)}

@@ -120,7 +120,6 @@ export function ToolsReprintPanel({ printer }: ToolsReprintPanelProps) {
               Visualizar
             </ToolsActionButton>
             <ToolsActionButton
-              variant="primary"
               loading={loading === "reprint"}
               disabled={loading != null}
               onClick={() => void runReprint("reprint")}

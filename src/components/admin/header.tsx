@@ -1,8 +1,10 @@
 "use client";
 
-import { LogOut, Menu } from "lucide-react";
+import Link from "next/link";
+import { LogOut, Menu, ArrowLeft } from "lucide-react";
 import { ThemeToggle } from "@/components/admin/theme-toggle";
 import { NotificationsBell } from "@/components/admin/notifications-bell";
+import { useAdminBackLink } from "@/components/admin/admin-back-link";
 import { useAuth } from "@/context/auth-provider";
 import { ROLE_LABELS } from "@/lib/roles";
 import { cn } from "@/lib/utils";
@@ -21,6 +23,7 @@ export function Header({
   sidebarCollapsed = false,
 }: HeaderProps) {
   const { user, logout } = useAuth();
+  const backLink = useAdminBackLink();
 
   return (
     <header
@@ -30,17 +33,31 @@ export function Header({
         sidebarCollapsed ? "lg:left-[72px]" : "lg:left-64",
       )}
     >
-      <div className="flex h-14 items-center gap-2 px-3 sm:h-16 sm:gap-4 sm:px-6 lg:px-8">
+      <div
+        className={cn(
+          "flex items-center gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8",
+          backLink ? "min-h-16 py-2 sm:min-h-[4.5rem]" : "h-14 sm:h-16",
+        )}
+      >
         <button
           type="button"
           onClick={onMenuClick}
-          className="shrink-0 rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground lg:hidden"
+          className="shrink-0 self-center rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground lg:hidden"
           aria-label="Abrir menú"
         >
           <Menu className="size-5" />
         </button>
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 self-center">
+          {backLink ? (
+            <Link
+              href={backLink.href}
+              className="mb-1 inline-flex max-w-full items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="size-4 shrink-0" aria-hidden />
+              <span className="truncate">{backLink.label}</span>
+            </Link>
+          ) : null}
           <h1 className="truncate text-base font-semibold tracking-tight text-foreground sm:text-lg">
             {title}
           </h1>
@@ -51,7 +68,7 @@ export function Header({
           )}
         </div>
 
-        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <div className="flex shrink-0 items-center gap-1 self-center sm:gap-2">
           <ThemeToggle />
           <NotificationsBell />
 

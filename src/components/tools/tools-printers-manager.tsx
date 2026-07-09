@@ -420,9 +420,6 @@ export function ToolsPrintersManager() {
                             )
                           }
                         />
-                        <th className="whitespace-nowrap px-5 py-3 font-medium">
-                          Ubicación
-                        </th>
                         {isAdmin ? (
                           <SortableTableHeader
                             label="Distribuidor"
@@ -459,12 +456,12 @@ export function ToolsPrintersManager() {
                           href={toolsPrinterPath(printer.serial)}
                         >
                           <td className="px-5 py-3">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-medium tabular-nums text-card-foreground">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <span className="truncate font-medium tabular-nums text-card-foreground">
                                 {printer.serial}
                               </span>
                               {!printer.macAddress ? (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
+                                <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
                                   <AlertTriangle
                                     className="size-3 shrink-0"
                                     aria-hidden
@@ -479,9 +476,6 @@ export function ToolsPrintersManager() {
                           </td>
                           <td className="px-5 py-3 tabular-nums">
                             {printer.firmware}
-                          </td>
-                          <td className="px-5 py-3">
-                            <TruncatedText>{printer.ubicacion}</TruncatedText>
                           </td>
                           {isAdmin ? (
                             <td className="px-5 py-3">

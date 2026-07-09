@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { useRegisterAdminBackLink } from "@/components/admin/admin-back-link";
 import { TruncatedText } from "@/components/ui/truncated-text";
 
 type ResourceViewShellProps = {
@@ -25,18 +25,10 @@ export function ResourceViewShell({
   actions,
   children,
 }: ResourceViewShellProps) {
+  useRegisterAdminBackLink(backHref, backLabel ?? "Volver");
+
   return (
     <div className="space-y-6">
-      {backHref ? (
-        <Link
-          href={backHref}
-          className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="size-4 shrink-0" aria-hidden />
-          {backLabel ?? "Volver"}
-        </Link>
-      ) : null}
-
       {title || subtitle || actions ? (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           {title || subtitle ? (

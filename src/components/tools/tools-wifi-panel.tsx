@@ -78,7 +78,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
           description={section.description}
         />
 
-        <ToolsPanelGrid className="xl:grid-cols-2">
+        <ToolsPanelGrid className="items-start xl:grid-cols-2">
           <ToolsPanelSection
             title="Escanear redes"
             description="Consulta las redes WiFi detectadas por la impresora."
@@ -92,9 +92,12 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
             >
               Escanear WiFi
             </ToolsActionButton>
-            {networks.length > 0 ? (
-              <div className="mt-4 max-h-56 overflow-y-auto overscroll-y-contain rounded-lg border border-border bg-background/50 p-1">
-                <ul className="space-y-2 text-sm" aria-label="Redes detectadas">
+            <div
+              className="mt-4 h-56 overflow-y-auto overscroll-y-contain rounded-lg border border-border bg-background/50 p-1"
+              aria-label="Redes detectadas"
+            >
+              {networks.length > 0 ? (
+                <ul className="space-y-2 text-sm">
                   {networks.map((network) => (
                     <li
                       key={network.ssid}
@@ -118,8 +121,14 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
                     </li>
                   ))}
                 </ul>
-              </div>
-            ) : null}
+              ) : (
+                <p className="px-3 py-2 text-sm text-muted">
+                  {loading === "scan"
+                    ? "Buscando redes cercanas…"
+                    : "Las redes aparecerán aquí después del escaneo."}
+                </p>
+              )}
+            </div>
           </ToolsPanelSection>
 
           <ToolsPanelSection
@@ -149,7 +158,6 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
             </div>
             <ToolsPanelActions className="mt-4">
               <ToolsActionButton
-                variant="primary"
                 loading={loading === "connect"}
                 disabled={loading != null || !ssid.trim()}
                 onClick={() => void run("connect")}

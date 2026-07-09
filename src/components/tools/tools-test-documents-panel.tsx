@@ -100,7 +100,6 @@ export function ToolsTestDocumentsPanel({ printer }: { printer: ToolsPrinter }) 
             {TEST_ACTIONS.map(({ action, label, icon: Icon }) => (
               <ToolsActionButton
                 key={action}
-                variant={action === "invoice" ? "primary" : "default"}
                 loading={loading === action}
                 disabled={loading != null}
                 onClick={() => void run(action)}
