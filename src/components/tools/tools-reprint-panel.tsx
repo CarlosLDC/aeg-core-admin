@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BarChart3, Eye, Printer, X } from "lucide-react";
+import { BarChart3, ChevronDown, Eye, Printer, X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
   ToolsActionButton,
@@ -88,17 +88,23 @@ export function ToolsReprintPanel({ printer }: ToolsReprintPanelProps) {
           <div className="grid gap-3 sm:grid-cols-3">
             <label className="block">
               <FieldLabel className="text-muted">Tipo</FieldLabel>
-              <select
-                value={docType}
-                onChange={(e) => setDocType(e.target.value)}
-                className={formFieldNativeSelectClass}
-              >
-                <option value="FAC">Factura</option>
-                <option value="NC">Nota de crédito</option>
-                <option value="ND">Nota de débito</option>
-                <option value="NF">No fiscal (NF)</option>
-                <option value="RX">Reporte X (RX)</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={docType}
+                  onChange={(e) => setDocType(e.target.value)}
+                  className={formFieldNativeSelectClass}
+                >
+                  <option value="FAC">Factura</option>
+                  <option value="NC">Nota de crédito</option>
+                  <option value="ND">Nota de débito</option>
+                  <option value="NF">No fiscal (NF)</option>
+                  <option value="RX">Reporte X (RX)</option>
+                </select>
+                <ChevronDown
+                  className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted"
+                  aria-hidden
+                />
+              </div>
             </label>
             <label className="block sm:col-span-2">
               <FieldLabel className="text-muted">Número</FieldLabel>

@@ -5,7 +5,6 @@ import { AuthGuard } from "@/components/auth/auth-guard";
 import { RouteAccessGuard } from "@/components/auth/route-access-guard";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
-import { AdminBackLinkProvider } from "./admin-back-link";
 import { cn } from "@/lib/utils";
 
 const SIDEBAR_COLLAPSED_KEY = "aeg-admin-sidebar-collapsed";
@@ -84,7 +83,6 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
     <AuthGuard>
       <RouteAccessGuard>
       <div className="min-h-screen bg-background">
-        <AdminBackLinkProvider>
         {mobileOpen && (
           <button
             type="button"
@@ -117,7 +115,6 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
             {children}
           </main>
         </div>
-        </AdminBackLinkProvider>
       </div>
       </RouteAccessGuard>
     </AuthGuard>

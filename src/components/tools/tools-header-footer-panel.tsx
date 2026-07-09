@@ -23,22 +23,22 @@ import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { formFieldTextareaClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
 
-type HeaderFooterAction =
-  | "header-read"
-  | "header-write"
-  | "footer-read"
-  | "footer-write";
-
 export function ToolsHeaderFooterPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.headerFooter;
   const [headerContent, setHeaderContent] = useState("");
   const [footerContent, setFooterContent] = useState("");
-  const [loading, setLoading] = useState<HeaderFooterAction | null>(null);
+  const [loadingHeader, setLoadingHeader] = useState(false);
+  const [loadingFooter, setLoadingFooter] = useState(false);
+  const [savingHeader, setSavingHeader] = useState(false);
+  const [savingFooter, setSavingFooter] = useState(false);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+
+  const isBusy = loadingHeader || loadingFooter || savingHeader || savingFooter;
 
   const loadHeader = useCallback(
     async (options?: { notify?: boolean }) => {
-      setLoading("header-read");
+      setLoadingHeader(true);
       try {
         const result = await readToolsHeader(printer.id);
         setHeaderContent(result.content ?? "");
@@ -47,8 +47,9 @@ export function ToolsHeaderFooterPanel({ printer }: { printer: ToolsPrinter }) {
         }
       } catch (err) {
         toast.error(getToolsMqttErrorMessage(err));
+        throw err;
       } finally {
-        setLoading(null);
+        setLoadingHeader(false);
       }
     },
     [printer.id, toast],
@@ -56,7 +57,7 @@ export function ToolsHeaderFooterPanel({ printer }: { printer: ToolsPrinter }) {
 
   const loadFooter = useCallback(
     async (options?: { notify?: boolean }) => {
-      setLoading("footer-read");
+      setLoadingFooter(true);
       try {
         const result = await readToolsFooter(printer.id);
         setFooterContent(result.content ?? "");
@@ -65,41 +66,57 @@ export function ToolsHeaderFooterPanel({ printer }: { printer: ToolsPrinter }) {
         }
       } catch (err) {
         toast.error(getToolsMqttErrorMessage(err));
+        throw err;
       } finally {
-        setLoading(null);
+        setLoadingFooter(false);
       }
     },
     [printer.id, toast],
   );
 
   useEffect(() => {
-    void loadHeader();
-    void loadFooter();
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        await loadHeader();
+        if (cancelled) return;
+        await loadFooter();
+      } catch {
+        /* loadHeader/loadFooter already toast errors */
+      } finally {
+        if (!cancelled) {
+          setInitialLoadDone(true);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [loadHeader, loadFooter]);
 
-  const run = async (kind: HeaderFooterAction) => {
-    if (kind === "header-read") {
-      await loadHeader({ notify: true });
-      return;
-    }
-    if (kind === "footer-read") {
-      await loadFooter({ notify: true });
-      return;
-    }
-
-    setLoading(kind);
+  const saveHeader = async () => {
+    setSavingHeader(true);
     try {
-      if (kind === "header-write") {
-        const result = await writeToolsHeader(printer.id, headerContent);
-        toast.success(result.message ?? "Encabezado actualizado.");
-      } else {
-        const result = await writeToolsFooter(printer.id, footerContent);
-        toast.success(result.message ?? "Pie actualizado.");
-      }
+      const result = await writeToolsHeader(printer.id, headerContent);
+      toast.success(result.message ?? "Encabezado actualizado.");
     } catch (err) {
       toast.error(getToolsMqttErrorMessage(err));
     } finally {
-      setLoading(null);
+      setSavingHeader(false);
+    }
+  };
+
+  const saveFooter = async () => {
+    setSavingFooter(true);
+    try {
+      const result = await writeToolsFooter(printer.id, footerContent);
+      toast.success(result.message ?? "Pie actualizado.");
+    } catch (err) {
+      toast.error(getToolsMqttErrorMessage(err));
+    } finally {
+      setSavingFooter(false);
     }
   };
 
@@ -124,21 +141,21 @@ export function ToolsHeaderFooterPanel({ printer }: { printer: ToolsPrinter }) {
               onChange={(e) => setHeaderContent(e.target.value)}
               rows={6}
               className={formFieldTextareaClass}
-              disabled={loading != null}
+              disabled={isBusy || !initialLoadDone}
             />
             <ToolsPanelActions className="mt-3">
               <ToolsActionButton
-                loading={loading === "header-read"}
-                disabled={loading != null}
-                onClick={() => void run("header-read")}
+                loading={loadingHeader}
+                disabled={isBusy}
+                onClick={() => void loadHeader({ notify: true })}
               >
                 Leer
               </ToolsActionButton>
               <ToolsActionButton
                 variant="primary"
-                loading={loading === "header-write"}
-                disabled={loading != null}
-                onClick={() => void run("header-write")}
+                loading={savingHeader}
+                disabled={isBusy}
+                onClick={() => void saveHeader()}
               >
                 Guardar
               </ToolsActionButton>
@@ -155,21 +172,21 @@ export function ToolsHeaderFooterPanel({ printer }: { printer: ToolsPrinter }) {
               onChange={(e) => setFooterContent(e.target.value)}
               rows={6}
               className={formFieldTextareaClass}
-              disabled={loading != null}
+              disabled={isBusy || !initialLoadDone}
             />
             <ToolsPanelActions className="mt-3">
               <ToolsActionButton
-                loading={loading === "footer-read"}
-                disabled={loading != null}
-                onClick={() => void run("footer-read")}
+                loading={loadingFooter}
+                disabled={isBusy}
+                onClick={() => void loadFooter({ notify: true })}
               >
                 Leer
               </ToolsActionButton>
               <ToolsActionButton
                 variant="primary"
-                loading={loading === "footer-write"}
-                disabled={loading != null}
-                onClick={() => void run("footer-write")}
+                loading={savingFooter}
+                disabled={isBusy}
+                onClick={() => void saveFooter()}
               >
                 Guardar
               </ToolsActionButton>

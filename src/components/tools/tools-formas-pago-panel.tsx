@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Pencil } from "lucide-react";
+import { Check, Loader2, Pencil, X } from "lucide-react";
 import {
   ToolsActionButton,
   ToolsPage,
@@ -30,16 +30,18 @@ import { cn } from "@/lib/utils";
 
 const rowClass = cn(
   toolsListItemClass,
-  "flex min-h-11 items-center gap-2 py-1.5 sm:flex-nowrap",
+  "flex h-11 items-center gap-2 py-0 sm:flex-nowrap",
 );
 
 const inlineDescriptionInputClass = cn(
   formFieldInputClass,
-  "h-9 min-w-0 flex-1 py-1.5",
+  "h-8 min-w-0 flex-1 py-1",
 );
 
-const editIconButtonClass =
+const rowActionButtonClass =
   "inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-border text-muted transition-colors hover:bg-foreground/[0.04] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50";
+
+const editIconButtonClass = rowActionButtonClass;
 
 function draftsFromItems(items: ToolsFormasPagoItem[]): Record<number, string> {
   return Object.fromEntries(
@@ -235,9 +237,10 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
                           aria-label={`Descripción forma de pago ${item.nro}`}
                           className={inlineDescriptionInputClass}
                         />
-                        <div className="flex shrink-0 items-center gap-1.5">
-                          <ToolsActionButton
-                            loading={isSaving}
+                        <div className="flex w-[4.25rem] shrink-0 items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            className={rowActionButtonClass}
                             disabled={
                               loading ||
                               isSaving ||
@@ -246,17 +249,26 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
                               validateFormaPagoDescripcion(draft) != null
                             }
                             onClick={() => void saveItem(item.nro)}
-                            className="!px-2.5"
+                            aria-label={`Guardar forma de pago ${item.nro}`}
                           >
-                            Guardar
-                          </ToolsActionButton>
-                          <ToolsActionButton
+                            {isSaving ? (
+                              <Loader2
+                                className="size-3.5 animate-spin"
+                                aria-hidden
+                              />
+                            ) : (
+                              <Check className="size-3.5" aria-hidden />
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            className={rowActionButtonClass}
                             disabled={loading || isSaving}
                             onClick={() => cancelEditing(item.nro)}
-                            className="!px-2.5"
+                            aria-label={`Cancelar edición forma de pago ${item.nro}`}
                           >
-                            Cancelar
-                          </ToolsActionButton>
+                            <X className="size-3.5" aria-hidden />
+                          </button>
                         </div>
                       </>
                     ) : (
@@ -264,15 +276,17 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
                         <span className="min-w-0 flex-1 truncate font-medium">
                           {item.descripcion}
                         </span>
-                        <button
-                          type="button"
-                          className={editIconButtonClass}
-                          disabled={loading || savingNro != null}
-                          onClick={() => startEditing(item.nro)}
-                          aria-label={`Editar forma de pago ${item.nro}`}
-                        >
-                          <Pencil className="size-3.5" aria-hidden />
-                        </button>
+                        <div className="flex w-[4.25rem] shrink-0 justify-end">
+                          <button
+                            type="button"
+                            className={editIconButtonClass}
+                            disabled={loading || savingNro != null}
+                            onClick={() => startEditing(item.nro)}
+                            aria-label={`Editar forma de pago ${item.nro}`}
+                          >
+                            <Pencil className="size-3.5" aria-hidden />
+                          </button>
+                        </div>
                       </>
                     )}
                   </li>

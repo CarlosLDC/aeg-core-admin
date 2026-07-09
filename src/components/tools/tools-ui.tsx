@@ -206,7 +206,7 @@ export function ToolsNavCard({
     <Link
       href={href}
       className={cn(
-        "group flex h-full min-h-[10.25rem] flex-col rounded-xl border border-border bg-card p-4 shadow-sm transition-colors",
+        "group relative z-0 flex h-full min-h-[10.25rem] flex-col rounded-xl border border-border bg-card p-4 shadow-sm transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
         toolsToneHoverBorderClass[tone],
       )}

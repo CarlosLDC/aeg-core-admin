@@ -261,7 +261,7 @@ export function Sidebar({
     >
       <div
         className={cn(
-          "flex h-16 shrink-0 items-center border-b border-white/10",
+          "flex h-[var(--admin-header-height)] shrink-0 items-center border-b border-white/10 box-border",
           isMobileDrawer
             ? "gap-2 px-3"
             : isCollapsed

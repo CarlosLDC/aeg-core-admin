@@ -78,12 +78,13 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
           description={section.description}
         />
 
-        <ToolsPanelGrid className="items-start xl:grid-cols-2">
+        <ToolsPanelGrid className="items-stretch xl:grid-cols-2 [&>*]:h-full">
           <ToolsPanelSection
             title="Escanear redes"
             description="Consulta las redes WiFi detectadas por la impresora."
             icon={Radio}
             tone="sky"
+            className="h-full"
           >
             <ToolsActionButton
               loading={loading === "scan"}
@@ -92,11 +93,11 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
             >
               Escanear WiFi
             </ToolsActionButton>
-            <div
-              className="mt-4 h-56 overflow-y-auto overscroll-y-contain rounded-lg border border-border bg-background/50 p-1"
-              aria-label="Redes detectadas"
-            >
-              {networks.length > 0 ? (
+            {networks.length > 0 ? (
+              <div
+                className="mt-4 max-h-48 overflow-y-auto overscroll-y-contain rounded-lg border border-border bg-background/50 p-1"
+                aria-label="Redes detectadas"
+              >
                 <ul className="space-y-2 text-sm">
                   {networks.map((network) => (
                     <li
@@ -121,14 +122,8 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
                     </li>
                   ))}
                 </ul>
-              ) : (
-                <p className="px-3 py-2 text-sm text-muted">
-                  {loading === "scan"
-                    ? "Buscando redes cercanas…"
-                    : "Las redes aparecerán aquí después del escaneo."}
-                </p>
-              )}
-            </div>
+              </div>
+            ) : null}
           </ToolsPanelSection>
 
           <ToolsPanelSection
@@ -136,6 +131,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
             description="Seleccione una red y envíe las credenciales a la impresora."
             icon={Link2}
             tone="sky"
+            className="h-full"
           >
             <div className="space-y-3">
               <label className="block">
