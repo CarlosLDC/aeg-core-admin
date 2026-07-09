@@ -248,6 +248,20 @@ export function ToolsNavLink({
   );
 }
 
+export function ToolsDetailFields({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <dl className={cn("grid min-w-0 gap-4 sm:grid-cols-2", className)}>
+      {children}
+    </dl>
+  );
+}
+
 export function ToolsMetricCard({
   label,
   value,

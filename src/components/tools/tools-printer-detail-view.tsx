@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Building2, LayoutGrid } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Building2, LayoutGrid, Truck } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
+import { DetailField } from "@/components/resource-view/detail-fields";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import {
+  ToolsDetailFields,
   ToolsMacWarning,
-  ToolsMetricCard,
   ToolsNavCard,
   ToolsPage,
   ToolsPanelSection,
@@ -16,8 +17,6 @@ import {
   ToolsSectionHeading,
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterStatusBar } from "@/components/tools/tools-printer-status-bar";
-import { ToolsReprintPanel } from "@/components/tools/tools-reprint-panel";
-import { ToolsTestDocumentsPanel } from "@/components/tools/tools-test-documents-panel";
 import { useToolsPrinters } from "@/modules/tools/printers/use-tools-printers";
 import {
   TOOLS_PRINTER_NAV_SECTIONS,
@@ -32,8 +31,9 @@ type ToolsPrinterDetailViewProps = {
 };
 
 export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) {
-  const { loading, error, reload, findBySerial } = useToolsPrinters();
+  const { loading, error, reload, findBySerial, role } = useToolsPrinters();
   const printer = findBySerial(serial);
+  const isAdmin = role === "ADMIN";
 
   if (loading && !printer) {
     return (
@@ -72,6 +72,10 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
 
   const client = printer.clientSummary;
   const summary = TOOLS_SECTIONS.summary;
+  const hasDistributorInfo =
+    Boolean(printer.distributorName.trim()) ||
+    Boolean(printer.distributorRif.trim());
+  const showPartySection = Boolean(client) || (isAdmin && hasDistributorInfo);
 
   return (
     <ResourceViewShell backHref={toolsListPath} backLabel="Volver al listado">
@@ -91,41 +95,66 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
           macAddress={printer.macAddress}
         />
 
-        <section className="space-y-3">
-          <ToolsSectionHeading
-            icon={summary.icon}
-            tone={summary.tone}
-            title={summary.title}
-            description={summary.description}
-          />
-          <ToolsSectionGrid>
-            <ToolsMetricCard label="Estado" value={printer.estado} />
-            <ToolsMetricCard
+        <ToolsPanelSection
+          title={summary.title}
+          description={summary.description}
+          icon={summary.icon}
+          tone={summary.tone}
+        >
+          <ToolsDetailFields>
+            <DetailField label="Estado" value={printer.estado} />
+            <DetailField
               label="MAC"
               value={printer.macAddress ?? "Sin MAC"}
               mono
             />
-            <ToolsMetricCard label="Firmware" value={printer.firmware} mono />
-            <ToolsMetricCard label="Ubicación" value={printer.ubicacion} />
-            <ToolsMetricCard label="Ciudad" value={printer.ciudad || "—"} />
-            <ToolsMetricCard
-              label="Cliente"
-              value={printer.rifName || printer.rifCliente || "—"}
+            <DetailField label="Firmware" value={printer.firmware} mono />
+            <DetailField label="Ciudad" value={printer.ciudad || "—"} />
+            <DetailField
+              label="Ubicación"
+              value={printer.ubicacion || "—"}
+              fullWidth
             />
-          </ToolsSectionGrid>
-        </section>
+          </ToolsDetailFields>
+        </ToolsPanelSection>
 
-        {client ? (
+        {showPartySection ? (
           <ToolsPanelSection
             title="Información del cliente"
             icon={Building2}
             tone="slate"
           >
-            <ToolsSectionGrid>
-              <ToolsMetricCard label="Nombre" value={client.name} />
-              <ToolsMetricCard label="Teléfono" value={client.phone} />
-              <ToolsMetricCard label="Email" value={client.email} />
-            </ToolsSectionGrid>
+          <div className="space-y-4">
+            {client ? (
+              <ToolsDetailFields>
+                <DetailField label="Nombre" value={client.name} />
+                <DetailField label="RIF" value={printer.rifCliente || "—"} mono />
+                <DetailField label="Teléfono" value={client.phone} />
+                <DetailField label="Email" value={client.email} />
+              </ToolsDetailFields>
+            ) : null}
+            {isAdmin && hasDistributorInfo ? (
+              <div className={client ? "border-t border-border pt-4" : undefined}>
+                <div className="mb-3 flex items-center gap-2">
+                  <Truck className="size-4 shrink-0 text-muted" aria-hidden />
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                    Distribuidor
+                  </p>
+                </div>
+                <ToolsDetailFields>
+                  <DetailField
+                    label="Nombre"
+                    value={printer.distributorName || "—"}
+                  />
+                  <DetailField
+                    label="RIF"
+                    value={printer.distributorRif || "—"}
+                    mono
+                  />
+                </ToolsDetailFields>
+              </div>
+            ) : null}
+          </div>
           </ToolsPanelSection>
         ) : null}
 
@@ -152,13 +181,6 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
             })}
           </ToolsSectionGrid>
         </section>
-
-        {printer.macAddress ? (
-          <div className="space-y-4">
-            <ToolsTestDocumentsPanel printer={printer} />
-            <ToolsReprintPanel printer={printer} />
-          </div>
-        ) : null}
       </ToolsPage>
     </ResourceViewShell>
   );

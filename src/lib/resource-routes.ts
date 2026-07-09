@@ -83,3 +83,15 @@ export function toolsPrinterReporteZPath(serial: string): string {
 export function toolsPrinterFormasPagoPath(serial: string): string {
   return `${toolsPrinterPath(serial)}/formas-pago`;
 }
+
+export function toolsPrinterTestDocumentsPath(serial: string): string {
+  return `${toolsPrinterPath(serial)}/documentos-prueba`;
+}
+
+export function toolsPrinterReprintPath(serial: string): string {
+  return `${toolsPrinterPath(serial)}/reimpresion`;
+}
+
+export function toolsPrinterHeaderFooterPath(serial: string): string {
+  return `${toolsPrinterPath(serial)}/encabezado-pie`;
+}

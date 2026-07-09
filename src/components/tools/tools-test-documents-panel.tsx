@@ -9,8 +9,10 @@ import {
 } from "lucide-react";
 import {
   ToolsActionTile,
+  ToolsPage,
   ToolsPanelActions,
   ToolsPanelSection,
+  ToolsSectionHeading,
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
@@ -98,26 +100,35 @@ export function ToolsTestDocumentsPanel({ printer }: { printer: ToolsPrinter }) 
 
   return (
     <ToolsPrinterMacGuard macAddress={printer.macAddress}>
-      <ToolsPanelSection
-        title={section.title}
-        description={section.description}
-        icon={section.icon}
-        tone={section.tone}
-      >
-        <ToolsPanelActions hint="Cada acción envía un comando a la impresora.">
-          {TEST_ACTIONS.map(({ action, label, icon, tone }) => (
-            <ToolsActionTile
-              key={action}
-              label={label}
-              icon={icon}
-              tone={tone}
-              loading={loading === action}
-              disabled={loading != null}
-              onClick={() => void run(action)}
-            />
-          ))}
-        </ToolsPanelActions>
-      </ToolsPanelSection>
+      <ToolsPage>
+        <ToolsSectionHeading
+          icon={section.icon}
+          tone={section.tone}
+          title={section.title}
+          description={section.description}
+        />
+
+        <ToolsPanelSection
+          title="Comandos de prueba"
+          description="Cada acción envía un comando MQTT a la impresora."
+          icon={section.icon}
+          tone={section.tone}
+        >
+          <ToolsPanelActions>
+            {TEST_ACTIONS.map(({ action, label, icon, tone }) => (
+              <ToolsActionTile
+                key={action}
+                label={label}
+                icon={icon}
+                tone={tone}
+                loading={loading === action}
+                disabled={loading != null}
+                onClick={() => void run(action)}
+              />
+            ))}
+          </ToolsPanelActions>
+        </ToolsPanelSection>
+      </ToolsPage>
     </ToolsPrinterMacGuard>
   );
 }

@@ -18,6 +18,8 @@
   --ring: #0033ff;
   --login-panel: #f0f3f7;
   --login-field: #f7f9fc;
+  --admin-header-height: 3.5rem;
+  --admin-header-offset: calc(var(--admin-header-height) + 0.75rem);
 }
 
 @theme inline {
@@ -87,6 +89,13 @@ html.light {
 
 html {
   overflow-x: hidden;
+  scroll-padding-top: var(--admin-header-offset);
+}
+
+@media (min-width: 640px) {
+  :root {
+    --admin-header-height: 4rem;
+  }
 }
 
 body {

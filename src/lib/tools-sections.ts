@@ -4,13 +4,17 @@ import {
   CreditCard,
   FileStack,
   FlaskConical,
+  PanelsTopBottom,
   Printer,
   ScrollText,
   Wifi,
 } from "lucide-react";
 import {
   toolsPrinterFormasPagoPath,
+  toolsPrinterHeaderFooterPath,
   toolsPrinterReporteZPath,
+  toolsPrinterReprintPath,
+  toolsPrinterTestDocumentsPath,
   toolsPrinterWifiPath,
 } from "@/lib/resource-routes";
 
@@ -55,18 +59,25 @@ export const TOOLS_SECTIONS = {
     tone: "emerald",
   },
   testDocuments: {
-    id: "test-documents",
+    id: "documentos-prueba",
     title: "Documentos de prueba",
     description: "Generar documentos fiscales de prueba en la impresora.",
     icon: FlaskConical,
     tone: "amber",
   },
   reprint: {
-    id: "reprint",
+    id: "reimpresion",
     title: "Reimpresión",
-    description: "Reimprimir documentos y editar encabezado o pie.",
+    description: "Visualizar, reimprimir documentos y generar reporte X.",
     icon: Printer,
     tone: "indigo",
+  },
+  headerFooter: {
+    id: "encabezado-pie",
+    title: "Encabezado y pie de página",
+    description: "Leer y editar el encabezado fiscal y el pie de ticket.",
+    icon: PanelsTopBottom,
+    tone: "rose",
   },
   status: {
     id: "status",
@@ -90,6 +101,9 @@ export const TOOLS_PRINTER_NAV_SECTIONS = [
   "wifi",
   "reporteZ",
   "formasPago",
+  "testDocuments",
+  "reprint",
+  "headerFooter",
 ] as const satisfies readonly ToolsSectionKey[];
 
 export type ToolsPrinterNavSectionKey =
@@ -106,5 +120,11 @@ export function toolsPrinterSectionHref(
       return toolsPrinterReporteZPath(serial);
     case "formasPago":
       return toolsPrinterFormasPagoPath(serial);
+    case "testDocuments":
+      return toolsPrinterTestDocumentsPath(serial);
+    case "reprint":
+      return toolsPrinterReprintPath(serial);
+    case "headerFooter":
+      return toolsPrinterHeaderFooterPath(serial);
   }
 }
