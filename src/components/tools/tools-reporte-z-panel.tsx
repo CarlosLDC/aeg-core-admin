@@ -4,17 +4,16 @@ import { useState } from "react";
 import {
   FileSearch,
   Printer,
-  Radio,
   ScrollText,
   Send,
 } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
-  ToolsActionTile,
+  ToolsActionButton,
   ToolsPage,
-  ToolsPanelActions,
   ToolsPanelSection,
   ToolsSectionHeading,
+  toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
@@ -112,12 +111,7 @@ export function ToolsReporteZPanel({ printer }: { printer: ToolsPrinter }) {
           description={section.description}
         />
 
-        <ToolsPanelSection
-          title="Operaciones Z"
-          description="Los comandos se envían de inmediato a la impresora."
-          icon={Radio}
-          tone="violet"
-        >
+        <div className={toolsPanelSectionClass}>
           <label className="block max-w-xs">
             <FieldLabel className="text-muted">
               Número de reporte (opcional)
@@ -129,21 +123,21 @@ export function ToolsReporteZPanel({ printer }: { printer: ToolsPrinter }) {
               className={formFieldInputClass}
             />
           </label>
-          <ToolsPanelActions className="mt-4">
-            {REPORT_ACTIONS.map(([action, label, icon]) => (
-              <ToolsActionTile
+          <div className="mt-4 flex flex-wrap gap-2">
+            {REPORT_ACTIONS.map(([action, label, Icon]) => (
+              <ToolsActionButton
                 key={action}
-                label={label}
-                icon={icon}
-                tone="violet"
                 variant={action === "generate" ? "primary" : "default"}
                 loading={loading === action}
                 disabled={loading != null}
                 onClick={() => void run(action)}
-              />
+              >
+                <Icon className="size-4 shrink-0" aria-hidden />
+                {label}
+              </ToolsActionButton>
             ))}
-          </ToolsPanelActions>
-        </ToolsPanelSection>
+          </div>
+        </div>
 
         {reportJson ? (
           <ToolsPanelSection

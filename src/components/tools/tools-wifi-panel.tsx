@@ -93,31 +93,32 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
               Escanear WiFi
             </ToolsActionButton>
             {networks.length > 0 ? (
-              <ul
-                className="mt-4 space-y-2 text-sm"
-                aria-label="Redes detectadas"
-              >
-                {networks.map((network) => (
-                  <li
-                    key={network.ssid}
-                    className={cn(
-                      toolsListItemClass,
-                      "flex items-center justify-between",
-                    )}
-                  >
-                    <button
-                      type="button"
-                      className="w-full text-left font-medium text-card-foreground transition-colors hover:text-accent"
-                      onClick={() => setSsid(network.ssid)}
+              <div className="mt-4 max-h-56 overflow-y-auto overscroll-y-contain rounded-lg border border-border bg-background/50 p-1">
+                <ul className="space-y-2 text-sm" aria-label="Redes detectadas">
+                  {networks.map((network) => (
+                    <li
+                      key={network.ssid}
+                      className={cn(
+                        toolsListItemClass,
+                        "flex items-center justify-between",
+                      )}
                     >
-                      {network.ssid}
-                    </button>
-                    {network.signal != null ? (
-                      <span className="text-muted">{network.signal} dBm</span>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
+                      <button
+                        type="button"
+                        className="w-full text-left font-medium text-card-foreground transition-colors hover:text-accent"
+                        onClick={() => setSsid(network.ssid)}
+                      >
+                        {network.ssid}
+                      </button>
+                      {network.signal != null ? (
+                        <span className="shrink-0 text-muted">
+                          {network.signal} dBm
+                        </span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : null}
           </ToolsPanelSection>
 

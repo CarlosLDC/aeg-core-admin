@@ -19,7 +19,7 @@
   --login-panel: #f0f3f7;
   --login-field: #f7f9fc;
   --admin-header-height: 3.5rem;
-  --admin-header-offset: calc(var(--admin-header-height) + 0.75rem);
+  --admin-header-offset: calc(var(--admin-header-height) + 0.5rem);
 }
 
 @theme inline {

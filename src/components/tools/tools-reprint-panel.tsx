@@ -4,10 +4,8 @@ import { useState } from "react";
 import { BarChart3, Eye, Printer, X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
-  ToolsActionTile,
+  ToolsActionButton,
   ToolsPage,
-  ToolsPanelActions,
-  ToolsPanelSection,
   ToolsSectionHeading,
   toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
@@ -86,12 +84,7 @@ export function ToolsReprintPanel({ printer }: ToolsReprintPanelProps) {
           description={section.description}
         />
 
-        <ToolsPanelSection
-          title="Documento fiscal"
-          description="Seleccione el tipo y número del documento a consultar o reimprimir."
-          icon={section.icon}
-          tone={section.tone}
-        >
+        <div className={toolsPanelSectionClass}>
           <div className="grid gap-3 sm:grid-cols-3">
             <label className="block">
               <FieldLabel className="text-muted">Tipo</FieldLabel>
@@ -117,34 +110,34 @@ export function ToolsReprintPanel({ printer }: ToolsReprintPanelProps) {
               />
             </label>
           </div>
-          <ToolsPanelActions className="mt-4">
-            <ToolsActionTile
-              label="Visualizar"
-              icon={Eye}
-              tone="indigo"
+          <div className="mt-4 flex flex-wrap gap-2">
+            <ToolsActionButton
               loading={loading === "visualize"}
               disabled={loading != null}
               onClick={() => void runReprint("visualize")}
-            />
-            <ToolsActionTile
-              label="Reimprimir"
-              icon={Printer}
-              tone="indigo"
+            >
+              <Eye className="size-4 shrink-0" aria-hidden />
+              Visualizar
+            </ToolsActionButton>
+            <ToolsActionButton
               variant="primary"
               loading={loading === "reprint"}
               disabled={loading != null}
               onClick={() => void runReprint("reprint")}
-            />
-            <ToolsActionTile
-              label="Generar reporte X"
-              icon={BarChart3}
-              tone="indigo"
+            >
+              <Printer className="size-4 shrink-0" aria-hidden />
+              Reimprimir
+            </ToolsActionButton>
+            <ToolsActionButton
               loading={loading === "report-x"}
               disabled={loading != null}
               onClick={() => void runReportX()}
-            />
-          </ToolsPanelActions>
-        </ToolsPanelSection>
+            >
+              <BarChart3 className="size-4 shrink-0" aria-hidden />
+              Generar reporte X
+            </ToolsActionButton>
+          </div>
+        </div>
 
         {previewHtml ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

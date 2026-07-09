@@ -23,6 +23,7 @@ const samplePrinter = (overrides: Partial<ToolsPrinter> = {}): ToolsPrinter => (
   rifName: "Empresa Demo",
   distributorName: "",
   distributorRif: "",
+  distributorSummary: null,
   reporteX: "No disponible",
   clientId: 10,
   clientSummary: null,

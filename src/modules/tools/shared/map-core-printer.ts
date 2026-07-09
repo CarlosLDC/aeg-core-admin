@@ -6,7 +6,7 @@ import {
 } from "@/modules/tools/shared/formatters";
 import type {
   ToolsPrinter,
-  ToolsPrinterClientSummary,
+  ToolsPrinterPartySummary,
 } from "@/modules/tools/shared/types";
 import { printerStatusLabel, normalizePrinterStatus } from "@/lib/printer-status";
 import type { BranchResponse } from "@/types/branch";
@@ -32,25 +32,33 @@ function distributorDisplay(
   distributors: DistributorResponse[],
   branches: BranchResponse[],
   companies: CompanyResponse[],
-): { name: string; rif: string } {
-  if (distributorId == null) return { name: "", rif: "" };
+): ToolsPrinterPartySummary | null {
+  if (distributorId == null) return null;
   const distributor = distributors.find((d) => d.id === distributorId);
-  if (!distributor) return { name: "", rif: "" };
+  if (!distributor) return null;
   const branch = branches.find((b) => b.id === distributor.branchId);
-  if (!branch) return { name: "", rif: "" };
+  if (!branch) return null;
+
+  const name = formatBranchShort(branch, companies);
+  const rif = companyRifForBranch(branch.id, branches, companies);
+  if (!name.trim() && !rif.trim()) return null;
+
   return {
-    name: formatBranchShort(branch, companies),
-    rif: companyRifForBranch(branch.id, branches, companies),
+    name: name.trim() || "N/A",
+    rif,
+    phone: branch.phone?.trim() || "N/A",
+    email: branch.email?.trim() || "N/A",
   };
 }
 
 export function extractClientSummary(
   client: ClientResponse | null | undefined,
-): ToolsPrinterClientSummary | null {
+): ToolsPrinterPartySummary | null {
   if (!client) return null;
 
   return {
     name: client.companyBusinessName?.trim() || "N/A",
+    rif: client.companyRif?.trim() || "",
     phone: client.branchPhone?.trim() || "N/A",
     email: client.branchEmail?.trim() || "N/A",
   };
@@ -124,8 +132,9 @@ export function mapCorePrinterToTools(options: {
     ciudad,
     rifCliente: client?.companyRif?.trim() || "",
     rifName: client?.companyBusinessName?.trim() || "",
-    distributorName: distributor.name,
-    distributorRif: distributor.rif,
+    distributorName: distributor?.name ?? "",
+    distributorRif: distributor?.rif ?? "",
+    distributorSummary: distributor,
     reporteX: "No disponible",
     clientId: printer.clientId,
     clientSummary,

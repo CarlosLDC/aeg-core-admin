@@ -3,8 +3,10 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { ChevronRight, Loader2 } from "lucide-react";
+import { DetailField } from "@/components/resource-view/detail-fields";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
 import type { ToolsSectionTone } from "@/lib/tools-sections";
+import type { ToolsPrinterPartySummary } from "@/modules/tools/shared/types";
 import { cn } from "@/lib/utils";
 
 const toolsToneBadgeClass: Record<ToolsSectionTone, string> = {
@@ -259,6 +261,21 @@ export function ToolsDetailFields({
     <dl className={cn("grid min-w-0 gap-4 sm:grid-cols-2", className)}>
       {children}
     </dl>
+  );
+}
+
+export function ToolsPartyInfoFields({
+  party,
+}: {
+  party: ToolsPrinterPartySummary;
+}) {
+  return (
+    <ToolsDetailFields>
+      <DetailField label="Nombre" value={party.name} />
+      <DetailField label="RIF" value={party.rif || "—"} mono />
+      <DetailField label="Teléfono" value={party.phone} />
+      <DetailField label="Email" value={party.email} />
+    </ToolsDetailFields>
   );
 }
 

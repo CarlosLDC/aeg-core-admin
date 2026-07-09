@@ -1,10 +1,14 @@
 import type { PrinterStatus } from "@/types/printer";
 
-export type ToolsPrinterClientSummary = {
+export type ToolsPrinterPartySummary = {
   name: string;
+  rif: string;
   phone: string;
   email: string;
 };
+
+/** @deprecated Use ToolsPrinterPartySummary */
+export type ToolsPrinterClientSummary = ToolsPrinterPartySummary;
 
 export type ToolsPrinter = {
   id: number;
@@ -21,6 +25,7 @@ export type ToolsPrinter = {
   rifName: string;
   distributorName: string;
   distributorRif: string;
+  distributorSummary: ToolsPrinterPartySummary | null;
   reporteX: string | number;
   clientId: number | null;
   clientSummary: ToolsPrinterClientSummary | null;

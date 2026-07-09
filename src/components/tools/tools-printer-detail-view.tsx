@@ -13,10 +13,12 @@ import {
   ToolsNavCard,
   ToolsPage,
   ToolsPanelSection,
+  ToolsPartyInfoFields,
   ToolsSectionGrid,
   ToolsSectionHeading,
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterStatusBar } from "@/components/tools/tools-printer-status-bar";
+import { ToolsPrinterStatusBadge } from "@/components/tools/tools-printer-status-badge";
 import { useToolsPrinters } from "@/modules/tools/printers/use-tools-printers";
 import {
   TOOLS_PRINTER_NAV_SECTIONS,
@@ -71,11 +73,8 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
   }
 
   const client = printer.clientSummary;
+  const distributor = printer.distributorSummary;
   const summary = TOOLS_SECTIONS.summary;
-  const hasDistributorInfo =
-    Boolean(printer.distributorName.trim()) ||
-    Boolean(printer.distributorRif.trim());
-  const showPartySection = Boolean(client) || (isAdmin && hasDistributorInfo);
 
   return (
     <ResourceViewShell backHref={toolsListPath} backLabel="Volver al listado">
@@ -102,59 +101,44 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
           tone={summary.tone}
         >
           <ToolsDetailFields>
-            <DetailField label="Estado" value={printer.estado} />
+            <DetailField
+              label="Estatus"
+              value={
+                <ToolsPrinterStatusBadge
+                  status={printer.status}
+                  label={printer.estado}
+                />
+              }
+              fullWidth
+            />
             <DetailField
               label="MAC"
               value={printer.macAddress ?? "Sin MAC"}
               mono
             />
             <DetailField label="Firmware" value={printer.firmware} mono />
+            <DetailField label="Estado" value={printer.ubicacion || "—"} />
             <DetailField label="Ciudad" value={printer.ciudad || "—"} />
-            <DetailField
-              label="Ubicación"
-              value={printer.ubicacion || "—"}
-              fullWidth
-            />
           </ToolsDetailFields>
         </ToolsPanelSection>
 
-        {showPartySection ? (
+        {client ? (
           <ToolsPanelSection
             title="Información del cliente"
             icon={Building2}
             tone="slate"
           >
-          <div className="space-y-4">
-            {client ? (
-              <ToolsDetailFields>
-                <DetailField label="Nombre" value={client.name} />
-                <DetailField label="RIF" value={printer.rifCliente || "—"} mono />
-                <DetailField label="Teléfono" value={client.phone} />
-                <DetailField label="Email" value={client.email} />
-              </ToolsDetailFields>
-            ) : null}
-            {isAdmin && hasDistributorInfo ? (
-              <div className={client ? "border-t border-border pt-4" : undefined}>
-                <div className="mb-3 flex items-center gap-2">
-                  <Truck className="size-4 shrink-0 text-muted" aria-hidden />
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                    Distribuidor
-                  </p>
-                </div>
-                <ToolsDetailFields>
-                  <DetailField
-                    label="Nombre"
-                    value={printer.distributorName || "—"}
-                  />
-                  <DetailField
-                    label="RIF"
-                    value={printer.distributorRif || "—"}
-                    mono
-                  />
-                </ToolsDetailFields>
-              </div>
-            ) : null}
-          </div>
+            <ToolsPartyInfoFields party={client} />
+          </ToolsPanelSection>
+        ) : null}
+
+        {isAdmin && distributor ? (
+          <ToolsPanelSection
+            title="Información del distribuidor"
+            icon={Truck}
+            tone="slate"
+          >
+            <ToolsPartyInfoFields party={distributor} />
           </ToolsPanelSection>
         ) : null}
 

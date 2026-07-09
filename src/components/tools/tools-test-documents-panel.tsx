@@ -8,11 +8,10 @@ import {
   ScrollText,
 } from "lucide-react";
 import {
-  ToolsActionTile,
+  ToolsActionButton,
   ToolsPage,
-  ToolsPanelActions,
-  ToolsPanelSection,
   ToolsSectionHeading,
+  toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
@@ -32,26 +31,14 @@ const TEST_ACTIONS: Array<{
   action: TestAction;
   label: string;
   icon: typeof FileText;
-  tone: "amber" | "rose" | "sky" | "violet";
 }> = [
-  { action: "invoice", label: "Factura de prueba", icon: FileText, tone: "amber" },
-  {
-    action: "credit-note",
-    label: "NC de prueba",
-    icon: FileMinus,
-    tone: "rose",
-  },
-  {
-    action: "debit-note",
-    label: "ND de prueba",
-    icon: FilePlus,
-    tone: "sky",
-  },
+  { action: "invoice", label: "Factura de prueba", icon: FileText },
+  { action: "credit-note", label: "NC de prueba", icon: FileMinus },
+  { action: "debit-note", label: "ND de prueba", icon: FilePlus },
   {
     action: "generate-z",
     label: "Generar Z de prueba",
     icon: ScrollText,
-    tone: "violet",
   },
 ];
 
@@ -108,26 +95,22 @@ export function ToolsTestDocumentsPanel({ printer }: { printer: ToolsPrinter }) 
           description={section.description}
         />
 
-        <ToolsPanelSection
-          title="Comandos de prueba"
-          description="Cada acción envía un comando MQTT a la impresora."
-          icon={section.icon}
-          tone={section.tone}
-        >
-          <ToolsPanelActions>
-            {TEST_ACTIONS.map(({ action, label, icon, tone }) => (
-              <ToolsActionTile
+        <div className={toolsPanelSectionClass}>
+          <div className="flex flex-wrap gap-2">
+            {TEST_ACTIONS.map(({ action, label, icon: Icon }) => (
+              <ToolsActionButton
                 key={action}
-                label={label}
-                icon={icon}
-                tone={tone}
+                variant={action === "invoice" ? "primary" : "default"}
                 loading={loading === action}
                 disabled={loading != null}
                 onClick={() => void run(action)}
-              />
+              >
+                <Icon className="size-4 shrink-0" aria-hidden />
+                {label}
+              </ToolsActionButton>
             ))}
-          </ToolsPanelActions>
-        </ToolsPanelSection>
+          </div>
+        </div>
       </ToolsPage>
     </ToolsPrinterMacGuard>
   );
