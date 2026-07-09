@@ -111,7 +111,9 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
             onMenuClick={() => setMobileOpen(true)}
             sidebarCollapsed={collapsed}
           />
-          <main className="min-w-0 p-3 pt-14 sm:p-6 sm:pt-16 lg:p-8">{children}</main>
+          <main className="min-w-0 px-3 pb-3 pt-14 sm:px-6 sm:pb-6 sm:pt-16 lg:px-8 lg:pb-8 lg:pt-16">
+            {children}
+          </main>
         </div>
       </div>
       </RouteAccessGuard>

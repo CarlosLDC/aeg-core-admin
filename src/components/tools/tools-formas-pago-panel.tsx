@@ -14,7 +14,12 @@ import {
   readToolsFormasPago,
   writeToolsFormasPago,
 } from "@/lib/tools-mqtt-api";
-import { isFormaPagoDivisa } from "@/lib/tools-formas-pago";
+import {
+  isFormaPagoDivisa,
+  normalizeFormaPagoDescripcion,
+  FORMAS_PAGO_DESCRIPCION_MAX_LENGTH,
+  validateFormaPagoDescripcion,
+} from "@/lib/tools-formas-pago";
 import type { ToolsFormasPagoItem } from "@/types/tools-mqtt";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
@@ -73,8 +78,9 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
     if (isFormaPagoDivisa(nro)) return;
 
     const descripcion = drafts[nro]?.trim() ?? "";
-    if (!descripcion) {
-      toast.error("La descripción no puede estar vacía.");
+    const validationError = validateFormaPagoDescripcion(descripcion);
+    if (validationError) {
+      toast.error(validationError);
       return;
     }
 
@@ -167,11 +173,14 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
                       <input
                         type="text"
                         value={draft}
+                        maxLength={FORMAS_PAGO_DESCRIPCION_MAX_LENGTH}
                         disabled={loading || isSaving}
                         onChange={(e) =>
                           setDrafts((current) => ({
                             ...current,
-                            [item.nro]: e.target.value,
+                            [item.nro]: normalizeFormaPagoDescripcion(
+                              e.target.value,
+                            ),
                           }))
                         }
                         onKeyDown={(e) => {
@@ -186,7 +195,13 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
                       <ToolsActionButton
                         variant={isDirty ? "primary" : "default"}
                         loading={isSaving}
-                        disabled={loading || isSaving || !isDirty || !draft.trim()}
+                        disabled={
+                          loading ||
+                          isSaving ||
+                          !isDirty ||
+                          !draft.trim() ||
+                          validateFormaPagoDescripcion(draft) != null
+                        }
                         onClick={() => void saveItem(item.nro)}
                         className="w-full shrink-0 sm:w-auto"
                       >

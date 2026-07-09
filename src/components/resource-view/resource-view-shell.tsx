@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { TruncatedText } from "@/components/ui/truncated-text";
+import { cn } from "@/lib/utils";
 
 type ResourceViewShellProps = {
   backHref?: string;
@@ -28,13 +29,20 @@ export function ResourceViewShell({
   return (
     <div className="space-y-6">
       {backHref ? (
-        <Link
-          href={backHref}
-          className="inline-flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-foreground"
+        <div
+          className={cn(
+            "sticky top-14 z-20 -mx-3 bg-background/95 px-3 py-2 backdrop-blur-md supports-[backdrop-filter]:bg-background/80",
+            "sm:-mx-6 sm:px-6 sm:top-16 lg:-mx-8 lg:px-8",
+          )}
         >
-          <ArrowLeft className="size-4" aria-hidden />
-          {backLabel ?? "Volver"}
-        </Link>
+          <Link
+            href={backHref}
+            className="inline-flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" aria-hidden />
+            {backLabel ?? "Volver"}
+          </Link>
+        </div>
       ) : null}
 
       {title || subtitle || actions ? (
