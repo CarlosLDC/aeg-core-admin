@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AlignLeft, AlignRight } from "lucide-react";
+import { AlignLeft, AlignRight, Loader2 } from "lucide-react";
 import {
   ToolsActionButton,
   ToolsPage,
@@ -23,11 +23,79 @@ import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { formFieldTextareaClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
 
+type HeaderFooterBlockProps = {
+  title: string;
+  icon: typeof AlignLeft;
+  tone: (typeof TOOLS_SECTIONS)["headerFooter"]["tone"];
+  value: string;
+  baseline: string;
+  loading: boolean;
+  saving: boolean;
+  busy: boolean;
+  loadingMessage: string;
+  onChange: (value: string) => void;
+  onSave: () => void | Promise<void>;
+  onRevert: () => void;
+};
+
+function HeaderFooterBlock({
+  title,
+  icon,
+  tone,
+  value,
+  baseline,
+  loading,
+  saving,
+  busy,
+  loadingMessage,
+  onChange,
+  onSave,
+  onRevert,
+}: HeaderFooterBlockProps) {
+  const isDirty = value !== baseline;
+
+  return (
+    <ToolsPanelSection title={title} icon={icon} tone={tone}>
+      {loading ? (
+        <div className="flex items-center gap-2 py-8 text-sm text-muted">
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+          {loadingMessage}
+        </div>
+      ) : (
+        <>
+          <textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            rows={6}
+            className={formFieldTextareaClass}
+            disabled={busy}
+          />
+          <ToolsPanelActions className="mt-3">
+            <ToolsActionButton
+              variant="primary"
+              loading={saving}
+              disabled={busy || !isDirty}
+              onClick={() => void onSave()}
+            >
+              Guardar
+            </ToolsActionButton>
+            <ToolsActionButton disabled={busy || !isDirty} onClick={onRevert}>
+              Revertir
+            </ToolsActionButton>
+          </ToolsPanelActions>
+        </>
+      )}
+    </ToolsPanelSection>
+  );
+}
+
 export function ToolsHeaderFooterPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.headerFooter;
   const [headerContent, setHeaderContent] = useState("");
+  const [headerBaseline, setHeaderBaseline] = useState("");
   const [footerContent, setFooterContent] = useState("");
+  const [footerBaseline, setFooterBaseline] = useState("");
   const [loadingHeader, setLoadingHeader] = useState(false);
   const [loadingFooter, setLoadingFooter] = useState(false);
   const [savingHeader, setSavingHeader] = useState(false);
@@ -36,43 +104,35 @@ export function ToolsHeaderFooterPanel({ printer }: { printer: ToolsPrinter }) {
 
   const isBusy = loadingHeader || loadingFooter || savingHeader || savingFooter;
 
-  const loadHeader = useCallback(
-    async (options?: { notify?: boolean }) => {
-      setLoadingHeader(true);
-      try {
-        const result = await readToolsHeader(printer.id);
-        setHeaderContent(result.content ?? "");
-        if (options?.notify) {
-          toast.success("Encabezado leído.");
-        }
-      } catch (err) {
-        toast.error(getToolsMqttErrorMessage(err));
-        throw err;
-      } finally {
-        setLoadingHeader(false);
-      }
-    },
-    [printer.id, toast],
-  );
+  const loadHeader = useCallback(async () => {
+    setLoadingHeader(true);
+    try {
+      const result = await readToolsHeader(printer.id);
+      const content = result.content ?? "";
+      setHeaderContent(content);
+      setHeaderBaseline(content);
+    } catch (err) {
+      toast.error(getToolsMqttErrorMessage(err));
+      throw err;
+    } finally {
+      setLoadingHeader(false);
+    }
+  }, [printer.id, toast]);
 
-  const loadFooter = useCallback(
-    async (options?: { notify?: boolean }) => {
-      setLoadingFooter(true);
-      try {
-        const result = await readToolsFooter(printer.id);
-        setFooterContent(result.content ?? "");
-        if (options?.notify) {
-          toast.success("Pie de página leído.");
-        }
-      } catch (err) {
-        toast.error(getToolsMqttErrorMessage(err));
-        throw err;
-      } finally {
-        setLoadingFooter(false);
-      }
-    },
-    [printer.id, toast],
-  );
+  const loadFooter = useCallback(async () => {
+    setLoadingFooter(true);
+    try {
+      const result = await readToolsFooter(printer.id);
+      const content = result.content ?? "";
+      setFooterContent(content);
+      setFooterBaseline(content);
+    } catch (err) {
+      toast.error(getToolsMqttErrorMessage(err));
+      throw err;
+    } finally {
+      setLoadingFooter(false);
+    }
+  }, [printer.id, toast]);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,6 +160,7 @@ export function ToolsHeaderFooterPanel({ printer }: { printer: ToolsPrinter }) {
     setSavingHeader(true);
     try {
       const result = await writeToolsHeader(printer.id, headerContent);
+      setHeaderBaseline(headerContent);
       toast.success(result.message ?? "Encabezado actualizado.");
     } catch (err) {
       toast.error(getToolsMqttErrorMessage(err));
@@ -112,6 +173,7 @@ export function ToolsHeaderFooterPanel({ printer }: { printer: ToolsPrinter }) {
     setSavingFooter(true);
     try {
       const result = await writeToolsFooter(printer.id, footerContent);
+      setFooterBaseline(footerContent);
       toast.success(result.message ?? "Pie actualizado.");
     } catch (err) {
       toast.error(getToolsMqttErrorMessage(err));
@@ -131,67 +193,35 @@ export function ToolsHeaderFooterPanel({ printer }: { printer: ToolsPrinter }) {
         />
 
         <ToolsPanelGrid className="xl:grid-cols-2">
-          <ToolsPanelSection
+          <HeaderFooterBlock
             title="Encabezado fiscal"
             icon={AlignLeft}
             tone={section.tone}
-          >
-            <textarea
-              value={headerContent}
-              onChange={(e) => setHeaderContent(e.target.value)}
-              rows={6}
-              className={formFieldTextareaClass}
-              disabled={isBusy || !initialLoadDone}
-            />
-            <ToolsPanelActions className="mt-3">
-              <ToolsActionButton
-                loading={loadingHeader}
-                disabled={isBusy}
-                onClick={() => void loadHeader({ notify: true })}
-              >
-                Leer
-              </ToolsActionButton>
-              <ToolsActionButton
-                variant="primary"
-                loading={savingHeader}
-                disabled={isBusy}
-                onClick={() => void saveHeader()}
-              >
-                Guardar
-              </ToolsActionButton>
-            </ToolsPanelActions>
-          </ToolsPanelSection>
+            value={headerContent}
+            baseline={headerBaseline}
+            loading={loadingHeader && !initialLoadDone}
+            saving={savingHeader}
+            busy={isBusy}
+            loadingMessage="Leyendo encabezado de la impresora…"
+            onChange={setHeaderContent}
+            onSave={saveHeader}
+            onRevert={() => setHeaderContent(headerBaseline)}
+          />
 
-          <ToolsPanelSection
+          <HeaderFooterBlock
             title="Pie de página"
             icon={AlignRight}
             tone={section.tone}
-          >
-            <textarea
-              value={footerContent}
-              onChange={(e) => setFooterContent(e.target.value)}
-              rows={6}
-              className={formFieldTextareaClass}
-              disabled={isBusy || !initialLoadDone}
-            />
-            <ToolsPanelActions className="mt-3">
-              <ToolsActionButton
-                loading={loadingFooter}
-                disabled={isBusy}
-                onClick={() => void loadFooter({ notify: true })}
-              >
-                Leer
-              </ToolsActionButton>
-              <ToolsActionButton
-                variant="primary"
-                loading={savingFooter}
-                disabled={isBusy}
-                onClick={() => void saveFooter()}
-              >
-                Guardar
-              </ToolsActionButton>
-            </ToolsPanelActions>
-          </ToolsPanelSection>
+            value={footerContent}
+            baseline={footerBaseline}
+            loading={!initialLoadDone}
+            saving={savingFooter}
+            busy={isBusy}
+            loadingMessage="Leyendo pie de página de la impresora…"
+            onChange={setFooterContent}
+            onSave={saveFooter}
+            onRevert={() => setFooterContent(footerBaseline)}
+          />
         </ToolsPanelGrid>
       </ToolsPage>
     </ToolsPrinterMacGuard>
