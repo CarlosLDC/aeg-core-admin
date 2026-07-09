@@ -76,6 +76,9 @@ export function useToolsPrinters() {
         printers: scoped,
         clients: catalog.clients,
         models: catalog.models,
+        distributors: catalog.distributors,
+        branches: catalog.branches,
+        companies: catalog.companies,
         role: user.role,
       });
       setAllPrinters(mapped);

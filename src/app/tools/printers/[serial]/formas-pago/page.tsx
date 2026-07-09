@@ -4,18 +4,13 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { ToolsPrinterSubPage } from "@/components/tools/tools-printer-sub-page";
 import { ToolsFormasPagoPanel } from "@/components/tools/tools-formas-pago-panel";
+import { toolsPageTitle } from "@/lib/tools-page-titles";
 
 export default function ToolsPrinterFormasPagoPage() {
   return (
-    <AdminShell
-      title="AEG Tools"
-      description="Formas de pago de la impresora fiscal."
-    >
+    <AdminShell title={toolsPageTitle("Formas de pago")}>
       <RoleGuard path="/tools">
-        <ToolsPrinterSubPage
-          title="Formas de pago"
-          description="Consultar y editar medios de pago"
-        >
+        <ToolsPrinterSubPage>
           {(printer) => <ToolsFormasPagoPanel printer={printer} />}
         </ToolsPrinterSubPage>
       </RoleGuard>

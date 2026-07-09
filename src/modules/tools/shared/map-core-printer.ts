@@ -1,3 +1,4 @@
+import { formatBranchShort } from "@/lib/branches";
 import {
   adaptStatusTerminology,
   extractLocation,
@@ -7,12 +8,41 @@ import type {
   ToolsPrinter,
   ToolsPrinterClientSummary,
 } from "@/modules/tools/shared/types";
-import { printerModelLabel } from "@/lib/printer-form";
 import { printerStatusLabel, normalizePrinterStatus } from "@/lib/printer-status";
-import type { ClientResponse } from "@/types/branch-role";
+import type { BranchResponse } from "@/types/branch";
+import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
+import type { CompanyResponse } from "@/types/company";
 import type { PrinterModelResponse } from "@/types/printer-model";
 import type { PrinterResponse } from "@/types/printer";
 import type { Role } from "@/types/user";
+
+function companyRifForBranch(
+  branchId: number | null | undefined,
+  branches: BranchResponse[],
+  companies: CompanyResponse[],
+): string {
+  if (branchId == null) return "";
+  const branch = branches.find((b) => b.id === branchId);
+  if (!branch) return "";
+  return companies.find((c) => c.id === branch.companyId)?.rif?.trim() ?? "";
+}
+
+function distributorDisplay(
+  distributorId: number | null | undefined,
+  distributors: DistributorResponse[],
+  branches: BranchResponse[],
+  companies: CompanyResponse[],
+): { name: string; rif: string } {
+  if (distributorId == null) return { name: "", rif: "" };
+  const distributor = distributors.find((d) => d.id === distributorId);
+  if (!distributor) return { name: "", rif: "" };
+  const branch = branches.find((b) => b.id === distributor.branchId);
+  if (!branch) return { name: "", rif: "" };
+  return {
+    name: formatBranchShort(branch, companies),
+    rif: companyRifForBranch(branch.id, branches, companies),
+  };
+}
 
 export function extractClientSummary(
   client: ClientResponse | null | undefined,
@@ -47,9 +77,20 @@ export function mapCorePrinterToTools(options: {
   printer: PrinterResponse;
   client?: ClientResponse | null;
   model?: PrinterModelResponse | null;
+  distributors?: DistributorResponse[];
+  branches?: BranchResponse[];
+  companies?: CompanyResponse[];
   role: Role;
 }): ToolsPrinter {
-  const { printer, client, model, role } = options;
+  const {
+    printer,
+    client,
+    model,
+    distributors = [],
+    branches = [],
+    companies = [],
+    role,
+  } = options;
   const clientSummary = extractClientSummary(client);
   const { marca, modelo } = resolveModelParts(printer, model);
   const estadoBase = printerStatusLabel(printer.status);
@@ -62,6 +103,13 @@ export function mapCorePrinterToTools(options: {
     branchCity: client?.branchCity,
     branchAddress: client?.branchAddress,
   });
+  const ciudad = client?.branchCity?.trim() || "";
+  const distributor = distributorDisplay(
+    printer.distributorId,
+    distributors,
+    branches,
+    companies,
+  );
 
   return {
     id: printer.id,
@@ -73,8 +121,11 @@ export function mapCorePrinterToTools(options: {
     status: normalizePrinterStatus(printer.status),
     firmware: printer.versionFirmware?.trim() || "N/A",
     ubicacion,
+    ciudad,
     rifCliente: client?.companyRif?.trim() || "",
     rifName: client?.companyBusinessName?.trim() || "",
+    distributorName: distributor.name,
+    distributorRif: distributor.rif,
     reporteX: "No disponible",
     clientId: printer.clientId,
     clientSummary,
@@ -85,6 +136,9 @@ export function mapCorePrintersToTools(options: {
   printers: PrinterResponse[];
   clients: ClientResponse[];
   models: PrinterModelResponse[];
+  distributors?: DistributorResponse[];
+  branches?: BranchResponse[];
+  companies?: CompanyResponse[];
   role: Role;
 }): ToolsPrinter[] {
   const clientById = new Map(options.clients.map((client) => [client.id, client]));
@@ -98,6 +152,9 @@ export function mapCorePrintersToTools(options: {
           ? clientById.get(printer.clientId) ?? null
           : null,
       model: modelById.get(printer.modelId) ?? null,
+      distributors: options.distributors,
+      branches: options.branches,
+      companies: options.companies,
       role: options.role,
     }),
   );

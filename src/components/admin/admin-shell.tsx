@@ -82,7 +82,7 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
   return (
     <AuthGuard>
       <RouteAccessGuard>
-      <div className="min-h-screen overflow-x-hidden bg-background">
+      <div className="min-h-screen bg-background">
         {mobileOpen && (
           <button
             type="button"
@@ -109,8 +109,9 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
             title={title}
             description={description}
             onMenuClick={() => setMobileOpen(true)}
+            sidebarCollapsed={collapsed}
           />
-          <main className="min-w-0 p-3 sm:p-6 lg:p-8">{children}</main>
+          <main className="min-w-0 p-3 pt-14 sm:p-6 sm:pt-16 lg:p-8">{children}</main>
         </div>
       </div>
       </RouteAccessGuard>

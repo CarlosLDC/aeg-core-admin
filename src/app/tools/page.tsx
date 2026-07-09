@@ -4,10 +4,7 @@ import { ToolsPrintersManager } from "@/components/tools/tools-printers-manager"
 
 export default function ToolsHomePage() {
   return (
-    <AdminShell
-      title="AEG Tools"
-      description="Operaciones de campo sobre impresoras fiscales en producción."
-    >
+    <AdminShell title="AEG Tools">
       <RoleGuard path="/tools">
         <ToolsPrintersManager />
       </RoleGuard>

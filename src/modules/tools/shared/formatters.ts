@@ -232,8 +232,11 @@ export function filterPrinters(
       printer.estado,
       printer.firmware,
       printer.ubicacion,
+      printer.ciudad,
       printer.rifCliente,
       printer.rifName,
+      printer.distributorName,
+      printer.distributorRif,
     ]
       .join(" ")
       .toLowerCase();

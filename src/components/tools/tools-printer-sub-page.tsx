@@ -9,16 +9,10 @@ import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { toolsPrinterPath } from "@/lib/resource-routes";
 
 type ToolsPrinterSubPageProps = {
-  title: string;
-  description: string;
   children: (printer: ToolsPrinter) => React.ReactNode;
 };
 
-export function ToolsPrinterSubPage({
-  title,
-  description,
-  children,
-}: ToolsPrinterSubPageProps) {
+export function ToolsPrinterSubPage({ children }: ToolsPrinterSubPageProps) {
   const params = useParams();
   const serial = typeof params.serial === "string" ? params.serial : "";
   const { loading, error, reload, findBySerial } = useToolsPrinters();
@@ -26,7 +20,7 @@ export function ToolsPrinterSubPage({
 
   if (loading && !printer) {
     return (
-      <ResourceViewShell loading title={title}>
+      <ResourceViewShell loading>
         {null}
       </ResourceViewShell>
     );
@@ -51,8 +45,6 @@ export function ToolsPrinterSubPage({
     <ResourceViewShell
       backHref={toolsPrinterPath(printer.serial)}
       backLabel="Volver al detalle"
-      title={title}
-      subtitle={`${description} — ${printer.serial}`}
     >
       {children(printer)}
     </ResourceViewShell>

@@ -2,21 +2,34 @@
 
 import { LogOut, Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/admin/theme-toggle";
+import { NotificationsBell } from "@/components/admin/notifications-bell";
 import { useAuth } from "@/context/auth-provider";
 import { ROLE_LABELS } from "@/lib/roles";
-import { NotificationsBell } from "@/components/admin/notifications-bell";
+import { cn } from "@/lib/utils";
 
 type HeaderProps = {
   title: string;
   description?: string;
   onMenuClick: () => void;
+  sidebarCollapsed?: boolean;
 };
 
-export function Header({ title, description, onMenuClick }: HeaderProps) {
+export function Header({
+  title,
+  description,
+  onMenuClick,
+  sidebarCollapsed = false,
+}: HeaderProps) {
   const { user, logout } = useAuth();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-md">
+    <header
+      className={cn(
+        "fixed top-0 right-0 z-30 border-b border-border bg-background/95 backdrop-blur-md transition-[left] duration-300 ease-out supports-[backdrop-filter]:bg-background/80",
+        "left-0",
+        sidebarCollapsed ? "lg:left-[72px]" : "lg:left-64",
+      )}
+    >
       <div className="flex h-14 items-center gap-2 px-3 sm:h-16 sm:gap-4 sm:px-6 lg:px-8">
         <button
           type="button"

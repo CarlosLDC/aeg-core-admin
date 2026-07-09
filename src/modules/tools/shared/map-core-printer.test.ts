@@ -68,6 +68,7 @@ describe("mapCorePrinterToTools", () => {
     expect(mapped.status).toBe("enajenada");
     expect(mapped.rifCliente).toBe("J-12345678-9");
     expect(mapped.ubicacion).toBe("Distrito Capital");
+    expect(mapped.ciudad).toBe("Caracas");
     expect(mapped.clientSummary?.email).toBe("demo@example.com");
   });
 

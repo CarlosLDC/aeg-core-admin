@@ -8,7 +8,6 @@ import {
   Printer,
   RefreshCw,
 } from "lucide-react";
-import { ToolsPrinterStatusBadge } from "@/components/tools/tools-printer-status-badge";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import {
   PageToolbar,
@@ -50,9 +49,18 @@ import { PRINTER_STATUSES } from "@/types/printer";
 import { isDistributorPanelRole } from "@/types/user";
 import { cn } from "@/lib/utils";
 
-type ToolsPrinterSortKey = "serial" | "modelo" | "estado" | "cliente" | "firmware";
+type ToolsPrinterSortKey =
+  | "serial"
+  | "ciudad"
+  | "cliente"
+  | "distribuidor"
+  | "firmware";
 
 const TOOLS_PAGE_SIZE = 10;
+const DEFAULT_TOOLS_SORT: TableSortState<ToolsPrinterSortKey> = {
+  key: "serial",
+  direction: "asc",
+};
 
 const STATUS_COUNTER_FILTERS: Array<{
   bucket: ToolsStatusBucket;
@@ -110,16 +118,16 @@ function compareToolsPrinters(
   switch (key) {
     case "serial":
       return a.serial.localeCompare(b.serial, "es");
-    case "modelo":
-      return `${a.marca} ${a.modelo}`.localeCompare(
-        `${b.marca} ${b.modelo}`,
-        "es",
-      );
-    case "estado":
-      return a.estado.localeCompare(b.estado, "es");
+    case "ciudad":
+      return a.ciudad.localeCompare(b.ciudad, "es");
     case "cliente":
       return (a.rifName || a.rifCliente || "").localeCompare(
         b.rifName || b.rifCliente || "",
+        "es",
+      );
+    case "distribuidor":
+      return (a.distributorName || a.distributorRif || "").localeCompare(
+        b.distributorName || b.distributorRif || "",
         "es",
       );
     case "firmware":
@@ -143,35 +151,44 @@ export function ToolsPrintersManager() {
   } = useToolsPrinters();
 
   const isDistributor = role != null && isDistributorPanelRole(role);
+  const isAdmin = role === "ADMIN";
   const [statusBucket, setStatusBucket] = useState<ToolsStatusBucket>("all");
   const [distributorFilter, setDistributorFilter] =
     useState<DistributorPrinterQuickFilter>("all");
   const [adminStatusFilter, setAdminStatusFilter] = useState<
     PrinterStatus | "all"
   >("all");
-  const [sort, setSort] = useState<TableSortState<ToolsPrinterSortKey>>(null);
+  const [missingMacFilter, setMissingMacFilter] = useState(false);
+  const [sort, setSort] =
+    useState<TableSortState<ToolsPrinterSortKey>>(DEFAULT_TOOLS_SORT);
 
   const statusFiltered = useMemo(() => {
+    let rows = searchResults;
+
     if (isDistributor) {
       if (statusBucket !== "all") {
-        return filterToolsPrintersByStatus(searchResults, statusBucket);
+        rows = filterToolsPrintersByStatus(rows, statusBucket);
+      } else if (distributorFilter !== "all") {
+        rows = rows.filter(
+          (printer) => printer.status === distributorFilter,
+        );
       }
-      if (distributorFilter === "all") return searchResults;
-      return searchResults.filter(
-        (printer) => printer.status === distributorFilter,
-      );
+    } else if (adminStatusFilter !== "all") {
+      rows = rows.filter((printer) => printer.status === adminStatusFilter);
     }
 
-    if (adminStatusFilter === "all") return searchResults;
-    return searchResults.filter(
-      (printer) => printer.status === adminStatusFilter,
-    );
+    if (missingMacFilter) {
+      rows = rows.filter((printer) => !printer.macAddress);
+    }
+
+    return rows;
   }, [
     searchResults,
     isDistributor,
     statusBucket,
     distributorFilter,
     adminStatusFilter,
+    missingMacFilter,
   ]);
 
   const sortedPrinters = useMemo(() => {
@@ -179,9 +196,9 @@ export function ToolsPrintersManager() {
       Record<ToolsPrinterSortKey, (a: ToolsPrinter, b: ToolsPrinter) => number>
     > = {
       serial: (a, b) => compareToolsPrinters(a, b, "serial"),
-      modelo: (a, b) => compareToolsPrinters(a, b, "modelo"),
-      estado: (a, b) => compareToolsPrinters(a, b, "estado"),
+      ciudad: (a, b) => compareToolsPrinters(a, b, "ciudad"),
       cliente: (a, b) => compareToolsPrinters(a, b, "cliente"),
+      distribuidor: (a, b) => compareToolsPrinters(a, b, "distribuidor"),
       firmware: (a, b) => compareToolsPrinters(a, b, "firmware"),
     };
     return sortTableRows(statusFiltered, sort, comparators);
@@ -213,6 +230,7 @@ export function ToolsPrintersManager() {
     setStatusBucket("all");
     setDistributorFilter("all");
     setAdminStatusFilter("all");
+    setMissingMacFilter(false);
   }
 
   function handleStatusCounterClick(bucket: ToolsStatusBucket) {
@@ -237,18 +255,32 @@ export function ToolsPrintersManager() {
       )}
 
       {!loading && !error && missingMacCount > 0 && (
-        <p
+        <div
           role="status"
-          className="flex items-start gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100"
+          className="flex flex-col gap-3 rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between dark:text-amber-100"
         >
-          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-          <span>
-            {missingMacCount === 1
-              ? "1 impresora no tiene MAC registrada"
-              : `${missingMacCount} impresoras no tienen MAC registrada`}
-            . Las operaciones MQTT requieren MAC en la fase 2.
-          </span>
-        </p>
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>
+              {missingMacCount === 1
+                ? "1 impresora no tiene MAC registrada"
+                : `${missingMacCount} impresoras no tienen MAC registrada`}
+              . Las operaciones MQTT requieren MAC en la fase 2.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMissingMacFilter((current) => !current)}
+            className={cn(
+              pageToolbarButtonClass,
+              "shrink-0 border border-amber-500/35 bg-card text-amber-900 hover:bg-amber-500/10 dark:text-amber-100",
+              missingMacFilter &&
+                "border-amber-600/50 bg-amber-500/15 ring-1 ring-amber-500/25",
+            )}
+          >
+            {missingMacFilter ? "Mostrar todas" : "Ver sin MAC"}
+          </button>
+        </div>
       )}
 
       <PageToolbar
@@ -322,7 +354,7 @@ export function ToolsPrintersManager() {
             <DataTableToolbar
               search={query}
               onSearchChange={setQuery}
-              searchPlaceholder="Buscar por serial, MAC, modelo, cliente…"
+              searchPlaceholder="Buscar por serial, cliente, ciudad, distribuidor…"
               resultCount={statusFiltered.length}
               totalCount={allPrinters.length}
               filters={
@@ -352,7 +384,7 @@ export function ToolsPrintersManager() {
             ) : (
               <>
                 <TableScroll>
-                  <table className="w-full min-w-[960px] text-left text-sm">
+                  <table className="w-full min-w-[760px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <SortableTableHeader
@@ -366,28 +398,14 @@ export function ToolsPrintersManager() {
                             )
                           }
                         />
-                        <th className="whitespace-nowrap px-5 py-3 font-medium">
-                          MAC
-                        </th>
                         <SortableTableHeader
-                          label="Modelo"
+                          label="Ciudad"
                           sortDirection={
-                            sort?.key === "modelo" ? sort.direction : null
+                            sort?.key === "ciudad" ? sort.direction : null
                           }
                           onToggle={() =>
                             setSort((current) =>
-                              toggleTableSort(current, "modelo"),
-                            )
-                          }
-                        />
-                        <SortableTableHeader
-                          label="Estado"
-                          sortDirection={
-                            sort?.key === "estado" ? sort.direction : null
-                          }
-                          onToggle={() =>
-                            setSort((current) =>
-                              toggleTableSort(current, "estado"),
+                              toggleTableSort(current, "ciudad"),
                             )
                           }
                         />
@@ -405,6 +423,21 @@ export function ToolsPrintersManager() {
                         <th className="whitespace-nowrap px-5 py-3 font-medium">
                           Ubicación
                         </th>
+                        {isAdmin ? (
+                          <SortableTableHeader
+                            label="Distribuidor"
+                            sortDirection={
+                              sort?.key === "distribuidor"
+                                ? sort.direction
+                                : null
+                            }
+                            onToggle={() =>
+                              setSort((current) =>
+                                toggleTableSort(current, "distribuidor"),
+                              )
+                            }
+                          />
+                        ) : null}
                         <SortableTableHeader
                           label="Cliente"
                           sortDirection={
@@ -425,41 +458,24 @@ export function ToolsPrintersManager() {
                           key={printer.id}
                           href={toolsPrinterPath(printer.serial)}
                         >
-                          <td className="px-5 py-3 font-medium tabular-nums">
-                            {printer.serial}
-                          </td>
                           <td className="px-5 py-3">
-                            {printer.macAddress ? (
-                              <TruncatedText className="font-mono text-xs">
-                                {printer.macAddress}
-                              </TruncatedText>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
-                                <AlertTriangle
-                                  className="size-3 shrink-0"
-                                  aria-hidden
-                                />
-                                Sin MAC
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-medium tabular-nums text-card-foreground">
+                                {printer.serial}
                               </span>
-                            )}
-                          </td>
-                          <td className="px-5 py-3">
-                            <div className="min-w-0">
-                              <p className="truncate font-medium">
-                                {printer.modelo}
-                              </p>
-                              {printer.marca ? (
-                                <p className="truncate text-xs text-muted">
-                                  {printer.marca}
-                                </p>
+                              {!printer.macAddress ? (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
+                                  <AlertTriangle
+                                    className="size-3 shrink-0"
+                                    aria-hidden
+                                  />
+                                  Sin MAC
+                                </span>
                               ) : null}
                             </div>
                           </td>
                           <td className="px-5 py-3">
-                            <ToolsPrinterStatusBadge
-                              status={printer.status}
-                              label={printer.estado}
-                            />
+                            <TruncatedText>{printer.ciudad || "—"}</TruncatedText>
                           </td>
                           <td className="px-5 py-3 tabular-nums">
                             {printer.firmware}
@@ -467,6 +483,20 @@ export function ToolsPrintersManager() {
                           <td className="px-5 py-3">
                             <TruncatedText>{printer.ubicacion}</TruncatedText>
                           </td>
+                          {isAdmin ? (
+                            <td className="px-5 py-3">
+                              <div className="min-w-0">
+                                <TruncatedText className="font-medium">
+                                  {printer.distributorName || "—"}
+                                </TruncatedText>
+                                {printer.distributorRif ? (
+                                  <p className="truncate text-xs text-muted">
+                                    {printer.distributorRif}
+                                  </p>
+                                ) : null}
+                              </div>
+                            </td>
+                          ) : null}
                           <td className="px-5 py-3">
                             <div className="min-w-0">
                               <TruncatedText className="font-medium">
@@ -495,9 +525,11 @@ export function ToolsPrintersManager() {
         )}
       </div>
 
-      {activeStatusBucket != null ? (
+      {activeStatusBucket != null || missingMacFilter ? (
         <p className="text-center text-xs text-muted sm:text-left">
-          Filtro activo por contador.{" "}
+          {activeStatusBucket != null ? "Filtro activo por contador." : null}
+          {activeStatusBucket != null && missingMacFilter ? " " : null}
+          {missingMacFilter ? "Mostrando solo impresoras sin MAC." : null}{" "}
           <button
             type="button"
             onClick={clearStatusFilters}

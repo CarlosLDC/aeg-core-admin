@@ -16,8 +16,11 @@ export type ToolsPrinter = {
   status: PrinterStatus;
   firmware: string;
   ubicacion: string;
+  ciudad: string;
   rifCliente: string;
   rifName: string;
+  distributorName: string;
+  distributorRif: string;
   reporteX: string | number;
   clientId: number | null;
   clientSummary: ToolsPrinterClientSummary | null;

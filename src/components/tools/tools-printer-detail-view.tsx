@@ -33,7 +33,7 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
 
   if (loading && !printer) {
     return (
-      <ResourceViewShell loading title={serial}>
+      <ResourceViewShell loading>
         {null}
       </ResourceViewShell>
     );
@@ -69,12 +69,7 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
   const client = printer.clientSummary;
 
   return (
-    <ResourceViewShell
-      backHref={toolsListPath}
-      backLabel="Volver al listado"
-      title={printer.serial}
-      subtitle="Panel de operaciones de campo para la impresora seleccionada."
-    >
+    <ResourceViewShell backHref={toolsListPath} backLabel="Volver al listado">
       {!printer.macAddress ? (
         <ToolsMacWarning>
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
