@@ -1,17 +1,43 @@
 "use client";
 
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
+import type { ToolsSectionTone } from "@/lib/tools-sections";
 import { cn } from "@/lib/utils";
+
+const toolsToneBadgeClass: Record<ToolsSectionTone, string> = {
+  sky: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+  emerald: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+  violet: "bg-violet-500/15 text-violet-700 dark:text-violet-300",
+  amber: "bg-amber-500/15 text-amber-800 dark:text-amber-300",
+  indigo: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300",
+  teal: "bg-teal-500/15 text-teal-700 dark:text-teal-300",
+  rose: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
+  slate: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
+};
+
+const toolsToneHoverBorderClass: Record<ToolsSectionTone, string> = {
+  sky: "hover:border-sky-500/35 hover:bg-sky-500/[0.03]",
+  emerald: "hover:border-emerald-500/35 hover:bg-emerald-500/[0.03]",
+  violet: "hover:border-violet-500/35 hover:bg-violet-500/[0.03]",
+  amber: "hover:border-amber-500/35 hover:bg-amber-500/[0.03]",
+  indigo: "hover:border-indigo-500/35 hover:bg-indigo-500/[0.03]",
+  teal: "hover:border-teal-500/35 hover:bg-teal-500/[0.03]",
+  rose: "hover:border-rose-500/35 hover:bg-rose-500/[0.03]",
+  slate: "hover:border-slate-500/35 hover:bg-slate-500/[0.03]",
+};
 
 export const toolsPanelSectionClass =
   "rounded-xl border border-border bg-card p-5 shadow-sm";
 
+export const toolsSurfaceClass =
+  "rounded-xl border border-border bg-card shadow-sm";
+
 const toolsActionButtonDisabledClass =
   "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100";
 
-/** Base for MQTT action controls — solid/outline buttons, not filter toggles. */
 const toolsActionButtonBaseClass = cn(
   pageToolbarButtonClass,
   "border shadow-sm transition-[color,background-color,box-shadow,transform] active:scale-[0.98]",
@@ -36,7 +62,6 @@ export const toolsDangerButtonClass = cn(
 export const toolsListItemClass =
   "rounded-lg border border-border bg-background px-3 py-2 transition-colors hover:border-border/80 hover:bg-foreground/[0.03]";
 
-/** List rows that represent a persistent selection (not one-shot actions). */
 export function toolsSelectableListItemClass(selected: boolean): string {
   return cn(
     toolsListItemClass,
@@ -47,9 +72,213 @@ export function toolsSelectableListItemClass(selected: boolean): string {
   );
 }
 
+export function ToolsPage({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return <div className={cn("space-y-6", className)}>{children}</div>;
+}
+
+export function ToolsSectionGrid({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function ToolsPanelGrid({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+type ToolsIconBadgeProps = {
+  icon: LucideIcon;
+  tone: ToolsSectionTone;
+  size?: "sm" | "md" | "lg";
+  className?: string;
+};
+
+export function ToolsIconBadge({
+  icon: Icon,
+  tone,
+  size = "md",
+  className,
+}: ToolsIconBadgeProps) {
+  const sizeClass =
+    size === "sm"
+      ? "size-9 [&_svg]:size-4"
+      : size === "lg"
+        ? "size-12 [&_svg]:size-6"
+        : "size-10 [&_svg]:size-5";
+
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center rounded-xl",
+        sizeClass,
+        toolsToneBadgeClass[tone],
+        className,
+      )}
+      aria-hidden
+    >
+      <Icon />
+    </span>
+  );
+}
+
+export function ToolsSectionHeading({
+  icon,
+  tone,
+  title,
+  description,
+  actions,
+}: {
+  icon: LucideIcon;
+  tone: ToolsSectionTone;
+  title: string;
+  description?: string;
+  actions?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex min-w-0 items-start gap-3">
+        <ToolsIconBadge icon={icon} tone={tone} size="lg" />
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold tracking-tight text-card-foreground">
+            {title}
+          </h2>
+          {description ? (
+            <p className="mt-1 max-w-2xl text-sm text-muted">{description}</p>
+          ) : null}
+        </div>
+      </div>
+      {actions ? <div className="shrink-0">{actions}</div> : null}
+    </div>
+  );
+}
+
+export function ToolsNavCard({
+  href,
+  icon,
+  tone,
+  title,
+  description,
+}: {
+  href: string;
+  icon: LucideIcon;
+  tone: ToolsSectionTone;
+  title: string;
+  description: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "group flex h-full flex-col rounded-xl border border-border bg-card p-4 shadow-sm transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
+        toolsToneHoverBorderClass[tone],
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <ToolsIconBadge icon={icon} tone={tone} />
+        <ChevronRight
+          className="size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-foreground"
+          aria-hidden
+        />
+      </div>
+      <div className="mt-4 min-w-0 flex-1">
+        <p className="font-medium text-card-foreground">{title}</p>
+        <p className="mt-1 text-sm leading-snug text-muted">{description}</p>
+      </div>
+    </Link>
+  );
+}
+
+/** @deprecated Use ToolsNavCard */
+export function ToolsNavLink({
+  title,
+  description,
+  href,
+}: {
+  title: string;
+  description: string;
+  href: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group block rounded-xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-accent/40 hover:bg-accent/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+    >
+      <p className="font-medium text-card-foreground">{title}</p>
+      <p className="mt-1 text-sm text-muted">{description}</p>
+      <p className="mt-3 flex items-center gap-1 text-xs font-medium text-accent">
+        Abrir
+        <ChevronRight className="size-3.5 shrink-0" aria-hidden />
+      </p>
+    </Link>
+  );
+}
+
+export function ToolsMetricCard({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className={cn(toolsSurfaceClass, "p-4")}>
+      <p className="text-xs font-medium uppercase tracking-wide text-muted">
+        {label}
+      </p>
+      <p
+        className={cn(
+          "mt-2 text-sm font-medium text-card-foreground",
+          mono && "font-mono text-xs",
+        )}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
 type ToolsPanelSectionProps = {
   title: string;
   description?: string;
+  icon?: LucideIcon;
+  tone?: ToolsSectionTone;
   headerActions?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
@@ -58,6 +287,8 @@ type ToolsPanelSectionProps = {
 export function ToolsPanelSection({
   title,
   description,
+  icon,
+  tone = "slate",
   headerActions,
   children,
   className,
@@ -65,11 +296,16 @@ export function ToolsPanelSection({
   return (
     <section className={cn(toolsPanelSectionClass, className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-card-foreground">{title}</h3>
-          {description ? (
-            <p className="mt-1 text-sm text-muted">{description}</p>
-          ) : null}
+        <div className="flex min-w-0 items-start gap-3">
+          {icon ? <ToolsIconBadge icon={icon} tone={tone} size="sm" /> : null}
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-card-foreground">
+              {title}
+            </h3>
+            {description ? (
+              <p className="mt-1 text-sm text-muted">{description}</p>
+            ) : null}
+          </div>
         </div>
         {headerActions}
       </div>
@@ -89,11 +325,60 @@ export function ToolsPanelActions({
 }) {
   return (
     <div className={cn("space-y-2", className)}>
-      {hint ? (
-        <p className="text-xs text-muted">{hint}</p>
-      ) : null}
-      <div className="flex flex-wrap gap-2">{children}</div>
+      {hint ? <p className="text-xs text-muted">{hint}</p> : null}
+      <ToolsSectionGrid>{children}</ToolsSectionGrid>
     </div>
+  );
+}
+
+type ToolsActionTileProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  loading?: boolean;
+  variant?: "default" | "primary" | "danger";
+  label: string;
+  icon?: LucideIcon;
+  tone?: ToolsSectionTone;
+};
+
+export function ToolsActionTile({
+  loading,
+  variant = "default",
+  label,
+  icon,
+  tone = "slate",
+  className,
+  disabled,
+  ...props
+}: ToolsActionTileProps) {
+  const Icon = icon;
+  const variantClass =
+    variant === "primary"
+      ? "border-accent/30 bg-accent/[0.04] hover:border-accent/45 hover:bg-accent/[0.08]"
+      : variant === "danger"
+        ? "border-rose-500/30 bg-rose-500/[0.04] hover:border-rose-500/45 hover:bg-rose-500/[0.08]"
+        : cn("border-border bg-background hover:bg-foreground/[0.03]", toolsToneHoverBorderClass[tone]);
+
+  return (
+    <button
+      type="button"
+      {...props}
+      disabled={disabled || loading}
+      className={cn(
+        "flex min-h-[5.5rem] flex-col items-start justify-between gap-3 rounded-xl border p-4 text-left shadow-sm transition-colors",
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        variantClass,
+        className,
+      )}
+    >
+      <div className="flex w-full items-start justify-between gap-2">
+        {Icon ? <ToolsIconBadge icon={Icon} tone={tone} size="sm" /> : <span />}
+        {loading ? (
+          <Loader2 className="size-4 shrink-0 animate-spin text-muted" aria-hidden />
+        ) : null}
+      </div>
+      <span className="text-sm font-medium leading-snug text-card-foreground">
+        {label}
+      </span>
+    </button>
   );
 }
 
@@ -130,31 +415,9 @@ export function ToolsActionButton({
   );
 }
 
-type ToolsNavLinkProps = {
-  title: string;
-  description: string;
-  href: string;
-};
-
-export function ToolsNavLink({ title, description, href }: ToolsNavLinkProps) {
-  return (
-    <Link
-      href={href}
-      className="group block rounded-xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-accent/40 hover:bg-accent/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-    >
-      <p className="font-medium text-card-foreground">{title}</p>
-      <p className="mt-1 text-sm text-muted">{description}</p>
-      <p className="mt-3 flex items-center gap-1 text-xs font-medium text-accent">
-        Abrir
-        <ChevronRight className="size-3.5 shrink-0" aria-hidden />
-      </p>
-    </Link>
-  );
-}
-
 export function ToolsMacWarning({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
+    <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
       {children}
     </div>
   );

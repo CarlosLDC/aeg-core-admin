@@ -1,26 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Building2, LayoutGrid } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
-import {
-  DetailField,
-  DetailSection,
-} from "@/components/resource-view/detail-fields";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
-import { ToolsNavLink, ToolsMacWarning } from "@/components/tools/tools-ui";
+import {
+  ToolsMacWarning,
+  ToolsMetricCard,
+  ToolsNavCard,
+  ToolsPage,
+  ToolsPanelSection,
+  ToolsSectionGrid,
+  ToolsSectionHeading,
+} from "@/components/tools/tools-ui";
 import { ToolsPrinterStatusBar } from "@/components/tools/tools-printer-status-bar";
 import { ToolsReprintPanel } from "@/components/tools/tools-reprint-panel";
 import { ToolsTestDocumentsPanel } from "@/components/tools/tools-test-documents-panel";
 import { useToolsPrinters } from "@/modules/tools/printers/use-tools-printers";
 import {
-  toolsListPath,
-  toolsPrinterFormasPagoPath,
-  toolsPrinterReporteZPath,
-  toolsPrinterWifiPath,
-} from "@/lib/resource-routes";
+  TOOLS_PRINTER_NAV_SECTIONS,
+  TOOLS_SECTIONS,
+  toolsPrinterSectionHref,
+} from "@/lib/tools-sections";
+import { toolsListPath } from "@/lib/resource-routes";
 import { cn } from "@/lib/utils";
 
 type ToolsPrinterDetailViewProps = {
@@ -67,66 +71,95 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
   }
 
   const client = printer.clientSummary;
+  const summary = TOOLS_SECTIONS.summary;
 
   return (
     <ResourceViewShell backHref={toolsListPath} backLabel="Volver al listado">
-      {!printer.macAddress ? (
-        <ToolsMacWarning>
-          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-          <p>
-            Esta impresora no tiene dirección MAC registrada. Las operaciones MQTT
-            requieren MAC en el catálogo.
-          </p>
-        </ToolsMacWarning>
-      ) : null}
+      <ToolsPage>
+        {!printer.macAddress ? (
+          <ToolsMacWarning>
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <p>
+              Esta impresora no tiene dirección MAC registrada. Las operaciones MQTT
+              requieren MAC en el catálogo.
+            </p>
+          </ToolsMacWarning>
+        ) : null}
 
-      <ToolsPrinterStatusBar
-        printerId={printer.id}
-        macAddress={printer.macAddress}
-      />
+        <ToolsPrinterStatusBar
+          printerId={printer.id}
+          macAddress={printer.macAddress}
+        />
 
-      <DetailSection title="Resumen" layout="quad">
-        <DetailField label="Estado" value={printer.estado} />
-        <DetailField label="MAC" value={printer.macAddress ?? "Sin MAC"} mono />
-        <DetailField label="Firmware" value={printer.firmware} />
-        <DetailField label="Ubicación" value={printer.ubicacion} />
-      </DetailSection>
-
-      {client ? (
-        <DetailSection title="Información del cliente">
-          <DetailField label="Nombre" value={client.name} />
-          <DetailField label="Teléfono" value={client.phone} />
-          <DetailField label="Email" value={client.email} />
-        </DetailSection>
-      ) : null}
-
-      <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-card-foreground">Operaciones</h3>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <ToolsNavLink
-            title="Configurar WiFi"
-            description="Escanear redes y conectar la impresora."
-            href={toolsPrinterWifiPath(printer.serial)}
+        <section className="space-y-3">
+          <ToolsSectionHeading
+            icon={summary.icon}
+            tone={summary.tone}
+            title={summary.title}
+            description={summary.description}
           />
-          <ToolsNavLink
-            title="Reporte Z / Cierre"
-            description="Generar, transmitir y reimprimir reportes Z."
-            href={toolsPrinterReporteZPath(printer.serial)}
-          />
-          <ToolsNavLink
-            title="Formas de pago"
-            description="Consultar y editar descripciones de pago."
-            href={toolsPrinterFormasPagoPath(printer.serial)}
-          />
-        </div>
-      </section>
+          <ToolsSectionGrid>
+            <ToolsMetricCard label="Estado" value={printer.estado} />
+            <ToolsMetricCard
+              label="MAC"
+              value={printer.macAddress ?? "Sin MAC"}
+              mono
+            />
+            <ToolsMetricCard label="Firmware" value={printer.firmware} mono />
+            <ToolsMetricCard label="Ubicación" value={printer.ubicacion} />
+            <ToolsMetricCard label="Ciudad" value={printer.ciudad || "—"} />
+            <ToolsMetricCard
+              label="Cliente"
+              value={printer.rifName || printer.rifCliente || "—"}
+            />
+          </ToolsSectionGrid>
+        </section>
 
-      {printer.macAddress ? (
-        <>
-          <ToolsTestDocumentsPanel printer={printer} />
-          <ToolsReprintPanel printer={printer} />
-        </>
-      ) : null}
+        {client ? (
+          <ToolsPanelSection
+            title="Información del cliente"
+            icon={Building2}
+            tone="slate"
+          >
+            <ToolsSectionGrid>
+              <ToolsMetricCard label="Nombre" value={client.name} />
+              <ToolsMetricCard label="Teléfono" value={client.phone} />
+              <ToolsMetricCard label="Email" value={client.email} />
+            </ToolsSectionGrid>
+          </ToolsPanelSection>
+        ) : null}
+
+        <section className="space-y-3">
+          <ToolsSectionHeading
+            icon={LayoutGrid}
+            tone="indigo"
+            title="Operaciones"
+            description="Acceda a las herramientas MQTT disponibles para esta impresora."
+          />
+          <ToolsSectionGrid>
+            {TOOLS_PRINTER_NAV_SECTIONS.map((sectionKey) => {
+              const section = TOOLS_SECTIONS[sectionKey];
+              return (
+                <ToolsNavCard
+                  key={section.id}
+                  href={toolsPrinterSectionHref(printer.serial, sectionKey)}
+                  icon={section.icon}
+                  tone={section.tone}
+                  title={section.title}
+                  description={section.description}
+                />
+              );
+            })}
+          </ToolsSectionGrid>
+        </section>
+
+        {printer.macAddress ? (
+          <div className="space-y-4">
+            <ToolsTestDocumentsPanel printer={printer} />
+            <ToolsReprintPanel printer={printer} />
+          </div>
+        ) : null}
+      </ToolsPage>
     </ResourceViewShell>
   );
 }

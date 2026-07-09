@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { Link2, Power, Radio } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
   ToolsActionButton,
+  ToolsPage,
   ToolsPanelActions,
+  ToolsPanelGrid,
   ToolsPanelSection,
+  ToolsSectionHeading,
   toolsListItemClass,
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
@@ -16,6 +20,7 @@ import {
   resetToolsWifi,
   scanToolsWifi,
 } from "@/lib/tools-mqtt-api";
+import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
 import { cn } from "@/lib/utils";
@@ -26,6 +31,7 @@ type ToolsWifiPanelProps = {
 
 export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const toast = useToast();
+  const section = TOOLS_SECTIONS.wifi;
   const [ssid, setSsid] = useState("");
   const [password, setPassword] = useState("");
   const [networks, setNetworks] = useState<
@@ -64,84 +70,104 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
 
   return (
     <ToolsPrinterMacGuard macAddress={printer.macAddress}>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ToolsPanelSection
-          title="Escanear redes"
-          description="Consulta las redes WiFi detectadas por la impresora."
-        >
-          <ToolsActionButton
-            loading={loading === "scan"}
-            disabled={loading != null}
-            onClick={() => void run("scan")}
-          >
-            Escanear WiFi
-          </ToolsActionButton>
-          {networks.length > 0 ? (
-            <ul className="mt-4 space-y-2 text-sm" aria-label="Redes detectadas">
-              {networks.map((network) => (
-                <li
-                  key={network.ssid}
-                  className={cn(
-                    toolsListItemClass,
-                    "flex items-center justify-between",
-                  )}
-                >
-                  <button
-                    type="button"
-                    className="w-full text-left font-medium text-card-foreground transition-colors hover:text-accent"
-                    onClick={() => setSsid(network.ssid)}
-                  >
-                    {network.ssid}
-                  </button>
-                  {network.signal != null ? (
-                    <span className="text-muted">{network.signal} dBm</span>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </ToolsPanelSection>
+      <ToolsPage>
+        <ToolsSectionHeading
+          icon={section.icon}
+          tone={section.tone}
+          title={section.title}
+          description={section.description}
+        />
 
-        <ToolsPanelSection title="Conectar / reiniciar">
-          <div className="space-y-3">
-            <label className="block">
-              <FieldLabel className="text-muted">SSID</FieldLabel>
-              <input
-                value={ssid}
-                onChange={(e) => setSsid(e.target.value)}
-                className={formFieldInputClass}
-              />
-            </label>
-            <label className="block">
-              <FieldLabel className="text-muted">Contraseña</FieldLabel>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={formFieldInputClass}
-              />
-            </label>
-          </div>
-          <ToolsPanelActions className="mt-4">
+        <ToolsPanelGrid className="xl:grid-cols-2">
+          <ToolsPanelSection
+            title="Escanear redes"
+            description="Consulta las redes WiFi detectadas por la impresora."
+            icon={Radio}
+            tone="sky"
+          >
             <ToolsActionButton
-              variant="primary"
-              loading={loading === "connect"}
-              disabled={loading != null || !ssid.trim()}
-              onClick={() => void run("connect")}
-            >
-              Conectar
-            </ToolsActionButton>
-            <ToolsActionButton
-              variant="danger"
-              loading={loading === "reset"}
+              loading={loading === "scan"}
               disabled={loading != null}
-              onClick={() => void run("reset")}
+              onClick={() => void run("scan")}
             >
-              Reiniciar impresora
+              Escanear WiFi
             </ToolsActionButton>
-          </ToolsPanelActions>
-        </ToolsPanelSection>
-      </div>
+            {networks.length > 0 ? (
+              <ul
+                className="mt-4 space-y-2 text-sm"
+                aria-label="Redes detectadas"
+              >
+                {networks.map((network) => (
+                  <li
+                    key={network.ssid}
+                    className={cn(
+                      toolsListItemClass,
+                      "flex items-center justify-between",
+                    )}
+                  >
+                    <button
+                      type="button"
+                      className="w-full text-left font-medium text-card-foreground transition-colors hover:text-accent"
+                      onClick={() => setSsid(network.ssid)}
+                    >
+                      {network.ssid}
+                    </button>
+                    {network.signal != null ? (
+                      <span className="text-muted">{network.signal} dBm</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </ToolsPanelSection>
+
+          <ToolsPanelSection
+            title="Conectar / reiniciar"
+            description="Seleccione una red y envíe las credenciales a la impresora."
+            icon={Link2}
+            tone="sky"
+          >
+            <div className="space-y-3">
+              <label className="block">
+                <FieldLabel className="text-muted">SSID</FieldLabel>
+                <input
+                  value={ssid}
+                  onChange={(e) => setSsid(e.target.value)}
+                  className={formFieldInputClass}
+                />
+              </label>
+              <label className="block">
+                <FieldLabel className="text-muted">Contraseña</FieldLabel>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={formFieldInputClass}
+                />
+              </label>
+            </div>
+            <ToolsPanelActions className="mt-4">
+              <ToolsActionButton
+                variant="primary"
+                loading={loading === "connect"}
+                disabled={loading != null || !ssid.trim()}
+                onClick={() => void run("connect")}
+              >
+                Conectar
+              </ToolsActionButton>
+              <ToolsActionButton
+                variant="danger"
+                loading={loading === "reset"}
+                disabled={loading != null}
+                onClick={() => void run("reset")}
+              >
+                <Power className="size-4" aria-hidden />
+                Reiniciar
+              </ToolsActionButton>
+            </ToolsPanelActions>
+          </ToolsPanelSection>
+        </ToolsPanelGrid>
+      </ToolsPage>
     </ToolsPrinterMacGuard>
   );
 }

@@ -5,14 +5,11 @@ import {
   AlertTriangle,
   ChevronRight,
   Loader2,
-  Printer,
+  Printer as PrinterIcon,
   RefreshCw,
 } from "lucide-react";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
-import {
-  PageToolbar,
-  pageToolbarButtonClass,
-} from "@/components/ui/page-toolbar";
+import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
 import {
   TableQuickFilterButton,
   TableQuickFilters,
@@ -48,6 +45,10 @@ import type { PrinterStatus } from "@/types/printer";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { isDistributorPanelRole } from "@/types/user";
 import { cn } from "@/lib/utils";
+import {
+  ToolsPage,
+  ToolsSectionHeading,
+} from "@/components/tools/tools-ui";
 
 type ToolsPrinterSortKey =
   | "serial"
@@ -239,7 +240,7 @@ export function ToolsPrintersManager() {
   }
 
   return (
-    <div className="space-y-4">
+    <ToolsPage>
       {isDistributor && !loading && !error && allPrinters.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {STATUS_COUNTER_FILTERS.map((counter) => (
@@ -283,12 +284,11 @@ export function ToolsPrintersManager() {
         </div>
       )}
 
-      <PageToolbar
-        description={
-          !loading && !error && allPrinters.length > 0
-            ? `${allPrinters.length} impresora${allPrinters.length === 1 ? "" : "s"} en tu alcance operativo`
-            : undefined
-        }
+      <ToolsSectionHeading
+        icon={PrinterIcon}
+        tone="slate"
+        title="Impresoras"
+        description="Seleccione una impresora para abrir sus operaciones de campo."
         actions={
           <button
             type="button"
@@ -325,7 +325,7 @@ export function ToolsPrintersManager() {
           </div>
         ) : allPrinters.length === 0 ? (
           <EmptyState
-            icon={Printer}
+            icon={PrinterIcon}
             title="No hay impresoras disponibles"
             description="No se encontraron impresoras en tu alcance operativo."
           />
@@ -539,6 +539,6 @@ export function ToolsPrintersManager() {
           </button>
         </p>
       ) : null}
-    </div>
+    </ToolsPage>
   );
 }

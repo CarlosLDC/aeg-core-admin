@@ -1,11 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import {
+  AlignLeft,
+  AlignRight,
+  BarChart3,
+  Eye,
+  Printer,
+  X,
+} from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
   ToolsActionButton,
+  ToolsActionTile,
+  ToolsPage,
   ToolsPanelActions,
+  ToolsPanelGrid,
   ToolsPanelSection,
   toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
@@ -20,6 +30,7 @@ import {
   writeToolsFooter,
   writeToolsHeader,
 } from "@/lib/tools-mqtt-api";
+import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import {
   formFieldInputClass,
   formFieldNativeSelectClass,
@@ -34,6 +45,7 @@ type ToolsReprintPanelProps = {
 
 export function ToolsReprintPanel({ printer }: ToolsReprintPanelProps) {
   const toast = useToast();
+  const section = TOOLS_SECTIONS.reprint;
   const [docType, setDocType] = useState("FAC");
   const [number, setNumber] = useState("");
   const [headerContent, setHeaderContent] = useState("");
@@ -110,8 +122,13 @@ export function ToolsReprintPanel({ printer }: ToolsReprintPanelProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <ToolsPanelSection title="Reimpresión de documentos">
+    <ToolsPage>
+      <ToolsPanelSection
+        title={section.title}
+        description={section.description}
+        icon={section.icon}
+        tone={section.tone}
+      >
         <div className="grid gap-3 sm:grid-cols-3">
           <label className="block">
             <FieldLabel className="text-muted">Tipo</FieldLabel>
@@ -138,33 +155,40 @@ export function ToolsReprintPanel({ printer }: ToolsReprintPanelProps) {
           </label>
         </div>
         <ToolsPanelActions className="mt-4">
-          <ToolsActionButton
+          <ToolsActionTile
+            label="Visualizar"
+            icon={Eye}
+            tone="indigo"
             loading={loading === "visualize"}
             disabled={loading != null}
             onClick={() => void runReprint("visualize")}
-          >
-            Visualizar
-          </ToolsActionButton>
-          <ToolsActionButton
+          />
+          <ToolsActionTile
+            label="Reimprimir"
+            icon={Printer}
+            tone="indigo"
             variant="primary"
             loading={loading === "reprint"}
             disabled={loading != null}
             onClick={() => void runReprint("reprint")}
-          >
-            Reimprimir
-          </ToolsActionButton>
-          <ToolsActionButton
+          />
+          <ToolsActionTile
+            label="Generar reporte X"
+            icon={BarChart3}
+            tone="indigo"
             loading={loading === "report-x"}
             disabled={loading != null}
             onClick={() => void runReportX()}
-          >
-            Generar reporte X
-          </ToolsActionButton>
+          />
         </ToolsPanelActions>
       </ToolsPanelSection>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ToolsPanelSection title="Encabezado fiscal">
+      <ToolsPanelGrid className="xl:grid-cols-2">
+        <ToolsPanelSection
+          title="Encabezado fiscal"
+          icon={AlignLeft}
+          tone="indigo"
+        >
           <textarea
             value={headerContent}
             onChange={(e) => setHeaderContent(e.target.value)}
@@ -190,7 +214,7 @@ export function ToolsReprintPanel({ printer }: ToolsReprintPanelProps) {
           </ToolsPanelActions>
         </ToolsPanelSection>
 
-        <ToolsPanelSection title="Pie de página">
+        <ToolsPanelSection title="Pie de página" icon={AlignRight} tone="indigo">
           <textarea
             value={footerContent}
             onChange={(e) => setFooterContent(e.target.value)}
@@ -215,7 +239,7 @@ export function ToolsReprintPanel({ printer }: ToolsReprintPanelProps) {
             </ToolsActionButton>
           </ToolsPanelActions>
         </ToolsPanelSection>
-      </div>
+      </ToolsPanelGrid>
 
       {previewHtml ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -245,6 +269,6 @@ export function ToolsReprintPanel({ printer }: ToolsReprintPanelProps) {
           </div>
         </div>
       ) : null}
-    </div>
+    </ToolsPage>
   );
 }

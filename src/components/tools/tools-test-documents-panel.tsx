@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import {
-  ToolsActionButton,
+  FileMinus,
+  FilePlus,
+  FileText,
+  ScrollText,
+} from "lucide-react";
+import {
+  ToolsActionTile,
   ToolsPanelActions,
   ToolsPanelSection,
 } from "@/components/tools/tools-ui";
@@ -15,19 +21,41 @@ import {
   sendToolsTestGenerateZ,
   sendToolsTestInvoice,
 } from "@/lib/tools-mqtt-api";
+import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { useToast } from "@/context/toast-provider";
 
 type TestAction = "invoice" | "credit-note" | "debit-note" | "generate-z";
 
-const TEST_ACTIONS = [
-  ["invoice", "Factura de prueba"],
-  ["credit-note", "NC de prueba"],
-  ["debit-note", "ND de prueba"],
-  ["generate-z", "Generar Z de prueba"],
-] as const;
+const TEST_ACTIONS: Array<{
+  action: TestAction;
+  label: string;
+  icon: typeof FileText;
+  tone: "amber" | "rose" | "sky" | "violet";
+}> = [
+  { action: "invoice", label: "Factura de prueba", icon: FileText, tone: "amber" },
+  {
+    action: "credit-note",
+    label: "NC de prueba",
+    icon: FileMinus,
+    tone: "rose",
+  },
+  {
+    action: "debit-note",
+    label: "ND de prueba",
+    icon: FilePlus,
+    tone: "sky",
+  },
+  {
+    action: "generate-z",
+    label: "Generar Z de prueba",
+    icon: ScrollText,
+    tone: "violet",
+  },
+];
 
 export function ToolsTestDocumentsPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
+  const section = TOOLS_SECTIONS.testDocuments;
   const [loading, setLoading] = useState<TestAction | null>(null);
 
   const run = async (action: TestAction) => {
@@ -71,19 +99,22 @@ export function ToolsTestDocumentsPanel({ printer }: { printer: ToolsPrinter }) 
   return (
     <ToolsPrinterMacGuard macAddress={printer.macAddress}>
       <ToolsPanelSection
-        title="Documentos de prueba"
-        description="Genera documentos fiscales de prueba en la impresora física. Las notas de crédito y débito requieren serial fiscal registrado."
+        title={section.title}
+        description={section.description}
+        icon={section.icon}
+        tone={section.tone}
       >
-        <ToolsPanelActions hint="Cada botón envía un comando a la impresora.">
-          {TEST_ACTIONS.map(([action, label]) => (
-            <ToolsActionButton
+        <ToolsPanelActions hint="Cada acción envía un comando a la impresora.">
+          {TEST_ACTIONS.map(({ action, label, icon, tone }) => (
+            <ToolsActionTile
               key={action}
+              label={label}
+              icon={icon}
+              tone={tone}
               loading={loading === action}
               disabled={loading != null}
               onClick={() => void run(action)}
-            >
-              {label}
-            </ToolsActionButton>
+            />
           ))}
         </ToolsPanelActions>
       </ToolsPanelSection>

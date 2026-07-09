@@ -1,11 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import {
+  FileSearch,
+  Printer,
+  Radio,
+  ScrollText,
+  Send,
+} from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
-  ToolsActionButton,
+  ToolsActionTile,
+  ToolsPage,
   ToolsPanelActions,
   ToolsPanelSection,
+  ToolsSectionHeading,
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
@@ -17,21 +26,23 @@ import {
   reprintToolsDocument,
   transmitToolsReportZ,
 } from "@/lib/tools-mqtt-api";
+import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
 
 const REPORT_ACTIONS = [
-  ["list", "Consultar último Z"],
-  ["generate", "Generar Z"],
-  ["get", "Obtener Z específico"],
-  ["transmit", "Transmitir a SENIAT"],
-  ["reprint", "Reimprimir Z"],
+  ["list", "Consultar último Z", FileSearch],
+  ["generate", "Generar Z", ScrollText],
+  ["get", "Obtener Z específico", FileSearch],
+  ["transmit", "Transmitir a SENIAT", Send],
+  ["reprint", "Reimprimir Z", Printer],
 ] as const;
 
 type ReportAction = (typeof REPORT_ACTIONS)[number][0];
 
 export function ToolsReporteZPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
+  const section = TOOLS_SECTIONS.reporteZ;
   const [reportNumber, setReportNumber] = useState("");
   const [reportJson, setReportJson] = useState<string | null>(null);
   const [loading, setLoading] = useState<ReportAction | null>(null);
@@ -93,8 +104,20 @@ export function ToolsReporteZPanel({ printer }: { printer: ToolsPrinter }) {
 
   return (
     <ToolsPrinterMacGuard macAddress={printer.macAddress}>
-      <div className="space-y-4">
-        <ToolsPanelSection title="Reportes Z">
+      <ToolsPage>
+        <ToolsSectionHeading
+          icon={section.icon}
+          tone={section.tone}
+          title={section.title}
+          description={section.description}
+        />
+
+        <ToolsPanelSection
+          title="Operaciones Z"
+          description="Los comandos se envían de inmediato a la impresora."
+          icon={Radio}
+          tone="violet"
+        >
           <label className="block max-w-xs">
             <FieldLabel className="text-muted">
               Número de reporte (opcional)
@@ -106,29 +129,34 @@ export function ToolsReporteZPanel({ printer }: { printer: ToolsPrinter }) {
               className={formFieldInputClass}
             />
           </label>
-          <ToolsPanelActions className="mt-4" hint="Los comandos se envían de inmediato a la impresora.">
-            {REPORT_ACTIONS.map(([action, label]) => (
-              <ToolsActionButton
+          <ToolsPanelActions className="mt-4">
+            {REPORT_ACTIONS.map(([action, label, icon]) => (
+              <ToolsActionTile
                 key={action}
+                label={label}
+                icon={icon}
+                tone="violet"
+                variant={action === "generate" ? "primary" : "default"}
                 loading={loading === action}
                 disabled={loading != null}
-                variant={action === "generate" ? "primary" : "default"}
                 onClick={() => void run(action)}
-              >
-                {label}
-              </ToolsActionButton>
+              />
             ))}
           </ToolsPanelActions>
         </ToolsPanelSection>
 
         {reportJson ? (
-          <ToolsPanelSection title="Datos del reporte">
+          <ToolsPanelSection
+            title="Datos del reporte"
+            icon={ScrollText}
+            tone="violet"
+          >
             <pre className="max-h-96 overflow-auto rounded-lg border border-border bg-foreground/[0.03] p-3 text-xs">
               {reportJson}
             </pre>
           </ToolsPanelSection>
         ) : null}
-      </div>
+      </ToolsPage>
     </ToolsPrinterMacGuard>
   );
 }

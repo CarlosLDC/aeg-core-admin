@@ -4,9 +4,11 @@ import { RefreshCw } from "lucide-react";
 import { useEffect } from "react";
 import {
   ToolsActionButton,
+  ToolsIconBadge,
   toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
 import { useToolsMqtt } from "@/modules/tools/mqtt/use-tools-mqtt";
+import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { cn } from "@/lib/utils";
 
 type ToolsPrinterStatusBarProps = {
@@ -22,6 +24,7 @@ export function ToolsPrinterStatusBar({
     printerId,
     macAddress,
   );
+  const statusSection = TOOLS_SECTIONS.status;
 
   useEffect(() => {
     if (mqttReady) {
@@ -41,38 +44,52 @@ export function ToolsPrinterStatusBar({
     <div
       className={cn(
         toolsPanelSectionClass,
-        "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+        "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between",
       )}
     >
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-        <span className="inline-flex items-center gap-2">
-          <span
-            className={cn(
-              "size-2.5 rounded-full",
-              loading
-                ? "animate-pulse bg-muted"
-                : isOnline
-                  ? "bg-emerald-500"
-                  : "bg-rose-500",
-            )}
-            aria-hidden
-          />
-          <span className="text-muted">SENIAT:</span>{" "}
-          <span className="font-medium text-card-foreground">{seniatLabel}</span>
-        </span>
-        {status?.additionalInfo?.ipAddress ? (
-          <span className="font-mono text-muted">
-            IP: {status.additionalInfo.ipAddress}
-          </span>
-        ) : null}
-        {status?.additionalInfo?.wifiNetwork ? (
-          <span className="text-muted">
-            WiFi: {status.additionalInfo.wifiNetwork}
-          </span>
-        ) : null}
-        {error ? (
-          <span className="text-rose-600 dark:text-rose-400">{error}</span>
-        ) : null}
+      <div className="flex min-w-0 items-start gap-3">
+        <ToolsIconBadge
+          icon={statusSection.icon}
+          tone={statusSection.tone}
+          size="md"
+        />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-card-foreground">
+            {statusSection.title}
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+            <span className="inline-flex items-center gap-2">
+              <span
+                className={cn(
+                  "size-2.5 rounded-full",
+                  loading
+                    ? "animate-pulse bg-muted"
+                    : isOnline
+                      ? "bg-emerald-500"
+                      : "bg-rose-500",
+                )}
+                aria-hidden
+              />
+              <span className="text-muted">SENIAT:</span>{" "}
+              <span className="font-medium text-card-foreground">
+                {seniatLabel}
+              </span>
+            </span>
+            {status?.additionalInfo?.ipAddress ? (
+              <span className="font-mono text-muted">
+                IP: {status.additionalInfo.ipAddress}
+              </span>
+            ) : null}
+            {status?.additionalInfo?.wifiNetwork ? (
+              <span className="text-muted">
+                WiFi: {status.additionalInfo.wifiNetwork}
+              </span>
+            ) : null}
+            {error ? (
+              <span className="text-rose-600 dark:text-rose-400">{error}</span>
+            ) : null}
+          </div>
+        </div>
       </div>
       <ToolsActionButton
         loading={loading}
