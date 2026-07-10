@@ -7,8 +7,8 @@ import {
 } from "@/modules/tools/escpos/esc-pos-to-html";
 import type { ToolsPdfDownloadRequest } from "@/modules/tools/pdf/tools-pdf-shared";
 
-// 100mm thermal-style width (80mm = 226.77pt); wider for on-screen invoice preview.
-const PAGE_WIDTH = 283.46;
+// 150mm width for on-screen invoice preview (80mm thermal = 226.77pt).
+const PAGE_WIDTH = 425.2;
 const MARGIN = 5;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
 const FONT_SIZE_NORMAL = 7.5;
@@ -83,11 +83,47 @@ function calculateContentHeight(lines: EscPosLine[]): number {
   let y = MARGIN;
   for (const line of lines) {
     const fontSize = line.isTitle ? FONT_SIZE_TITLE : FONT_SIZE_NORMAL;
+    const lineHeight = fontSize + LINE_SPACING;
     if (line.isSeparator) y += 1;
-    y += fontSize + LINE_SPACING;
+    y += estimateRenderedLineHeight(line, lineHeight);
     if (line.isSeparator) y += 1;
   }
   return y + MARGIN;
+}
+
+function estimateRenderedLineHeight(line: EscPosLine, lineHeight: number): number {
+  if (line.isSeparator) {
+    return lineHeight;
+  }
+
+  if (line.rightPart) {
+    const leftText = (line.leftPart || line.text || "").trim();
+    const isProductLine = /^\([A-Z]\)\s+Bs\s*[\d.,]+/i.test(line.rightPart);
+    if (isProductLine && leftText.length > 24) {
+      const wrappedLines = Math.max(1, Math.ceil(leftText.length / 24));
+      return wrappedLines * lineHeight;
+    }
+    return lineHeight;
+  }
+
+  const textLength = line.text.length;
+  const charsPerLine = Math.max(32, Math.floor(CONTENT_WIDTH / 4.8));
+  if (textLength <= charsPerLine) {
+    return lineHeight;
+  }
+
+  return Math.max(lineHeight, Math.ceil(textLength / charsPerLine) * lineHeight);
+}
+
+function advanceY(
+  doc: PdfDoc,
+  y: number,
+  text: string,
+  fontSize: number,
+  width: number,
+): number {
+  const blockHeight = doc.heightOfString(text, { width });
+  return y + Math.max(blockHeight, fontSize) + LINE_SPACING;
 }
 
 type PdfDoc = InstanceType<typeof PDFDocument>;
@@ -110,7 +146,11 @@ function renderPdf(doc: PdfDoc, lines: EscPosLine[]): void {
         width: CONTENT_WIDTH,
         align: "center",
       });
-    } else if (line.rightPart) {
+      y += fontSize + LINE_SPACING + 2;
+      continue;
+    }
+
+    if (line.rightPart) {
       const leftText = (line.leftPart || line.text || "").trim();
       const rightText = line.rightPart;
       const rightWidth = doc.widthOfString(rightText);
@@ -133,21 +173,29 @@ function renderPdf(doc: PdfDoc, lines: EscPosLine[]): void {
         doc.text(rightText, MARGIN + CONTENT_WIDTH - rightWidth, y, {
           width: rightWidth,
         });
-      } else {
-        doc.text(leftText, MARGIN, y, { width: maxDescWidth });
-        doc.text(rightText, MARGIN + CONTENT_WIDTH - rightWidth, y, {
-          width: rightWidth,
-        });
+        y = Math.max(
+          advanceY(doc, y, lastChunk, fontSize, CONTENT_WIDTH - rightWidth - gap),
+          advanceY(doc, y, rightText, fontSize, rightWidth),
+        );
+        continue;
       }
-    } else {
-      doc.text(line.text, MARGIN, y, {
-        width: CONTENT_WIDTH,
-        align: line.align,
+
+      doc.text(leftText, MARGIN, y, { width: maxDescWidth });
+      doc.text(rightText, MARGIN + CONTENT_WIDTH - rightWidth, y, {
+        width: rightWidth,
       });
+      y = Math.max(
+        advanceY(doc, y, leftText, fontSize, maxDescWidth),
+        advanceY(doc, y, rightText, fontSize, rightWidth),
+      );
+      continue;
     }
 
-    y += fontSize + LINE_SPACING;
-    if (line.isSeparator) y += 1;
+    doc.text(line.text, MARGIN, y, {
+      width: CONTENT_WIDTH,
+      align: line.align,
+    });
+    y = advanceY(doc, y, line.text, fontSize, CONTENT_WIDTH);
   }
 }
 
