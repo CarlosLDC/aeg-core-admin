@@ -63,7 +63,7 @@ export function ToolsPrinterMacGuard({
       <EmptyState
         compact
         title="MAC requerida"
-        description="Registre la dirección MAC de la impresora en el catálogo antes de usar operaciones MQTT."
+        description="Registre la dirección MAC de la impresora en el catálogo antes de usar las operaciones remotas."
       />
     );
   }

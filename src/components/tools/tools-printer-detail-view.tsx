@@ -77,7 +77,7 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
           <ToolsMacWarning>
             <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
             <p>
-              Esta impresora no tiene dirección MAC registrada. Las operaciones MQTT
+              Esta impresora no tiene dirección MAC registrada. Las operaciones remotas
               requieren MAC en el catálogo.
             </p>
           </ToolsMacWarning>
@@ -93,7 +93,7 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
             icon={LayoutGrid}
             tone="indigo"
             title="Operaciones"
-            description="Acceda a las herramientas MQTT disponibles para esta impresora."
+            description="Acceda a las herramientas remotas disponibles para esta impresora."
           />
           <ToolsSectionGrid>
             {TOOLS_PRINTER_NAV_SECTIONS.map((sectionKey) => {

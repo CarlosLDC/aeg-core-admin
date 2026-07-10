@@ -266,7 +266,7 @@ export function ToolsPrintersManager() {
               {missingMacCount === 1
                 ? "1 impresora no tiene MAC registrada"
                 : `${missingMacCount} impresoras no tienen MAC registrada`}
-              . Las operaciones MQTT requieren MAC en la fase 2.
+              . Las operaciones remotas requieren MAC en la fase 2.
             </span>
           </div>
           <button
