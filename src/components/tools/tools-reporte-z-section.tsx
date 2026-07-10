@@ -21,8 +21,8 @@ import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import {
   generateToolsReportZ,
-  getToolsMqttErrorMessage,
   getToolsReportZ,
+  getToolsReportZErrorMessage,
   listToolsReportZ,
   reprintToolsDocument,
   transmitToolsReportZ,
@@ -31,13 +31,21 @@ import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
 
-type ReportAction = "list" | "generate" | "get" | "transmit" | "reprint";
+type ReportAction =
+  | "list"
+  | "generate"
+  | "get"
+  | "transmit"
+  | "reprint-last"
+  | "reprint";
 
 type ReportZActionConfig = {
   id: ReportAction;
   title: string;
   description: string;
+  confirmMessage: string;
   icon: LucideIcon;
+  confirmOnly?: boolean;
   requiresReportNumber?: boolean;
 };
 
@@ -46,18 +54,23 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
     id: "list",
     title: "Consultar último Z",
     description: "Obtiene el último reporte Z registrado en la impresora.",
+    confirmMessage: "¿Consultar el último reporte Z registrado en la impresora?",
     icon: FileSearch,
+    confirmOnly: true,
   },
   {
     id: "generate",
     title: "Generar Z",
     description: "Genera un nuevo reporte Z en la impresora.",
+    confirmMessage: "¿Generar un nuevo reporte Z en la impresora?",
     icon: ScrollText,
+    confirmOnly: true,
   },
   {
     id: "get",
     title: "Obtener Z específico",
     description: "Consulta un reporte Z por su número.",
+    confirmMessage: "Indique el número exacto del reporte Z que desea consultar.",
     icon: FileSearch,
     requiresReportNumber: true,
   },
@@ -65,16 +78,41 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
     id: "transmit",
     title: "Transmitir a SENIAT",
     description: "Envía el último reporte Z al SENIAT.",
+    confirmMessage: "¿Transmitir el último reporte Z al SENIAT?",
     icon: Send,
+    confirmOnly: true,
+  },
+  {
+    id: "reprint-last",
+    title: "Reimprimir último Z",
+    description: "Reimprime el último reporte Z en la impresora.",
+    confirmMessage: "¿Reimprimir el último reporte Z en la impresora?",
+    icon: Printer,
+    confirmOnly: true,
   },
   {
     id: "reprint",
-    title: "Reimprimir Z",
-    description: "Reimprime un reporte Z en la impresora.",
+    title: "Reimprimir Z específico",
+    description: "Reimprime un reporte Z por su número.",
+    confirmMessage: "Indique el número exacto del reporte Z que desea reimprimir.",
     icon: Printer,
     requiresReportNumber: true,
   },
 ];
+
+function parseReportNumberInput(numberInput: string): number | null {
+  const trimmed = numberInput.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const parsedNumber = Number(trimmed);
+  if (!Number.isFinite(parsedNumber) || parsedNumber <= 0) {
+    return null;
+  }
+
+  return Math.trunc(parsedNumber);
+}
 
 type ToolsReporteZSectionProps = {
   printer: ToolsPrinter;
@@ -119,13 +157,14 @@ export function ToolsReporteZSection({
 
   const run = async (action: ReportAction, numberInput: string) => {
     const config = REPORT_Z_ACTIONS.find((item) => item.id === action);
-    const parsedNumber = Number(numberInput);
+    const parsedNumber = parseReportNumberInput(numberInput);
 
-    if (
-      config?.requiresReportNumber &&
-      (!Number.isFinite(parsedNumber) || parsedNumber <= 0)
-    ) {
-      toast.error("Indique un número de reporte Z válido.");
+    if (config?.requiresReportNumber && parsedNumber == null) {
+      toast.error(
+        numberInput.trim().length === 0
+          ? "Indique el número del reporte Z."
+          : "Indique un número de reporte Z válido.",
+      );
       return;
     }
 
@@ -140,7 +179,7 @@ export function ToolsReporteZSection({
         showReport(result.report?.report);
         toast.success("Reporte Z generado.");
       } else if (action === "get") {
-        const result = await getToolsReportZ(printer.id, parsedNumber);
+        const result = await getToolsReportZ(printer.id, parsedNumber!);
         showReport(result.report?.report);
         toast.success(`Reporte Z #${parsedNumber} obtenido.`);
       } else if (action === "transmit") {
@@ -152,10 +191,16 @@ export function ToolsReporteZSection({
         } else {
           toast.success(result.message ?? "Transmisión completada.");
         }
+      } else if (action === "reprint-last") {
+        await reprintToolsDocument(printer.id, {
+          docType: "Z",
+          mode: "reprint",
+        });
+        toast.success("Reimpresión del último reporte Z enviada a la impresora.");
       } else {
         await reprintToolsDocument(printer.id, {
           docType: "Z",
-          number: parsedNumber,
+          number: parsedNumber!,
           mode: "reprint",
         });
         toast.success(`Reimpresión Z #${parsedNumber} enviada a la impresora.`);
@@ -163,11 +208,19 @@ export function ToolsReporteZSection({
       setPendingAction(null);
       setReportNumber("");
     } catch (err) {
-      toast.error(getToolsMqttErrorMessage(err));
+      toast.error(
+        getToolsReportZErrorMessage(
+          err,
+          config?.requiresReportNumber ? parsedNumber ?? undefined : undefined,
+        ),
+      );
     } finally {
       setLoading(null);
     }
   };
+
+  const requiresReportNumber = pendingAction?.requiresReportNumber === true;
+  const confirmOnly = pendingAction?.confirmOnly === true;
 
   return (
     <>
@@ -212,27 +265,28 @@ export function ToolsReporteZSection({
       <ConfirmDialog
         open={pendingAction != null}
         title={pendingAction?.title ?? "Reporte Z"}
+        message={confirmOnly ? pendingAction?.confirmMessage : undefined}
         content={
-          <div className="space-y-2">
-            <p className="text-sm text-muted">
-              {pendingAction?.requiresReportNumber
-                ? "Indique el número de reporte Z para continuar."
-                : "Puede indicar un número de reporte o dejar el campo vacío."}
-            </p>
-            <label className="block">
-              <FieldLabel className="text-muted">
-                Número de reporte (opcional)
-              </FieldLabel>
-              <input
-                type="number"
-                min={1}
-                value={reportNumber}
-                onChange={(e) => setReportNumber(e.target.value)}
-                className={formFieldInputClass}
-                autoFocus
-              />
-            </label>
-          </div>
+          requiresReportNumber ? (
+            <div className="space-y-2">
+              <p className="text-sm text-muted">{pendingAction?.confirmMessage}</p>
+              <label className="block">
+                <FieldLabel className="text-muted">
+                  Número de reporte
+                </FieldLabel>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  required
+                  value={reportNumber}
+                  onChange={(e) => setReportNumber(e.target.value)}
+                  className={formFieldInputClass}
+                  autoFocus
+                />
+              </label>
+            </div>
+          ) : undefined
         }
         confirmLabel="Ejecutar"
         loading={loading != null}

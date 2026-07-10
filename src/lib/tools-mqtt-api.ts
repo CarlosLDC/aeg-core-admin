@@ -60,19 +60,48 @@ async function toolsMqttFetch<T>(
   return { data, status: response.status };
 }
 
+function readMqttPayloadFields(data: unknown): {
+  message?: string;
+  code?: number;
+  success?: boolean;
+} {
+  if (!data || typeof data !== "object") {
+    return {};
+  }
+
+  const payload = data as Record<string, unknown>;
+  return {
+    message:
+      typeof payload.message === "string" && payload.message.length > 0
+        ? payload.message
+        : undefined,
+    code: typeof payload.code === "number" ? payload.code : undefined,
+    success: typeof payload.success === "boolean" ? payload.success : undefined,
+  };
+}
+
 function ensureSuccess(status: number, data: unknown, fallback: string): void {
   if (status >= 200 && status < 300) {
     return;
   }
-  const message =
-    data &&
-    typeof data === "object" &&
-    "message" in data &&
-    typeof (data as { message: unknown }).message === "string"
-      ? (data as { message: string }).message
-      : fallback;
-  throw new ApiError(message, status);
+  const { message, code } = readMqttPayloadFields(data);
+  throw new ApiError(message ?? fallback, status, code);
 }
+
+function ensureMqttOperationSuccess(
+  status: number,
+  data: unknown,
+  fallback: string,
+): void {
+  ensureSuccess(status, data, fallback);
+  const { message, code, success } = readMqttPayloadFields(data);
+  if (success === false) {
+    throw new ApiError(message ?? fallback, status, code);
+  }
+}
+
+/** Código fiscal cuando el reporte Z solicitado no existe en la impresora. */
+export const TOOLS_FISCAL_ERROR_Z_NOT_FOUND = 48;
 
 function printerBody(printerId: number): string {
   return JSON.stringify({ printerId });
@@ -169,7 +198,7 @@ export async function listToolsReportZ(printerId: number): Promise<ToolsReportZR
     `${BASE}/reports-z/list`,
     { method: "POST", body: printerBody(printerId) },
   );
-  ensureSuccess(status, data, "No se pudo consultar el reporte Z.");
+  ensureMqttOperationSuccess(status, data, "No se pudo consultar el reporte Z.");
   return data;
 }
 
@@ -178,7 +207,7 @@ export async function generateToolsReportZ(printerId: number): Promise<ToolsRepo
     `${BASE}/reports-z/generate`,
     { method: "POST", body: printerBody(printerId) },
   );
-  ensureSuccess(status, data, "No se pudo generar el reporte Z.");
+  ensureMqttOperationSuccess(status, data, "No se pudo generar el reporte Z.");
   return data;
 }
 
@@ -193,7 +222,7 @@ export async function getToolsReportZ(
       body: JSON.stringify({ printerId, reportNumber }),
     },
   );
-  ensureSuccess(status, data, "No se pudo obtener el reporte Z.");
+  ensureMqttOperationSuccess(status, data, "No se pudo obtener el reporte Z.");
   return data;
 }
 
@@ -316,7 +345,7 @@ export async function reprintToolsDocument(
       }),
     },
   );
-  ensureSuccess(status, data, "No se pudo reimprimir el documento.");
+  ensureMqttOperationSuccess(status, data, "No se pudo reimprimir el documento.");
   return data;
 }
 
@@ -372,4 +401,29 @@ export function getToolsMqttErrorMessage(error: unknown): string {
     return error.message;
   }
   return "Error de comunicación con la impresora.";
+}
+
+function isToolsFiscalZNotFoundError(error: unknown): boolean {
+  if (!(error instanceof ApiError)) {
+    return false;
+  }
+
+  if (error.code === TOOLS_FISCAL_ERROR_Z_NOT_FOUND) {
+    return true;
+  }
+
+  return /\b48\b/.test(error.message);
+}
+
+export function getToolsReportZErrorMessage(
+  error: unknown,
+  reportNumber?: number,
+): string {
+  if (isToolsFiscalZNotFoundError(error)) {
+    return reportNumber != null
+      ? `No existe un reporte Z con el número ${reportNumber}.`
+      : "No existe un reporte Z con el número indicado.";
+  }
+
+  return getToolsMqttErrorMessage(error);
 }

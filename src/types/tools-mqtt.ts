@@ -37,6 +37,7 @@ export type ToolsReportZData = {
 export type ToolsReportZResponse = {
   success: boolean;
   message?: string | null;
+  code?: number | null;
   report?: ToolsReportZData | null;
 };
 
@@ -67,6 +68,7 @@ export type ToolsHeaderFooterReadResponse = {
 export type ToolsReprintResponse = {
   success: boolean;
   message?: string | null;
+  code?: number | null;
   escPosContent?: string | null;
   mode?: string | null;
   docType?: string | null;
