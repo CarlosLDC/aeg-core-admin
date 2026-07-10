@@ -4,7 +4,9 @@ import { useCallback, useState } from "react";
 import { fetchToolsMqttStatus, getToolsMqttErrorMessage } from "@/lib/tools-mqtt-api";
 import type { ToolsMqttStatusResponse } from "@/types/tools-mqtt";
 import {
-  isToolsPrinterConnectionKnown,
+  areToolsRemoteActionsDisabled,
+  areToolsRemoteActionsEnabled,
+  isToolsPrinterConnectionResolved,
   isToolsPrinterOnline,
 } from "./tools-printer-connection";
 
@@ -53,17 +55,33 @@ export function useToolsPrinterConnection(
   macAddress: string | null,
 ) {
   const mqtt = useToolsMqtt(printerId, macAddress);
-  const connectionKnown = isToolsPrinterConnectionKnown(
+  const connectionResolved = isToolsPrinterConnectionResolved(
     mqtt.loading,
     mqtt.status,
     mqtt.error,
   );
   const isOnline = isToolsPrinterOnline(mqtt.status, mqtt.error);
+  const remoteActionsEnabled = areToolsRemoteActionsEnabled(
+    mqtt.mqttReady,
+    mqtt.loading,
+    mqtt.status,
+    mqtt.error,
+  );
+  const remoteActionsDisabled = areToolsRemoteActionsDisabled(
+    mqtt.mqttReady,
+    mqtt.loading,
+    mqtt.status,
+    mqtt.error,
+  );
 
   return {
     ...mqtt,
-    connectionKnown,
+    connectionResolved,
+    /** @deprecated Use connectionResolved */
+    connectionKnown: connectionResolved,
     isOnline,
+    remoteActionsEnabled,
+    remoteActionsDisabled,
   };
 }
 

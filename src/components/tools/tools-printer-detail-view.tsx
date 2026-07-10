@@ -49,7 +49,7 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
   }, [connection.mqttReady, connection.refreshStatus]);
 
   const remoteActionsDisabled = Boolean(
-    printer?.macAddress && connection.connectionKnown && !connection.isOnline,
+    printer?.macAddress && !connection.remoteActionsEnabled,
   );
 
   if (loading && !printer) {
@@ -102,7 +102,11 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
 
         <ToolsPrinterStatusBar connection={connection} />
 
-        {remoteActionsDisabled ? <ToolsConnectionWarning /> : null}
+        {printer.macAddress &&
+        connection.connectionResolved &&
+        !connection.isOnline ? (
+          <ToolsConnectionWarning />
+        ) : null}
 
         <section className={toolsSubsectionClass}>
           <ToolsSectionHeading

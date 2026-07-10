@@ -76,9 +76,8 @@ const wifiPanelGridClass =
 export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.wifi;
-  const { status, refreshStatus, connectionKnown, isOnline } =
+  const { status, refreshStatus, remoteActionsDisabled, connectionResolved, isOnline } =
     useToolsPrinterConnection(printer.id, printer.macAddress);
-  const remoteActionsDisabled = connectionKnown && !isOnline;
   const [ssid, setSsid] = useState("");
   const [password, setPassword] = useState("");
   const [networks, setNetworks] = useState<WifiNetwork[]>([]);
@@ -154,7 +153,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
           description={section.description}
         />
 
-        {remoteActionsDisabled ? <ToolsConnectionWarning /> : null}
+        {connectionResolved && !isOnline ? <ToolsConnectionWarning /> : null}
 
         <div className={wifiPanelGridClass}>
           <ToolsPanelSection

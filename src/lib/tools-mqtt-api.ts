@@ -13,6 +13,7 @@ import type {
   ToolsTransmitZResponse,
   ToolsWifiScanResponse,
 } from "@/types/tools-mqtt";
+import { TOOLS_PRINTER_STATUS_TIMEOUT_MS } from "@/modules/tools/mqtt/tools-printer-connection";
 
 const BASE = "/api/mqtt/tools";
 
@@ -79,12 +80,34 @@ function printerBody(printerId: number): string {
 export async function fetchToolsMqttStatus(
   printerId: number,
 ): Promise<ToolsMqttStatusResponse> {
-  const { data, status } = await toolsMqttFetch<ToolsMqttStatusResponse>(
-    `${BASE}/status`,
-    { method: "POST", body: printerBody(printerId) },
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    TOOLS_PRINTER_STATUS_TIMEOUT_MS,
   );
-  ensureSuccess(status, data, "No se pudo consultar el estado de la impresora.");
-  return data;
+
+  try {
+    const { data, status } = await toolsMqttFetch<ToolsMqttStatusResponse>(
+      `${BASE}/status`,
+      {
+        method: "POST",
+        body: printerBody(printerId),
+        signal: controller.signal,
+      },
+    );
+    ensureSuccess(status, data, "No se pudo consultar el estado de la impresora.");
+    return data;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new ApiError(
+        "Tiempo de espera agotado al consultar la impresora fiscal.",
+        408,
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function scanToolsWifi(printerId: number): Promise<ToolsWifiScanResponse> {

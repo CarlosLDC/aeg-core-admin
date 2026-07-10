@@ -18,11 +18,8 @@ import { useToast } from "@/context/toast-provider";
 export function ToolsHeaderPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.header;
-  const { refreshStatus, connectionKnown, isOnline } = useToolsPrinterConnection(
-    printer.id,
-    printer.macAddress,
-  );
-  const remoteActionsDisabled = connectionKnown && !isOnline;
+  const { refreshStatus, remoteActionsDisabled, connectionResolved, isOnline } =
+    useToolsPrinterConnection(printer.id, printer.macAddress);
   const [content, setContent] = useState("");
   const [baseline, setBaseline] = useState("");
   const [loading, setLoading] = useState(false);
@@ -77,7 +74,7 @@ export function ToolsHeaderPanel({ printer }: { printer: ToolsPrinter }) {
           description={section.description}
         />
 
-        {remoteActionsDisabled ? <ToolsConnectionWarning /> : null}
+        {connectionResolved && !isOnline ? <ToolsConnectionWarning /> : null}
 
         <ToolsHeaderFooterBlock
           title="Encabezado fiscal"

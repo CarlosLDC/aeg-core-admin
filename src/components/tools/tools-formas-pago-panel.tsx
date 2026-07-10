@@ -54,11 +54,8 @@ function draftsFromItems(items: ToolsFormasPagoItem[]): Record<number, string> {
 export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.formasPago;
-  const { refreshStatus, connectionKnown, isOnline } = useToolsPrinterConnection(
-    printer.id,
-    printer.macAddress,
-  );
-  const remoteActionsDisabled = connectionKnown && !isOnline;
+  const { refreshStatus, remoteActionsDisabled, connectionResolved, isOnline } =
+    useToolsPrinterConnection(printer.id, printer.macAddress);
   const [items, setItems] = useState<ToolsFormasPagoItem[]>([]);
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [editingNro, setEditingNro] = useState<number | null>(null);
@@ -169,7 +166,7 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
           }
         />
 
-        {remoteActionsDisabled ? <ToolsConnectionWarning /> : null}
+        {connectionResolved && !isOnline ? <ToolsConnectionWarning /> : null}
 
         <div className={toolsPanelSectionClass}>
           {loading && !initialLoadDone ? (
