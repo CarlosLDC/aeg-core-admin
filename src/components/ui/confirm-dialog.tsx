@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import type { ReactNode } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export type ConfirmDialogOptions = {
@@ -37,6 +37,13 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   if (!open) return null;
 
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!loading) {
+      onConfirm();
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center p-4"
@@ -52,7 +59,28 @@ export function ConfirmDialog({
         onClick={onCancel}
         disabled={loading}
       />
-      <div className="relative w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl">
+      <form
+        className="relative w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl"
+        onSubmit={handleSubmit}
+        onKeyDown={(event) => {
+          if (event.key !== "Enter" || loading) {
+            return;
+          }
+          const target = event.target;
+          if (
+            target instanceof HTMLInputElement ||
+            target instanceof HTMLTextAreaElement ||
+            target instanceof HTMLSelectElement
+          ) {
+            return;
+          }
+          if (target instanceof HTMLButtonElement && target.type === "button") {
+            return;
+          }
+          event.preventDefault();
+          onConfirm();
+        }}
+      >
         <h2
           id="confirm-dialog-title"
           className="text-lg font-semibold text-card-foreground"
@@ -87,8 +115,7 @@ export function ConfirmDialog({
             </button>
           ) : null}
           <button
-            type="button"
-            onClick={onConfirm}
+            type="submit"
             disabled={loading}
             className={cn(
               "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-70",
@@ -101,7 +128,7 @@ export function ConfirmDialog({
             {confirmLabel}
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
