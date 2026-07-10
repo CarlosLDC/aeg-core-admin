@@ -14,6 +14,7 @@ import type {
   ToolsWifiScanResponse,
 } from "@/types/tools-mqtt";
 import { TOOLS_PRINTER_STATUS_TIMEOUT_MS } from "@/lib/tools-printer-connection";
+import { normalizeToolsWifiNetworks } from "@/lib/tools-wifi-networks";
 
 const BASE = "/api/mqtt/tools";
 
@@ -119,7 +120,23 @@ export async function scanToolsWifi(printerId: number): Promise<ToolsWifiScanRes
     { method: "POST", body: printerBody(printerId) },
   );
   ensureSuccess(status, data, "No se pudo escanear redes WiFi.");
-  return data;
+  if (
+    data &&
+    typeof data === "object" &&
+    "success" in data &&
+    data.success === false
+  ) {
+    throw new ApiError(
+      typeof data.message === "string" && data.message.length > 0
+        ? data.message
+        : "No se pudo escanear redes WiFi.",
+      status,
+    );
+  }
+  return {
+    ...data,
+    networks: normalizeToolsWifiNetworks(data.networks),
+  };
 }
 
 export async function connectToolsWifi(

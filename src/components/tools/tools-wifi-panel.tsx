@@ -37,11 +37,27 @@ type WifiNetwork = {
 };
 
 function wifiSignalLevel(signal: number): 0 | 1 | 2 | 3 | 4 {
+  if (signal >= 0 && signal <= 100) {
+    if (signal >= 80) return 4;
+    if (signal >= 60) return 3;
+    if (signal >= 40) return 2;
+    if (signal >= 20) return 1;
+    return 0;
+  }
+
   if (signal >= -55) return 4;
   if (signal >= -65) return 3;
   if (signal >= -75) return 2;
   if (signal >= -85) return 1;
   return 0;
+}
+
+function formatWifiSignalLabel(signal: number): string {
+  if (signal >= 0 && signal <= 100) {
+    return `Calidad de señal ${signal}%`;
+  }
+
+  return `Intensidad de señal ${signal} dBm`;
 }
 
 function WifiSignalIndicator({ signal }: { signal: number | null }) {
@@ -51,9 +67,15 @@ function WifiSignalIndicator({ signal }: { signal: number | null }) {
     <span
       className="inline-flex shrink-0 items-end gap-0.5 text-sky-600 dark:text-sky-400"
       aria-label={
-        signal != null ? `Intensidad de señal ${signal} dBm` : "Señal desconocida"
+        signal != null ? formatWifiSignalLabel(signal) : "Señal desconocida"
       }
-      title={signal != null ? `${signal} dBm` : undefined}
+      title={
+        signal != null
+          ? signal >= 0 && signal <= 100
+            ? `${signal}%`
+            : `${signal} dBm`
+          : undefined
+      }
     >
       {[1, 2, 3, 4].map((bar) => (
         <span
@@ -93,6 +115,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
       const result = await scanToolsWifi(printer.id);
       setNetworks(result.networks ?? []);
     } catch (err) {
+      setNetworks([]);
       toast.error(getToolsMqttErrorMessage(err));
     } finally {
       setScanning(false);
@@ -100,8 +123,20 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   }, [printer.id, toast]);
 
   useEffect(() => {
-    void refreshStatus();
-    void runScan();
+    let cancelled = false;
+
+    async function init() {
+      await runScan();
+      if (!cancelled) {
+        await refreshStatus();
+      }
+    }
+
+    void init();
+
+    return () => {
+      cancelled = true;
+    };
   }, [refreshStatus, runScan]);
 
   const runConnect = async () => {
@@ -184,8 +219,14 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
                   Escaneando redes…
                 </div>
               ) : networks.length === 0 ? (
-                <div className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted">
-                  No se detectaron redes WiFi.
+                <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 py-8 text-center text-sm text-muted">
+                  <p>No se detectaron redes WiFi.</p>
+                  <ToolsActionButton
+                    disabled={busy || remoteActionsDisabled}
+                    onClick={() => void runScan()}
+                  >
+                    Reintentar conexión
+                  </ToolsActionButton>
                 </div>
               ) : (
                 <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-y-contain p-2">
