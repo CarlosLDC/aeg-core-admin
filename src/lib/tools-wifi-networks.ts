@@ -1,5 +1,71 @@
 import type { ToolsWifiNetwork } from "@/types/tools-mqtt";
 
+const WIFI_CONNECTED_STATUS_PATTERN =
+  /EQUIPO\s+SI\s+CONECTADO(?:\s+AP)?/i;
+const WIFI_DISCONNECTED_STATUS_PATTERN =
+  /EQUIPO\s+NO\s+CONECTADO(?:\s+AP)?/i;
+
+export type ToolsWifiConnectionInfo = {
+  connected: boolean | null;
+  ssid: string | null;
+  label: string;
+};
+
+/** Interpreta el campo ConexionWifi de la impresora (SSID o mensaje de estado). */
+export function parseToolsWifiConnection(
+  value: string | null | undefined,
+): ToolsWifiConnectionInfo {
+  const raw = value?.trim() ?? "";
+
+  if (!raw || raw === "N/A") {
+    return {
+      connected: null,
+      ssid: null,
+      label: "Sin datos",
+    };
+  }
+
+  if (WIFI_DISCONNECTED_STATUS_PATTERN.test(raw)) {
+    return {
+      connected: false,
+      ssid: null,
+      label: "Sin conexión",
+    };
+  }
+
+  if (WIFI_CONNECTED_STATUS_PATTERN.test(raw)) {
+    return {
+      connected: true,
+      ssid: null,
+      label: "Conectada",
+    };
+  }
+
+  return {
+    connected: true,
+    ssid: raw,
+    label: raw,
+  };
+}
+
+/** Etiqueta legible para mostrar el estado WiFi en la UI. */
+export function formatToolsWifiStatusLine(
+  value: string | null | undefined,
+): string {
+  const connection = parseToolsWifiConnection(value);
+  if (connection.ssid) {
+    return `Red WiFi: ${connection.ssid}`;
+  }
+  return `WiFi: ${connection.label}`;
+}
+
+/** SSID real conectado, si la impresora lo reporta (no mensajes de estado). */
+export function resolveToolsWifiConnectedSsid(
+  value: string | null | undefined,
+): string {
+  return parseToolsWifiConnection(value).ssid ?? "";
+}
+
 /** Normaliza redes WiFi: deduplica SSID, conserva la mejor señal y prioriza la red conectada. */
 export function normalizeToolsWifiNetworks(
   networks: ToolsWifiNetwork[] | null | undefined,

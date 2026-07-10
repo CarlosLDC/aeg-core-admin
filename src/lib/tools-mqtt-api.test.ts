@@ -3,6 +3,7 @@ import { ApiError } from "@/types/auth";
 import {
   TOOLS_FISCAL_ERROR_Z_NOT_FOUND,
   getToolsReportZErrorMessage,
+  getToolsReprintErrorMessage,
 } from "@/lib/tools-mqtt-api";
 
 describe("getToolsReportZErrorMessage", () => {
@@ -25,5 +26,14 @@ describe("getToolsReportZErrorMessage", () => {
     expect(
       getToolsReportZErrorMessage(new ApiError("Impresora ocupada", 409), 10),
     ).toBe("Impresora ocupada");
+  });
+
+  it("traduce el código 48 en reimpresión de documentos", () => {
+    expect(
+      getToolsReprintErrorMessage(new ApiError("Error fiscal 48", 400), {
+        docType: "FAC",
+        number: 177,
+      }),
+    ).toBe("No existe una factura con el número 177.");
   });
 });

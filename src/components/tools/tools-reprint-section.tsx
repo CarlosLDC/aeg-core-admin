@@ -17,6 +17,7 @@ import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import {
   getToolsMqttErrorMessage,
+  getToolsReprintErrorMessage,
   reprintToolsDocument,
 } from "@/lib/tools-mqtt-api";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
@@ -59,7 +60,7 @@ const DOC_TYPE_OPTIONS = [
   { value: "NC", label: "Nota de crédito" },
   { value: "ND", label: "Nota de débito" },
   { value: "NF", label: "No fiscal (NF)" },
-  { value: "RX", label: "Reporte X (RX)" },
+  { value: "Z", label: "Reporte Z" },
 ] as const;
 
 type ToolsReprintSectionProps = {
@@ -128,7 +129,12 @@ export function ToolsReprintSection({
       setDocType("FAC");
       setDocumentNumber("");
     } catch (err) {
-      toast.error(getToolsMqttErrorMessage(err));
+      toast.error(
+        getToolsReprintErrorMessage(err, {
+          docType,
+          number: parsedNumber,
+        }),
+      );
     } finally {
       setLoading(null);
     }

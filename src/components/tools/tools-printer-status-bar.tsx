@@ -6,6 +6,7 @@ import {
   toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
+import { formatToolsWifiStatusLine } from "@/lib/tools-wifi-networks";
 import type { ToolsPrinterConnectionState } from "@/modules/tools/mqtt/use-tools-mqtt";
 import { cn } from "@/lib/utils";
 
@@ -67,7 +68,7 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
             ) : null}
             {status?.additionalInfo?.wifiNetwork ? (
               <span className="text-muted">
-                WiFi: {status.additionalInfo.wifiNetwork}
+                {formatToolsWifiStatusLine(status.additionalInfo.wifiNetwork)}
               </span>
             ) : null}
             {error ? (

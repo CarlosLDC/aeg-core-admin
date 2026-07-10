@@ -1,3 +1,24 @@
+import { decodeLatin2 } from "@/lib/fiscal-ticket-latin2";
+
+/** Decodifica texto fiscal Latin-2 mal interpretado como UTF-8 en tránsito. */
+export function decodeToolsHeaderFooterText(text: string): string {
+  if (!text || text.includes("\uFFFD")) {
+    return text;
+  }
+
+  const hasHighByte = [...text].some((char) => char.charCodeAt(0) > 127);
+  if (!hasHighByte) {
+    return text;
+  }
+
+  if (/[áéíóúñÁÉÍÓÚÑ]/.test(text)) {
+    return text;
+  }
+
+  const bytes = Uint8Array.from(text, (char) => char.charCodeAt(0) & 0xff);
+  return decodeLatin2(bytes);
+}
+
 /** Parsea el texto remoto del encabezado o pie en líneas editables. */
 export function parseToolsHeaderFooterContent(
   content: string | null | undefined,
@@ -6,7 +27,7 @@ export function parseToolsHeaderFooterContent(
     return [""];
   }
 
-  return content.split(/\r?\n/);
+  return decodeToolsHeaderFooterText(content).split(/\r?\n/);
 }
 
 /** Serializa las líneas editadas al formato esperado por la escritura remota. */

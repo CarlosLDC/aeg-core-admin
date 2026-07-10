@@ -403,7 +403,7 @@ export function getToolsMqttErrorMessage(error: unknown): string {
   return "Error de comunicación con la impresora.";
 }
 
-function isToolsFiscalZNotFoundError(error: unknown): boolean {
+function isToolsFiscalNotFoundError(error: unknown): boolean {
   if (!(error instanceof ApiError)) {
     return false;
   }
@@ -415,11 +415,35 @@ function isToolsFiscalZNotFoundError(error: unknown): boolean {
   return /\b48\b/.test(error.message);
 }
 
+const REPRINT_DOC_TYPE_LABELS: Record<string, string> = {
+  FAC: "una factura",
+  NC: "una nota de crédito",
+  ND: "una nota de débito",
+  NF: "un documento no fiscal",
+  Z: "un reporte Z",
+};
+
+export function getToolsReprintErrorMessage(
+  error: unknown,
+  options?: { docType?: string; number?: number },
+): string {
+  if (isToolsFiscalNotFoundError(error)) {
+    const label =
+      (options?.docType && REPRINT_DOC_TYPE_LABELS[options.docType]) ||
+      "un documento";
+    return options?.number != null
+      ? `No existe ${label} con el número ${options.number}.`
+      : `No existe ${label} con el número indicado.`;
+  }
+
+  return getToolsMqttErrorMessage(error);
+}
+
 export function getToolsReportZErrorMessage(
   error: unknown,
   reportNumber?: number,
 ): string {
-  if (isToolsFiscalZNotFoundError(error)) {
+  if (isToolsFiscalNotFoundError(error)) {
     return reportNumber != null
       ? `No existe un reporte Z con el número ${reportNumber}.`
       : "No existe un reporte Z con el número indicado.";

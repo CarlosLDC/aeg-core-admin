@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { normalizeToolsWifiNetworks } from "./tools-wifi-networks";
+import {
+  formatToolsWifiStatusLine,
+  normalizeToolsWifiNetworks,
+  parseToolsWifiConnection,
+  resolveToolsWifiConnectedSsid,
+} from "./tools-wifi-networks";
 
 describe("normalizeToolsWifiNetworks", () => {
   it("deduplica SSID conservando la mejor señal", () => {
@@ -42,5 +47,28 @@ describe("normalizeToolsWifiNetworks", () => {
         (network) => network.ssid,
       ),
     ).toEqual(["MiRed", "Otra"]);
+  });
+
+  it("traduce el mensaje de estado conectado de la impresora", () => {
+    expect(
+      formatToolsWifiStatusLine("EQUIPO SI CONECTADO AP"),
+    ).toBe("WiFi: Conectada");
+    expect(parseToolsWifiConnection("EQUIPO SI CONECTADO AP")).toMatchObject({
+      connected: true,
+      ssid: null,
+      label: "Conectada",
+    });
+  });
+
+  it("traduce el mensaje de estado desconectado de la impresora", () => {
+    expect(formatToolsWifiStatusLine("EQUIPO NO CONECTADO AP")).toBe(
+      "WiFi: Sin conexión",
+    );
+  });
+
+  it("muestra el SSID cuando la impresora lo reporta", () => {
+    expect(formatToolsWifiStatusLine("AEG-WiFi")).toBe("Red WiFi: AEG-WiFi");
+    expect(resolveToolsWifiConnectedSsid("AEG-WiFi")).toBe("AEG-WiFi");
+    expect(resolveToolsWifiConnectedSsid("EQUIPO SI CONECTADO AP")).toBe("");
   });
 });

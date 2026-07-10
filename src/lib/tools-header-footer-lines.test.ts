@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  decodeToolsHeaderFooterText,
   parseToolsHeaderFooterContent,
   serializeToolsHeaderFooterLines,
   toolsHeaderFooterLinesEqual,
@@ -22,5 +23,14 @@ describe("tools-header-footer-lines", () => {
   it("compara listas de líneas por valor", () => {
     expect(toolsHeaderFooterLinesEqual(["A", "B"], ["A", "B"])).toBe(true);
     expect(toolsHeaderFooterLinesEqual(["A"], ["A", "B"])).toBe(false);
+  });
+
+  it("decodifica bytes Latin-2 embebidos en el contenido remoto", () => {
+    const latinBytes = String.fromCharCode(0xed, 0xf1);
+    expect(decodeToolsHeaderFooterText(latinBytes)).toBe("íñ");
+    expect(parseToolsHeaderFooterContent(`Línea 1\n${latinBytes}`)).toEqual([
+      "Línea 1",
+      "íñ",
+    ]);
   });
 });

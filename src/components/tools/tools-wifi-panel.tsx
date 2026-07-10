@@ -23,7 +23,10 @@ import {
   scanToolsWifi,
 } from "@/lib/tools-mqtt-api";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
-import { normalizeToolsWifiNetworks } from "@/lib/tools-wifi-networks";
+import {
+  normalizeToolsWifiNetworks,
+  resolveToolsWifiConnectedSsid,
+} from "@/lib/tools-wifi-networks";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
 import { cn } from "@/lib/utils";
@@ -110,7 +113,9 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const [scanning, setScanning] = useState(true);
   const [action, setAction] = useState<"connect" | "disconnect" | null>(null);
 
-  const connectedSsid = status?.additionalInfo?.wifiNetwork?.trim() ?? "";
+  const connectedSsid = resolveToolsWifiConnectedSsid(
+    status?.additionalInfo?.wifiNetwork,
+  );
   const displayedNetworks = useMemo(
     () => normalizeToolsWifiNetworks(networks, connectedSsid || undefined),
     [networks, connectedSsid],

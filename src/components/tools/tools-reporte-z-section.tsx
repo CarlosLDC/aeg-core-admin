@@ -4,8 +4,8 @@ import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
+  ClipboardList,
   FileSearch,
-  Printer,
   ScrollText,
   Send,
 } from "lucide-react";
@@ -26,7 +26,6 @@ import {
   getToolsReportZ,
   getToolsReportZErrorMessage,
   listToolsReportZ,
-  reprintToolsDocument,
   sendToolsReportX,
   transmitToolsReportZ,
 } from "@/lib/tools-mqtt-api";
@@ -34,14 +33,7 @@ import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
 
-type ReportAction =
-  | "list"
-  | "generate"
-  | "get"
-  | "transmit"
-  | "reprint-last"
-  | "reprint"
-  | "report-x";
+type ReportAction = "list" | "generate" | "get" | "transmit" | "report-x";
 
 type ReportZActionConfig = {
   id: ReportAction;
@@ -59,23 +51,7 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
     title: "Consultar último Z",
     description: "Obtiene el último reporte Z registrado en la impresora.",
     confirmMessage: "¿Consultar el último reporte Z registrado en la impresora?",
-    icon: FileSearch,
-    confirmOnly: true,
-  },
-  {
-    id: "generate",
-    title: "Generar Z",
-    description: "Genera un nuevo reporte Z en la impresora.",
-    confirmMessage: "¿Generar un nuevo reporte Z en la impresora?",
-    icon: ScrollText,
-    confirmOnly: true,
-  },
-  {
-    id: "report-x",
-    title: "Generar reporte X",
-    description: "Genera un reporte X en la impresora.",
-    confirmMessage: "¿Generar un reporte X en la impresora?",
-    icon: BarChart3,
+    icon: ClipboardList,
     confirmOnly: true,
   },
   {
@@ -87,6 +63,14 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
     requiresReportNumber: true,
   },
   {
+    id: "generate",
+    title: "Generar Z",
+    description: "Genera un nuevo reporte Z en la impresora.",
+    confirmMessage: "¿Generar un nuevo reporte Z en la impresora?",
+    icon: ScrollText,
+    confirmOnly: true,
+  },
+  {
     id: "transmit",
     title: "Transmitir a SENIAT",
     description: "Envía el último reporte Z al SENIAT.",
@@ -95,20 +79,12 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
     confirmOnly: true,
   },
   {
-    id: "reprint-last",
-    title: "Reimprimir último Z",
-    description: "Reimprime el último reporte Z en la impresora.",
-    confirmMessage: "¿Reimprimir el último reporte Z en la impresora?",
-    icon: Printer,
+    id: "report-x",
+    title: "Generar reporte X",
+    description: "Genera un reporte X en la impresora.",
+    confirmMessage: "¿Generar un reporte X en la impresora?",
+    icon: BarChart3,
     confirmOnly: true,
-  },
-  {
-    id: "reprint",
-    title: "Reimprimir Z específico",
-    description: "Reimprime un reporte Z por su número.",
-    confirmMessage: "Indique el número exacto del reporte Z que desea reimprimir.",
-    icon: Printer,
-    requiresReportNumber: true,
   },
 ];
 
@@ -203,22 +179,9 @@ export function ToolsReporteZSection({
         } else {
           toast.success(result.message ?? "Transmisión completada.");
         }
-      } else if (action === "reprint-last") {
-        await reprintToolsDocument(printer.id, {
-          docType: "Z",
-          mode: "reprint",
-        });
-        toast.success("Reimpresión del último reporte Z enviada a la impresora.");
       } else if (action === "report-x") {
         const result = await sendToolsReportX(printer.id);
         toast.success(result.message ?? "Reporte X enviado.");
-      } else {
-        await reprintToolsDocument(printer.id, {
-          docType: "Z",
-          number: parsedNumber!,
-          mode: "reprint",
-        });
-        toast.success(`Reimpresión Z #${parsedNumber} enviada a la impresora.`);
       }
       setPendingAction(null);
       setReportNumber("");

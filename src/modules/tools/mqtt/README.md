@@ -27,7 +27,7 @@ Cada endpoint valida `printerId` + `SecurityScopeService.assertPrinterInScope`.
 | POST | `/header/write` | wFileSPIFF |
 | POST | `/footer/read` | staPieFij |
 | POST | `/footer/write` | pieTiF |
-| POST | `/reprint` | reimRep (visualize / reprint; tipos FAC/NC/ND/NF/RX) |
+| POST | `/reprint` | reimRep (`tipoRe` + `nroReg[]`; FAC/NC/ND/NF/Z) |
 | POST | `/test-documents/invoice` | Factura de prueba (secuencia proF/endFac) |
 | POST | `/test-documents/credit-note` | NC de prueba (requiere serial fiscal) |
 | POST | `/test-documents/debit-note` | ND de prueba (requiere serial fiscal) |
