@@ -562,7 +562,7 @@ export function ToolsSectionStatusActions({
   statusRefresh?: ToolsRefreshStatusControl | null;
   children?: React.ReactNode;
 }) {
-  const showRefresh = statusRefresh?.mqttReady ?? false;
+  const showRefresh = Boolean(statusRefresh?.mqttReady);
   if (!showRefresh && !children) {
     return null;
   }
@@ -570,7 +570,7 @@ export function ToolsSectionStatusActions({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {children}
-      {showRefresh ? (
+      {statusRefresh?.mqttReady ? (
         <ToolsRefreshStatusButton
           loading={statusRefresh.loading}
           onRefresh={statusRefresh.refreshStatus}
