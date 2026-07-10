@@ -316,6 +316,7 @@ type ToolsPanelSectionProps = {
   headerActions?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
+  contentClassName?: string;
 };
 
 export function ToolsPanelSection({
@@ -326,6 +327,7 @@ export function ToolsPanelSection({
   headerActions,
   children,
   className,
+  contentClassName,
 }: ToolsPanelSectionProps) {
   return (
     <section className={cn(toolsPanelSectionClass, className)}>
@@ -343,7 +345,9 @@ export function ToolsPanelSection({
         </div>
         {headerActions}
       </div>
-      {children ? <div className="mt-4">{children}</div> : null}
+      {children ? (
+        <div className={cn("mt-4", contentClassName)}>{children}</div>
+      ) : null}
     </section>
   );
 }

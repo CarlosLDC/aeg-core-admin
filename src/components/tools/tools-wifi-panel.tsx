@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { Link2, Power, Radio } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Link2, Loader2, Radio, Unplug } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
   ToolsActionButton,
   ToolsPage,
   ToolsPanelActions,
-  ToolsPanelGrid,
   ToolsPanelSection,
   ToolsSectionHeading,
   toolsListItemClass,
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
+import { useToolsMqtt } from "@/modules/tools/mqtt/use-tools-mqtt";
 import {
   connectToolsWifi,
   getToolsMqttErrorMessage,
@@ -29,44 +29,117 @@ type ToolsWifiPanelProps = {
   printer: ToolsPrinter;
 };
 
+type WifiNetwork = {
+  ssid: string;
+  signal: number | null;
+};
+
+function wifiSignalLevel(signal: number): 0 | 1 | 2 | 3 | 4 {
+  if (signal >= -55) return 4;
+  if (signal >= -65) return 3;
+  if (signal >= -75) return 2;
+  if (signal >= -85) return 1;
+  return 0;
+}
+
+function WifiSignalIndicator({ signal }: { signal: number | null }) {
+  const level = signal != null ? wifiSignalLevel(signal) : 0;
+
+  return (
+    <span
+      className="inline-flex shrink-0 items-end gap-0.5 text-sky-600 dark:text-sky-400"
+      aria-label={
+        signal != null ? `Intensidad de señal ${signal} dBm` : "Señal desconocida"
+      }
+      title={signal != null ? `${signal} dBm` : undefined}
+    >
+      {[1, 2, 3, 4].map((bar) => (
+        <span
+          key={bar}
+          className={cn(
+            "w-1 rounded-sm bg-current",
+            bar <= level ? "opacity-100" : "opacity-20",
+          )}
+          style={{ height: `${bar * 3 + 4}px` }}
+          aria-hidden
+        />
+      ))}
+    </span>
+  );
+}
+
+const wifiPanelFillClass = "flex h-full min-h-0 flex-col";
+const wifiPanelGridClass =
+  "grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 [&>*]:min-h-0";
+
 export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.wifi;
+  const { status, refreshStatus } = useToolsMqtt(printer.id, printer.macAddress);
   const [ssid, setSsid] = useState("");
   const [password, setPassword] = useState("");
-  const [networks, setNetworks] = useState<
-    Array<{ ssid: string; signal: number | null }>
-  >([]);
-  const [loading, setLoading] = useState<string | null>(null);
+  const [networks, setNetworks] = useState<WifiNetwork[]>([]);
+  const [scanning, setScanning] = useState(true);
+  const [action, setAction] = useState<"connect" | "disconnect" | null>(null);
 
-  const run = async (action: "scan" | "connect" | "reset") => {
-    setLoading(action);
+  const connectedSsid = status?.additionalInfo?.wifiNetwork?.trim() ?? "";
+
+  const runScan = useCallback(async () => {
+    setScanning(true);
     try {
-      if (action === "scan") {
-        const result = await scanToolsWifi(printer.id);
-        setNetworks(result.networks ?? []);
-        toast.success(
-          result.networks?.length
-            ? `${result.networks.length} red(es) encontrada(s).`
-            : "Escaneo completado sin redes.",
-        );
-      } else if (action === "connect") {
-        const result = await connectToolsWifi(printer.id, ssid, password);
-        if (result.success) {
-          toast.success(result.message ?? "Conexión WiFi enviada.");
-        } else {
-          toast.error(result.message ?? "No se pudo conectar.");
-        }
+      const result = await scanToolsWifi(printer.id);
+      setNetworks(result.networks ?? []);
+    } catch (err) {
+      toast.error(getToolsMqttErrorMessage(err));
+    } finally {
+      setScanning(false);
+    }
+  }, [printer.id, toast]);
+
+  useEffect(() => {
+    void refreshStatus();
+    void runScan();
+  }, [refreshStatus, runScan]);
+
+  const runConnect = async () => {
+    setAction("connect");
+    try {
+      const result = await connectToolsWifi(printer.id, ssid, password);
+      if (result.success) {
+        toast.success(result.message ?? "Conexión WiFi enviada.");
+        await Promise.all([refreshStatus(), runScan()]);
       } else {
-        const result = await resetToolsWifi(printer.id);
-        toast.success(result.message ?? "Reinicio enviado.");
+        toast.error(result.message ?? "No se pudo conectar.");
       }
     } catch (err) {
       toast.error(getToolsMqttErrorMessage(err));
     } finally {
-      setLoading(null);
+      setAction(null);
     }
   };
+
+  const runDisconnect = async (networkSsid: string) => {
+    setAction("disconnect");
+    try {
+      const result = await resetToolsWifi(printer.id);
+      if (result.success) {
+        toast.success(result.message ?? `Desconectado de ${networkSsid}.`);
+        if (ssid === networkSsid) {
+          setSsid("");
+          setPassword("");
+        }
+        await Promise.all([refreshStatus(), runScan()]);
+      } else {
+        toast.error(result.message ?? "No se pudo desconectar.");
+      }
+    } catch (err) {
+      toast.error(getToolsMqttErrorMessage(err));
+    } finally {
+      setAction(null);
+    }
+  };
+
+  const busy = scanning || action != null;
 
   return (
     <ToolsPrinterMacGuard macAddress={printer.macAddress}>
@@ -78,60 +151,94 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
           description={section.description}
         />
 
-        <ToolsPanelGrid className="items-stretch xl:grid-cols-2 [&>*]:h-full">
+        <div className={wifiPanelGridClass}>
           <ToolsPanelSection
-            title="Escanear redes"
-            description="Consulta las redes WiFi detectadas por la impresora."
+            title="Redes disponibles"
+            description="Las redes se detectan automáticamente al abrir esta pantalla."
             icon={Radio}
             tone="sky"
-            className="h-full"
+            className={wifiPanelFillClass}
+            contentClassName="flex min-h-0 flex-1 flex-col"
           >
-            <ToolsActionButton
-              loading={loading === "scan"}
-              disabled={loading != null}
-              onClick={() => void run("scan")}
+            <div
+              className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-background/50"
+              aria-label="Redes detectadas"
             >
-              Escanear WiFi
-            </ToolsActionButton>
-            {networks.length > 0 ? (
-              <div
-                className="mt-4 max-h-48 overflow-y-auto overscroll-y-contain rounded-lg border border-border bg-background/50 p-1"
-                aria-label="Redes detectadas"
-              >
-                <ul className="space-y-2 text-sm">
-                  {networks.map((network) => (
-                    <li
-                      key={network.ssid}
-                      className={cn(
-                        toolsListItemClass,
-                        "flex items-center justify-between",
-                      )}
-                    >
-                      <button
-                        type="button"
-                        className="w-full text-left font-medium text-card-foreground transition-colors hover:text-accent"
-                        onClick={() => setSsid(network.ssid)}
+              {scanning ? (
+                <div className="flex flex-1 items-center justify-center gap-2 px-4 py-8 text-sm text-muted">
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                  Escaneando redes…
+                </div>
+              ) : networks.length === 0 ? (
+                <div className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted">
+                  No se detectaron redes WiFi.
+                </div>
+              ) : (
+                <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-y-contain p-2">
+                  {networks.map((network) => {
+                    const isConnected =
+                      connectedSsid.length > 0 &&
+                      connectedSsid === network.ssid;
+                    const isSelected = ssid === network.ssid;
+
+                    return (
+                      <li
+                        key={network.ssid}
+                        className={cn(
+                          toolsListItemClass,
+                          "flex items-center gap-3",
+                          isConnected &&
+                            "border-sky-500/35 bg-sky-500/[0.06] ring-1 ring-sky-500/20",
+                          isSelected &&
+                            !isConnected &&
+                            "border-accent/40 bg-accent/[0.04]",
+                        )}
                       >
-                        {network.ssid}
-                      </button>
-                      {network.signal != null ? (
-                        <span className="shrink-0 text-muted">
-                          {network.signal} dBm
-                        </span>
-                      ) : null}
-                    </li>
-                  ))}
+                        <button
+                          type="button"
+                          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                          onClick={() => setSsid(network.ssid)}
+                        >
+                          <WifiSignalIndicator signal={network.signal} />
+                          <span className="min-w-0 flex-1 truncate font-medium text-card-foreground">
+                            {network.ssid}
+                          </span>
+                          {isConnected ? (
+                            <span className="shrink-0 text-xs font-medium text-sky-700 dark:text-sky-300">
+                              Conectada
+                            </span>
+                          ) : null}
+                        </button>
+                        {isConnected ? (
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void runDisconnect(network.ssid)}
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-foreground/[0.04] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {action === "disconnect" ? (
+                              <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                            ) : (
+                              <Unplug className="size-3.5" aria-hidden />
+                            )}
+                            Desconectar
+                          </button>
+                        ) : null}
+                      </li>
+                    );
+                  })}
                 </ul>
-              </div>
-            ) : null}
+              )}
+            </div>
           </ToolsPanelSection>
 
           <ToolsPanelSection
-            title="Conectar / reiniciar"
+            title="Conectar"
             description="Seleccione una red y envíe las credenciales a la impresora."
             icon={Link2}
             tone="sky"
-            className="h-full"
+            className={wifiPanelFillClass}
+            contentClassName="flex min-h-0 flex-1 flex-col"
           >
             <div className="space-y-3">
               <label className="block">
@@ -152,26 +259,17 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
                 />
               </label>
             </div>
-            <ToolsPanelActions className="mt-4">
+            <ToolsPanelActions className="mt-auto pt-4">
               <ToolsActionButton
-                loading={loading === "connect"}
-                disabled={loading != null || !ssid.trim()}
-                onClick={() => void run("connect")}
+                loading={action === "connect"}
+                disabled={busy || !ssid.trim()}
+                onClick={() => void runConnect()}
               >
                 Conectar
               </ToolsActionButton>
-              <ToolsActionButton
-                variant="danger"
-                loading={loading === "reset"}
-                disabled={loading != null}
-                onClick={() => void run("reset")}
-              >
-                <Power className="size-4" aria-hidden />
-                Reiniciar
-              </ToolsActionButton>
             </ToolsPanelActions>
           </ToolsPanelSection>
-        </ToolsPanelGrid>
+        </div>
       </ToolsPage>
     </ToolsPrinterMacGuard>
   );
