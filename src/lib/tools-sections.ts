@@ -12,9 +12,7 @@ import {
 import {
   toolsPrinterFormasPagoPath,
   toolsPrinterHeaderFooterPath,
-  toolsPrinterReprintPath,
   toolsPrinterSummaryPath,
-  toolsPrinterTestDocumentsPath,
   toolsPrinterWifiPath,
 } from "@/lib/resource-routes";
 
@@ -101,8 +99,6 @@ export const TOOLS_PRINTER_NAV_SECTIONS = [
   "summary",
   "wifi",
   "formasPago",
-  "testDocuments",
-  "reprint",
   "headerFooter",
 ] as const satisfies readonly ToolsSectionKey[];
 
@@ -120,10 +116,6 @@ export function toolsPrinterSectionHref(
       return toolsPrinterWifiPath(serial);
     case "formasPago":
       return toolsPrinterFormasPagoPath(serial);
-    case "testDocuments":
-      return toolsPrinterTestDocumentsPath(serial);
-    case "reprint":
-      return toolsPrinterReprintPath(serial);
     case "headerFooter":
       return toolsPrinterHeaderFooterPath(serial);
   }

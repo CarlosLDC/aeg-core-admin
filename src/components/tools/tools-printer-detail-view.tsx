@@ -15,6 +15,8 @@ import {
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterStatusBar } from "@/components/tools/tools-printer-status-bar";
 import { ToolsReporteZSection } from "@/components/tools/tools-reporte-z-section";
+import { ToolsReprintSection } from "@/components/tools/tools-reprint-section";
+import { ToolsTestDocumentsSection } from "@/components/tools/tools-test-documents-section";
 import { useToolsPrinters } from "@/modules/tools/printers/use-tools-printers";
 import {
   TOOLS_PRINTER_NAV_SECTIONS,
@@ -110,7 +112,11 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
         </section>
 
         {printer.macAddress ? (
-          <ToolsReporteZSection printer={printer} />
+          <>
+            <ToolsReporteZSection printer={printer} />
+            <ToolsTestDocumentsSection printer={printer} />
+            <ToolsReprintSection printer={printer} />
+          </>
         ) : null}
       </ToolsPage>
     </ResourceViewShell>
