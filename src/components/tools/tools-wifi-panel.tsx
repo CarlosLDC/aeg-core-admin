@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link2, Loader2, Radio, Unplug } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
@@ -97,11 +97,11 @@ function WifiSignalIndicator({ signal }: { signal: number | null }) {
   );
 }
 
-const wifiPanelFillClass = "flex h-full min-h-0 flex-col";
-const wifiPanelGridClass =
-  "grid grid-cols-1 items-start gap-4 lg:grid-cols-2";
+const wifiPanelGridClass = "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start";
+const wifiPanelSectionMatchClass =
+  "flex min-h-0 flex-col overflow-hidden lg:h-[var(--wifi-connect-panel-height)]";
 const wifiNetworkListClass =
-  "flex h-56 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background/50";
+  "flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-background/50";
 
 export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const toast = useToast();
@@ -113,6 +113,10 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const [networks, setNetworks] = useState<WifiNetwork[]>([]);
   const [scanning, setScanning] = useState(true);
   const [action, setAction] = useState<"connect" | "disconnect" | null>(null);
+  const connectPanelRef = useRef<HTMLDivElement>(null);
+  const [connectPanelHeight, setConnectPanelHeight] = useState<number | null>(
+    null,
+  );
 
   const connectedSsid = resolveToolsWifiConnectedSsid(
     status?.additionalInfo?.wifiNetwork,
@@ -157,6 +161,28 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
       cancelled = true;
     };
   }, [refreshStatus, runScan]);
+
+  useEffect(() => {
+    const node = connectPanelRef.current;
+    if (!node) {
+      return;
+    }
+
+    const updateHeight = () => {
+      setConnectPanelHeight(node.offsetHeight);
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(node);
+    window.addEventListener("resize", updateHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateHeight);
+    };
+  }, []);
 
   const runConnect = async () => {
     setAction("connect");
@@ -219,13 +245,22 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
 
         {connectionResolved && !isOnline ? <ToolsConnectionWarning /> : null}
 
-        <div className={wifiPanelGridClass}>
+        <div
+          className={wifiPanelGridClass}
+          style={
+            connectPanelHeight != null
+              ? ({
+                  "--wifi-connect-panel-height": `${connectPanelHeight}px`,
+                } as CSSProperties)
+              : undefined
+          }
+        >
           <ToolsPanelSection
             title="Redes disponibles"
             description="Las redes se detectan automáticamente al abrir esta pantalla."
             icon={Radio}
             tone="sky"
-            className={wifiPanelFillClass}
+            className={wifiPanelSectionMatchClass}
             contentClassName="flex min-h-0 flex-1 flex-col"
           >
             <div className={wifiNetworkListClass} aria-label="Redes detectadas">
@@ -298,13 +333,13 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
             </div>
           </ToolsPanelSection>
 
-          <ToolsPanelSection
-            title="Conectar"
-            description="Seleccione una red y envíe las credenciales a la impresora."
-            icon={Link2}
-            tone="sky"
-            className="self-start"
-          >
+          <div ref={connectPanelRef}>
+            <ToolsPanelSection
+              title="Conectar"
+              description="Seleccione una red y envíe las credenciales a la impresora."
+              icon={Link2}
+              tone="sky"
+            >
             <div className="space-y-3">
               <label className="block">
                 <FieldLabel className="text-muted">SSID</FieldLabel>
@@ -333,7 +368,8 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
                 Conectar
               </ToolsActionButton>
             </ToolsPanelActions>
-          </ToolsPanelSection>
+            </ToolsPanelSection>
+          </div>
         </div>
       </ToolsPage>
     </ToolsPrinterMacGuard>
