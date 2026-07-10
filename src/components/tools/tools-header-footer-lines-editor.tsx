@@ -29,7 +29,7 @@ export function ToolsHeaderFooterLinesEditor({
           {lines.map((line, index) => (
             <li
               key={`line-${index}`}
-              className="group flex items-center gap-2 px-2 py-1.5"
+              className="group flex items-center gap-2 px-3 py-1.5"
             >
               <span
                 aria-hidden
@@ -50,29 +50,34 @@ export function ToolsHeaderFooterLinesEditor({
                 )}
                 spellCheck={false}
               />
-              <button
-                type="button"
-                disabled={disabled}
-                onClick={() => onRemoveLine(index)}
-                aria-label={`Eliminar línea ${index + 1}`}
-                className="inline-flex shrink-0 rounded p-1 text-muted/70 opacity-70 transition-all hover:bg-rose-500/10 hover:text-rose-600 hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100"
-              >
-                <Trash2 className="size-3.5" aria-hidden />
-              </button>
+              <div className="flex w-7 shrink-0 items-center justify-end">
+                <button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onRemoveLine(index)}
+                  aria-label={`Eliminar línea ${index + 1}`}
+                  className="inline-flex rounded p-1 text-muted/70 opacity-70 transition-all hover:bg-rose-500/10 hover:text-rose-600 hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100"
+                >
+                  <Trash2 className="size-3.5" aria-hidden />
+                </button>
+              </div>
             </li>
           ))}
         </ul>
       )}
 
-      <div className="border-t border-border/60 px-2 py-2">
+      <div className="border-t border-border/60 px-3 py-2">
         <button
           type="button"
           disabled={disabled}
           onClick={onAddLine}
-          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-accent transition-colors hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex w-full items-center gap-2 rounded-md py-1 text-left text-xs font-medium text-accent transition-colors hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <Plus className="size-3.5" aria-hidden />
-          Añadir línea
+          <span className="w-7 shrink-0" aria-hidden />
+          <span className="inline-flex items-center gap-1.5">
+            <Plus className="size-3.5" aria-hidden />
+            Añadir línea
+          </span>
         </button>
       </div>
     </div>

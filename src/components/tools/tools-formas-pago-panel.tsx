@@ -75,27 +75,21 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
     [items],
   );
 
-  const load = useCallback(
-    async (options?: { notify?: boolean }) => {
-      setLoading(true);
-      setEditingNro(null);
-      try {
-        const result = await readToolsFormasPago(printer.id);
-        const nextItems = result.formasPago ?? [];
-        setItems(nextItems);
-        setDrafts(draftsFromItems(nextItems));
-        if (options?.notify) {
-          toast.success("Formas de pago actualizadas.");
-        }
-      } catch (err) {
-        toast.error(getToolsMqttErrorMessage(err));
-      } finally {
-        setLoading(false);
-        setInitialLoadDone(true);
-      }
-    },
-    [printer.id, toast],
-  );
+  const load = useCallback(async () => {
+    setLoading(true);
+    setEditingNro(null);
+    try {
+      const result = await readToolsFormasPago(printer.id);
+      const nextItems = result.formasPago ?? [];
+      setItems(nextItems);
+      setDrafts(draftsFromItems(nextItems));
+    } catch (err) {
+      toast.error(getToolsMqttErrorMessage(err));
+    } finally {
+      setLoading(false);
+      setInitialLoadDone(true);
+    }
+  }, [printer.id, toast]);
 
   useEffect(() => {
     void load();
@@ -169,15 +163,7 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
                 refreshStatus,
                 mqttReady,
               }}
-            >
-              <ToolsActionButton
-                loading={loading}
-                disabled={loading || savingNro != null || remoteActionsDisabled}
-                onClick={() => void load({ notify: true })}
-              >
-                Actualizar
-              </ToolsActionButton>
-            </ToolsSectionStatusActions>
+            />
           }
         />
 

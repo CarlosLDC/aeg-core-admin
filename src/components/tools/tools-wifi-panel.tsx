@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link2, Loader2, Radio, Unplug } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
@@ -23,6 +23,7 @@ import {
   scanToolsWifi,
 } from "@/lib/tools-mqtt-api";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
+import { normalizeToolsWifiNetworks } from "@/lib/tools-wifi-networks";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
 import { cn } from "@/lib/utils";
@@ -95,6 +96,8 @@ function WifiSignalIndicator({ signal }: { signal: number | null }) {
 const wifiPanelFillClass = "flex h-full min-h-0 flex-col";
 const wifiPanelGridClass =
   "grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 [&>*]:min-h-0";
+const wifiNetworkListClass =
+  "flex h-56 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background/50";
 
 export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const toast = useToast();
@@ -108,6 +111,10 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const [action, setAction] = useState<"connect" | "disconnect" | null>(null);
 
   const connectedSsid = status?.additionalInfo?.wifiNetwork?.trim() ?? "";
+  const displayedNetworks = useMemo(
+    () => normalizeToolsWifiNetworks(networks, connectedSsid || undefined),
+    [networks, connectedSsid],
+  );
 
   const runScan = useCallback(async () => {
     setScanning(true);
@@ -209,17 +216,14 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
             className={wifiPanelFillClass}
             contentClassName="flex min-h-0 flex-1 flex-col"
           >
-            <div
-              className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-background/50"
-              aria-label="Redes detectadas"
-            >
+            <div className={wifiNetworkListClass} aria-label="Redes detectadas">
               {scanning ? (
-                <div className="flex flex-1 items-center justify-center gap-2 px-4 py-8 text-sm text-muted">
+                <div className="flex h-full items-center justify-center gap-2 px-4 text-sm text-muted">
                   <Loader2 className="size-4 animate-spin" aria-hidden />
                   Escaneando redes…
                 </div>
-              ) : networks.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 py-8 text-center text-sm text-muted">
+              ) : displayedNetworks.length === 0 ? (
+                <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center text-sm text-muted">
                   <p>No se detectaron redes WiFi.</p>
                   <ToolsActionButton
                     disabled={busy || remoteActionsDisabled}
@@ -230,7 +234,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
                 </div>
               ) : (
                 <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-y-contain p-2">
-                  {networks.map((network) => {
+                  {displayedNetworks.map((network) => {
                     const isConnected =
                       connectedSsid.length > 0 &&
                       connectedSsid === network.ssid;
@@ -258,11 +262,6 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
                           <span className="min-w-0 flex-1 truncate font-medium text-card-foreground">
                             {network.ssid}
                           </span>
-                          {isConnected ? (
-                            <span className="shrink-0 text-xs font-medium text-sky-700 dark:text-sky-300">
-                              Conectada
-                            </span>
-                          ) : null}
                         </button>
                         {isConnected ? (
                           <button

@@ -23,4 +23,24 @@ describe("normalizeToolsWifiNetworks", () => {
       ]).map((network) => network.ssid),
     ).toEqual(["Alta", "Baja"]);
   });
+
+  it("coloca la red conectada primero aunque tenga menor señal", () => {
+    expect(
+      normalizeToolsWifiNetworks(
+        [
+          { ssid: "Alta", signal: 90 },
+          { ssid: "Conectada", signal: 15 },
+        ],
+        "Conectada",
+      ).map((network) => network.ssid),
+    ).toEqual(["Conectada", "Alta"]);
+  });
+
+  it("agrega la red conectada si no apareció en el escaneo", () => {
+    expect(
+      normalizeToolsWifiNetworks([{ ssid: "Otra", signal: 50 }], "MiRed").map(
+        (network) => network.ssid,
+      ),
+    ).toEqual(["MiRed", "Otra"]);
+  });
 });

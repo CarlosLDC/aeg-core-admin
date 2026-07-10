@@ -13,9 +13,7 @@ import {
   ToolsActionCard,
   ToolsSectionGrid,
   ToolsSectionHeading,
-  ToolsSectionStatusActions,
   toolsSubsectionClass,
-  type ToolsRefreshStatusControl,
 } from "@/components/tools/tools-ui";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
@@ -71,25 +69,18 @@ const TEST_DOCUMENT_ACTIONS: TestDocumentActionConfig[] = [
 type ToolsTestDocumentsSectionProps = {
   printer: ToolsPrinter;
   remoteActionsDisabled?: boolean;
-  statusRefresh?: ToolsRefreshStatusControl;
 };
 
 export function ToolsTestDocumentsSection({
   printer,
   remoteActionsDisabled: remoteActionsDisabledProp,
-  statusRefresh: statusRefreshProp,
 }: ToolsTestDocumentsSectionProps) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.testDocuments;
   const internalConnection = useToolsPrinterConnection(
-    statusRefreshProp ? null : printer.id,
-    statusRefreshProp ? null : printer.macAddress,
+    remoteActionsDisabledProp !== undefined ? null : printer.id,
+    remoteActionsDisabledProp !== undefined ? null : printer.macAddress,
   );
-  const statusRefresh = statusRefreshProp ?? {
-    loading: internalConnection.loading,
-    refreshStatus: internalConnection.refreshStatus,
-    mqttReady: internalConnection.mqttReady,
-  };
   const remoteActionsDisabled =
     remoteActionsDisabledProp ?? internalConnection.remoteActionsDisabled;
   const [pendingAction, setPendingAction] =
@@ -153,7 +144,6 @@ export function ToolsTestDocumentsSection({
           tone={section.tone}
           title={section.title}
           description={section.description}
-          actions={<ToolsSectionStatusActions statusRefresh={statusRefresh} />}
         />
         <ToolsSectionGrid>
           {TEST_DOCUMENT_ACTIONS.map((action) => (

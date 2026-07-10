@@ -1,8 +1,9 @@
 import type { ToolsWifiNetwork } from "@/types/tools-mqtt";
 
-/** Normaliza redes WiFi: deduplica SSID y conserva la mejor señal reportada. */
+/** Normaliza redes WiFi: deduplica SSID, conserva la mejor señal y prioriza la red conectada. */
 export function normalizeToolsWifiNetworks(
   networks: ToolsWifiNetwork[] | null | undefined,
+  connectedSsid?: string,
 ): ToolsWifiNetwork[] {
   const bySsid = new Map<string, ToolsWifiNetwork>();
 
@@ -19,9 +20,26 @@ export function normalizeToolsWifiNetworks(
     }
   }
 
-  return [...bySsid.values()].sort(
+  const connected = connectedSsid?.trim();
+  if (connected && !bySsid.has(connected)) {
+    bySsid.set(connected, { ssid: connected, signal: null });
+  }
+
+  const sorted = [...bySsid.values()].sort(
     (a, b) => compareWifiSignal(b.signal, a.signal),
   );
+
+  if (!connected) {
+    return sorted;
+  }
+
+  const connectedIndex = sorted.findIndex((network) => network.ssid === connected);
+  if (connectedIndex <= 0) {
+    return sorted;
+  }
+
+  const [connectedNetwork] = sorted.splice(connectedIndex, 1);
+  return [connectedNetwork, ...sorted];
 }
 
 function compareWifiSignal(
