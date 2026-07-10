@@ -211,20 +211,15 @@ export function ToolsNavCard({
   const className = cn(
     "group relative z-0 flex h-full min-h-[10.25rem] flex-col rounded-xl border border-border bg-card p-4 shadow-sm transition-colors",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
-    disabled
-      ? "cursor-not-allowed opacity-50"
-      : toolsToneHoverBorderClass[tone],
+    disabled && "cursor-not-allowed opacity-50",
+    toolsToneHoverBorderClass[tone],
   );
   const content = (
     <>
       <div className="flex items-start justify-between gap-3">
         <ToolsIconBadge icon={icon} tone={tone} />
         <ChevronRight
-          className={cn(
-            "size-4 shrink-0 text-muted",
-            !disabled &&
-              "transition-transform group-hover:translate-x-0.5 group-hover:text-foreground",
-          )}
+          className="size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-foreground"
           aria-hidden
         />
       </div>
