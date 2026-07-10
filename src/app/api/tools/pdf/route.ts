@@ -15,7 +15,7 @@ function requireSession(request: NextRequest): NextResponse | null {
   }
   const auth = requireRole(request, "tools", "read");
   if (auth instanceof Response) {
-    return NextResponse.json({ error: "Sin permiso." }, { status: auth.status });
+    return auth;
   }
   return null;
 }

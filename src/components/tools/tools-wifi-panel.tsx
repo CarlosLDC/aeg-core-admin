@@ -99,7 +99,7 @@ function WifiSignalIndicator({ signal }: { signal: number | null }) {
 
 const wifiPanelFillClass = "flex h-full min-h-0 flex-col";
 const wifiPanelGridClass =
-  "grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 [&>*]:min-h-0";
+  "grid grid-cols-1 items-start gap-4 lg:grid-cols-2";
 const wifiNetworkListClass =
   "flex h-56 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background/50";
 
@@ -303,6 +303,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
             description="Seleccione una red y envíe las credenciales a la impresora."
             icon={Link2}
             tone="sky"
+            className="self-start"
           >
             <div className="space-y-3">
               <label className="block">

@@ -156,10 +156,25 @@ export function ToolsHeaderFooterLinesEditor({
           type="button"
           disabled={disabled}
           onClick={onAddLine}
-          className="flex w-full items-center gap-2 rounded-none px-3 py-1.5 text-left text-xs font-medium text-accent transition-colors hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-40"
+          aria-label="Añadir línea"
+          className={cn(
+            "w-full rounded-none px-3 py-1.5 text-accent transition-colors hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-40",
+            lineRowGridClass,
+          )}
         >
-          <Plus className="size-3.5 shrink-0" aria-hidden />
-          <span className="truncate">Añadir línea</span>
+          <span className={lineGripColumnClass} aria-hidden />
+          <span aria-hidden />
+          <span
+            className={cn(
+              lineGripColumnClass,
+              "w-[1.75rem] text-accent",
+            )}
+            aria-hidden
+          >
+            <Plus className="size-3.5" />
+          </span>
+          <span aria-hidden />
+          <span aria-hidden />
         </button>
       </div>
     </div>

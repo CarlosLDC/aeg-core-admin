@@ -1,3 +1,4 @@
+import { getStoredToken } from "@/lib/auth-storage";
 import {
   buildToolsPdfFilename,
   getToolsPdfTypeLabel,
@@ -12,9 +13,17 @@ export type ToolsDocumentPdfPreview = {
 export async function createToolsDocumentPdfPreview(
   request: ToolsPdfDownloadRequest,
 ): Promise<ToolsDocumentPdfPreview> {
+  const token = getStoredToken();
+  if (!token) {
+    throw new Error("No hay sesión activa.");
+  }
+
   const response = await fetch("/api/tools/pdf", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     credentials: "include",
     body: JSON.stringify(request),
   });
