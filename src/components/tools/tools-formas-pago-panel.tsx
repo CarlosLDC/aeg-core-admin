@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Loader2, Pencil, X } from "lucide-react";
 import {
   ToolsActionButton,
+  ToolsConnectionWarning,
   ToolsPage,
   ToolsSectionHeading,
   toolsListItemClass,
@@ -11,6 +12,7 @@ import {
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
+import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import {
   getToolsMqttErrorMessage,
   readToolsFormasPago,
@@ -52,6 +54,11 @@ function draftsFromItems(items: ToolsFormasPagoItem[]): Record<number, string> {
 export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.formasPago;
+  const { refreshStatus, connectionKnown, isOnline } = useToolsPrinterConnection(
+    printer.id,
+    printer.macAddress,
+  );
+  const remoteActionsDisabled = connectionKnown && !isOnline;
   const [items, setItems] = useState<ToolsFormasPagoItem[]>([]);
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [editingNro, setEditingNro] = useState<number | null>(null);
@@ -88,7 +95,8 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
 
   useEffect(() => {
     void load();
-  }, [load]);
+    void refreshStatus();
+  }, [load, refreshStatus]);
 
   const startEditing = (nro: number) => {
     const original =
@@ -153,13 +161,15 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
           actions={
             <ToolsActionButton
               loading={loading}
-              disabled={loading || savingNro != null}
+              disabled={loading || savingNro != null || remoteActionsDisabled}
               onClick={() => void load({ notify: true })}
             >
               Actualizar
             </ToolsActionButton>
           }
         />
+
+        {remoteActionsDisabled ? <ToolsConnectionWarning /> : null}
 
         <div className={toolsPanelSectionClass}>
           {loading && !initialLoadDone ? (
@@ -214,7 +224,7 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
                           type="text"
                           value={draft}
                           maxLength={FORMAS_PAGO_DESCRIPCION_MAX_LENGTH}
-                          disabled={loading || isSaving}
+                          disabled={loading || isSaving || remoteActionsDisabled}
                           autoFocus
                           onChange={(e) =>
                             setDrafts((current) => ({
@@ -244,6 +254,7 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
                             disabled={
                               loading ||
                               isSaving ||
+                              remoteActionsDisabled ||
                               !isDirty ||
                               !draft.trim() ||
                               validateFormaPagoDescripcion(draft) != null
@@ -280,7 +291,9 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
                           <button
                             type="button"
                             className={editIconButtonClass}
-                            disabled={loading || savingNro != null}
+                            disabled={
+                              loading || savingNro != null || remoteActionsDisabled
+                            }
                             onClick={() => startEditing(item.nro)}
                             aria-label={`Editar forma de pago ${item.nro}`}
                           >

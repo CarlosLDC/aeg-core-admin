@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { ChevronRight, Loader2, WifiOff } from "lucide-react";
 import { DetailField } from "@/components/resource-view/detail-fields";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
 import type { ToolsSectionTone } from "@/lib/tools-sections";
 import type { ToolsPrinterPartySummary } from "@/modules/tools/shared/types";
+import { TOOLS_PRINTER_OFFLINE_MESSAGE } from "@/modules/tools/mqtt/tools-printer-connection";
 import { cn } from "@/lib/utils";
 
 const toolsToneBadgeClass: Record<ToolsSectionTone, string> = {
@@ -198,26 +199,32 @@ export function ToolsNavCard({
   tone,
   title,
   description,
+  disabled = false,
 }: {
   href: string;
   icon: LucideIcon;
   tone: ToolsSectionTone;
   title: string;
   description: string;
+  disabled?: boolean;
 }) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "group relative z-0 flex h-full min-h-[10.25rem] flex-col rounded-xl border border-border bg-card p-4 shadow-sm transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
-        toolsToneHoverBorderClass[tone],
-      )}
-    >
+  const className = cn(
+    "group relative z-0 flex h-full min-h-[10.25rem] flex-col rounded-xl border border-border bg-card p-4 shadow-sm transition-colors",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
+    disabled
+      ? "cursor-not-allowed opacity-50"
+      : toolsToneHoverBorderClass[tone],
+  );
+  const content = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <ToolsIconBadge icon={icon} tone={tone} />
         <ChevronRight
-          className="size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-foreground"
+          className={cn(
+            "size-4 shrink-0 text-muted",
+            !disabled &&
+              "transition-transform group-hover:translate-x-0.5 group-hover:text-foreground",
+          )}
           aria-hidden
         />
       </div>
@@ -227,6 +234,20 @@ export function ToolsNavCard({
           {description}
         </p>
       </div>
+    </>
+  );
+
+  if (disabled) {
+    return (
+      <div aria-disabled="true" className={className}>
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <Link href={href} className={className}>
+      {content}
     </Link>
   );
 }
@@ -513,6 +534,22 @@ export function ToolsMacWarning({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
       {children}
+    </div>
+  );
+}
+
+export function ToolsConnectionWarning({
+  children = TOOLS_PRINTER_OFFLINE_MESSAGE,
+}: {
+  children?: React.ReactNode;
+}) {
+  return (
+    <div
+      role="status"
+      className="flex items-start gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-800 dark:text-rose-200"
+    >
+      <WifiOff className="mt-0.5 size-4 shrink-0" aria-hidden />
+      <p>{children}</p>
     </div>
   );
 }

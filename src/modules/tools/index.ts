@@ -26,7 +26,9 @@ export { escPosToHtml } from "./escpos/esc-pos-to-html";
 
 export { loadToolsPrinterCatalog } from "./printers/tools-printers-api";
 export { useToolsPrinters } from "./printers/use-tools-printers";
-export { useToolsMqtt } from "./mqtt/use-tools-mqtt";
+export { useToolsMqtt, useToolsPrinterConnection } from "./mqtt/use-tools-mqtt";
+export type { ToolsPrinterConnectionState } from "./mqtt/use-tools-mqtt";
+export { TOOLS_PRINTER_OFFLINE_MESSAGE } from "./mqtt/tools-printer-connection";
 
 export type {
   MqttCommand,

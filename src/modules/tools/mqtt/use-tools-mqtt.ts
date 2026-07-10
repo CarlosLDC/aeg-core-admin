@@ -3,6 +3,10 @@
 import { useCallback, useState } from "react";
 import { fetchToolsMqttStatus, getToolsMqttErrorMessage } from "@/lib/tools-mqtt-api";
 import type { ToolsMqttStatusResponse } from "@/types/tools-mqtt";
+import {
+  isToolsPrinterConnectionKnown,
+  isToolsPrinterOnline,
+} from "./tools-printer-connection";
 
 export function useToolsMqtt(printerId: number | null, macAddress: string | null) {
   const [status, setStatus] = useState<ToolsMqttStatusResponse | null>(null);
@@ -43,3 +47,26 @@ export function useToolsMqtt(printerId: number | null, macAddress: string | null
     refreshStatus,
   };
 }
+
+export function useToolsPrinterConnection(
+  printerId: number | null,
+  macAddress: string | null,
+) {
+  const mqtt = useToolsMqtt(printerId, macAddress);
+  const connectionKnown = isToolsPrinterConnectionKnown(
+    mqtt.loading,
+    mqtt.status,
+    mqtt.error,
+  );
+  const isOnline = isToolsPrinterOnline(mqtt.status, mqtt.error);
+
+  return {
+    ...mqtt,
+    connectionKnown,
+    isOnline,
+  };
+}
+
+export type ToolsPrinterConnectionState = ReturnType<
+  typeof useToolsPrinterConnection
+>;

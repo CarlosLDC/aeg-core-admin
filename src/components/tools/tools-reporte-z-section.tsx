@@ -77,9 +77,13 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
 
 type ToolsReporteZSectionProps = {
   printer: ToolsPrinter;
+  remoteActionsDisabled?: boolean;
 };
 
-export function ToolsReporteZSection({ printer }: ToolsReporteZSectionProps) {
+export function ToolsReporteZSection({
+  printer,
+  remoteActionsDisabled = false,
+}: ToolsReporteZSectionProps) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.reporteZ;
   const [pendingAction, setPendingAction] = useState<ReportZActionConfig | null>(
@@ -176,7 +180,10 @@ export function ToolsReporteZSection({ printer }: ToolsReporteZSectionProps) {
               title={action.title}
               description={action.description}
               loading={loading === action.id}
-              disabled={loading != null && loading !== action.id}
+              disabled={
+                remoteActionsDisabled ||
+                (loading != null && loading !== action.id)
+              }
               onClick={() => openAction(action)}
             />
           ))}

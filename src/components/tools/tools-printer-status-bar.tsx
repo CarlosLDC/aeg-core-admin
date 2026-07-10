@@ -1,36 +1,22 @@
 "use client";
 
 import { RefreshCw } from "lucide-react";
-import { useEffect } from "react";
 import {
   ToolsActionButton,
   ToolsIconBadge,
   toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
-import { useToolsMqtt } from "@/modules/tools/mqtt/use-tools-mqtt";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
+import type { ToolsPrinterConnectionState } from "@/modules/tools/mqtt/use-tools-mqtt";
 import { cn } from "@/lib/utils";
 
 type ToolsPrinterStatusBarProps = {
-  printerId: number;
-  macAddress: string | null;
+  connection: ToolsPrinterConnectionState;
 };
 
-export function ToolsPrinterStatusBar({
-  printerId,
-  macAddress,
-}: ToolsPrinterStatusBarProps) {
-  const { status, loading, error, mqttReady, refreshStatus } = useToolsMqtt(
-    printerId,
-    macAddress,
-  );
+export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps) {
+  const { status, loading, error, mqttReady, refreshStatus } = connection;
   const statusSection = TOOLS_SECTIONS.status;
-
-  useEffect(() => {
-    if (mqttReady) {
-      void refreshStatus();
-    }
-  }, [mqttReady, refreshStatus]);
 
   if (!mqttReady) {
     return null;

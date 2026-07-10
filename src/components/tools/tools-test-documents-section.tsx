@@ -67,10 +67,12 @@ const TEST_DOCUMENT_ACTIONS: TestDocumentActionConfig[] = [
 
 type ToolsTestDocumentsSectionProps = {
   printer: ToolsPrinter;
+  remoteActionsDisabled?: boolean;
 };
 
 export function ToolsTestDocumentsSection({
   printer,
+  remoteActionsDisabled = false,
 }: ToolsTestDocumentsSectionProps) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.testDocuments;
@@ -145,7 +147,10 @@ export function ToolsTestDocumentsSection({
               title={action.title}
               description={action.description}
               loading={loading === action.id}
-              disabled={loading != null && loading !== action.id}
+              disabled={
+                remoteActionsDisabled ||
+                (loading != null && loading !== action.id)
+              }
               onClick={() => openAction(action)}
             />
           ))}

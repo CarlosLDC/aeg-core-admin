@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { AlertTriangle, ArrowLeft, LayoutGrid } from "lucide-react";
+import { useEffect } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import {
+  ToolsConnectionWarning,
   ToolsMacWarning,
   ToolsNavCard,
   ToolsPage,
@@ -19,6 +21,7 @@ import { ToolsReporteZSection } from "@/components/tools/tools-reporte-z-section
 import { ToolsReprintSection } from "@/components/tools/tools-reprint-section";
 import { ToolsTestDocumentsSection } from "@/components/tools/tools-test-documents-section";
 import { useToolsPrinters } from "@/modules/tools/printers/use-tools-printers";
+import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import {
   TOOLS_PRINTER_NAV_SECTIONS,
   TOOLS_SECTIONS,
@@ -34,6 +37,20 @@ type ToolsPrinterDetailViewProps = {
 export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) {
   const { loading, error, reload, findBySerial } = useToolsPrinters();
   const printer = findBySerial(serial);
+  const connection = useToolsPrinterConnection(
+    printer?.id ?? null,
+    printer?.macAddress ?? null,
+  );
+
+  useEffect(() => {
+    if (connection.mqttReady) {
+      void connection.refreshStatus();
+    }
+  }, [connection.mqttReady, connection.refreshStatus]);
+
+  const remoteActionsDisabled = Boolean(
+    printer?.macAddress && connection.connectionKnown && !connection.isOnline,
+  );
 
   if (loading && !printer) {
     return (
@@ -83,10 +100,9 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
           </ToolsMacWarning>
         ) : null}
 
-        <ToolsPrinterStatusBar
-          printerId={printer.id}
-          macAddress={printer.macAddress}
-        />
+        <ToolsPrinterStatusBar connection={connection} />
+
+        {remoteActionsDisabled ? <ToolsConnectionWarning /> : null}
 
         <section className={toolsSubsectionClass}>
           <ToolsSectionHeading
@@ -98,6 +114,7 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
           <ToolsSectionGrid>
             {TOOLS_PRINTER_NAV_SECTIONS.map((sectionKey) => {
               const section = TOOLS_SECTIONS[sectionKey];
+              const requiresConnection = sectionKey !== "summary";
               return (
                 <ToolsNavCard
                   key={section.id}
@@ -106,6 +123,9 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
                   tone={section.tone}
                   title={section.title}
                   description={section.description}
+                  disabled={
+                    requiresConnection && remoteActionsDisabled
+                  }
                 />
               );
             })}
@@ -114,9 +134,18 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
 
         {printer.macAddress ? (
           <>
-            <ToolsReporteZSection printer={printer} />
-            <ToolsTestDocumentsSection printer={printer} />
-            <ToolsReprintSection printer={printer} />
+            <ToolsReporteZSection
+              printer={printer}
+              remoteActionsDisabled={remoteActionsDisabled}
+            />
+            <ToolsTestDocumentsSection
+              printer={printer}
+              remoteActionsDisabled={remoteActionsDisabled}
+            />
+            <ToolsReprintSection
+              printer={printer}
+              remoteActionsDisabled={remoteActionsDisabled}
+            />
           </>
         ) : null}
       </ToolsPage>

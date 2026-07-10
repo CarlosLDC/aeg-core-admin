@@ -70,9 +70,13 @@ const DOC_TYPE_OPTIONS = [
 
 type ToolsReprintSectionProps = {
   printer: ToolsPrinter;
+  remoteActionsDisabled?: boolean;
 };
 
-export function ToolsReprintSection({ printer }: ToolsReprintSectionProps) {
+export function ToolsReprintSection({
+  printer,
+  remoteActionsDisabled = false,
+}: ToolsReprintSectionProps) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.reprint;
   const [pendingAction, setPendingAction] = useState<ReprintActionConfig | null>(
@@ -153,7 +157,10 @@ export function ToolsReprintSection({ printer }: ToolsReprintSectionProps) {
               title={action.title}
               description={action.description}
               loading={loading === action.id}
-              disabled={loading != null && loading !== action.id}
+              disabled={
+                remoteActionsDisabled ||
+                (loading != null && loading !== action.id)
+              }
               onClick={() => openAction(action)}
             />
           ))}

@@ -5,6 +5,7 @@ import { Link2, Loader2, Radio, Unplug } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
   ToolsActionButton,
+  ToolsConnectionWarning,
   ToolsPage,
   ToolsPanelActions,
   ToolsPanelSection,
@@ -13,7 +14,7 @@ import {
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
-import { useToolsMqtt } from "@/modules/tools/mqtt/use-tools-mqtt";
+import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import {
   connectToolsWifi,
   getToolsMqttErrorMessage,
@@ -75,7 +76,9 @@ const wifiPanelGridClass =
 export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.wifi;
-  const { status, refreshStatus } = useToolsMqtt(printer.id, printer.macAddress);
+  const { status, refreshStatus, connectionKnown, isOnline } =
+    useToolsPrinterConnection(printer.id, printer.macAddress);
+  const remoteActionsDisabled = connectionKnown && !isOnline;
   const [ssid, setSsid] = useState("");
   const [password, setPassword] = useState("");
   const [networks, setNetworks] = useState<WifiNetwork[]>([]);
@@ -151,6 +154,8 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
           description={section.description}
         />
 
+        {remoteActionsDisabled ? <ToolsConnectionWarning /> : null}
+
         <div className={wifiPanelGridClass}>
           <ToolsPanelSection
             title="Redes disponibles"
@@ -212,7 +217,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
                         {isConnected ? (
                           <button
                             type="button"
-                            disabled={busy}
+                            disabled={busy || remoteActionsDisabled}
                             onClick={() => void runDisconnect(network.ssid)}
                             className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-foreground/[0.04] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                           >
@@ -262,7 +267,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
             <ToolsPanelActions className="mt-auto pt-4">
               <ToolsActionButton
                 loading={action === "connect"}
-                disabled={busy || !ssid.trim()}
+                disabled={busy || !ssid.trim() || remoteActionsDisabled}
                 onClick={() => void runConnect()}
               >
                 Conectar

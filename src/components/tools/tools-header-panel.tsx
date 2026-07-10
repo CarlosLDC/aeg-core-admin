@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { AlignLeft } from "lucide-react";
 import { ToolsHeaderFooterBlock } from "@/components/tools/tools-header-footer-block";
-import { ToolsPage, ToolsSectionHeading } from "@/components/tools/tools-ui";
+import { ToolsPage, ToolsSectionHeading, ToolsConnectionWarning } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
+import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import {
   getToolsMqttErrorMessage,
   readToolsHeader,
@@ -17,6 +18,11 @@ import { useToast } from "@/context/toast-provider";
 export function ToolsHeaderPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.header;
+  const { refreshStatus, connectionKnown, isOnline } = useToolsPrinterConnection(
+    printer.id,
+    printer.macAddress,
+  );
+  const remoteActionsDisabled = connectionKnown && !isOnline;
   const [content, setContent] = useState("");
   const [baseline, setBaseline] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,7 +49,8 @@ export function ToolsHeaderPanel({ printer }: { printer: ToolsPrinter }) {
     void load().catch(() => {
       /* load already toasts errors */
     });
-  }, [load]);
+    void refreshStatus();
+  }, [load, refreshStatus]);
 
   const save = async () => {
     setSaving(true);
@@ -58,7 +65,7 @@ export function ToolsHeaderPanel({ printer }: { printer: ToolsPrinter }) {
     }
   };
 
-  const busy = loading || saving;
+  const busy = loading || saving || remoteActionsDisabled;
 
   return (
     <ToolsPrinterMacGuard macAddress={printer.macAddress}>
@@ -69,6 +76,8 @@ export function ToolsHeaderPanel({ printer }: { printer: ToolsPrinter }) {
           title={section.title}
           description={section.description}
         />
+
+        {remoteActionsDisabled ? <ToolsConnectionWarning /> : null}
 
         <ToolsHeaderFooterBlock
           title="Encabezado fiscal"
