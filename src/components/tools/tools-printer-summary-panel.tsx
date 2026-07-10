@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Truck } from "lucide-react";
+import { Building2, Printer, Truck } from "lucide-react";
 import { DetailField } from "@/components/resource-view/detail-fields";
 import {
   ToolsDetailFields,
@@ -65,7 +65,11 @@ export function ToolsPrinterSummaryPanel({
       />
 
       <section className={cn(toolsPanelSectionClass, "space-y-6")}>
-        <DividedSection title="Datos de la impresora">
+        <DividedSection
+          title="Datos de la impresora"
+          icon={Printer}
+          tone="slate"
+        >
             <ToolsDetailFields>
               <DetailField
                 label="Estatus"
