@@ -15,11 +15,8 @@ import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page"
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import { useToolsSectionRefresh } from "@/modules/tools/mqtt/use-tools-section-refresh";
-import {
-  getToolsMqttErrorMessage,
-  readToolsFormasPago,
-  writeToolsFormasPago,
-} from "@/lib/tools-mqtt-api";
+import { useToolsTransport } from "@/modules/tools/transport/tools-transport-provider";
+import { getToolsMqttErrorMessage } from "@/lib/tools-mqtt-api";
 import {
   isFormaPagoDivisa,
   normalizeFormaPagoDescripcion,
@@ -32,9 +29,14 @@ import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
 import { cn } from "@/lib/utils";
 
-const rowClass = cn(
+const cardClass = cn(
   toolsListItemClass,
-  "flex h-11 items-center gap-2 py-0 sm:flex-nowrap",
+  "flex min-h-11 items-center gap-2 px-3 py-2",
+);
+
+const cardEditingClass = cn(
+  cardClass,
+  "col-span-full flex-col items-stretch gap-2 sm:flex-row sm:items-center",
 );
 
 const inlineDescriptionInputClass = cn(
@@ -55,6 +57,7 @@ function draftsFromItems(items: ToolsFormasPagoItem[]): Record<number, string> {
 
 export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
+  const transport = useToolsTransport();
   const section = TOOLS_SECTIONS.formasPago;
   const {
     loading: statusLoading,
@@ -80,7 +83,7 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
     setLoading(true);
     setEditingNro(null);
     try {
-      const result = await readToolsFormasPago(printer.id);
+      const result = await transport.readFormasPago();
       const nextItems = result.formasPago ?? [];
       setItems(nextItems);
       setDrafts(draftsFromItems(nextItems));
@@ -90,7 +93,7 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
       setLoading(false);
       setInitialLoadDone(true);
     }
-  }, [printer.id, toast]);
+  }, [transport, toast]);
 
   const { refreshAll, refreshLoading } = useToolsSectionRefresh(
     refreshStatus,
@@ -138,7 +141,7 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
 
     setSavingNro(nro);
     try {
-      const result = await writeToolsFormasPago(printer.id, nro, descripcion);
+      const result = await transport.writeFormasPago(nro, descripcion);
       if (result.success) {
         setItems((current) =>
           current.map((item) =>
@@ -187,7 +190,7 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
               Leyendo formas de pago de la impresora…
             </div>
           ) : sortedItems.length > 0 ? (
-            <ul className="space-y-2 text-sm">
+            <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {sortedItems.map((item) => {
                 const isDivisa = isFormaPagoDivisa(item.nro);
                 const isEditing = editingNro === item.nro;
@@ -202,33 +205,33 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
                   <li
                     key={item.nro}
                     className={cn(
-                      rowClass,
+                      isEditing ? cardEditingClass : cardClass,
                       isDivisa &&
                         "border-emerald-500/35 bg-emerald-500/10 text-emerald-950 dark:text-emerald-100",
                     )}
                   >
-                    <span
-                      className={cn(
-                        "w-10 shrink-0 font-medium tabular-nums",
-                        isDivisa
-                          ? "text-emerald-800 dark:text-emerald-200"
-                          : "text-card-foreground",
-                      )}
-                    >
-                      #{item.nro}
-                    </span>
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <span
+                        className={cn(
+                          "inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-foreground/[0.06] text-xs font-semibold tabular-nums",
+                          isDivisa
+                            ? "text-emerald-800 dark:text-emerald-200"
+                            : "text-card-foreground",
+                        )}
+                      >
+                        {item.nro}
+                      </span>
 
-                    {isDivisa ? (
-                      <>
-                        <span className="min-w-0 flex-1 truncate font-medium">
-                          {item.descripcion}
-                        </span>
-                        <span className="shrink-0 rounded-full border border-emerald-600/25 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">
-                          Divisa
-                        </span>
-                      </>
-                    ) : isEditing ? (
-                      <>
+                      {isDivisa ? (
+                        <>
+                          <span className="min-w-0 truncate text-sm font-medium">
+                            {item.descripcion}
+                          </span>
+                          <span className="ml-auto shrink-0 rounded-full border border-emerald-600/25 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">
+                            Divisa
+                          </span>
+                        </>
+                      ) : isEditing ? (
                         <input
                           type="text"
                           value={draft}
@@ -254,63 +257,63 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
                             }
                           }}
                           aria-label={`Descripción forma de pago ${item.nro}`}
-                          className={inlineDescriptionInputClass}
+                          className={cn(inlineDescriptionInputClass, "w-full sm:max-w-xs")}
                         />
-                        <div className="flex w-[4.25rem] shrink-0 items-center justify-end gap-1">
-                          <button
-                            type="button"
-                            className={rowActionButtonClass}
-                            disabled={
-                              loading ||
-                              isSaving ||
-                              remoteActionsDisabled ||
-                              !isDirty ||
-                              !draft.trim() ||
-                              validateFormaPagoDescripcion(draft) != null
-                            }
-                            onClick={() => void saveItem(item.nro)}
-                            aria-label={`Guardar forma de pago ${item.nro}`}
-                          >
-                            {isSaving ? (
-                              <Loader2
-                                className="size-3.5 animate-spin"
-                                aria-hidden
-                              />
-                            ) : (
-                              <Check className="size-3.5" aria-hidden />
-                            )}
-                          </button>
-                          <button
-                            type="button"
-                            className={rowActionButtonClass}
-                            disabled={loading || isSaving}
-                            onClick={() => cancelEditing(item.nro)}
-                            aria-label={`Cancelar edición forma de pago ${item.nro}`}
-                          >
-                            <X className="size-3.5" aria-hidden />
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <span className="min-w-0 flex-1 truncate font-medium">
+                      ) : (
+                        <span className="min-w-0 truncate text-sm font-medium">
                           {item.descripcion}
                         </span>
-                        <div className="flex w-[4.25rem] shrink-0 justify-end">
-                          <button
-                            type="button"
-                            className={editIconButtonClass}
-                            disabled={
-                              loading || savingNro != null || remoteActionsDisabled
-                            }
-                            onClick={() => startEditing(item.nro)}
-                            aria-label={`Editar forma de pago ${item.nro}`}
-                          >
-                            <Pencil className="size-3.5" aria-hidden />
-                          </button>
-                        </div>
-                      </>
-                    )}
+                      )}
+                    </div>
+
+                    {!isDivisa && isEditing ? (
+                      <div className="flex shrink-0 items-center justify-end gap-1 sm:ml-auto">
+                        <button
+                          type="button"
+                          className={rowActionButtonClass}
+                          disabled={
+                            loading ||
+                            isSaving ||
+                            remoteActionsDisabled ||
+                            !isDirty ||
+                            !draft.trim() ||
+                            validateFormaPagoDescripcion(draft) != null
+                          }
+                          onClick={() => void saveItem(item.nro)}
+                          aria-label={`Guardar forma de pago ${item.nro}`}
+                        >
+                          {isSaving ? (
+                            <Loader2
+                              className="size-3.5 animate-spin"
+                              aria-hidden
+                            />
+                          ) : (
+                            <Check className="size-3.5" aria-hidden />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          className={rowActionButtonClass}
+                          disabled={loading || isSaving}
+                          onClick={() => cancelEditing(item.nro)}
+                          aria-label={`Cancelar edición forma de pago ${item.nro}`}
+                        >
+                          <X className="size-3.5" aria-hidden />
+                        </button>
+                      </div>
+                    ) : !isDivisa ? (
+                      <button
+                        type="button"
+                        className={editIconButtonClass}
+                        disabled={
+                          loading || savingNro != null || remoteActionsDisabled
+                        }
+                        onClick={() => startEditing(item.nro)}
+                        aria-label={`Editar forma de pago ${item.nro}`}
+                      >
+                        <Pencil className="size-3.5" aria-hidden />
+                      </button>
+                    ) : null}
                   </li>
                 );
               })}

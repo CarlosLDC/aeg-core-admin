@@ -1,6 +1,15 @@
 # Tools MQTT core
 
-Operaciones MQTT de campo expuestas por **aeg-core** en `/api/mqtt/tools/*`. El admin consume estas rutas vía [`src/lib/tools-mqtt-api.ts`](../../../lib/tools-mqtt-api.ts) con JWT.
+Operaciones de campo sobre impresoras fiscales. Hay dos modos de transporte:
+
+- **WiFi / MQTT:** proxy REST en aeg-core (`/api/mqtt/tools/*`) vía `MqttTransport` (requiere MAC).
+- **USB:** Web Serial en el navegador (`UsbSerialTransport`) con el mismo JSON de integración; no requiere MAC ni backend MQTT.
+
+Modo seleccionable en la ficha de impresora (`ToolsTransportProvider`).
+
+## WiFi / MQTT (aeg-core)
+
+El admin consume estas rutas vía [`src/lib/tools-mqtt-api.ts`](../../../lib/tools-mqtt-api.ts) con JWT.
 
 ## Roles
 

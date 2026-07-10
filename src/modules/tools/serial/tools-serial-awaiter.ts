@@ -1,0 +1,187 @@
+import {
+  cmdEquals,
+  tryParseFiscalResponse,
+  type FiscalMqttResponseItem,
+} from "@/modules/tools/serial/tools-fiscal-response";
+import type { ResponseMatcher } from "@/modules/tools/serial/tools-response-parser";
+
+export type ToolsSerialTextChunksResult = {
+  chunks: string[];
+  terminal: FiscalMqttResponseItem;
+};
+
+type WaitMode = "object" | "matcher" | "text_chunks";
+
+type PendingWait = {
+  mode: WaitMode;
+  expectedCmd: string | null;
+  matcher: ResponseMatcher | null;
+  resolve: (value: unknown) => void;
+  reject: (reason?: unknown) => void;
+  textChunks: string[];
+  terminalAck: FiscalMqttResponseItem | null;
+  documentoSeen: boolean;
+  timeoutId: ReturnType<typeof setTimeout>;
+};
+
+export class ToolsSerialAwaiter {
+  private pending: PendingWait | null = null;
+
+  handleLine(rawLine: string): void {
+    const line = rawLine.trim();
+    if (line === "" || this.pending == null) {
+      return;
+    }
+
+    const wait = this.pending;
+
+    if (wait.mode === "text_chunks") {
+      this.handleTextChunksLine(wait, line);
+      return;
+    }
+
+    const item = tryParseFiscalResponse(line);
+    if (item == null) {
+      return;
+    }
+
+    if (wait.mode === "matcher") {
+      if (wait.matcher?.(item)) {
+        this.complete(wait, item);
+      }
+      return;
+    }
+
+    if (wait.expectedCmd != null && cmdEquals(item.cmd, wait.expectedCmd)) {
+      this.complete(wait, item);
+    }
+  }
+
+  private handleTextChunksLine(wait: PendingWait, line: string): void {
+    if (line === "-1") {
+      wait.documentoSeen = true;
+      const terminal =
+        wait.terminalAck ??
+        ({ cmd: wait.expectedCmd ?? undefined, code: 0 } satisfies FiscalMqttResponseItem);
+      this.complete(wait, {
+        chunks: [...wait.textChunks],
+        terminal,
+      } satisfies ToolsSerialTextChunksResult);
+      return;
+    }
+
+    const item = tryParseFiscalResponse(line);
+    if (item != null && wait.expectedCmd != null && cmdEquals(item.cmd, wait.expectedCmd)) {
+      wait.terminalAck = item;
+      if (item.code != null && item.code !== 0) {
+        this.complete(wait, {
+          chunks: [],
+          terminal: item,
+        } satisfies ToolsSerialTextChunksResult);
+        return;
+      }
+      if (!wait.documentoSeen && wait.textChunks.length > 0) {
+        this.complete(wait, {
+          chunks: [...wait.textChunks],
+          terminal: item,
+        } satisfies ToolsSerialTextChunksResult);
+      }
+      return;
+    }
+
+    if (line !== "") {
+      wait.documentoSeen = true;
+      wait.textChunks.push(`${line}\n`);
+    }
+  }
+
+  registerObject(expectedCmd: string, timeoutMs: number): Promise<FiscalMqttResponseItem> {
+    return this.register("object", expectedCmd, null, timeoutMs) as Promise<FiscalMqttResponseItem>;
+  }
+
+  registerMatcher(
+    matcher: ResponseMatcher,
+    timeoutMs: number,
+  ): Promise<FiscalMqttResponseItem> {
+    return this.register("matcher", null, matcher, timeoutMs) as Promise<FiscalMqttResponseItem>;
+  }
+
+  registerTextChunks(
+    terminalCmd: string,
+    timeoutMs: number,
+  ): Promise<ToolsSerialTextChunksResult> {
+    return this.register(
+      "text_chunks",
+      terminalCmd,
+      null,
+      timeoutMs,
+    ) as Promise<ToolsSerialTextChunksResult>;
+  }
+
+  cancel(): void {
+    if (this.pending == null) {
+      return;
+    }
+    clearTimeout(this.pending.timeoutId);
+    this.pending.reject(new Error("Operación serial cancelada."));
+    this.pending = null;
+  }
+
+  private register(
+    mode: WaitMode,
+    expectedCmd: string | null,
+    matcher: ResponseMatcher | null,
+    timeoutMs: number,
+  ): Promise<unknown> {
+    this.cancel();
+    return new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        if (this.pending != null) {
+          this.pending = null;
+          reject(new Error("La impresora no respondió a tiempo."));
+        }
+      }, timeoutMs);
+
+      this.pending = {
+        mode,
+        expectedCmd,
+        matcher,
+        resolve,
+        reject,
+        textChunks: [],
+        terminalAck: null,
+        documentoSeen: false,
+        timeoutId,
+      };
+    });
+  }
+
+  private complete(wait: PendingWait, value: unknown): void {
+    clearTimeout(wait.timeoutId);
+    this.pending = null;
+    wait.resolve(value);
+  }
+}
+
+export function createLineBuffer(onLine: (line: string) => void): {
+  push: (chunk: string) => void;
+  reset: () => void;
+} {
+  let buffer = "";
+
+  return {
+    push(chunk: string) {
+      buffer += chunk;
+      let newlineIndex = buffer.indexOf("\n");
+      while (newlineIndex >= 0) {
+        const line = buffer.slice(0, newlineIndex).replace(/\r$/, "");
+        buffer = buffer.slice(newlineIndex + 1);
+        onLine(line);
+        newlineIndex = buffer.indexOf("\n");
+      }
+    },
+    reset() {
+      buffer = "";
+    },
+  };
+}

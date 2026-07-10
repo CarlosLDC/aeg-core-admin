@@ -21,14 +21,10 @@ import {
 import { ToolsReportZModal } from "@/components/tools/tools-report-z-modal";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
+import { useToolsTransport } from "@/modules/tools/transport/tools-transport-provider";
 import {
-  generateToolsReportZ,
   getToolsMqttErrorMessage,
-  getToolsReportZ,
   getToolsReportZErrorMessage,
-  listToolsReportZ,
-  sendToolsReportX,
-  transmitToolsReportZ,
 } from "@/lib/tools-mqtt-api";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
@@ -115,6 +111,7 @@ export function ToolsReporteZSection({
   seniatActionsDisabled: seniatActionsDisabledProp,
 }: ToolsReporteZSectionProps) {
   const toast = useToast();
+  const transport = useToolsTransport();
   const section = TOOLS_SECTIONS.reporteZ;
   const internalConnection = useToolsPrinterConnection(
     remoteActionsDisabledProp !== undefined ? null : printer.id,
@@ -171,19 +168,19 @@ export function ToolsReporteZSection({
     setLoading(action);
     try {
       if (action === "list") {
-        const result = await listToolsReportZ(printer.id);
+        const result = await transport.listReportZ();
         showReport(result.report?.report);
         toast.success("Último reporte Z consultado.");
       } else if (action === "generate") {
-        const result = await generateToolsReportZ(printer.id);
+        const result = await transport.generateReportZ();
         showReport(result.report?.report);
         toast.success("Reporte Z generado.");
       } else if (action === "get") {
-        const result = await getToolsReportZ(printer.id, parsedNumber!);
+        const result = await transport.getReportZ(parsedNumber!);
         showReport(result.report?.report);
         toast.success(`Reporte Z #${parsedNumber} obtenido.`);
       } else if (action === "transmit") {
-        const result = await transmitToolsReportZ(printer.id);
+        const result = await transport.transmitReportZ();
         if (result.seniatUnavailable) {
           toast.error(result.message ?? "SENIAT no responde.");
         } else if (result.lastTransmittedZ != null) {
@@ -192,7 +189,7 @@ export function ToolsReporteZSection({
           toast.success(result.message ?? "Transmisión completada.");
         }
       } else if (action === "report-x") {
-        const result = await sendToolsReportX(printer.id);
+        const result = await transport.sendReportX();
         if (result.escPosContent) {
           setReportXPreview(result.escPosContent);
         }

@@ -15,10 +15,10 @@ import {
 } from "@/components/tools/tools-ui";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
+import { useToolsTransport } from "@/modules/tools/transport/tools-transport-provider";
 import {
   getToolsMqttErrorMessage,
   getToolsReprintErrorMessage,
-  reprintToolsDocument,
 } from "@/lib/tools-mqtt-api";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import {
@@ -78,6 +78,7 @@ export function ToolsReprintSection({
   remoteActionsDisabled: remoteActionsDisabledProp,
 }: ToolsReprintSectionProps) {
   const toast = useToast();
+  const transport = useToolsTransport();
   const section = TOOLS_SECTIONS.reprint;
   const internalConnection = useToolsPrinterConnection(
     remoteActionsDisabledProp !== undefined ? null : printer.id,
@@ -121,7 +122,7 @@ export function ToolsReprintSection({
 
     setLoading(action);
     try {
-      const result = await reprintToolsDocument(printer.id, {
+      const result = await transport.reprintDocument({
         docType,
         number: parsedNumber,
         mode: action,

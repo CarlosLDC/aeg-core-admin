@@ -74,12 +74,12 @@ export function getToolsConnectionIssue(
 }
 
 export function areToolsRemoteActionsEnabled(
-  mqttReady: boolean,
+  transportReady: boolean,
   loading: boolean,
   status: ToolsMqttStatusResponse | null,
   error: string | null,
 ): boolean {
-  if (!mqttReady) {
+  if (!transportReady) {
     return false;
   }
   if (loading) {
@@ -89,12 +89,12 @@ export function areToolsRemoteActionsEnabled(
 }
 
 export function areToolsSeniatActionsEnabled(
-  mqttReady: boolean,
+  transportReady: boolean,
   loading: boolean,
   status: ToolsMqttStatusResponse | null,
   error: string | null,
 ): boolean {
-  if (!mqttReady) {
+  if (!transportReady) {
     return false;
   }
   if (loading) {
@@ -104,21 +104,61 @@ export function areToolsSeniatActionsEnabled(
 }
 
 export function areToolsRemoteActionsDisabled(
-  mqttReady: boolean,
+  transportReady: boolean,
   loading: boolean,
   status: ToolsMqttStatusResponse | null,
   error: string | null,
 ): boolean {
-  return !areToolsRemoteActionsEnabled(mqttReady, loading, status, error);
+  return !areToolsRemoteActionsEnabled(transportReady, loading, status, error);
 }
 
 export function areToolsSeniatActionsDisabled(
+  transportReady: boolean,
+  loading: boolean,
+  status: ToolsMqttStatusResponse | null,
+  error: string | null,
+): boolean {
+  return !areToolsSeniatActionsEnabled(transportReady, loading, status, error);
+}
+
+/** @deprecated Use transportReady — kept for mqtt-specific call sites during migration */
+export function areToolsRemoteActionsEnabledMqtt(
   mqttReady: boolean,
   loading: boolean,
   status: ToolsMqttStatusResponse | null,
   error: string | null,
 ): boolean {
-  return !areToolsSeniatActionsEnabled(mqttReady, loading, status, error);
+  return areToolsRemoteActionsEnabled(mqttReady, loading, status, error);
+}
+
+/** @deprecated Use transportReady */
+export function areToolsSeniatActionsEnabledMqtt(
+  mqttReady: boolean,
+  loading: boolean,
+  status: ToolsMqttStatusResponse | null,
+  error: string | null,
+): boolean {
+  return areToolsSeniatActionsEnabled(mqttReady, loading, status, error);
+}
+
+/** @deprecated Use areToolsRemoteActionsDisabled with transportReady */
+export function areToolsRemoteActionsDisabledMqtt(
+  mqttReady: boolean,
+  loading: boolean,
+  status: ToolsMqttStatusResponse | null,
+  error: string | null,
+): boolean {
+  return areToolsRemoteActionsDisabled(mqttReady, loading, status, error);
+}
+
+/** @deprecated Use areToolsSeniatActionsDisabled with transportReady */
+export function areToolsSeniatActionsDisabledMqtt(
+  mqttReady: boolean,
+  loading: boolean,
+  status: ToolsMqttStatusResponse | null,
+  error: string | null,
+): boolean {
+  return areToolsSeniatActionsDisabled(mqttReady, loading, status, error);
 }
 
 /** @deprecated Use isToolsPrinterConnectionResolved */

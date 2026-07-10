@@ -82,7 +82,7 @@ describe("isToolsPrinterConnectionResolved", () => {
 });
 
 describe("areToolsRemoteActionsEnabled", () => {
-  it("requires mqtt readiness, a finished check and a reachable printer", () => {
+  it("requires transport readiness, a finished check and a reachable printer", () => {
     expect(areToolsRemoteActionsEnabled(true, true, null, null)).toBe(false);
     expect(areToolsRemoteActionsEnabled(true, false, null, null)).toBe(false);
     expect(
@@ -94,11 +94,14 @@ describe("areToolsRemoteActionsEnabled", () => {
     expect(areToolsRemoteActionsEnabled(true, false, onlineStatus, null)).toBe(
       true,
     );
+    expect(areToolsRemoteActionsEnabled(false, false, onlineStatus, null)).toBe(
+      false,
+    );
   });
 });
 
 describe("areToolsSeniatActionsEnabled", () => {
-  it("requires mqtt readiness, a finished check and EN LINEA status", () => {
+  it("requires transport readiness, a finished check and EN LINEA status", () => {
     expect(areToolsSeniatActionsEnabled(true, false, seniatOfflineStatus, null)).toBe(
       false,
     );

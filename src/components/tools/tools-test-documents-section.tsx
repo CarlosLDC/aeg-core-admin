@@ -16,12 +16,8 @@ import {
 } from "@/components/tools/tools-ui";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
-import {
-  getToolsMqttErrorMessage,
-  sendToolsTestCreditNote,
-  sendToolsTestDebitNote,
-  sendToolsTestInvoice,
-} from "@/lib/tools-mqtt-api";
+import { useToolsTransport } from "@/modules/tools/transport/tools-transport-provider";
+import { getToolsMqttErrorMessage } from "@/lib/tools-mqtt-api";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { useToast } from "@/context/toast-provider";
 
@@ -68,6 +64,7 @@ export function ToolsTestDocumentsSection({
   remoteActionsDisabled: remoteActionsDisabledProp,
 }: ToolsTestDocumentsSectionProps) {
   const toast = useToast();
+  const transport = useToolsTransport();
   const section = TOOLS_SECTIONS.testDocuments;
   const internalConnection = useToolsPrinterConnection(
     remoteActionsDisabledProp !== undefined ? null : printer.id,
@@ -102,13 +99,13 @@ export function ToolsTestDocumentsSection({
       let result;
       switch (action) {
         case "invoice":
-          result = await sendToolsTestInvoice(printer.id);
+          result = await transport.sendTestInvoice();
           break;
         case "credit-note":
-          result = await sendToolsTestCreditNote(printer.id);
+          result = await transport.sendTestCreditNote(printer.serial);
           break;
         case "debit-note":
-          result = await sendToolsTestDebitNote(printer.id);
+          result = await transport.sendTestDebitNote(printer.serial);
           break;
       }
 

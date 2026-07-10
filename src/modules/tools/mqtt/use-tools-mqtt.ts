@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { fetchToolsMqttStatus, getToolsMqttErrorMessage } from "@/lib/tools-mqtt-api";
-import type { ToolsMqttStatusResponse } from "@/types/tools-mqtt";
+import { useCallback, useMemo, useState } from "react";
+import { getToolsMqttErrorMessage } from "@/lib/tools-mqtt-api";
 import {
   areToolsRemoteActionsDisabled,
   areToolsRemoteActionsEnabled,
@@ -13,17 +12,44 @@ import {
   isToolsPrinterReachable,
   isToolsSeniatOnline,
 } from "@/lib/tools-printer-connection";
+import { createMqttTransport } from "@/modules/tools/transport/mqtt-transport";
+import {
+  useOptionalToolsTransportContext,
+} from "@/modules/tools/transport/tools-transport-provider";
+import type { ToolsPrinterTransport } from "@/modules/tools/transport/tools-printer-transport";
+import type { ToolsMqttStatusResponse } from "@/types/tools-mqtt";
 
-export function useToolsMqtt(printerId: number | null, macAddress: string | null) {
+export function useToolsPrinterConnection(
+  printerId: number | null,
+  macAddress: string | null,
+) {
+  const transportContext = useOptionalToolsTransportContext();
+  const fallbackTransport = useMemo(
+    () =>
+      createMqttTransport(
+        printerId ?? 0,
+        printerId != null && macAddress != null && macAddress.trim() !== "",
+      ),
+    [printerId, macAddress],
+  );
+  const transport: ToolsPrinterTransport =
+    transportContext?.transport ?? fallbackTransport;
+
+  const transportReady =
+    transportContext?.transportReady ??
+    (printerId != null && macAddress != null && macAddress.trim() !== "");
+
   const [status, setStatus] = useState<ToolsMqttStatusResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const mqttReady = printerId != null && macAddress != null && macAddress.trim() !== "";
-
   const refreshStatus = useCallback(async () => {
-    if (!mqttReady || printerId == null) {
-      setError("La impresora no tiene MAC registrada.");
+    if (!transportReady) {
+      setError(
+        transport.mode === "usb"
+          ? "Conecte la impresora por USB."
+          : "La impresora no tiene MAC registrada.",
+      );
       return;
     }
 
@@ -31,7 +57,7 @@ export function useToolsMqtt(printerId: number | null, macAddress: string | null
     setError(null);
 
     try {
-      const response = await fetchToolsMqttStatus(printerId);
+      const response = await transport.fetchStatus();
       if (!response.success) {
         setError(response.message ?? "No se pudo consultar el estado.");
         setStatus(response);
@@ -43,61 +69,50 @@ export function useToolsMqtt(printerId: number | null, macAddress: string | null
     } finally {
       setLoading(false);
     }
-  }, [mqttReady, printerId]);
+  }, [transport, transportReady]);
+
+  const connectionResolved = isToolsPrinterConnectionResolved(
+    loading,
+    status,
+    error,
+  );
+  const isPrinterReachable = isToolsPrinterReachable(status, error);
+  const isSeniatOnline = isToolsSeniatOnline(status, error);
+  const connectionIssue = getToolsConnectionIssue(loading, status, error);
+  const remoteActionsEnabled = areToolsRemoteActionsEnabled(
+    transportReady,
+    loading,
+    status,
+    error,
+  );
+  const remoteActionsDisabled = areToolsRemoteActionsDisabled(
+    transportReady,
+    loading,
+    status,
+    error,
+  );
+  const seniatActionsEnabled = areToolsSeniatActionsEnabled(
+    transportReady,
+    loading,
+    status,
+    error,
+  );
+  const seniatActionsDisabled = areToolsSeniatActionsDisabled(
+    transportReady,
+    loading,
+    status,
+    error,
+  );
 
   return {
     status,
     loading,
     error,
-    mqttReady,
+    /** @deprecated Use transportReady */
+    mqttReady: transportReady,
+    transportReady,
+    connectionMode: transport.mode,
     refreshStatus,
-  };
-}
-
-export function useToolsPrinterConnection(
-  printerId: number | null,
-  macAddress: string | null,
-) {
-  const mqtt = useToolsMqtt(printerId, macAddress);
-  const connectionResolved = isToolsPrinterConnectionResolved(
-    mqtt.loading,
-    mqtt.status,
-    mqtt.error,
-  );
-  const isPrinterReachable = isToolsPrinterReachable(mqtt.status, mqtt.error);
-  const isSeniatOnline = isToolsSeniatOnline(mqtt.status, mqtt.error);
-  const connectionIssue = getToolsConnectionIssue(
-    mqtt.loading,
-    mqtt.status,
-    mqtt.error,
-  );
-  const remoteActionsEnabled = areToolsRemoteActionsEnabled(
-    mqtt.mqttReady,
-    mqtt.loading,
-    mqtt.status,
-    mqtt.error,
-  );
-  const remoteActionsDisabled = areToolsRemoteActionsDisabled(
-    mqtt.mqttReady,
-    mqtt.loading,
-    mqtt.status,
-    mqtt.error,
-  );
-  const seniatActionsEnabled = areToolsSeniatActionsEnabled(
-    mqtt.mqttReady,
-    mqtt.loading,
-    mqtt.status,
-    mqtt.error,
-  );
-  const seniatActionsDisabled = areToolsSeniatActionsDisabled(
-    mqtt.mqttReady,
-    mqtt.loading,
-    mqtt.status,
-    mqtt.error,
-  );
-
-  return {
-    ...mqtt,
     connectionResolved,
     /** @deprecated Use connectionResolved */
     connectionKnown: connectionResolved,
@@ -116,3 +131,8 @@ export function useToolsPrinterConnection(
 export type ToolsPrinterConnectionState = ReturnType<
   typeof useToolsPrinterConnection
 >;
+
+/** @deprecated Use useToolsPrinterConnection */
+export function useToolsMqtt(printerId: number | null, macAddress: string | null) {
+  return useToolsPrinterConnection(printerId, macAddress);
+}

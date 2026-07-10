@@ -17,12 +17,8 @@ import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page"
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import { useToolsSectionRefresh } from "@/modules/tools/mqtt/use-tools-section-refresh";
-import {
-  connectToolsWifi,
-  getToolsMqttErrorMessage,
-  resetToolsWifi,
-  scanToolsWifi,
-} from "@/lib/tools-mqtt-api";
+import { useToolsTransport } from "@/modules/tools/transport/tools-transport-provider";
+import { getToolsMqttErrorMessage } from "@/lib/tools-mqtt-api";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import {
   normalizeToolsWifiNetworks,
@@ -105,6 +101,7 @@ const wifiNetworkListClass =
 
 export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const toast = useToast();
+  const transport = useToolsTransport();
   const section = TOOLS_SECTIONS.wifi;
   const { status, loading: statusLoading, refreshStatus, remoteActionsDisabled, connectionResolved, connectionIssue, mqttReady } =
     useToolsPrinterConnection(printer.id, printer.macAddress);
@@ -129,7 +126,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const runScan = useCallback(async () => {
     setScanning(true);
     try {
-      const result = await scanToolsWifi(printer.id);
+      const result = await transport.scanWifi();
       setNetworks(result.networks ?? []);
     } catch (err) {
       setNetworks([]);
@@ -187,7 +184,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const runConnect = async () => {
     setAction("connect");
     try {
-      const result = await connectToolsWifi(printer.id, ssid, password);
+      const result = await transport.connectWifi(ssid, password);
       if (result.success) {
         toast.success(result.message ?? "Conexión WiFi enviada.");
         await Promise.all([refreshStatus(), runScan()]);
@@ -204,7 +201,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const runDisconnect = async (networkSsid: string) => {
     setAction("disconnect");
     try {
-      const result = await resetToolsWifi(printer.id);
+      const result = await transport.resetWifi();
       if (result.success) {
         toast.success(result.message ?? `Desconectado de ${networkSsid}.`);
         if (ssid === networkSsid) {

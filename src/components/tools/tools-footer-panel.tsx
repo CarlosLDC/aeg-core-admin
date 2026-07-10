@@ -7,16 +7,14 @@ import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page"
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import { useToolsSectionRefresh } from "@/modules/tools/mqtt/use-tools-section-refresh";
-import {
-  getToolsMqttErrorMessage,
-  readToolsFooter,
-  writeToolsFooter,
-} from "@/lib/tools-mqtt-api";
+import { useToolsTransport } from "@/modules/tools/transport/tools-transport-provider";
+import { getToolsMqttErrorMessage } from "@/lib/tools-mqtt-api";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { useToast } from "@/context/toast-provider";
 
 export function ToolsFooterPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
+  const transport = useToolsTransport();
   const section = TOOLS_SECTIONS.footer;
   const {
     loading: statusLoading,
@@ -35,7 +33,7 @@ export function ToolsFooterPanel({ printer }: { printer: ToolsPrinter }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await readToolsFooter(printer.id);
+      const result = await transport.readFooter();
       const nextContent = result.content ?? "";
       setContent(nextContent);
       setBaseline(nextContent);
@@ -46,7 +44,7 @@ export function ToolsFooterPanel({ printer }: { printer: ToolsPrinter }) {
       setLoading(false);
       setInitialLoadDone(true);
     }
-  }, [printer.id, toast]);
+  }, [transport, toast]);
 
   const { refreshAll, refreshLoading } = useToolsSectionRefresh(
     refreshStatus,
@@ -66,7 +64,7 @@ export function ToolsFooterPanel({ printer }: { printer: ToolsPrinter }) {
   const save = async () => {
     setSaving(true);
     try {
-      const result = await writeToolsFooter(printer.id, content);
+      const result = await transport.writeFooter(content);
       setBaseline(content);
       toast.success(result.message ?? "Pie actualizado.");
     } catch (err) {
