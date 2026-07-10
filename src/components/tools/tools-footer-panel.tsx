@@ -23,7 +23,7 @@ export function ToolsFooterPanel({ printer }: { printer: ToolsPrinter }) {
     refreshStatus,
     remoteActionsDisabled,
     connectionResolved,
-    isOnline,
+    connectionIssue,
     mqttReady,
   } = useToolsPrinterConnection(printer.id, printer.macAddress);
   const [content, setContent] = useState("");
@@ -97,7 +97,9 @@ export function ToolsFooterPanel({ printer }: { printer: ToolsPrinter }) {
           }
         />
 
-        {connectionResolved && !isOnline ? <ToolsConnectionWarning /> : null}
+        {connectionResolved && connectionIssue !== "none" ? (
+          <ToolsConnectionWarning variant={connectionIssue} />
+        ) : null}
 
         <ToolsHeaderFooterBlock
           value={content}

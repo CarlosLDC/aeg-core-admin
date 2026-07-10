@@ -2,12 +2,16 @@
 
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { ChevronRight, Loader2, RefreshCw, WifiOff } from "lucide-react";
+import { ChevronRight, Loader2, RefreshCw, TriangleAlert, WifiOff } from "lucide-react";
 import { DetailField } from "@/components/resource-view/detail-fields";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
 import type { ToolsSectionTone } from "@/lib/tools-sections";
 import type { ToolsPrinterPartySummary } from "@/modules/tools/shared/types";
-import { TOOLS_PRINTER_OFFLINE_MESSAGE } from "@/lib/tools-printer-connection";
+import {
+  TOOLS_PRINTER_OFFLINE_MESSAGE,
+  TOOLS_SENIAT_OFFLINE_MESSAGE,
+  type ToolsConnectionIssue,
+} from "@/lib/tools-printer-connection";
 import { cn } from "@/lib/utils";
 
 const toolsToneBadgeClass: Record<ToolsSectionTone, string> = {
@@ -589,17 +593,31 @@ export function ToolsMacWarning({ children }: { children: React.ReactNode }) {
 }
 
 export function ToolsConnectionWarning({
-  children = TOOLS_PRINTER_OFFLINE_MESSAGE,
+  variant = "printer",
+  children,
 }: {
+  variant?: Extract<ToolsConnectionIssue, "printer" | "seniat">;
   children?: React.ReactNode;
 }) {
+  const message =
+    children ??
+    (variant === "seniat"
+      ? TOOLS_SENIAT_OFFLINE_MESSAGE
+      : TOOLS_PRINTER_OFFLINE_MESSAGE);
+  const Icon = variant === "seniat" ? TriangleAlert : WifiOff;
+
   return (
     <div
       role="status"
-      className="flex items-start gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-800 dark:text-rose-200"
+      className={cn(
+        "flex items-start gap-3 rounded-xl border px-4 py-3 text-sm",
+        variant === "seniat"
+          ? "border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-200"
+          : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-200",
+      )}
     >
-      <WifiOff className="mt-0.5 size-4 shrink-0" aria-hidden />
-      <p>{children}</p>
+      <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
+      <p>{message}</p>
     </div>
   );
 }

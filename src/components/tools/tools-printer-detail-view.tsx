@@ -104,8 +104,8 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
 
         {printer.macAddress &&
         connection.connectionResolved &&
-        !connection.isOnline ? (
-          <ToolsConnectionWarning />
+        connection.connectionIssue !== "none" ? (
+          <ToolsConnectionWarning variant={connection.connectionIssue} />
         ) : null}
 
         <section className={toolsSubsectionClass}>
@@ -141,6 +141,7 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
             <ToolsReporteZSection
               printer={printer}
               remoteActionsDisabled={remoteActionsDisabled}
+              seniatActionsDisabled={connection.seniatActionsDisabled}
             />
             <ToolsTestDocumentsSection
               printer={printer}

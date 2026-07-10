@@ -6,8 +6,12 @@ import type { ToolsMqttStatusResponse } from "@/types/tools-mqtt";
 import {
   areToolsRemoteActionsDisabled,
   areToolsRemoteActionsEnabled,
+  areToolsSeniatActionsDisabled,
+  areToolsSeniatActionsEnabled,
+  getToolsConnectionIssue,
   isToolsPrinterConnectionResolved,
-  isToolsPrinterOnline,
+  isToolsPrinterReachable,
+  isToolsSeniatOnline,
 } from "@/lib/tools-printer-connection";
 
 export function useToolsMqtt(printerId: number | null, macAddress: string | null) {
@@ -60,7 +64,13 @@ export function useToolsPrinterConnection(
     mqtt.status,
     mqtt.error,
   );
-  const isOnline = isToolsPrinterOnline(mqtt.status, mqtt.error);
+  const isPrinterReachable = isToolsPrinterReachable(mqtt.status, mqtt.error);
+  const isSeniatOnline = isToolsSeniatOnline(mqtt.status, mqtt.error);
+  const connectionIssue = getToolsConnectionIssue(
+    mqtt.loading,
+    mqtt.status,
+    mqtt.error,
+  );
   const remoteActionsEnabled = areToolsRemoteActionsEnabled(
     mqtt.mqttReady,
     mqtt.loading,
@@ -73,15 +83,33 @@ export function useToolsPrinterConnection(
     mqtt.status,
     mqtt.error,
   );
+  const seniatActionsEnabled = areToolsSeniatActionsEnabled(
+    mqtt.mqttReady,
+    mqtt.loading,
+    mqtt.status,
+    mqtt.error,
+  );
+  const seniatActionsDisabled = areToolsSeniatActionsDisabled(
+    mqtt.mqttReady,
+    mqtt.loading,
+    mqtt.status,
+    mqtt.error,
+  );
 
   return {
     ...mqtt,
     connectionResolved,
     /** @deprecated Use connectionResolved */
     connectionKnown: connectionResolved,
-    isOnline,
+    isPrinterReachable,
+    isSeniatOnline,
+    /** @deprecated Use isSeniatOnline */
+    isOnline: isSeniatOnline,
+    connectionIssue,
     remoteActionsEnabled,
     remoteActionsDisabled,
+    seniatActionsEnabled,
+    seniatActionsDisabled,
   };
 }
 

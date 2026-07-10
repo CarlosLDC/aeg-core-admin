@@ -1,10 +1,17 @@
 export {
   TOOLS_PRINTER_OFFLINE_MESSAGE,
+  TOOLS_SENIAT_OFFLINE_MESSAGE,
   TOOLS_PRINTER_STATUS_TIMEOUT_MESSAGE,
   TOOLS_PRINTER_STATUS_TIMEOUT_MS,
   areToolsRemoteActionsDisabled,
   areToolsRemoteActionsEnabled,
+  areToolsSeniatActionsDisabled,
+  areToolsSeniatActionsEnabled,
+  getToolsConnectionIssue,
   isToolsPrinterConnectionKnown,
   isToolsPrinterConnectionResolved,
   isToolsPrinterOnline,
+  isToolsPrinterReachable,
+  isToolsSeniatOnline,
+  type ToolsConnectionIssue,
 } from "@/lib/tools-printer-connection";

@@ -105,11 +105,13 @@ function parseReportNumberInput(numberInput: string): number | null {
 type ToolsReporteZSectionProps = {
   printer: ToolsPrinter;
   remoteActionsDisabled?: boolean;
+  seniatActionsDisabled?: boolean;
 };
 
 export function ToolsReporteZSection({
   printer,
   remoteActionsDisabled: remoteActionsDisabledProp,
+  seniatActionsDisabled: seniatActionsDisabledProp,
 }: ToolsReporteZSectionProps) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.reporteZ;
@@ -119,6 +121,8 @@ export function ToolsReporteZSection({
   );
   const remoteActionsDisabled =
     remoteActionsDisabledProp ?? internalConnection.remoteActionsDisabled;
+  const seniatActionsDisabled =
+    seniatActionsDisabledProp ?? internalConnection.seniatActionsDisabled;
   const [pendingAction, setPendingAction] = useState<ReportZActionConfig | null>(
     null,
   );
@@ -227,7 +231,9 @@ export function ToolsReporteZSection({
               description={action.description}
               loading={loading === action.id}
               disabled={
-                remoteActionsDisabled ||
+                (action.id === "transmit"
+                  ? seniatActionsDisabled
+                  : remoteActionsDisabled) ||
                 (loading != null && loading !== action.id)
               }
               onClick={() => openAction(action)}

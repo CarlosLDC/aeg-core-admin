@@ -15,7 +15,15 @@ type ToolsPrinterStatusBarProps = {
 };
 
 export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps) {
-  const { status, loading, error, mqttReady, refreshStatus } = connection;
+  const {
+    status,
+    loading,
+    error,
+    mqttReady,
+    refreshStatus,
+    connectionIssue,
+    isSeniatOnline,
+  } = connection;
   const statusSection = TOOLS_SECTIONS.status;
 
   if (!mqttReady) {
@@ -24,7 +32,6 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
 
   const seniatLabel =
     status?.seniatStatus ?? (loading ? "Consultando…" : "Sin datos");
-  const isOnline = status?.seniatStatus === "EN LINEA";
 
   return (
     <div
@@ -50,9 +57,11 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
                   "size-2.5 rounded-full",
                   loading
                     ? "animate-pulse bg-muted"
-                    : isOnline
+                    : isSeniatOnline
                       ? "bg-emerald-500"
-                      : "bg-rose-500",
+                      : connectionIssue === "seniat"
+                        ? "bg-amber-500"
+                        : "bg-rose-500",
                 )}
                 aria-hidden
               />
@@ -72,7 +81,15 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
               </span>
             ) : null}
             {error ? (
-              <span className="text-rose-600 dark:text-rose-400">{error}</span>
+              <span
+                className={cn(
+                  connectionIssue === "seniat"
+                    ? "text-amber-700 dark:text-amber-300"
+                    : "text-rose-600 dark:text-rose-400",
+                )}
+              >
+                {error}
+              </span>
             ) : null}
           </div>
         </div>
