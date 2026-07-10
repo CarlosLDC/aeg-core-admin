@@ -3,10 +3,10 @@ import { getSessionCookieName } from "@/lib/session-cookie";
 import { requireRole } from "@/lib/server-request-auth";
 import {
   buildToolsPdfFilename,
-  createToolsPdfBuffer,
   getToolsPdfTypeLabel,
   type ToolsPdfDownloadRequest,
-} from "@/modules/tools/pdf/tools-pdf";
+} from "@/modules/tools/pdf/tools-pdf-shared";
+import { createToolsPdfBuffer } from "@/modules/tools/pdf/tools-pdf-server";
 
 function requireSession(request: NextRequest): NextResponse | null {
   const session = request.cookies.get(getSessionCookieName())?.value;

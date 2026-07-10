@@ -2,7 +2,7 @@ import {
   buildToolsPdfFilename,
   getToolsPdfTypeLabel,
   type ToolsPdfDownloadRequest,
-} from "@/modules/tools/pdf/tools-pdf";
+} from "@/modules/tools/pdf/tools-pdf-shared";
 
 export type ToolsDocumentPdfPreview = {
   pdfUrl: string;

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   buildToolsPdfFilename,
-  createToolsPdfBuffer,
   getToolsPdfTypeLabel,
-} from "./tools-pdf";
+} from "./tools-pdf-shared";
+import { createToolsPdfBuffer } from "./tools-pdf-server";
 
-describe("tools-pdf", () => {
+describe("tools-pdf-shared", () => {
   it("resuelve etiquetas por tipo de documento", () => {
     expect(getToolsPdfTypeLabel("FAC")).toBe("Factura");
     expect(getToolsPdfTypeLabel("Z")).toBe("ReporteZ");
@@ -16,7 +16,9 @@ describe("tools-pdf", () => {
       "Factura_12_GRA-001.pdf",
     );
   });
+});
 
+describe("tools-pdf-server", () => {
   it("genera un buffer PDF para contenido ESC/POS", async () => {
     const buffer = await createToolsPdfBuffer({
       rawContent: "!a1!TITULO DE PRUEBA\nLinea 2",
