@@ -35,7 +35,7 @@ export function PageToolbar({
         <p className="min-w-0 flex-1 text-sm text-muted">{description}</p>
       ) : null}
       {hasActions ? (
-        <div className="flex w-full shrink-0 flex-col gap-2 max-md:w-full md:w-auto md:flex-row md:flex-nowrap">
+        <div className="flex w-full shrink-0 flex-col items-stretch gap-2 max-md:w-full md:w-auto md:flex-row md:flex-nowrap md:items-center">
           {actions}
         </div>
       ) : null}

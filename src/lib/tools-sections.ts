@@ -12,7 +12,6 @@ import {
 import {
   toolsPrinterFormasPagoPath,
   toolsPrinterHeaderFooterPath,
-  toolsPrinterReporteZPath,
   toolsPrinterReprintPath,
   toolsPrinterSummaryPath,
   toolsPrinterTestDocumentsPath,
@@ -119,8 +118,6 @@ export function toolsPrinterSectionHref(
       return toolsPrinterSummaryPath(serial);
     case "wifi":
       return toolsPrinterWifiPath(serial);
-    case "reporteZ":
-      return toolsPrinterReporteZPath(serial);
     case "formasPago":
       return toolsPrinterFormasPagoPath(serial);
     case "testDocuments":
