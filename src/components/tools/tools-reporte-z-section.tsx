@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FieldLabel } from "@/components/ui/field-label";
+import { ToolsDocumentPdfModal } from "@/components/tools/tools-document-pdf-modal";
 import {
   ToolsActionCard,
   ToolsSectionGrid,
@@ -130,6 +131,7 @@ export function ToolsReporteZSection({
   const [reportData, setReportData] = useState<Record<string, unknown> | null>(
     null,
   );
+  const [reportXPreview, setReportXPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState<ReportAction | null>(null);
 
   const showReport = (report: Record<string, unknown> | undefined) => {
@@ -191,7 +193,10 @@ export function ToolsReporteZSection({
         }
       } else if (action === "report-x") {
         const result = await sendToolsReportX(printer.id);
-        toast.success(result.message ?? "Reporte X enviado.");
+        if (result.escPosContent) {
+          setReportXPreview(result.escPosContent);
+        }
+        toast.success("Reporte X generado.");
       }
       setPendingAction(null);
       setReportNumber("");
@@ -247,6 +252,18 @@ export function ToolsReporteZSection({
         report={reportData}
         onClose={closeReportModal}
       />
+
+      {reportXPreview ? (
+        <ToolsDocumentPdfModal
+          open
+          title="Reporte X"
+          rawContent={reportXPreview}
+          documentType="X"
+          documentNumber={0}
+          printerSerial={printer.serial}
+          onClose={() => setReportXPreview(null)}
+        />
+      ) : null}
 
       <ConfirmDialog
         open={pendingAction != null}
