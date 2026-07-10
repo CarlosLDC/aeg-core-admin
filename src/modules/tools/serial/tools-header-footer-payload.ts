@@ -1,3 +1,5 @@
+import { normalizeFiscalTicketText } from "@/lib/fiscal-ticket-latin2";
+
 export const HEADER_MAX_LINES = 8;
 export const FOOTER_MAX_LINES = 9;
 export const HEADER_FOOTER_MAX_LINE_LENGTH = 50;
@@ -8,7 +10,7 @@ export function parseHeaderFooterLines(content: string | null | undefined): stri
   }
   return content
     .split(/\r?\n/)
-    .map((line) => line.trim())
+    .map((line) => normalizeFiscalTicketText(line.trim()))
     .filter((line) => line.length > 0);
 }
 
