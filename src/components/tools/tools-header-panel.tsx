@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AlignLeft } from "lucide-react";
 import { ToolsHeaderFooterBlock } from "@/components/tools/tools-header-footer-block";
 import { ToolsPage, ToolsSectionHeading, ToolsSectionStatusActions, ToolsConnectionWarning } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
@@ -92,9 +91,6 @@ export function ToolsHeaderPanel({ printer }: { printer: ToolsPrinter }) {
         {connectionResolved && !isOnline ? <ToolsConnectionWarning /> : null}
 
         <ToolsHeaderFooterBlock
-          title="Encabezado fiscal"
-          icon={AlignLeft}
-          tone={section.tone}
           value={content}
           baseline={baseline}
           loading={loading && !initialLoadDone}

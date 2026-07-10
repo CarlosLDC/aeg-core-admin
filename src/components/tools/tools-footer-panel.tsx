@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AlignRight } from "lucide-react";
 import { ToolsHeaderFooterBlock } from "@/components/tools/tools-header-footer-block";
 import { ToolsPage, ToolsSectionHeading, ToolsSectionStatusActions, ToolsConnectionWarning } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
@@ -92,9 +91,6 @@ export function ToolsFooterPanel({ printer }: { printer: ToolsPrinter }) {
         {connectionResolved && !isOnline ? <ToolsConnectionWarning /> : null}
 
         <ToolsHeaderFooterBlock
-          title="Pie de página"
-          icon={AlignRight}
-          tone={section.tone}
           value={content}
           baseline={baseline}
           loading={loading && !initialLoadDone}

@@ -1,7 +1,11 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const lineRowGridClass =
+  "grid grid-cols-[1.25rem_1.75rem_minmax(0,1fr)_1.75rem] items-center gap-x-2";
 
 type ToolsHeaderFooterLinesEditorProps = {
   lines: string[];
@@ -9,6 +13,7 @@ type ToolsHeaderFooterLinesEditorProps = {
   onChangeLine: (index: number, value: string) => void;
   onRemoveLine: (index: number) => void;
   onAddLine: () => void;
+  onMoveLine: (fromIndex: number, toIndex: number) => void;
 };
 
 export function ToolsHeaderFooterLinesEditor({
@@ -17,7 +22,16 @@ export function ToolsHeaderFooterLinesEditor({
   onChangeLine,
   onRemoveLine,
   onAddLine,
+  onMoveLine,
 }: ToolsHeaderFooterLinesEditorProps) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  function finishDrag() {
+    setDragIndex(null);
+    setDragOverIndex(null);
+  }
+
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-foreground/[0.03] font-mono text-sm">
       {lines.length === 0 ? (
@@ -29,11 +43,47 @@ export function ToolsHeaderFooterLinesEditor({
           {lines.map((line, index) => (
             <li
               key={`line-${index}`}
-              className="group flex items-center gap-2 px-3 py-1.5"
+              onDragOver={(event) => {
+                if (disabled) return;
+                event.preventDefault();
+                setDragOverIndex(index);
+              }}
+              onDrop={(event) => {
+                if (disabled) return;
+                event.preventDefault();
+                if (dragIndex != null) {
+                  onMoveLine(dragIndex, index);
+                }
+                finishDrag();
+              }}
+              className={cn(
+                "group px-3 py-1.5 transition-colors",
+                lineRowGridClass,
+                dragOverIndex === index &&
+                  dragIndex !== null &&
+                  dragIndex !== index &&
+                  "bg-accent/10",
+              )}
             >
+              <button
+                type="button"
+                draggable={!disabled}
+                disabled={disabled}
+                aria-label={`Mover línea ${index + 1}`}
+                className="inline-flex cursor-grab touch-none rounded p-0.5 text-muted/60 active:cursor-grabbing hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+                onDragStart={(event) => {
+                  setDragIndex(index);
+                  setDragOverIndex(index);
+                  event.dataTransfer.effectAllowed = "move";
+                  event.dataTransfer.setData("text/plain", String(index));
+                }}
+                onDragEnd={finishDrag}
+              >
+                <GripVertical className="size-3.5" aria-hidden />
+              </button>
               <span
                 aria-hidden
-                className="w-7 shrink-0 select-none text-right text-xs text-muted/80 tabular-nums"
+                className="select-none text-right text-xs text-muted/80 tabular-nums"
               >
                 {index + 1}
               </span>
@@ -44,13 +94,13 @@ export function ToolsHeaderFooterLinesEditor({
                 aria-label={`Línea ${index + 1}`}
                 onChange={(event) => onChangeLine(index, event.target.value)}
                 className={cn(
-                  "min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm outline-none",
+                  "min-w-0 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm outline-none",
                   "focus:border-accent/40 focus:bg-background focus:ring-2 focus:ring-ring/20",
                   "disabled:cursor-not-allowed disabled:opacity-60",
                 )}
                 spellCheck={false}
               />
-              <div className="flex w-7 shrink-0 items-center justify-end">
+              <div className="flex items-center justify-end">
                 <button
                   type="button"
                   disabled={disabled}
@@ -71,13 +121,17 @@ export function ToolsHeaderFooterLinesEditor({
           type="button"
           disabled={disabled}
           onClick={onAddLine}
-          className="flex w-full items-center gap-2 rounded-md py-1 text-left text-xs font-medium text-accent transition-colors hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-40"
+          className={cn(
+            "w-full rounded-md py-1 text-left text-xs font-medium text-accent transition-colors hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-40",
+            lineRowGridClass,
+          )}
         >
-          <span className="w-7 shrink-0" aria-hidden />
-          <span className="inline-flex items-center gap-1.5">
+          <span aria-hidden />
+          <span className="flex items-center justify-end text-accent">
             <Plus className="size-3.5" aria-hidden />
-            Añadir línea
           </span>
+          <span>Añadir línea</span>
+          <span aria-hidden />
         </button>
       </div>
     </div>

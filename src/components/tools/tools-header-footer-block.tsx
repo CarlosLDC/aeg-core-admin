@@ -1,24 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, type LucideIcon } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   ToolsActionButton,
-  ToolsPanelActions,
-  ToolsPanelSection,
+  toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
 import {
   parseToolsHeaderFooterContent,
   serializeToolsHeaderFooterLines,
   toolsHeaderFooterLinesEqual,
 } from "@/lib/tools-header-footer-lines";
-import type { ToolsSectionTone } from "@/lib/tools-sections";
 import { ToolsHeaderFooterLinesEditor } from "./tools-header-footer-lines-editor";
+import { cn } from "@/lib/utils";
 
 type ToolsHeaderFooterBlockProps = {
-  title: string;
-  icon: LucideIcon;
-  tone: ToolsSectionTone;
   value: string;
   baseline: string;
   loading: boolean;
@@ -31,9 +27,6 @@ type ToolsHeaderFooterBlockProps = {
 };
 
 export function ToolsHeaderFooterBlock({
-  title,
-  icon,
-  tone,
   value,
   baseline,
   loading,
@@ -72,8 +65,19 @@ export function ToolsHeaderFooterBlock({
     updateLines([...lines, ""]);
   }
 
+  function handleMoveLine(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex) {
+      return;
+    }
+
+    const nextLines = [...lines];
+    const [movedLine] = nextLines.splice(fromIndex, 1);
+    nextLines.splice(toIndex, 0, movedLine);
+    updateLines(nextLines);
+  }
+
   return (
-    <ToolsPanelSection title={title} icon={icon} tone={tone}>
+    <section className={cn(toolsPanelSectionClass)}>
       {loading ? (
         <div className="flex items-center gap-2 py-8 text-sm text-muted">
           <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -87,8 +91,9 @@ export function ToolsHeaderFooterBlock({
             onChangeLine={handleChangeLine}
             onRemoveLine={handleRemoveLine}
             onAddLine={handleAddLine}
+            onMoveLine={handleMoveLine}
           />
-          <ToolsPanelActions className="mt-3">
+          <div className="mt-3 grid grid-cols-2 gap-2">
             <ToolsActionButton
               variant="primary"
               loading={saving}
@@ -100,9 +105,9 @@ export function ToolsHeaderFooterBlock({
             <ToolsActionButton disabled={busy || !isDirty} onClick={onRevert}>
               Revertir
             </ToolsActionButton>
-          </ToolsPanelActions>
+          </div>
         </>
       )}
-    </ToolsPanelSection>
+    </section>
   );
 }
