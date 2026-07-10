@@ -13,11 +13,11 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
   ToolsActionCard,
-  ToolsPanelSection,
   ToolsSectionGrid,
   ToolsSectionHeading,
   toolsSubsectionClass,
 } from "@/components/tools/tools-ui";
+import { ToolsReportZModal } from "@/components/tools/tools-report-z-modal";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import {
@@ -123,13 +123,19 @@ export function ToolsReporteZSection({
     null,
   );
   const [reportNumber, setReportNumber] = useState("");
-  const [reportJson, setReportJson] = useState<string | null>(null);
+  const [reportData, setReportData] = useState<Record<string, unknown> | null>(
+    null,
+  );
   const [loading, setLoading] = useState<ReportAction | null>(null);
 
   const showReport = (report: Record<string, unknown> | undefined) => {
     if (report) {
-      setReportJson(JSON.stringify(report, null, 2));
+      setReportData(report);
     }
+  };
+
+  const closeReportModal = () => {
+    setReportData(null);
   };
 
   const closeModal = () => {
@@ -230,17 +236,11 @@ export function ToolsReporteZSection({
         </ToolsSectionGrid>
       </section>
 
-      {reportJson ? (
-        <ToolsPanelSection
-          title="Datos del reporte"
-          icon={ScrollText}
-          tone={section.tone}
-        >
-          <pre className="max-h-96 overflow-auto rounded-lg border border-border bg-foreground/[0.03] p-3 text-xs">
-            {reportJson}
-          </pre>
-        </ToolsPanelSection>
-      ) : null}
+      <ToolsReportZModal
+        open={reportData != null}
+        report={reportData}
+        onClose={closeReportModal}
+      />
 
       <ConfirmDialog
         open={pendingAction != null}
