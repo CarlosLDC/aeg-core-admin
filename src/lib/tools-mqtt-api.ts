@@ -13,7 +13,7 @@ import type {
   ToolsTransmitZResponse,
   ToolsWifiScanResponse,
 } from "@/types/tools-mqtt";
-import { TOOLS_PRINTER_STATUS_TIMEOUT_MS } from "@/modules/tools/mqtt/tools-printer-connection";
+import { TOOLS_PRINTER_STATUS_TIMEOUT_MS } from "@/lib/tools-printer-connection";
 
 const BASE = "/api/mqtt/tools";
 
@@ -98,7 +98,10 @@ export async function fetchToolsMqttStatus(
     ensureSuccess(status, data, "No se pudo consultar el estado de la impresora.");
     return data;
   } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") {
+    if (
+      (error instanceof DOMException && error.name === "AbortError") ||
+      (error instanceof Error && error.name === "AbortError")
+    ) {
       throw new ApiError(
         "Tiempo de espera agotado al consultar la impresora fiscal.",
         408,

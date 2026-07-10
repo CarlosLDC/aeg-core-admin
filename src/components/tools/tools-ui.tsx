@@ -7,7 +7,7 @@ import { DetailField } from "@/components/resource-view/detail-fields";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
 import type { ToolsSectionTone } from "@/lib/tools-sections";
 import type { ToolsPrinterPartySummary } from "@/modules/tools/shared/types";
-import { TOOLS_PRINTER_OFFLINE_MESSAGE } from "@/modules/tools/mqtt/tools-printer-connection";
+import { TOOLS_PRINTER_OFFLINE_MESSAGE } from "@/lib/tools-printer-connection";
 import { cn } from "@/lib/utils";
 
 const toolsToneBadgeClass: Record<ToolsSectionTone, string> = {

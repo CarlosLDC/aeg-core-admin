@@ -4,7 +4,7 @@ import {
   areToolsRemoteActionsEnabled,
   isToolsPrinterConnectionResolved,
   isToolsPrinterOnline,
-} from "@/modules/tools/mqtt/tools-printer-connection";
+} from "@/lib/tools-printer-connection";
 
 const onlineStatus = { success: true, seniatStatus: "EN LINEA" as const };
 const offlineStatus = { success: true, seniatStatus: "SIN CONEXION" as const };

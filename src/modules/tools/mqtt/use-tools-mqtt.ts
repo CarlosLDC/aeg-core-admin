@@ -8,7 +8,7 @@ import {
   areToolsRemoteActionsEnabled,
   isToolsPrinterConnectionResolved,
   isToolsPrinterOnline,
-} from "./tools-printer-connection";
+} from "@/lib/tools-printer-connection";
 
 export function useToolsMqtt(printerId: number | null, macAddress: string | null) {
   const [status, setStatus] = useState<ToolsMqttStatusResponse | null>(null);

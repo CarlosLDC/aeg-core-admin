@@ -121,7 +121,7 @@ export function mapCorePrinterToTools(options: {
 
   return {
     id: printer.id,
-    serial: printer.fiscalSerial,
+    serial: printer.fiscalSerial?.trim() || `ID-${printer.id}`,
     macAddress: printer.macAddress?.trim() || null,
     modelo,
     marca,

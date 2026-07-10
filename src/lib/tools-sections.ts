@@ -130,5 +130,9 @@ export function toolsPrinterSectionHref(
       return toolsPrinterHeaderPath(serial);
     case "footer":
       return toolsPrinterFooterPath(serial);
+    default: {
+      const _exhaustive: never = section;
+      return _exhaustive;
+    }
   }
 }

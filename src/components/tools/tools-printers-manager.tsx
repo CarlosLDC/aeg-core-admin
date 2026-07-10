@@ -111,6 +111,10 @@ function StatusCounter({
   );
 }
 
+function compareStringField(a: string | null | undefined, b: string | null | undefined): number {
+  return (a ?? "").localeCompare(b ?? "", "es");
+}
+
 function compareToolsPrinters(
   a: ToolsPrinter,
   b: ToolsPrinter,
@@ -118,21 +122,21 @@ function compareToolsPrinters(
 ): number {
   switch (key) {
     case "serial":
-      return a.serial.localeCompare(b.serial, "es");
+      return compareStringField(a.serial, b.serial);
     case "ciudad":
-      return a.ciudad.localeCompare(b.ciudad, "es");
+      return compareStringField(a.ciudad, b.ciudad);
     case "cliente":
-      return (a.rifName || a.rifCliente || "").localeCompare(
-        b.rifName || b.rifCliente || "",
-        "es",
+      return compareStringField(
+        a.rifName || a.rifCliente,
+        b.rifName || b.rifCliente,
       );
     case "distribuidor":
-      return (a.distributorName || a.distributorRif || "").localeCompare(
-        b.distributorName || b.distributorRif || "",
-        "es",
+      return compareStringField(
+        a.distributorName || a.distributorRif,
+        b.distributorName || b.distributorRif,
       );
     case "firmware":
-      return a.firmware.localeCompare(b.firmware, "es");
+      return compareStringField(a.firmware, b.firmware);
     default:
       return 0;
   }
