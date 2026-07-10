@@ -7,7 +7,8 @@ import {
 } from "@/modules/tools/escpos/esc-pos-to-html";
 import type { ToolsPdfDownloadRequest } from "@/modules/tools/pdf/tools-pdf-shared";
 
-const PAGE_WIDTH = 226.77;
+// 100mm thermal-style width (80mm = 226.77pt); wider for on-screen invoice preview.
+const PAGE_WIDTH = 283.46;
 const MARGIN = 5;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
 const FONT_SIZE_NORMAL = 7.5;
