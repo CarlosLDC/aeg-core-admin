@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
+  BarChart3,
   FileSearch,
   Printer,
   ScrollText,
@@ -21,10 +22,12 @@ import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import {
   generateToolsReportZ,
+  getToolsMqttErrorMessage,
   getToolsReportZ,
   getToolsReportZErrorMessage,
   listToolsReportZ,
   reprintToolsDocument,
+  sendToolsReportX,
   transmitToolsReportZ,
 } from "@/lib/tools-mqtt-api";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
@@ -37,7 +40,8 @@ type ReportAction =
   | "get"
   | "transmit"
   | "reprint-last"
-  | "reprint";
+  | "reprint"
+  | "report-x";
 
 type ReportZActionConfig = {
   id: ReportAction;
@@ -64,6 +68,14 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
     description: "Genera un nuevo reporte Z en la impresora.",
     confirmMessage: "¿Generar un nuevo reporte Z en la impresora?",
     icon: ScrollText,
+    confirmOnly: true,
+  },
+  {
+    id: "report-x",
+    title: "Generar reporte X",
+    description: "Genera un reporte X en la impresora.",
+    confirmMessage: "¿Generar un reporte X en la impresora?",
+    icon: BarChart3,
     confirmOnly: true,
   },
   {
@@ -197,6 +209,9 @@ export function ToolsReporteZSection({
           mode: "reprint",
         });
         toast.success("Reimpresión del último reporte Z enviada a la impresora.");
+      } else if (action === "report-x") {
+        const result = await sendToolsReportX(printer.id);
+        toast.success(result.message ?? "Reporte X enviado.");
       } else {
         await reprintToolsDocument(printer.id, {
           docType: "Z",
@@ -209,10 +224,12 @@ export function ToolsReporteZSection({
       setReportNumber("");
     } catch (err) {
       toast.error(
-        getToolsReportZErrorMessage(
-          err,
-          config?.requiresReportNumber ? parsedNumber ?? undefined : undefined,
-        ),
+        action === "report-x"
+          ? getToolsMqttErrorMessage(err)
+          : getToolsReportZErrorMessage(
+              err,
+              config?.requiresReportNumber ? parsedNumber ?? undefined : undefined,
+            ),
       );
     } finally {
       setLoading(null);

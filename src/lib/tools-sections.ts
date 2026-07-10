@@ -47,7 +47,7 @@ export const TOOLS_SECTIONS = {
   reporteZ: {
     id: "reporte-z",
     title: "Reporte Z",
-    description: "Generar, consultar y transmitir reportes Z.",
+    description: "Generar, consultar y transmitir reportes Z y X.",
     icon: ScrollText,
     tone: "violet",
   },
@@ -68,7 +68,7 @@ export const TOOLS_SECTIONS = {
   reprint: {
     id: "reimpresion",
     title: "Reimpresión",
-    description: "Visualizar, reimprimir documentos y generar reporte X.",
+    description: "Visualizar y reimprimir documentos.",
     icon: Printer,
     tone: "indigo",
   },

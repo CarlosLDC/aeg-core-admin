@@ -7,6 +7,12 @@ import { cn } from "@/lib/utils";
 const lineRowGridClass =
   "grid grid-cols-[1.25rem_1.75rem_minmax(0,1fr)_1.75rem] items-center gap-x-2";
 
+const lineIndexColumnClass =
+  "block w-full select-none text-right text-xs tabular-nums leading-none";
+
+const lineGripColumnClass =
+  "inline-flex w-[1.25rem] shrink-0 justify-center";
+
 type ToolsHeaderFooterLinesEditorProps = {
   lines: string[];
   disabled?: boolean;
@@ -70,7 +76,10 @@ export function ToolsHeaderFooterLinesEditor({
                 draggable={!disabled}
                 disabled={disabled}
                 aria-label={`Mover línea ${index + 1}`}
-                className="inline-flex cursor-grab touch-none rounded p-0.5 text-muted/60 active:cursor-grabbing hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+                className={cn(
+                  lineGripColumnClass,
+                  "cursor-grab touch-none rounded p-0.5 text-muted/60 active:cursor-grabbing hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30",
+                )}
                 onDragStart={(event) => {
                   setDragIndex(index);
                   setDragOverIndex(index);
@@ -83,7 +92,7 @@ export function ToolsHeaderFooterLinesEditor({
               </button>
               <span
                 aria-hidden
-                className="select-none text-right text-xs text-muted/80 tabular-nums"
+                className={cn(lineIndexColumnClass, "text-muted/80")}
               >
                 {index + 1}
               </span>
@@ -116,21 +125,21 @@ export function ToolsHeaderFooterLinesEditor({
         </ul>
       )}
 
-      <div className="border-t border-border/60 px-3 py-2">
+      <div className="border-t border-border/60">
         <button
           type="button"
           disabled={disabled}
           onClick={onAddLine}
           className={cn(
-            "w-full rounded-md py-1 text-left text-xs font-medium text-accent transition-colors hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-40",
+            "w-full rounded-none px-3 py-1.5 text-left text-xs font-medium text-accent transition-colors hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-40",
             lineRowGridClass,
           )}
         >
-          <span aria-hidden />
-          <span className="flex items-center justify-end text-accent">
-            <Plus className="size-3.5" aria-hidden />
+          <span className={lineGripColumnClass} aria-hidden />
+          <span className={cn(lineIndexColumnClass, "text-accent")} aria-hidden>
+            <Plus className="inline-block size-3.5" aria-hidden />
           </span>
-          <span>Añadir línea</span>
+          <span className="min-w-0 truncate">Añadir línea</span>
           <span aria-hidden />
         </button>
       </div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { BarChart3, ChevronDown, Eye, Printer, X } from "lucide-react";
+import { ChevronDown, Eye, Printer, X } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
@@ -18,7 +18,6 @@ import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import {
   getToolsMqttErrorMessage,
   reprintToolsDocument,
-  sendToolsReportX,
 } from "@/lib/tools-mqtt-api";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import {
@@ -28,7 +27,7 @@ import {
 import { useToast } from "@/context/toast-provider";
 import { cn } from "@/lib/utils";
 
-type ReprintAction = "visualize" | "reprint" | "report-x";
+type ReprintAction = "visualize" | "reprint";
 
 type ReprintActionConfig = {
   id: ReprintAction;
@@ -52,12 +51,6 @@ const REPRINT_ACTIONS: ReprintActionConfig[] = [
     description: "Envía el documento a la impresora para reimpresión.",
     icon: Printer,
     requiresDocumentNumber: true,
-  },
-  {
-    id: "report-x",
-    title: "Generar reporte X",
-    description: "Genera un reporte X en la impresora.",
-    icon: BarChart3,
   },
 ];
 
@@ -121,20 +114,15 @@ export function ToolsReprintSection({
 
     setLoading(action);
     try {
-      if (action === "report-x") {
-        const result = await sendToolsReportX(printer.id);
-        toast.success(result.message ?? "Reporte X enviado.");
+      const result = await reprintToolsDocument(printer.id, {
+        docType,
+        number: parsedNumber,
+        mode: action,
+      });
+      if (action === "visualize" && result.escPosContent) {
+        setPreviewHtml(escPosToHtml(result.escPosContent));
       } else {
-        const result = await reprintToolsDocument(printer.id, {
-          docType,
-          number: parsedNumber,
-          mode: action,
-        });
-        if (action === "visualize" && result.escPosContent) {
-          setPreviewHtml(escPosToHtml(result.escPosContent));
-        } else {
-          toast.success(result.message ?? "Comando enviado a la impresora.");
-        }
+        toast.success(result.message ?? "Comando enviado a la impresora.");
       }
       setPendingAction(null);
       setDocType("FAC");
@@ -209,13 +197,9 @@ export function ToolsReprintSection({
         content={
           <div className="space-y-3">
             <p className="text-sm text-muted">
-              {pendingAction?.requiresDocumentNumber
-                ? "Seleccione el tipo de documento e indique su número."
-                : "Confirme para generar el reporte X en la impresora."}
+              Seleccione el tipo de documento e indique su número.
             </p>
-            {pendingAction?.requiresDocumentNumber ? (
-              <>
-                <label className="block">
+            <label className="block">
                   <FieldLabel className="text-muted">Tipo</FieldLabel>
                   <div className="relative">
                     <select
@@ -248,8 +232,6 @@ export function ToolsReprintSection({
                     autoFocus
                   />
                 </label>
-              </>
-            ) : null}
           </div>
         }
         confirmLabel="Ejecutar"
