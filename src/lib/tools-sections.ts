@@ -14,6 +14,7 @@ import {
   toolsPrinterHeaderFooterPath,
   toolsPrinterReporteZPath,
   toolsPrinterReprintPath,
+  toolsPrinterSummaryPath,
   toolsPrinterTestDocumentsPath,
   toolsPrinterWifiPath,
 } from "@/lib/resource-routes";
@@ -87,9 +88,9 @@ export const TOOLS_SECTIONS = {
     tone: "teal",
   },
   summary: {
-    id: "summary",
+    id: "resumen",
     title: "Resumen",
-    description: "Datos operativos de la impresora seleccionada.",
+    description: "Datos de la impresora, cliente y distribuidor.",
     icon: FileStack,
     tone: "slate",
   },
@@ -98,6 +99,7 @@ export const TOOLS_SECTIONS = {
 export type ToolsSectionKey = keyof typeof TOOLS_SECTIONS;
 
 export const TOOLS_PRINTER_NAV_SECTIONS = [
+  "summary",
   "wifi",
   "reporteZ",
   "formasPago",
@@ -114,6 +116,8 @@ export function toolsPrinterSectionHref(
   section: ToolsPrinterNavSectionKey,
 ): string {
   switch (section) {
+    case "summary":
+      return toolsPrinterSummaryPath(serial);
     case "wifi":
       return toolsPrinterWifiPath(serial);
     case "reporteZ":

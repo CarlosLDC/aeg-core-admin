@@ -95,3 +95,7 @@ export function toolsPrinterReprintPath(serial: string): string {
 export function toolsPrinterHeaderFooterPath(serial: string): string {
   return `${toolsPrinterPath(serial)}/encabezado-pie`;
 }
+
+export function toolsPrinterSummaryPath(serial: string): string {
+  return `${toolsPrinterPath(serial)}/resumen`;
+}

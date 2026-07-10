@@ -1,24 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Building2, LayoutGrid, Truck } from "lucide-react";
+import { AlertTriangle, ArrowLeft, LayoutGrid } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
-import { DetailField } from "@/components/resource-view/detail-fields";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import {
-  ToolsDetailFields,
   ToolsMacWarning,
   ToolsNavCard,
   ToolsPage,
-  ToolsPanelSection,
-  ToolsPartyInfoFields,
   ToolsSectionGrid,
   ToolsSectionHeading,
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterStatusBar } from "@/components/tools/tools-printer-status-bar";
-import { ToolsPrinterStatusBadge } from "@/components/tools/tools-printer-status-badge";
 import { useToolsPrinters } from "@/modules/tools/printers/use-tools-printers";
 import {
   TOOLS_PRINTER_NAV_SECTIONS,
@@ -33,9 +28,8 @@ type ToolsPrinterDetailViewProps = {
 };
 
 export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) {
-  const { loading, error, reload, findBySerial, role } = useToolsPrinters();
+  const { loading, error, reload, findBySerial } = useToolsPrinters();
   const printer = findBySerial(serial);
-  const isAdmin = role === "ADMIN";
 
   if (loading && !printer) {
     return (
@@ -72,10 +66,6 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
     );
   }
 
-  const client = printer.clientSummary;
-  const distributor = printer.distributorSummary;
-  const summary = TOOLS_SECTIONS.summary;
-
   return (
     <ResourceViewShell backHref={toolsListPath} backLabel="Volver al listado">
       <ToolsPage>
@@ -93,54 +83,6 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
           printerId={printer.id}
           macAddress={printer.macAddress}
         />
-
-        <ToolsPanelSection
-          title={summary.title}
-          description={summary.description}
-          icon={summary.icon}
-          tone={summary.tone}
-        >
-          <ToolsDetailFields>
-            <DetailField
-              label="Estatus"
-              value={
-                <ToolsPrinterStatusBadge
-                  status={printer.status}
-                  label={printer.estado}
-                />
-              }
-              fullWidth
-            />
-            <DetailField
-              label="MAC"
-              value={printer.macAddress ?? "Sin MAC"}
-              mono
-            />
-            <DetailField label="Firmware" value={printer.firmware} mono />
-            <DetailField label="Estado" value={printer.ubicacion || "—"} />
-            <DetailField label="Ciudad" value={printer.ciudad || "—"} />
-          </ToolsDetailFields>
-        </ToolsPanelSection>
-
-        {client ? (
-          <ToolsPanelSection
-            title="Información del cliente"
-            icon={Building2}
-            tone="slate"
-          >
-            <ToolsPartyInfoFields party={client} />
-          </ToolsPanelSection>
-        ) : null}
-
-        {isAdmin && distributor ? (
-          <ToolsPanelSection
-            title="Información del distribuidor"
-            icon={Truck}
-            tone="slate"
-          >
-            <ToolsPartyInfoFields party={distributor} />
-          </ToolsPanelSection>
-        ) : null}
 
         <section className="space-y-3">
           <ToolsSectionHeading
