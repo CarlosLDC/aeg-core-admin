@@ -6,6 +6,7 @@ import { ToolsPage, ToolsSectionHeading, ToolsSectionStatusActions, ToolsConnect
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
+import { useToolsSectionRefresh } from "@/modules/tools/mqtt/use-tools-section-refresh";
 import {
   getToolsMqttErrorMessage,
   readToolsHeader,
@@ -47,6 +48,12 @@ export function ToolsHeaderPanel({ printer }: { printer: ToolsPrinter }) {
     }
   }, [printer.id, toast]);
 
+  const { refreshAll, refreshLoading } = useToolsSectionRefresh(
+    refreshStatus,
+    load,
+    statusLoading,
+  );
+
   useEffect(() => {
     void load().catch(() => {
       /* load already toasts errors */
@@ -80,8 +87,8 @@ export function ToolsHeaderPanel({ printer }: { printer: ToolsPrinter }) {
           actions={
             <ToolsSectionStatusActions
               statusRefresh={{
-                loading: statusLoading,
-                refreshStatus,
+                loading: refreshLoading,
+                refreshStatus: refreshAll,
                 mqttReady,
               }}
             />

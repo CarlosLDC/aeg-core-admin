@@ -14,6 +14,7 @@ import {
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
+import { useToolsSectionRefresh } from "@/modules/tools/mqtt/use-tools-section-refresh";
 import {
   getToolsMqttErrorMessage,
   readToolsFormasPago,
@@ -91,6 +92,12 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
     }
   }, [printer.id, toast]);
 
+  const { refreshAll, refreshLoading } = useToolsSectionRefresh(
+    refreshStatus,
+    load,
+    statusLoading,
+  );
+
   useEffect(() => {
     void load();
     void refreshStatus();
@@ -159,8 +166,8 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
           actions={
             <ToolsSectionStatusActions
               statusRefresh={{
-                loading: statusLoading,
-                refreshStatus,
+                loading: refreshLoading,
+                refreshStatus: refreshAll,
                 mqttReady,
               }}
             />

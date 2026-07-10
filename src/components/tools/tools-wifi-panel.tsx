@@ -16,6 +16,7 @@ import {
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
+import { useToolsSectionRefresh } from "@/modules/tools/mqtt/use-tools-section-refresh";
 import {
   connectToolsWifi,
   getToolsMqttErrorMessage,
@@ -134,6 +135,12 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
     }
   }, [printer.id, toast]);
 
+  const { refreshAll, refreshLoading } = useToolsSectionRefresh(
+    refreshStatus,
+    runScan,
+    statusLoading,
+  );
+
   useEffect(() => {
     let cancelled = false;
 
@@ -202,8 +209,8 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
           actions={
             <ToolsSectionStatusActions
               statusRefresh={{
-                loading: statusLoading,
-                refreshStatus,
+                loading: refreshLoading || scanning,
+                refreshStatus: refreshAll,
                 mqttReady,
               }}
             />
