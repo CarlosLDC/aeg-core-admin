@@ -9,11 +9,14 @@ import {
   ToolsActionCard,
   ToolsSectionGrid,
   ToolsSectionHeading,
+  ToolsSectionStatusActions,
   toolsPanelSectionClass,
   toolsSubsectionClass,
+  type ToolsRefreshStatusControl,
 } from "@/components/tools/tools-ui";
 import { escPosToHtml } from "@/modules/tools/escpos/esc-pos-to-html";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
+import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import {
   getToolsMqttErrorMessage,
   reprintToolsDocument,
@@ -71,14 +74,27 @@ const DOC_TYPE_OPTIONS = [
 type ToolsReprintSectionProps = {
   printer: ToolsPrinter;
   remoteActionsDisabled?: boolean;
+  statusRefresh?: ToolsRefreshStatusControl;
 };
 
 export function ToolsReprintSection({
   printer,
-  remoteActionsDisabled = false,
+  remoteActionsDisabled: remoteActionsDisabledProp,
+  statusRefresh: statusRefreshProp,
 }: ToolsReprintSectionProps) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.reprint;
+  const internalConnection = useToolsPrinterConnection(
+    statusRefreshProp ? null : printer.id,
+    statusRefreshProp ? null : printer.macAddress,
+  );
+  const statusRefresh = statusRefreshProp ?? {
+    loading: internalConnection.loading,
+    refreshStatus: internalConnection.refreshStatus,
+    mqttReady: internalConnection.mqttReady,
+  };
+  const remoteActionsDisabled =
+    remoteActionsDisabledProp ?? internalConnection.remoteActionsDisabled;
   const [pendingAction, setPendingAction] = useState<ReprintActionConfig | null>(
     null,
   );
@@ -147,6 +163,7 @@ export function ToolsReprintSection({
           tone={section.tone}
           title={section.title}
           description={section.description}
+          actions={<ToolsSectionStatusActions statusRefresh={statusRefresh} />}
         />
         <ToolsSectionGrid>
           {REPRINT_ACTIONS.map((action) => (

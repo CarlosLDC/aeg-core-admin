@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { ChevronRight, Loader2, WifiOff } from "lucide-react";
+import { ChevronRight, Loader2, RefreshCw, WifiOff } from "lucide-react";
 import { DetailField } from "@/components/resource-view/detail-fields";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
 import type { ToolsSectionTone } from "@/lib/tools-sections";
@@ -522,6 +522,61 @@ export function ToolsActionButton({
       {loading ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
       {children}
     </button>
+  );
+}
+
+export type ToolsRefreshStatusControl = {
+  loading: boolean;
+  refreshStatus: () => void | Promise<void>;
+  mqttReady: boolean;
+};
+
+export function ToolsRefreshStatusButton({
+  loading,
+  onRefresh,
+  disabled,
+  className,
+}: {
+  loading: boolean;
+  onRefresh: () => void | Promise<void>;
+  disabled?: boolean;
+  className?: string;
+}) {
+  return (
+    <ToolsActionButton
+      loading={loading}
+      disabled={disabled}
+      onClick={() => void onRefresh()}
+      className={className}
+    >
+      {!loading ? <RefreshCw className="size-4" aria-hidden /> : null}
+      Actualizar estado
+    </ToolsActionButton>
+  );
+}
+
+export function ToolsSectionStatusActions({
+  statusRefresh,
+  children,
+}: {
+  statusRefresh?: ToolsRefreshStatusControl | null;
+  children?: React.ReactNode;
+}) {
+  const showRefresh = statusRefresh?.mqttReady ?? false;
+  if (!showRefresh && !children) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {children}
+      {showRefresh ? (
+        <ToolsRefreshStatusButton
+          loading={statusRefresh.loading}
+          onRefresh={statusRefresh.refreshStatus}
+        />
+      ) : null}
+    </div>
   );
 }
 

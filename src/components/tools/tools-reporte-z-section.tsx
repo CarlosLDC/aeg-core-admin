@@ -15,9 +15,12 @@ import {
   ToolsPanelSection,
   ToolsSectionGrid,
   ToolsSectionHeading,
+  ToolsSectionStatusActions,
   toolsSubsectionClass,
+  type ToolsRefreshStatusControl,
 } from "@/components/tools/tools-ui";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
+import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import {
   generateToolsReportZ,
   getToolsMqttErrorMessage,
@@ -78,14 +81,27 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
 type ToolsReporteZSectionProps = {
   printer: ToolsPrinter;
   remoteActionsDisabled?: boolean;
+  statusRefresh?: ToolsRefreshStatusControl;
 };
 
 export function ToolsReporteZSection({
   printer,
-  remoteActionsDisabled = false,
+  remoteActionsDisabled: remoteActionsDisabledProp,
+  statusRefresh: statusRefreshProp,
 }: ToolsReporteZSectionProps) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.reporteZ;
+  const internalConnection = useToolsPrinterConnection(
+    statusRefreshProp ? null : printer.id,
+    statusRefreshProp ? null : printer.macAddress,
+  );
+  const statusRefresh = statusRefreshProp ?? {
+    loading: internalConnection.loading,
+    refreshStatus: internalConnection.refreshStatus,
+    mqttReady: internalConnection.mqttReady,
+  };
+  const remoteActionsDisabled =
+    remoteActionsDisabledProp ?? internalConnection.remoteActionsDisabled;
   const [pendingAction, setPendingAction] = useState<ReportZActionConfig | null>(
     null,
   );
@@ -170,6 +186,7 @@ export function ToolsReporteZSection({
           tone={section.tone}
           title={section.title}
           description={section.description}
+          actions={<ToolsSectionStatusActions statusRefresh={statusRefresh} />}
         />
         <ToolsSectionGrid>
           {REPORT_Z_ACTIONS.map((action) => (

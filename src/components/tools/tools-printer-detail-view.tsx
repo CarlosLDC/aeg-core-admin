@@ -141,14 +141,29 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
             <ToolsReporteZSection
               printer={printer}
               remoteActionsDisabled={remoteActionsDisabled}
+              statusRefresh={{
+                loading: connection.loading,
+                refreshStatus: connection.refreshStatus,
+                mqttReady: connection.mqttReady,
+              }}
             />
             <ToolsTestDocumentsSection
               printer={printer}
               remoteActionsDisabled={remoteActionsDisabled}
+              statusRefresh={{
+                loading: connection.loading,
+                refreshStatus: connection.refreshStatus,
+                mqttReady: connection.mqttReady,
+              }}
             />
             <ToolsReprintSection
               printer={printer}
               remoteActionsDisabled={remoteActionsDisabled}
+              statusRefresh={{
+                loading: connection.loading,
+                refreshStatus: connection.refreshStatus,
+                mqttReady: connection.mqttReady,
+              }}
             />
           </>
         ) : null}

@@ -1,9 +1,8 @@
 "use client";
 
-import { RefreshCw } from "lucide-react";
 import {
-  ToolsActionButton,
   ToolsIconBadge,
+  ToolsRefreshStatusButton,
   toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
@@ -77,14 +76,11 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
           </div>
         </div>
       </div>
-      <ToolsActionButton
+      <ToolsRefreshStatusButton
         loading={loading}
-        onClick={() => void refreshStatus()}
+        onRefresh={refreshStatus}
         className="shrink-0"
-      >
-        {!loading ? <RefreshCw className="size-4" aria-hidden /> : null}
-        Actualizar estado
-      </ToolsActionButton>
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AlignLeft } from "lucide-react";
 import { ToolsHeaderFooterBlock } from "@/components/tools/tools-header-footer-block";
-import { ToolsPage, ToolsSectionHeading, ToolsConnectionWarning } from "@/components/tools/tools-ui";
+import { ToolsPage, ToolsSectionHeading, ToolsSectionStatusActions, ToolsConnectionWarning } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
@@ -18,8 +18,14 @@ import { useToast } from "@/context/toast-provider";
 export function ToolsHeaderPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.header;
-  const { refreshStatus, remoteActionsDisabled, connectionResolved, isOnline } =
-    useToolsPrinterConnection(printer.id, printer.macAddress);
+  const {
+    loading: statusLoading,
+    refreshStatus,
+    remoteActionsDisabled,
+    connectionResolved,
+    isOnline,
+    mqttReady,
+  } = useToolsPrinterConnection(printer.id, printer.macAddress);
   const [content, setContent] = useState("");
   const [baseline, setBaseline] = useState("");
   const [loading, setLoading] = useState(false);
@@ -72,6 +78,15 @@ export function ToolsHeaderPanel({ printer }: { printer: ToolsPrinter }) {
           tone={section.tone}
           title={section.title}
           description={section.description}
+          actions={
+            <ToolsSectionStatusActions
+              statusRefresh={{
+                loading: statusLoading,
+                refreshStatus,
+                mqttReady,
+              }}
+            />
+          }
         />
 
         {connectionResolved && !isOnline ? <ToolsConnectionWarning /> : null}

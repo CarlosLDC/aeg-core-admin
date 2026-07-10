@@ -7,6 +7,7 @@ import {
   ToolsConnectionWarning,
   ToolsPage,
   ToolsSectionHeading,
+  ToolsSectionStatusActions,
   toolsListItemClass,
   toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
@@ -54,8 +55,14 @@ function draftsFromItems(items: ToolsFormasPagoItem[]): Record<number, string> {
 export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.formasPago;
-  const { refreshStatus, remoteActionsDisabled, connectionResolved, isOnline } =
-    useToolsPrinterConnection(printer.id, printer.macAddress);
+  const {
+    loading: statusLoading,
+    refreshStatus,
+    remoteActionsDisabled,
+    connectionResolved,
+    isOnline,
+    mqttReady,
+  } = useToolsPrinterConnection(printer.id, printer.macAddress);
   const [items, setItems] = useState<ToolsFormasPagoItem[]>([]);
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [editingNro, setEditingNro] = useState<number | null>(null);
@@ -156,13 +163,21 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
           title={section.title}
           description={section.description}
           actions={
-            <ToolsActionButton
-              loading={loading}
-              disabled={loading || savingNro != null || remoteActionsDisabled}
-              onClick={() => void load({ notify: true })}
+            <ToolsSectionStatusActions
+              statusRefresh={{
+                loading: statusLoading,
+                refreshStatus,
+                mqttReady,
+              }}
             >
-              Actualizar
-            </ToolsActionButton>
+              <ToolsActionButton
+                loading={loading}
+                disabled={loading || savingNro != null || remoteActionsDisabled}
+                onClick={() => void load({ notify: true })}
+              >
+                Actualizar
+              </ToolsActionButton>
+            </ToolsSectionStatusActions>
           }
         />
 

@@ -10,6 +10,7 @@ import {
   ToolsPanelActions,
   ToolsPanelSection,
   ToolsSectionHeading,
+  ToolsSectionStatusActions,
   toolsListItemClass,
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
@@ -76,7 +77,7 @@ const wifiPanelGridClass =
 export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const toast = useToast();
   const section = TOOLS_SECTIONS.wifi;
-  const { status, refreshStatus, remoteActionsDisabled, connectionResolved, isOnline } =
+  const { status, loading: statusLoading, refreshStatus, remoteActionsDisabled, connectionResolved, isOnline, mqttReady } =
     useToolsPrinterConnection(printer.id, printer.macAddress);
   const [ssid, setSsid] = useState("");
   const [password, setPassword] = useState("");
@@ -151,6 +152,15 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
           tone={section.tone}
           title={section.title}
           description={section.description}
+          actions={
+            <ToolsSectionStatusActions
+              statusRefresh={{
+                loading: statusLoading,
+                refreshStatus,
+                mqttReady,
+              }}
+            />
+          }
         />
 
         {connectionResolved && !isOnline ? <ToolsConnectionWarning /> : null}
