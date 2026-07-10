@@ -240,7 +240,7 @@ export function ToolsPrintersManager() {
   }
 
   return (
-    <ToolsPage className="pt-6">
+    <ToolsPage>
       {isDistributor && !loading && !error && allPrinters.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {STATUS_COUNTER_FILTERS.map((counter) => (

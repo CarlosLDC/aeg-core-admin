@@ -20,6 +20,7 @@
   --login-field: #f7f9fc;
   --admin-header-height: 3.5rem;
   --admin-header-offset: var(--admin-header-height);
+  --admin-content-gap: 0.75rem;
 }
 
 @theme inline {
@@ -89,12 +90,13 @@ html.light {
 
 html {
   overflow-x: hidden;
-  scroll-padding-top: var(--admin-header-offset);
+  scroll-padding-top: calc(var(--admin-header-offset) + var(--admin-content-gap));
 }
 
 @media (min-width: 640px) {
   :root {
     --admin-header-height: 4rem;
+    --admin-content-gap: 1.5rem;
   }
 }
 
