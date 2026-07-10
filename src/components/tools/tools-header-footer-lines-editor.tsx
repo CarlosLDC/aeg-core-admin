@@ -1,11 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  GripVertical,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const lineRowGridClass =
-  "grid grid-cols-[1.25rem_1.75rem_minmax(0,1fr)_1.75rem] items-center gap-x-2";
+  "grid grid-cols-[1.25rem_1.25rem_1.75rem_minmax(0,1fr)_1.75rem] items-center gap-x-2";
 
 const lineIndexColumnClass =
   "block w-full select-none text-right text-xs tabular-nums leading-none";
@@ -90,6 +96,26 @@ export function ToolsHeaderFooterLinesEditor({
               >
                 <GripVertical className="size-3.5" aria-hidden />
               </button>
+              <div className="flex flex-col">
+                <button
+                  type="button"
+                  disabled={disabled || index === 0}
+                  onClick={() => onMoveLine(index, index - 1)}
+                  aria-label={`Subir línea ${index + 1}`}
+                  className="inline-flex rounded p-0.5 text-muted/70 enabled:hover:bg-foreground/5 enabled:hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  <ChevronUp className="size-3" aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  disabled={disabled || index === lines.length - 1}
+                  onClick={() => onMoveLine(index, index + 1)}
+                  aria-label={`Bajar línea ${index + 1}`}
+                  className="inline-flex rounded p-0.5 text-muted/70 enabled:hover:bg-foreground/5 enabled:hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  <ChevronDown className="size-3" aria-hidden />
+                </button>
+              </div>
               <span
                 aria-hidden
                 className={cn(lineIndexColumnClass, "text-muted/80")}
@@ -136,6 +162,7 @@ export function ToolsHeaderFooterLinesEditor({
           )}
         >
           <span className={lineGripColumnClass} aria-hidden />
+          <span aria-hidden />
           <span className={cn(lineIndexColumnClass, "text-accent")} aria-hidden>
             <Plus className="inline-block size-3.5" aria-hidden />
           </span>
