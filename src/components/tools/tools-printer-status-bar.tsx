@@ -5,6 +5,7 @@ import {
   ToolsRefreshStatusButton,
   toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
+import { ToolsConnectionModeToggle } from "@/components/tools/tools-connection-mode-switch";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { formatToolsWifiStatusLine } from "@/lib/tools-wifi-networks";
 import { isUsableToolsNetworkField } from "@/lib/tools-printer-connection";
@@ -100,11 +101,13 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
           </div>
         </div>
       </div>
-      <ToolsRefreshStatusButton
-        loading={loading}
-        onRefresh={refreshStatus}
-        className="shrink-0"
-      />
+      <div className="flex shrink-0 items-center gap-2">
+        <ToolsConnectionModeToggle />
+        <ToolsRefreshStatusButton
+          loading={loading}
+          onRefresh={refreshStatus}
+        />
+      </div>
     </div>
   );
 }

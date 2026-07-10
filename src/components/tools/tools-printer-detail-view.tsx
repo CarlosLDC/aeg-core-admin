@@ -7,7 +7,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
-import { ToolsConnectionModeSwitch } from "@/components/tools/tools-connection-mode-switch";
 import {
   ToolsConnectionWarning,
   ToolsMacWarning,
@@ -62,8 +61,6 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
 
   return (
     <ToolsPage>
-      <ToolsConnectionModeSwitch />
-
       {showMacWarning ? (
         <ToolsMacWarning>
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
@@ -76,7 +73,7 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
 
       <ToolsUsbConnectPanel />
 
-      {connection.transportReady ? <ToolsPrinterStatusBar connection={connection} /> : null}
+      <ToolsPrinterStatusBar connection={connection} />
 
       {connection.transportReady &&
       connection.connectionResolved &&
