@@ -1,13 +1,19 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Loader2, type LucideIcon } from "lucide-react";
 import {
   ToolsActionButton,
   ToolsPanelActions,
   ToolsPanelSection,
 } from "@/components/tools/tools-ui";
+import {
+  parseToolsHeaderFooterContent,
+  serializeToolsHeaderFooterLines,
+  toolsHeaderFooterLinesEqual,
+} from "@/lib/tools-header-footer-lines";
 import type { ToolsSectionTone } from "@/lib/tools-sections";
-import { formFieldTextareaClass } from "@/lib/toggle-button-styles";
+import { ToolsHeaderFooterLinesEditor } from "./tools-header-footer-lines-editor";
 
 type ToolsHeaderFooterBlockProps = {
   title: string;
@@ -38,7 +44,33 @@ export function ToolsHeaderFooterBlock({
   onSave,
   onRevert,
 }: ToolsHeaderFooterBlockProps) {
-  const isDirty = value !== baseline;
+  const [lines, setLines] = useState(() => parseToolsHeaderFooterContent(value));
+
+  useEffect(() => {
+    setLines(parseToolsHeaderFooterContent(value));
+  }, [value]);
+
+  const baselineLines = parseToolsHeaderFooterContent(baseline);
+  const isDirty = !toolsHeaderFooterLinesEqual(lines, baselineLines);
+
+  function updateLines(nextLines: string[]) {
+    setLines(nextLines);
+    onChange(serializeToolsHeaderFooterLines(nextLines));
+  }
+
+  function handleChangeLine(index: number, lineValue: string) {
+    updateLines(
+      lines.map((line, lineIndex) => (lineIndex === index ? lineValue : line)),
+    );
+  }
+
+  function handleRemoveLine(index: number) {
+    updateLines(lines.filter((_, lineIndex) => lineIndex !== index));
+  }
+
+  function handleAddLine() {
+    updateLines([...lines, ""]);
+  }
 
   return (
     <ToolsPanelSection title={title} icon={icon} tone={tone}>
@@ -49,12 +81,12 @@ export function ToolsHeaderFooterBlock({
         </div>
       ) : (
         <>
-          <textarea
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            rows={6}
-            className={formFieldTextareaClass}
+          <ToolsHeaderFooterLinesEditor
+            lines={lines}
             disabled={busy}
+            onChangeLine={handleChangeLine}
+            onRemoveLine={handleRemoveLine}
+            onAddLine={handleAddLine}
           />
           <ToolsPanelActions className="mt-3">
             <ToolsActionButton

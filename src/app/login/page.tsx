@@ -10,6 +10,7 @@ import {
   Lock,
   User,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/admin/theme-toggle";
 import { LoginAnimatedBackdrop } from "@/components/auth/login-animated-backdrop";
 import { BrandLogo } from "@/components/brand/logo";
 import { getLoginErrorMessage, useAuth } from "@/context/auth-provider";
@@ -80,14 +81,20 @@ function LoginForm() {
 
   if (isLoading || user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-login-panel">
+      <div className="relative flex min-h-screen items-center justify-center bg-login-panel">
+        <div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
+          <ThemeToggle />
+        </div>
         <Loader2 className="size-8 animate-spin text-accent" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-login-panel">
+    <div className="relative flex min-h-screen bg-login-panel">
+      <div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
+        <ThemeToggle />
+      </div>
       <div className="relative hidden flex-1 flex-col justify-between overflow-hidden p-10 text-sidebar-foreground lg:flex">
         <LoginAnimatedBackdrop />
         <div className="relative z-10">
@@ -232,7 +239,10 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-login-panel">
+        <div className="relative flex min-h-screen items-center justify-center bg-login-panel">
+          <div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
+            <ThemeToggle />
+          </div>
           <Loader2 className="size-8 animate-spin text-accent" />
         </div>
       }
