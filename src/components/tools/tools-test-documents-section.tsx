@@ -13,6 +13,7 @@ import {
   ToolsActionCard,
   ToolsSectionGrid,
   ToolsSectionHeading,
+  toolsSubsectionClass,
 } from "@/components/tools/tools-ui";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import {
@@ -128,7 +129,7 @@ export function ToolsTestDocumentsSection({
 
   return (
     <>
-      <section className="space-y-3">
+      <section className={toolsSubsectionClass}>
         <ToolsSectionHeading
           icon={section.icon}
           tone={section.tone}

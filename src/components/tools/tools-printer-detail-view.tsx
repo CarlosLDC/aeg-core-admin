@@ -12,6 +12,7 @@ import {
   ToolsPage,
   ToolsSectionGrid,
   ToolsSectionHeading,
+  toolsSubsectionClass,
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterStatusBar } from "@/components/tools/tools-printer-status-bar";
 import { ToolsReporteZSection } from "@/components/tools/tools-reporte-z-section";
@@ -87,7 +88,7 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
           macAddress={printer.macAddress}
         />
 
-        <section className="space-y-3">
+        <section className={toolsSubsectionClass}>
           <ToolsSectionHeading
             icon={LayoutGrid}
             tone="indigo"

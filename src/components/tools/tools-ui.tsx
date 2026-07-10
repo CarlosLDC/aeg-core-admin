@@ -34,6 +34,9 @@ const toolsToneHoverBorderClass: Record<ToolsSectionTone, string> = {
 export const toolsPanelSectionClass =
   "rounded-xl border border-border bg-card p-5 shadow-sm";
 
+/** Symmetric vertical rhythm inside Tools subsections (heading → content). */
+export const toolsSubsectionClass = "admin-content-stack";
+
 export const toolsSurfaceClass =
   "rounded-xl border border-border bg-card shadow-sm";
 
@@ -172,10 +175,10 @@ export function ToolsSectionHeading({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex min-w-0 items-start gap-3">
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex min-w-0 items-center gap-3">
         <ToolsIconBadge icon={icon} tone={tone} size="lg" />
-        <div className="min-w-0">
+        <div className="min-w-0 py-0.5">
           <h2 className="text-lg font-semibold tracking-tight text-card-foreground">
             {title}
           </h2>

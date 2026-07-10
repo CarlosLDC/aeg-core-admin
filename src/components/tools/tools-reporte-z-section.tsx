@@ -15,6 +15,7 @@ import {
   ToolsPanelSection,
   ToolsSectionGrid,
   ToolsSectionHeading,
+  toolsSubsectionClass,
 } from "@/components/tools/tools-ui";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import {
@@ -159,7 +160,7 @@ export function ToolsReporteZSection({ printer }: ToolsReporteZSectionProps) {
 
   return (
     <>
-      <section className="space-y-3">
+      <section className={toolsSubsectionClass}>
         <ToolsSectionHeading
           icon={section.icon}
           tone={section.tone}

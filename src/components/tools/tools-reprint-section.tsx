@@ -10,6 +10,7 @@ import {
   ToolsSectionGrid,
   ToolsSectionHeading,
   toolsPanelSectionClass,
+  toolsSubsectionClass,
 } from "@/components/tools/tools-ui";
 import { escPosToHtml } from "@/modules/tools/escpos/esc-pos-to-html";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
@@ -136,7 +137,7 @@ export function ToolsReprintSection({ printer }: ToolsReprintSectionProps) {
 
   return (
     <>
-      <section className="space-y-3">
+      <section className={toolsSubsectionClass}>
         <ToolsSectionHeading
           icon={section.icon}
           tone={section.tone}
