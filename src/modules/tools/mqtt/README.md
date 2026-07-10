@@ -37,6 +37,8 @@ Cada endpoint valida `printerId` + `SecurityScopeService.assertPrinterInScope`.
 
 Backend: `ToolsMqttService` + `ToolsTestDocumentsService` + `FiscalMqttSyncResponseAwaiter` (modos matcher y text-chunks para StaInf y reimpresión).
 
+Visualización (`/reprint` con `mode: visualize`): la impresora confirma en `Respuesta` y envía fragmentos ESC/POS en `/{mac}/AEG_Fiscal/Integracion/Documento` hasta el marcador `-1`. El admin convierte el contenido acumulado en PDF.
+
 ## Timeouts (configurables)
 
 `app.mqtt.tools.timeout.*` en application properties (defaults: status 15s, wifi 30s, report-z 20s, reprint 60s, test-invoice 5s, test-note 6s, test-generate-z 5s).

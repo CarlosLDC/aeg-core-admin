@@ -19,6 +19,7 @@ export const FISCAL_MQTT_TOPIC_SUFFIX = {
   CMD_SERVER: "/AEG_Fiscal/Integracion/CmdServer",
   COMANDO: "/AEG_Fiscal/Integracion/Comando",
   RESPUESTA: "/AEG_Fiscal/Integracion/Respuesta",
+  DOCUMENTO: "/AEG_Fiscal/Integracion/Documento",
 } as const;
 
 export type FiscalMqttTopicExample = {

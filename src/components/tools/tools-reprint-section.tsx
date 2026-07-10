@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { ChevronDown, Eye, Printer, X } from "lucide-react";
+import { ChevronDown, Eye, Printer } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FieldLabel } from "@/components/ui/field-label";
+import { ToolsDocumentPdfModal } from "@/components/tools/tools-document-pdf-modal";
 import {
   ToolsActionCard,
   ToolsSectionGrid,
@@ -12,7 +13,6 @@ import {
   toolsPanelSectionClass,
   toolsSubsectionClass,
 } from "@/components/tools/tools-ui";
-import { escPosToHtml } from "@/modules/tools/escpos/esc-pos-to-html";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import {
@@ -26,7 +26,6 @@ import {
   formFieldNativeSelectClass,
 } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
-import { cn } from "@/lib/utils";
 
 type ReprintAction = "visualize" | "reprint";
 
@@ -63,6 +62,12 @@ const DOC_TYPE_OPTIONS = [
   { value: "Z", label: "Reporte Z" },
 ] as const;
 
+type DocumentPreviewState = {
+  rawContent: string;
+  docType: string;
+  documentNumber: number;
+};
+
 type ToolsReprintSectionProps = {
   printer: ToolsPrinter;
   remoteActionsDisabled?: boolean;
@@ -85,7 +90,8 @@ export function ToolsReprintSection({
   );
   const [docType, setDocType] = useState("FAC");
   const [documentNumber, setDocumentNumber] = useState("");
-  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [documentPreview, setDocumentPreview] =
+    useState<DocumentPreviewState | null>(null);
   const [loading, setLoading] = useState<ReprintAction | null>(null);
 
   const closeModal = () => {
@@ -121,7 +127,11 @@ export function ToolsReprintSection({
         mode: action,
       });
       if (action === "visualize" && result.escPosContent) {
-        setPreviewHtml(escPosToHtml(result.escPosContent));
+        setDocumentPreview({
+          rawContent: result.escPosContent,
+          docType,
+          documentNumber: parsedNumber,
+        });
       } else {
         toast.success(result.message ?? "Comando enviado a la impresora.");
       }
@@ -168,33 +178,15 @@ export function ToolsReprintSection({
         </ToolsSectionGrid>
       </section>
 
-      {previewHtml ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div
-            className={cn(
-              toolsPanelSectionClass,
-              "max-h-[90vh] w-full max-w-2xl overflow-hidden p-0",
-            )}
-          >
-            <div className="flex items-center justify-between border-b border-border px-5 py-3">
-              <h3 className="text-sm font-semibold text-card-foreground">
-                Vista previa del documento
-              </h3>
-              <button
-                type="button"
-                onClick={() => setPreviewHtml(null)}
-                aria-label="Cerrar"
-                className="rounded-lg p-1 text-muted transition-colors hover:bg-foreground/[0.03] hover:text-foreground"
-              >
-                <X className="size-5" />
-              </button>
-            </div>
-            <div
-              className="max-h-[70vh] overflow-auto p-5 font-mono text-xs"
-              dangerouslySetInnerHTML={{ __html: previewHtml }}
-            />
-          </div>
-        </div>
+      {documentPreview ? (
+        <ToolsDocumentPdfModal
+          open
+          rawContent={documentPreview.rawContent}
+          documentType={documentPreview.docType}
+          documentNumber={documentPreview.documentNumber}
+          printerSerial={printer.serial}
+          onClose={() => setDocumentPreview(null)}
+        />
       ) : null}
 
       <ConfirmDialog

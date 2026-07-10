@@ -235,11 +235,11 @@ export const TOOLS_MODULES: ToolsModule[] = [
       "C:\\Users\\sirgo\\Documents\\aeg-tools\\aeg-tools-next\\lib\\pdf.ts; C:\\Users\\sirgo\\Documents\\aeg-tools\\aeg-tools-next\\app\\api\\pdf\\download",
     targetPath:
       "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\pdf",
-    route: null,
-    status: "planned",
+    route: "/api/tools/pdf",
+    status: "migrated",
     dependsOn: ["tools-shared-escpos"],
     priority: "medium",
-    notes: "Server runtime and dependency wiring are deferred to the next prompt.",
+    notes: "PDF preview modal for document visualization via MQTT Documento topic chunks.",
   },
   {
     id: "tools-ui-kit",
