@@ -57,7 +57,7 @@ type ToolsPrinterSortKey =
   | "distribuidor"
   | "firmware";
 
-const TOOLS_PAGE_SIZE = 10;
+const TOOLS_PAGE_SIZE = 5;
 const DEFAULT_TOOLS_SORT: TableSortState<ToolsPrinterSortKey> = {
   key: "serial",
   direction: "asc",

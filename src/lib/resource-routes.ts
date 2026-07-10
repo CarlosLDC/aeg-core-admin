@@ -92,8 +92,12 @@ export function toolsPrinterReprintPath(serial: string): string {
   return `${toolsPrinterPath(serial)}/reimpresion`;
 }
 
-export function toolsPrinterHeaderFooterPath(serial: string): string {
-  return `${toolsPrinterPath(serial)}/encabezado-pie`;
+export function toolsPrinterHeaderPath(serial: string): string {
+  return `${toolsPrinterPath(serial)}/encabezado`;
+}
+
+export function toolsPrinterFooterPath(serial: string): string {
+  return `${toolsPrinterPath(serial)}/pie-de-pagina`;
 }
 
 export function toolsPrinterSummaryPath(serial: string): string {
