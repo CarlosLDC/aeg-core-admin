@@ -8,10 +8,13 @@ export {
   areToolsSeniatActionsDisabled,
   areToolsSeniatActionsEnabled,
   getToolsConnectionIssue,
+  hasUsableToolsNetworkInfo,
   isToolsPrinterConnectionKnown,
   isToolsPrinterConnectionResolved,
   isToolsPrinterOnline,
   isToolsPrinterReachable,
   isToolsSeniatOnline,
+  isUsableToolsNetworkField,
+  resolveToolsPrinterNetworkInfo,
   type ToolsConnectionIssue,
 } from "@/lib/tools-printer-connection";

@@ -62,9 +62,7 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
 
   return (
     <ToolsPage>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <ToolsConnectionModeSwitch />
-      </div>
+      <ToolsConnectionModeSwitch />
 
       {showMacWarning ? (
         <ToolsMacWarning>

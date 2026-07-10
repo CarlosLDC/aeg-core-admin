@@ -3,7 +3,7 @@ import {
   buildToolsPdfFilename,
   getToolsPdfTypeLabel,
 } from "./tools-pdf-shared";
-import { createToolsPdfBuffer } from "./tools-pdf-server";
+import { createToolsPdfBuffer, countPdfPages } from "./tools-pdf-server";
 
 describe("tools-pdf-shared", () => {
   it("resuelve etiquetas por tipo de documento", () => {
@@ -29,5 +29,20 @@ describe("tools-pdf-server", () => {
 
     expect(buffer.byteLength).toBeGreaterThan(100);
     expect(buffer.subarray(0, 4).toString("ascii")).toBe("%PDF");
+  });
+
+  it("genera reporte X en una sola pagina aunque tenga muchas lineas con montos", async () => {
+    const lines = Array.from(
+      { length: 80 },
+      (_, index) => `Concepto fiscal numero ${index + 1} extendido Bs ${(index + 1) * 10}.00`,
+    );
+    const buffer = await createToolsPdfBuffer({
+      rawContent: ["!a1!REPORTE X", ...lines].join("\n"),
+      documentType: "reporte-x",
+      printerSerial: "GRA0000017",
+      documentNumber: 0,
+    });
+
+    expect(countPdfPages(buffer)).toBe(1);
   });
 });

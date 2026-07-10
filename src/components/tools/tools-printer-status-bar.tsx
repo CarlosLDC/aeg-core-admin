@@ -7,6 +7,7 @@ import {
 } from "@/components/tools/tools-ui";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { formatToolsWifiStatusLine } from "@/lib/tools-wifi-networks";
+import { isUsableToolsNetworkField } from "@/lib/tools-printer-connection";
 import type { ToolsPrinterConnectionState } from "@/modules/tools/mqtt/use-tools-mqtt";
 import { useToolsTransportContext } from "@/modules/tools/transport/tools-transport-provider";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
     refreshStatus,
     connectionIssue,
     isSeniatOnline,
+    networkInfo,
   } = connection;
   const statusSection = TOOLS_SECTIONS.status;
 
@@ -74,14 +76,14 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
                 {seniatLabel}
               </span>
             </span>
-            {status?.additionalInfo?.ipAddress ? (
+            {isUsableToolsNetworkField(networkInfo?.ipAddress) ? (
               <span className="font-mono text-muted">
-                IP: {status.additionalInfo.ipAddress}
+                IP: {networkInfo?.ipAddress}
               </span>
             ) : null}
-            {status?.additionalInfo?.wifiNetwork ? (
+            {isUsableToolsNetworkField(networkInfo?.wifiNetwork) ? (
               <span className="text-muted">
-                {formatToolsWifiStatusLine(status.additionalInfo.wifiNetwork)}
+                {formatToolsWifiStatusLine(networkInfo?.wifiNetwork)}
               </span>
             ) : null}
             {error ? (

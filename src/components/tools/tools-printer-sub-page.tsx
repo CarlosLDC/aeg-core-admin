@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { ToolsConnectionModeSwitch } from "@/components/tools/tools-connection-mode-switch";
 import { ToolsUsbConnectPanel } from "@/components/tools/tools-usb-connect-panel";
 import { ToolsPrinterTransportShell } from "@/components/tools/tools-printer-transport-shell";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -28,8 +27,7 @@ function ToolsPrinterSubPageContent({
       backHref={toolsPrinterPath(printer.serial)}
       backLabel="Volver al detalle"
     >
-      <div className="mb-6 flex flex-col gap-4">
-        <ToolsConnectionModeSwitch />
+      <div className="mb-6">
         <ToolsUsbConnectPanel />
       </div>
       {children(printer)}

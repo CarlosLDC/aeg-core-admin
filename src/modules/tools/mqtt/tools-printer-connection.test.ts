@@ -5,9 +5,12 @@ import {
   areToolsSeniatActionsDisabled,
   areToolsSeniatActionsEnabled,
   getToolsConnectionIssue,
+  hasUsableToolsNetworkInfo,
   isToolsPrinterConnectionResolved,
   isToolsPrinterReachable,
   isToolsSeniatOnline,
+  isUsableToolsNetworkField,
+  resolveToolsPrinterNetworkInfo,
 } from "@/lib/tools-printer-connection";
 
 const printerInfo = {
@@ -35,6 +38,26 @@ const printerOfflineStatus = {
   seniatStatus: "SIN CONEXION" as const,
   additionalInfo: null,
 };
+
+describe("resolveToolsPrinterNetworkInfo", () => {
+  it("prefers current network info and falls back when SENIAT is offline", () => {
+    expect(
+      resolveToolsPrinterNetworkInfo(seniatOfflineStatus, null, "seniat"),
+    ).toEqual(printerInfo);
+    expect(
+      resolveToolsPrinterNetworkInfo(printerOfflineStatus, printerInfo, "seniat"),
+    ).toEqual(printerInfo);
+    expect(
+      resolveToolsPrinterNetworkInfo(printerOfflineStatus, printerInfo, "printer"),
+    ).toBeNull();
+  });
+
+  it("detects usable network fields", () => {
+    expect(isUsableToolsNetworkField("192.168.1.10")).toBe(true);
+    expect(isUsableToolsNetworkField("N/A")).toBe(false);
+    expect(hasUsableToolsNetworkInfo(printerInfo)).toBe(true);
+  });
+});
 
 describe("isToolsPrinterReachable", () => {
   it("returns true when StaInf includes printer network data", () => {

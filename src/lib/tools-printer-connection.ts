@@ -1,4 +1,7 @@
-import type { ToolsMqttStatusResponse } from "@/types/tools-mqtt";
+import type {
+  ToolsMqttAdditionalInfo,
+  ToolsMqttStatusResponse,
+} from "@/types/tools-mqtt";
 
 /** Aligns with backend default `app.mqtt.tools.timeout.status` (15s). */
 export const TOOLS_PRINTER_STATUS_TIMEOUT_MS = 15_000;
@@ -13,6 +16,41 @@ export const TOOLS_PRINTER_STATUS_TIMEOUT_MESSAGE =
   "Tiempo de espera agotado al consultar la impresora fiscal.";
 
 export type ToolsConnectionIssue = "none" | "printer" | "seniat";
+
+export function isUsableToolsNetworkField(
+  value: string | null | undefined,
+): boolean {
+  const trimmed = value?.trim();
+  return (
+    trimmed != null && trimmed !== "" && trimmed.toUpperCase() !== "N/A"
+  );
+}
+
+export function hasUsableToolsNetworkInfo(
+  info: ToolsMqttAdditionalInfo | null | undefined,
+): boolean {
+  if (info == null) {
+    return false;
+  }
+  return (
+    isUsableToolsNetworkField(info.ipAddress) ||
+    isUsableToolsNetworkField(info.wifiNetwork)
+  );
+}
+
+export function resolveToolsPrinterNetworkInfo(
+  status: ToolsMqttStatusResponse | null,
+  cachedNetworkInfo: ToolsMqttAdditionalInfo | null,
+  connectionIssue: ToolsConnectionIssue,
+): ToolsMqttAdditionalInfo | null {
+  if (hasUsableToolsNetworkInfo(status?.additionalInfo)) {
+    return status?.additionalInfo ?? null;
+  }
+  if (connectionIssue === "seniat" && hasUsableToolsNetworkInfo(cachedNetworkInfo)) {
+    return cachedNetworkInfo;
+  }
+  return status?.additionalInfo ?? null;
+}
 
 export function isToolsPrinterReachable(
   status: ToolsMqttStatusResponse | null,

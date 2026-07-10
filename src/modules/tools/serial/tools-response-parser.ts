@@ -150,22 +150,36 @@ export function isHeaderFooterReadResponse(item: FiscalMqttResponseItem | null):
   return isJsonArrayOfStrings(trimmed) || trimmed.toUpperCase() === "SIN PIE DE TICKET FIJOS";
 }
 
+function buildStatusInfoFromNode(
+  node: Record<string, unknown>,
+): ToolsMqttStatusResponse {
+  const seniatStatus = normalizeSeniatStatus(String(node.EstatusSeniat ?? ""));
+  const info: ToolsMqttAdditionalInfo = {
+    wifiNetwork: textOrNa(node, "ConexionWifi"),
+    ipAddress: textOrNa(node, "direccionIP"),
+    lastZReport: Number(node.NroUltZEmit ?? 0),
+    lastZTransmitted:
+      node.NroUltZTx != null && node.NroUltZTx !== ""
+        ? Number(node.NroUltZTx)
+        : null,
+    daysSinceLastTx: Number(node.DiasSinTx ?? 0),
+  };
+  return { success: true, seniatStatus, additionalInfo: info };
+}
+
+function tryParseStatusInfo(dataS: string): ToolsMqttStatusResponse | null {
+  const node = parseStaInfDataNode(dataS);
+  if (node == null || !("EstatusSeniat" in node)) {
+    return null;
+  }
+  return buildStatusInfoFromNode(node);
+}
+
 export function parseStatusResponse(response: FiscalMqttResponseItem): ToolsMqttStatusResponse {
-  if (response.code === 0 && response.dataS != null) {
-    const node = parseStaInfDataNode(response.dataS);
-    if (node != null && "EstatusSeniat" in node) {
-      const seniatStatus = normalizeSeniatStatus(String(node.EstatusSeniat ?? ""));
-      const info: ToolsMqttAdditionalInfo = {
-        wifiNetwork: textOrNa(node, "ConexionWifi"),
-        ipAddress: textOrNa(node, "direccionIP"),
-        lastZReport: Number(node.NroUltZEmit ?? 0),
-        lastZTransmitted:
-          node.NroUltZTx != null && node.NroUltZTx !== ""
-            ? Number(node.NroUltZTx)
-            : null,
-        daysSinceLastTx: Number(node.DiasSinTx ?? 0),
-      };
-      return { success: true, seniatStatus, additionalInfo: info };
+  if (response.dataS != null && response.dataS.trim() !== "") {
+    const parsed = tryParseStatusInfo(response.dataS);
+    if (parsed != null) {
+      return parsed;
     }
   }
 

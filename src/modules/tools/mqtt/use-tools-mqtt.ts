@@ -8,16 +8,21 @@ import {
   areToolsSeniatActionsDisabled,
   areToolsSeniatActionsEnabled,
   getToolsConnectionIssue,
+  hasUsableToolsNetworkInfo,
   isToolsPrinterConnectionResolved,
   isToolsPrinterReachable,
   isToolsSeniatOnline,
+  resolveToolsPrinterNetworkInfo,
 } from "@/lib/tools-printer-connection";
 import { createMqttTransport } from "@/modules/tools/transport/mqtt-transport";
 import {
   useOptionalToolsTransportContext,
 } from "@/modules/tools/transport/tools-transport-provider";
 import type { ToolsPrinterTransport } from "@/modules/tools/transport/tools-printer-transport";
-import type { ToolsMqttStatusResponse } from "@/types/tools-mqtt";
+import type {
+  ToolsMqttAdditionalInfo,
+  ToolsMqttStatusResponse,
+} from "@/types/tools-mqtt";
 
 export function useToolsPrinterConnection(
   printerId: number | null,
@@ -40,6 +45,8 @@ export function useToolsPrinterConnection(
     (printerId != null && macAddress != null && macAddress.trim() !== "");
 
   const [status, setStatus] = useState<ToolsMqttStatusResponse | null>(null);
+  const [cachedNetworkInfo, setCachedNetworkInfo] =
+    useState<ToolsMqttAdditionalInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,6 +70,9 @@ export function useToolsPrinterConnection(
         setStatus(response);
         return;
       }
+      if (hasUsableToolsNetworkInfo(response.additionalInfo)) {
+        setCachedNetworkInfo(response.additionalInfo ?? null);
+      }
       setStatus(response);
     } catch (err) {
       setError(getToolsMqttErrorMessage(err));
@@ -79,6 +89,11 @@ export function useToolsPrinterConnection(
   const isPrinterReachable = isToolsPrinterReachable(status, error);
   const isSeniatOnline = isToolsSeniatOnline(status, error);
   const connectionIssue = getToolsConnectionIssue(loading, status, error);
+  const networkInfo = resolveToolsPrinterNetworkInfo(
+    status,
+    cachedNetworkInfo,
+    connectionIssue,
+  );
   const remoteActionsEnabled = areToolsRemoteActionsEnabled(
     transportReady,
     loading,
@@ -121,6 +136,7 @@ export function useToolsPrinterConnection(
     /** @deprecated Use isSeniatOnline */
     isOnline: isSeniatOnline,
     connectionIssue,
+    networkInfo,
     remoteActionsEnabled,
     remoteActionsDisabled,
     seniatActionsEnabled,

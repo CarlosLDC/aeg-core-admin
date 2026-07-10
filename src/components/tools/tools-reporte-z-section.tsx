@@ -255,7 +255,7 @@ export function ToolsReporteZSection({
           open
           title="Reporte X"
           rawContent={reportXPreview}
-          documentType="X"
+          documentType="reporte-x"
           documentNumber={0}
           printerSerial={printer.serial}
           onClose={() => setReportXPreview(null)}

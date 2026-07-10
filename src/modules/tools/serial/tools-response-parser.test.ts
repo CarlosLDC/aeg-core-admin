@@ -32,6 +32,25 @@ describe("tools-response-parser", () => {
     expect(result.additionalInfo?.wifiNetwork).toBe("AP_Test");
   });
 
+  it("keeps printer network info when SENIAT is offline", () => {
+    const result = parseStatusResponse({
+      cmd: "StaInf",
+      code: 20,
+      dataS: JSON.stringify({
+        EstatusSeniat: "SIN CONEXION",
+        ConexionWifi: "AP_IoT_HomeP",
+        direccionIP: "192.168.68.120",
+        NroUltZEmit: 2,
+        NroUltZTx: 0,
+        DiasSinTx: 1,
+      }),
+    });
+    expect(result.success).toBe(true);
+    expect(result.seniatStatus).toBe("SIN CONEXION");
+    expect(result.additionalInfo?.ipAddress).toBe("192.168.68.120");
+    expect(result.additionalInfo?.wifiNetwork).toBe("AP_IoT_HomeP");
+  });
+
   it("detects wifi scan StaInf responses", () => {
     const item = {
       cmd: "StaInf",

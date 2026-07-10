@@ -26,7 +26,7 @@ export async function createToolsPdfBuffer(
   const documentType = request.documentType || request.title?.toLowerCase();
   const printerSerial = request.printerSerial || request.serial;
   const parsedLines = parsePdfLines(rawContent, documentType, printerSerial);
-  const pageHeight = Math.max(calculateContentHeight(parsedLines) + 40, 150);
+  const pageHeight = Math.max(measureContentHeight(parsedLines) + 40, 150);
 
   return new Promise<Buffer>((resolve, reject) => {
     try {
@@ -79,40 +79,28 @@ function parsePdfLines(
   return parsedLines;
 }
 
-function calculateContentHeight(lines: EscPosLine[]): number {
-  let y = MARGIN;
-  for (const line of lines) {
-    const fontSize = line.isTitle ? FONT_SIZE_TITLE : FONT_SIZE_NORMAL;
-    const lineHeight = fontSize + LINE_SPACING;
-    if (line.isSeparator) y += 1;
-    y += estimateRenderedLineHeight(line, lineHeight);
-    if (line.isSeparator) y += 1;
-  }
-  return y + MARGIN;
+type PdfDoc = InstanceType<typeof PDFDocument>;
+
+function createMeasureDoc(): PdfDoc {
+  return new PDFDocument({
+    size: [PAGE_WIDTH, 10_000],
+    margins: {
+      top: MARGIN,
+      bottom: MARGIN,
+      left: MARGIN,
+      right: MARGIN,
+    },
+    autoFirstPage: true,
+  });
 }
 
-function estimateRenderedLineHeight(line: EscPosLine, lineHeight: number): number {
-  if (line.isSeparator) {
-    return lineHeight;
+function measureContentHeight(lines: EscPosLine[]): number {
+  const doc = createMeasureDoc();
+  let y = MARGIN;
+  for (const line of lines) {
+    y = advanceYForLine(doc, line, y);
   }
-
-  if (line.rightPart) {
-    const leftText = (line.leftPart || line.text || "").trim();
-    const isProductLine = /^\([A-Z]\)\s+Bs\s*[\d.,]+/i.test(line.rightPart);
-    if (isProductLine && leftText.length > 24) {
-      const wrappedLines = Math.max(1, Math.ceil(leftText.length / 24));
-      return wrappedLines * lineHeight;
-    }
-    return lineHeight;
-  }
-
-  const textLength = line.text.length;
-  const charsPerLine = Math.max(32, Math.floor(CONTENT_WIDTH / 4.8));
-  if (textLength <= charsPerLine) {
-    return lineHeight;
-  }
-
-  return Math.max(lineHeight, Math.ceil(textLength / charsPerLine) * lineHeight);
+  return y + MARGIN;
 }
 
 function advanceY(
@@ -126,16 +114,62 @@ function advanceY(
   return y + Math.max(blockHeight, fontSize) + LINE_SPACING;
 }
 
-type PdfDoc = InstanceType<typeof PDFDocument>;
+function advanceYForLine(doc: PdfDoc, line: EscPosLine, y: number): number {
+  const fontSize = line.isTitle ? FONT_SIZE_TITLE : FONT_SIZE_NORMAL;
+  const fontName = line.bold ? "Courier-Bold" : "Courier";
+
+  if (line.isSeparator) {
+    y += 1;
+  }
+
+  doc.font(fontName).fontSize(fontSize);
+
+  if (line.isSeparator) {
+    return y + fontSize + LINE_SPACING + 2;
+  }
+
+  if (line.rightPart) {
+    const leftText = (line.leftPart || line.text || "").trim();
+    const rightText = line.rightPart;
+    const rightWidth = doc.widthOfString(rightText);
+    const gap = 4;
+    const isProductLine = /^\([A-Z]\)\s+Bs\s*[\d.,]+/i.test(rightText);
+    const maxDescWidth = isProductLine
+      ? Math.floor(CONTENT_WIDTH * 0.5)
+      : Math.max(20, CONTENT_WIDTH - rightWidth - gap);
+
+    if (isProductLine && doc.widthOfString(leftText) > maxDescWidth) {
+      const chunks = wrapTextToWidth(doc, leftText, maxDescWidth);
+      for (let index = 0; index < chunks.length - 1; index += 1) {
+        y += fontSize + LINE_SPACING;
+      }
+      const lastChunk = chunks[chunks.length - 1];
+      return Math.max(
+        advanceY(doc, y, lastChunk, fontSize, CONTENT_WIDTH - rightWidth - gap),
+        advanceY(doc, y, rightText, fontSize, rightWidth),
+      );
+    }
+
+    return Math.max(
+      advanceY(doc, y, leftText, fontSize, maxDescWidth),
+      advanceY(doc, y, rightText, fontSize, rightWidth),
+    );
+  }
+
+  return advanceY(doc, y, line.text, fontSize, CONTENT_WIDTH);
+}
 
 function renderPdf(doc: PdfDoc, lines: EscPosLine[]): void {
   let y = MARGIN;
 
   for (const line of lines) {
+    const lineStartY = y;
     const fontSize = line.isTitle ? FONT_SIZE_TITLE : FONT_SIZE_NORMAL;
     const fontName = line.bold ? "Courier-Bold" : "Courier";
 
-    if (line.isSeparator) y += 1;
+    if (line.isSeparator) {
+      y += 1;
+    }
 
     doc.font(fontName).fontSize(fontSize);
 
@@ -146,7 +180,7 @@ function renderPdf(doc: PdfDoc, lines: EscPosLine[]): void {
         width: CONTENT_WIDTH,
         align: "center",
       });
-      y += fontSize + LINE_SPACING + 2;
+      y = advanceYForLine(doc, line, lineStartY);
       continue;
     }
 
@@ -162,32 +196,26 @@ function renderPdf(doc: PdfDoc, lines: EscPosLine[]): void {
 
       if (isProductLine && doc.widthOfString(leftText) > maxDescWidth) {
         const chunks = wrapTextToWidth(doc, leftText, maxDescWidth);
+        let drawY = y;
         for (let index = 0; index < chunks.length - 1; index += 1) {
-          doc.text(chunks[index], MARGIN, y, { width: maxDescWidth });
-          y += fontSize + LINE_SPACING;
+          doc.text(chunks[index], MARGIN, drawY, { width: maxDescWidth });
+          drawY += fontSize + LINE_SPACING;
         }
         const lastChunk = chunks[chunks.length - 1];
-        doc.text(lastChunk, MARGIN, y, {
+        doc.text(lastChunk, MARGIN, drawY, {
           width: CONTENT_WIDTH - rightWidth - gap,
         });
+        doc.text(rightText, MARGIN + CONTENT_WIDTH - rightWidth, drawY, {
+          width: rightWidth,
+        });
+      } else {
+        doc.text(leftText, MARGIN, y, { width: maxDescWidth });
         doc.text(rightText, MARGIN + CONTENT_WIDTH - rightWidth, y, {
           width: rightWidth,
         });
-        y = Math.max(
-          advanceY(doc, y, lastChunk, fontSize, CONTENT_WIDTH - rightWidth - gap),
-          advanceY(doc, y, rightText, fontSize, rightWidth),
-        );
-        continue;
       }
 
-      doc.text(leftText, MARGIN, y, { width: maxDescWidth });
-      doc.text(rightText, MARGIN + CONTENT_WIDTH - rightWidth, y, {
-        width: rightWidth,
-      });
-      y = Math.max(
-        advanceY(doc, y, leftText, fontSize, maxDescWidth),
-        advanceY(doc, y, rightText, fontSize, rightWidth),
-      );
+      y = advanceYForLine(doc, line, lineStartY);
       continue;
     }
 
@@ -195,7 +223,7 @@ function renderPdf(doc: PdfDoc, lines: EscPosLine[]): void {
       width: CONTENT_WIDTH,
       align: line.align,
     });
-    y = advanceY(doc, y, line.text, fontSize, CONTENT_WIDTH);
+    y = advanceYForLine(doc, line, lineStartY);
   }
 }
 
@@ -216,4 +244,10 @@ function wrapTextToWidth(doc: PdfDoc, text: string, maxWidth: number): string[] 
 
   if (current) chunks.push(current);
   return chunks;
+}
+
+export function countPdfPages(buffer: Buffer): number {
+  const text = buffer.toString("latin1");
+  const matches = text.match(/\/Type\s*\/Page\b/g);
+  return matches?.length ?? 0;
 }

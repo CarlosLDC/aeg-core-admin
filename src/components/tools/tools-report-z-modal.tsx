@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId } from "react";
+import { Fragment, useEffect, useId } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import {
@@ -25,23 +25,20 @@ function ReportZFieldGrid({
   report: Record<string, unknown>;
 }) {
   return (
-    <dl className="grid gap-3 sm:grid-cols-2">
+    <dl className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-2 rounded-lg border border-border/60 bg-background/50 px-3 py-2.5">
       {fields.map((field) => (
-        <div
-          key={field.key}
-          className="rounded-lg border border-border/60 bg-background/50 px-3 py-2"
-        >
+        <Fragment key={field.key}>
           <dt className="text-xs font-medium text-muted">{field.label}</dt>
           <dd
             className={cn(
-              "mt-1 text-sm text-foreground",
+              "text-right text-sm text-foreground",
               field.kind === "currency" && "font-medium tabular-nums",
               field.kind === "number" && "font-medium tabular-nums",
             )}
           >
             {formatToolsReportZFieldValue(report[field.key], field.kind)}
           </dd>
-        </div>
+        </Fragment>
       ))}
     </dl>
   );
@@ -153,19 +150,16 @@ export function ToolsReportZModal({
                 <h4 className="mb-3 text-sm font-semibold text-card-foreground">
                   Otros datos
                 </h4>
-                <dl className="grid gap-3 sm:grid-cols-2">
+                <dl className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-2 rounded-lg border border-border/60 bg-background/50 px-3 py-2.5">
                   {extraFields.map((field) => (
-                    <div
-                      key={field.key}
-                      className="rounded-lg border border-border/60 bg-background/50 px-3 py-2"
-                    >
+                    <Fragment key={field.key}>
                       <dt className="text-xs font-medium text-muted">
                         {field.key}
                       </dt>
-                      <dd className="mt-1 break-all text-sm text-foreground">
+                      <dd className="text-right text-sm break-all text-foreground">
                         {field.value}
                       </dd>
-                    </div>
+                    </Fragment>
                   ))}
                 </dl>
               </section>

@@ -19,6 +19,7 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   "documento-no-fiscal": "DocNoFiscal",
   Z: "ReporteZ",
   "reporte-z": "ReporteZ",
+  X: "ReporteX",
   RX: "ReporteX",
   "reporte-x": "ReporteX",
 };

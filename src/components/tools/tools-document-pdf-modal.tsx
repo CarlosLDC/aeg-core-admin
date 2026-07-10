@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Download, Loader2, X } from "lucide-react";
 import { toolsPanelSectionClass } from "@/components/tools/tools-ui";
 import {
@@ -20,6 +20,33 @@ type ToolsDocumentPdfModalProps = {
   onClose: () => void;
 };
 
+function buildPdfIframeSrc(pdfUrl: string): string {
+  const hash = "page=1&view=FitH&zoom=page-width";
+  return pdfUrl.includes("#") ? pdfUrl : `${pdfUrl}#${hash}`;
+}
+
+function scrollPdfPreviewToTop(iframe: HTMLIFrameElement | null): void {
+  if (!iframe) {
+    return;
+  }
+
+  const scroll = () => {
+    try {
+      iframe.contentWindow?.scrollTo(0, 0);
+      iframe.contentDocument?.documentElement?.scrollTo(0, 0);
+      iframe.contentDocument?.body?.scrollTo(0, 0);
+    } catch {
+      // El visor PDF puede bloquear acceso al documento interno.
+    }
+  };
+
+  scroll();
+  requestAnimationFrame(scroll);
+  for (const delayMs of [50, 150, 300, 600]) {
+    window.setTimeout(scroll, delayMs);
+  }
+}
+
 export function ToolsDocumentPdfModal({
   open,
   title = "Vista previa del documento",
@@ -32,6 +59,18 @@ export function ToolsDocumentPdfModal({
   const [preview, setPreview] = useState<ToolsDocumentPdfPreview | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const handlePdfIframeLoad = useCallback(() => {
+    scrollPdfPreviewToTop(iframeRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (!preview || loading || error) {
+      return;
+    }
+    scrollPdfPreviewToTop(iframeRef.current);
+  }, [preview, loading, error]);
 
   useEffect(() => {
     if (!open) {
@@ -165,9 +204,11 @@ export function ToolsDocumentPdfModal({
           ) : null}
           {preview && !loading && !error ? (
             <iframe
+              ref={iframeRef}
               title={title}
-              src={preview.pdfUrl}
+              src={buildPdfIframeSrc(preview.pdfUrl)}
               className="h-[70vh] w-full border-0 bg-white"
+              onLoad={handlePdfIframeLoad}
             />
           ) : null}
         </div>
