@@ -81,7 +81,7 @@ export function ToolsPage({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={cn("space-y-6", className)}>{children}</div>;
+  return <div className={cn("admin-content-stack", className)}>{children}</div>;
 }
 
 export function ToolsSectionGrid({
@@ -225,6 +225,59 @@ export function ToolsNavCard({
         </p>
       </div>
     </Link>
+  );
+}
+
+export function ToolsActionCard({
+  icon,
+  tone,
+  title,
+  description,
+  onClick,
+  disabled,
+  loading,
+}: {
+  icon: LucideIcon;
+  tone: ToolsSectionTone;
+  title: string;
+  description: string;
+  onClick: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || loading}
+      className={cn(
+        "group relative z-0 flex h-full min-h-[10.25rem] w-full flex-col rounded-xl border border-border bg-card p-4 text-left shadow-sm transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        toolsToneHoverBorderClass[tone],
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <ToolsIconBadge icon={icon} tone={tone} />
+        {loading ? (
+          <Loader2
+            className="size-4 shrink-0 animate-spin text-muted"
+            aria-hidden
+          />
+        ) : (
+          <ChevronRight
+            className="size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-foreground"
+            aria-hidden
+          />
+        )}
+      </div>
+      <div className="mt-4 flex min-h-0 flex-1 flex-col">
+        <p className="font-medium text-card-foreground">{title}</p>
+        <p className="mt-1 line-clamp-2 min-h-[2.5rem] flex-1 text-sm leading-snug text-muted">
+          {description}
+        </p>
+      </div>
+    </button>
   );
 }
 

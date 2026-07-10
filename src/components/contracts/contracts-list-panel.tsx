@@ -320,7 +320,7 @@ export function ContractsListPanel({
     kind === "distributor" ? "Distribuidora" : "Centro de servicio";
 
   return (
-    <div className="space-y-4">
+    <div className="admin-content-stack">
       <PageToolbar
         actions={
           canCreate ? (

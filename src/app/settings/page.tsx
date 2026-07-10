@@ -16,7 +16,7 @@ export default function SettingsPage() {
   return (
     <AdminShell title="Configuración" description="Preferencias del sistema">
       <RoleGuard path="/settings">
-        <div className="space-y-6">
+        <div className="admin-content-stack">
           <p className="text-sm text-muted">
             Ajustes del panel de administración. La asignación de roles a usuarios
             se gestiona en el backend.

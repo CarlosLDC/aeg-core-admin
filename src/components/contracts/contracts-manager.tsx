@@ -120,7 +120,7 @@ export function ContractsManager() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="admin-content-stack">
       <div className="flex justify-center">
         <SegmentedToggle
           value={tab}

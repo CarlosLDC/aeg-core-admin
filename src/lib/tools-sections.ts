@@ -101,7 +101,6 @@ export type ToolsSectionKey = keyof typeof TOOLS_SECTIONS;
 export const TOOLS_PRINTER_NAV_SECTIONS = [
   "summary",
   "wifi",
-  "reporteZ",
   "formasPago",
   "testDocuments",
   "reprint",

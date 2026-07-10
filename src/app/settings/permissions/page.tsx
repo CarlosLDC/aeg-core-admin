@@ -28,7 +28,7 @@ export default function PermissionsPage() {
       title="Matriz de permisos"
       description="Reglas efectivas del panel por recurso, acción y rol."
     >
-      <div className="space-y-8">
+      <div className="admin-content-stack">
         {currentRole ? (
           <p className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted">
             Sesión actual:{" "}

@@ -112,7 +112,7 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
             sidebarCollapsed={collapsed}
           />
           <main className="min-w-0 px-3 pb-3 pt-[var(--admin-header-offset)] sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
-            <div className="pt-[var(--admin-content-gap)]">{children}</div>
+            <div className="admin-content-inset">{children}</div>
           </main>
         </div>
       </div>

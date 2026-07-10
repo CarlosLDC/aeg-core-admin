@@ -124,7 +124,7 @@ export function DashboardManager() {
   const showWelcome = snapshot && !loading;
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="admin-content-stack">
       {showWelcome && (
         <DashboardWelcome
           role={user.role}

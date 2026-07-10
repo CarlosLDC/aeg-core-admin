@@ -68,15 +68,6 @@ export function ToolsPrinterSummaryPanel({
         <DividedSection title="Datos de la impresora">
             <ToolsDetailFields>
               <DetailField
-                label="Serial"
-                value={printer.serial}
-                mono
-              />
-              <DetailField
-                label="Modelo"
-                value={`${printer.marca} ${printer.modelo}`.trim() || "—"}
-              />
-              <DetailField
                 label="Estatus"
                 value={
                   <ToolsPrinterStatusBadge

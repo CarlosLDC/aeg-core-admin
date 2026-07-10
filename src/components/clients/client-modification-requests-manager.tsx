@@ -135,7 +135,7 @@ export function ClientModificationRequestsManager() {
   const pagination = usePagination(filtered);
 
   return (
-    <div className="space-y-4">
+    <div className="admin-content-stack">
       {error && (
         <p
           role="alert"

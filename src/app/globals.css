@@ -107,6 +107,16 @@ body {
   overflow-x: hidden;
 }
 
+.admin-content-inset {
+  padding-top: var(--admin-content-gap);
+}
+
+.admin-content-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-content-gap);
+}
+
 @supports (padding: max(0px)) {
   body {
     padding-left: env(safe-area-inset-left);

@@ -774,7 +774,7 @@ export function BranchesManager() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="admin-content-stack">
       <PageToolbar
         actions={
           canCreate ? (

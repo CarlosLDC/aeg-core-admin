@@ -39,7 +39,7 @@ export function MqttWorkspace() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="admin-content-stack">
       <div className="flex justify-center">
         <SegmentedToggle
           value={tab}
