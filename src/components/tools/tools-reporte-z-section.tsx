@@ -49,14 +49,14 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
   {
     id: "list",
     title: "Consultar último Z",
-    description: "Obtiene el último reporte Z registrado en la impresora.",
+    description: "Consulta el último reporte Z registrado en la impresora.",
     confirmMessage: "¿Consultar el último reporte Z registrado en la impresora?",
     icon: ClipboardList,
     confirmOnly: true,
   },
   {
     id: "get",
-    title: "Obtener Z específico",
+    title: "Consultar Z específico",
     description: "Consulta un reporte Z por su número.",
     confirmMessage: "Indique el número exacto del reporte Z que desea consultar.",
     icon: FileSearch,
@@ -72,7 +72,7 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
   },
   {
     id: "transmit",
-    title: "Transmitir a SENIAT",
+    title: "Transmitir al SENIAT",
     description: "Envía el último reporte Z al SENIAT.",
     confirmMessage: "¿Transmitir el último reporte Z al SENIAT?",
     icon: Send,

@@ -55,10 +55,12 @@ export function ToolsHeaderPanel({ printer }: { printer: ToolsPrinter }) {
   );
 
   useEffect(() => {
-    void load().catch(() => {
-      /* load already toasts errors */
-    });
-    void refreshStatus();
+    void (async () => {
+      await load().catch(() => {
+        /* load already toasts errors */
+      });
+      await refreshStatus();
+    })();
   }, [load, refreshStatus]);
 
   const save = async () => {

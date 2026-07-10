@@ -303,8 +303,6 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
             description="Seleccione una red y envíe las credenciales a la impresora."
             icon={Link2}
             tone="sky"
-            className={wifiPanelFillClass}
-            contentClassName="flex min-h-0 flex-1 flex-col"
           >
             <div className="space-y-3">
               <label className="block">
@@ -325,7 +323,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
                 />
               </label>
             </div>
-            <ToolsPanelActions className="mt-auto pt-4">
+            <ToolsPanelActions className="mt-4">
               <ToolsActionButton
                 loading={action === "connect"}
                 disabled={busy || !ssid.trim() || remoteActionsDisabled}

@@ -6,7 +6,8 @@ export async function runToolsSectionRefresh(
   refreshStatus: () => void | Promise<void>,
   reloadSection: () => void | Promise<void>,
 ): Promise<void> {
-  await Promise.all([refreshStatus(), reloadSection()]);
+  await refreshStatus();
+  await reloadSection();
 }
 
 export function useToolsSectionRefresh(

@@ -99,8 +99,10 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
   );
 
   useEffect(() => {
-    void load();
-    void refreshStatus();
+    void (async () => {
+      await load();
+      await refreshStatus();
+    })();
   }, [load, refreshStatus]);
 
   const startEditing = (nro: number) => {
