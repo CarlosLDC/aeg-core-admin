@@ -11,10 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const lineRowGridClass =
-  "grid grid-cols-[1.25rem_1.25rem_1.75rem_minmax(0,1fr)_1.75rem] items-center gap-x-2";
-
-const lineIndexColumnClass =
-  "block w-full select-none text-right text-xs tabular-nums leading-none";
+  "grid grid-cols-[1.25rem_1.25rem_minmax(0,1fr)_1.75rem] items-center gap-x-2";
 
 const lineGripColumnClass =
   "inline-flex w-[1.25rem] shrink-0 justify-center";
@@ -116,12 +113,6 @@ export function ToolsHeaderFooterLinesEditor({
                   <ChevronDown className="size-3" aria-hidden />
                 </button>
               </div>
-              <span
-                aria-hidden
-                className={cn(lineIndexColumnClass, "text-muted/80")}
-              >
-                {index + 1}
-              </span>
               <input
                 type="text"
                 value={line}

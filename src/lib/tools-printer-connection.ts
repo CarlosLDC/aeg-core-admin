@@ -2,6 +2,11 @@ import type {
   ToolsMqttAdditionalInfo,
   ToolsMqttStatusResponse,
 } from "@/types/tools-mqtt";
+import {
+  isGenericWifiConnectedMessage,
+  resolveToolsWifiConnectedSsid,
+  resolveToolsWifiDisplayValue,
+} from "@/lib/tools-wifi-networks";
 
 /** Aligns with backend default `app.mqtt.tools.timeout.status` (15s). */
 export const TOOLS_PRINTER_STATUS_TIMEOUT_MS = 15_000;
@@ -43,13 +48,68 @@ export function resolveToolsPrinterNetworkInfo(
   cachedNetworkInfo: ToolsMqttAdditionalInfo | null,
   connectionIssue: ToolsConnectionIssue,
 ): ToolsMqttAdditionalInfo | null {
+  let info: ToolsMqttAdditionalInfo | null;
+
   if (hasUsableToolsNetworkInfo(status?.additionalInfo)) {
-    return status?.additionalInfo ?? null;
+    info = status?.additionalInfo ?? null;
+  } else if (
+    connectionIssue === "seniat" &&
+    hasUsableToolsNetworkInfo(cachedNetworkInfo)
+  ) {
+    info = cachedNetworkInfo;
+  } else {
+    info = status?.additionalInfo ?? null;
   }
-  if (connectionIssue === "seniat" && hasUsableToolsNetworkInfo(cachedNetworkInfo)) {
-    return cachedNetworkInfo;
+
+  if (info == null) {
+    return null;
   }
-  return status?.additionalInfo ?? null;
+
+  const resolvedWifi = resolveToolsWifiDisplayValue(
+    info.wifiNetwork,
+    cachedNetworkInfo?.wifiNetwork,
+  );
+
+  if (!resolvedWifi || resolvedWifi === info.wifiNetwork) {
+    return info;
+  }
+
+  return { ...info, wifiNetwork: resolvedWifi };
+}
+
+export function mergeToolsCachedNetworkInfo(
+  previous: ToolsMqttAdditionalInfo | null,
+  next: ToolsMqttAdditionalInfo | null | undefined,
+): ToolsMqttAdditionalInfo | null {
+  if (!next) {
+    return previous;
+  }
+  if (!previous) {
+    return next;
+  }
+
+  const resolvedWifi = resolveToolsWifiDisplayValue(
+    next.wifiNetwork,
+    previous.wifiNetwork,
+  );
+
+  if (!resolvedWifi || resolvedWifi === next.wifiNetwork) {
+    return next;
+  }
+
+  return { ...next, wifiNetwork: resolvedWifi };
+}
+
+export function shouldPersistToolsNetworkInfo(
+  info: ToolsMqttAdditionalInfo | null | undefined,
+): boolean {
+  if (!hasUsableToolsNetworkInfo(info)) {
+    return false;
+  }
+  if (resolveToolsWifiConnectedSsid(info?.wifiNetwork)) {
+    return true;
+  }
+  return !isGenericWifiConnectedMessage(info?.wifiNetwork);
 }
 
 export function isToolsPrinterReachable(

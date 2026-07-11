@@ -48,13 +48,38 @@ export function parseToolsWifiConnection(
   };
 }
 
+/** Mensaje genérico de la impresora cuando está conectada pero no reporta el SSID. */
+export function isGenericWifiConnectedMessage(
+  value: string | null | undefined,
+): boolean {
+  const connection = parseToolsWifiConnection(value);
+  return connection.connected === true && connection.ssid == null;
+}
+
+/** Resuelve el SSID a mostrar usando un valor previo cuando el actual es genérico. */
+export function resolveToolsWifiDisplayValue(
+  current: string | null | undefined,
+  fallback: string | null | undefined,
+): string | null | undefined {
+  if (resolveToolsWifiConnectedSsid(current)) {
+    return current;
+  }
+  const fallbackSsid = resolveToolsWifiConnectedSsid(fallback);
+  if (isGenericWifiConnectedMessage(current) && fallbackSsid) {
+    return fallbackSsid;
+  }
+  return current ?? fallback;
+}
+
 /** Etiqueta legible para mostrar el estado WiFi en la UI. */
 export function formatToolsWifiStatusLine(
   value: string | null | undefined,
+  fallbackSsid?: string | null,
 ): string {
-  const connection = parseToolsWifiConnection(value);
+  const resolved = resolveToolsWifiDisplayValue(value, fallbackSsid);
+  const connection = parseToolsWifiConnection(resolved);
   if (connection.ssid) {
-    return `Red WiFi: ${connection.ssid}`;
+    return `WiFi: ${connection.ssid}`;
   }
   return `WiFi: ${connection.label}`;
 }

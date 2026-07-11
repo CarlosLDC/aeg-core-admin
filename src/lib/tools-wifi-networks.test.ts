@@ -53,6 +53,9 @@ describe("normalizeToolsWifiNetworks", () => {
     expect(
       formatToolsWifiStatusLine("EQUIPO SI CONECTADO AP"),
     ).toBe("WiFi: Conectada");
+    expect(
+      formatToolsWifiStatusLine("EQUIPO SI CONECTADO AP", "AP_IoT_HomeP"),
+    ).toBe("WiFi: AP_IoT_HomeP");
     expect(parseToolsWifiConnection("EQUIPO SI CONECTADO AP")).toMatchObject({
       connected: true,
       ssid: null,
@@ -67,7 +70,7 @@ describe("normalizeToolsWifiNetworks", () => {
   });
 
   it("muestra el SSID cuando la impresora lo reporta", () => {
-    expect(formatToolsWifiStatusLine("AEG-WiFi")).toBe("Red WiFi: AEG-WiFi");
+    expect(formatToolsWifiStatusLine("AEG-WiFi")).toBe("WiFi: AEG-WiFi");
     expect(resolveToolsWifiConnectedSsid("AEG-WiFi")).toBe("AEG-WiFi");
     expect(resolveToolsWifiConnectedSsid("EQUIPO SI CONECTADO AP")).toBe("");
   });

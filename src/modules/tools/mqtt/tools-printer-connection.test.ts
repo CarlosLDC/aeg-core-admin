@@ -52,6 +52,21 @@ describe("resolveToolsPrinterNetworkInfo", () => {
     ).toBeNull();
   });
 
+  it("conserva el SSID en caché cuando la impresora responde con mensaje genérico", () => {
+    const genericWifiStatus = {
+      success: true,
+      seniatStatus: "SIN CONEXION" as const,
+      additionalInfo: {
+        ...printerInfo,
+        wifiNetwork: "EQUIPO SI CONECTADO AP",
+      },
+    };
+
+    expect(
+      resolveToolsPrinterNetworkInfo(genericWifiStatus, printerInfo, "seniat"),
+    ).toEqual(printerInfo);
+  });
+
   it("detects usable network fields", () => {
     expect(isUsableToolsNetworkField("192.168.1.10")).toBe(true);
     expect(isUsableToolsNetworkField("N/A")).toBe(false);

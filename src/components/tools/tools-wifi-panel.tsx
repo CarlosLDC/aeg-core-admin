@@ -103,7 +103,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const toast = useToast();
   const transport = useToolsTransport();
   const section = TOOLS_SECTIONS.wifi;
-  const { status, loading: statusLoading, refreshStatus, remoteActionsDisabled, connectionResolved, connectionIssue, mqttReady } =
+  const { loading: statusLoading, refreshStatus, remoteActionsDisabled, connectionResolved, connectionIssue, networkInfo, mqttReady } =
     useToolsPrinterConnection(printer.id, printer.macAddress);
   const [ssid, setSsid] = useState("");
   const [password, setPassword] = useState("");
@@ -115,9 +115,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
     null,
   );
 
-  const connectedSsid = resolveToolsWifiConnectedSsid(
-    status?.additionalInfo?.wifiNetwork,
-  );
+  const connectedSsid = resolveToolsWifiConnectedSsid(networkInfo?.wifiNetwork);
   const displayedNetworks = useMemo(
     () => normalizeToolsWifiNetworks(networks, connectedSsid || undefined),
     [networks, connectedSsid],

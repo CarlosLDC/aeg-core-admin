@@ -1,10 +1,8 @@
 "use client";
 
 import { Cable, Wifi } from "lucide-react";
-import { cn } from "@/lib/utils";
-import {
-  useToolsTransportContext,
-} from "@/modules/tools/transport/tools-transport-provider";
+import { ToolsActionButton } from "@/components/tools/tools-ui";
+import { useToolsTransportContext } from "@/modules/tools/transport/tools-transport-provider";
 
 export function ToolsConnectionModeToggle({
   className,
@@ -15,28 +13,29 @@ export function ToolsConnectionModeToggle({
   const isUsb = mode === "usb";
   const canSwitchToUsb = webSerialSupported;
   const disabled = !isUsb && !canSwitchToUsb;
-  const label = isUsb ? "Cambiar a WiFi" : "Cambiar a USB";
+  const actionLabel = isUsb ? "Cambiar a WiFi" : "Cambiar a USB";
   const disabledTitle =
     "Web Serial no está disponible en este navegador. Use Chrome o Edge.";
 
   return (
-    <button
-      type="button"
+    <ToolsActionButton
       onClick={() => setMode(isUsb ? "wifi" : "usb")}
       disabled={disabled}
-      title={disabled ? disabledTitle : label}
-      aria-label={disabled ? disabledTitle : label}
-      className={cn(
-        "rounded-lg border border-border bg-card p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground",
-        disabled && "cursor-not-allowed opacity-50 hover:bg-card hover:text-muted",
-        className,
-      )}
+      title={disabled ? disabledTitle : actionLabel}
+      aria-label={disabled ? disabledTitle : actionLabel}
+      className={className}
     >
       {isUsb ? (
-        <Wifi className="size-4" aria-hidden />
+        <>
+          <Wifi className="size-4 shrink-0" aria-hidden />
+          WiFi
+        </>
       ) : (
-        <Cable className="size-4" aria-hidden />
+        <>
+          <Cable className="size-4 shrink-0" aria-hidden />
+          USB
+        </>
       )}
-    </button>
+    </ToolsActionButton>
   );
 }

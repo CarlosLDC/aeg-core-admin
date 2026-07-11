@@ -12,7 +12,9 @@ import {
   isToolsPrinterConnectionResolved,
   isToolsPrinterReachable,
   isToolsSeniatOnline,
+  mergeToolsCachedNetworkInfo,
   resolveToolsPrinterNetworkInfo,
+  shouldPersistToolsNetworkInfo,
 } from "@/lib/tools-printer-connection";
 import { createMqttTransport } from "@/modules/tools/transport/mqtt-transport";
 import {
@@ -70,8 +72,10 @@ export function useToolsPrinterConnection(
         setStatus(response);
         return;
       }
-      if (hasUsableToolsNetworkInfo(response.additionalInfo)) {
-        setCachedNetworkInfo(response.additionalInfo ?? null);
+      if (shouldPersistToolsNetworkInfo(response.additionalInfo)) {
+        setCachedNetworkInfo((previous) =>
+          mergeToolsCachedNetworkInfo(previous, response.additionalInfo),
+        );
       }
       setStatus(response);
     } catch (err) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { toolsSubsectionClass } from "@/components/tools/tools-ui";
 import { ToolsUsbConnectPanel } from "@/components/tools/tools-usb-connect-panel";
 import { ToolsPrinterTransportShell } from "@/components/tools/tools-printer-transport-shell";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -27,10 +28,10 @@ function ToolsPrinterSubPageContent({
       backHref={toolsPrinterPath(printer.serial)}
       backLabel="Volver al detalle"
     >
-      <div className="mb-6">
+      <div className={toolsSubsectionClass}>
         <ToolsUsbConnectPanel />
+        {children(printer)}
       </div>
-      {children(printer)}
     </ResourceViewShell>
   );
 }
