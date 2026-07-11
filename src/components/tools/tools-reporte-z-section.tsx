@@ -170,7 +170,6 @@ export function ToolsReporteZSection({
       if (action === "list") {
         const result = await transport.listReportZ();
         showReport(result.report?.report);
-        toast.success("Último reporte Z consultado.");
       } else if (action === "generate") {
         const result = await transport.generateReportZ();
         showReport(result.report?.report);
@@ -178,7 +177,6 @@ export function ToolsReporteZSection({
       } else if (action === "get") {
         const result = await transport.getReportZ(parsedNumber!);
         showReport(result.report?.report);
-        toast.success(`Reporte Z #${parsedNumber} obtenido.`);
       } else if (action === "transmit") {
         const result = await transport.transmitReportZ();
         if (result.seniatUnavailable) {
