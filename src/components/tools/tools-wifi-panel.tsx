@@ -238,8 +238,8 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
           }
         />
 
-        {connectionResolved && connectionIssue !== "none" ? (
-          <ToolsConnectionWarning variant={connectionIssue} />
+        {connectionResolved && connectionIssue === "printer" ? (
+          <ToolsConnectionWarning variant="printer" />
         ) : null}
 
         <div

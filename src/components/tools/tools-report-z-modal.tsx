@@ -166,16 +166,6 @@ export function ToolsReportZModal({
             ) : null}
           </div>
         </div>
-
-        <div className="border-t border-border px-4 py-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
-          >
-            Cerrar
-          </button>
-        </div>
       </div>
     </div>,
     document.body,

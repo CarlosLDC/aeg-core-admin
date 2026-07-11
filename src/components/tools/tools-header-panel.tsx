@@ -95,8 +95,8 @@ export function ToolsHeaderPanel({ printer }: { printer: ToolsPrinter }) {
           }
         />
 
-        {connectionResolved && connectionIssue !== "none" ? (
-          <ToolsConnectionWarning variant={connectionIssue} />
+        {connectionResolved && connectionIssue === "printer" ? (
+          <ToolsConnectionWarning variant="printer" />
         ) : null}
 
         <ToolsHeaderFooterBlock
