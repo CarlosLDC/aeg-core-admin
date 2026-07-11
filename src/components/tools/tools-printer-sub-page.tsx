@@ -77,19 +77,9 @@ export function ToolsPrinterMacGuard({
   children: React.ReactNode;
 }) {
   const transportContext = useOptionalToolsTransportContext();
-  const usbMode = transportContext?.mode === "usb";
   const usbConnected = transportContext?.usbConnected === true;
 
-  if (usbMode) {
-    if (!usbConnected) {
-      return (
-        <EmptyState
-          compact
-          title="USB requerido"
-          description="Conecte la impresora por USB antes de usar las operaciones."
-        />
-      );
-    }
+  if (usbConnected) {
     return <>{children}</>;
   }
 
@@ -98,7 +88,7 @@ export function ToolsPrinterMacGuard({
       <EmptyState
         compact
         title="MAC requerida"
-        description="Registre la dirección MAC de la impresora en el catálogo antes de usar las operaciones remotas, o cambie a conexión USB."
+        description="Registre la dirección MAC de la impresora en el catálogo antes de usar las operaciones remotas, o active la conexión USB."
       />
     );
   }

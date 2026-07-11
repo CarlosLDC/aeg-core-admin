@@ -21,7 +21,6 @@ import { ToolsPrinterTransportShell } from "@/components/tools/tools-printer-tra
 import { ToolsReporteZSection } from "@/components/tools/tools-reporte-z-section";
 import { ToolsReprintSection } from "@/components/tools/tools-reprint-section";
 import { ToolsTestDocumentsSection } from "@/components/tools/tools-test-documents-section";
-import { ToolsUsbConnectPanel } from "@/components/tools/tools-usb-connect-panel";
 import { useToolsPrinters } from "@/modules/tools/printers/use-tools-printers";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import { useToolsTransportContext } from "@/modules/tools/transport/tools-transport-provider";
@@ -70,8 +69,6 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
           </p>
         </ToolsMacWarning>
       ) : null}
-
-      <ToolsUsbConnectPanel />
 
       <ToolsPrinterStatusBar connection={connection} />
 

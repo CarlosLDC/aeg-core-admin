@@ -5,21 +5,20 @@ import {
   ToolsRefreshStatusButton,
   toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
-import { ToolsConnectionModeToggle } from "@/components/tools/tools-connection-mode-switch";
+import { ToolsUsbConnectionButton } from "@/components/tools/tools-connection-mode-switch";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { formatToolsWifiStatusLine } from "@/lib/tools-wifi-networks";
 import { isUsableToolsNetworkField } from "@/lib/tools-printer-connection";
 import type { ToolsPrinterConnectionState } from "@/modules/tools/mqtt/use-tools-mqtt";
 import { useToolsTransportContext } from "@/modules/tools/transport/tools-transport-provider";
 import { cn } from "@/lib/utils";
-import { Cable } from "lucide-react";
 
 type ToolsPrinterStatusBarProps = {
   connection: ToolsPrinterConnectionState;
 };
 
 export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps) {
-  const { mode } = useToolsTransportContext();
+  const { usbConnected } = useToolsTransportContext();
   const {
     status,
     loading,
@@ -43,19 +42,19 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
     >
       <div className="flex min-w-0 items-start gap-3">
         <ToolsIconBadge
-          icon={mode === "usb" ? Cable : statusSection.icon}
+          icon={statusSection.icon}
           tone={statusSection.tone}
           size="md"
         />
         <div className="min-w-0">
           <p className="text-sm font-semibold text-card-foreground">
-            {mode === "usb" ? "Estado (USB)" : statusSection.title}
+            {statusSection.title}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-            {mode === "usb" ? (
+            {usbConnected ? (
               <span className="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                 <span className="size-2.5 rounded-full bg-emerald-500" aria-hidden />
-                USB conectado
+                USB activo
               </span>
             ) : null}
             <span className="inline-flex items-center gap-2">
@@ -102,7 +101,7 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <ToolsConnectionModeToggle />
+        <ToolsUsbConnectionButton />
         <ToolsRefreshStatusButton
           loading={loading}
           onRefresh={refreshStatus}

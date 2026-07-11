@@ -1,41 +1,64 @@
 "use client";
 
-import { Cable, Wifi } from "lucide-react";
+import { Cable } from "lucide-react";
 import { ToolsActionButton } from "@/components/tools/tools-ui";
 import { useToolsTransportContext } from "@/modules/tools/transport/tools-transport-provider";
+import { useToast } from "@/context/toast-provider";
 
-export function ToolsConnectionModeToggle({
+export function ToolsUsbConnectionButton({
   className,
 }: {
   className?: string;
 }) {
-  const { mode, setMode, webSerialSupported } = useToolsTransportContext();
-  const isUsb = mode === "usb";
-  const canSwitchToUsb = webSerialSupported;
-  const disabled = !isUsb && !canSwitchToUsb;
-  const actionLabel = isUsb ? "Cambiar a WiFi" : "Cambiar a USB";
+  const toast = useToast();
+  const {
+    usbConnected,
+    usbConnecting,
+    webSerialSupported,
+    connectUsb,
+    disconnectUsb,
+  } = useToolsTransportContext();
   const disabledTitle =
     "Web Serial no está disponible en este navegador. Use Chrome o Edge.";
 
+  const handleClick = async () => {
+    if (usbConnected) {
+      try {
+        await disconnectUsb();
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "No se pudo cerrar la conexión USB.",
+        );
+      }
+      return;
+    }
+
+    try {
+      await connectUsb();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "No se pudo conectar por USB.",
+      );
+    }
+  };
+
   return (
     <ToolsActionButton
-      onClick={() => setMode(isUsb ? "wifi" : "usb")}
-      disabled={disabled}
-      title={disabled ? disabledTitle : actionLabel}
-      aria-label={disabled ? disabledTitle : actionLabel}
+      variant={usbConnected ? "primary" : "default"}
+      aria-pressed={usbConnected}
+      loading={usbConnecting}
+      onClick={() => void handleClick()}
+      disabled={!webSerialSupported && !usbConnected}
+      title={!webSerialSupported && !usbConnected ? disabledTitle : undefined}
+      aria-label={
+        usbConnected
+          ? "Desactivar conexión USB"
+          : "Activar conexión USB"
+      }
       className={className}
     >
-      {isUsb ? (
-        <>
-          <Wifi className="size-4 shrink-0" aria-hidden />
-          WiFi
-        </>
-      ) : (
-        <>
-          <Cable className="size-4 shrink-0" aria-hidden />
-          USB
-        </>
-      )}
+      <Cable className="size-4 shrink-0" aria-hidden />
+      USB
     </ToolsActionButton>
   );
 }

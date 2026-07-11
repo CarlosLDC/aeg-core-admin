@@ -36,12 +36,9 @@ type ToolsTransportContextValue = {
 
 const ToolsTransportContext = createContext<ToolsTransportContextValue | null>(null);
 
-function readStoredMode(serial: string): ToolsConnectionMode {
-  if (typeof window === "undefined") {
-    return "wifi";
-  }
-  const stored = window.sessionStorage.getItem(`${MODE_STORAGE_PREFIX}${serial}`);
-  return stored === "usb" ? "usb" : "wifi";
+function readStoredMode(_serial: string): ToolsConnectionMode {
+  // USB requires a fresh user gesture; always start on the remote channel.
+  return "wifi";
 }
 
 type ToolsTransportProviderProps = {
@@ -112,7 +109,11 @@ export function ToolsTransportProvider({
     await sessionRef.current.close();
     setUsbConnected(false);
     setUsbError(null);
-  }, []);
+    setModeState("wifi");
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(`${MODE_STORAGE_PREFIX}${printerSerial}`, "wifi");
+    }
+  }, [printerSerial]);
 
   const macReady =
     printerId != null && macAddress != null && macAddress.trim() !== "";
