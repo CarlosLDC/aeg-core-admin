@@ -1,6 +1,9 @@
 import "server-only";
 
-import PDFDocument from "pdfkit/js/pdfkit.standalone.js";
+import {
+  getPdfDocumentClass,
+  type PdfDocument,
+} from "@/modules/tools/pdf/tools-pdf-document";
 import {
   parseEscPos,
   type EscPosLine,
@@ -30,6 +33,7 @@ export async function createToolsPdfBuffer(
 
   return new Promise<Buffer>((resolve, reject) => {
     try {
+      const PDFDocument = getPdfDocumentClass();
       const doc = new PDFDocument({
         size: [PAGE_WIDTH, pageHeight],
         margins: {
@@ -79,9 +83,10 @@ function parsePdfLines(
   return parsedLines;
 }
 
-type PdfDoc = InstanceType<typeof PDFDocument>;
+type PdfDoc = PdfDocument;
 
 function createMeasureDoc(): PdfDoc {
+  const PDFDocument = getPdfDocumentClass();
   return new PDFDocument({
     size: [PAGE_WIDTH, 10_000],
     margins: {
