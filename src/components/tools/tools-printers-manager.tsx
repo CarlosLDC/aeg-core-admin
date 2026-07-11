@@ -50,12 +50,7 @@ import {
   ToolsSectionHeading,
 } from "@/components/tools/tools-ui";
 
-type ToolsPrinterSortKey =
-  | "serial"
-  | "ciudad"
-  | "cliente"
-  | "distribuidor"
-  | "firmware";
+type ToolsPrinterSortKey = "serial";
 
 const TOOLS_PAGE_SIZE = 5;
 const DEFAULT_TOOLS_SORT: TableSortState<ToolsPrinterSortKey> = {
@@ -111,35 +106,8 @@ function StatusCounter({
   );
 }
 
-function compareStringField(a: string | null | undefined, b: string | null | undefined): number {
-  return (a ?? "").localeCompare(b ?? "", "es");
-}
-
-function compareToolsPrinters(
-  a: ToolsPrinter,
-  b: ToolsPrinter,
-  key: ToolsPrinterSortKey,
-): number {
-  switch (key) {
-    case "serial":
-      return compareStringField(a.serial, b.serial);
-    case "ciudad":
-      return compareStringField(a.ciudad, b.ciudad);
-    case "cliente":
-      return compareStringField(
-        a.rifName || a.rifCliente,
-        b.rifName || b.rifCliente,
-      );
-    case "distribuidor":
-      return compareStringField(
-        a.distributorName || a.distributorRif,
-        b.distributorName || b.distributorRif,
-      );
-    case "firmware":
-      return compareStringField(a.firmware, b.firmware);
-    default:
-      return 0;
-  }
+function compareToolsPrinters(a: ToolsPrinter, b: ToolsPrinter): number {
+  return (a.serial ?? "").localeCompare(b.serial ?? "", "es");
 }
 
 export function ToolsPrintersManager() {
@@ -200,11 +168,7 @@ export function ToolsPrintersManager() {
     const comparators: Partial<
       Record<ToolsPrinterSortKey, (a: ToolsPrinter, b: ToolsPrinter) => number>
     > = {
-      serial: (a, b) => compareToolsPrinters(a, b, "serial"),
-      ciudad: (a, b) => compareToolsPrinters(a, b, "ciudad"),
-      cliente: (a, b) => compareToolsPrinters(a, b, "cliente"),
-      distribuidor: (a, b) => compareToolsPrinters(a, b, "distribuidor"),
-      firmware: (a, b) => compareToolsPrinters(a, b, "firmware"),
+      serial: compareToolsPrinters,
     };
     return sortTableRows(statusFiltered, sort, comparators);
   }, [statusFiltered, sort]);
@@ -402,54 +366,20 @@ export function ToolsPrintersManager() {
                             )
                           }
                         />
-                        <SortableTableHeader
-                          label="Ciudad"
-                          sortDirection={
-                            sort?.key === "ciudad" ? sort.direction : null
-                          }
-                          onToggle={() =>
-                            setSort((current) =>
-                              toggleTableSort(current, "ciudad"),
-                            )
-                          }
-                        />
-                        <SortableTableHeader
-                          label="Firmware"
-                          sortDirection={
-                            sort?.key === "firmware" ? sort.direction : null
-                          }
-                          onToggle={() =>
-                            setSort((current) =>
-                              toggleTableSort(current, "firmware"),
-                            )
-                          }
-                        />
+                        <th className="whitespace-nowrap px-5 py-3 font-medium">
+                          Ciudad
+                        </th>
+                        <th className="whitespace-nowrap px-5 py-3 font-medium">
+                          Firmware
+                        </th>
                         {isAdmin ? (
-                          <SortableTableHeader
-                            label="Distribuidor"
-                            sortDirection={
-                              sort?.key === "distribuidor"
-                                ? sort.direction
-                                : null
-                            }
-                            onToggle={() =>
-                              setSort((current) =>
-                                toggleTableSort(current, "distribuidor"),
-                              )
-                            }
-                          />
+                          <th className="whitespace-nowrap px-5 py-3 font-medium">
+                            Distribuidor
+                          </th>
                         ) : null}
-                        <SortableTableHeader
-                          label="Cliente"
-                          sortDirection={
-                            sort?.key === "cliente" ? sort.direction : null
-                          }
-                          onToggle={() =>
-                            setSort((current) =>
-                              toggleTableSort(current, "cliente"),
-                            )
-                          }
-                        />
+                        <th className="whitespace-nowrap px-5 py-3 font-medium">
+                          Cliente
+                        </th>
                         <th className="w-10 px-3 py-3" aria-hidden />
                       </tr>
                     </thead>

@@ -14,6 +14,26 @@ export function isWebSerialSupported(): boolean {
   return typeof navigator !== "undefined" && "serial" in navigator && navigator.serial != null;
 }
 
+const USB_SERIAL_ERROR_MESSAGES: Record<string, string> = {
+  "No port selected": "No se seleccionó ningún puerto.",
+};
+
+export function getToolsUsbErrorMessage(
+  error: unknown,
+  fallback = "No se pudo conectar por USB.",
+): string {
+  if (!(error instanceof Error)) {
+    return fallback;
+  }
+
+  const message = error.message.trim();
+  if (!message) {
+    return fallback;
+  }
+
+  return USB_SERIAL_ERROR_MESSAGES[message] ?? message;
+}
+
 export class ToolsSerialPortSession {
   private port: SerialPort | null = null;
   private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
@@ -34,12 +54,16 @@ export class ToolsSerialPortSession {
       throw new Error("Este navegador no admite Web Serial. Use Chrome o Edge.");
     }
     await this.close();
-    const port = await navigator.serial!.requestPort();
-    await port.open({ baudRate });
-    this.port = port;
-    this.writer = port.writable?.getWriter() ?? null;
-    this.reader = port.readable?.getReader() ?? null;
-    void this.startReadLoop();
+    try {
+      const port = await navigator.serial!.requestPort();
+      await port.open({ baudRate });
+      this.port = port;
+      this.writer = port.writable?.getWriter() ?? null;
+      this.reader = port.readable?.getReader() ?? null;
+      void this.startReadLoop();
+    } catch (error) {
+      throw new Error(getToolsUsbErrorMessage(error));
+    }
   }
 
   async close(): Promise<void> {

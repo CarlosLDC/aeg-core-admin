@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ToolsSerialPortSession, isWebSerialSupported } from "@/modules/tools/serial/tools-serial-port";
+import { ToolsSerialPortSession, isWebSerialSupported, getToolsUsbErrorMessage } from "@/modules/tools/serial/tools-serial-port";
 import { createMqttTransport } from "@/modules/tools/transport/mqtt-transport";
 import { createUsbSerialTransport } from "@/modules/tools/transport/usb-serial-transport";
 import type {
@@ -98,7 +98,7 @@ export function ToolsTransportProvider({
       }
     } catch (error) {
       setUsbConnected(false);
-      setUsbError(error instanceof Error ? error.message : "No se pudo conectar por USB.");
+      setUsbError(getToolsUsbErrorMessage(error));
       throw error;
     } finally {
       setUsbConnecting(false);

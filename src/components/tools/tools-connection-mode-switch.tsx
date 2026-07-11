@@ -2,6 +2,7 @@
 
 import { Cable } from "lucide-react";
 import { ToolsActionButton } from "@/components/tools/tools-ui";
+import { getToolsUsbErrorMessage } from "@/modules/tools/serial/tools-serial-port";
 import { useToolsTransportContext } from "@/modules/tools/transport/tools-transport-provider";
 import { useToast } from "@/context/toast-provider";
 
@@ -36,9 +37,7 @@ export function ToolsUsbConnectionButton({
     try {
       await connectUsb();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "No se pudo conectar por USB.",
-      );
+      toast.error(getToolsUsbErrorMessage(error));
     }
   };
 

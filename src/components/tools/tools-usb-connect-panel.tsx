@@ -3,6 +3,7 @@
 import { Cable, Loader2, Unplug } from "lucide-react";
 import { ToolsActionButton, toolsPanelSectionClass } from "@/components/tools/tools-ui";
 import { cn } from "@/lib/utils";
+import { getToolsUsbErrorMessage } from "@/modules/tools/serial/tools-serial-port";
 import { useToolsTransportContext } from "@/modules/tools/transport/tools-transport-provider";
 import { useToast } from "@/context/toast-provider";
 
@@ -42,9 +43,7 @@ export function ToolsUsbConnectPanel({ className }: { className?: string }) {
       await connectUsb();
       toast.success("Impresora conectada por USB.");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "No se pudo conectar por USB.",
-      );
+      toast.error(getToolsUsbErrorMessage(error));
     }
   };
 
