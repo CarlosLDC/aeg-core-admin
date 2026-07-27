@@ -1,12 +1,13 @@
-"use client";
+import { redirect } from "next/navigation";
+import { toolsPrinterHeaderFooterPath } from "@/lib/resource-routes";
 
-import { ToolsHeaderPanel } from "@/components/tools/tools-header-panel";
-import { ToolsPrinterOperationPage } from "@/components/tools/tools-printer-operation-page";
+type ToolsPrinterLegacyHeaderPageProps = {
+  params: Promise<{ serial: string }>;
+};
 
-export default function ToolsPrinterHeaderPage() {
-  return (
-    <ToolsPrinterOperationPage>
-      {(printer) => <ToolsHeaderPanel printer={printer} />}
-    </ToolsPrinterOperationPage>
-  );
+export default async function ToolsPrinterLegacyHeaderPage({
+  params,
+}: ToolsPrinterLegacyHeaderPageProps) {
+  const { serial } = await params;
+  redirect(toolsPrinterHeaderFooterPath(decodeURIComponent(serial)));
 }

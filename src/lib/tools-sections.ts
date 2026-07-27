@@ -1,19 +1,17 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
-  AlignLeft,
-  AlignRight,
   CreditCard,
   FileStack,
   FlaskConical,
   Printer,
+  ReceiptText,
   ScrollText,
   Wifi,
 } from "lucide-react";
 import {
-  toolsPrinterFooterPath,
   toolsPrinterFormasPagoPath,
-  toolsPrinterHeaderPath,
+  toolsPrinterHeaderFooterPath,
   toolsPrinterSummaryPath,
   toolsPrinterWifiPath,
 } from "@/lib/resource-routes";
@@ -72,19 +70,12 @@ export const TOOLS_SECTIONS = {
     icon: Printer,
     tone: "indigo",
   },
-  header: {
-    id: "encabezado",
-    title: "Encabezado",
-    description: "Leer y editar el encabezado fiscal de la impresora.",
-    icon: AlignLeft,
+  headerFooter: {
+    id: "encabezado-pie",
+    title: "Encabezado y pie",
+    description: "Leer y editar el encabezado y pie de ticket en vista de factura.",
+    icon: ReceiptText,
     tone: "rose",
-  },
-  footer: {
-    id: "pie-de-pagina",
-    title: "Pie de página",
-    description: "Leer y editar el pie de ticket de la impresora.",
-    icon: AlignRight,
-    tone: "amber",
   },
   status: {
     id: "status",
@@ -108,8 +99,7 @@ export const TOOLS_PRINTER_NAV_SECTIONS = [
   "summary",
   "wifi",
   "formasPago",
-  "header",
-  "footer",
+  "headerFooter",
 ] as const satisfies readonly ToolsSectionKey[];
 
 export type ToolsPrinterNavSectionKey =
@@ -126,10 +116,8 @@ export function toolsPrinterSectionHref(
       return toolsPrinterWifiPath(serial);
     case "formasPago":
       return toolsPrinterFormasPagoPath(serial);
-    case "header":
-      return toolsPrinterHeaderPath(serial);
-    case "footer":
-      return toolsPrinterFooterPath(serial);
+    case "headerFooter":
+      return toolsPrinterHeaderFooterPath(serial);
     default: {
       const _exhaustive: never = section;
       return _exhaustive;

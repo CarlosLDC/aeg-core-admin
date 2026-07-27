@@ -28,6 +28,11 @@ type VenezuelanFiscalInvoicePreviewProps = {
   className?: string;
   editable?: boolean;
   hasChanges?: boolean;
+  /**
+   * When true (default), locks SENIAT/RIF/razón social and contributor-type
+   * header lines — used by enajenación. Tools passes false to allow full edits.
+   */
+  lockIdentityLines?: boolean;
   onChange?: (data: VenezuelanFiscalInvoiceData) => void;
   onRevert?: () => void;
 };
@@ -295,6 +300,7 @@ function EditableTicketLineList({
   lineLabelPrefix,
   emptyEditingHint,
   minLines = 1,
+  lockIdentityLines = true,
   onChangeLine,
   onRemoveLine,
   onMoveLine,
@@ -305,6 +311,7 @@ function EditableTicketLineList({
   lineLabelPrefix: string;
   emptyEditingHint?: string;
   minLines?: number;
+  lockIdentityLines?: boolean;
   onChangeLine: (index: number, value: string) => void;
   onRemoveLine: (index: number) => void;
   onMoveLine: (fromIndex: number, toIndex: number) => void;
@@ -337,16 +344,20 @@ function EditableTicketLineList({
       {lines.map((line, index) => {
         const ariaLabel = `${lineLabelPrefix} línea ${index + 1}`;
         const isLineLocked =
+          lockIdentityLines &&
           lineLabelPrefix === "Encabezado" &&
           (index < 3 || isContributorTypeHeaderLine(line));
         const canRemove = !isLineLocked && lines.length > minLines;
         const canMoveUp =
           !isLineLocked &&
-          (lineLabelPrefix === "Encabezado" ? index > 3 : index > 0);
+          (lockIdentityLines && lineLabelPrefix === "Encabezado"
+            ? index > 3
+            : index > 0);
         const canMoveDown =
           !isLineLocked &&
           index < lines.length - 1 &&
           !(
+            lockIdentityLines &&
             lineLabelPrefix === "Encabezado" &&
             isContributorTypeHeaderLine(lines[index + 1] ?? "")
           );
@@ -454,6 +465,7 @@ export function VenezuelanFiscalInvoicePreview({
   className,
   editable = false,
   hasChanges = false,
+  lockIdentityLines = true,
   onChange,
   onRevert,
 }: VenezuelanFiscalInvoicePreviewProps) {
@@ -468,6 +480,13 @@ export function VenezuelanFiscalInvoicePreview({
   );
   const showPieDeTicketSection =
     hasPieDeTicketContent || pieDeTicketEditing || canEdit;
+
+  function isIdentityHeaderLineLocked(index: number, line: string): boolean {
+    return (
+      lockIdentityLines &&
+      (index < 3 || isContributorTypeHeaderLine(line))
+    );
+  }
 
   useEffect(() => {
     if (!pieDeTicketEditing) return;
@@ -494,7 +513,7 @@ export function VenezuelanFiscalInvoicePreview({
   }
 
   function patchHeaderLine(index: number, value: string) {
-    if (index < 3 || isContributorTypeHeaderLine(headerLines[index] ?? "")) return;
+    if (isIdentityHeaderLineLocked(index, headerLines[index] ?? "")) return;
     patch((current) => {
       const lineas = [...current.encabezado.lineas];
       lineas[index] = value;
@@ -510,7 +529,7 @@ export function VenezuelanFiscalInvoicePreview({
   }
 
   function removeHeaderLine(index: number) {
-    if (index < 3 || isContributorTypeHeaderLine(headerLines[index] ?? "")) return;
+    if (isIdentityHeaderLineLocked(index, headerLines[index] ?? "")) return;
     patch((current) => ({
       ...current,
       encabezado: {
@@ -521,10 +540,8 @@ export function VenezuelanFiscalInvoicePreview({
 
   function moveHeaderLine(fromIndex: number, toIndex: number) {
     if (
-      fromIndex < 3 ||
-      toIndex < 3 ||
-      isContributorTypeHeaderLine(headerLines[fromIndex] ?? "") ||
-      isContributorTypeHeaderLine(headerLines[toIndex] ?? "")
+      isIdentityHeaderLineLocked(fromIndex, headerLines[fromIndex] ?? "") ||
+      isIdentityHeaderLineLocked(toIndex, headerLines[toIndex] ?? "")
     ) {
       return;
     }
@@ -633,6 +650,7 @@ export function VenezuelanFiscalInvoicePreview({
                   centered
                   lineLabelPrefix="Encabezado"
                   minLines={1}
+                  lockIdentityLines={lockIdentityLines}
                   onChangeLine={patchHeaderLine}
                   onRemoveLine={removeHeaderLine}
                   onMoveLine={moveHeaderLine}

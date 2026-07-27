@@ -100,6 +100,10 @@ export function toolsPrinterFooterPath(serial: string): string {
   return `${toolsPrinterPath(serial)}/pie-de-pagina`;
 }
 
+export function toolsPrinterHeaderFooterPath(serial: string): string {
+  return `${toolsPrinterPath(serial)}/encabezado-pie`;
+}
+
 export function toolsPrinterSummaryPath(serial: string): string {
   return `${toolsPrinterPath(serial)}/resumen`;
 }
