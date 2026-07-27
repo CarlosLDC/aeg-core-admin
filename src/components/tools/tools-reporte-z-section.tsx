@@ -85,6 +85,9 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
   },
 ];
 
+// TODO(tools-report-x): flujo vista previa → Imprimir pendiente de comando MQTT definitivo.
+// Ver buildReportXPayload / ToolsMqttPayloadBuilder.reportXPayload.
+
 function parseReportNumberInput(numberInput: string): number | null {
   const trimmed = numberInput.trim();
   if (!trimmed) {
@@ -188,6 +191,7 @@ export function ToolsReporteZSection({
           toast.success(result.message ?? "Transmisión completada.");
         }
       } else if (action === "report-x") {
+        // TODO(tools-report-x): visualize aún usa impRepX; puede imprimir. Pendiente comando nuevo.
         const result = await transport.sendReportX("visualize");
         if (!result.escPosContent) {
           throw new Error("La impresora no devolvió contenido del reporte X.");

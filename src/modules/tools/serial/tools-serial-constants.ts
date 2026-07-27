@@ -21,6 +21,9 @@ export const CMD_RESET_MF = "resetMF";
 export const CMD_GET_REP_Z = "getRepZ";
 export const CMD_REP_Z = "RepZ";
 export const CMD_IMP_REP_X = "impRepX";
+// TODO(tools-report-x): pendiente comando MQTT definitivo para vista previa SIN impresión.
+// Hoy impRepX imprime al generar; impFis:0 no basta. Cuando el usuario aporte el comando
+// correcto, actualizar buildReportXPayload / reportXPayload y el flujo visualize→print.
 export const CMD_DESC_FP = "descFP";
 export const CMD_W_FILE_SPIFF = "wFileSPIFF";
 export const CMD_PIE_TI_F = "pieTiF";

@@ -85,6 +85,12 @@ export function buildGetReportZPayload(reportNumber: number): string {
   return writeJson({ cmd: CMD_GET_REP_Z, data: reportNumber });
 }
 
+/**
+ * Payload de Reporte X.
+ * TODO(tools-report-x): SECCIÓN INCOMPLETA — hace falta un comando MQTT nuevo para
+ * visualizar el reporte X sin impresión física. `impRepX` (incluso con impFis:0) imprime
+ * al generar. Sustituir el modo visualize cuando se confirme el comando definitivo.
+ */
 export function buildReportXPayload(printPhysically = false): string {
   return writeJson({
     cmd: CMD_IMP_REP_X,
