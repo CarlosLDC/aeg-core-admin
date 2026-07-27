@@ -30,9 +30,10 @@ describe("tools-command-builder", () => {
     });
   });
 
-  it("builds report X payload with optional print flag", () => {
+  it("builds report X payload with impFis flag", () => {
     expect(JSON.parse(buildReportXPayload(false))).toEqual({
       cmd: "impRepX",
+      data: { impFis: 0 },
     });
     expect(JSON.parse(buildReportXPayload(true))).toEqual({
       cmd: "impRepX",

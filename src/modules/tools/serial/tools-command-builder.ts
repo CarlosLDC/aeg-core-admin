@@ -86,12 +86,9 @@ export function buildGetReportZPayload(reportNumber: number): string {
 }
 
 export function buildReportXPayload(printPhysically = false): string {
-  if (!printPhysically) {
-    return writeJson({ cmd: CMD_IMP_REP_X });
-  }
   return writeJson({
     cmd: CMD_IMP_REP_X,
-    data: { impFis: 1 },
+    data: { impFis: printPhysically ? 1 : 0 },
   });
 }
 
