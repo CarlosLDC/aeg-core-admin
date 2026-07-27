@@ -5,6 +5,7 @@ import type {
   ToolsMqttStatusResponse,
   ToolsReprintMode,
   ToolsReprintResponse,
+  ToolsReportXMode,
   ToolsReportXResponse,
   ToolsReportZResponse,
   ToolsTransmitZResponse,
@@ -27,7 +28,7 @@ export interface ToolsPrinterTransport {
   generateReportZ(): Promise<ToolsReportZResponse>;
   getReportZ(reportNumber: number): Promise<ToolsReportZResponse>;
   transmitReportZ(): Promise<ToolsTransmitZResponse>;
-  sendReportX(): Promise<ToolsReportXResponse>;
+  sendReportX(mode?: ToolsReportXMode): Promise<ToolsReportXResponse>;
   readFormasPago(): Promise<ToolsFormasPagoReadResponse>;
   writeFormasPago(nroFP: number, descripcion: string): Promise<ToolsMqttSimpleResponse>;
   readHeader(): Promise<ToolsHeaderFooterReadResponse>;

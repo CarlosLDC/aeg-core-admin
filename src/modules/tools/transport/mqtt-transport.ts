@@ -41,7 +41,7 @@ export function createMqttTransport(
     generateReportZ: () => generateToolsReportZ(printerId),
     getReportZ: (reportNumber) => getToolsReportZ(printerId, reportNumber),
     transmitReportZ: () => transmitToolsReportZ(printerId),
-    sendReportX: () => sendToolsReportX(printerId),
+    sendReportX: (mode) => sendToolsReportX(printerId, mode ?? "visualize"),
     readFormasPago: () => readToolsFormasPago(printerId),
     writeFormasPago: (nroFP, descripcion) =>
       writeToolsFormasPago(printerId, nroFP, descripcion),

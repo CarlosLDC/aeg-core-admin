@@ -85,8 +85,14 @@ export function buildGetReportZPayload(reportNumber: number): string {
   return writeJson({ cmd: CMD_GET_REP_Z, data: reportNumber });
 }
 
-export function buildReportXPayload(): string {
-  return writeJson({ cmd: CMD_IMP_REP_X });
+export function buildReportXPayload(printPhysically = false): string {
+  if (!printPhysically) {
+    return writeJson({ cmd: CMD_IMP_REP_X });
+  }
+  return writeJson({
+    cmd: CMD_IMP_REP_X,
+    data: { impFis: 1 },
+  });
 }
 
 export function buildFormasPagoWritePayload(nroFp: number, descripcion: string): string {

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildFooterWritePayload,
   buildHeaderWritePayload,
+  buildReportXPayload,
   buildReprintPayload,
   buildStatusPayload,
   buildWifiConnectPayload,
@@ -26,6 +27,16 @@ describe("tools-command-builder", () => {
     expect(JSON.parse(buildReprintPayload("rFactura", 12, false))).toEqual({
       cmd: "reimRep",
       data: { tipoRe: "rFactura", nroReg: [12], impFis: 0 },
+    });
+  });
+
+  it("builds report X payload with optional print flag", () => {
+    expect(JSON.parse(buildReportXPayload(false))).toEqual({
+      cmd: "impRepX",
+    });
+    expect(JSON.parse(buildReportXPayload(true))).toEqual({
+      cmd: "impRepX",
+      data: { impFis: 1 },
     });
   });
 

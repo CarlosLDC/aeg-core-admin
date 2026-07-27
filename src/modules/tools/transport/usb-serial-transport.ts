@@ -159,10 +159,21 @@ export function createUsbSerialTransport(
       return parseTransmitZResponse(response);
     },
 
-    sendReportX: async () => {
+    sendReportX: async (mode = "visualize") => {
       requireConnected();
+      const printPhysically = mode === "print";
+      if (printPhysically) {
+        const response = await session.publishAndAwaitObject(
+          buildReportXPayload(true),
+          CMD_IMP_REP_X,
+          TOOLS_SERIAL_TIMEOUT_MS.default,
+        );
+        parseSimpleAck(response, "Error al imprimir el reporte X");
+        return { success: true, message: "Reporte X enviado a imprimir." };
+      }
+
       const result = await session.publishAndAwaitTextChunks(
-        buildReportXPayload(),
+        buildReportXPayload(false),
         CMD_IMP_REP_X,
         TOOLS_SERIAL_TIMEOUT_MS.reprint,
       );

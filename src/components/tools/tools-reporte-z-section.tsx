@@ -78,8 +78,8 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
   {
     id: "report-x",
     title: "Generar reporte X",
-    description: "Genera un reporte X en la impresora.",
-    confirmMessage: "¿Generar un reporte X en la impresora?",
+    description: "Consulta la vista previa y confirma para imprimir el reporte X.",
+    confirmMessage: "¿Obtener la vista previa del reporte X?",
     icon: BarChart3,
     confirmOnly: true,
   },
@@ -130,6 +130,7 @@ export function ToolsReporteZSection({
   );
   const [reportXPreview, setReportXPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState<ReportAction | null>(null);
+  const [printingReportX, setPrintingReportX] = useState(false);
 
   const showReport = (report: Record<string, unknown> | undefined) => {
     if (report) {
@@ -187,11 +188,11 @@ export function ToolsReporteZSection({
           toast.success(result.message ?? "Transmisión completada.");
         }
       } else if (action === "report-x") {
-        const result = await transport.sendReportX();
-        if (result.escPosContent) {
-          setReportXPreview(result.escPosContent);
+        const result = await transport.sendReportX("visualize");
+        if (!result.escPosContent) {
+          throw new Error("La impresora no devolvió contenido del reporte X.");
         }
-        toast.success("Reporte X generado.");
+        setReportXPreview(result.escPosContent);
       }
       setPendingAction(null);
       setReportNumber("");
@@ -206,6 +207,19 @@ export function ToolsReporteZSection({
       );
     } finally {
       setLoading(null);
+    }
+  };
+
+  const printReportX = async () => {
+    setPrintingReportX(true);
+    try {
+      const result = await transport.sendReportX("print");
+      toast.success(result.message ?? "Reporte X enviado a imprimir.");
+      setReportXPreview(null);
+    } catch (err) {
+      toast.error(getToolsMqttErrorMessage(err));
+    } finally {
+      setPrintingReportX(false);
     }
   };
 
@@ -251,12 +265,18 @@ export function ToolsReporteZSection({
       {reportXPreview ? (
         <ToolsDocumentPdfModal
           open
-          title="Reporte X"
+          title="Vista previa — Reporte X"
           rawContent={reportXPreview}
           documentType="reporte-x"
           documentNumber={0}
           printerSerial={printer.serial}
-          onClose={() => setReportXPreview(null)}
+          confirmLabel="Imprimir"
+          confirmLoading={printingReportX}
+          onConfirm={() => void printReportX()}
+          onClose={() => {
+            if (printingReportX) return;
+            setReportXPreview(null);
+          }}
         />
       ) : null}
 
@@ -286,7 +306,9 @@ export function ToolsReporteZSection({
             </div>
           ) : undefined
         }
-        confirmLabel="Ejecutar"
+        confirmLabel={
+          pendingAction?.id === "report-x" ? "Vista previa" : "Ejecutar"
+        }
         loading={loading != null}
         onConfirm={() => {
           if (pendingAction) {

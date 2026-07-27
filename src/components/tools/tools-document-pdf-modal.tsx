@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Download, Loader2, X } from "lucide-react";
-import { toolsPanelSectionClass } from "@/components/tools/tools-ui";
+import { Download, Loader2, Printer, X } from "lucide-react";
+import {
+  ToolsActionButton,
+  toolsPanelSectionClass,
+} from "@/components/tools/tools-ui";
 import {
   createToolsDocumentPdfPreview,
   revokeToolsDocumentPdfPreview,
@@ -18,6 +21,10 @@ type ToolsDocumentPdfModalProps = {
   documentNumber: number;
   printerSerial?: string;
   onClose: () => void;
+  /** Primary confirm action (e.g. print Report X after preview). */
+  confirmLabel?: string;
+  confirmLoading?: boolean;
+  onConfirm?: () => void | Promise<void>;
 };
 
 function buildPdfIframeSrc(pdfUrl: string): string {
@@ -55,6 +62,9 @@ export function ToolsDocumentPdfModal({
   documentNumber,
   printerSerial,
   onClose,
+  confirmLabel,
+  confirmLoading = false,
+  onConfirm,
 }: ToolsDocumentPdfModalProps) {
   const [preview, setPreview] = useState<ToolsDocumentPdfPreview | null>(null);
   const [loading, setLoading] = useState(false);
@@ -137,6 +147,11 @@ export function ToolsDocumentPdfModal({
       if (event.key !== "Enter") {
         return;
       }
+      if (onConfirm && preview && !loading && !error && !confirmLoading) {
+        event.preventDefault();
+        void onConfirm();
+        return;
+      }
       const target = event.target;
       if (
         target instanceof HTMLButtonElement ||
@@ -152,7 +167,7 @@ export function ToolsDocumentPdfModal({
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+  }, [open, onClose, onConfirm, preview, loading, error, confirmLoading]);
 
   if (!open) {
     return null;
@@ -212,6 +227,26 @@ export function ToolsDocumentPdfModal({
             />
           ) : null}
         </div>
+
+        {onConfirm && confirmLabel ? (
+          <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-3">
+            <ToolsActionButton
+              disabled={confirmLoading || loading || !preview || Boolean(error)}
+              onClick={onClose}
+            >
+              Cancelar
+            </ToolsActionButton>
+            <ToolsActionButton
+              variant="primary"
+              loading={confirmLoading}
+              disabled={confirmLoading || loading || !preview || Boolean(error)}
+              onClick={() => void onConfirm()}
+            >
+              {!confirmLoading ? <Printer className="size-4" aria-hidden /> : null}
+              {confirmLabel}
+            </ToolsActionButton>
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ import type {
   ToolsMqttStatusResponse,
   ToolsReprintMode,
   ToolsReprintResponse,
+  ToolsReportXMode,
   ToolsReportXResponse,
   ToolsReportZResponse,
   ToolsTransmitZResponse,
@@ -238,10 +239,16 @@ export async function transmitToolsReportZ(
   return data;
 }
 
-export async function sendToolsReportX(printerId: number): Promise<ToolsReportXResponse> {
+export async function sendToolsReportX(
+  printerId: number,
+  mode: ToolsReportXMode = "visualize",
+): Promise<ToolsReportXResponse> {
   const { data, status } = await toolsMqttFetch<ToolsReportXResponse>(
     `${BASE}/report-x`,
-    { method: "POST", body: printerBody(printerId) },
+    {
+      method: "POST",
+      body: JSON.stringify({ printerId, mode }),
+    },
   );
   ensureSuccess(status, data, "No se pudo generar el reporte X.");
   return data;

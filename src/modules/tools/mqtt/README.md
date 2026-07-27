@@ -29,7 +29,7 @@ Cada endpoint valida `printerId` + `SecurityScopeService.assertPrinterInScope`.
 | POST | `/reports-z/generate` | Generar RepZ |
 | POST | `/reports-z/get` | Reporte Z por número |
 | POST | `/reports-z/transmit` | UltZTxSeni |
-| POST | `/report-x` | impRepX (generar en impresora) |
+| POST | `/report-x` | impRepX (`mode: visualize` → contenido; `mode: print` → impresión física) |
 | POST | `/formas-pago/read` | MediosPagos |
 | POST | `/formas-pago/write` | descFP |
 | POST | `/header/read` | staEncFij |

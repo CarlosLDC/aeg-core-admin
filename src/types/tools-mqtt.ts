@@ -77,6 +77,8 @@ export type ToolsReprintResponse = {
 
 export type ToolsReprintMode = "visualize" | "reprint" | "test";
 
+export type ToolsReportXMode = "visualize" | "print";
+
 export type ToolsReportXResponse = {
   success: boolean;
   message?: string | null;
