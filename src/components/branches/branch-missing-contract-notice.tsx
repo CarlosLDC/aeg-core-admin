@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { FileText } from "lucide-react";
 import { branchMissingContractMessage } from "@/lib/branch-contract-coverage";
 import { cn } from "@/lib/utils";
 
 type BranchMissingContractNoticeProps = {
   missingLabels: string[];
+  /** @deprecated Los contratos se gestionan en la ficha de la empresa. */
   showContractsLink?: boolean;
   variant?: "banner" | "inline";
   className?: string;
@@ -12,7 +12,6 @@ type BranchMissingContractNoticeProps = {
 
 export function BranchMissingContractNotice({
   missingLabels,
-  showContractsLink = false,
   variant = "banner",
   className,
 }: BranchMissingContractNoticeProps) {
@@ -44,12 +43,9 @@ export function BranchMissingContractNotice({
       )}
     >
       <FileText className="size-4 shrink-0 opacity-80" aria-hidden />
-      <span>{message}</span>
-      {showContractsLink ? (
-        <Link href="/contracts" className="font-medium text-accent hover:underline">
-          Ir a contratos
-        </Link>
-      ) : null}
+      <span>
+        {message} Regístralo en la pestaña Contrato.
+      </span>
     </p>
   );
 }

@@ -57,6 +57,28 @@ export const CONTRACT_STATUS_STYLES: Record<ContractStatus, string> = {
   expired: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
 };
 
+const CONTRACT_STATUS_RANK: Record<ContractStatus, number> = {
+  active: 0,
+  upcoming: 1,
+  expired: 2,
+};
+
+/** Preferente: vigente, luego próximo, luego el de fin más reciente. */
+export function pickCurrentContract<
+  T extends { startDate: string; endDate: string },
+>(contracts: readonly T[]): T | null {
+  if (contracts.length === 0) return null;
+  return [...contracts].sort((a, b) => {
+    const byStatus =
+      CONTRACT_STATUS_RANK[contractStatus(a.startDate, a.endDate)] -
+      CONTRACT_STATUS_RANK[contractStatus(b.startDate, b.endDate)];
+    if (byStatus !== 0) return byStatus;
+    const byEnd = b.endDate.localeCompare(a.endDate);
+    if (byEnd !== 0) return byEnd;
+    return b.startDate.localeCompare(a.startDate);
+  })[0]!;
+}
+
 export function validateContractForm(
   values: ContractFormValues,
   kind: ContractKind,

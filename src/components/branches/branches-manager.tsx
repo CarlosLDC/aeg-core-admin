@@ -124,8 +124,6 @@ import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import {
   branchPath,
-  distributorContractPath,
-  serviceCenterContractPath,
 } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
@@ -164,7 +162,8 @@ export function BranchesManager() {
   const canCancelReview = user ? canCancelModificationReview(user.role) : false;
   const showClientActions = canRequestReview || canCancelReview;
   const canReadContracts = user ? can(user.role, "contracts", "read") : false;
-  const contractCoverage = useContractPartyCoverage(canReadContracts);
+  const { coverage: contractCoverage } =
+    useContractPartyCoverage(canReadContracts);
   const {
     scope,
     catalogRoles,
@@ -657,7 +656,6 @@ export function BranchesManager() {
           roles,
         });
 
-        let contractHref: string | undefined;
         let contractNote = "";
 
         if (branchWizardNeedsContracts(roles)) {
@@ -669,14 +667,8 @@ export function BranchesManager() {
               serviceCenterId: result.serviceCenterId,
             });
             if (contracts.distributorContractId != null) {
-              contractHref = distributorContractPath(
-                contracts.distributorContractId,
-              );
               contractNote = " Contrato de distribuidora registrado.";
             } else if (contracts.serviceCenterContractId != null) {
-              contractHref = serviceCenterContractPath(
-                contracts.serviceCenterContractId,
-              );
               contractNote = " Contrato de centro de servicio registrado.";
             }
           } catch (contractErr) {
@@ -685,7 +677,8 @@ export function BranchesManager() {
                 ? contractErr.message
                 : "No se pudo registrar el contrato.";
             toast.error(
-              `Empresa creada, pero el contrato falló: ${contractMessage}. Complétalo en Contratos.`,
+              `Empresa creada, pero el contrato falló: ${contractMessage}. Complétalo en la ficha de la empresa.`,
+              { href: branchPath(result.branch.id) },
             );
             closeWizard();
             invalidateCatalogRoles();
@@ -699,7 +692,7 @@ export function BranchesManager() {
           : `Empresa "${result.branchLabel}" creada correctamente.`;
 
         toast.success(`${baseMessage}${contractNote}`, {
-          href: contractHref ?? branchPath(result.branch.id),
+          href: branchPath(result.branch.id),
         });
         closeWizard();
       } else {

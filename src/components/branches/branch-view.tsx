@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BranchMissingContractNotice } from "@/components/branches/branch-missing-contract-notice";
+import { BranchCurrentContractCard } from "@/components/branches/branch-current-contract-card";
 import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
 import {
   BranchCreateWizardDialog,
@@ -31,7 +32,10 @@ import { useDistributorStaffBranchId } from "@/hooks/use-distributor-staff-branc
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
   canCancelModificationReview,
+  canCreateContractRecord,
   canDeleteBranchRecord,
+  canDeleteContractRecord,
+  canManageContracts,
   canUpdateBranchRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
@@ -105,7 +109,11 @@ export function BranchView() {
   const canRequestReview = isTechnician;
   const canCancelReview = user ? canCancelModificationReview(user.role) : false;
   const canReadContracts = user ? can(user.role, "contracts", "read") : false;
-  const contractCoverage = useContractPartyCoverage(canReadContracts);
+  const canCreateContract = user ? canCreateContractRecord(user.role) : false;
+  const canModifyContract = user ? canManageContracts(user.role) : false;
+  const canDeleteContract = user ? canDeleteContractRecord(user.role) : false;
+  const { coverage: contractCoverage, refresh: refreshContractCoverage } =
+    useContractPartyCoverage(canReadContracts);
 
   const [branch, setBranch] = useState<BranchWithRoles | null>(null);
   const [client, setClient] = useState<ClientResponse | null>(null);
@@ -435,7 +443,7 @@ export function BranchView() {
   const detailSteps = useMemo(() => {
     if (!branch || isTechnician) return [];
 
-    return [
+    const steps = [
       {
         id: "branch",
         label: "Empresa",
@@ -508,7 +516,57 @@ export function BranchView() {
         ),
       },
     ];
-  }, [branch, branches, companies, companyLabel, distributors, isTechnician, user]);
+
+    if (canReadContracts && (branch.distributor || branch.serviceCenter)) {
+      steps.push({
+        id: "contract",
+        label: "Contrato",
+        content: (
+          <div className="space-y-6">
+            {branch.distributor ? (
+              <BranchCurrentContractCard
+                kind="distributor"
+                partyId={branch.distributor.id}
+                partyLabel={companyLabel || `${branch.city}, ${branch.state}`}
+                branchId={branch.id}
+                canCreate={canCreateContract}
+                canModify={canModifyContract}
+                canDelete={canDeleteContract}
+                onChanged={refreshContractCoverage}
+              />
+            ) : null}
+            {branch.serviceCenter ? (
+              <BranchCurrentContractCard
+                kind="serviceCenter"
+                partyId={branch.serviceCenter.id}
+                partyLabel={companyLabel || `${branch.city}, ${branch.state}`}
+                branchId={branch.id}
+                canCreate={canCreateContract}
+                canModify={canModifyContract}
+                canDelete={canDeleteContract}
+                onChanged={refreshContractCoverage}
+              />
+            ) : null}
+          </div>
+        ),
+      });
+    }
+
+    return steps;
+  }, [
+    branch,
+    branches,
+    canCreateContract,
+    canDeleteContract,
+    canModifyContract,
+    canReadContracts,
+    companies,
+    companyLabel,
+    distributors,
+    isTechnician,
+    refreshContractCoverage,
+    user,
+  ]);
 
   const missingContractLabelsForBranch = useMemo(() => {
     if (!branch || !contractCoverage) return [];
@@ -588,7 +646,6 @@ export function BranchView() {
             {!isTechnician && missingContractLabelsForBranch.length > 0 ? (
               <BranchMissingContractNotice
                 missingLabels={missingContractLabelsForBranch}
-                showContractsLink={canReadContracts}
               />
             ) : null}
             {technicianEmpresaView ? (

@@ -1,16 +1,6 @@
-import { AdminShell } from "@/components/admin/admin-shell";
-import { RoleGuard } from "@/components/auth/role-guard";
-import { ContractsManager } from "@/components/contracts/contracts-manager";
+import { redirect } from "next/navigation";
 
+/** Los contratos se gestionan desde la ficha de cada empresa. */
 export default function ContractsPage() {
-  return (
-    <AdminShell
-      title="Contratos"
-      description="Contratos de distribuidora y centro de servicio"
-    >
-      <RoleGuard path="/contracts">
-        <ContractsManager />
-      </RoleGuard>
-    </AdminShell>
-  );
+  redirect("/branches");
 }

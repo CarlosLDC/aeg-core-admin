@@ -6,6 +6,7 @@ import {
   resolveUserNationalId,
   validateUserCreateForm,
   validateUserEditForm,
+  validateUserWizardStep,
 } from "@/lib/user-form";
 
 const baseForm = {
@@ -101,6 +102,42 @@ describe("validateUserEditForm", () => {
       nationalId: "V12345678",
     });
     expect(error).toBeNull();
+  });
+});
+
+describe("validateUserWizardStep", () => {
+  it("validates identity before advancing", () => {
+    expect(
+      validateUserWizardStep(
+        "identity",
+        { ...baseForm, name: "", role: "SENIAT" },
+        "create",
+      ),
+    ).toMatch(/nombre/i);
+    expect(
+      validateUserWizardStep(
+        "identity",
+        { ...baseForm, role: "SENIAT" },
+        "create",
+      ),
+    ).toBeNull();
+  });
+
+  it("skips role validation and checks assignment on last step", () => {
+    expect(
+      validateUserWizardStep(
+        "role",
+        { ...baseForm, role: "ADMIN", nationalId: "" },
+        "create",
+      ),
+    ).toBeNull();
+    expect(
+      validateUserWizardStep(
+        "assignment",
+        { ...baseForm, role: "ADMIN", nationalId: "" },
+        "create",
+      ),
+    ).toMatch(/cédula/i);
   });
 });
 

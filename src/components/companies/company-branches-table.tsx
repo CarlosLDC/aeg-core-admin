@@ -60,8 +60,6 @@ import {
 } from "@/components/branches/branch-wizard-types";
 import {
   branchPath,
-  distributorContractPath,
-  serviceCenterContractPath,
 } from "@/lib/resource-routes";
 import {
   filterAllOption,
@@ -285,7 +283,6 @@ export function CompanyBranchesTable({
         const created = await createBranch(body);
         await syncBranchRoles(created.id, null, roles);
 
-        let contractHref: string | undefined;
         let contractNote = "";
 
         if (branchWizardNeedsContracts(roles)) {
@@ -297,14 +294,8 @@ export function CompanyBranchesTable({
               ...roleIds,
             });
             if (contracts.distributorContractId != null) {
-              contractHref = distributorContractPath(
-                contracts.distributorContractId,
-              );
               contractNote = " Contrato de distribuidora registrado.";
             } else if (contracts.serviceCenterContractId != null) {
-              contractHref = serviceCenterContractPath(
-                contracts.serviceCenterContractId,
-              );
               contractNote = " Contrato de centro de servicio registrado.";
             }
           } catch (contractErr) {
@@ -313,7 +304,8 @@ export function CompanyBranchesTable({
                 ? contractErr.message
                 : "No se pudo registrar el contrato.";
             toast.error(
-              `Sucursal creada, pero el contrato falló: ${contractMessage}. Complétalo en Contratos.`,
+              `Sucursal creada, pero el contrato falló: ${contractMessage}. Complétalo en la ficha de la empresa.`,
+              { href: branchPath(created.id) },
             );
             closeDialog();
             invalidateCatalogRoles();
@@ -324,7 +316,7 @@ export function CompanyBranchesTable({
         }
 
         toast.success(`Sucursal "${label}" creada.${contractNote}`, {
-          href: contractHref ?? branchPath(created.id),
+          href: branchPath(created.id),
         });
       } else if (selected) {
         await updateBranch(selected.id, body);

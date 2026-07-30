@@ -125,7 +125,12 @@ function validateServiceCenterProfile(
   return null;
 }
 
-export function validateUserCreateForm(values: UserFormFields): string | null {
+export type UserWizardSection = "identity" | "role" | "assignment";
+
+function validateUserIdentity(
+  values: UserFormFields,
+  mode: "create" | "edit",
+): string | null {
   const name = values.name.trim();
   if (!name) return "El nombre es obligatorio.";
 
@@ -133,10 +138,21 @@ export function validateUserCreateForm(values: UserFormFields): string | null {
   if (!email) return "El correo es obligatorio.";
   if (!EMAIL_PATTERN.test(email)) return "El correo no tiene un formato válido.";
 
-  if (values.password.length < MIN_PASSWORD_LENGTH) {
+  if (mode === "create") {
+    if (values.password.length < MIN_PASSWORD_LENGTH) {
+      return `La clave debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
+    }
+  } else if (
+    values.password.trim().length > 0 &&
+    values.password.length < MIN_PASSWORD_LENGTH
+  ) {
     return `La clave debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
   }
 
+  return null;
+}
+
+function validateUserAssignment(values: UserFormFields): string | null {
   const adminError = validateAdminEmployeeProfile(values.role, values.nationalId);
   if (adminError) return adminError;
 
@@ -157,37 +173,22 @@ export function validateUserCreateForm(values: UserFormFields): string | null {
   return null;
 }
 
+export function validateUserWizardStep(
+  section: UserWizardSection,
+  values: UserFormFields,
+  mode: "create" | "edit",
+): string | null {
+  if (section === "identity") return validateUserIdentity(values, mode);
+  if (section === "role") return null;
+  return validateUserAssignment(values);
+}
+
+export function validateUserCreateForm(values: UserFormFields): string | null {
+  return (
+    validateUserIdentity(values, "create") ?? validateUserAssignment(values)
+  );
+}
+
 export function validateUserEditForm(values: UserFormFields): string | null {
-  const name = values.name.trim();
-  if (!name) return "El nombre es obligatorio.";
-
-  const email = values.email.trim().toLowerCase();
-  if (!email) return "El correo es obligatorio.";
-  if (!EMAIL_PATTERN.test(email)) return "El correo no tiene un formato válido.";
-
-  if (
-    values.password.trim().length > 0 &&
-    values.password.length < MIN_PASSWORD_LENGTH
-  ) {
-    return `La clave debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
-  }
-
-  const adminError = validateAdminEmployeeProfile(values.role, values.nationalId);
-  if (adminError) return adminError;
-
-  const distributorError = validateDistributorProfile(
-    values.role,
-    values.distributorId,
-    values.nationalId,
-  );
-  if (distributorError) return distributorError;
-
-  const serviceCenterError = validateServiceCenterProfile(
-    values.role,
-    values.branchId,
-    values.nationalId,
-  );
-  if (serviceCenterError) return serviceCenterError;
-
-  return null;
+  return validateUserIdentity(values, "edit") ?? validateUserAssignment(values);
 }

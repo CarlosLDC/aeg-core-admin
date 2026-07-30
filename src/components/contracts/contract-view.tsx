@@ -48,6 +48,7 @@ import {
 import { fetchServiceCenters } from "@/lib/service-centers-api";
 import { formatDate } from "@/lib/datetime-form";
 import {
+  branchPath,
   distributorContractPath,
   serviceCenterContractPath,
 } from "@/lib/resource-routes";
@@ -80,6 +81,7 @@ export function ContractView({ kind }: ContractViewProps) {
   const [contract, setContract] = useState<
     DistributorContractResponse | ServiceCenterContractResponse | null
   >(null);
+  const [partyBranchId, setPartyBranchId] = useState<number | null>(null);
   const [branches, setBranches] = useState<BranchResponse[]>([]);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
@@ -136,6 +138,20 @@ export function ContractView({ kind }: ContractViewProps) {
         ? await fetchDistributorContractById(id)
         : await fetchServiceCenterContractById(id);
       setContract(data);
+
+      const [distributorRows, serviceCenterRows] = await Promise.all([
+        fetchDistributors(),
+        fetchServiceCenters(),
+      ]);
+      if (isDistributor) {
+        const partyId = (data as DistributorContractResponse).distributorId;
+        const party = distributorRows.find((row) => row.id === partyId);
+        setPartyBranchId(party?.branchId ?? null);
+      } else {
+        const partyId = (data as ServiceCenterContractResponse).serviceCenterId;
+        const party = serviceCenterRows.find((row) => row.id === partyId);
+        setPartyBranchId(party?.branchId ?? null);
+      }
     } catch (err) {
       setError(
         isDistributor
@@ -239,7 +255,7 @@ export function ContractView({ kind }: ContractViewProps) {
         await deleteServiceCenterContract(contract.id);
       }
       toast.success("Contrato eliminado.");
-      router.push("/contracts");
+      router.push(partyBranchId != null ? branchPath(partyBranchId) : "/branches");
     } catch (err) {
       const message = isDistributor
         ? getDistributorContractsErrorMessage(err)
@@ -257,8 +273,8 @@ export function ContractView({ kind }: ContractViewProps) {
   return (
     <>
       <ResourceViewShell
-        backHref="/contracts"
-        backLabel="Volver a contratos"
+        backHref={partyBranchId != null ? branchPath(partyBranchId) : "/branches"}
+        backLabel="Volver a empresa"
         title={title}
         subtitle={partyLabel}
         loading={loading}

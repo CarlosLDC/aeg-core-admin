@@ -20,6 +20,9 @@ type ContractFormDialogProps = {
   mode: "create" | "edit";
   contract?: DistributorContractResponse | ServiceCenterContractResponse;
   partyOptions: PartyOption[];
+  /** Cuando hay una sola parte (p. ej. desde la vista de empresa), se preselecciona. */
+  defaultPartyId?: number | null;
+  lockParty?: boolean;
   catalogLoading: boolean;
   open: boolean;
   saving: boolean;
@@ -50,6 +53,8 @@ export function ContractFormDialog({
   mode,
   contract,
   partyOptions,
+  defaultPartyId = null,
+  lockParty = false,
   catalogLoading,
   open,
   saving,
@@ -71,6 +76,11 @@ export function ContractFormDialog({
     [partyOptions],
   );
 
+  const partyLocked =
+    lockParty ||
+    (defaultPartyId != null && partyOptions.length === 1) ||
+    (mode === "edit" && partyOptions.length === 1);
+
   useEffect(() => {
     if (!open) return;
     if (mode === "edit" && contract) {
@@ -81,9 +91,18 @@ export function ContractFormDialog({
         photoUrls: [...(contract.photoUrls ?? [])],
       });
     } else {
-      setForm(emptyForm);
+      const fallbackPartyId =
+        defaultPartyId != null
+          ? String(defaultPartyId)
+          : partyOptions.length === 1
+            ? String(partyOptions[0]!.id)
+            : "";
+      setForm({
+        ...emptyForm,
+        partyId: fallbackPartyId,
+      });
     }
-  }, [open, mode, contract, kind]);
+  }, [open, mode, contract, kind, defaultPartyId, partyOptions]);
 
   if (!open) return null;
 
@@ -143,7 +162,12 @@ export function ContractFormDialog({
               onChange={(partyId) => setForm((f) => ({ ...f, partyId }))}
               options={partySelectOptions}
               loading={catalogLoading}
-              disabled={catalogLoading || partyOptions.length === 0}
+              disabled={
+                catalogLoading ||
+                partyOptions.length === 0 ||
+                partyLocked ||
+                saving
+              }
               required
               emptyLabel={
                 partyOptions.length === 0

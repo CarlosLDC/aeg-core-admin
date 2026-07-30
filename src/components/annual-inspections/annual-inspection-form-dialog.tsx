@@ -1,7 +1,14 @@
 "use client";
 
 import { FormEvent, useEffect, useId, useState } from "react";
-import { ClipboardCheck, Link2, Loader2, X } from "lucide-react";
+import {
+  CalendarDays,
+  ClipboardCheck,
+  FileText,
+  Link2,
+  Loader2,
+  X,
+} from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import { SearchableSelect } from "@/components/ui/searchable-select";
@@ -38,6 +45,44 @@ type AnnualInspectionFormDialogProps = {
   onSubmit: (values: AnnualInspectionFormValues) => void;
 };
 
+type WizardStep = 1 | 2 | 3 | 4;
+type WizardSection = "assignment" | "date" | "result" | "notes";
+
+const FORM_STEPS: {
+  step: WizardStep;
+  section: WizardSection;
+  label: string;
+}[] = [
+  { step: 1, section: "assignment", label: "Asignacion" },
+  { step: 2, section: "date", label: "Fecha" },
+  { step: 3, section: "result", label: "Resultado" },
+  { step: 4, section: "notes", label: "Observaciones" },
+];
+
+const STEP_ICONS = {
+  1: Link2,
+  2: CalendarDays,
+  3: ClipboardCheck,
+  4: FileText,
+} as const;
+
+const LAST_WIZARD_STEP: WizardStep = 4;
+
+function stepSubtitle(targetStep: WizardStep): string {
+  switch (targetStep) {
+    case 1:
+      return "Selecciona una impresora asignada y el técnico responsable.";
+    case 2:
+      return "Indica la fecha en que se realizó la inspección.";
+    case 3:
+      return "Registra el resultado verificado de cada ítem.";
+    case 4:
+      return "Añade observaciones adicionales de la revisión.";
+    default:
+      return "";
+  }
+}
+
 export function AnnualInspectionFormDialog({
   mode,
   row,
@@ -61,7 +106,6 @@ export function AnnualInspectionFormDialog({
       currentUserRole === "TECHNICIAN" ||
       currentUserRole === "SERVICE_CENTER") &&
     currentUserId != null;
-  type WizardStep = 1 | 2;
   const [step, setStep] = useState<WizardStep>(1);
   const [stepError, setStepError] = useState<string | null>(null);
   const [form, setForm] = useState<AnnualInspectionFormValues>(
@@ -87,27 +131,6 @@ export function AnnualInspectionFormDialog({
   const inputClass = formFieldInputClass;
   const disabled = saving || catalogLoading;
   const displayError = stepError ?? error;
-
-  const FORM_STEPS: { step: WizardStep; label: string }[] = [
-    { step: 1, label: "Asignacion" },
-    { step: 2, label: "Resultado" },
-  ];
-
-  const STEP_ICONS = {
-    1: Link2,
-    2: ClipboardCheck,
-  } as const;
-
-  function stepSubtitle(targetStep: WizardStep): string {
-    switch (targetStep) {
-      case 1:
-        return "Selecciona una impresora asignada y el técnico responsable.";
-      case 2:
-        return "Registra el resultado y observaciones de la revision.";
-      default:
-        return "";
-    }
-  }
 
   function hasValue(value: string): boolean {
     return value.trim().length > 0;
@@ -142,7 +165,7 @@ export function AnnualInspectionFormDialog({
       return;
     }
 
-    if (step < 2) {
+    if (step < LAST_WIZARD_STEP) {
       setStepError(null);
       setStep((current) => (current + 1) as WizardStep);
       return;
@@ -213,7 +236,7 @@ export function AnnualInspectionFormDialog({
     </div>
   );
 
-  const resultSection = (
+  const dateSection = (
     <div className="space-y-4">
       <label className="block">
         <FieldLabel>Fecha de inspección</FieldLabel>
@@ -227,7 +250,11 @@ export function AnnualInspectionFormDialog({
           className={inputClass}
         />
       </label>
+    </div>
+  );
 
+  const resultSection = (
+    <div className="space-y-4">
       <fieldset className="space-y-4 rounded-lg border border-border p-4">
         <legend className="px-1 text-sm font-medium text-card-foreground">
           Checklist de inspección
@@ -277,7 +304,11 @@ export function AnnualInspectionFormDialog({
           ))}
         </div>
       </fieldset>
+    </div>
+  );
 
+  const notesSection = (
+    <div className="space-y-4">
       <label className="block">
         <FieldLabel>Observaciones</FieldLabel>
         <textarea
@@ -294,8 +325,11 @@ export function AnnualInspectionFormDialog({
   );
 
   function renderWizardSection() {
-    if (step === 1) return assignmentSection;
-    return resultSection;
+    const section = FORM_STEPS.find((item) => item.step === step)?.section;
+    if (section === "assignment") return assignmentSection;
+    if (section === "date") return dateSection;
+    if (section === "result") return resultSection;
+    return notesSection;
   }
 
   return (
@@ -400,7 +434,7 @@ export function AnnualInspectionFormDialog({
               >
                 Cancelar
               </button>
-              {step < 2 ? (
+              {step < LAST_WIZARD_STEP ? (
                 <button
                   type="submit"
                   form={formId}

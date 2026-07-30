@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   buildContractPartyCoverage,
   type ContractPartyCoverage,
@@ -10,6 +10,11 @@ import { fetchServiceCenterContracts } from "@/lib/service-center-contracts-api"
 
 export function useContractPartyCoverage(enabled: boolean) {
   const [coverage, setCoverage] = useState<ContractPartyCoverage | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  const refresh = useCallback(() => {
+    setReloadToken((token) => token + 1);
+  }, []);
 
   useEffect(() => {
     if (!enabled) {
@@ -39,7 +44,7 @@ export function useContractPartyCoverage(enabled: boolean) {
     return () => {
       cancelled = true;
     };
-  }, [enabled]);
+  }, [enabled, reloadToken]);
 
-  return coverage;
+  return { coverage, refresh };
 }
