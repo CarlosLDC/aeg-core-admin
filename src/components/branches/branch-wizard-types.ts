@@ -27,6 +27,7 @@ export type BranchWizardValues = {
   organizationRole: BranchOrganizationRole;
   isClient: boolean;
   clientDistributorId: string;
+  canWriteAnnualInspection: boolean;
   distributorContract: BranchWizardContractDraft;
   serviceCenterContract: BranchWizardContractDraft;
 };
@@ -45,6 +46,7 @@ export const emptyBranchWizardForm = (): BranchWizardValues => ({
   organizationRole: "NONE",
   isClient: false,
   clientDistributorId: "",
+  canWriteAnnualInspection: true,
   distributorContract: emptyBranchWizardContractDraft(),
   serviceCenterContract: emptyBranchWizardContractDraft(),
 });

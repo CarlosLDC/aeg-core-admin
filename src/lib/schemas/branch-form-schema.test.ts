@@ -17,6 +17,7 @@ describe("branchFormSchema", () => {
       organizationRole: "NONE",
       isClient: false,
       clientDistributorId: "",
+      canWriteAnnualInspection: true,
     });
     expect(result.success).toBe(false);
   });
@@ -33,6 +34,7 @@ describe("branchFormSchema", () => {
       organizationRole: "NONE",
       isClient: true,
       clientDistributorId: "5",
+      canWriteAnnualInspection: true,
     });
     expect(result.success).toBe(true);
   });
@@ -51,6 +53,7 @@ describe("branchCreateFormSchema", () => {
       organizationRole: "NONE",
       isClient: false,
       clientDistributorId: "",
+      canWriteAnnualInspection: true,
     });
     expect(result.success).toBe(false);
   });

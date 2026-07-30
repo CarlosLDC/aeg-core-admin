@@ -639,6 +639,7 @@ export function BranchesManager() {
           organizationRole: values.organizationRole,
           isClient: values.isClient,
           clientDistributorId: values.clientDistributorId,
+          canWriteAnnualInspection: values.canWriteAnnualInspection,
         };
 
         if (branchWizardNeedsContracts(roles)) {

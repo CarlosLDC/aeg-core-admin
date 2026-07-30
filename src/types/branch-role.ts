@@ -2,10 +2,13 @@ export type DistributorResponse = {
   id: number;
   branchId: number;
   createdAt: string;
+  /** Default true; when false, distributor users cannot write annual inspections. */
+  canWriteAnnualInspection?: boolean;
 };
 
 export type DistributorRequest = {
   branchId: number;
+  canWriteAnnualInspection?: boolean;
 };
 
 export type ClientResponse = {

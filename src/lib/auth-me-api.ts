@@ -10,6 +10,7 @@ export type AuthMeResponse = {
   branchId: number | null;
   distributorId: number | null;
   enabled: boolean;
+  canWriteAnnualInspection?: boolean;
 };
 
 export async function fetchAuthMe(): Promise<AuthMeResponse> {

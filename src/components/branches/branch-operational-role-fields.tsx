@@ -19,6 +19,7 @@ export type BranchOperationalRoleFieldValues = {
   organizationRole: BranchOrganizationRole;
   isClient: boolean;
   clientDistributorId: string;
+  canWriteAnnualInspection: boolean;
 };
 
 type BranchOperationalRoleFieldsProps = {
@@ -58,9 +59,39 @@ export function BranchOperationalRoleFields({
         </p>
       ) : null}
       {values.organizationRole === "DISTRIBUTOR" ? (
-        <p className="text-xs text-muted">
-          Una distribuidora no puede registrarse como cliente de sí misma.
-        </p>
+        <div className="space-y-2">
+          <p className="text-xs text-muted">
+            Una distribuidora no puede registrarse como cliente de sí misma.
+          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-foreground/[0.02] px-3 py-2.5">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-card-foreground">
+                Inspecciones anuales
+              </p>
+              <p className="text-xs text-muted">
+                Permite a los usuarios de esta distribuidora crear inspecciones
+                anuales obligatorias.
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-pressed={values.canWriteAnnualInspection}
+              disabled={disabled}
+              onClick={() =>
+                onChange({
+                  canWriteAnnualInspection: !values.canWriteAnnualInspection,
+                })
+              }
+              className={toggleButtonClass(
+                values.canWriteAnnualInspection,
+                "emerald",
+                { disabled, className: "shrink-0" },
+              )}
+            >
+              {values.canWriteAnnualInspection ? "Permitido" : "No permitido"}
+            </button>
+          </div>
+        </div>
       ) : null}
       <div className="space-y-2">
         <FieldLabel>Roles de la empresa</FieldLabel>
@@ -75,7 +106,11 @@ export function BranchOperationalRoleFields({
                 onChange({
                   organizationRole: option.value,
                   ...(option.value === "DISTRIBUTOR"
-                    ? { isClient: false, clientDistributorId: "" }
+                    ? {
+                        isClient: false,
+                        clientDistributorId: "",
+                        canWriteAnnualInspection: true,
+                      }
                     : {}),
                 })
               }

@@ -27,6 +27,7 @@ export type BranchFormValues = {
   organizationRole: BranchOrganizationRole;
   isClient: boolean;
   clientDistributorId: string;
+  canWriteAnnualInspection: boolean;
 };
 
 type BranchFormDialogProps = {
@@ -55,6 +56,7 @@ const emptyForm: BranchFormValues = {
   organizationRole: "NONE",
   isClient: false,
   clientDistributorId: "",
+  canWriteAnnualInspection: true,
 };
 
 function rolesFromBranch(branch: BranchWithRoles): BranchRoleFormState {
@@ -64,6 +66,8 @@ function rolesFromBranch(branch: BranchWithRoles): BranchRoleFormState {
     clientDistributorId: branch.client?.distributorId
       ? String(branch.client.distributorId)
       : "",
+    canWriteAnnualInspection:
+      branch.distributor?.canWriteAnnualInspection !== false,
   };
 }
 
@@ -106,6 +110,7 @@ export function BranchFormDialog({
         organizationRole: roles.organizationRole,
         isClient: roles.isClient,
         clientDistributorId: roles.clientDistributorId,
+        canWriteAnnualInspection: roles.canWriteAnnualInspection,
       });
     } else {
       setForm((prev) => ({
@@ -323,6 +328,7 @@ export function BranchFormDialog({
                 organizationRole: form.organizationRole,
                 isClient: form.isClient,
                 clientDistributorId: form.clientDistributorId,
+                canWriteAnnualInspection: form.canWriteAnnualInspection,
               }}
               onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
               disabled={saving}

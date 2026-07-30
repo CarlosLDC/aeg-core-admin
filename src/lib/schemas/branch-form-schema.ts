@@ -20,6 +20,7 @@ const branchFormBaseSchema = z.object({
   organizationRole: z.enum(BRANCH_ORGANIZATION_ROLES),
   isClient: z.boolean(),
   clientDistributorId: z.string(),
+  canWriteAnnualInspection: z.boolean(),
 });
 
 export const branchFormSchema = branchFormBaseSchema.extend({

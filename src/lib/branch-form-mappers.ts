@@ -13,6 +13,7 @@ export function toBranchRoleFormState(values: BranchFormValues): BranchRoleFormS
     organizationRole: values.organizationRole,
     isClient: values.isClient,
     clientDistributorId: values.clientDistributorId,
+    canWriteAnnualInspection: values.canWriteAnnualInspection,
   };
 }
 
@@ -28,6 +29,7 @@ export function toBranchFormValues(values: BranchWizardValues): BranchFormValues
     organizationRole: values.organizationRole,
     isClient: values.isClient,
     clientDistributorId: values.clientDistributorId,
+    canWriteAnnualInspection: values.canWriteAnnualInspection,
   };
 }
 
@@ -52,6 +54,8 @@ export function branchToWizardValues(
     clientDistributorId: branch.client?.distributorId
       ? String(branch.client.distributorId)
       : "",
+    canWriteAnnualInspection:
+      branch.distributor?.canWriteAnnualInspection !== false,
     distributorContract: emptyBranchWizardContractDraft(),
     serviceCenterContract: emptyBranchWizardContractDraft(),
   };

@@ -74,6 +74,7 @@ export type ClientOnboardingRoleOptions = {
   organizationRole: import("@/types/organization").BranchOrganizationRole;
   isClient: boolean;
   clientDistributorId: string;
+  canWriteAnnualInspection?: boolean;
 };
 
 export type CreateClientOnboardingInput = {
@@ -420,5 +421,6 @@ export function distributorClientRoles(
     organizationRole: "NONE",
     isClient: true,
     clientDistributorId: String(distributorId),
+    canWriteAnnualInspection: true,
   };
 }

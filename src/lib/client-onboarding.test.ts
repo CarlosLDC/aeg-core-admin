@@ -81,6 +81,7 @@ describe("distributorClientRoles", () => {
       organizationRole: "NONE",
       isClient: true,
       clientDistributorId: "42",
+      canWriteAnnualInspection: true,
     });
   });
 });

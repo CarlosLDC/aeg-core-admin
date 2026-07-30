@@ -10,6 +10,7 @@ import {
   createDistributor,
   deleteDistributor,
   fetchDistributors,
+  updateDistributor,
 } from "@/lib/distributors-api";
 import {
   createServiceCenter,
@@ -33,6 +34,8 @@ export type BranchRoleFormState = {
   organizationRole: BranchOrganizationRole;
   isClient: boolean;
   clientDistributorId: string;
+  /** Solo aplica cuando organizationRole === DISTRIBUTOR. Default true. */
+  canWriteAnnualInspection: boolean;
 };
 
 export function mergeBranchesWithRoles(
@@ -92,8 +95,9 @@ export function clientDistributorSummary(
 export async function syncBranchRoles(
   branchId: number,
   previous: BranchWithRoles | null,
-  roles: BranchRoleFormState,
+  roles: BranchRoleFormState | import("@/lib/client-onboarding").ClientOnboardingRoleOptions,
 ): Promise<void> {
+  const canWriteAnnualInspection = roles.canWriteAnnualInspection !== false;
   const prev: BranchWithRoles =
     previous ??
     ({
@@ -116,9 +120,20 @@ export async function syncBranchRoles(
     : undefined;
 
   if (nextRole === "DISTRIBUTOR" && prevRole !== "DISTRIBUTOR") {
-    const created = await createDistributor({ branchId });
+    await createDistributor({
+      branchId,
+      canWriteAnnualInspection,
+    });
     if (prevRole === "SERVICE_CENTER" && prev.serviceCenter) {
       await deleteServiceCenter(prev.serviceCenter.id);
+    }
+  } else if (nextRole === "DISTRIBUTOR" && prevRole === "DISTRIBUTOR" && prev.distributor) {
+    const prevFlag = prev.distributor.canWriteAnnualInspection !== false;
+    if (prevFlag !== canWriteAnnualInspection) {
+      await updateDistributor(prev.distributor.id, {
+        branchId,
+        canWriteAnnualInspection,
+      });
     }
   } else if (nextRole !== "DISTRIBUTOR" && prevRole === "DISTRIBUTOR" && prev.distributor) {
     await deleteDistributor(prev.distributor.id);

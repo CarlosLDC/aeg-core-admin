@@ -27,6 +27,16 @@ export async function createDistributor(
   });
 }
 
+export async function updateDistributor(
+  id: number,
+  body: DistributorRequest,
+): Promise<DistributorResponse> {
+  return apiFetch<DistributorResponse>(`${BASE}/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
 export async function deleteDistributor(id: number): Promise<void> {
   return apiFetch<void>(`${BASE}/${id}`, { method: "DELETE" });
 }

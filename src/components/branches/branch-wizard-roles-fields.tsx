@@ -35,6 +35,7 @@ export function BranchWizardRolesFields({
           organizationRole: form.organizationRole,
           isClient: form.isClient,
           clientDistributorId: form.clientDistributorId,
+          canWriteAnnualInspection: form.canWriteAnnualInspection,
         }}
         onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
         disabled={saving}
