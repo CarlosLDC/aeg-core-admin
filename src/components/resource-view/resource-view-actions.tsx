@@ -1,10 +1,13 @@
 import { Loader2, Pencil, Trash2, XCircle } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 type ResourceViewActionsProps = {
   onEdit?: () => void;
   onDelete?: () => void;
   onCancelReview?: () => void;
+  /** Acciones adicionales junto a Editar (p. ej. Contrato). */
+  leadingActions?: ReactNode;
   deleting?: boolean;
   editLabel?: string;
   deleteLabel?: string;
@@ -15,13 +18,14 @@ export function ResourceViewActions({
   onEdit,
   onDelete,
   onCancelReview,
+  leadingActions,
   deleting = false,
   editLabel = "Editar",
   deleteLabel = "Eliminar",
   cancelReviewLabel = "Cancelar revisión",
 }: ResourceViewActionsProps) {
   const busy = deleting;
-  if (!onEdit && !onDelete && !onCancelReview) return null;
+  if (!onEdit && !onDelete && !onCancelReview && !leadingActions) return null;
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -36,6 +40,7 @@ export function ResourceViewActions({
           {editLabel}
         </button>
       ) : null}
+      {leadingActions}
       {onCancelReview ? (
         <button
           type="button"

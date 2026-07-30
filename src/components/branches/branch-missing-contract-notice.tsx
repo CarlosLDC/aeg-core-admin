@@ -44,7 +44,7 @@ export function BranchMissingContractNotice({
     >
       <FileText className="size-4 shrink-0 opacity-80" aria-hidden />
       <span>
-        {message} Regístralo en la pestaña Contrato.
+        {message} Usa el botón Contrato para revisar o descargar documentos.
       </span>
     </p>
   );
