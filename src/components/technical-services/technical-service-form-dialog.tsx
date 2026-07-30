@@ -75,6 +75,9 @@ const STEP_ICONS = {
 
 const LAST_WIZARD_STEP: WizardStep = 5;
 
+/** Altura mínima del cuerpo: misma que Asignación/Visita/Reportes Z (rejilla 2×2 de campos h-10). */
+const WIZARD_BODY_MIN_HEIGHT_CLASS = "min-h-[19.5rem] sm:min-h-[9.25rem]";
+
 function stepSubtitle(step: WizardStep): string {
   switch (step) {
     case 1:
@@ -612,7 +615,11 @@ export function TechnicalServiceFormDialog({
             </p>
           )}
 
-          <form id={formId} onSubmit={handleCreateStepSubmit} className="space-y-5">
+          <form
+            id={formId}
+            onSubmit={handleCreateStepSubmit}
+            className={cn("space-y-5", WIZARD_BODY_MIN_HEIGHT_CLASS)}
+          >
             {renderWizardSection()}
           </form>
         </div>
