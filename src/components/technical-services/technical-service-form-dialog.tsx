@@ -60,7 +60,7 @@ type WizardSection =
 const FORM_STEPS: { step: WizardStep; section: WizardSection; label: string }[] = [
   { step: 1, section: "assignment", label: "Asignacion" },
   { step: 2, section: "visit", label: "Visita" },
-  { step: 3, section: "outcome", label: "Resultado" },
+  { step: 3, section: "outcome", label: "Fallas" },
   { step: 4, section: "zReports", label: "Reportes Z" },
   { step: 5, section: "seals", label: "Precintos" },
 ];
@@ -82,11 +82,11 @@ function stepSubtitle(step: WizardStep): string {
     case 2:
       return "Registra tiempos, solicitud y costo del servicio.";
     case 3:
-      return "Indica el estado del precinto y describe la falla y acción realizada.";
+      return "Describe la falla reportada y la acción realizada.";
     case 4:
       return "Completa los reportes Z inicial y final.";
     case 5:
-      return "Asocia precintos instalados o retirados.";
+      return "Asocia precintos e indica si el precinto fue violentado.";
     default:
       return "";
   }
@@ -163,9 +163,6 @@ export function TechnicalServiceFormDialog({
     }
 
     if (targetStep === 3) {
-      if (form.sealTampered === null) {
-        return "Indica si el precinto fue violentado.";
-      }
       if (!hasValue(form.reportedFailure)) {
         return "Describe la falla reportada y la acción realizada.";
       }
@@ -181,6 +178,13 @@ export function TechnicalServiceFormDialog({
         return "Indica la fecha del Z inicial.";
       }
       if (!hasValue(form.finalZDate)) return "Indica la fecha del Z final.";
+      return null;
+    }
+
+    if (targetStep === 5) {
+      if (form.sealTampered === null) {
+        return "Indica si el precinto fue violentado.";
+      }
       return null;
     }
 
@@ -365,51 +369,6 @@ export function TechnicalServiceFormDialog({
 
   const outcomeSection = (
     <div className={sectionClass}>
-      <div className="block">
-        <FieldLabel required>Precinto violentado</FieldLabel>
-        <div
-          role="group"
-          aria-label="Estado del precinto"
-          className="flex flex-wrap gap-2"
-        >
-          <button
-            type="button"
-            disabled={disabled}
-            aria-pressed={form.sealTampered === false}
-            onClick={() =>
-              setForm((f) => ({ ...f, sealTampered: false }))
-            }
-            className={toggleButtonClass(
-              form.sealTampered === false,
-              SEAL_TAMPERED_TOGGLE_TONE.false,
-              {
-                disabled,
-                className: "rounded-md px-2.5 py-1.5 text-xs",
-              },
-            )}
-          >
-            Intacto
-          </button>
-          <button
-            type="button"
-            disabled={disabled}
-            aria-pressed={form.sealTampered === true}
-            onClick={() =>
-              setForm((f) => ({ ...f, sealTampered: true }))
-            }
-            className={toggleButtonClass(
-              form.sealTampered === true,
-              SEAL_TAMPERED_TOGGLE_TONE.true,
-              {
-                disabled,
-                className: "rounded-md px-2.5 py-1.5 text-xs",
-              },
-            )}
-          >
-            Violentado
-          </button>
-        </div>
-      </div>
       <label className="block">
         <FieldLabel required>Falla reportada y acción realizada</FieldLabel>
         <textarea
@@ -518,6 +477,51 @@ export function TechnicalServiceFormDialog({
             searchPlaceholder="Buscar precinto..."
             mono
           />
+        </div>
+      </div>
+      <div className="block">
+        <FieldLabel required>Precinto violentado</FieldLabel>
+        <div
+          role="group"
+          aria-label="Estado del precinto"
+          className="flex flex-wrap gap-2"
+        >
+          <button
+            type="button"
+            disabled={disabled}
+            aria-pressed={form.sealTampered === false}
+            onClick={() =>
+              setForm((f) => ({ ...f, sealTampered: false }))
+            }
+            className={toggleButtonClass(
+              form.sealTampered === false,
+              SEAL_TAMPERED_TOGGLE_TONE.false,
+              {
+                disabled,
+                className: "rounded-md px-2.5 py-1.5 text-xs",
+              },
+            )}
+          >
+            Intacto
+          </button>
+          <button
+            type="button"
+            disabled={disabled}
+            aria-pressed={form.sealTampered === true}
+            onClick={() =>
+              setForm((f) => ({ ...f, sealTampered: true }))
+            }
+            className={toggleButtonClass(
+              form.sealTampered === true,
+              SEAL_TAMPERED_TOGGLE_TONE.true,
+              {
+                disabled,
+                className: "rounded-md px-2.5 py-1.5 text-xs",
+              },
+            )}
+          >
+            Violentado
+          </button>
         </div>
       </div>
     </div>
