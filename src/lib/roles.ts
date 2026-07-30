@@ -19,6 +19,12 @@ export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   SENIAT: "Solo lectura del libro fiscal (sin acceso al panel)",
 };
 
+/** Categoría de UI que agrupa DISTRIBUTOR y TECHNICIAN en el formulario de usuarios. */
+export const OPERATIONAL_ROLE_LABEL = "Usuario operativo";
+export const OPERATIONAL_ROLE_COMPACT_LABEL = "Operativo";
+export const OPERATIONAL_ROLE_DESCRIPTION =
+  "Personal de campo: acceso de distribuidora o de técnico según la asignación.";
+
 export const ROLE_STYLES: Record<Role, string> = {
   ADMIN: "bg-violet-500/15 text-violet-700 dark:text-violet-300",
   DISTRIBUTOR: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
@@ -28,3 +34,11 @@ export const ROLE_STYLES: Record<Role, string> = {
 };
 
 export const OPERATIONAL_ROLES: Role[] = ["DISTRIBUTOR", "TECHNICIAN"];
+
+export function isOperationalRole(role: Role): boolean {
+  return (
+    role === "DISTRIBUTOR" ||
+    role === "TECHNICIAN" ||
+    role === "SERVICE_CENTER"
+  );
+}

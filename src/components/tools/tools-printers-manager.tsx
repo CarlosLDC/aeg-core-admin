@@ -131,7 +131,6 @@ export function ToolsPrintersManager() {
   const [adminStatusFilter, setAdminStatusFilter] = useState<
     PrinterStatus | "all"
   >("all");
-  const [missingMacFilter, setMissingMacFilter] = useState(false);
   const [sort, setSort] =
     useState<TableSortState<ToolsPrinterSortKey>>(DEFAULT_TOOLS_SORT);
 
@@ -150,10 +149,6 @@ export function ToolsPrintersManager() {
       rows = rows.filter((printer) => printer.status === adminStatusFilter);
     }
 
-    if (missingMacFilter) {
-      rows = rows.filter((printer) => !printer.macAddress);
-    }
-
     return rows;
   }, [
     searchResults,
@@ -161,7 +156,6 @@ export function ToolsPrintersManager() {
     statusBucket,
     distributorFilter,
     adminStatusFilter,
-    missingMacFilter,
   ]);
 
   const sortedPrinters = useMemo(() => {
@@ -175,11 +169,6 @@ export function ToolsPrintersManager() {
 
   const pagination = usePagination(sortedPrinters, TOOLS_PAGE_SIZE);
   const { paginatedItems: visiblePrinters } = pagination;
-
-  const missingMacCount = useMemo(
-    () => allPrinters.filter((printer) => !printer.macAddress).length,
-    [allPrinters],
-  );
 
   const adminStatusFilterOptions = useMemo(
     () => [
@@ -199,7 +188,6 @@ export function ToolsPrintersManager() {
     setStatusBucket("all");
     setDistributorFilter("all");
     setAdminStatusFilter("all");
-    setMissingMacFilter(false);
   }
 
   function handleStatusCounterClick(bucket: ToolsStatusBucket) {
@@ -220,35 +208,6 @@ export function ToolsPrintersManager() {
               onClick={() => handleStatusCounterClick(counter.bucket)}
             />
           ))}
-        </div>
-      )}
-
-      {!loading && !error && missingMacCount > 0 && (
-        <div
-          role="status"
-          className="flex flex-col gap-3 rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between dark:text-amber-100"
-        >
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-            <span>
-              {missingMacCount === 1
-                ? "1 impresora no tiene MAC registrada"
-                : `${missingMacCount} impresoras no tienen MAC registrada`}
-              . Las operaciones remotas requieren MAC en la fase 2.
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setMissingMacFilter((current) => !current)}
-            className={cn(
-              pageToolbarButtonClass,
-              "shrink-0 border border-amber-500/35 bg-card text-amber-900 hover:bg-amber-500/10 dark:text-amber-100",
-              missingMacFilter &&
-                "border-amber-600/50 bg-amber-500/15 ring-1 ring-amber-500/25",
-            )}
-          >
-            {missingMacFilter ? "Mostrar todas" : "Ver sin MAC"}
-          </button>
         </div>
       )}
 
@@ -453,11 +412,9 @@ export function ToolsPrintersManager() {
         )}
       </div>
 
-      {activeStatusBucket != null || missingMacFilter ? (
+      {activeStatusBucket != null ? (
         <p className="text-center text-xs text-muted sm:text-left">
-          {activeStatusBucket != null ? "Filtro activo por contador." : null}
-          {activeStatusBucket != null && missingMacFilter ? " " : null}
-          {missingMacFilter ? "Mostrando solo impresoras sin MAC." : null}{" "}
+          Filtro activo por contador.{" "}
           <button
             type="button"
             onClick={clearStatusFilters}

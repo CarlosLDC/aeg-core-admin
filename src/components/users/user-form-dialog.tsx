@@ -15,7 +15,14 @@ import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { DistributorIdSelect } from "@/components/users/distributor-id-select";
 import { PasswordInput } from "@/components/ui/password-input";
-import { ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/roles";
+import {
+  OPERATIONAL_ROLE_COMPACT_LABEL,
+  OPERATIONAL_ROLE_DESCRIPTION,
+  OPERATIONAL_ROLE_LABEL,
+  ROLE_DESCRIPTIONS,
+  ROLE_LABELS,
+  isOperationalRole,
+} from "@/lib/roles";
 import {
   factoryCompanyDisplayLabel,
   findFactoryCompany,
@@ -28,6 +35,7 @@ import {
 import {
   USER_ROLE_TOGGLE_TONE,
   formFieldInputClass,
+  type ToggleTone,
 } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 import type { BranchResponse } from "@/types/branch";
@@ -49,20 +57,37 @@ export type UserFormValues = {
   enabled: boolean;
 };
 
-type SelectableUserRole = "ADMIN" | "DISTRIBUTOR" | "TECHNICIAN" | "SENIAT";
+type UserRoleCategory = "ADMIN" | "OPERATIONAL" | "SENIAT";
+type OperationalAssignment = "DISTRIBUTOR" | "TECHNICIAN";
 
-const USER_FORM_ROLE_OPTIONS: SelectableUserRole[] = [
-  "DISTRIBUTOR",
-  "TECHNICIAN",
+const USER_FORM_ROLE_CATEGORIES: UserRoleCategory[] = [
+  "OPERATIONAL",
   "ADMIN",
   "SENIAT",
 ];
 
-const USER_ROLE_COMPACT_LABELS: Record<SelectableUserRole, string> = {
-  DISTRIBUTOR: "Distribuidor",
-  TECHNICIAN: "Técnico",
+const USER_ROLE_CATEGORY_LABELS: Record<UserRoleCategory, string> = {
+  OPERATIONAL: OPERATIONAL_ROLE_LABEL,
+  ADMIN: ROLE_LABELS.ADMIN,
+  SENIAT: ROLE_LABELS.SENIAT,
+};
+
+const USER_ROLE_CATEGORY_COMPACT_LABELS: Record<UserRoleCategory, string> = {
+  OPERATIONAL: OPERATIONAL_ROLE_COMPACT_LABEL,
   ADMIN: "Admin",
   SENIAT: "SENIAT",
+};
+
+const USER_ROLE_CATEGORY_TONE: Record<UserRoleCategory, ToggleTone> = {
+  OPERATIONAL: "teal",
+  ADMIN: USER_ROLE_TOGGLE_TONE.ADMIN,
+  SENIAT: USER_ROLE_TOGGLE_TONE.SENIAT,
+};
+
+const USER_ROLE_CATEGORY_DESCRIPTION: Record<UserRoleCategory, string> = {
+  OPERATIONAL: OPERATIONAL_ROLE_DESCRIPTION,
+  ADMIN: ROLE_DESCRIPTIONS.ADMIN,
+  SENIAT: ROLE_DESCRIPTIONS.SENIAT,
 };
 
 type UserFormDialogProps = {
@@ -110,8 +135,12 @@ const STEP_ICONS = {
 
 const LAST_WIZARD_STEP: WizardStep = 3;
 
-function selectableRole(role: Role): SelectableUserRole {
+function roleCategory(role: Role): UserRoleCategory {
   if (role === "ADMIN" || role === "SENIAT") return role;
+  return "OPERATIONAL";
+}
+
+function operationalAssignmentFromRole(role: Role): OperationalAssignment {
   if (role === "TECHNICIAN" || role === "SERVICE_CENTER") return "TECHNICIAN";
   return "DISTRIBUTOR";
 }
@@ -148,10 +177,12 @@ export function UserFormDialog({
   const [step, setStep] = useState<WizardStep>(1);
   const [stepError, setStepError] = useState<string | null>(null);
   const [form, setForm] = useState<UserFormValues>(emptyForm);
-  const selectedRole = selectableRole(form.role);
+  const selectedCategory = roleCategory(form.role);
+  const operationalAssignment = operationalAssignmentFromRole(form.role);
   const needsDistributorProfile = form.role === "DISTRIBUTOR";
   const needsServiceCenterBranch = form.role === "TECHNICIAN";
   const needsAdminEmployeeProfile = form.role === "ADMIN";
+  const needsOperationalAssignment = isOperationalRole(form.role);
   const needsFieldAssignment =
     needsDistributorProfile ||
     needsServiceCenterBranch ||
@@ -177,16 +208,43 @@ export function UserFormDialog({
     [branches, companies],
   );
 
-  function handleRoleChange(role: SelectableUserRole) {
+  function handleCategoryChange(category: UserRoleCategory) {
+    setForm((f) => {
+      if (category === "ADMIN") {
+        return {
+          ...f,
+          role: "ADMIN",
+          distributorId: "",
+          branchId: "",
+        };
+      }
+      if (category === "SENIAT") {
+        return {
+          ...f,
+          role: "SENIAT",
+          distributorId: "",
+          branchId: "",
+          nationalId: "",
+        };
+      }
+      const nextRole: OperationalAssignment = isOperationalRole(f.role)
+        ? operationalAssignmentFromRole(f.role)
+        : "DISTRIBUTOR";
+      return {
+        ...f,
+        role: nextRole,
+        distributorId: nextRole === "DISTRIBUTOR" ? f.distributorId : "",
+        branchId: nextRole === "TECHNICIAN" ? f.branchId : "",
+      };
+    });
+  }
+
+  function handleOperationalAssignmentChange(next: OperationalAssignment) {
     setForm((f) => ({
       ...f,
-      role,
-      distributorId: role === "DISTRIBUTOR" ? f.distributorId : "",
-      branchId: role === "TECHNICIAN" ? f.branchId : "",
-      nationalId:
-        role === "DISTRIBUTOR" || role === "TECHNICIAN" || role === "ADMIN"
-          ? f.nationalId
-          : "",
+      role: next,
+      distributorId: next === "DISTRIBUTOR" ? f.distributorId : "",
+      branchId: next === "TECHNICIAN" ? f.branchId : "",
     }));
   }
 
@@ -335,26 +393,28 @@ export function UserFormDialog({
   const roleSection = (
     <div className="space-y-4">
       <SegmentedToggle
-        value={selectedRole}
-        onChange={handleRoleChange}
+        value={selectedCategory}
+        onChange={handleCategoryChange}
         layout="wrap"
         ariaLabel="Rol del usuario"
         disabled={saving}
-        options={USER_FORM_ROLE_OPTIONS.map((role) => ({
-          value: role,
+        options={USER_FORM_ROLE_CATEGORIES.map((category) => ({
+          value: category,
           label: (
             <>
               <span className="sm:hidden">
-                {USER_ROLE_COMPACT_LABELS[role]}
+                {USER_ROLE_CATEGORY_COMPACT_LABELS[category]}
               </span>
-              <span className="hidden sm:inline">{ROLE_LABELS[role]}</span>
+              <span className="hidden sm:inline">
+                {USER_ROLE_CATEGORY_LABELS[category]}
+              </span>
             </>
           ),
-          tone: USER_ROLE_TOGGLE_TONE[role],
+          tone: USER_ROLE_CATEGORY_TONE[category],
         }))}
       />
       <p className="text-xs leading-relaxed text-muted">
-        {ROLE_DESCRIPTIONS[selectedRole]}
+        {USER_ROLE_CATEGORY_DESCRIPTION[selectedCategory]}
       </p>
     </div>
   );
@@ -366,10 +426,32 @@ export function UserFormDialog({
           <p className="text-xs text-muted">
             {needsAdminEmployeeProfile
               ? "Los administradores son empleados de la empresa fabricante (AEG)."
-              : needsDistributorProfile
-                ? "Vincula el usuario a la distribuidora que operará en el panel."
-                : "Vincula el técnico a la sucursal del centro de servicio."}
+              : "Vincula al usuario operativo con una distribuidora o un centro de servicio."}
           </p>
+
+          {needsOperationalAssignment ? (
+            <div className="space-y-2">
+              <FieldLabel required>Tipo de asignación</FieldLabel>
+              <SegmentedToggle
+                value={operationalAssignment}
+                onChange={handleOperationalAssignmentChange}
+                ariaLabel="Tipo de asignación operativa"
+                disabled={saving}
+                options={[
+                  {
+                    value: "DISTRIBUTOR",
+                    label: "Distribuidora",
+                    tone: USER_ROLE_TOGGLE_TONE.DISTRIBUTOR,
+                  },
+                  {
+                    value: "TECHNICIAN",
+                    label: "Centro de servicio",
+                    tone: USER_ROLE_TOGGLE_TONE.TECHNICIAN,
+                  },
+                ]}
+              />
+            </div>
+          ) : null}
 
           {needsAdminEmployeeProfile && (
             <div className="grid gap-4 sm:grid-cols-2">
