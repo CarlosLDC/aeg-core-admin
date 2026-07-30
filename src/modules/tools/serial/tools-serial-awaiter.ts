@@ -163,22 +163,93 @@ export class ToolsSerialAwaiter {
   }
 }
 
+/**
+ * Extracts one complete top-level JSON object from the start of `text`,
+ * respecting braces inside quoted strings. Returns null if incomplete.
+ */
+export function extractLeadingJsonObject(
+  text: string,
+): { object: string; rest: string } | null {
+  const start = text.search(/\S/);
+  if (start < 0 || text[start] !== "{") {
+    return null;
+  }
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = start; index < text.length; index++) {
+    const char = text[index];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+    if (char === "{") {
+      depth += 1;
+      continue;
+    }
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return {
+          object: text.slice(start, index + 1),
+          rest: text.slice(index + 1),
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
 export function createLineBuffer(onLine: (line: string) => void): {
   push: (chunk: string) => void;
   reset: () => void;
 } {
   let buffer = "";
 
+  function flushNewlines(): void {
+    let newlineIndex = buffer.indexOf("\n");
+    while (newlineIndex >= 0) {
+      const line = buffer.slice(0, newlineIndex).replace(/\r$/, "");
+      buffer = buffer.slice(newlineIndex + 1);
+      if (line.trim() !== "") {
+        onLine(line);
+      }
+      newlineIndex = buffer.indexOf("\n");
+    }
+  }
+
+  function flushJsonObjects(): void {
+    while (true) {
+      const extracted = extractLeadingJsonObject(buffer);
+      if (extracted == null) {
+        return;
+      }
+      buffer = extracted.rest.replace(/^\r?\n/, "");
+      onLine(extracted.object);
+    }
+  }
+
   return {
     push(chunk: string) {
       buffer += chunk;
-      let newlineIndex = buffer.indexOf("\n");
-      while (newlineIndex >= 0) {
-        const line = buffer.slice(0, newlineIndex).replace(/\r$/, "");
-        buffer = buffer.slice(newlineIndex + 1);
-        onLine(line);
-        newlineIndex = buffer.indexOf("\n");
-      }
+      flushNewlines();
+      // USB printers often send a single JSON object without a trailing newline.
+      flushJsonObjects();
     },
     reset() {
       buffer = "";

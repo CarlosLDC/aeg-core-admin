@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ToolsSerialAwaiter,
   createLineBuffer,
+  extractLeadingJsonObject,
 } from "@/modules/tools/serial/tools-serial-awaiter";
 
 describe("ToolsSerialAwaiter", () => {
@@ -47,11 +48,51 @@ describe("ToolsSerialAwaiter", () => {
   });
 });
 
+describe("extractLeadingJsonObject", () => {
+  it("extracts a complete object and leaves the rest", () => {
+    expect(extractLeadingJsonObject('{"cmd":"A"}{"cmd":"B"}')).toEqual({
+      object: '{"cmd":"A"}',
+      rest: '{"cmd":"B"}',
+    });
+  });
+
+  it("ignores braces inside strings", () => {
+    expect(
+      extractLeadingJsonObject('{"dataS":"has } brace","code":0} trailing'),
+    ).toEqual({
+      object: '{"dataS":"has } brace","code":0}',
+      rest: " trailing",
+    });
+  });
+
+  it("returns null while incomplete", () => {
+    expect(extractLeadingJsonObject('{"cmd":"StaInf","dataS":{')).toBeNull();
+  });
+});
+
 describe("createLineBuffer", () => {
   it("emits complete lines split by newline", () => {
     const lines: string[] = [];
     const buffer = createLineBuffer((line) => lines.push(line));
     buffer.push('{"cmd":"StaInf"}\r\n{"cmd":"RepZ"}\n');
     expect(lines).toEqual(['{"cmd":"StaInf"}', '{"cmd":"RepZ"}']);
+  });
+
+  it("emits complete JSON objects without a trailing newline", () => {
+    const lines: string[] = [];
+    const buffer = createLineBuffer((line) => lines.push(line));
+    buffer.push('{"cmd":"StaInf","code":0,"dataS":{"EstatusSeniat":"EN LINEA"}}');
+    expect(lines).toEqual([
+      '{"cmd":"StaInf","code":0,"dataS":{"EstatusSeniat":"EN LINEA"}}',
+    ]);
+  });
+
+  it("emits JSON across chunk boundaries without newline", () => {
+    const lines: string[] = [];
+    const buffer = createLineBuffer((line) => lines.push(line));
+    buffer.push('{"cmd":"StaInf","code":0,');
+    expect(lines).toEqual([]);
+    buffer.push('"dataS":{"NroUltZEmit":8}}');
+    expect(lines).toEqual(['{"cmd":"StaInf","code":0,"dataS":{"NroUltZEmit":8}}']);
   });
 });
