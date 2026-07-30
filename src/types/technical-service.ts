@@ -2,8 +2,11 @@ export type TechnicalServiceResponse = {
   id: number;
   printerId: number;
   userId: number;
+  technicianName: string | null;
+  technicianNationalId: string | null;
   serviceCenterId: number | null;
   sealTampered: boolean;
+  /** Always null from API; text lives in reportedFailure. Kept for wire compatibility. */
   notes: string | null;
   startAt: string;
   createdAt: string;
@@ -25,6 +28,7 @@ export type TechnicalServiceRequest = {
   userId: number;
   serviceCenterId?: number | null;
   sealTampered: boolean;
+  /** Optional; backend merges into reportedFailure and clears notes. Prefer null. */
   notes?: string | null;
   startAt: string;
   endAt: string;

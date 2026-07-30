@@ -28,7 +28,7 @@ import {
   getTechnicalServicesErrorMessage,
   updateTechnicalService,
 } from "@/lib/technical-services-api";
-import { catalogOptionLabel } from "@/lib/record-labels";
+import { catalogOptionLabel, technicalServiceTechnicianLabel } from "@/lib/record-labels";
 import {
   printerPath,
   sealPath,
@@ -182,10 +182,9 @@ export function TechnicalServiceView() {
                 />
                 <DetailField
                   label="Técnico"
-                  value={catalogOptionLabel(
+                  value={technicalServiceTechnicianLabel(
+                    service,
                     catalog.technicianUserOptions,
-                    service.userId,
-                    "—",
                   )}
                   href={userPath(service.userId)}
                 />
@@ -272,10 +271,6 @@ export function TechnicalServiceView() {
                       ? sealPath(service.removedSealId)
                       : undefined
                   }
-                />
-                <DetailField
-                  label="Notas"
-                  value={service.notes || "—"}
                 />
               </DetailSection>
             </div>

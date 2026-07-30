@@ -16,3 +16,21 @@ export function mapOptionLabel(
 ): string {
   return labelById.get(String(id)) ?? fallback;
 }
+
+/** Nombre del técnico: catálogo si está en alcance; si no, datos del API. */
+export function technicalServiceTechnicianLabel(
+  service: {
+    userId: number;
+    technicianName?: string | null;
+    technicianNationalId?: string | null;
+  },
+  options: Array<{ value: string; label: string }>,
+  fallback = "—",
+): string {
+  const fromCatalog = catalogOptionLabel(options, service.userId, "");
+  if (fromCatalog) return fromCatalog;
+  const name = service.technicianName?.trim();
+  if (!name) return fallback;
+  const cedula = service.technicianNationalId?.trim();
+  return cedula ? `${name} · ${cedula}` : name;
+}

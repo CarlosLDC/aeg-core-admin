@@ -40,6 +40,7 @@ import {
   type TableSortState,
 } from "@/lib/table-sort";
 import { formatDateTime, formatMoney } from "@/lib/datetime-form";
+import { technicalServiceTechnicianLabel } from "@/lib/record-labels";
 import {
   toTechnicalServiceRequest,
   type TechnicalServiceFormValues,
@@ -125,8 +126,9 @@ export function TechnicalServicesManager() {
         row.userId,
         printerLabelById.get(String(row.printerId)),
         technicianLabelById.get(String(row.userId)),
+        row.technicianName,
+        row.technicianNationalId,
         row.reportedFailure,
-        row.notes,
       ]
         .join(" ")
         .toLowerCase();
@@ -431,8 +433,10 @@ export function TechnicalServicesManager() {
                           </td>
                           <td className="max-w-[160px] px-5 py-3.5 text-muted">
                             <TruncatedText maxClassName="max-w-[140px]">
-                              {technicianLabelById.get(String(row.userId)) ??
-                                "—"}
+                              {technicalServiceTechnicianLabel(
+                                row,
+                                catalog.technicianUserOptions,
+                              )}
                             </TruncatedText>
                           </td>
                           <td className="px-5 py-3.5 text-muted">

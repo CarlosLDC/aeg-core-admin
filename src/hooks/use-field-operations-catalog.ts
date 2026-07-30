@@ -99,7 +99,9 @@ export function useFieldOperationsCatalog() {
       ]);
 
       const technicianUsersRaw = usersRaw.filter(
-        (row) => isServiceCenterStaff(row) && row.enabled,
+        (row) =>
+          row.enabled &&
+          (isServiceCenterStaff(row) || row.role === "ADMIN"),
       );
       const inspectorUsersRaw = usersRaw.filter(
         (row) =>

@@ -129,10 +129,16 @@ export function filterTechnicianUsersInScope(
   distributorId: number | null,
   branchId: number | null = null,
 ): UserResponse[] {
-  const technicians = users.filter((user) => isServiceCenterStaff(user));
+  const technicians = users.filter(
+    (user) => isServiceCenterStaff(user) || user.role === "ADMIN",
+  );
   if (role === "ADMIN") return technicians;
   if (isServiceCenterStaffRole(role) && branchId != null) {
-    return technicians.filter((user) => user.branchId === branchId);
+    return technicians.filter(
+      (user) =>
+        user.role === "ADMIN" ||
+        (isServiceCenterStaff(user) && user.branchId === branchId),
+    );
   }
   if (isDistributorPanelRole(role)) {
     return [];

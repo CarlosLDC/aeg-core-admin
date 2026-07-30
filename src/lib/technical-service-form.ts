@@ -14,7 +14,6 @@ export type TechnicalServiceFormValues = {
   serviceCenterId: string;
   distributorId: string;
   sealTampered: boolean | null;
-  notes: string;
   startAt: string;
   endAt: string;
   installedSealId: string;
@@ -34,7 +33,6 @@ export const emptyTechnicalServiceForm = (): TechnicalServiceFormValues => ({
   serviceCenterId: "",
   distributorId: "",
   sealTampered: null,
-  notes: "",
   startAt: "",
   endAt: "",
   installedSealId: "",
@@ -59,7 +57,6 @@ export function technicalServiceToFormValues(
     distributorId:
       row.distributorId != null ? String(row.distributorId) : "",
     sealTampered: row.sealTampered,
-    notes: row.notes ?? "",
     startAt: toDatetimeLocalValue(row.startAt),
     endAt: toDatetimeLocalValue(row.endAt),
     installedSealId:
@@ -152,16 +149,13 @@ export function toTechnicalServiceRequest(
     return "Indica si el precinto fue violentado.";
   }
 
-  const notes = values.notes.trim();
-  if (!notes) return "Las observaciones son obligatorias.";
-
   return {
     printerId,
     userId,
     serviceCenterId,
     distributorId,
     sealTampered: values.sealTampered,
-    notes,
+    notes: null,
     startAt,
     endAt,
     installedSealId,

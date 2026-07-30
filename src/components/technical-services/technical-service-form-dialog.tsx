@@ -82,7 +82,7 @@ function stepSubtitle(step: WizardStep): string {
     case 2:
       return "Registra tiempos, solicitud, costo y falla reportada.";
     case 3:
-      return "Indica observaciones y si el precinto fue violentado.";
+      return "Indica si el precinto fue violentado.";
     case 4:
       return "Completa los reportes Z inicial y final.";
     case 5:
@@ -169,7 +169,6 @@ export function TechnicalServiceFormDialog({
       if (form.sealTampered === null) {
         return "Indica si el precinto fue violentado.";
       }
-      if (!hasValue(form.notes)) return "Indica las observaciones.";
       return null;
     }
 
@@ -394,19 +393,6 @@ export function TechnicalServiceFormDialog({
           ariaLabel="Estado del precinto"
         />
       </div>
-      <label className="block">
-        <FieldLabel required>Observaciones</FieldLabel>
-        <textarea
-          required
-          rows={FORM_FIELD_TEXTAREA_ROWS}
-          value={form.notes}
-          disabled={disabled}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, notes: e.target.value }))
-          }
-          className={formFieldTextareaClass}
-        />
-      </label>
     </div>
   );
 

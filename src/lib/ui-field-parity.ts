@@ -302,7 +302,7 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         formLabels: ["Técnico"],
         viewLabels: ["Técnico"],
         formBindings: ["form.userId"],
-        viewBindings: ["service.userId"],
+        viewBindings: ["service.userId", "service.technicianName"],
       },
       {
         formLabels: ["Centro de servicio"],
@@ -345,12 +345,6 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         viewLabels: ["Falla reportada"],
         formBindings: ["form.reportedFailure"],
         viewBindings: ["service.reportedFailure"],
-      },
-      {
-        formLabels: ["Observaciones"],
-        viewLabels: ["Notas"],
-        formBindings: ["form.notes"],
-        viewBindings: ["service.notes"],
       },
       {
         formLabels: ["Precinto violentado"],
