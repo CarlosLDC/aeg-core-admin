@@ -10,7 +10,6 @@ import {
   ShieldAlert,
   X,
 } from "lucide-react";
-import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import { SearchableSelect } from "@/components/ui/searchable-select";
@@ -18,7 +17,9 @@ import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 import {
   FORM_FIELD_TEXTAREA_ROWS,
   SEAL_TAMPERED_TOGGLE_TONE,
+  formFieldInputClass,
   formFieldTextareaClass,
+  toggleButtonClass,
 } from "@/lib/toggle-button-styles";
 import {
   emptyTechnicalServiceForm,
@@ -27,7 +28,6 @@ import {
 } from "@/lib/technical-service-form";
 import type { TechnicalServiceResponse } from "@/types/technical-service";
 import type { Role } from "@/types/user";
-import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 type TechnicalServiceFormDialogProps = {
@@ -80,9 +80,9 @@ function stepSubtitle(step: WizardStep): string {
     case 1:
       return "Selecciona impresora, tecnico y responsables del servicio.";
     case 2:
-      return "Registra tiempos, solicitud, costo y falla reportada.";
+      return "Registra tiempos, solicitud y costo del servicio.";
     case 3:
-      return "Indica si el precinto fue violentado.";
+      return "Indica el estado del precinto y describe la falla y acción realizada.";
     case 4:
       return "Completa los reportes Z inicial y final.";
     case 5:
@@ -159,15 +159,15 @@ export function TechnicalServiceFormDialog({
         return "Indica la fecha de solicitud.";
       }
       if (!hasValue(form.cost)) return "Indica el costo del servicio.";
-      if (!hasValue(form.reportedFailure)) {
-        return "Describe la falla reportada.";
-      }
       return null;
     }
 
     if (targetStep === 3) {
       if (form.sealTampered === null) {
         return "Indica si el precinto fue violentado.";
+      }
+      if (!hasValue(form.reportedFailure)) {
+        return "Describe la falla reportada y la acción realizada.";
       }
       return null;
     }
@@ -360,8 +360,58 @@ export function TechnicalServiceFormDialog({
           />
         </label>
       </div>
+    </div>
+  );
+
+  const outcomeSection = (
+    <div className={sectionClass}>
+      <div className="block">
+        <FieldLabel required>Precinto violentado</FieldLabel>
+        <div
+          role="group"
+          aria-label="Estado del precinto"
+          className="flex flex-wrap gap-2"
+        >
+          <button
+            type="button"
+            disabled={disabled}
+            aria-pressed={form.sealTampered === false}
+            onClick={() =>
+              setForm((f) => ({ ...f, sealTampered: false }))
+            }
+            className={toggleButtonClass(
+              form.sealTampered === false,
+              SEAL_TAMPERED_TOGGLE_TONE.false,
+              {
+                disabled,
+                className: "rounded-md px-2.5 py-1.5 text-xs",
+              },
+            )}
+          >
+            Intacto
+          </button>
+          <button
+            type="button"
+            disabled={disabled}
+            aria-pressed={form.sealTampered === true}
+            onClick={() =>
+              setForm((f) => ({ ...f, sealTampered: true }))
+            }
+            className={toggleButtonClass(
+              form.sealTampered === true,
+              SEAL_TAMPERED_TOGGLE_TONE.true,
+              {
+                disabled,
+                className: "rounded-md px-2.5 py-1.5 text-xs",
+              },
+            )}
+          >
+            Violentado
+          </button>
+        </div>
+      </div>
       <label className="block">
-        <FieldLabel required>Falla reportada</FieldLabel>
+        <FieldLabel required>Falla reportada y acción realizada</FieldLabel>
         <textarea
           required
           rows={FORM_FIELD_TEXTAREA_ROWS}
@@ -371,28 +421,9 @@ export function TechnicalServiceFormDialog({
             setForm((f) => ({ ...f, reportedFailure: e.target.value }))
           }
           className={formFieldTextareaClass}
+          placeholder="Describa la falla reportada, el trabajo realizado y cualquier observación relevante..."
         />
       </label>
-    </div>
-  );
-
-  const outcomeSection = (
-    <div className={sectionClass}>
-      <div className="block">
-        <FieldLabel required>Precinto violentado</FieldLabel>
-        <BooleanToggle
-          value={form.sealTampered}
-          onChange={(sealTampered) =>
-            setForm((f) => ({ ...f, sealTampered }))
-          }
-          disabled={disabled}
-          falseLabel="Intacto"
-          trueLabel="Violentado"
-          falseTone={SEAL_TAMPERED_TOGGLE_TONE.false}
-          trueTone={SEAL_TAMPERED_TOGGLE_TONE.true}
-          ariaLabel="Estado del precinto"
-        />
-      </div>
     </div>
   );
 

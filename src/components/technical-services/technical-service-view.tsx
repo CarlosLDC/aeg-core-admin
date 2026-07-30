@@ -205,7 +205,7 @@ export function TechnicalServiceView() {
                   )}
                 />
                 <DetailField
-                  label="Falla reportada"
+                  label="Falla reportada y acción realizada"
                   value={service.reportedFailure}
                 />
                 <DetailField

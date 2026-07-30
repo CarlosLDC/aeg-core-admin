@@ -128,7 +128,9 @@ export function toTechnicalServiceRequest(
   if (!values.requestDate.trim()) return "La fecha de solicitud es obligatoria.";
 
   const reportedFailure = values.reportedFailure.trim();
-  if (!reportedFailure) return "La falla reportada es obligatoria.";
+  if (!reportedFailure) {
+    return "La falla reportada y la acción realizada son obligatorias.";
+  }
 
   const initialZReport = Number(values.initialZReport);
   if (!Number.isFinite(initialZReport) || initialZReport < 0) {

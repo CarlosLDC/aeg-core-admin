@@ -341,8 +341,8 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         viewBindings: ["service.cost"],
       },
       {
-        formLabels: ["Falla reportada"],
-        viewLabels: ["Falla reportada"],
+        formLabels: ["Falla reportada y acción realizada"],
+        viewLabels: ["Falla reportada y acción realizada"],
         formBindings: ["form.reportedFailure"],
         viewBindings: ["service.reportedFailure"],
       },
