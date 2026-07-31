@@ -36,6 +36,14 @@ function upstreamFromEnv(): string | null {
 }
 
 /**
+ * URL absoluta del backend Java (nunca el proxy same-origin).
+ * Útil para uploads/descargas grandes que superarían el timeout del rewrite de Vercel.
+ */
+export function resolveDirectApiBaseUrl(): string {
+  return upstreamFromEnv() ?? DEFAULT_PRODUCTION_API_URL;
+}
+
+/**
  * Base URL para fetch.
  * - Cliente en producción: "" → rutas relativas /api/... (proxy Next, sin CORS).
  * - Servidor / desarrollo: URL absoluta del backend.

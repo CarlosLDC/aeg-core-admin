@@ -1,10 +1,46 @@
-import { apiFetch, getApiBaseUrl, readErrorMessage } from "@/lib/api";
+import { apiFetch, readErrorMessage } from "@/lib/api";
+import { resolveDirectApiBaseUrl } from "@/lib/api-config";
 import { getStoredToken } from "@/lib/auth-storage";
 import { redirectToLoginAfterExpired } from "@/lib/session-expired";
 import { ApiError } from "@/types/auth";
 import type { CreateFirmwareInput, FirmwareResponse } from "@/types/firmware";
 
 const BASE = "/api/firmwares";
+
+/**
+ * Subida/descarga de .bin evita el rewrite same-origin de Vercel: el proxy
+ * corta peticiones largas con 504 antes de que el backend termine el SFTP.
+ */
+function firmwareDirectUrl(path: string): string {
+  const base = resolveDirectApiBaseUrl().replace(/\/$/, "");
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+async function firmwareDirectFetch(
+  path: string,
+  init: RequestInit = {},
+): Promise<Response> {
+  const token = getStoredToken();
+  if (!token) {
+    throw new ApiError("No hay sesión activa", 401);
+  }
+
+  const headers = new Headers(init.headers);
+  headers.set("Authorization", `Bearer ${token}`);
+
+  const response = await fetch(firmwareDirectUrl(path), {
+    ...init,
+    headers,
+    credentials: "omit",
+  });
+
+  if (response.status === 401) {
+    redirectToLoginAfterExpired();
+    throw new ApiError("Sesión expirada o no válida", 401);
+  }
+
+  return response;
+}
 
 export async function fetchFirmwares(
   printerModelId?: number | null,
@@ -34,10 +70,17 @@ export async function createFirmware(
   if (input.notes?.trim()) {
     body.append("notes", input.notes.trim());
   }
-  return apiFetch<FirmwareResponse>(BASE, {
+
+  const response = await firmwareDirectFetch(BASE, {
     method: "POST",
     body,
   });
+
+  if (!response.ok) {
+    throw new ApiError(await readErrorMessage(response), response.status);
+  }
+
+  return response.json() as Promise<FirmwareResponse>;
 }
 
 export async function deleteFirmware(id: number): Promise<void> {
@@ -61,27 +104,12 @@ function filenameFromContentDisposition(
   return plainMatch?.[1]?.trim() || fallback;
 }
 
-/** Descarga autenticada vía proxy del backend; dispara guardado en el navegador. */
+/** Descarga autenticada directa al backend; dispara guardado en el navegador. */
 export async function downloadFirmware(
   id: number,
   fallbackFileName: string,
 ): Promise<void> {
-  const token = getStoredToken();
-  if (!token) {
-    throw new ApiError("No hay sesión activa", 401);
-  }
-
-  const url = `${getApiBaseUrl()}${BASE}/${id}/download`;
-  const response = await fetch(url, {
-    method: "GET",
-    headers: { Authorization: `Bearer ${token}` },
-    credentials: "omit",
-  });
-
-  if (response.status === 401) {
-    redirectToLoginAfterExpired();
-    throw new ApiError("Sesión expirada o no válida", 401);
-  }
+  const response = await firmwareDirectFetch(`${BASE}/${id}/download`);
 
   if (!response.ok) {
     throw new ApiError(await readErrorMessage(response), response.status);
@@ -121,6 +149,12 @@ export function getFirmwaresErrorMessage(error: unknown): string {
       return (
         error.message ||
         "Ya existe una versión de firmware con esos datos."
+      );
+    }
+    if (error.status === 504 || error.status === 502) {
+      return (
+        error.message ||
+        "El servidor tardó demasiado en subir o transferir el binario. Reintenta; si persiste, revisa la conexión SFTP del backend."
       );
     }
     return error.message;
