@@ -10,6 +10,15 @@ export type FirmwareResponse = {
   createdAt: string;
 };
 
+export type FirmwareUploadJobStatus = "PENDING" | "SUCCEEDED" | "FAILED";
+
+export type FirmwareUploadJobResponse = {
+  jobId: string;
+  status: FirmwareUploadJobStatus;
+  error: string | null;
+  result: FirmwareResponse | null;
+};
+
 export type CreateFirmwareInput = {
   file: File;
   version: string;

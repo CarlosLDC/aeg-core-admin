@@ -3,9 +3,15 @@ import { resolveDirectApiBaseUrl } from "@/lib/api-config";
 import { getStoredToken } from "@/lib/auth-storage";
 import { redirectToLoginAfterExpired } from "@/lib/session-expired";
 import { ApiError } from "@/types/auth";
-import type { CreateFirmwareInput, FirmwareResponse } from "@/types/firmware";
+import type {
+  CreateFirmwareInput,
+  FirmwareResponse,
+  FirmwareUploadJobResponse,
+} from "@/types/firmware";
 
 const BASE = "/api/firmwares";
+const UPLOAD_POLL_MS = 1500;
+const UPLOAD_TIMEOUT_MS = 180_000;
 
 /**
  * Subida/descarga de .bin evita el rewrite same-origin de Vercel: el proxy
@@ -42,6 +48,10 @@ async function firmwareDirectFetch(
   return response;
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function fetchFirmwares(
   printerModelId?: number | null,
 ): Promise<FirmwareResponse[]> {
@@ -56,6 +66,16 @@ export async function fetchFirmwareById(
   id: number,
 ): Promise<FirmwareResponse> {
   return apiFetch<FirmwareResponse>(`${BASE}/${id}`);
+}
+
+async function fetchFirmwareUploadJob(
+  jobId: string,
+): Promise<FirmwareUploadJobResponse> {
+  const response = await firmwareDirectFetch(`${BASE}/uploads/${jobId}`);
+  if (!response.ok) {
+    throw new ApiError(await readErrorMessage(response), response.status);
+  }
+  return response.json() as Promise<FirmwareUploadJobResponse>;
 }
 
 export async function createFirmware(
@@ -80,7 +100,37 @@ export async function createFirmware(
     throw new ApiError(await readErrorMessage(response), response.status);
   }
 
-  return response.json() as Promise<FirmwareResponse>;
+  const job = (await response.json()) as FirmwareUploadJobResponse;
+  if (job.status === "SUCCEEDED" && job.result) {
+    return job.result;
+  }
+  if (job.status === "FAILED") {
+    throw new ApiError(
+      job.error || "Error al transferir el firmware al servidor de archivos.",
+      503,
+    );
+  }
+
+  const started = Date.now();
+  while (Date.now() - started < UPLOAD_TIMEOUT_MS) {
+    await sleep(UPLOAD_POLL_MS);
+    const latest = await fetchFirmwareUploadJob(job.jobId);
+    if (latest.status === "SUCCEEDED" && latest.result) {
+      return latest.result;
+    }
+    if (latest.status === "FAILED") {
+      throw new ApiError(
+        latest.error ||
+          "Error al transferir el firmware al servidor de archivos.",
+        503,
+      );
+    }
+  }
+
+  throw new ApiError(
+    "La transferencia SFTP del firmware sigue en curso o no respondió a tiempo. Revisa el listado en unos segundos.",
+    504,
+  );
 }
 
 export async function deleteFirmware(id: number): Promise<void> {
@@ -155,6 +205,12 @@ export function getFirmwaresErrorMessage(error: unknown): string {
       return (
         error.message ||
         "El servidor tardó demasiado en subir o transferir el binario. Reintenta; si persiste, revisa la conexión SFTP del backend."
+      );
+    }
+    if (error.status === 503) {
+      return (
+        error.message ||
+        "No se pudo transferir el binario al servidor de archivos (SFTP)."
       );
     }
     return error.message;
