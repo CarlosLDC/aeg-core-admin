@@ -204,19 +204,19 @@ export function getFirmwaresErrorMessage(error: unknown): string {
     if (error.status === 504 || error.status === 502) {
       return (
         error.message ||
-        "El servidor tardó demasiado en subir o transferir el binario. Reintenta; si persiste, revisa la conexión SFTP del backend."
+        "El servidor tardó demasiado en subir o transferir el binario. Reintenta; si persiste, revisa la conexión SFTP del backend (puerto 2222 en el droplet)."
       );
     }
     if (error.status === 503) {
       return (
         error.message ||
-        "No se pudo transferir el binario al servidor de archivos (SFTP)."
+        "No se pudo transferir el binario al servidor de archivos (SFTP). Comprueba FIRMWARE_SFTP_HOST/PORT/USER/PASSWORD y que sshd escuche en 2222."
       );
     }
     return error.message;
   }
   if (error instanceof TypeError) {
-    return "No se pudo conectar con el servidor.";
+    return "No se pudo conectar con el API (red o CORS). Si subes desde un dominio nuevo, añade el origen a APP_CORS_ALLOWED_ORIGINS.";
   }
   return "Ha ocurrido un error inesperado.";
 }
