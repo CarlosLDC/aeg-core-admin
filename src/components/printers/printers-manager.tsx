@@ -112,8 +112,9 @@ import { TruncatedText } from "@/components/ui/truncated-text";
 import { printerDispositionPath, printerPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
+import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 
-type PrinterSortKey = "id" | "createdAt";
+type PrinterSortKey = "id" | "createdAt" | "fiscalSerial";
 
 function companyRifForBranch(
   branchId: number | null | undefined,
@@ -258,7 +259,7 @@ export function PrintersManager() {
           .map((p) => p.fiscalSerial)
           .filter((serial) => serial.trim().length > 0),
       ),
-    ].sort((a, b) => a.localeCompare(b, "es"));
+    ].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
     return [
       filterAllOption("Todos los seriales"),
       ...serials.map((serial) => ({
@@ -313,6 +314,10 @@ export function PrintersManager() {
       sortTableRows(filteredPrinters, sort, {
         id: (a, b) => compareNumberValues(a.id, b.id),
         createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
+        fiscalSerial: (a, b) =>
+          a.fiscalSerial.localeCompare(b.fiscalSerial, "es", {
+            numeric: true,
+          }),
       }),
     [filteredPrinters, sort],
   );
@@ -901,7 +906,17 @@ export function PrintersManager() {
                             </th>
                           }
                         >
-                        <th className="px-5 py-3 font-medium">Serial</th>
+                        <SortableTableHeader
+                          label="Serial"
+                          sortDirection={
+                            sort?.key === "fiscalSerial" ? sort.direction : null
+                          }
+                          onToggle={() =>
+                            setSort((current) =>
+                              toggleTableSort(current, "fiscalSerial"),
+                            )
+                          }
+                        />
                         <th className="px-5 py-3 font-medium">Estatus</th>
                         {!isDistributor ? (
                           <th className="px-5 py-3 font-medium">Distribuidor</th>
