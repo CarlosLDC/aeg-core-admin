@@ -195,6 +195,7 @@ export function PrintersManager() {
   const [statusFilter, setStatusFilter] = useState<
     PrinterStatus | "all" | DistributorPrinterQuickFilter
   >("all");
+  const [serialFilter, setSerialFilter] = useState("all");
 
   const distributorStatusFilterOptions = useMemo(
     () => [
@@ -250,10 +251,34 @@ export function PrintersManager() {
     [models],
   );
 
+  const serialFilterOptions = useMemo(() => {
+    const serials = [
+      ...new Set(
+        visiblePrinters
+          .map((p) => p.fiscalSerial)
+          .filter((serial) => serial.trim().length > 0),
+      ),
+    ].sort((a, b) => a.localeCompare(b, "es"));
+    return [
+      filterAllOption("Todos los seriales"),
+      ...serials.map((serial) => ({
+        value: serial,
+        label: serial,
+        searchText: serial,
+      })),
+    ];
+  }, [visiblePrinters]);
+
   const filteredPrinters = useMemo(() => {
     const q = search.trim().toLowerCase();
     return visiblePrinters.filter((printer) => {
       if (statusFilter !== "all" && printer.status !== statusFilter) {
+        return false;
+      }
+      if (
+        serialFilter !== "all" &&
+        printer.fiscalSerial !== serialFilter
+      ) {
         return false;
       }
       if (!q) return true;
@@ -278,6 +303,7 @@ export function PrintersManager() {
     visiblePrinters,
     search,
     statusFilter,
+    serialFilter,
     modelById,
     isDistributor,
   ]);
@@ -823,6 +849,15 @@ export function PrintersManager() {
                   options: isDistributor
                     ? distributorStatusFilterOptions
                     : adminStatusFilterOptions,
+                },
+                {
+                  id: "serial",
+                  label: "Serial",
+                  value: serialFilter,
+                  onChange: setSerialFilter,
+                  options: serialFilterOptions,
+                  searchable: true,
+                  searchPlaceholder: "Buscar por serial…",
                 },
               ]}
               columns={tableColumns.toolbarColumns}
