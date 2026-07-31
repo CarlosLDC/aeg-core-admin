@@ -143,6 +143,14 @@ export function canDeletePrinterModelRecord(role: Role): boolean {
   return can(role, "printerModels", "delete");
 }
 
+export function canCreateFirmwareRecord(role: Role): boolean {
+  return can(role, "firmwares", "create");
+}
+
+export function canDeleteFirmwareRecord(role: Role): boolean {
+  return can(role, "firmwares", "delete");
+}
+
 export function canUseSeniatExtract(role: Role): boolean {
   return can(role, "seniatExtract", "create");
 }

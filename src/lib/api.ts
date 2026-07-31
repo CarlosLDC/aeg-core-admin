@@ -26,7 +26,12 @@ export async function apiFetch<T>(
   const url = `${getApiBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`;
 
   const requestHeaders = new Headers(headers);
-  if (!requestHeaders.has("Content-Type") && init.body) {
+  // FormData must keep its multipart boundary; do not force JSON content-type.
+  if (
+    !requestHeaders.has("Content-Type") &&
+    init.body &&
+    !(init.body instanceof FormData)
+  ) {
     requestHeaders.set("Content-Type", "application/json");
   }
 

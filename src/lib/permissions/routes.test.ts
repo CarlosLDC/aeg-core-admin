@@ -78,12 +78,16 @@ describe("route permissions", () => {
 
   it("blocks panel roles from admin-only catalog sections", () => {
     expect(canAccessRoute("DISTRIBUTOR", "/printer-models")).toBe(false);
+    expect(canAccessRoute("DISTRIBUTOR", "/firmware-versions")).toBe(false);
     expect(canAccessRoute("DISTRIBUTOR", "/seals")).toBe(false);
     expect(canAccessRoute("DISTRIBUTOR", "/technical-services")).toBe(false);
     expect(canAccessRoute("DISTRIBUTOR", "/annual-inspections")).toBe(false);
     expect(canAccessRoute("TECHNICIAN", "/printer-models")).toBe(false);
+    expect(canAccessRoute("TECHNICIAN", "/firmware-versions")).toBe(false);
     expect(canAccessRoute("TECHNICIAN", "/seals")).toBe(false);
     expect(canAccessRoute("ADMIN", "/printer-models")).toBe(true);
+    expect(canAccessRoute("ADMIN", "/firmware-versions")).toBe(true);
+    expect(resourceForPath("/firmware-versions")).toBe("firmwares");
     expect(canAccessRoute("ADMIN", "/seals")).toBe(true);
     expect(canAccessRoute("ADMIN", "/technical-services")).toBe(true);
     expect(canAccessRoute("ADMIN", "/annual-inspections")).toBe(true);

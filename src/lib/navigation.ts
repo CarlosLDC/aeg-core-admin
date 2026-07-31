@@ -5,6 +5,7 @@ import {
   Settings,
   Printer,
   FileDigit,
+  Cpu,
   Stamp,
   Wrench,
   ClipboardCheck,
@@ -60,6 +61,12 @@ export const navSections: NavSection[] = [
         title: "Modelos fiscales",
         href: "/printer-models",
         icon: FileDigit,
+        roles: ["ADMIN"],
+      },
+      {
+        title: "Versiones de firmware",
+        href: "/firmware-versions",
+        icon: Cpu,
         roles: ["ADMIN"],
       },
       {

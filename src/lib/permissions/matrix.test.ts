@@ -28,6 +28,7 @@ describe("PERMISSION_MATRIX completeness", () => {
   it("covers standard CRUD or documented exceptions", () => {
     const crudExceptions: Partial<Record<(typeof RESOURCES)[number], Action[]>> = {
       dashboard: ["read"],
+      firmwares: ["read", "create", "delete"],
       clientTransfers: ["read", "update"],
       tools: ["read"],
       remoto: ["read", "create"],

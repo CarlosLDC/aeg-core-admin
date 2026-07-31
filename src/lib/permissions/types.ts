@@ -16,6 +16,7 @@ export const RESOURCES = [
   "branches",
   "printers",
   "printerModels",
+  "firmwares",
   "seals",
   "technicalServices",
   "annualInspections",

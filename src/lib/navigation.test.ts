@@ -29,15 +29,19 @@ describe("navSectionsForRole", () => {
     );
   });
 
-  it("hides modelos and precintos sections from distributor panel roles", () => {
+  it("hides modelos, firmware and precintos sections from distributor panel roles", () => {
     const items = navItemsForRole("DISTRIBUTOR");
     expect(items.some((i) => i.title === "Modelos fiscales")).toBe(false);
+    expect(items.some((i) => i.title === "Versiones de firmware")).toBe(false);
     expect(items.some((i) => i.title === "Precintos fiscales")).toBe(false);
     expect(items.some((i) => i.title === "Servicio técnico")).toBe(false);
     expect(items.some((i) => i.title === "Inspección anual")).toBe(false);
 
     const adminItems = navItemsForRole("ADMIN");
     expect(adminItems.some((i) => i.title === "Modelos fiscales")).toBe(true);
+    expect(adminItems.some((i) => i.title === "Versiones de firmware")).toBe(
+      true,
+    );
     expect(adminItems.some((i) => i.title === "Precintos fiscales")).toBe(true);
     expect(adminItems.some((i) => i.title === "Servicio técnico")).toBe(true);
     expect(adminItems.some((i) => i.title === "Inspección anual")).toBe(true);
