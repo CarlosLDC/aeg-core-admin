@@ -330,7 +330,6 @@ export function FirmwareUploadDialog({
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-3">
                     <div className="flex items-center gap-2.5 rounded-lg border border-border bg-background p-2.5">
                       <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-foreground/5">
                         <FileCode2 className="size-4 text-muted" aria-hidden />
@@ -353,19 +352,6 @@ export function FirmwareUploadDialog({
                         <Trash2 className="size-4" aria-hidden />
                       </button>
                     </div>
-                    <button
-                      type="button"
-                      disabled={saving}
-                      onClick={openFilePicker}
-                      className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
-                    >
-                      Reemplazar archivo
-                    </button>
-                    <p className="text-center text-xs text-muted">
-                      Solo se admite un binario por versión. Para cambiarlo,
-                      reemplázalo o quítalo primero.
-                    </p>
-                  </div>
                 )}
               </div>
             ) : null}
