@@ -235,3 +235,34 @@ export type EnajenacionActiveSession = {
   awaitingSince: string | null;
   timeoutSeconds: number | null;
 };
+
+export type FiscalizacionActivityEntry = {
+  id: string;
+  at: string;
+  mac: string;
+  printerId: number | null;
+  ptrReg: string | null;
+  direction: EnajenacionActivityDirection | null;
+  topic: string | null;
+  payload: string | null;
+  result: EnajenacionActivityResult;
+  detail: string | null;
+  sessionState: string | null;
+};
+
+export type FiscalizacionActivityListResponse = {
+  entries: FiscalizacionActivityEntry[];
+  total: number;
+};
+
+export type FiscalizacionActiveSession = {
+  mac: string;
+  printerId: number | null;
+  ptrReg: string;
+  state: string;
+  startedAt: string;
+  lastError: string | null;
+  awaitingResponse: boolean;
+  awaitingSince: string | null;
+  timeoutSeconds: number | null;
+};

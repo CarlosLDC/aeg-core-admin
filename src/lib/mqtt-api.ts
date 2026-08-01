@@ -8,6 +8,8 @@ import type {
   EnajenacionActivityListResponse,
   EnajenacionActivityResult,
   EnajenacionActiveSession,
+  FiscalizacionActivityListResponse,
+  FiscalizacionActiveSession,
   EnajenacionTestInvoiceRequest,
   EnajenacionTestInvoiceResponse,
   AnnualInspectionStaInfRequest,
@@ -390,6 +392,48 @@ export function getEnajenacionSseUrl(mac: string): string {
     token,
   });
   return `${httpBase}/api/mqtt/enajenacion/stream?${params}`;
+}
+
+export async function getFiscalizacionActivity(options?: {
+  limit?: number;
+  mac?: string;
+}): Promise<FiscalizacionActivityListResponse> {
+  const params = new URLSearchParams();
+  params.set("limit", String(options?.limit ?? 100));
+  if (options?.mac?.trim()) {
+    params.set("mac", options.mac.trim());
+  }
+  const { data, status } = await mqttFetch<FiscalizacionActivityListResponse>(
+    `${BASE}/fiscalizacion/activity?${params}`,
+  );
+  ensureMqttSuccess(status, data, "No se pudo cargar la actividad de fiscalización.");
+  if (data === undefined) {
+    throw new ApiError("Respuesta vacía del servidor", 500);
+  }
+  return data;
+}
+
+export async function getFiscalizacionActiveSessions(): Promise<
+  FiscalizacionActiveSession[]
+> {
+  const { data, status } = await mqttFetch<FiscalizacionActiveSession[]>(
+    `${BASE}/fiscalizacion/sessions`,
+  );
+  ensureMqttSuccess(status, data, "No se pudieron cargar las sesiones de fiscalización.");
+  return data ?? [];
+}
+
+export function getFiscalizacionSseUrl(mac: string): string {
+  const token = getStoredToken();
+  if (!token) {
+    throw new ApiError("No hay sesión activa", 401);
+  }
+  const httpBase = getApiBaseUrl().replace(/\/$/, "");
+  const params = new URLSearchParams({
+    mac,
+    token,
+  });
+  return `${httpBase}/api/mqtt/fiscalizacion/stream?${params}`;
 }
 
 export function getMqttErrorMessage(error: unknown): string {

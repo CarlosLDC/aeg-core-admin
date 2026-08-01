@@ -5,11 +5,18 @@ import { AnnualInspectionMqttPanel } from "@/components/mqtt/annual-inspection-m
 import { AnnualInspectionQrLookupPanel } from "@/components/mqtt/annual-inspection-qr-lookup-panel";
 import { EnajenacionActivityPanel } from "@/components/mqtt/enajenacion-activity-panel";
 import { EnajenacionTestPanel } from "@/components/mqtt/enajenacion-test-panel";
+import { FiscalizacionTestPanel } from "@/components/mqtt/fiscalizacion-test-panel";
 import { MqttDiagnosticsPanel } from "@/components/mqtt/mqtt-diagnostics-panel";
 import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { cn } from "@/lib/utils";
 
-type MqttTab = "diagnostics" | "enajenacion" | "activity" | "annual-inspection" | "verify-qr";
+type MqttTab =
+  | "diagnostics"
+  | "enajenacion"
+  | "fiscalizacion"
+  | "activity"
+  | "annual-inspection"
+  | "verify-qr";
 
 const TAB_STORAGE_KEY = "remoto-workspace-tab";
 const LEGACY_TAB_STORAGE_KEY = "mqtt-workspace-tab";
@@ -24,7 +31,14 @@ function readStoredTab(): MqttTab {
   if (stored === "monitor") {
     return "activity";
   }
-  if (stored === "diagnostics" || stored === "enajenacion" || stored === "activity" || stored === "annual-inspection" || stored === "verify-qr") {
+  if (
+    stored === "diagnostics" ||
+    stored === "enajenacion" ||
+    stored === "fiscalizacion" ||
+    stored === "activity" ||
+    stored === "annual-inspection" ||
+    stored === "verify-qr"
+  ) {
     return stored;
   }
   return "diagnostics";
@@ -49,10 +63,11 @@ export function MqttWorkspace() {
             { value: "diagnostics", label: "Diagnóstico" },
             { value: "activity", label: "Actividad" },
             { value: "enajenacion", label: "Enajenación" },
+            { value: "fiscalizacion", label: "Fiscalización" },
             { value: "annual-inspection", label: "Inspección anual" },
             { value: "verify-qr", label: "Verificar comprobante" },
           ]}
-          className="w-full max-w-2xl"
+          className="w-full max-w-3xl"
         />
       </div>
 
@@ -66,6 +81,10 @@ export function MqttWorkspace() {
 
       <div className={cn(tab !== "enajenacion" && "hidden")}>
         <EnajenacionTestPanel />
+      </div>
+
+      <div className={cn(tab !== "fiscalizacion" && "hidden")}>
+        <FiscalizacionTestPanel />
       </div>
 
       <div className={cn(tab !== "annual-inspection" && "hidden")}>
