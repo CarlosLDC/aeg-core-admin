@@ -1,13 +1,22 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { FormEvent, useEffect, useId, useRef, useState } from "react";
+import {
+  Cpu,
+  FileCode2,
+  Loader2,
+  StickyNote,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
-import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
+import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import {
   formFieldInputClass,
   formFieldNativeSelectClass,
 } from "@/lib/toggle-button-styles";
+import { cn } from "@/lib/utils";
 
 export type FirmwareUploadValues = {
   version: string;
@@ -30,6 +39,20 @@ type FirmwareUploadDialogProps = {
   onSubmit: (values: FirmwareUploadValues) => void;
 };
 
+type WizardStep = 1 | 2 | 3;
+
+const FORM_STEPS: { step: WizardStep; label: string }[] = [
+  { step: 1, label: "Binario" },
+  { step: 2, label: "Versión" },
+  { step: 3, label: "Notas" },
+];
+
+const STEP_ICONS = {
+  1: Upload,
+  2: Cpu,
+  3: StickyNote,
+} as const;
+
 const emptyForm: FirmwareUploadValues = {
   version: "",
   printerModelId: "",
@@ -38,6 +61,26 @@ const emptyForm: FirmwareUploadValues = {
 };
 
 const VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
+const MAX_BIN_BYTES = 64 * 1024 * 1024;
+
+function stepSubtitle(step: WizardStep): string {
+  switch (step) {
+    case 1:
+      return "Seleccione el archivo .bin del firmware (máx. 64 MB).";
+    case 2:
+      return "Indique la versión semántica y, si aplica, el modelo fiscal.";
+    case 3:
+      return "Notas u observaciones opcionales sobre esta versión.";
+    default:
+      return "";
+  }
+}
+
+function formatBytes(size: number): string {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+}
 
 export function FirmwareUploadDialog({
   open,
@@ -47,47 +90,124 @@ export function FirmwareUploadDialog({
   onClose,
   onSubmit,
 }: FirmwareUploadDialogProps) {
+  const formId = useId();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [step, setStep] = useState<WizardStep>(1);
   const [form, setForm] = useState<FirmwareUploadValues>(emptyForm);
-  const [localError, setLocalError] = useState<string | null>(null);
+  const [stepError, setStepError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    setStep(1);
     setForm(emptyForm);
-    setLocalError(null);
+    setStepError(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }, [open]);
 
   if (!open) return null;
 
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setLocalError(null);
+  function validateStep(target: WizardStep): string | null {
+    if (target === 1) {
+      if (!form.file) return "Selecciona un archivo .bin.";
+      if (!form.file.name.toLowerCase().endsWith(".bin")) {
+        return "El archivo debe tener extensión .bin.";
+      }
+      if (form.file.size > MAX_BIN_BYTES) {
+        return "El archivo supera el máximo de 64 MB.";
+      }
+      return null;
+    }
+    if (target === 2) {
+      const version = form.version.trim();
+      if (!VERSION_PATTERN.test(version)) {
+        return "La versión debe tener el formato x.y.z (p. ej. 1.2.3).";
+      }
+      return null;
+    }
+    return null;
+  }
 
-    const version = form.version.trim();
-    if (!VERSION_PATTERN.test(version)) {
-      setLocalError("La versión debe tener el formato x.y.z (p. ej. 1.2.3).");
-      return;
+  function goToStep(target: WizardStep) {
+    if (saving) return;
+    if (target > step) {
+      for (let s = step; s < target; s++) {
+        const err = validateStep(s as WizardStep);
+        if (err) {
+          setStepError(err);
+          setStep(s as WizardStep);
+          return;
+        }
+      }
     }
-    if (!form.file) {
-      setLocalError("Selecciona un archivo .bin.");
-      return;
-    }
-    if (!form.file.name.toLowerCase().endsWith(".bin")) {
-      setLocalError("El archivo debe tener extensión .bin.");
-      return;
-    }
+    setStepError(null);
+    setStep(target);
+  }
 
+  function goBack() {
+    if (saving || step === 1) return;
+    setStepError(null);
+    setStep((current) => Math.max(1, current - 1) as WizardStep);
+  }
+
+  function goNext() {
+    const err = validateStep(step);
+    if (err) {
+      setStepError(err);
+      return;
+    }
+    setStepError(null);
+    if (step < 3) {
+      setStep((current) => (current + 1) as WizardStep);
+    }
+  }
+
+  function submitUpload() {
+    for (const { step: s } of FORM_STEPS) {
+      const err = validateStep(s);
+      if (err) {
+        setStepError(err);
+        setStep(s);
+        return;
+      }
+    }
+    setStepError(null);
     onSubmit({
       ...form,
-      version,
+      version: form.version.trim(),
       notes: form.notes.trim(),
     });
   }
+
+  function handleFormSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (step < 3) {
+      goNext();
+      return;
+    }
+    submitUpload();
+  }
+
+  function assignFile(file: File | null) {
+    setStepError(null);
+    setForm((current) => ({ ...current, file }));
+    if (fileInputRef.current && !file) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  function openFilePicker() {
+    if (saving) return;
+    fileInputRef.current?.click();
+  }
+
+  const displayError = stepError ?? error;
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="firmware-upload-wizard-title"
     >
       <button
         type="button"
@@ -95,107 +215,270 @@ export function FirmwareUploadDialog({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-card-foreground">
-              Subir versión de firmware
-            </h2>
-            <p className="mt-1 text-sm text-muted">
-              Archivo .bin (máx. 64 MB) asociado opcionalmente a un modelo fiscal.
-            </p>
+      <div className="relative flex max-h-[min(92vh,100dvh)] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+        <div className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h2
+                id="firmware-upload-wizard-title"
+                className="text-lg font-semibold text-card-foreground"
+              >
+                Subir versión de firmware
+              </h2>
+              <p className="mt-1 text-sm text-muted">{stepSubtitle(step)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="shrink-0 rounded-lg p-1.5 text-muted hover:bg-foreground/5 disabled:opacity-50"
+            >
+              <X className="size-5" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-muted hover:bg-foreground/5"
-          >
-            <X className="size-5" />
-          </button>
+
+          <nav className="mt-4 flex gap-1" aria-label="Pasos de la subida">
+            {FORM_STEPS.map(({ step: wizardStep, label }) => {
+              const Icon = STEP_ICONS[wizardStep];
+              const isActive = step === wizardStep;
+              const isDone = step > wizardStep;
+              return (
+                <button
+                  key={wizardStep}
+                  type="button"
+                  disabled={saving}
+                  onClick={() => goToStep(wizardStep)}
+                  className={cn(
+                    "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2 text-center transition-colors",
+                    "hover:bg-foreground/5 disabled:opacity-50",
+                    isActive && "bg-accent/10 text-accent",
+                    isDone && !isActive && "text-card-foreground",
+                    !isActive && !isDone && "text-muted",
+                  )}
+                  aria-current={isActive ? "step" : undefined}
+                >
+                  <Icon className="size-4 shrink-0" aria-hidden />
+                  <span className="text-[11px] font-medium leading-tight sm:text-xs">
+                    {label}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
         </div>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <label className="block">
-            <FieldLabel required>Archivo .bin</FieldLabel>
-            <input
-              type="file"
-              accept=".bin,application/octet-stream"
-              required
-              disabled={saving}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  file: e.target.files?.[0] ?? null,
-                }))
-              }
-              className="block w-full text-sm text-card-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-foreground/5 file:px-3 file:py-2 file:text-sm file:font-medium file:text-card-foreground hover:file:bg-foreground/10"
-            />
-          </label>
-
-          <label className="block">
-            <FieldLabel required>Versión</FieldLabel>
-            <input
-              type="text"
-              required
-              value={form.version}
-              disabled={saving}
-              placeholder="1.2.3"
-              onChange={(e) =>
-                setForm((f) => ({ ...f, version: e.target.value }))
-              }
-              className={formFieldInputClass}
-            />
-          </label>
-
-          <label className="block">
-            <FieldLabel>Modelo fiscal</FieldLabel>
-            <select
-              value={form.printerModelId}
-              disabled={saving}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, printerModelId: e.target.value }))
-              }
-              className={formFieldNativeSelectClass}
-            >
-              <option value="">Todos los modelos</option>
-              {modelOptions.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block">
-            <FieldLabel>Notas</FieldLabel>
-            <textarea
-              value={form.notes}
-              disabled={saving}
-              rows={3}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, notes: e.target.value }))
-              }
-              className={`${formFieldInputClass} h-auto min-h-[5rem] py-2`}
-              placeholder="Cambios o instrucciones opcionales"
-            />
-          </label>
-
-          {(localError || error) && (
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+          {displayError ? (
             <p
               role="alert"
-              className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
+              className="mb-4 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
             >
-              {localError || error}
+              {displayError}
             </p>
-          )}
+          ) : null}
 
-          <FormDialogFooter
-            mode="create"
-            saving={saving}
-            onClose={onClose}
-            createLabel="Subir"
-          />
-        </form>
+          <form id={formId} onSubmit={handleFormSubmit} className="space-y-4">
+            {step === 1 ? (
+              <div className="space-y-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".bin,application/octet-stream"
+                  className="sr-only"
+                  disabled={saving}
+                  onChange={(e) =>
+                    assignFile(e.target.files?.[0] ?? null)
+                  }
+                />
+
+                <div
+                  role="group"
+                  aria-label="Subir archivo de firmware"
+                  className={cn(
+                    "shrink-0 rounded-xl border border-dashed border-border bg-foreground/[0.02] px-4 py-5",
+                    saving && "opacity-60",
+                  )}
+                >
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={openFilePicker}
+                    className="group flex w-full flex-col items-center gap-3 rounded-lg px-1 py-0.5 text-center transition-colors enabled:hover:bg-foreground/[0.02] disabled:cursor-not-allowed"
+                  >
+                    <div className="flex size-11 items-center justify-center rounded-full bg-accent/10 text-accent">
+                      <Upload className="size-5" aria-hidden />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-card-foreground">
+                        {form.file
+                          ? "Cambiar archivo .bin"
+                          : "Añadir archivo .bin"}
+                      </p>
+                      <p className="text-xs leading-relaxed text-muted">
+                        Firmware binario
+                        <span className="mx-1 text-border">·</span>
+                        máx. 64 MB
+                      </p>
+                      {!form.file ? (
+                        <p className="pt-0.5 text-xs text-muted/90">
+                          Se requiere un archivo .bin.
+                        </p>
+                      ) : null}
+                    </div>
+                    <span
+                      className={cn(
+                        "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm font-medium text-foreground",
+                        !saving && "group-hover:border-accent/30",
+                      )}
+                    >
+                      {form.file ? "Elegir otro archivo" : "Elegir archivo"}
+                    </span>
+                  </button>
+                </div>
+
+                {form.file ? (
+                  <ul className="space-y-2">
+                    <li className="flex items-start gap-2.5 rounded-lg border border-border bg-background p-2.5">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-foreground/5">
+                        <FileCode2 className="size-4 text-muted" aria-hidden />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-card-foreground">
+                          {form.file.name}
+                        </p>
+                        <p className="text-xs text-muted">
+                          {formatBytes(form.file.size)}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() => assignFile(null)}
+                        className="shrink-0 rounded-lg p-1.5 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
+                        aria-label="Quitar archivo"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </li>
+                  </ul>
+                ) : null}
+              </div>
+            ) : null}
+
+            {step === 2 ? (
+              <div className="space-y-4">
+                <label className="block">
+                  <FieldLabel required>Versión</FieldLabel>
+                  <input
+                    type="text"
+                    required
+                    value={form.version}
+                    disabled={saving}
+                    placeholder="1.2.3"
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        version: e.target.value,
+                      }))
+                    }
+                    className={formFieldInputClass}
+                  />
+                </label>
+
+                <label className="block">
+                  <FieldLabel>Modelo fiscal</FieldLabel>
+                  <select
+                    value={form.printerModelId}
+                    disabled={saving}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        printerModelId: e.target.value,
+                      }))
+                    }
+                    className={formFieldNativeSelectClass}
+                  >
+                    <option value="">Todos los modelos</option>
+                    {modelOptions.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            ) : null}
+
+            {step === 3 ? (
+              <label className="block">
+                <FieldLabel>Notas</FieldLabel>
+                <textarea
+                  value={form.notes}
+                  disabled={saving}
+                  rows={5}
+                  onChange={(e) =>
+                    setForm((current) => ({
+                      ...current,
+                      notes: e.target.value,
+                    }))
+                  }
+                  className={`${formFieldInputClass} h-auto min-h-[8rem] py-2`}
+                  placeholder="Cambios, instrucciones o comentarios opcionales"
+                />
+              </label>
+            ) : null}
+          </form>
+        </div>
+
+        <div className="shrink-0 border-t border-border px-4 py-4 sm:px-6">
+          <FormDialogFooterBar>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between [&_button]:w-full sm:[&_button]:w-auto">
+              <button
+                type="button"
+                onClick={goBack}
+                disabled={saving || step === 1}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
+              >
+                Atrás
+              </button>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={saving}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                {step < 3 ? (
+                  <button
+                    type="submit"
+                    form={formId}
+                    disabled={saving}
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
+                  >
+                    Siguiente
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    form={formId}
+                    disabled={saving}
+                    className={cn(
+                      "flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
+                      saving && "cursor-not-allowed opacity-70",
+                    )}
+                  >
+                    {saving ? (
+                      <Loader2 className="size-4 animate-spin" aria-hidden />
+                    ) : null}
+                    Subir
+                  </button>
+                )}
+              </div>
+            </div>
+          </FormDialogFooterBar>
+        </div>
       </div>
     </div>
   );
