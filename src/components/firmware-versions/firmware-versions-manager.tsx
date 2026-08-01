@@ -44,6 +44,7 @@ import {
 import {
   createFirmware,
   deleteFirmware,
+  downloadFirmware,
   fetchFirmwares,
   getFirmwaresErrorMessage,
   updateFirmware,
@@ -98,6 +99,7 @@ export function FirmwareVersionsManager() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("firmware-versions");
   const [search, setSearch] = useState("");
   const [modelFilter, setModelFilter] = useState("all");
@@ -298,6 +300,17 @@ export function FirmwareVersionsManager() {
     }
   }
 
+  async function handleDownload(fw: FirmwareResponse) {
+    setDownloadingId(fw.id);
+    try {
+      await downloadFirmware(fw.id, fw.fileName);
+    } catch (err) {
+      toast.error(getFirmwaresErrorMessage(err));
+    } finally {
+      setDownloadingId(null);
+    }
+  }
+
   async function handleDelete(fw: FirmwareResponse) {
     if (!canDelete) {
       toast.error(forbiddenMessage("delete", "firmwares"));
@@ -465,6 +478,8 @@ export function FirmwareVersionsManager() {
                                 <TableRowActionsMenu
                                   viewHref={firmwareVersionPath(fw.id)}
                                   viewLabel={`Ver firmware ${fw.version}`}
+                                  onDownload={() => void handleDownload(fw)}
+                                  downloading={downloadingId === fw.id}
                                   onEdit={
                                     canUpdate ? () => openEdit(fw) : undefined
                                   }

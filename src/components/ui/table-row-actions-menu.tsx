@@ -4,6 +4,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
+  Download,
   Eye,
   Loader2,
   MoreHorizontal,
@@ -18,6 +19,9 @@ export type TableRowActionsMenuProps = {
   viewLabel: string;
   onEdit?: () => void;
   editLabel?: string;
+  onDownload?: () => void;
+  downloadLabel?: string;
+  downloading?: boolean;
   onDelete?: () => void;
   deleteLabel?: string;
   onCancelReview?: () => void;
@@ -38,11 +42,18 @@ type MenuCoords = {
 };
 
 function countMenuItems(
+  hasDownload: boolean,
   hasEdit: boolean,
   hasDelete: boolean,
   hasCancelReview: boolean,
 ): number {
-  return 1 + (hasEdit ? 1 : 0) + (hasDelete ? 1 : 0) + (hasCancelReview ? 1 : 0);
+  return (
+    1 +
+    (hasDownload ? 1 : 0) +
+    (hasEdit ? 1 : 0) +
+    (hasDelete ? 1 : 0) +
+    (hasCancelReview ? 1 : 0)
+  );
 }
 
 /** Menu is portaled with fixed positioning — use viewport space, not table/card clips. */
@@ -73,13 +84,15 @@ function shouldOpenMenuUp(
 function computeMenuCoords(
   trigger: HTMLElement,
   menu: HTMLElement | null,
+  hasDownload: boolean,
   hasEdit: boolean,
   hasDelete: boolean,
   hasCancelReview: boolean,
 ): MenuCoords {
   const rect = trigger.getBoundingClientRect();
   const menuHeight =
-    menu?.offsetHeight ?? countMenuItems(hasEdit, hasDelete, hasCancelReview) * 40 + 8;
+    menu?.offsetHeight ??
+    countMenuItems(hasDownload, hasEdit, hasDelete, hasCancelReview) * 40 + 8;
   const openUp = shouldOpenMenuUp(trigger, menuHeight);
 
   return {
@@ -94,6 +107,9 @@ export function TableRowActionsMenu({
   viewLabel,
   onEdit,
   editLabel = "Editar",
+  onDownload,
+  downloadLabel = "Descargar",
+  downloading = false,
   onDelete,
   deleteLabel = "Eliminar",
   onCancelReview,
@@ -107,10 +123,11 @@ export function TableRowActionsMenu({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const hasDownload = Boolean(onDownload);
   const hasEdit = Boolean(onEdit);
   const hasDelete = Boolean(onDelete);
   const hasCancelReview = Boolean(onCancelReview);
-  const rowBusy = deleting;
+  const rowBusy = deleting || downloading;
 
   const updateCoords = () => {
     const trigger = triggerRef.current;
@@ -119,6 +136,7 @@ export function TableRowActionsMenu({
       computeMenuCoords(
         trigger,
         menuRef.current,
+        hasDownload,
         hasEdit,
         hasDelete,
         hasCancelReview,
@@ -144,7 +162,7 @@ export function TableRowActionsMenu({
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", updateCoords);
     };
-  }, [open, hasEdit, hasDelete, hasCancelReview]);
+  }, [open, hasDownload, hasEdit, hasDelete, hasCancelReview]);
 
   useEffect(() => {
     if (!open) return;
@@ -197,6 +215,25 @@ export function TableRowActionsMenu({
           <Eye className="size-4 shrink-0" aria-hidden />
           Ver
         </Link>
+        {onDownload ? (
+          <button
+            type="button"
+            role="menuitem"
+            disabled={rowBusy}
+            className={cn(menuItemClass, "disabled:opacity-50")}
+            onClick={() => {
+              close();
+              onDownload();
+            }}
+          >
+            {downloading ? (
+              <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+            ) : (
+              <Download className="size-4 shrink-0" aria-hidden />
+            )}
+            {downloadLabel}
+          </button>
+        ) : null}
         {onEdit ? (
           <button
             type="button"
@@ -274,6 +311,7 @@ export function TableRowActionsMenu({
               computeMenuCoords(
                 triggerRef.current,
                 null,
+                hasDownload,
                 hasEdit,
                 hasDelete,
                 hasCancelReview,

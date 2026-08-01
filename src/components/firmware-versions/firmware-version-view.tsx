@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Download, Loader2 } from "lucide-react";
 import {
@@ -12,6 +12,10 @@ import {
   DetailField,
   DetailSection,
 } from "@/components/resource-view/detail-fields";
+import {
+  DetailSectionsPager,
+  type DetailPagerStep,
+} from "@/components/resource-view/detail-sections-pager";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -23,7 +27,6 @@ import {
   canUpdateFirmwareRecord,
 } from "@/lib/api-permissions";
 import { forbiddenMessage } from "@/lib/permissions/messages";
-import { formatDateTime } from "@/lib/datetime-form";
 import {
   deleteFirmware,
   downloadFirmware,
@@ -32,7 +35,7 @@ import {
   updateFirmware,
 } from "@/lib/firmwares-api";
 import { fetchPrinterModels } from "@/lib/printer-models-api";
-import { firmwareVersionPath } from "@/lib/resource-routes";
+import { firmwareVersionPath, printerModelPath } from "@/lib/resource-routes";
 import type { FirmwareResponse } from "@/types/firmware";
 
 function formatBytes(bytes: number): string {
@@ -59,7 +62,6 @@ export function FirmwareVersionView() {
 
   const [firmware, setFirmware] = useState<FirmwareResponse | null>(null);
   const [modelOptions, setModelOptions] = useState<FirmwareModelOption[]>([]);
-  const [modelLabel, setModelLabel] = useState("General");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -67,6 +69,55 @@ export function FirmwareVersionView() {
   const [deleting, setDeleting] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const modelLabel = useMemo(() => {
+    if (!firmware) return "General";
+    if (firmware.printerModelId == null) return "General";
+    const match = modelOptions.find((m) => m.id === firmware.printerModelId);
+    return match?.label ?? `Modelo #${firmware.printerModelId}`;
+  }, [firmware, modelOptions]);
+
+  const detailSteps = useMemo((): DetailPagerStep[] => {
+    if (!firmware) return [];
+
+    return [
+      {
+        id: "binary",
+        label: "Binario",
+        content: (
+          <DetailSection title="Binario" layout="quad">
+            <DetailField label="Versión" value={firmware.version} mono />
+            <DetailField label="Archivo" value={firmware.fileName} mono />
+            <DetailField
+              label="Tamaño"
+              value={formatBytes(firmware.sizeBytes)}
+            />
+            <DetailField
+              label="Modelo fiscal"
+              value={modelLabel}
+              href={
+                firmware.printerModelId != null
+                  ? printerModelPath(firmware.printerModelId)
+                  : undefined
+              }
+            />
+          </DetailSection>
+        ),
+      },
+      {
+        id: "notes",
+        label: "Notas",
+        content: (
+          <DetailSection title="Notas">
+            <DetailField
+              label="Observaciones"
+              value={firmware.notes?.trim() || "—"}
+            />
+          </DetailSection>
+        ),
+      },
+    ];
+  }, [firmware, modelLabel]);
 
   const load = useCallback(async () => {
     if (id == null) {
@@ -116,19 +167,6 @@ export function FirmwareVersionView() {
       cancelled = true;
     };
   }, []);
-
-  useEffect(() => {
-    if (!firmware) {
-      setModelLabel("General");
-      return;
-    }
-    if (firmware.printerModelId == null) {
-      setModelLabel("General");
-      return;
-    }
-    const match = modelOptions.find((m) => m.id === firmware.printerModelId);
-    setModelLabel(match?.label ?? `Modelo #${firmware.printerModelId}`);
-  }, [firmware, modelOptions]);
 
   async function handleSubmit(values: FirmwareUploadValues) {
     if (!firmware) return;
@@ -215,7 +253,7 @@ export function FirmwareVersionView() {
         backHref="/firmware-versions"
         backLabel="Volver a firmwares"
         title={title}
-        subtitle={firmware?.fileName}
+        subtitle={firmware ? modelLabel : undefined}
         loading={loading}
         error={error}
         actions={
@@ -250,35 +288,9 @@ export function FirmwareVersionView() {
           ) : undefined
         }
       >
-        {firmware && (
-          <>
-            <DetailSection title="Binario" layout="quad">
-              <DetailField label="ID" value={String(firmware.id)} mono />
-              <DetailField label="Versión" value={firmware.version} mono />
-              <DetailField label="Archivo" value={firmware.fileName} mono />
-              <DetailField
-                label="Tamaño"
-                value={formatBytes(firmware.sizeBytes)}
-              />
-              <DetailField label="Modelo" value={modelLabel} />
-              <DetailField
-                label="Registrado"
-                value={formatDateTime(firmware.createdAt)}
-              />
-              <DetailField
-                label="SHA-256"
-                value={firmware.checksumSha256}
-                mono
-              />
-            </DetailSection>
-            <DetailSection title="Notas">
-              <DetailField
-                label="Observaciones"
-                value={firmware.notes?.trim() || "—"}
-              />
-            </DetailSection>
-          </>
-        )}
+        {firmware ? (
+          <DetailSectionsPager key={firmware.id} steps={detailSteps} />
+        ) : null}
       </ResourceViewShell>
 
       {firmware && editOpen ? (
