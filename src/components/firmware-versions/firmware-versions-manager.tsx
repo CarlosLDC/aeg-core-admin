@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import {
   FirmwareUploadDialog,
   type FirmwareModelOption,
@@ -28,6 +28,7 @@ import { useConfirm } from "@/context/confirm-provider";
 import {
   canCreateFirmwareRecord,
   canDeleteFirmwareRecord,
+  canUpdateFirmwareRecord,
 } from "@/lib/api-permissions";
 import { forbiddenMessage } from "@/lib/permissions/messages";
 import { reportListTableError } from "@/lib/api-error-message";
@@ -43,15 +44,18 @@ import {
 import {
   createFirmware,
   deleteFirmware,
-  downloadFirmware,
   fetchFirmwares,
   getFirmwaresErrorMessage,
+  updateFirmware,
 } from "@/lib/firmwares-api";
 import { fetchPrinterModels } from "@/lib/printer-models-api";
+import { firmwareVersionPath } from "@/lib/resource-routes";
 import type { FirmwareResponse } from "@/types/firmware";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
+import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 
 type FirmwareSortKey = "version" | "sizeBytes" | "id" | "createdAt";
@@ -69,16 +73,6 @@ function formatBytes(bytes: number): string {
   return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[unitIndex]}`;
 }
 
-function formatFirmwareDate(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  return new Intl.DateTimeFormat("es-VE", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
 function modelLabel(
   printerModelId: number | null,
   modelMap: Map<number, string>,
@@ -92,17 +86,18 @@ export function FirmwareVersionsManager() {
   const confirm = useConfirm();
   const { user } = useAuth();
   const canCreate = user ? canCreateFirmwareRecord(user.role) : false;
+  const canUpdate = user ? canUpdateFirmwareRecord(user.role) : false;
   const canDelete = user ? canDeleteFirmwareRecord(user.role) : false;
 
   const [firmwares, setFirmwares] = useState<FirmwareResponse[]>([]);
   const [modelOptions, setModelOptions] = useState<FirmwareModelOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialog, setDialog] = useState<"create" | "edit" | null>(null);
+  const [selected, setSelected] = useState<FirmwareResponse | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("firmware-versions");
   const [search, setSearch] = useState("");
   const [modelFilter, setModelFilter] = useState("all");
@@ -217,16 +212,61 @@ export function FirmwareVersionsManager() {
   }, []);
 
   function openCreate() {
+    setSelected(null);
     setFormError(null);
-    setDialogOpen(true);
+    setDialog("create");
+  }
+
+  function openEdit(fw: FirmwareResponse) {
+    setSelected(fw);
+    setFormError(null);
+    setDialog("edit");
   }
 
   function closeDialog() {
-    setDialogOpen(false);
+    setDialog(null);
+    setSelected(null);
     setFormError(null);
   }
 
   async function handleSubmit(values: FirmwareUploadValues) {
+    const printerModelId = values.printerModelId
+      ? Number(values.printerModelId)
+      : null;
+    const resolvedModelId =
+      printerModelId != null && Number.isFinite(printerModelId)
+        ? printerModelId
+        : null;
+
+    if (dialog === "edit") {
+      if (!selected) return;
+      if (!canUpdate) {
+        setFormError(forbiddenMessage("update", "firmwares"));
+        return;
+      }
+      setSaving(true);
+      setFormError(null);
+      try {
+        await updateFirmware(selected.id, {
+          version: values.version,
+          printerModelId: resolvedModelId,
+          notes: values.notes || null,
+        });
+        toast.success(`Firmware ${values.version} actualizado.`, {
+          href: firmwareVersionPath(selected.id),
+        });
+        closeDialog();
+        await loadFirmwares({ silent: true });
+      } catch (err) {
+        const message = getFirmwaresErrorMessage(err);
+        setFormError(message);
+        toast.error(message);
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
     if (!canCreate) {
       setFormError(forbiddenMessage("create", "firmwares"));
       return;
@@ -240,16 +280,10 @@ export function FirmwareVersionsManager() {
     setFormError(null);
 
     try {
-      const printerModelId = values.printerModelId
-        ? Number(values.printerModelId)
-        : null;
       await createFirmware({
         file: values.file,
         version: values.version,
-        printerModelId:
-          printerModelId != null && Number.isFinite(printerModelId)
-            ? printerModelId
-            : null,
+        printerModelId: resolvedModelId,
         notes: values.notes || null,
       });
       toast.success(`Firmware ${values.version} subido correctamente.`);
@@ -261,17 +295,6 @@ export function FirmwareVersionsManager() {
       toast.error(message);
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleDownload(fw: FirmwareResponse) {
-    setDownloadingId(fw.id);
-    try {
-      await downloadFirmware(fw.id, fw.fileName);
-    } catch (err) {
-      toast.error(getFirmwaresErrorMessage(err));
-    } finally {
-      setDownloadingId(null);
     }
   }
 
@@ -368,7 +391,7 @@ export function FirmwareVersionsManager() {
             ) : (
               <>
                 <TableScroll>
-                  <table className="w-full min-w-[880px] text-left text-sm">
+                  <table className="w-full min-w-[760px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <TableRowMetaHeaders
@@ -420,97 +443,63 @@ export function FirmwareVersionsManager() {
                             }
                           />
                           <th className="px-5 py-3 font-medium">Modelo</th>
-                          <th className="px-5 py-3 font-medium">Notas</th>
-                          {!tableColumns.showCreatedAt ? (
-                            <th className="px-5 py-3 font-medium">Fecha</th>
-                          ) : null}
                         </TableRowMetaHeaders>
                       </tr>
                     </thead>
                     <tbody>
-                      {pagination.paginatedItems.map((fw) => {
-                        const busy =
-                          deletingId === fw.id || downloadingId === fw.id;
-                        return (
-                          <tr
-                            key={fw.id}
-                            className="border-b border-border/70 last:border-0"
-                          >
-                            <TableRowMetaCells
-                              showId={tableColumns.showId}
-                              showCreatedAt={tableColumns.showCreatedAt}
-                              id={fw.id}
-                              createdAt={fw.createdAt}
-                              actions={
-                                <td className="px-5 py-3.5">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <button
-                                      type="button"
-                                      title="Descargar"
-                                      aria-label={`Descargar ${fw.fileName}`}
-                                      disabled={busy}
-                                      onClick={() => handleDownload(fw)}
-                                      className="rounded-lg p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground disabled:opacity-50"
-                                    >
-                                      {downloadingId === fw.id ? (
-                                        <Loader2 className="size-4 animate-spin" />
-                                      ) : (
-                                        <Download className="size-4" />
-                                      )}
-                                    </button>
-                                    {canDelete ? (
-                                      <button
-                                        type="button"
-                                        title="Eliminar"
-                                        aria-label={`Eliminar firmware ${fw.version}`}
-                                        disabled={busy}
-                                        onClick={() => handleDelete(fw)}
-                                        className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-700 disabled:opacity-50 dark:hover:text-rose-300"
-                                      >
-                                        {deletingId === fw.id ? (
-                                          <Loader2 className="size-4 animate-spin" />
-                                        ) : (
-                                          <Trash2 className="size-4" />
-                                        )}
-                                      </button>
-                                    ) : null}
-                                  </div>
-                                </td>
-                              }
-                            >
-                              <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
-                                {fw.version}
-                              </td>
+                      {pagination.paginatedItems.map((fw) => (
+                        <ClickableTableRow
+                          key={fw.id}
+                          href={firmwareVersionPath(fw.id)}
+                        >
+                          <TableRowMetaCells
+                            showId={tableColumns.showId}
+                            showCreatedAt={tableColumns.showCreatedAt}
+                            id={fw.id}
+                            createdAt={fw.createdAt}
+                            actions={
                               <td
-                                className="max-w-[200px] px-5 py-3.5"
-                                title={`SHA-256: ${fw.checksumSha256}`}
+                                className="px-5 py-3.5"
+                                data-row-click="ignore"
                               >
-                                <TruncatedText maxClassName="max-w-[180px]">
-                                  {fw.fileName}
-                                </TruncatedText>
+                                <TableRowActionsMenu
+                                  viewHref={firmwareVersionPath(fw.id)}
+                                  viewLabel={`Ver firmware ${fw.version}`}
+                                  onEdit={
+                                    canUpdate ? () => openEdit(fw) : undefined
+                                  }
+                                  onDelete={
+                                    canDelete
+                                      ? () => void handleDelete(fw)
+                                      : undefined
+                                  }
+                                  deleting={deletingId === fw.id}
+                                />
                               </td>
-                              <td className="px-5 py-3.5 text-muted">
-                                {formatBytes(fw.sizeBytes)}
-                              </td>
-                              <td className="max-w-[160px] px-5 py-3.5 text-muted">
-                                <TruncatedText maxClassName="max-w-[140px]">
-                                  {modelLabel(fw.printerModelId, modelMap)}
-                                </TruncatedText>
-                              </td>
-                              <td className="max-w-[180px] px-5 py-3.5 text-muted">
-                                <TruncatedText maxClassName="max-w-[160px]">
-                                  {fw.notes || "—"}
-                                </TruncatedText>
-                              </td>
-                              {!tableColumns.showCreatedAt ? (
-                                <td className="px-5 py-3.5 text-muted">
-                                  {formatFirmwareDate(fw.createdAt)}
-                                </td>
-                              ) : null}
-                            </TableRowMetaCells>
-                          </tr>
-                        );
-                      })}
+                            }
+                          >
+                            <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
+                              {fw.version}
+                            </td>
+                            <td
+                              className="max-w-[220px] px-5 py-3.5"
+                              title={`SHA-256: ${fw.checksumSha256}`}
+                            >
+                              <TruncatedText maxClassName="max-w-[200px]">
+                                {fw.fileName}
+                              </TruncatedText>
+                            </td>
+                            <td className="px-5 py-3.5 text-muted">
+                              {formatBytes(fw.sizeBytes)}
+                            </td>
+                            <td className="max-w-[180px] px-5 py-3.5 text-muted">
+                              <TruncatedText maxClassName="max-w-[160px]">
+                                {modelLabel(fw.printerModelId, modelMap)}
+                              </TruncatedText>
+                            </td>
+                          </TableRowMetaCells>
+                        </ClickableTableRow>
+                      ))}
                     </tbody>
                   </table>
                 </TableScroll>
@@ -521,14 +510,18 @@ export function FirmwareVersionsManager() {
         )}
       </div>
 
-      <FirmwareUploadDialog
-        open={dialogOpen}
-        saving={saving}
-        error={formError}
-        modelOptions={modelOptions}
-        onClose={closeDialog}
-        onSubmit={handleSubmit}
-      />
+      {dialog ? (
+        <FirmwareUploadDialog
+          mode={dialog}
+          open
+          saving={saving}
+          error={formError}
+          modelOptions={modelOptions}
+          firmware={dialog === "edit" ? selected : null}
+          onClose={closeDialog}
+          onSubmit={handleSubmit}
+        />
+      ) : null}
     </div>
   );
 }

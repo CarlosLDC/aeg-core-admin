@@ -44,6 +44,7 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
   firmwares: {
     read: ADMIN_ONLY,
     create: ADMIN_ONLY,
+    update: ADMIN_ONLY,
     delete: ADMIN_ONLY,
   },
   seals: {

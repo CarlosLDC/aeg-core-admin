@@ -25,3 +25,9 @@ export type CreateFirmwareInput = {
   printerModelId?: number | null;
   notes?: string | null;
 };
+
+export type UpdateFirmwareInput = {
+  version: string;
+  printerModelId?: number | null;
+  notes?: string | null;
+};

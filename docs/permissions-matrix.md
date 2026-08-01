@@ -21,7 +21,7 @@ Los roles históricos `DISTRIBUTOR` y `SERVICE_CENTER` se consolidaron en `TECHN
 | branches | ADMIN, TECHNICIAN | ADMIN, TECHNICIAN | ADMIN, TECHNICIAN | ADMIN | Wizard SENIAT: create company+branch |
 | printers | ADMIN, TECHNICIAN | ADMIN | ADMIN | ADMIN | TECH: solo su cartera (`distributorId`); solo lectura |
 | printerModels | ADMIN | ADMIN | ADMIN | ADMIN | Catálogo solo administrador; TECH resuelve modelos vía API al ver impresoras |
-| firmwares | ADMIN | ADMIN | — | ADMIN | Catálogo OTA; sin edición (solo alta y baja) |
+| firmwares | ADMIN | ADMIN | ADMIN | ADMIN | Catálogo OTA; edición de metadatos (versión, modelo, notas) |
 | seals | ADMIN (ruta `/seals`) | ADMIN, TECHNICIAN | Igual | Igual | TECH gestiona precintos en servicio técnico, no en el catálogo |
 | technicalServices | ADMIN, TECHNICIAN | Igual | Igual | Igual | `userId` = técnico (`users.id`) |
 | annualInspections | ADMIN, TECHNICIAN | Igual | Igual | Igual | Solo impresoras **asignada**; inspector = `userId` |

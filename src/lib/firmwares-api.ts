@@ -7,6 +7,7 @@ import type {
   CreateFirmwareInput,
   FirmwareResponse,
   FirmwareUploadJobResponse,
+  UpdateFirmwareInput,
 } from "@/types/firmware";
 
 const BASE = "/api/firmwares";
@@ -131,6 +132,20 @@ export async function createFirmware(
     "La transferencia SFTP del firmware sigue en curso o no respondió a tiempo. Revisa el listado en unos segundos.",
     504,
   );
+}
+
+export async function updateFirmware(
+  id: number,
+  input: UpdateFirmwareInput,
+): Promise<FirmwareResponse> {
+  return apiFetch<FirmwareResponse>(`${BASE}/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      version: input.version.trim(),
+      printerModelId: input.printerModelId ?? null,
+      notes: input.notes?.trim() ? input.notes.trim() : null,
+    }),
+  });
 }
 
 export async function deleteFirmware(id: number): Promise<void> {

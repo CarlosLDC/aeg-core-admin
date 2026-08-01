@@ -147,6 +147,10 @@ export function canCreateFirmwareRecord(role: Role): boolean {
   return can(role, "firmwares", "create");
 }
 
+export function canUpdateFirmwareRecord(role: Role): boolean {
+  return can(role, "firmwares", "update");
+}
+
 export function canDeleteFirmwareRecord(role: Role): boolean {
   return can(role, "firmwares", "delete");
 }

@@ -17,6 +17,7 @@ import {
   formFieldNativeSelectClass,
 } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
+import type { FirmwareResponse } from "@/types/firmware";
 
 export type FirmwareUploadValues = {
   version: string;
@@ -31,26 +32,38 @@ export type FirmwareModelOption = {
 };
 
 type FirmwareUploadDialogProps = {
+  mode: "create" | "edit";
   open: boolean;
   saving: boolean;
   error: string | null;
   modelOptions: FirmwareModelOption[];
+  firmware?: FirmwareResponse | null;
   onClose: () => void;
   onSubmit: (values: FirmwareUploadValues) => void;
 };
 
 type WizardStep = 1 | 2 | 3;
 
-const FORM_STEPS: { step: WizardStep; label: string }[] = [
+const CREATE_STEPS: { step: WizardStep; label: string }[] = [
   { step: 1, label: "Binario" },
   { step: 2, label: "Versión" },
   { step: 3, label: "Notas" },
 ];
 
-const STEP_ICONS = {
+const EDIT_STEPS: { step: WizardStep; label: string }[] = [
+  { step: 1, label: "Versión" },
+  { step: 2, label: "Notas" },
+];
+
+const CREATE_ICONS = {
   1: Upload,
   2: Cpu,
   3: StickyNote,
+} as const;
+
+const EDIT_ICONS = {
+  1: Cpu,
+  2: StickyNote,
 } as const;
 
 const emptyForm: FirmwareUploadValues = {
@@ -62,7 +75,23 @@ const emptyForm: FirmwareUploadValues = {
 
 const VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
 
-function stepSubtitle(step: WizardStep): string {
+function formatBytes(size: number): string {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function stepSubtitle(mode: "create" | "edit", step: WizardStep): string {
+  if (mode === "edit") {
+    switch (step) {
+      case 1:
+        return "Actualice la versión semántica y, si aplica, el modelo fiscal.";
+      case 2:
+        return "Notas u observaciones opcionales sobre esta versión.";
+      default:
+        return "";
+    }
+  }
   switch (step) {
     case 1:
       return "Seleccione un único archivo .bin.";
@@ -75,17 +104,13 @@ function stepSubtitle(step: WizardStep): string {
   }
 }
 
-function formatBytes(size: number): string {
-  if (size < 1024) return `${size} B`;
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-  return `${(size / (1024 * 1024)).toFixed(2)} MB`;
-}
-
 export function FirmwareUploadDialog({
+  mode,
   open,
   saving,
   error,
   modelOptions,
+  firmware = null,
   onClose,
   onSubmit,
 }: FirmwareUploadDialogProps) {
@@ -95,25 +120,40 @@ export function FirmwareUploadDialog({
   const [form, setForm] = useState<FirmwareUploadValues>(emptyForm);
   const [stepError, setStepError] = useState<string | null>(null);
 
+  const steps = mode === "create" ? CREATE_STEPS : EDIT_STEPS;
+  const lastStep = steps[steps.length - 1]!.step;
+
   useEffect(() => {
     if (!open) return;
     setStep(1);
-    setForm(emptyForm);
     setStepError(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  }, [open]);
+    if (mode === "edit" && firmware) {
+      setForm({
+        version: firmware.version,
+        printerModelId:
+          firmware.printerModelId != null ? String(firmware.printerModelId) : "",
+        notes: firmware.notes ?? "",
+        file: null,
+      });
+    } else {
+      setForm(emptyForm);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }, [open, mode, firmware]);
 
   if (!open) return null;
 
   function validateStep(target: WizardStep): string | null {
-    if (target === 1) {
+    if (mode === "create" && target === 1) {
       if (!form.file) return "Selecciona un archivo .bin.";
       if (!form.file.name.toLowerCase().endsWith(".bin")) {
         return "El archivo debe tener extensión .bin.";
       }
       return null;
     }
-    if (target === 2) {
+    const isVersionStep =
+      (mode === "create" && target === 2) || (mode === "edit" && target === 1);
+    if (isVersionStep) {
       const version = form.version.trim();
       if (!VERSION_PATTERN.test(version)) {
         return "La versión debe tener el formato x.y.z (p. ej. 1.2.3).";
@@ -152,13 +192,13 @@ export function FirmwareUploadDialog({
       return;
     }
     setStepError(null);
-    if (step < 3) {
+    if (step < lastStep) {
       setStep((current) => (current + 1) as WizardStep);
     }
   }
 
-  function submitUpload() {
-    for (const { step: s } of FORM_STEPS) {
+  function submitForm() {
+    for (const { step: s } of steps) {
       const err = validateStep(s);
       if (err) {
         setStepError(err);
@@ -176,11 +216,11 @@ export function FirmwareUploadDialog({
 
   function handleFormSubmit(e: FormEvent) {
     e.preventDefault();
-    if (step < 3) {
+    if (step < lastStep) {
       goNext();
       return;
     }
-    submitUpload();
+    submitForm();
   }
 
   function assignFile(file: File | null) {
@@ -197,6 +237,9 @@ export function FirmwareUploadDialog({
   }
 
   const displayError = stepError ?? error;
+  const title =
+    mode === "create" ? "Subir versión de firmware" : "Editar versión de firmware";
+  const submitLabel = mode === "create" ? "Subir" : "Guardar";
 
   return (
     <div
@@ -219,9 +262,11 @@ export function FirmwareUploadDialog({
                 id="firmware-upload-wizard-title"
                 className="text-lg font-semibold text-card-foreground"
               >
-                Subir versión de firmware
+                {title}
               </h2>
-              <p className="mt-1 text-sm text-muted">{stepSubtitle(step)}</p>
+              <p className="mt-1 text-sm text-muted">
+                {stepSubtitle(mode, step)}
+              </p>
             </div>
             <button
               type="button"
@@ -233,9 +278,17 @@ export function FirmwareUploadDialog({
             </button>
           </div>
 
-          <nav className="mt-4 flex gap-1" aria-label="Pasos de la subida">
-            {FORM_STEPS.map(({ step: wizardStep, label }) => {
-              const Icon = STEP_ICONS[wizardStep];
+          <nav
+            className="mt-4 flex gap-1"
+            aria-label={
+              mode === "create" ? "Pasos de la subida" : "Pasos de la edición"
+            }
+          >
+            {steps.map(({ step: wizardStep, label }) => {
+              const Icon =
+                mode === "create"
+                  ? CREATE_ICONS[wizardStep]
+                  : EDIT_ICONS[wizardStep as 1 | 2];
               const isActive = step === wizardStep;
               const isDone = step > wizardStep;
               return (
@@ -274,7 +327,23 @@ export function FirmwareUploadDialog({
           ) : null}
 
           <form id={formId} onSubmit={handleFormSubmit} className="space-y-4">
-            {step === 1 ? (
+            {mode === "edit" && firmware ? (
+              <div className="flex items-center gap-2.5 rounded-lg border border-border bg-foreground/[0.02] p-2.5">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-foreground/5">
+                  <FileCode2 className="size-4 text-muted" aria-hidden />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-card-foreground">
+                    {firmware.fileName}
+                  </p>
+                  <p className="text-xs text-muted">
+                    {formatBytes(firmware.sizeBytes)} · binario sin cambios
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {mode === "create" && step === 1 ? (
               <div className="space-y-3">
                 <input
                   ref={fileInputRef}
@@ -285,7 +354,6 @@ export function FirmwareUploadDialog({
                   onChange={(e) => {
                     const next = e.target.files?.[0] ?? null;
                     assignFile(next);
-                    // Solo un binario: limpia el input para que un re-pick del mismo nombre funcione.
                     if (fileInputRef.current) fileInputRef.current.value = "";
                   }}
                 />
@@ -330,33 +398,34 @@ export function FirmwareUploadDialog({
                     </button>
                   </div>
                 ) : (
-                    <div className="flex items-center gap-2.5 rounded-lg border border-border bg-background p-2.5">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-foreground/5">
-                        <FileCode2 className="size-4 text-muted" aria-hidden />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-card-foreground">
-                          {form.file.name}
-                        </p>
-                        <p className="text-xs text-muted">
-                          {formatBytes(form.file.size)}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        disabled={saving}
-                        onClick={() => assignFile(null)}
-                        className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
-                        aria-label="Quitar archivo"
-                      >
-                        <Trash2 className="size-4" aria-hidden />
-                      </button>
+                  <div className="flex items-center gap-2.5 rounded-lg border border-border bg-background p-2.5">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-foreground/5">
+                      <FileCode2 className="size-4 text-muted" aria-hidden />
                     </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-card-foreground">
+                        {form.file.name}
+                      </p>
+                      <p className="text-xs text-muted">
+                        {formatBytes(form.file.size)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => assignFile(null)}
+                      className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
+                      aria-label="Quitar archivo"
+                    >
+                      <Trash2 className="size-4" aria-hidden />
+                    </button>
+                  </div>
                 )}
               </div>
             ) : null}
 
-            {step === 2 ? (
+            {(mode === "create" && step === 2) ||
+            (mode === "edit" && step === 1) ? (
               <div className="space-y-4">
                 <label className="block">
                   <FieldLabel required>Versión</FieldLabel>
@@ -400,7 +469,8 @@ export function FirmwareUploadDialog({
               </div>
             ) : null}
 
-            {step === 3 ? (
+            {(mode === "create" && step === 3) ||
+            (mode === "edit" && step === 2) ? (
               <label className="block">
                 <FieldLabel>Notas</FieldLabel>
                 <textarea
@@ -441,7 +511,7 @@ export function FirmwareUploadDialog({
                 >
                   Cancelar
                 </button>
-                {step < 3 ? (
+                {step < lastStep ? (
                   <button
                     type="submit"
                     form={formId}
@@ -463,7 +533,7 @@ export function FirmwareUploadDialog({
                     {saving ? (
                       <Loader2 className="size-4 animate-spin" aria-hidden />
                     ) : null}
-                    Subir
+                    {submitLabel}
                   </button>
                 )}
               </div>

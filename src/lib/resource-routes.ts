@@ -38,6 +38,10 @@ export function printerModelPath(id: number): string {
   return `/printer-models/${id}`;
 }
 
+export function firmwareVersionPath(id: number): string {
+  return `/firmware-versions/${id}`;
+}
+
 export function sealPath(id: number): string {
   return `/seals/${id}`;
 }
