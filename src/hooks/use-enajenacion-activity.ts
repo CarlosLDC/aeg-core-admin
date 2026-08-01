@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
+  clearEnajenacionActivity,
   getEnajenacionActiveSessions,
   getEnajenacionActivity,
 } from "@/lib/mqtt-api";
@@ -32,6 +33,7 @@ export function useEnajenacionActivity() {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [polling, setPolling] = useState(true);
@@ -103,6 +105,22 @@ export function useEnajenacionActivity() {
     void refetch({ silent: true, nextPage: page + 1, append: true });
   }, [hasMore, loadingMore, page, refetch]);
 
+  const clear = useCallback(async () => {
+    setClearing(true);
+    try {
+      await clearEnajenacionActivity();
+      setEntries([]);
+      setTotal(0);
+      setPage(0);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al limpiar actividad");
+      throw err;
+    } finally {
+      setClearing(false);
+    }
+  }, []);
+
   return {
     entries,
     sessions,
@@ -118,11 +136,13 @@ export function useEnajenacionActivity() {
     hasMore,
     loading,
     refreshing,
+    clearing,
     loadingMore,
     error,
     polling,
     setPolling,
     refetch: () => refetch(),
+    clear,
     loadMore,
   };
 }

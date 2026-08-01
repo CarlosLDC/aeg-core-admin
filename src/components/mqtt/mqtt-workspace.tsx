@@ -1,15 +1,19 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { AnnualInspectionMqttPanel } from "@/components/mqtt/annual-inspection-mqtt-panel";
 import { AnnualInspectionQrLookupPanel } from "@/components/mqtt/annual-inspection-qr-lookup-panel";
 import { EnajenacionActivityPanel } from "@/components/mqtt/enajenacion-activity-panel";
-import { EnajenacionTestPanel } from "@/components/mqtt/enajenacion-test-panel";
 import { FiscalizacionTestPanel } from "@/components/mqtt/fiscalizacion-test-panel";
 import { MqttDiagnosticsPanel } from "@/components/mqtt/mqtt-diagnostics-panel";
 import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { cn } from "@/lib/utils";
 
+/**
+ * Full Remoto tab set. Enajenación and Inspección anual stay in the type union /
+ * storage migration but are omitted from {@link VISIBLE_TAB_OPTIONS} for now.
+ * Restore by re-adding those options and mounting their panels again
+ * (`EnajenacionTestPanel`, `AnnualInspectionMqttPanel`).
+ */
 type MqttTab =
   | "diagnostics"
   | "enajenacion"
@@ -17,6 +21,15 @@ type MqttTab =
   | "activity"
   | "annual-inspection"
   | "verify-qr";
+
+const HIDDEN_TABS = new Set<MqttTab>(["enajenacion", "annual-inspection"]);
+
+const VISIBLE_TAB_OPTIONS: { value: MqttTab; label: string }[] = [
+  { value: "diagnostics", label: "Diagnóstico" },
+  { value: "activity", label: "Actividad" },
+  { value: "fiscalizacion", label: "Fiscalización" },
+  { value: "verify-qr", label: "Comprobante" },
+];
 
 const TAB_STORAGE_KEY = "remoto-workspace-tab";
 const LEGACY_TAB_STORAGE_KEY = "mqtt-workspace-tab";
@@ -39,6 +52,9 @@ function readStoredTab(): MqttTab {
     stored === "annual-inspection" ||
     stored === "verify-qr"
   ) {
+    if (HIDDEN_TABS.has(stored)) {
+      return "diagnostics";
+    }
     return stored;
   }
   return "diagnostics";
@@ -48,6 +64,9 @@ export function MqttWorkspace() {
   const [tab, setTab] = useState<MqttTab>(readStoredTab);
 
   const handleTabChange = useCallback((next: MqttTab) => {
+    if (HIDDEN_TABS.has(next)) {
+      return;
+    }
     setTab(next);
     sessionStorage.setItem(TAB_STORAGE_KEY, next);
   }, []);
@@ -59,15 +78,8 @@ export function MqttWorkspace() {
           value={tab}
           onChange={handleTabChange}
           ariaLabel="Sección Remoto"
-          options={[
-            { value: "diagnostics", label: "Diagnóstico" },
-            { value: "activity", label: "Actividad" },
-            { value: "enajenacion", label: "Enajenación" },
-            { value: "fiscalizacion", label: "Fiscalización" },
-            { value: "annual-inspection", label: "Inspección anual" },
-            { value: "verify-qr", label: "Comprobante" },
-          ]}
-          className="w-full max-w-4xl"
+          options={VISIBLE_TAB_OPTIONS}
+          className="w-full max-w-2xl"
         />
       </div>
 
@@ -79,16 +91,8 @@ export function MqttWorkspace() {
         <EnajenacionActivityPanel />
       </div>
 
-      <div className={cn(tab !== "enajenacion" && "hidden")}>
-        <EnajenacionTestPanel />
-      </div>
-
       <div className={cn(tab !== "fiscalizacion" && "hidden")}>
         <FiscalizacionTestPanel />
-      </div>
-
-      <div className={cn(tab !== "annual-inspection" && "hidden")}>
-        <AnnualInspectionMqttPanel />
       </div>
 
       <div className={cn(tab !== "verify-qr" && "hidden")}>

@@ -306,6 +306,14 @@ export async function getEnajenacionActivity(options?: {
   return data;
 }
 
+export async function clearEnajenacionActivity(): Promise<void> {
+  const { data, status } = await mqttFetch<undefined>(
+    `${BASE}/enajenacion/activity`,
+    { method: "DELETE" },
+  );
+  ensureMqttSuccess(status, data, "No se pudo limpiar la actividad de enajenación.");
+}
+
 export async function getEnajenacionActiveSessions(): Promise<
   EnajenacionActiveSession[]
 > {

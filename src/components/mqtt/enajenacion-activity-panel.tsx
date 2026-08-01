@@ -1,7 +1,8 @@
 "use client";
 
-import { ChevronDown, ChevronRight, Loader2, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronRight, Eraser, Loader2, RefreshCw } from "lucide-react";
 import { useState } from "react";
+import { useConfirm } from "@/context/confirm-provider";
 import { useToast } from "@/context/toast-provider";
 import { useEnajenacionActivity } from "@/hooks/use-enajenacion-activity";
 import {
@@ -68,12 +69,32 @@ function formatPayload(payload: string | null): string {
 export function EnajenacionActivityPanel() {
   const activity = useEnajenacionActivity();
   const toast = useToast();
+  const confirm = useConfirm();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   async function handleRefresh() {
     try {
       await activity.refetch();
       toast.success("Actividad actualizada");
+    } catch (err) {
+      toast.error(getMqttErrorMessage(err));
+    }
+  }
+
+  async function handleClear() {
+    if (
+      !(await confirm({
+        title: "Limpiar actividad",
+        message:
+          "¿Eliminar todos los registros de actividad Remoto de enajenación? Esta acción no se puede deshacer.",
+        destructive: true,
+      }))
+    ) {
+      return;
+    }
+    try {
+      await activity.clear();
+      toast.success("Actividad limpiada");
     } catch (err) {
       toast.error(getMqttErrorMessage(err));
     }
@@ -162,7 +183,7 @@ export function EnajenacionActivityPanel() {
           <button
             type="button"
             onClick={() => void handleRefresh()}
-            disabled={activity.refreshing}
+            disabled={activity.refreshing || activity.clearing}
             className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs text-muted hover:text-card-foreground disabled:opacity-50"
           >
             {activity.refreshing ? (
@@ -170,8 +191,25 @@ export function EnajenacionActivityPanel() {
             ) : (
               <RefreshCw className="size-3.5" />
             )}
-          Actualizar
-        </button>
+            Actualizar
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleClear()}
+            disabled={
+              activity.clearing ||
+              activity.refreshing ||
+              (activity.total === 0 && activity.entries.length === 0)
+            }
+            className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs text-muted hover:bg-rose-500/10 hover:text-rose-700 disabled:opacity-50 dark:hover:text-rose-300"
+          >
+            {activity.clearing ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Eraser className="size-3.5" />
+            )}
+            Limpiar
+          </button>
       </div>
 
       {activity.sessions.length > 0 ? (
