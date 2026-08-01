@@ -61,12 +61,11 @@ const emptyForm: FirmwareUploadValues = {
 };
 
 const VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
-const MAX_BIN_BYTES = 64 * 1024 * 1024;
 
 function stepSubtitle(step: WizardStep): string {
   switch (step) {
     case 1:
-      return "Seleccione el archivo .bin del firmware (máx. 64 MB).";
+      return "Seleccione un único archivo .bin.";
     case 2:
       return "Indique la versión semántica y, si aplica, el modelo fiscal.";
     case 3:
@@ -111,9 +110,6 @@ export function FirmwareUploadDialog({
       if (!form.file) return "Selecciona un archivo .bin.";
       if (!form.file.name.toLowerCase().endsWith(".bin")) {
         return "El archivo debe tener extensión .bin.";
-      }
-      if (form.file.size > MAX_BIN_BYTES) {
-        return "El archivo supera el máximo de 64 MB.";
       }
       return null;
     }
@@ -286,59 +282,56 @@ export function FirmwareUploadDialog({
                   accept=".bin,application/octet-stream"
                   className="sr-only"
                   disabled={saving}
-                  onChange={(e) =>
-                    assignFile(e.target.files?.[0] ?? null)
-                  }
+                  onChange={(e) => {
+                    const next = e.target.files?.[0] ?? null;
+                    assignFile(next);
+                    // Solo un binario: limpia el input para que un re-pick del mismo nombre funcione.
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
                 />
 
-                <div
-                  role="group"
-                  aria-label="Subir archivo de firmware"
-                  className={cn(
-                    "shrink-0 rounded-xl border border-dashed border-border bg-foreground/[0.02] px-4 py-5",
-                    saving && "opacity-60",
-                  )}
-                >
-                  <button
-                    type="button"
-                    disabled={saving}
-                    onClick={openFilePicker}
-                    className="group flex w-full flex-col items-center gap-3 rounded-lg px-1 py-0.5 text-center transition-colors enabled:hover:bg-foreground/[0.02] disabled:cursor-not-allowed"
+                {!form.file ? (
+                  <div
+                    role="group"
+                    aria-label="Subir archivo de firmware"
+                    className={cn(
+                      "shrink-0 rounded-xl border border-dashed border-border bg-foreground/[0.02] px-4 py-5",
+                      saving && "opacity-60",
+                    )}
                   >
-                    <div className="flex size-11 items-center justify-center rounded-full bg-accent/10 text-accent">
-                      <Upload className="size-5" aria-hidden />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-card-foreground">
-                        {form.file
-                          ? "Cambiar archivo .bin"
-                          : "Añadir archivo .bin"}
-                      </p>
-                      <p className="text-xs leading-relaxed text-muted">
-                        Firmware binario
-                        <span className="mx-1 text-border">·</span>
-                        máx. 64 MB
-                      </p>
-                      {!form.file ? (
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={openFilePicker}
+                      className="group flex w-full flex-col items-center gap-3 rounded-lg px-1 py-0.5 text-center transition-colors enabled:hover:bg-foreground/[0.02] disabled:cursor-not-allowed"
+                    >
+                      <div className="flex size-11 items-center justify-center rounded-full bg-accent/10 text-accent">
+                        <Upload className="size-5" aria-hidden />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-card-foreground">
+                          Seleccionar archivo .bin
+                        </p>
+                        <p className="text-xs leading-relaxed text-muted">
+                          Un solo binario por subida
+                        </p>
                         <p className="pt-0.5 text-xs text-muted/90">
                           Se requiere un archivo .bin.
                         </p>
-                      ) : null}
-                    </div>
-                    <span
-                      className={cn(
-                        "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm font-medium text-foreground",
-                        !saving && "group-hover:border-accent/30",
-                      )}
-                    >
-                      {form.file ? "Elegir otro archivo" : "Elegir archivo"}
-                    </span>
-                  </button>
-                </div>
-
-                {form.file ? (
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2.5 rounded-lg border border-border bg-background p-2.5">
+                      </div>
+                      <span
+                        className={cn(
+                          "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm font-medium text-foreground",
+                          !saving && "group-hover:border-accent/30",
+                        )}
+                      >
+                        Elegir archivo
+                      </span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2.5 rounded-lg border border-border bg-background p-2.5">
                       <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-foreground/5">
                         <FileCode2 className="size-4 text-muted" aria-hidden />
                       </div>
@@ -354,14 +347,26 @@ export function FirmwareUploadDialog({
                         type="button"
                         disabled={saving}
                         onClick={() => assignFile(null)}
-                        className="shrink-0 rounded-lg p-1.5 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
+                        className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
                         aria-label="Quitar archivo"
                       >
-                        <Trash2 className="size-4" />
+                        <Trash2 className="size-4" aria-hidden />
                       </button>
-                    </li>
-                  </ul>
-                ) : null}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={openFilePicker}
+                      className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+                    >
+                      Reemplazar archivo
+                    </button>
+                    <p className="text-center text-xs text-muted">
+                      Solo se admite un binario por versión. Para cambiarlo,
+                      reemplázalo o quítalo primero.
+                    </p>
+                  </div>
+                )}
               </div>
             ) : null}
 
