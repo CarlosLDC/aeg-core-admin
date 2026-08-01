@@ -238,33 +238,40 @@ export function AnnualInspectionActiveStep({
             </div>
           ) : null}
 
-          {showPublishCommand && (
-            <div className="mt-5">
-              <PublishServerCommandButton
-                stepId={step.id}
-                simulation={stepState.serverCommandSimulation!}
-                disabled={stepState.publishDisabled}
-                disabledReason={stepState.publishDisabledReason}
-                onPublished={onServerCommandPublished}
-                buttonLabel={annualInspectionServerCommandButtonLabel(step.id)}
-                fullWidth
-              />
+          {showPublishCommand || showSimulation ? (
+            <div
+              className={cn(
+                "mt-5 grid gap-3",
+                showPublishCommand && showSimulation
+                  ? "grid-cols-1 sm:grid-cols-2"
+                  : "grid-cols-1",
+              )}
+            >
+              {showPublishCommand ? (
+                <PublishServerCommandButton
+                  stepId={step.id}
+                  simulation={stepState.serverCommandSimulation!}
+                  disabled={stepState.publishDisabled}
+                  disabledReason={stepState.publishDisabledReason}
+                  onPublished={onServerCommandPublished}
+                  buttonLabel={annualInspectionServerCommandButtonLabel(step.id)}
+                  fullWidth
+                />
+              ) : null}
+              {showSimulation ? (
+                <SimulatePrinterButton
+                  stepId={step.id}
+                  simulation={stepState.simulation!}
+                  disabled={stepState.simulateDisabled}
+                  disabledReason={stepState.simulateDisabledReason}
+                  onPublished={onPublished}
+                  buttonLabel={annualInspectionSimulationButtonLabel(step.id)}
+                  fullWidth
+                  variant="outline"
+                />
+              ) : null}
             </div>
-          )}
-
-          {showSimulation && (
-            <div className="mt-5">
-              <SimulatePrinterButton
-                stepId={step.id}
-                simulation={stepState.simulation!}
-                disabled={stepState.simulateDisabled}
-                disabledReason={stepState.simulateDisabledReason}
-                onPublished={onPublished}
-                buttonLabel={annualInspectionSimulationButtonLabel(step.id)}
-                fullWidth
-              />
-            </div>
-          )}
+          ) : null}
         </>
       )}
     </article>

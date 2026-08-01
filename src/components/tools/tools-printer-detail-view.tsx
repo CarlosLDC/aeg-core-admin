@@ -104,23 +104,19 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
         </ToolsSectionGrid>
       </section>
 
-      {!remoteActionsDisabled ? (
-        <>
-          <ToolsReporteZSection
-            printer={printer}
-            remoteActionsDisabled={remoteActionsDisabled}
-            seniatActionsDisabled={connection.seniatActionsDisabled}
-          />
-          <ToolsTestDocumentsSection
-            printer={printer}
-            remoteActionsDisabled={remoteActionsDisabled}
-          />
-          <ToolsReprintSection
-            printer={printer}
-            remoteActionsDisabled={remoteActionsDisabled}
-          />
-        </>
-      ) : null}
+      <ToolsReporteZSection
+        printer={printer}
+        remoteActionsDisabled={remoteActionsDisabled}
+        seniatActionsDisabled={connection.seniatActionsDisabled}
+      />
+      <ToolsTestDocumentsSection
+        printer={printer}
+        remoteActionsDisabled={remoteActionsDisabled}
+      />
+      <ToolsReprintSection
+        printer={printer}
+        remoteActionsDisabled={remoteActionsDisabled}
+      />
     </ToolsPage>
   );
 }

@@ -65,9 +65,9 @@ export function MqttWorkspace() {
             { value: "enajenacion", label: "Enajenación" },
             { value: "fiscalizacion", label: "Fiscalización" },
             { value: "annual-inspection", label: "Inspección anual" },
-            { value: "verify-qr", label: "Verificar comprobante" },
+            { value: "verify-qr", label: "Comprobante" },
           ]}
-          className="w-full max-w-3xl"
+          className="w-full max-w-4xl"
         />
       </div>
 

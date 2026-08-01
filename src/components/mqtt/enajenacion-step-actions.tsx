@@ -182,6 +182,7 @@ export function SimulatePrinterButton({
   onPublished,
   fullWidth,
   buttonLabel,
+  variant = "accent",
 }: {
   stepId: string;
   simulation: PrinterSimulationPayload;
@@ -190,6 +191,7 @@ export function SimulatePrinterButton({
   onPublished?: (stepId: string) => void;
   fullWidth?: boolean;
   buttonLabel?: string;
+  variant?: "accent" | "outline";
 }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
@@ -221,8 +223,12 @@ export function SimulatePrinterButton({
         onClick={() => void handlePublish()}
         disabled={disabled || loading}
         className={cn(
-          "inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground",
-          "hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50",
+          "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium",
+          "disabled:pointer-events-none disabled:opacity-50",
+          variant === "accent" &&
+            "bg-accent text-accent-foreground hover:bg-accent/90",
+          variant === "outline" &&
+            "border border-border bg-card text-card-foreground hover:bg-foreground/5",
           fullWidth && "w-full",
         )}
       >
