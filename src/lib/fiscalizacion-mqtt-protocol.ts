@@ -9,19 +9,19 @@ export const FISCALIZACION_FLOW_STEPS = [
   {
     id: "request",
     step: "1",
-    name: "Solicitud ptrFiscalizar",
+    name: "Enviar solicitud",
     isRequest: true,
   },
   {
     id: "ack",
     step: "2",
-    name: "ACK RxPtrFiscalizarRemoto",
+    name: "ACK del servidor",
     isRequest: false,
   },
   {
     id: "result",
     step: "3",
-    name: "Resultado en Respuesta",
+    name: "Resultado",
     isRequest: false,
   },
 ] as const;
