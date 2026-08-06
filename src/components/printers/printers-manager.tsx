@@ -10,6 +10,7 @@ import {
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
+import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
 import {
   type SelectOption,
 } from "@/components/printers/printer-form-dialog";
@@ -85,8 +86,10 @@ import {
   deletePrinter,
   fetchPrinters,
   getPrintersErrorMessage,
+  isPrinterDeleteBlockedError,
   updatePrinter,
 } from "@/lib/printers-api";
+import type { PrinterDependencyRef } from "@/types/printer-dependencies";
 import { fetchAuthMe } from "@/lib/auth-me-api";
 import {
   DISTRIBUTOR_SELF_CLIENT_MESSAGE,
@@ -191,6 +194,14 @@ export function PrintersManager() {
   } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteBlocked, setDeleteBlocked] = useState<{
+    printerId: number;
+    printerLabel: string;
+    message: string;
+    dependencies: PrinterDependencyRef[];
+    consequences: string[];
+  } | null>(null);
+  const [forceDeleting, setForceDeleting] = useState(false);
   const tableColumns = useTableColumnVisibility("printers");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<
@@ -747,14 +758,45 @@ export function PrintersManager() {
       toast.success("Impresora eliminada.");
       await loadPrinters({ silent: true });
     } catch (err) {
+      if (isPrinterDeleteBlockedError(err)) {
+        setDeleteBlocked({
+          printerId: printer.id,
+          printerLabel: printer.fiscalSerial,
+          message: err.message,
+          dependencies: err.dependencies,
+          consequences: err.consequences,
+        });
+      } else {
+        reportListTableError({
+          message: getPrintersErrorMessage(err),
+          recordLabel: printer.fiscalSerial,
+          setListError,
+          toast,
+        });
+      }
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function handleForceDelete() {
+    if (!deleteBlocked) return;
+    const { printerId, printerLabel } = deleteBlocked;
+    setForceDeleting(true);
+    try {
+      await deletePrinter(printerId, { force: true });
+      setDeleteBlocked(null);
+      toast.success(`Impresora ${printerLabel} eliminada (borrado forzado).`);
+      await loadPrinters({ silent: true });
+    } catch (err) {
       reportListTableError({
         message: getPrintersErrorMessage(err),
-        recordLabel: printer.fiscalSerial,
+        recordLabel: printerLabel,
         setListError,
         toast,
       });
     } finally {
-      setDeletingId(null);
+      setForceDeleting(false);
     }
   }
 
@@ -1115,6 +1157,22 @@ export function PrintersManager() {
         defaultDistributorId={distributorId}
         onClose={closeDialog}
         onSubmit={handleSubmit}
+      />
+
+      <PrinterDeleteBlockedDialog
+        open={deleteBlocked != null}
+        printerLabel={deleteBlocked?.printerLabel ?? ""}
+        message={
+          deleteBlocked?.message ??
+          "Esta impresora tiene registros vinculados."
+        }
+        dependencies={deleteBlocked?.dependencies ?? []}
+        consequences={deleteBlocked?.consequences ?? []}
+        forcing={forceDeleting}
+        onClose={() => {
+          if (!forceDeleting) setDeleteBlocked(null);
+        }}
+        onForceDelete={handleForceDelete}
       />
     </div>
   );
