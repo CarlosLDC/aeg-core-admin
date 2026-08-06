@@ -26,7 +26,16 @@ import type { RitualStep } from "@/hooks/use-enajenacion-ritual";
 
 export type FiscalizacionRitualStepStatus = "pending" | "success";
 
-const SESSION_POLL_MS = 8_000;
+/** High-level UI phase for a linear, one-action-at-a-time flow. */
+export type FiscalizacionPhase =
+  | "setup"
+  | "waiting_ack"
+  | "waiting_result"
+  | "done"
+  | "failed";
+
+const SESSION_POLL_MS = 5_000;
+const REJECT_POLL_MS = 2_000;
 
 const DEFAULT_FORM: FiscalizacionFormValues = {
   ptrReg: "",
@@ -40,14 +49,17 @@ const DEFAULT_FORM: FiscalizacionFormValues = {
 export function useFiscalizacionRitual() {
   const toast = useToast();
   const [form, setForm] = useState<FiscalizacionFormValues>(DEFAULT_FORM);
+  const [selectedSealId, setSelectedSealId] = useState("");
   const [seals, setSeals] = useState<SealResponse[]>([]);
   const [sealsLoading, setSealsLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [persistentSessionError, setPersistentSessionError] = useState<
     string | null
   >(null);
-  const [panelAckedRequest, setPanelAckedRequest] = useState(false);
+  const [requestPublished, setRequestPublished] = useState(false);
   const hadActiveSessionRef = useRef(false);
+  const publishStartedAtRef = useRef<number | null>(null);
 
   const topics = useMemo(() => {
     if (!form.mac.trim()) return null;
@@ -65,6 +77,15 @@ export function useFiscalizacionRitual() {
     [seals],
   );
 
+  const canStart = useMemo(() => {
+    return Boolean(
+      form.ptrReg.trim() &&
+        topics &&
+        form.precintoNro.trim() &&
+        form.model.trim(),
+    );
+  }, [form.model, form.precintoNro, form.ptrReg, topics]);
+
   const ritualSteps = useMemo<RitualStep[]>(
     () =>
       FISCALIZACION_FLOW_STEPS.map((step) => ({
@@ -76,11 +97,14 @@ export function useFiscalizacionRitual() {
     [],
   );
 
+  const hasAck = sse.acceptedStepIds.has("ack");
+  const hasResult = sse.acceptedStepIds.has("result");
+
   const completedStepIds = useMemo(() => {
     const done = new Set(sse.acceptedStepIds);
-    if (panelAckedRequest) done.add("request");
+    if (requestPublished) done.add("request");
     return done;
-  }, [panelAckedRequest, sse.acceptedStepIds]);
+  }, [requestPublished, sse.acceptedStepIds]);
 
   const stepStatuses = useMemo(() => {
     const next: Record<string, FiscalizacionRitualStepStatus> = {};
@@ -97,7 +121,15 @@ export function useFiscalizacionRitual() {
     return index === -1 ? ritualSteps.length : index;
   }, [ritualSteps, stepStatuses]);
 
-  const ritualComplete = activeStepIndex >= ritualSteps.length;
+  const ritualComplete = hasResult || Boolean(sse.completedPrinterId);
+
+  const phase: FiscalizacionPhase = useMemo(() => {
+    if (ritualComplete) return "done";
+    if (persistentSessionError) return "failed";
+    if (hasAck) return "waiting_result";
+    if (requestPublished) return "waiting_ack";
+    return "setup";
+  }, [hasAck, persistentSessionError, requestPublished, ritualComplete]);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,19 +152,64 @@ export function useFiscalizacionRitual() {
   useEffect(() => {
     if (sse.sessionError) {
       setPersistentSessionError(sse.sessionError);
-      toast.error(sse.sessionError);
     }
-  }, [sse.sessionError, toast]);
+  }, [sse.sessionError]);
 
   useEffect(() => {
     if (sse.lastEvent?.type === "session_started") {
       setPersistentSessionError(null);
       hadActiveSessionRef.current = true;
+      setRequestPublished(true);
     }
   }, [sse.lastEvent]);
 
+  // After publishing, look for validation REJECTED (no session created).
   useEffect(() => {
-    if (!topics?.mac || ritualComplete) return;
+    if (!topics?.mac || !requestPublished || hasAck || ritualComplete) return;
+    if (persistentSessionError) return;
+
+    let cancelled = false;
+    const startedAt = publishStartedAtRef.current ?? Date.now() - 5_000;
+
+    async function pollRejection() {
+      try {
+        const activity = await getFiscalizacionActivity({
+          mac: topics!.mac,
+          limit: 20,
+        });
+        if (cancelled) return;
+        const rejected = activity.entries.find((e) => {
+          if (e.result !== "REJECTED") return false;
+          const at = Date.parse(e.at);
+          return Number.isFinite(at) ? at >= startedAt - 1_000 : true;
+        });
+        if (rejected) {
+          setPersistentSessionError(
+            rejected.detail?.trim() ||
+              "Core rechazó la solicitud de fiscalización.",
+          );
+        }
+      } catch {
+        // best-effort
+      }
+    }
+
+    void pollRejection();
+    const id = window.setInterval(() => void pollRejection(), REJECT_POLL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [
+    hasAck,
+    persistentSessionError,
+    requestPublished,
+    ritualComplete,
+    topics,
+  ]);
+
+  useEffect(() => {
+    if (!topics?.mac || ritualComplete || phase === "setup") return;
     let cancelled = false;
 
     async function poll() {
@@ -146,7 +223,7 @@ export function useFiscalizacionRitual() {
           hadActiveSessionRef.current = true;
           return;
         }
-        if (hadActiveSessionRef.current || completedStepIds.has("ack")) {
+        if (hadActiveSessionRef.current || hasAck) {
           const activity = await getFiscalizacionActivity({
             mac: topics!.mac,
             limit: 30,
@@ -171,7 +248,7 @@ export function useFiscalizacionRitual() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [completedStepIds, ritualComplete, topics]);
+  }, [hasAck, phase, ritualComplete, topics]);
 
   const updateForm = useCallback(
     (patch: Partial<FiscalizacionFormValues>) => {
@@ -182,6 +259,15 @@ export function useFiscalizacionRitual() {
 
   const selectSeal = useCallback(
     (sealId: string) => {
+      setSelectedSealId(sealId);
+      if (!sealId) {
+        setForm((prev) => ({
+          ...prev,
+          precintoNro: "",
+          precintoColor: "Azul",
+        }));
+        return;
+      }
       const seal = availableSeals.find((s) => String(s.id) === sealId);
       if (!seal) return;
       setForm((prev) => ({
@@ -194,8 +280,8 @@ export function useFiscalizacionRitual() {
   );
 
   const publishRequest = useCallback(async () => {
-    if (!topics) {
-      toast.error("Indica una MAC válida.");
+    if (!canStart || !topics) {
+      toast.error("Completa registro, MAC y precinto.");
       return;
     }
     setBusy(true);
@@ -204,20 +290,21 @@ export function useFiscalizacionRitual() {
         topic: topics.cmdServer,
         payload: buildPtrFiscalizarPayload(form) as MqttPublishPayload,
       });
-      setPanelAckedRequest(true);
+      publishStartedAtRef.current = Date.now();
+      setRequestPublished(true);
       setPersistentSessionError(null);
       hadActiveSessionRef.current = false;
-      toast.success("ptrFiscalizar publicado en CmdServer.");
+      toast.success("Solicitud enviada. Esperando ACK de Core…");
     } catch (err) {
       toast.error(getMqttErrorMessage(err));
     } finally {
       setBusy(false);
     }
-  }, [form, toast, topics]);
+  }, [canStart, form, toast, topics]);
 
   const publishRemotoKickoff = useCallback(async () => {
-    if (!topics) {
-      toast.error("Indica una MAC válida.");
+    if (!canStart || !topics) {
+      toast.error("Completa registro, MAC y precinto.");
       return;
     }
     setBusy(true);
@@ -226,18 +313,18 @@ export function useFiscalizacionRitual() {
         topic: topics.comando,
         payload: buildPtrFiscalizarRemotoPayload(form) as MqttPublishPayload,
       });
-      toast.success("ptrFiscalizarRemoto publicado en Comando (hardware).");
+      toast.success("Comando enviado a la impresora.");
     } catch (err) {
       toast.error(getMqttErrorMessage(err));
     } finally {
       setBusy(false);
     }
-  }, [form, toast, topics]);
+  }, [canStart, form, toast, topics]);
 
   const simulateResult = useCallback(
     async (ok: boolean) => {
-      if (!topics) {
-        toast.error("Indica una MAC válida.");
+      if (!topics || !hasAck) {
+        toast.error("Espera el ACK del servidor antes de simular el resultado.");
         return;
       }
       setBusy(true);
@@ -249,9 +336,7 @@ export function useFiscalizacionRitual() {
             : buildFiscalizacionResultErrorPayload()) as MqttPublishPayload,
         });
         toast.success(
-          ok
-            ? "Resultado de éxito simulado en Respuesta."
-            : "Resultado de error simulado en Respuesta.",
+          ok ? "Resultado OK simulado." : "Resultado de error simulado.",
         );
       } catch (err) {
         toast.error(getMqttErrorMessage(err));
@@ -259,28 +344,50 @@ export function useFiscalizacionRitual() {
         setBusy(false);
       }
     },
-    [toast, topics],
+    [hasAck, toast, topics],
   );
 
   const reset = useCallback(() => {
     setForm(DEFAULT_FORM);
-    setPanelAckedRequest(false);
+    setSelectedSealId("");
+    setShowAdvanced(false);
+    setRequestPublished(false);
     setPersistentSessionError(null);
     hadActiveSessionRef.current = false;
+    publishStartedAtRef.current = null;
     sse.resetState();
   }, [sse]);
+
+  const refreshSeals = useCallback(async () => {
+    setSealsLoading(true);
+    try {
+      const list = await fetchSeals();
+      setSeals(list);
+    } catch (err) {
+      toast.error(getMqttErrorMessage(err));
+    } finally {
+      setSealsLoading(false);
+    }
+  }, [toast]);
 
   return {
     form,
     updateForm,
+    selectedSealId,
     sealsLoading,
     availableSeals,
     selectSeal,
+    refreshSeals,
+    showAdvanced,
+    setShowAdvanced,
     topics,
     ritualSteps,
     stepStatuses,
     activeStepIndex,
     ritualComplete,
+    phase,
+    canStart,
+    hasAck,
     busy,
     persistentSessionError,
     ackPayload: sse.ackPayload,
