@@ -426,8 +426,7 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
     formPath: "src/components/printer-models/printer-model-form-dialog.tsx",
     viewPath: "src/components/printer-models/printer-model-view.tsx",
     fields: [
-      { formLabels: ["Marca"], viewLabels: ["Marca"] },
-      { formLabels: ["Código de modelo"], viewLabels: ["Modelo"] },
+      { formLabels: ["Modelo"], viewLabels: ["Modelo"] },
       { formLabels: ["Providencia"], viewLabels: ["Providencia"] },
       { formLabels: ["Fecha de homologación"], viewLabels: ["Fecha de homologación"] },
       { formLabels: ["Precio"], viewLabels: ["Precio"] },

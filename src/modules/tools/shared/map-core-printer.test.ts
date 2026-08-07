@@ -44,8 +44,7 @@ const client: ClientResponse = {
 
 const model: PrinterModelResponse = {
   id: 3,
-  brand: "MarcaX",
-  modelCode: "MX-100",
+  modelCode: "AEG-R1",
   providencia: "",
   approvalDate: "",
   createdAt: "",
@@ -62,8 +61,8 @@ describe("mapCorePrinterToTools", () => {
     });
 
     expect(mapped.serial).toBe("ABC1234567");
-    expect(mapped.marca).toBe("MarcaX");
-    expect(mapped.modelo).toBe("MX-100");
+    expect(mapped.marca).toBe("AEG-R1");
+    expect(mapped.modelo).toBe("AEG-R1");
     expect(mapped.estado).toBe("Enajenada");
     expect(mapped.status).toBe("enajenada");
     expect(mapped.rifCliente).toBe("J-12345678-9");

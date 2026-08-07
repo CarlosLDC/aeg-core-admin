@@ -84,7 +84,7 @@ export function PrinterModelView() {
 
     setSaving(true);
     setFormError(null);
-    const label = `${bodyOrError.brand} ${bodyOrError.modelCode}`;
+    const label = bodyOrError.modelCode;
 
     try {
       const updated = await updatePrinterModel(model.id, bodyOrError);
@@ -108,7 +108,7 @@ export function PrinterModelView() {
       toast.error(forbiddenMessage("delete", "printerModels"));
       return;
     }
-    const label = `${model.brand} ${model.modelCode}`;
+    const label = model.modelCode;
     if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el modelo "${label}"? Las impresoras vinculadas pueden verse afectadas.`, destructive: true }))) {
       return;
     }
@@ -125,7 +125,7 @@ export function PrinterModelView() {
     }
   }
 
-  const title = model ? `${model.brand} ${model.modelCode}` : "Modelo fiscal";
+  const title = model ? model.modelCode : "Modelo fiscal";
 
   return (
     <>
@@ -156,7 +156,6 @@ export function PrinterModelView() {
         {model && (
           <DetailSection title="Modelo fiscal" layout="quad">
             <DetailField label="ID" value={String(model.id)} mono />
-            <DetailField label="Marca" value={model.brand} />
             <DetailField label="Modelo" value={model.modelCode} mono />
             <DetailField label="Precio" value={formatMoney(model.price)} />
             <DetailField

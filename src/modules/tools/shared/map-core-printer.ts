@@ -69,9 +69,10 @@ function resolveModelParts(
   model: PrinterModelResponse | null | undefined,
 ): { marca: string; modelo: string } {
   if (model) {
+    const modelCode = model.modelCode.trim();
     return {
-      marca: model.brand.trim(),
-      modelo: model.modelCode.trim(),
+      marca: modelCode,
+      modelo: modelCode,
     };
   }
 

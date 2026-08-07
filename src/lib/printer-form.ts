@@ -68,7 +68,7 @@ export const DEVICE_TYPE_LABELS: Record<DeviceType, string> = {
 };
 
 export function printerModelLabel(model: PrinterModelResponse): string {
-  return `${model.brand} ${model.modelCode}`.trim();
+  return model.modelCode.trim();
 }
 
 export function printerToFormValues(

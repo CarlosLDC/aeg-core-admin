@@ -1,7 +1,6 @@
 import type { PrinterModelRequest } from "@/types/printer-model";
 
 export type PrinterModelFormValues = {
-  brand: string;
   modelCode: string;
   price: string;
   providencia: string;
@@ -11,10 +10,8 @@ export type PrinterModelFormValues = {
 export function toPrinterModelRequest(
   values: PrinterModelFormValues,
 ): PrinterModelRequest | string {
-  const brand = values.brand.trim();
   const modelCode = values.modelCode.trim();
-  if (!brand) return "La marca es obligatoria.";
-  if (!modelCode) return "El código de modelo es obligatorio.";
+  if (!modelCode) return "El modelo es obligatorio.";
 
   const price = Number(values.price);
   if (!Number.isFinite(price) || price < 0) {
@@ -25,7 +22,6 @@ export function toPrinterModelRequest(
   const approvalDate = values.approvalDate.trim();
 
   return {
-    brand,
     modelCode,
     price,
     ...(providencia && { providencia }),

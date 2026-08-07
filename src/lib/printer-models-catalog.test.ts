@@ -8,7 +8,6 @@ import type { PrinterModelResponse } from "@/types/printer-model";
 
 const model = (id: number): PrinterModelResponse => ({
   id,
-  brand: "Brand",
   modelCode: `M${id}`,
   price: 1,
   providencia: "",

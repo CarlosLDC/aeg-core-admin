@@ -1,6 +1,5 @@
 export type PrinterModelResponse = {
   id: number;
-  brand: string;
   modelCode: string;
   price: number;
   providencia: string;
@@ -9,7 +8,6 @@ export type PrinterModelResponse = {
 };
 
 export type PrinterModelRequest = {
-  brand: string;
   modelCode: string;
   price: number;
   providencia?: string;

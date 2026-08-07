@@ -19,7 +19,6 @@ type PrinterModelFormDialogProps = {
 };
 
 const emptyForm: PrinterModelFormValues = {
-  brand: "",
   modelCode: "",
   price: "",
   providencia: "",
@@ -47,7 +46,6 @@ export function PrinterModelFormDialog({
     if (!open) return;
     if (mode === "edit" && model) {
       setForm({
-        brand: model.brand,
         modelCode: model.modelCode,
         price: String(model.price),
         providencia: model.providencia ?? "",
@@ -116,32 +114,19 @@ export function PrinterModelFormDialog({
             <legend className="px-1 text-sm font-semibold text-card-foreground">
               Identificación del modelo
             </legend>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <FieldLabel required>Marca</FieldLabel>
-                <input
-                  type="text"
-                  required
-                  value={form.brand}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, brand: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
-              <label className="block">
-                <FieldLabel required>Código de modelo</FieldLabel>
-                <input
-                  type="text"
-                  required
-                  value={form.modelCode}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, modelCode: e.target.value }))
-                  }
-                  className={inputClass}
-                />
-              </label>
-            </div>
+            <label className="block">
+              <FieldLabel required>Modelo</FieldLabel>
+              <input
+                type="text"
+                required
+                value={form.modelCode}
+                placeholder="AEG-R1"
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, modelCode: e.target.value }))
+                }
+                className={inputClass}
+              />
+            </label>
             <label className="block">
               <FieldLabel required>Precio</FieldLabel>
               <input

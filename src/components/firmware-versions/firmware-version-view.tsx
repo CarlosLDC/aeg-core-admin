@@ -149,14 +149,10 @@ export function FirmwareVersionView() {
         if (cancelled) return;
         setModelOptions(
           [...models]
-            .sort((a, b) => {
-              const brandCmp = a.brand.localeCompare(b.brand, "es");
-              if (brandCmp !== 0) return brandCmp;
-              return a.modelCode.localeCompare(b.modelCode, "es");
-            })
+            .sort((a, b) => a.modelCode.localeCompare(b.modelCode, "es"))
             .map((m) => ({
               id: m.id,
-              label: `${m.brand} ${m.modelCode}`.trim(),
+              label: m.modelCode.trim(),
             })),
         );
       })

@@ -14,10 +14,6 @@ import {
   TableRowMetaCells,
   TableRowMetaHeaders,
 } from "@/components/ui/table-meta-column-slots";
-import {
-  filterAllOption,
-  uniqueFilterOptions,
-} from "@/lib/table-filter-options";
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
@@ -62,7 +58,7 @@ import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 type PrinterModelSortKey = "price" | "approvalDate" | "id" | "createdAt";
 
 function modelLabel(model: PrinterModelResponse) {
-  return `${model.brand} ${model.modelCode}`.trim();
+  return model.modelCode.trim();
 }
 
 export function PrinterModelsManager() {
@@ -82,25 +78,14 @@ export function PrinterModelsManager() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("printer-models");
   const [search, setSearch] = useState("");
-  const [brandFilter, setBrandFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<PrinterModelSortKey>>(null);
-
-  const brandFilterOptions = useMemo(
-    () => [
-      filterAllOption("Todas las marcas"),
-      ...uniqueFilterOptions(models.map((model) => model.brand)),
-    ],
-    [models],
-  );
 
   const filteredModels = useMemo(() => {
     const q = search.trim().toLowerCase();
     return models.filter((model) => {
-      if (brandFilter !== "all" && model.brand !== brandFilter) return false;
       if (!q) return true;
       const haystack = [
         model.id,
-        model.brand,
         model.modelCode,
         model.providencia,
         model.approvalDate,
@@ -110,7 +95,7 @@ export function PrinterModelsManager() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [models, search, brandFilter]);
+  }, [models, search]);
 
   const sortedModels = useMemo(
     () =>
@@ -135,11 +120,7 @@ export function PrinterModelsManager() {
     try {
       const data = await fetchPrinterModels();
       setModels(
-        data.sort((a, b) => {
-          const brandCmp = a.brand.localeCompare(b.brand, "es");
-          if (brandCmp !== 0) return brandCmp;
-          return a.modelCode.localeCompare(b.modelCode, "es");
-        }),
+        data.sort((a, b) => a.modelCode.localeCompare(b.modelCode, "es")),
       );
     } catch (err) {
       reportListTableError({
@@ -192,7 +173,7 @@ export function PrinterModelsManager() {
 
     setSaving(true);
     setFormError(null);
-    const label = `${bodyOrError.brand} ${bodyOrError.modelCode}`;
+    const label = bodyOrError.modelCode;
 
     try {
       if (dialog === "create") {
@@ -286,18 +267,9 @@ export function PrinterModelsManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por marca, modelo, providencia…"
+              searchPlaceholder="Buscar por modelo, providencia…"
               resultCount={filteredModels.length}
               totalCount={models.length}
-              filters={[
-                {
-                  id: "brand",
-                  label: "Marca",
-                  value: brandFilter,
-                  onChange: setBrandFilter,
-                  options: brandFilterOptions,
-                },
-              ]}
               columns={tableColumns.toolbarColumns}
             />
             {filteredModels.length === 0 ? (
@@ -333,7 +305,6 @@ export function PrinterModelsManager() {
                             </th>
                           }
                         >
-                        <th className="px-5 py-3 font-medium">Marca</th>
                         <th className="px-5 py-3 font-medium">Modelo</th>
                         <SortableTableHeader
                           label="Precio"
@@ -384,11 +355,6 @@ export function PrinterModelsManager() {
                               </td>
                             }
                           >
-                          <td className="max-w-[140px] px-5 py-3.5">
-                            <TruncatedText maxClassName="max-w-[120px]">
-                              {model.brand}
-                            </TruncatedText>
-                          </td>
                           <td className="px-5 py-3.5 font-mono text-card-foreground">
                             {model.modelCode}
                           </td>

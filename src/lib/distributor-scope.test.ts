@@ -100,8 +100,8 @@ describe("distributor-scope", () => {
 
   it("filters printer models to those used by distributor printers", () => {
     const models = [
-      { id: 1, brand: "A", modelCode: "X", providencia: "", approvalDate: "", createdAt: "", price: 0 },
-      { id: 2, brand: "B", modelCode: "Y", providencia: "", approvalDate: "", createdAt: "", price: 0 },
+      { id: 1, modelCode: "A-X", providencia: "", approvalDate: "", createdAt: "", price: 0 },
+      { id: 2, modelCode: "B-Y", providencia: "", approvalDate: "", createdAt: "", price: 0 },
     ];
     const printers: PrinterResponse[] = [
       {

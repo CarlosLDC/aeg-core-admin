@@ -298,7 +298,7 @@ export async function loadNotifications(options: {
         id: `printer-model-${m.id}`,
         kind: "printer_model",
         title: "Modelo fiscal",
-        message: `Modelo ${m.brand} ${m.modelCode} añadido al catálogo.`,
+        message: `Modelo ${m.modelCode} añadido al catálogo.`,
         href: resolveNotificationHref(role, printerModelPath(m.id)),
         createdAt: m.createdAt,
       });
