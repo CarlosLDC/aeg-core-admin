@@ -14,6 +14,8 @@ import {
   FISCALIZACION_FLOW_STEPS,
   buildFiscalizacionResultErrorPayload,
   buildFiscalizacionResultSuccessPayload,
+  buildFiscalizacionSpiffsErrorPayload,
+  buildFiscalizacionSpiffsSuccessPayload,
   buildPtrFiscalizarPayload,
   buildPtrFiscalizarRemotoPayload,
   colorLabelForSeal,
@@ -31,6 +33,7 @@ export type FiscalizacionPhase =
   | "setup"
   | "waiting_ack"
   | "waiting_result"
+  | "waiting_config_spiffs"
   | "done"
   | "failed";
 
@@ -99,6 +102,7 @@ export function useFiscalizacionRitual() {
 
   const hasAck = sse.acceptedStepIds.has("ack");
   const hasResult = sse.acceptedStepIds.has("result");
+  const hasConfigSpiffs = sse.acceptedStepIds.has("config_spiffs");
 
   const completedStepIds = useMemo(() => {
     const done = new Set(sse.acceptedStepIds);
@@ -121,15 +125,16 @@ export function useFiscalizacionRitual() {
     return index === -1 ? ritualSteps.length : index;
   }, [ritualSteps, stepStatuses]);
 
-  const ritualComplete = hasResult || Boolean(sse.completedPrinterId);
+  const ritualComplete = hasConfigSpiffs || Boolean(sse.completedPrinterId);
 
   const phase: FiscalizacionPhase = useMemo(() => {
     if (ritualComplete) return "done";
     if (persistentSessionError) return "failed";
+    if (hasResult) return "waiting_config_spiffs";
     if (hasAck) return "waiting_result";
     if (requestPublished) return "waiting_ack";
     return "setup";
-  }, [hasAck, persistentSessionError, requestPublished, ritualComplete]);
+  }, [hasAck, hasResult, persistentSessionError, requestPublished, ritualComplete]);
 
   useEffect(() => {
     let cancelled = false;
@@ -347,6 +352,32 @@ export function useFiscalizacionRitual() {
     [hasAck, toast, topics],
   );
 
+  const simulateConfigSpiffsResult = useCallback(
+    async (ok: boolean) => {
+      if (!topics || !hasResult) {
+        toast.error("Espera el resultado de fiscalización antes de simular la configuración.");
+        return;
+      }
+      setBusy(true);
+      try {
+        await publishMqttMessage({
+          topic: topics.respuesta,
+          payload: (ok
+            ? buildFiscalizacionSpiffsSuccessPayload()
+            : buildFiscalizacionSpiffsErrorPayload()) as MqttPublishPayload,
+        });
+        toast.success(
+          ok ? "Configuración de impuestos OK simulada." : "Configuración de impuestos con error simulada.",
+        );
+      } catch (err) {
+        toast.error(getMqttErrorMessage(err));
+      } finally {
+        setBusy(false);
+      }
+    },
+    [hasResult, toast, topics],
+  );
+
   const reset = useCallback(() => {
     setForm(DEFAULT_FORM);
     setSelectedSealId("");
@@ -388,6 +419,8 @@ export function useFiscalizacionRitual() {
     phase,
     canStart,
     hasAck,
+    hasResult,
+    hasConfigSpiffs,
     busy,
     persistentSessionError,
     ackPayload: sse.ackPayload,
@@ -396,6 +429,7 @@ export function useFiscalizacionRitual() {
     publishRequest,
     publishRemotoKickoff,
     simulateResult,
+    simulateConfigSpiffsResult,
     reset,
   };
 }

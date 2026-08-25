@@ -73,7 +73,7 @@ export function useFiscalizacionSse(mac: string | null, enabled = true) {
       setAcceptedStepIds((prev) => new Set([...prev, event.acceptedStepId!]));
     }
     if (event.type === "session_completed") {
-      setAcceptedStepIds((prev) => new Set([...prev, "result"]));
+      setAcceptedStepIds((prev) => new Set([...prev, "result", "config_spiffs"]));
       if (typeof event.printerId === "number") {
         setCompletedPrinterId(event.printerId);
       }

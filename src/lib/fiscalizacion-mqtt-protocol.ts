@@ -24,6 +24,12 @@ export const FISCALIZACION_FLOW_STEPS = [
     name: "Resultado",
     isRequest: false,
   },
+  {
+    id: "config_spiffs",
+    step: "4",
+    name: "Configuración impuestos",
+    isRequest: false,
+  },
 ] as const;
 
 export type FiscalizacionFormValues = {
@@ -85,6 +91,22 @@ export function buildFiscalizacionResultErrorPayload() {
     cmd: "RxPtrFiscalizarRemoto",
     code: 1,
     dataS: { error: "ERROR Fiscalizando" },
+  };
+}
+
+export function buildFiscalizacionSpiffsSuccessPayload() {
+  return {
+    cmd: "wFileSPIFF",
+    code: 0,
+    dataD: 0,
+  };
+}
+
+export function buildFiscalizacionSpiffsErrorPayload() {
+  return {
+    cmd: "wFileSPIFF",
+    code: 1,
+    dataD: 0,
   };
 }
 

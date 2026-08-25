@@ -66,10 +66,15 @@ function phaseCopy(phase: FiscalizacionPhase): {
         title: "Esperando resultado",
         body: "El ACK ya salió. Espera la Respuesta de la impresora, o simúlala si estás depurando sin hardware.",
       };
+    case "waiting_config_spiffs":
+      return {
+        title: "Configurando impuestos (SPIFFS)",
+        body: "Fiscalización física aceptada. Core envió wFileSPIFF (configSPIFFS.json). Esperando confirmación de la impresora.",
+      };
     case "done":
       return {
         title: "Listo",
-        body: "Impresora creada en SIN_ASIGNAR y precinto asignado.",
+        body: "Impresora creada en SIN_ASIGNAR, precinto asignado e impuestos configurados.",
       };
     case "failed":
       return {
@@ -384,6 +389,36 @@ export function FiscalizacionTestPanel() {
                   Con hardware real no hace falta simular: la impresora publica en
                   Respuesta.
                 </p>
+              </div>
+            ) : null}
+
+            {ritual.phase === "waiting_config_spiffs" ? (
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm text-emerald-800 dark:text-emerald-200">
+                  <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
+                  Alta de impresora confirmada. Enviando impuestos (`wFileSPIFF`)…
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={ritual.busy}
+                    onClick={() => void ritual.simulateConfigSpiffsResult(true)}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground disabled:opacity-50"
+                  >
+                    {ritual.busy ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : null}
+                    Simular config SPIFFS OK
+                  </button>
+                  <button
+                    type="button"
+                    disabled={ritual.busy}
+                    onClick={() => void ritual.simulateConfigSpiffsResult(false)}
+                    className="rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-foreground/5 disabled:opacity-50"
+                  >
+                    Simular error en SPIFFS
+                  </button>
+                </div>
               </div>
             ) : null}
 
