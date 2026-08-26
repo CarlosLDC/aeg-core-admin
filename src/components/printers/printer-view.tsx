@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, RefreshCw } from "lucide-react";
+import { BookOpen, RefreshCw, ShieldCheck } from "lucide-react";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
+import { PrinterSealsDialog } from "@/components/printers/printer-seals-dialog";
+import { PrinterSealsSection } from "@/components/printers/printer-seals-section";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import {
   DetailCard,
@@ -31,9 +33,11 @@ import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
+  canCreateSealRecord,
   canDisposePrinterRecord,
   canDeletePrinterRecord,
   canModifyPrinterRecord,
+  canModifySealRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
 import {
@@ -87,6 +91,7 @@ import {
 import type { PrinterDependencyRef } from "@/types/printer-dependencies";
 import { fetchAuthMe } from "@/lib/auth-me-api";
 import { fetchSoftware } from "@/lib/software-api";
+import { fetchSeals } from "@/lib/seals-api";
 import {
   canAccessFiscalBooksApp,
   fiscalBooksAppUrl,
@@ -98,6 +103,7 @@ import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterResponse } from "@/types/printer";
 import type { PrinterModelResponse } from "@/types/printer-model";
+import type { SealResponse } from "@/types/seal";
 import { isDistributorPanelRole } from "@/types/user";
 
 function clientLabel(
@@ -124,11 +130,19 @@ export function PrinterView() {
   const showSoftware = isAdmin;
   const canAssignInitialized = isAdmin && canModify;
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
+  const canManageSeals = user
+    ? canCreateSealRecord(user.role) ||
+      canModifySealRecord(user.role) ||
+      canModify
+    : false;
   const canOpenFiscalBook = user
     ? canAccessFiscalBooksApp(user.role)
     : false;
 
   const [printer, setPrinter] = useState<PrinterResponse | null>(null);
+  const [seals, setSeals] = useState<SealResponse[]>([]);
+  const [sealsLoading, setSealsLoading] = useState(true);
+  const [sealsDialogOpen, setSealsDialogOpen] = useState(false);
   const [models, setModels] = useState<PrinterModelResponse[]>([]);
   const [software, setSoftware] = useState<SelectOption[]>([]);
   const [branches, setBranches] = useState<BranchResponse[]>([]);
@@ -170,6 +184,18 @@ export function PrinterView() {
     isDistributor ? distributorId : null,
   );
 
+  const loadSeals = useCallback(async () => {
+    setSealsLoading(true);
+    try {
+      const data = await fetchSeals();
+      setSeals(data);
+    } catch {
+      setSeals([]);
+    } finally {
+      setSealsLoading(false);
+    }
+  }, []);
+
   const load = useCallback(async () => {
     if (id == null) {
       setError("Identificador de impresora no válido.");
@@ -199,7 +225,8 @@ export function PrinterView() {
 
   useEffect(() => {
     void load();
-  }, [load]);
+    void loadSeals();
+  }, [load, loadSeals]);
 
   useEffect(() => {
     if (!isDistributor) return;
@@ -376,7 +403,7 @@ export function PrinterView() {
     if (!printer) return null;
 
     return (
-      <>
+      <div className="space-y-6">
         <DetailCard>
           <DetailField
             label="Tipo de equipo"
@@ -426,7 +453,15 @@ export function PrinterView() {
           />
           <DetailField label="MAC" value={printer.macAddress || "—"} mono />
         </DetailCard>
-      </>
+        <PrinterSealsSection
+          printer={printer}
+          seals={seals}
+          loading={sealsLoading}
+          canManage={canManageSeals}
+          userRole={user?.role}
+          onOpenManage={() => setSealsDialogOpen(true)}
+        />
+      </div>
     );
   }, [
     printer,
@@ -435,6 +470,9 @@ export function PrinterView() {
     clientLabelById,
     statusQuickAction,
     statusBadgeTitle,
+    seals,
+    sealsLoading,
+    canManageSeals,
   ]);
 
   const adminDetailSteps = useMemo(() => {
@@ -497,6 +535,20 @@ export function PrinterView() {
               value={formatDate(printer.installationDate)}
             />
           </DetailSection>
+        ),
+      },
+      {
+        id: "seals",
+        label: "Precintos",
+        content: (
+          <PrinterSealsSection
+            printer={printer}
+            seals={seals}
+            loading={sealsLoading}
+            canManage={canManageSeals}
+            userRole={user?.role}
+            onOpenManage={() => setSealsDialogOpen(true)}
+          />
         ),
       },
       {
@@ -606,6 +658,9 @@ export function PrinterView() {
     showSoftware,
     canAssignInitialized,
     statusQuickAction,
+    seals,
+    sealsLoading,
+    canManageSeals,
   ]);
 
   async function handleAssignmentSubmit({
@@ -847,6 +902,16 @@ export function PrinterView() {
         actions={
           printer ? (
             <div className="flex flex-wrap gap-2">
+              {canManageSeals ? (
+                <button
+                  type="button"
+                  onClick={() => setSealsDialogOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
+                >
+                  <ShieldCheck className="size-4" aria-hidden />
+                  Gestionar precintos
+                </button>
+              ) : null}
               {canOpenFiscalBook ? (
                 <a
                   href={fiscalBooksAppUrl(printer.id)}
@@ -892,6 +957,17 @@ export function PrinterView() {
             <DetailSectionsPager key={printer.id} steps={adminDetailSteps} />
           ))}
       </ResourceViewShell>
+
+      {printer && sealsDialogOpen ? (
+        <PrinterSealsDialog
+          key={`seals-${printer.id}`}
+          open={sealsDialogOpen}
+          printer={printer}
+          seals={seals}
+          onClose={() => setSealsDialogOpen(false)}
+          onRefresh={loadSeals}
+        />
+      ) : null}
 
       {printer && assignmentOpen ? (
         <PrinterAssignmentDialog
