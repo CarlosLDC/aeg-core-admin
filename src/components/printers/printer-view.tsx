@@ -130,11 +130,7 @@ export function PrinterView() {
   const showSoftware = isAdmin;
   const canAssignInitialized = isAdmin && canModify;
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
-  const canManageSeals = user
-    ? canCreateSealRecord(user.role) ||
-      canModifySealRecord(user.role) ||
-      canModify
-    : false;
+  const canManageSeals = isAdmin;
   const canOpenFiscalBook = user
     ? canAccessFiscalBooksApp(user.role)
     : false;
@@ -452,11 +448,6 @@ export function PrinterView() {
             mono
           />
           <DetailField label="MAC" value={printer.macAddress || "—"} mono />
-          <DetailField
-            label="Llave de encriptación"
-            value={printer.encryptionKey || printer.llaveEncrip || "—"}
-            mono
-          />
         </DetailCard>
         <PrinterSealsSection
           printer={printer}
@@ -645,11 +636,13 @@ export function PrinterView() {
               value={printer.macAddress || "—"}
               mono
             />
-            <DetailField
-              label="Llave de encriptación"
-              value={printer.encryptionKey || printer.llaveEncrip || "—"}
-              mono
-            />
+            {isAdmin ? (
+              <DetailField
+                label="Llave de encriptación"
+                value={printer.encryptionKey || printer.llaveEncrip || "—"}
+                mono
+              />
+            ) : null}
           </DetailSection>
         ),
       },

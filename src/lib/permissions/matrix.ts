@@ -48,10 +48,10 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     delete: ADMIN_ONLY,
   },
   seals: {
-    read: SEAL_WRITE,
-    create: SEAL_WRITE,
-    update: SEAL_WRITE,
-    delete: SEAL_WRITE,
+    read: ADMIN_ONLY,
+    create: ADMIN_ONLY,
+    update: ADMIN_ONLY,
+    delete: ADMIN_ONLY,
   },
   technicalServices: {
     read: ADMIN_ONLY,

@@ -1,9 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TechnicalServiceFormDialog } from "@/components/technical-services/technical-service-form-dialog";
 import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
+import {
+  DetailSectionsPager,
+  type DetailPagerStep,
+} from "@/components/resource-view/detail-sections-pager";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -145,6 +149,127 @@ export function TechnicalServiceView() {
     }
   }
 
+  const detailSteps = useMemo<DetailPagerStep[]>(() => {
+    if (!service) return [];
+
+    return [
+      {
+        id: "service",
+        label: "Servicio técnico",
+        content: (
+          <DetailSection title="Servicio técnico" layout="quad">
+            <DetailField
+              label="Impresora"
+              value={catalogOptionLabel(catalog.printerOptions, service.printerId, "—")}
+              href={printerPath(service.printerId)}
+            />
+            <DetailField
+              label="Técnico"
+              value={technicalServiceTechnicianLabel(
+                service,
+                catalog.technicianUserOptions,
+              )}
+              href={userPath(service.userId)}
+            />
+            <DetailField
+              label="Centro de servicio"
+              value={catalogOptionLabel(
+                catalog.serviceCenterOptions,
+                service.serviceCenterId,
+                "Sin asignar",
+              )}
+            />
+            <DetailField
+              label="Distribuidor"
+              value={catalogOptionLabel(
+                catalog.distributorOptions,
+                service.distributorId,
+                "Sin asignar",
+              )}
+            />
+            <DetailField
+              label="Falla reportada y acción realizada"
+              value={service.reportedFailure}
+            />
+            <DetailField
+              label="Precinto violado"
+              value={service.sealTampered ? "Sí" : "No"}
+            />
+            <DetailField label="Costo" value={formatMoney(service.cost)} />
+            <DetailField
+              label="Solicitud"
+              value={formatDate(service.requestDate)}
+            />
+            <DetailField
+              label="Inicio"
+              value={formatDateTime(service.startAt)}
+            />
+            <DetailField label="Fin" value={formatDateTime(service.endAt)} />
+          </DetailSection>
+        ),
+      },
+      {
+        id: "reports",
+        label: "Reportes y cierre",
+        content: (
+          <DetailSection title="Reportes y cierre" layout="quad">
+            <DetailField
+              label="Z inicial"
+              value={String(service.initialZReport)}
+              mono
+            />
+            <DetailField
+              label="Fecha Z inicial"
+              value={formatDateTime(service.initialZDate)}
+            />
+            <DetailField
+              label="Z final"
+              value={String(service.finalZReport)}
+              mono
+            />
+            <DetailField
+              label="Fecha Z final"
+              value={formatDateTime(service.finalZDate)}
+            />
+            <DetailField
+              label="Precinto instalado"
+              value={catalogOptionLabel(
+                catalog.sealOptions,
+                service.installedSealId,
+                "—",
+              )}
+              href={
+                service.installedSealId != null
+                  ? sealPath(service.installedSealId)
+                  : undefined
+              }
+            />
+            <DetailField
+              label="Precinto retirado"
+              value={catalogOptionLabel(
+                catalog.sealOptions,
+                service.removedSealId,
+                "—",
+              )}
+              href={
+                service.removedSealId != null
+                  ? sealPath(service.removedSealId)
+                  : undefined
+              }
+            />
+          </DetailSection>
+        ),
+      },
+    ];
+  }, [
+    catalog.distributorOptions,
+    catalog.printerOptions,
+    catalog.sealOptions,
+    catalog.serviceCenterOptions,
+    catalog.technicianUserOptions,
+    service,
+  ]);
+
   return (
     <>
       <ResourceViewShell
@@ -171,105 +296,7 @@ export function TechnicalServiceView() {
         }
       >
         {service && (
-          <>
-            <div className="space-y-4">
-              <DetailSection title="Servicio técnico" layout="quad">
-                <DetailField
-                  label="Impresora"
-                  value={catalogOptionLabel(catalog.printerOptions, service.printerId, "—")}
-                  href={printerPath(service.printerId)}
-                />
-                <DetailField
-                  label="Técnico"
-                  value={technicalServiceTechnicianLabel(
-                    service,
-                    catalog.technicianUserOptions,
-                  )}
-                  href={userPath(service.userId)}
-                />
-                <DetailField
-                  label="Centro de servicio"
-                  value={catalogOptionLabel(
-                    catalog.serviceCenterOptions,
-                    service.serviceCenterId,
-                    "Sin asignar",
-                  )}
-                />
-                <DetailField
-                  label="Distribuidor"
-                  value={catalogOptionLabel(
-                    catalog.distributorOptions,
-                    service.distributorId,
-                    "Sin asignar",
-                  )}
-                />
-                <DetailField
-                  label="Falla reportada y acción realizada"
-                  value={service.reportedFailure}
-                />
-                <DetailField
-                  label="Precinto violado"
-                  value={service.sealTampered ? "Sí" : "No"}
-                />
-                <DetailField label="Costo" value={formatMoney(service.cost)} />
-                <DetailField
-                  label="Solicitud"
-                  value={formatDate(service.requestDate)}
-                />
-                <DetailField
-                  label="Inicio"
-                  value={formatDateTime(service.startAt)}
-                />
-                <DetailField label="Fin" value={formatDateTime(service.endAt)} />
-              </DetailSection>
-              <DetailSection title="Reportes y cierre" layout="quad">
-                <DetailField
-                  label="Z inicial"
-                  value={String(service.initialZReport)}
-                  mono
-                />
-                <DetailField
-                  label="Fecha Z inicial"
-                  value={formatDateTime(service.initialZDate)}
-                />
-                <DetailField
-                  label="Z final"
-                  value={String(service.finalZReport)}
-                  mono
-                />
-                <DetailField
-                  label="Fecha Z final"
-                  value={formatDateTime(service.finalZDate)}
-                />
-                <DetailField
-                  label="Precinto instalado"
-                  value={catalogOptionLabel(
-                    catalog.sealOptions,
-                    service.installedSealId,
-                    "—",
-                  )}
-                  href={
-                    service.installedSealId != null
-                      ? sealPath(service.installedSealId)
-                      : undefined
-                  }
-                />
-                <DetailField
-                  label="Precinto retirado"
-                  value={catalogOptionLabel(
-                    catalog.sealOptions,
-                    service.removedSealId,
-                    "—",
-                  )}
-                  href={
-                    service.removedSealId != null
-                      ? sealPath(service.removedSealId)
-                      : undefined
-                  }
-                />
-              </DetailSection>
-            </div>
-          </>
+          <DetailSectionsPager key={service.id} steps={detailSteps} />
         )}
       </ResourceViewShell>
 

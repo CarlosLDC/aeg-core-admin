@@ -16,7 +16,10 @@ describe("can", () => {
     expect(can("DISTRIBUTOR", "companies", "delete")).toBe(false);
     expect(can("DISTRIBUTOR", "users", "read")).toBe(false);
     expect(can("DISTRIBUTOR", "contracts", "read")).toBe(false);
-    expect(can("DISTRIBUTOR", "seals", "create")).toBe(true);
+    expect(can("DISTRIBUTOR", "seals", "create")).toBe(false);
+    expect(can("ADMIN", "seals", "create")).toBe(true);
+    expect(can("ADMIN", "seals", "update")).toBe(true);
+    expect(can("ADMIN", "seals", "delete")).toBe(true);
     expect(can("DISTRIBUTOR", "printers", "read")).toBe(true);
     expect(can("DISTRIBUTOR", "printers", "create")).toBe(false);
   });

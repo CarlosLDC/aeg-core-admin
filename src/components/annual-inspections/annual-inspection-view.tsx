@@ -4,6 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnnualInspectionFormDialog } from "@/components/annual-inspections/annual-inspection-form-dialog";
 import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
+import {
+  DetailSectionsPager,
+  type DetailPagerStep,
+} from "@/components/resource-view/detail-sections-pager";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -171,6 +175,137 @@ export function AnnualInspectionView() {
     }
   }
 
+  const detailSteps = useMemo<DetailPagerStep[]>(() => {
+    if (!inspection) return [];
+
+    const steps: DetailPagerStep[] = [
+      {
+        id: "inspection",
+        label: "Inspección anual",
+        content: (
+          <DetailSection title="Inspección anual" layout="quad">
+            <DetailField
+              label="Impresora"
+              value={catalogOptionLabel(
+                catalog.printerOptions,
+                inspection.printerId,
+                "—",
+              )}
+              href={printerPath(inspection.printerId)}
+            />
+            <DetailField
+              label="Inspector"
+              value={catalogOptionLabel(
+                catalog.inspectorUserOptions,
+                inspection.userId,
+                "—",
+              )}
+              href={userPath(inspection.userId)}
+            />
+            <DetailField
+              label="Fecha inspección"
+              value={formatDate(inspection.inspectionDate)}
+            />
+            <DetailField
+              label="Notas"
+              value={inspection.notes || "—"}
+            />
+          </DetailSection>
+        ),
+      },
+    ];
+
+    if (hasAnnualInspectionChecklistDisplay(inspection)) {
+      steps.push({
+        id: "checklist",
+        label: "Checklist",
+        content: (
+          <DetailSection title="Checklist de inspección" layout="quad">
+            {annualInspectionChecklistRows(inspection).map((row) => (
+              <DetailField key={row.label} label={row.label} value={row.value} />
+            ))}
+          </DetailSection>
+        ),
+      });
+    } else {
+      steps.push({
+        id: "seal",
+        label: "Precinto",
+        content: (
+          <DetailSection title="Precinto">
+            <DetailField
+              label="Precinto violado"
+              value={inspection.sealTampered ? "Sí" : "No"}
+            />
+          </DetailSection>
+        ),
+      });
+    }
+
+    if (hasAnnualInspectionMqttAudit(inspection)) {
+      steps.push({
+        id: "audit",
+        label: "Auditoría Remoto",
+        content: (
+          <DetailSection title="Auditoría Remoto (SetDateRevO)" layout="quad">
+            <DetailField
+              label="Registro impresora"
+              value={inspection.mqttRegistroImpresora ?? "—"}
+              mono
+            />
+            <DetailField
+              label="SetDateRevO"
+              value={formatMqttSetDateRevOAt(inspection.mqttSetDateRevOAt)}
+              mono
+            />
+            <DetailField
+              label="Nº factura de prueba"
+              value={
+                inspection.mqttNumeroFacturaPrueba != null
+                  ? String(inspection.mqttNumeroFacturaPrueba)
+                  : "—"
+              }
+              mono
+            />
+          </DetailSection>
+        ),
+      });
+    }
+
+    if (hasAnnualInspectionQrProof(inspection)) {
+      steps.push({
+        id: "qr",
+        label: "Comprobante QR",
+        content: (
+          <DetailSection title="Comprobante QR" layout="quad">
+            <DetailField
+              label="Registro impresora"
+              value={inspection.mqttQrRegistro ?? "—"}
+              mono
+            />
+            <DetailField
+              label="MAC"
+              value={inspection.mqttQrMac ?? "—"}
+              mono
+            />
+            <DetailField
+              label="Fecha (firmware)"
+              value={inspection.mqttQrFecha ?? "—"}
+              mono
+            />
+            <DetailField
+              label="Código QR"
+              value={truncateQrCodigo(inspection.mqttQrCodigo)}
+              mono
+            />
+          </DetailSection>
+        ),
+      });
+    }
+
+    return steps;
+  }, [catalog.inspectorUserOptions, catalog.printerOptions, inspection]);
+
   return (
     <>
       <ResourceViewShell
@@ -197,97 +332,7 @@ export function AnnualInspectionView() {
         }
       >
         {inspection && (
-          <>
-            <DetailSection title="Inspección anual" layout="quad">
-              <DetailField
-                label="Impresora"
-                value={catalogOptionLabel(
-                  catalog.printerOptions,
-                  inspection.printerId,
-                  "—",
-                )}
-                href={printerPath(inspection.printerId)}
-              />
-              <DetailField
-                label="Inspector"
-                value={catalogOptionLabel(
-                  catalog.inspectorUserOptions,
-                  inspection.userId,
-                  "—",
-                )}
-                href={userPath(inspection.userId)}
-              />
-              <DetailField
-                label="Fecha inspección"
-                value={formatDate(inspection.inspectionDate)}
-              />
-              <DetailField
-                label="Notas"
-                value={inspection.notes || "—"}
-              />
-            </DetailSection>
-            {hasAnnualInspectionChecklistDisplay(inspection) ? (
-              <DetailSection title="Checklist de inspección" layout="quad">
-                {annualInspectionChecklistRows(inspection).map((row) => (
-                  <DetailField key={row.label} label={row.label} value={row.value} />
-                ))}
-              </DetailSection>
-            ) : (
-              <DetailSection title="Precinto">
-                <DetailField
-                  label="Precinto violado"
-                  value={inspection.sealTampered ? "Sí" : "No"}
-                />
-              </DetailSection>
-            )}
-            {hasAnnualInspectionMqttAudit(inspection) ? (
-              <DetailSection title="Auditoría Remoto (SetDateRevO)" layout="quad">
-                <DetailField
-                  label="Registro impresora"
-                  value={inspection.mqttRegistroImpresora ?? "—"}
-                  mono
-                />
-                <DetailField
-                  label="SetDateRevO"
-                  value={formatMqttSetDateRevOAt(inspection.mqttSetDateRevOAt)}
-                  mono
-                />
-                <DetailField
-                  label="Nº factura de prueba"
-                  value={
-                    inspection.mqttNumeroFacturaPrueba != null
-                      ? String(inspection.mqttNumeroFacturaPrueba)
-                      : "—"
-                  }
-                  mono
-                />
-              </DetailSection>
-            ) : null}
-            {hasAnnualInspectionQrProof(inspection) ? (
-              <DetailSection title="Comprobante QR" layout="quad">
-                <DetailField
-                  label="Registro impresora"
-                  value={inspection.mqttQrRegistro ?? "—"}
-                  mono
-                />
-                <DetailField
-                  label="MAC"
-                  value={inspection.mqttQrMac ?? "—"}
-                  mono
-                />
-                <DetailField
-                  label="Fecha (firmware)"
-                  value={inspection.mqttQrFecha ?? "—"}
-                  mono
-                />
-                <DetailField
-                  label="Código QR"
-                  value={truncateQrCodigo(inspection.mqttQrCodigo)}
-                  mono
-                />
-              </DetailSection>
-            ) : null}
-          </>
+          <DetailSectionsPager key={inspection.id} steps={detailSteps} />
         )}
       </ResourceViewShell>
 
