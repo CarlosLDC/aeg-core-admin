@@ -34,6 +34,8 @@ export type PrinterResponse = {
   deviceType: DeviceType;
   header: PrinterTicketSection | null;
   trailer: PrinterTicketSection | null;
+  encryptionKey?: string | null;
+  llaveEncrip?: string | null;
 };
 
 export type PrinterDispositionRequest = {
@@ -62,4 +64,6 @@ export type PrinterRequest = {
   status: PrinterStatus;
   deviceType: DeviceType;
   creationBatchId?: string | null;
+  encryptionKey?: string | null;
+  llaveEncrip?: string | null;
 };

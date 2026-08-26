@@ -25,6 +25,7 @@ export type FiscalResponseItem = {
   code: number;
   dataD?: number;
   dataS?: string;
+  llaveEncrip?: string;
 };
 
 export type EnajenacionSimulatorContext = {
@@ -774,8 +775,14 @@ export function buildCreditNoteSuccessResponse(): FiscalResponseItem[] {
   ];
 }
 
-export function buildReportZSuccessResponse(): FiscalResponseItem {
-  return item("genImpRepZ");
+export function buildReportZSuccessResponse(
+  llaveEncrip?: string,
+): FiscalResponseItem {
+  const res = item("genImpRepZ");
+  if (llaveEncrip) {
+    res.llaveEncrip = llaveEncrip;
+  }
+  return res;
 }
 
 export const EnajenacionResponseSteps: EnajenacionSimulatorStep[] = [
@@ -833,7 +840,7 @@ export const EnajenacionResponseSteps: EnajenacionSimulatorStep[] = [
     flowStepId: "report-z",
     label: "Paso 7 — Reporte Z",
     delayMs: 600,
-    buildPayload: () => buildReportZSuccessResponse(),
+    buildPayload: () => buildReportZSuccessResponse("55a42534f4d2d8b9"),
   },
 ];
 

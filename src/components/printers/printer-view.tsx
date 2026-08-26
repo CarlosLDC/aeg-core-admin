@@ -452,6 +452,11 @@ export function PrinterView() {
             mono
           />
           <DetailField label="MAC" value={printer.macAddress || "—"} mono />
+          <DetailField
+            label="Llave de encriptación"
+            value={printer.encryptionKey || printer.llaveEncrip || "—"}
+            mono
+          />
         </DetailCard>
         <PrinterSealsSection
           printer={printer}
@@ -638,6 +643,11 @@ export function PrinterView() {
             <DetailField
               label="MAC"
               value={printer.macAddress || "—"}
+              mono
+            />
+            <DetailField
+              label="Llave de encriptación"
+              value={printer.encryptionKey || printer.llaveEncrip || "—"}
               mono
             />
           </DetailSection>

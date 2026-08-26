@@ -238,6 +238,12 @@ describe("enajenacion-mqtt-protocol", () => {
       code: 0,
       dataD: 0,
     });
+    expect(buildReportZSuccessResponse("55a42534f4d2d8b9")).toEqual({
+      cmd: "genImpRepZ",
+      code: 0,
+      dataD: 0,
+      llaveEncrip: "55a42534f4d2d8b9",
+    });
   });
 
   it("detects eligible assigned printer", () => {
