@@ -29,6 +29,10 @@ export function PrinterSealsSection({
   userRole,
   onOpenManage,
 }: PrinterSealsSectionProps) {
+  if (userRole && userRole !== "ADMIN") {
+    return null;
+  }
+
   const { activeSeal, historicalSeals } = getPrinterSealsSummary(
     seals,
     printer.id,

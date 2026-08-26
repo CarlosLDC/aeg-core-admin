@@ -20,7 +20,10 @@ import {
   hrefForDistributor,
   hrefForPrinterModel,
 } from "@/lib/table-foreign-hrefs";
-import { DetailSectionsPager } from "@/components/resource-view/detail-sections-pager";
+import {
+  DetailSectionsPager,
+  type DetailPagerStep,
+} from "@/components/resource-view/detail-sections-pager";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
 import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-mqtt-badge";
@@ -449,14 +452,6 @@ export function PrinterView() {
           />
           <DetailField label="MAC" value={printer.macAddress || "—"} mono />
         </DetailCard>
-        <PrinterSealsSection
-          printer={printer}
-          seals={seals}
-          loading={sealsLoading}
-          canManage={canManageSeals}
-          userRole={user?.role}
-          onOpenManage={() => setSealsDialogOpen(true)}
-        />
       </div>
     );
   }, [
@@ -466,15 +461,12 @@ export function PrinterView() {
     clientLabelById,
     statusQuickAction,
     statusBadgeTitle,
-    seals,
-    sealsLoading,
-    canManageSeals,
   ]);
 
   const adminDetailSteps = useMemo(() => {
     if (!printer) return [];
 
-    return [
+    const steps: DetailPagerStep[] = [
       {
         id: "equipment",
         label: "Equipo",
@@ -533,7 +525,10 @@ export function PrinterView() {
           </DetailSection>
         ),
       },
-      {
+    ];
+
+    if (isAdmin) {
+      steps.push({
         id: "seals",
         label: "Precintos",
         content: (
@@ -546,7 +541,10 @@ export function PrinterView() {
             onOpenManage={() => setSealsDialogOpen(true)}
           />
         ),
-      },
+      });
+    }
+
+    steps.push(
       {
         id: "ticket-remoto",
         label: "Ticket Remoto",
@@ -646,7 +644,9 @@ export function PrinterView() {
           </DetailSection>
         ),
       },
-    ];
+    );
+
+    return steps;
   }, [
     printer,
     model,
@@ -664,6 +664,7 @@ export function PrinterView() {
     seals,
     sealsLoading,
     canManageSeals,
+    isAdmin,
   ]);
 
   async function handleAssignmentSubmit({
