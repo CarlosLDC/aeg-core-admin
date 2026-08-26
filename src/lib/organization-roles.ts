@@ -52,8 +52,8 @@ export function validateBranchRoleSelection(
   isClient: boolean,
   isFactoryCompanyFlag: boolean,
 ): string | null {
-  if (isFactoryCompanyFlag && organizationRole !== "NONE") {
-    return "Las sucursales de la empresa fábrica no pueden ser distribuidora ni centro de servicio.";
+  if (isFactoryCompanyFlag && organizationRole === "SERVICE_CENTER") {
+    return "Las sucursales de la empresa fábrica no pueden ser centro de servicio.";
   }
   if (organizationRole === "NONE" && !isClient) {
     return null;

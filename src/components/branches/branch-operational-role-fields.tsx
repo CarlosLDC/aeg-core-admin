@@ -44,7 +44,6 @@ export function BranchOperationalRoleFields({
   excludeBranchId,
 }: BranchOperationalRoleFieldsProps) {
   const factoryCompany = isFactoryCompany(companyOrganizationType);
-  const operationalDisabled = disabled || factoryCompany;
 
   return (
     <div className="space-y-4">
@@ -54,8 +53,8 @@ export function BranchOperationalRoleFields({
       </p>
       {factoryCompany ? (
         <p className="text-xs text-amber-700 dark:text-amber-300">
-          Esta empresa es la fábrica (AEG): sus sucursales no pueden ser
-          distribuidora ni centro de servicio.
+          Esta empresa es la fábrica (AEG): sus sucursales pueden operar como
+          distribuidora, pero no como centro de servicio.
         </p>
       ) : null}
       {values.organizationRole === "DISTRIBUTOR" ? (
@@ -96,44 +95,53 @@ export function BranchOperationalRoleFields({
       <div className="space-y-2">
         <FieldLabel>Roles de la empresa</FieldLabel>
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-          {BRANCH_OPERATIONAL_ROLE_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              aria-pressed={values.organizationRole === option.value}
-              disabled={operationalDisabled}
-              onClick={() =>
-                onChange({
-                  organizationRole: option.value,
-                  ...(option.value === "DISTRIBUTOR"
-                    ? {
-                        isClient: false,
-                        clientDistributorId: "",
-                        canWriteAnnualInspection: true,
-                      }
-                    : {}),
-                })
-              }
-              className={toggleButtonClass(
-                values.organizationRole === option.value,
-                option.value === "SERVICE_CENTER"
-                  ? BRANCH_ROLE_TOGGLE_TONE.isServiceCenter
-                  : option.value === "DISTRIBUTOR"
-                    ? BRANCH_ROLE_TOGGLE_TONE.isDistributor
-                    : "slate",
-                {
-                  disabled: operationalDisabled,
-                  className: "w-full justify-center",
-                },
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
+          {BRANCH_OPERATIONAL_ROLE_OPTIONS.map((option) => {
+            const isOptionDisabled =
+              disabled ||
+              (factoryCompany && option.value === "SERVICE_CENTER");
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={values.organizationRole === option.value}
+                disabled={isOptionDisabled}
+                onClick={() =>
+                  onChange({
+                    organizationRole: option.value,
+                    ...(option.value === "DISTRIBUTOR"
+                      ? {
+                          isClient: false,
+                          clientDistributorId: "",
+                          canWriteAnnualInspection: true,
+                        }
+                      : {}),
+                  })
+                }
+                className={toggleButtonClass(
+                  values.organizationRole === option.value,
+                  option.value === "SERVICE_CENTER"
+                    ? BRANCH_ROLE_TOGGLE_TONE.isServiceCenter
+                    : option.value === "DISTRIBUTOR"
+                      ? BRANCH_ROLE_TOGGLE_TONE.isDistributor
+                      : "slate",
+                  {
+                    disabled: isOptionDisabled,
+                    className: "w-full justify-center",
+                  },
+                )}
+              >
+                {option.label}
+              </button>
+            );
+          })}
           <button
             type="button"
             aria-pressed={values.isClient}
-            disabled={disabled || values.organizationRole === "DISTRIBUTOR"}
+            disabled={
+              disabled ||
+              values.organizationRole === "DISTRIBUTOR" ||
+              factoryCompany
+            }
             onClick={() =>
               onChange({
                 isClient: !values.isClient,
@@ -143,7 +151,13 @@ export function BranchOperationalRoleFields({
             className={toggleButtonClass(
               values.isClient,
               BRANCH_ROLE_TOGGLE_TONE.isClient,
-              { disabled, className: "w-full justify-center" },
+              {
+                disabled:
+                  disabled ||
+                  values.organizationRole === "DISTRIBUTOR" ||
+                  factoryCompany,
+                className: "w-full justify-center",
+              },
             )}
           >
             Cliente

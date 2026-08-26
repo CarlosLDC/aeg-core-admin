@@ -403,7 +403,14 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         viewBindings: ["inspection.userId"],
       },
       { formLabels: ["Fecha de inspección"], viewLabels: ["Fecha inspección"] },
-      { formLabels: ["Precinto violentado"], viewLabels: ["Precinto violado"] },
+      {
+        formLabels: [
+          "Precinto violentado",
+          "Checklist de inspección",
+          "Precinto fiscal",
+        ],
+        viewLabels: ["Precinto violado", "Checklist"],
+      },
       { formLabels: ["Observaciones"], viewLabels: ["Notas"] },
     ],
   },

@@ -29,9 +29,13 @@ describe("organizationRoleFromBranch", () => {
 });
 
 describe("validateBranchRoleSelection", () => {
-  it("rejects operational roles on factory companies", () => {
+  it("allows distributor role on factory companies", () => {
+    expect(validateBranchRoleSelection("DISTRIBUTOR", false, true)).toBeNull();
+  });
+
+  it("rejects service center role on factory companies", () => {
     expect(
-      validateBranchRoleSelection("DISTRIBUTOR", false, true),
+      validateBranchRoleSelection("SERVICE_CENTER", false, true),
     ).toMatch(/fábrica/i);
   });
 
