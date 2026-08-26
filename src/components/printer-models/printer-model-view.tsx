@@ -155,7 +155,6 @@ export function PrinterModelView() {
       >
         {model && (
           <DetailSection title="Modelo fiscal" layout="quad">
-            <DetailField label="ID" value={String(model.id)} mono />
             <DetailField label="Modelo" value={model.modelCode} mono />
             <DetailField label="Precio" value={formatMoney(model.price)} />
             <DetailField
@@ -165,10 +164,6 @@ export function PrinterModelView() {
             <DetailField
               label="Fecha de homologación"
               value={formatDate(model.approvalDate)}
-            />
-            <DetailField
-              label="Registrado"
-              value={formatDate(model.createdAt)}
             />
           </DetailSection>
         )}

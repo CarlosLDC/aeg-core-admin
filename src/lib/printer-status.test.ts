@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildPrinterRollbackConsequences,
+  isBackwardPrinterStatusTransition,
   isPrinterAssigned,
   isPrinterAssignedToDistributor,
   isPrinterEligibleForMqttEnajenacion,
@@ -40,4 +42,73 @@ describe("printer-status", () => {
     expect(isPrinterEligibleForMqttEnajenacion("en_consignacion")).toBe(false);
     expect(isPrinterEligibleForMqttEnajenacion("enajenada")).toBe(false);
   });
+
+  it("detects backward status transitions correctly", () => {
+    // From enajenada to any other status
+    expect(
+      isBackwardPrinterStatusTransition({
+        currentStatus: "enajenada",
+        newStatus: "sin_asignar",
+        currentClientId: 1,
+        newClientId: null,
+      }),
+    ).toBe(true);
+
+    expect(
+      isBackwardPrinterStatusTransition({
+        currentStatus: "enajenada",
+        newStatus: "asignada",
+        currentClientId: 1,
+        newClientId: null,
+      }),
+    ).toBe(true);
+
+    // From asignada to sin_asignar
+    expect(
+      isBackwardPrinterStatusTransition({
+        currentStatus: "asignada",
+        newStatus: "sin_asignar",
+        currentDistributorId: 5,
+        newDistributorId: null,
+      }),
+    ).toBe(true);
+
+    // Forward transition (sin_asignar to asignada)
+    expect(
+      isBackwardPrinterStatusTransition({
+        currentStatus: "sin_asignar",
+        newStatus: "asignada",
+        currentDistributorId: null,
+        newDistributorId: 5,
+      }),
+    ).toBe(false);
+
+    // Same status edit without unassigning
+    expect(
+      isBackwardPrinterStatusTransition({
+        currentStatus: "asignada",
+        newStatus: "asignada",
+        currentDistributorId: 5,
+        newDistributorId: 5,
+      }),
+    ).toBe(false);
+  });
+
+  it("builds consequences list for rollback changes", () => {
+    const consequences = buildPrinterRollbackConsequences({
+      currentStatus: "enajenada",
+      newStatus: "sin_asignar",
+      currentClientId: 1,
+      clientLabel: "Cliente Principal",
+      currentDistributorId: 2,
+      distributorLabel: "Distribuidora Caracas",
+    });
+
+    expect(consequences).toHaveLength(4);
+    expect(consequences[0]).toContain("enajenada");
+    expect(consequences[1]).toContain("Cliente Principal");
+    expect(consequences[2]).toContain("Distribuidora Caracas");
+    expect(consequences[3]).toContain("encabezado/pie");
+  });
 });
+

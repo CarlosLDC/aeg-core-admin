@@ -186,7 +186,6 @@ export function SealView() {
       >
         {seal && (
           <DetailSection title="Precinto" layout="quad">
-            <DetailField label="ID" value={String(seal.id)} mono />
             <DetailField label="Serial" value={seal.serial} mono />
             <DetailField
               label="Color"
@@ -210,10 +209,6 @@ export function SealView() {
               value={formatDate(seal.installationDate)}
             />
             <DetailField label="Retiro" value={formatDate(seal.removalDate)} />
-            <DetailField
-              label="Registrado"
-              value={formatDate(seal.createdAt)}
-            />
           </DetailSection>
         )}
       </ResourceViewShell>

@@ -55,3 +55,113 @@ export function printerStatusLabel(status: string): string {
   const normalized = normalizePrinterStatus(status);
   return PRINTER_STATUS_LABELS[normalized];
 }
+
+export type PrinterRollbackConsequencesParams = {
+  currentStatus: string;
+  newStatus: string;
+  currentClientId?: number | null;
+  newClientId?: number | null;
+  currentDistributorId?: number | null;
+  newDistributorId?: number | null;
+  clientLabel?: string | null;
+  distributorLabel?: string | null;
+};
+
+export function isBackwardPrinterStatusTransition(params: {
+  currentStatus: string;
+  newStatus: string;
+  currentClientId?: number | null;
+  newClientId?: number | null;
+  currentDistributorId?: number | null;
+  newDistributorId?: number | null;
+}): boolean {
+  const current = normalizePrinterStatus(params.currentStatus);
+  const next = normalizePrinterStatus(params.newStatus);
+
+  if (current === "enajenada" && next !== "enajenada") {
+    return true;
+  }
+
+  if (
+    (current === "asignada" ||
+      current === "en_consignacion" ||
+      current === "laboratorio") &&
+    (next === "sin_asignar" || next === "de_fabrica")
+  ) {
+    return true;
+  }
+
+  if (
+    params.currentClientId != null &&
+    (params.newClientId == null ||
+      next === "sin_asignar" ||
+      next === "de_fabrica")
+  ) {
+    return true;
+  }
+
+  if (
+    params.currentDistributorId != null &&
+    (next === "sin_asignar" || next === "de_fabrica")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+export function buildPrinterRollbackConsequences(
+  params: PrinterRollbackConsequencesParams,
+): string[] {
+  const current = normalizePrinterStatus(params.currentStatus);
+  const next = normalizePrinterStatus(params.newStatus);
+  const consequences: string[] = [];
+
+  const losingClient =
+    params.currentClientId != null &&
+    (params.newClientId == null ||
+      next === "sin_asignar" ||
+      next === "de_fabrica" ||
+      (current === "enajenada" && next !== "enajenada"));
+
+  const losingDistributor =
+    params.currentDistributorId != null &&
+    (next === "sin_asignar" || next === "de_fabrica");
+
+  if (current === "enajenada" && next !== "enajenada") {
+    consequences.push(
+      "La impresora dejará de considerarse enajenada y volverá al flujo de asignación.",
+    );
+  }
+
+  if (losingClient) {
+    const clientDesc = params.clientLabel ? ` (${params.clientLabel})` : "";
+    consequences.push(`Se desvinculará el cliente asignado${clientDesc}.`);
+  }
+
+  if (losingDistributor) {
+    const distDesc = params.distributorLabel
+      ? ` (${params.distributorLabel})`
+      : "";
+    consequences.push(`Se desvinculará la distribuidora${distDesc}.`);
+  }
+
+  if (
+    current === "enajenada" ||
+    next === "sin_asignar" ||
+    next === "de_fabrica"
+  ) {
+    consequences.push(
+      "Se restablecerán los datos de fecha de enajenación y la configuración de ticket (encabezado/pie).",
+    );
+  }
+
+  if (consequences.length === 0) {
+    consequences.push(
+      "El cambio de estatus modificará las operaciones permitidas para este equipo.",
+    );
+  }
+
+  return consequences;
+}
+

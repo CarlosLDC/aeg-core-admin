@@ -20,6 +20,7 @@ import {
 } from "@/lib/table-foreign-hrefs";
 import { DetailSectionsPager } from "@/components/resource-view/detail-sections-pager";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
+import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
 import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-mqtt-badge";
 import { PrinterTicketConfigPanel } from "@/components/printers/printer-ticket-json-preview";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
@@ -40,7 +41,12 @@ import {
   excludeDistributorSelfClients,
   isDistributorSelfClient,
 } from "@/lib/distributor-scope";
-import { isPrinterUnassigned } from "@/lib/printer-status";
+import {
+  buildPrinterRollbackConsequences,
+  isBackwardPrinterStatusTransition,
+  isPrinterUnassigned,
+  normalizePrinterStatus,
+} from "@/lib/printer-status";
 import {
   isPrinterPendingMqttEnajenacion,
   PRINTER_TICKET_RECONFIGURE_LABEL,
@@ -440,11 +446,6 @@ export function PrinterView() {
         label: "Equipo",
         content: (
           <DetailSection title="Equipo fiscal" layout="quad">
-            <DetailField label="ID" value={String(printer.id)} mono />
-            <DetailField
-              label="Registrada"
-              value={formatDate(printer.createdAt)}
-            />
             <DetailField
               label="Serial fiscal"
               value={printer.fiscalSerial}
@@ -691,6 +692,72 @@ export function PrinterView() {
 
     if (lockDistributor && distributorId != null) {
       bodyOrError.distributorId = distributorId;
+    }
+
+    const isBackward = isBackwardPrinterStatusTransition({
+      currentStatus: printer.status,
+      newStatus: bodyOrError.status,
+      currentClientId: printer.clientId,
+      newClientId: bodyOrError.clientId,
+      currentDistributorId: printer.distributorId,
+      newDistributorId: bodyOrError.distributorId,
+    });
+
+    if (isBackward) {
+      const currentClientLabel =
+        printer.clientId != null
+          ? clientLabelById.get(printer.clientId)
+          : null;
+      const currentDistributorLabel =
+        printer.distributorId != null
+          ? distributorOptions.find((d) => d.id === printer.distributorId)?.label
+          : null;
+
+      const consequences = buildPrinterRollbackConsequences({
+        currentStatus: printer.status,
+        newStatus: bodyOrError.status,
+        currentClientId: printer.clientId,
+        newClientId: bodyOrError.clientId,
+        currentDistributorId: printer.distributorId,
+        newDistributorId: bodyOrError.distributorId,
+        clientLabel: currentClientLabel,
+        distributorLabel: currentDistributorLabel,
+      });
+
+      const confirmed = await confirm({
+        title: "Confirmar cambio de estatus",
+        content: (
+          <div className="space-y-3">
+            <p className="text-sm text-muted">
+              Vas a cambiar el estatus de la impresora{" "}
+              <strong className="font-mono text-card-foreground">
+                {printer.fiscalSerial}
+              </strong>
+              {" "}hacia un estado anterior.
+            </p>
+            <PrinterStatusTransition
+              from={normalizePrinterStatus(printer.status)}
+              to={normalizePrinterStatus(bodyOrError.status)}
+            />
+            {consequences.length > 0 ? (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-destructive">
+                  Consecuencias de esta acción:
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-card-foreground">
+                  {consequences.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        ),
+        confirmLabel: "Confirmar cambio",
+        destructive: true,
+      });
+
+      if (!confirmed) return;
     }
 
     setSaving(true);

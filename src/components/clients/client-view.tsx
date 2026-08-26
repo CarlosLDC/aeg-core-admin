@@ -43,7 +43,6 @@ import {
   getCompaniesErrorMessage,
   updateCompany,
 } from "@/lib/companies-api";
-import { formatDate } from "@/lib/datetime-form";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
   clientModificationReviewPath,
@@ -231,11 +230,6 @@ export function ClientView() {
         label: "Cliente",
         content: (
           <DetailSection title="Cliente" layout="quad">
-            <DetailField label="ID" value={String(client.id)} mono />
-            <DetailField
-              label="Registrado"
-              value={formatDate(branch?.createdAt ?? client.createdAt)}
-            />
             <DetailField label="RIF" value={rif} mono />
           </DetailSection>
         ),

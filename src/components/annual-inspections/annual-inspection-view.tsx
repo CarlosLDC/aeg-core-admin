@@ -199,7 +199,6 @@ export function AnnualInspectionView() {
         {inspection && (
           <>
             <DetailSection title="Inspección anual" layout="quad">
-              <DetailField label="ID" value={String(inspection.id)} mono />
               <DetailField
                 label="Impresora"
                 value={catalogOptionLabel(
@@ -221,10 +220,6 @@ export function AnnualInspectionView() {
               <DetailField
                 label="Fecha inspección"
                 value={formatDate(inspection.inspectionDate)}
-              />
-              <DetailField
-                label="Registrada"
-                value={formatDate(inspection.createdAt)}
               />
               <DetailField
                 label="Notas"

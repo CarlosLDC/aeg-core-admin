@@ -174,7 +174,6 @@ export function TechnicalServiceView() {
           <>
             <div className="space-y-4">
               <DetailSection title="Servicio técnico" layout="quad">
-                <DetailField label="ID" value={String(service.id)} mono />
                 <DetailField
                   label="Impresora"
                   value={catalogOptionLabel(catalog.printerOptions, service.printerId, "—")}
@@ -222,10 +221,6 @@ export function TechnicalServiceView() {
                   value={formatDateTime(service.startAt)}
                 />
                 <DetailField label="Fin" value={formatDateTime(service.endAt)} />
-                <DetailField
-                  label="Registrado"
-                  value={formatDate(service.createdAt)}
-                />
               </DetailSection>
               <DetailSection title="Reportes y cierre" layout="quad">
                 <DetailField

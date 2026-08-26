@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ArrowRightLeft, Info, Loader2 } from "lucide-react";
-import { DistributorSelect } from "@/components/branches/distributor-select";
+import { ArrowRightLeft, Loader2 } from "lucide-react";
+import { ClientTransferDialog } from "@/components/clients/client-transfer-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { useConfirm } from "@/context/confirm-provider";
@@ -32,7 +33,6 @@ import {
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
-import { cn } from "@/lib/utils";
 
 function clientBusinessName(client: ClientResponse): string {
   return (
@@ -73,51 +73,6 @@ function PendingReviewBadge() {
   );
 }
 
-function TransferGuide() {
-  const steps = [
-    "Busca el cliente en la tabla.",
-    "Elige la nueva distribuidora de destino.",
-    "Confirma la transferencia.",
-  ];
-
-  return (
-    <div className="rounded-xl border border-accent/20 bg-accent/5 p-4 sm:p-5">
-      <div className="flex gap-3">
-        <div
-          className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent"
-          aria-hidden
-        >
-          <Info className="size-4" />
-        </div>
-        <div className="min-w-0 space-y-3">
-          <div>
-            <h2 className="text-sm font-semibold text-card-foreground">
-              Cómo transferir un cliente
-            </h2>
-            <p className="mt-1 text-sm text-muted">
-              Solo cambia la relación cliente–distribuidor. Las impresoras del
-              cliente conservan su distribuidora actual.
-            </p>
-          </div>
-          <ol className="grid gap-2 sm:grid-cols-3">
-            {steps.map((step, index) => (
-              <li
-                key={step}
-                className="flex items-start gap-2 rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-sm text-card-foreground"
-              >
-                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent/15 text-[11px] font-semibold text-accent">
-                  {index + 1}
-                </span>
-                <span className="min-w-0 leading-snug">{step}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function ClientTransfersManager() {
   const toast = useToast();
   const confirm = useConfirm();
@@ -129,10 +84,11 @@ export function ClientTransfersManager() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [distributorFilter, setDistributorFilter] = useState<string>(FILTER_ALL);
-  const [targetByClientId, setTargetByClientId] = useState<
-    Record<number, string>
-  >({});
-  const [transferringId, setTransferringId] = useState<number | null>(null);
+  const [transferClient, setTransferClient] = useState<ClientResponse | null>(
+    null,
+  );
+  const [saving, setSaving] = useState(false);
+  const [dialogError, setDialogError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -227,32 +183,17 @@ export function ClientTransfersManager() {
     [clients],
   );
 
-  const handleTargetChange = (clientId: number, value: string) => {
-    setTargetByClientId((prev) => ({ ...prev, [clientId]: value }));
-  };
+  function closeTransferDialog() {
+    if (saving) return;
+    setTransferClient(null);
+    setDialogError(null);
+  }
 
-  const clearTarget = (clientId: number) => {
-    setTargetByClientId((prev) => {
-      const next = { ...prev };
-      delete next[clientId];
-      return next;
-    });
-  };
-
-  const handleTransfer = async (client: ClientResponse) => {
-    const targetValue = targetByClientId[client.id]?.trim();
-    if (!targetValue) {
-      toast.error("Selecciona la distribuidora de destino.");
-      return;
-    }
-    const targetId = Number(targetValue);
-    if (!Number.isFinite(targetId)) {
-      toast.error("Distribuidora de destino no válida.");
-      return;
-    }
+  async function handleTransferSubmit(targetId: number) {
+    if (!transferClient) return;
 
     const fromLabel = distributorName(
-      client.distributorId,
+      transferClient.distributorId,
       distributors,
       branches,
       companies,
@@ -266,30 +207,32 @@ export function ClientTransfersManager() {
 
     const accepted = await confirm({
       title: "Transferir cliente",
-      message: `¿Reasignar «${clientBusinessName(client)}» de «${fromLabel}» a «${toLabel}»? Las impresoras del cliente no cambiarán de distribuidora.`,
+      message: `¿Reasignar «${clientBusinessName(transferClient)}» de «${fromLabel}» a «${toLabel}»? Las impresoras del cliente no cambiarán de distribuidora.`,
       confirmLabel: "Transferir",
     });
     if (!accepted) return;
 
-    setTransferringId(client.id);
+    setSaving(true);
+    setDialogError(null);
     try {
-      const updated = await transferClientDistributor(client.id, targetId);
+      const updated = await transferClientDistributor(
+        transferClient.id,
+        targetId,
+      );
       setClients((prev) =>
         prev.map((row) => (row.id === updated.id ? updated : row)),
       );
-      clearTarget(client.id);
+      setTransferClient(null);
       toast.success("Cliente transferido correctamente.");
     } catch (err) {
-      toast.error(getClientsErrorMessage(err));
+      setDialogError(getClientsErrorMessage(err));
     } finally {
-      setTransferringId(null);
+      setSaving(false);
     }
-  };
+  }
 
   return (
     <div className="admin-content-stack">
-      <TransferGuide />
-
       {error ? (
         <ErrorState
           message={error}
@@ -343,15 +286,30 @@ export function ClientTransfersManager() {
               <TableFilterEmptyState />
             ) : (
               <>
-                <TableScroll>
-                  <table className="w-full min-w-[52rem] text-left text-sm">
+                <TableScroll className="[&_tbody_tr]:!h-auto [&_tbody_td]:!whitespace-normal">
+                  <table className="w-full min-w-[28rem] table-fixed text-left text-sm lg:min-w-0">
+                    <colgroup>
+                      <col className="w-[40%]" />
+                      <col className="w-0 lg:w-[22%]" />
+                      <col className="w-[48%] lg:w-[28%]" />
+                      <col className="w-[12%] lg:w-[10%]" />
+                    </colgroup>
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <th className="px-5 py-3 font-medium">Cliente</th>
-                        <th className="px-5 py-3 font-medium">Sede</th>
-                        <th className="px-5 py-3 font-medium">Reasignación</th>
-                        <th className="px-5 py-3 text-right font-medium">
-                          Acción
+                        <th className="font-medium">Cliente</th>
+                        <th className="hidden font-medium lg:table-cell">
+                          Sede
+                        </th>
+                        <th className="font-medium">
+                          <span className="lg:hidden">Distribuidora</span>
+                          <span className="hidden lg:inline">
+                            Distribuidora actual
+                          </span>
+                        </th>
+                        <th className="w-12 text-right font-medium sm:w-auto">
+                          <span className="sr-only sm:not-sr-only">
+                            Acciones
+                          </span>
                         </th>
                       </tr>
                     </thead>
@@ -359,126 +317,67 @@ export function ClientTransfersManager() {
                       {pageClients.map((client) => {
                         const pending =
                           client.reviewStatus === "PENDING_REVIEW";
-                        const currentDistributorId = client.distributorId;
-                        const busy = transferringId === client.id;
-                        const targetValue = targetByClientId[client.id] ?? "";
-                        const hasTarget = Boolean(targetValue.trim());
                         const currentLabel = distributorName(
-                          currentDistributorId,
+                          client.distributorId,
                           distributors,
                           branches,
                           companies,
                         );
+                        const branchLabel = clientBranchLabel(client);
 
                         return (
                           <tr
                             key={client.id}
-                            className={cn(
-                              "border-b border-border/60 transition-colors",
-                              hasTarget &&
-                                !pending &&
-                                "bg-accent/[0.03]",
-                            )}
+                            className="border-b border-border/60"
                           >
-                            <td className="px-5 py-3.5 align-middle">
-                              <div className="space-y-1">
+                            <td className="min-w-0 align-middle">
+                              <div className="min-w-0 space-y-0.5 py-2.5">
                                 <Link
                                   href={branchPath(client.branchId)}
-                                  className="font-medium text-primary hover:underline"
+                                  className="block min-w-0 font-medium text-primary hover:underline"
                                 >
-                                  <TruncatedText maxClassName="max-w-[220px]">
+                                  <TruncatedText maxClassName="max-w-full">
                                     {clientBusinessName(client)}
                                   </TruncatedText>
                                 </Link>
-                                <div className="flex flex-wrap items-center gap-2">
+                                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                                   <span className="font-mono text-xs text-muted">
                                     {clientRif(client)}
                                   </span>
                                   {pending ? <PendingReviewBadge /> : null}
                                 </div>
+                                <p className="truncate text-xs text-muted lg:hidden">
+                                  {branchLabel}
+                                </p>
                               </div>
                             </td>
-                            <td className="max-w-[200px] px-5 py-3.5 align-middle text-muted">
-                              <TruncatedText maxClassName="max-w-[180px]">
-                                {clientBranchLabel(client)}
+                            <td className="hidden min-w-0 align-middle text-muted lg:table-cell">
+                              <TruncatedText maxClassName="max-w-full">
+                                {branchLabel}
                               </TruncatedText>
                             </td>
-                            <td className="px-5 py-3.5 align-middle">
-                              <div className="flex min-w-[18rem] flex-col gap-2 lg:min-w-[24rem]">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span
-                                    className={cn(
-                                      "inline-flex max-w-full items-center rounded-lg border px-2.5 py-1.5 text-xs font-medium",
-                                      pending
-                                        ? "border-border bg-foreground/[0.03] text-muted"
-                                        : "border-border bg-background text-card-foreground",
-                                    )}
-                                    title="Distribuidora actual"
-                                  >
-                                    <TruncatedText maxClassName="max-w-[160px]">
-                                      {currentLabel}
-                                    </TruncatedText>
-                                  </span>
-                                  <ArrowRight
-                                    className="size-4 shrink-0 text-muted"
-                                    aria-hidden
-                                  />
-                                  <div className="min-w-[12rem] flex-1">
-                                    <DistributorSelect
-                                      value={targetValue}
-                                      onChange={(value) =>
-                                        handleTargetChange(client.id, value)
-                                      }
-                                      distributors={distributors.filter(
-                                        (d) => d.id !== currentDistributorId,
-                                      )}
-                                      branches={branches}
-                                      companies={companies}
-                                      disabled={pending || busy}
-                                      excludeBranchId={client.branchId}
-                                      emptyLabel="Nueva distribuidora"
-                                      searchPlaceholder="Buscar distribuidora…"
-                                      modalTitle="Nueva distribuidora"
-                                    />
-                                  </div>
-                                </div>
-                                {hasTarget && !pending ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => clearTarget(client.id)}
-                                    className="self-start text-xs font-medium text-muted transition-colors hover:text-foreground"
-                                  >
-                                    Quitar selección
-                                  </button>
-                                ) : null}
-                              </div>
+                            <td className="min-w-0 align-middle text-card-foreground">
+                              <TruncatedText maxClassName="max-w-full">
+                                {currentLabel}
+                              </TruncatedText>
                             </td>
-                            <td className="px-5 py-3.5 align-middle text-right">
-                              <button
-                                type="button"
-                                className={cn(
-                                  "inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-                                  hasTarget && !pending
-                                    ? "bg-accent text-accent-foreground hover:opacity-90"
-                                    : "border border-border text-card-foreground hover:bg-foreground/5",
-                                )}
-                                disabled={pending || busy || !hasTarget}
-                                title={
+                            <td
+                              className="align-middle text-right"
+                              data-row-click="ignore"
+                            >
+                              <TableRowActionsMenu
+                                viewHref={branchPath(client.branchId)}
+                                viewLabel={`Ver sede de ${clientBusinessName(client)}`}
+                                onEdit={
                                   pending
-                                    ? "Solicitud de revisión pendiente"
-                                    : !hasTarget
-                                      ? "Selecciona una distribuidora de destino"
-                                      : undefined
+                                    ? undefined
+                                    : () => {
+                                        setDialogError(null);
+                                        setTransferClient(client);
+                                      }
                                 }
-                                onClick={() => void handleTransfer(client)}
-                              >
-                                {busy ? (
-                                  <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                  <ArrowRightLeft className="size-4" />
-                                )}
-                                Transferir
-                              </button>
+                                editLabel="Transferir"
+                              />
                             </td>
                           </tr>
                         );
@@ -493,6 +392,18 @@ export function ClientTransfersManager() {
           </>
         )}
       </div>
+
+      <ClientTransferDialog
+        open={transferClient != null}
+        client={transferClient}
+        distributors={distributors}
+        branches={branches}
+        companies={companies}
+        saving={saving}
+        error={dialogError}
+        onClose={closeTransferDialog}
+        onSubmit={(targetId) => void handleTransferSubmit(targetId)}
+      />
     </div>
   );
 }

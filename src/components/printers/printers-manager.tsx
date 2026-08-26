@@ -3,14 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Layers, Loader2, Plus } from "lucide-react";
-import {
-  PrinterBatchFormDialog,
-  type PrinterBatchSubmitPayload,
-} from "@/components/printers/printer-batch-form-dialog";
+import { PrinterBatchFormDialog, type PrinterBatchSubmitPayload } from "@/components/printers/printer-batch-form-dialog";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
+import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
 import {
   type SelectOption,
 } from "@/components/printers/printer-form-dialog";
@@ -104,7 +102,12 @@ import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterModelResponse } from "@/types/printer-model";
 import type { PrinterResponse, PrinterStatus } from "@/types/printer";
-import { isPrinterUnassigned } from "@/lib/printer-status";
+import {
+  buildPrinterRollbackConsequences,
+  isBackwardPrinterStatusTransition,
+  isPrinterUnassigned,
+  normalizePrinterStatus,
+} from "@/lib/printer-status";
 import { getPrinterStatusQuickAction, getPrinterStatusBadgeTitle } from "@/lib/printer-quick-actions";
 import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
 import { PRINTER_STATUSES } from "@/types/printer";
@@ -715,6 +718,74 @@ export function PrintersManager() {
 
     if (lockDistributor && distributorId != null) {
       bodyOrError.distributorId = distributorId;
+    }
+
+    if (dialog === "edit" && selected) {
+      const isBackward = isBackwardPrinterStatusTransition({
+        currentStatus: selected.status,
+        newStatus: bodyOrError.status,
+        currentClientId: selected.clientId,
+        newClientId: bodyOrError.clientId,
+        currentDistributorId: selected.distributorId,
+        newDistributorId: bodyOrError.distributorId,
+      });
+
+      if (isBackward) {
+        const currentClientLabel =
+          selected.clientId != null
+            ? getClientLabel(selected.clientId)
+            : null;
+        const currentDistributorLabel =
+          selected.distributorId != null
+            ? getDistributorLabel(selected.distributorId)
+            : null;
+
+        const consequences = buildPrinterRollbackConsequences({
+          currentStatus: selected.status,
+          newStatus: bodyOrError.status,
+          currentClientId: selected.clientId,
+          newClientId: bodyOrError.clientId,
+          currentDistributorId: selected.distributorId,
+          newDistributorId: bodyOrError.distributorId,
+          clientLabel: currentClientLabel,
+          distributorLabel: currentDistributorLabel,
+        });
+
+        const confirmed = await confirm({
+          title: "Confirmar cambio de estatus",
+          content: (
+            <div className="space-y-3">
+              <p className="text-sm text-muted">
+                Vas a cambiar el estatus de la impresora{" "}
+                <strong className="font-mono text-card-foreground">
+                  {selected.fiscalSerial}
+                </strong>
+                {" "}hacia un estado anterior.
+              </p>
+              <PrinterStatusTransition
+                from={normalizePrinterStatus(selected.status)}
+                to={normalizePrinterStatus(bodyOrError.status)}
+              />
+              {consequences.length > 0 ? (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-destructive">
+                    Consecuencias de esta acción:
+                  </p>
+                  <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-card-foreground">
+                    {consequences.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          ),
+          confirmLabel: "Confirmar cambio",
+          destructive: true,
+        });
+
+        if (!confirmed) return;
+      }
     }
 
     setSaving(true);

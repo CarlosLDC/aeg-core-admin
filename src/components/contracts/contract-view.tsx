@@ -46,7 +46,6 @@ import {
   updateServiceCenterContract,
 } from "@/lib/service-center-contracts-api";
 import { fetchServiceCenters } from "@/lib/service-centers-api";
-import { formatDate } from "@/lib/datetime-form";
 import {
   branchPath,
   distributorContractPath,
@@ -299,7 +298,6 @@ export function ContractView({ kind }: ContractViewProps) {
         {contract && (
           <>
             <DetailSection title="Contrato" layout="quad">
-              <DetailField label="ID" value={String(contract.id)} mono />
               <DetailField
                 label={isDistributor ? "Distribuidora" : "Centro de servicio"}
                 value={partyLabel}
@@ -316,10 +314,6 @@ export function ContractView({ kind }: ContractViewProps) {
                     endDate={contract.endDate}
                   />
                 }
-              />
-              <DetailField
-                label="Registrado"
-                value={formatDate(contract.createdAt)}
               />
             </DetailSection>
             {contract.photoUrls.length > 0 && (

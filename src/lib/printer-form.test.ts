@@ -125,4 +125,58 @@ describe("toPrinterEditRequest", () => {
     expect(body.clientId).toBe(88);
     expect(body.softwareId).toBe(77);
   });
+
+  it("clears installationDate when rolling back an enajenada printer to sin_asignar", () => {
+    const enajenadaPrinter: PrinterResponse = {
+      ...assignedPrinter,
+      status: "enajenada",
+      clientId: 30,
+      distributorId: 40,
+      installationDate: "2026-05-10T10:00:00.000Z",
+    };
+
+    const values = {
+      ...printerToFormValues(enajenadaPrinter),
+      status: "sin_asignar" as const,
+      distributorId: "",
+      clientId: "",
+      installationDate: "",
+    };
+
+    const body = toPrinterEditRequest(values, enajenadaPrinter);
+    expect(typeof body).not.toBe("string");
+    if (typeof body === "string") return;
+
+    expect(body.status).toBe("sin_asignar");
+    expect(body.clientId).toBeNull();
+    expect(body.distributorId).toBeNull();
+    expect(body.installationDate).toBeNull();
+  });
+
+  it("clears installationDate when changing status from enajenada to asignada without entering date", () => {
+    const enajenadaPrinter: PrinterResponse = {
+      ...assignedPrinter,
+      status: "enajenada",
+      clientId: 30,
+      distributorId: 40,
+      installationDate: "2026-05-10T10:00:00.000Z",
+    };
+
+    const values = {
+      ...printerToFormValues(enajenadaPrinter),
+      status: "asignada" as const,
+      paid: true,
+      clientId: "",
+      installationDate: "",
+    };
+
+    const body = toPrinterEditRequest(values, enajenadaPrinter);
+    expect(typeof body).not.toBe("string");
+    if (typeof body === "string") return;
+
+    expect(body.status).toBe("asignada");
+    expect(body.clientId).toBeNull();
+    expect(body.distributorId).toBe(40);
+    expect(body.installationDate).toBeNull();
+  });
 });

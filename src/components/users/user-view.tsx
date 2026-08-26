@@ -18,7 +18,6 @@ import { distributorLabel } from "@/lib/branch-roles";
 import { fetchBranches } from "@/lib/branches-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
-import { formatDate } from "@/lib/datetime-form";
 import {
   deleteUser,
   fetchUserById,
@@ -188,8 +187,6 @@ export function UserView() {
           : null,
       )
     : "—";
-  const userCreatedAt = (user as (UserResponse & { createdAt?: string }) | null)
-    ?.createdAt;
 
   return (
     <>
@@ -215,7 +212,6 @@ export function UserView() {
         {user && (
           <>
             <DetailSection title="Identidad" layout="quad">
-              <DetailField label="ID" value={String(user.id)} mono />
               <DetailField label="Nombre" value={displayUserName(user)} />
               <DetailField label="Correo" value={user.email} mono />
               <DetailField label="Rol" value={<RoleBadge role={user.role} />} />
@@ -223,7 +219,6 @@ export function UserView() {
                 label="Estado"
                 value={user.enabled ? "Activo" : "Deshabilitado"}
               />
-              <DetailField label="Registrado" value={formatDate(userCreatedAt)} />
             </DetailSection>
 
             <DetailSection title="Portales y permisos" layout="quad">

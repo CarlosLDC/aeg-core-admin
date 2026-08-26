@@ -282,14 +282,19 @@ export function toPrinterEditRequest(
   }
 
   const clearAssignments = clearsPrinterAssignments(bodyOrError.status);
+  const wasEnajenadaAndReverted =
+    printer.status === "enajenada" && bodyOrError.status !== "enajenada";
 
   return {
     ...bodyOrError,
     distributorId: clearAssignments ? null : bodyOrError.distributorId,
     clientId: clearAssignments ? null : bodyOrError.clientId,
     softwareId: bodyOrError.softwareId ?? printer.softwareId,
-    installationDate:
-      bodyOrError.installationDate ?? printer.installationDate ?? null,
+    installationDate: clearAssignments
+      ? null
+      : wasEnajenadaAndReverted
+        ? (bodyOrError.installationDate ?? null)
+        : (bodyOrError.installationDate ?? printer.installationDate ?? null),
     finalSalePrice:
       options?.finalSalePrice ?? printer.finalSalePrice ?? null,
   };

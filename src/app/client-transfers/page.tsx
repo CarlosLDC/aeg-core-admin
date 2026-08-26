@@ -6,7 +6,7 @@ export default function ClientTransfersPage() {
   return (
     <AdminShell
       title="Transferir cliente"
-      description="Reasigna clientes entre distribuidoras."
+      description="Reasigna la distribuidora de un cliente."
     >
       <RoleGuard allow={["ADMIN"]}>
         <ClientTransfersManager />

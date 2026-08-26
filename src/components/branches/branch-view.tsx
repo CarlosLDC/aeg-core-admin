@@ -69,7 +69,6 @@ import {
   updateCompany,
 } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
-import { formatDate } from "@/lib/datetime-form";
 import {
   getBranchMissingContractKinds,
   missingContractLabels,
@@ -445,12 +444,7 @@ export function BranchView() {
         label: "Empresa",
         content: (
           <DetailSection title="Empresa" layout="quad">
-            <DetailField label="ID" value={String(branch.id)} mono />
             <DetailField label="Razón social" value={companyLabel} />
-            <DetailField
-              label="Registrada"
-              value={formatDate(branch.createdAt)}
-            />
           </DetailSection>
         ),
       },

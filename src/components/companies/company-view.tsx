@@ -28,7 +28,6 @@ import {
   getCompaniesErrorMessage,
   updateCompany,
 } from "@/lib/companies-api";
-import { formatDate } from "@/lib/datetime-form";
 import { companyPath } from "@/lib/resource-routes";
 import { cn } from "@/lib/utils";
 import type { CompanyResponse } from "@/types/company";
@@ -205,7 +204,6 @@ export function CompanyView() {
                   label="Razón social"
                   value={company.businessName || "—"}
                 />
-                <DetailField label="ID" value={String(company.id)} mono />
                 <DetailField
                   label="Tipo de contribuyente"
                   value={<ContributorBadge type={company.contributorType} />}
@@ -221,10 +219,6 @@ export function CompanyView() {
                       "Estándar"
                     )
                   }
-                />
-                <DetailField
-                  label="Registrada"
-                  value={formatDate(company.createdAt)}
                 />
               </DetailSection>
             ) : (
