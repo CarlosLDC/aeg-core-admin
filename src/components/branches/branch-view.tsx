@@ -6,10 +6,10 @@ import { FileText } from "lucide-react";
 import { BranchMissingContractNotice } from "@/components/branches/branch-missing-contract-notice";
 import { BranchContractDownloadModal } from "@/components/branches/branch-contract-download-modal";
 import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
-import {
-  BranchCreateWizardDialog,
+import { BranchCreateWizardDialog,
   type BranchWizardValues,
 } from "@/components/branches/branch-create-wizard-dialog";
+import { BranchPrintersTable } from "@/components/branches/branch-printers-table";
 import { emptyBranchWizardContractDraft } from "@/components/branches/branch-wizard-types";
 import {
   ClientEditDialog,
@@ -106,6 +106,7 @@ export function BranchView() {
   const canRequestReview = isTechnician;
   const canCancelReview = user ? canCancelModificationReview(user.role) : false;
   const canReadContracts = user ? can(user.role, "contracts", "read") : false;
+  const canReadPrinters = user ? can(user.role, "printers", "read") : false;
   const { coverage: contractCoverage } =
     useContractPartyCoverage(canReadContracts);
 
@@ -507,15 +508,63 @@ export function BranchView() {
       },
     ];
 
+    if (canReadPrinters) {
+      steps.push({
+        id: "printers",
+        label: "Impresoras",
+        content: (
+          <BranchPrintersTable
+            branch={branch}
+            client={client}
+          />
+        ),
+      });
+    }
+
     return steps;
   }, [
     branch,
     branches,
+    canReadPrinters,
+    client,
     companies,
     companyLabel,
     distributors,
     isTechnician,
     user,
+  ]);
+
+  const technicianSteps = useMemo(() => {
+    if (!branch || !technicianEmpresaView) return [];
+
+    const steps = [
+      {
+        id: "general",
+        label: "Empresa",
+        content: technicianDetailContent,
+      },
+    ];
+
+    if (canReadPrinters) {
+      steps.push({
+        id: "printers",
+        label: "Impresoras",
+        content: (
+          <BranchPrintersTable
+            branch={branch}
+            client={client}
+          />
+        ),
+      });
+    }
+
+    return steps;
+  }, [
+    branch,
+    technicianEmpresaView,
+    technicianDetailContent,
+    canReadPrinters,
+    client,
   ]);
 
   const missingContractLabelsForBranch = useMemo(() => {
@@ -613,7 +662,14 @@ export function BranchView() {
               />
             ) : null}
             {technicianEmpresaView ? (
-              technicianDetailContent
+              canReadPrinters && technicianSteps.length > 1 ? (
+                <DetailSectionsPager
+                  key={`tech-${branch.id}`}
+                  steps={technicianSteps}
+                />
+              ) : (
+                technicianDetailContent
+              )
             ) : isStaffBranch && branch ? (
               <p className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted">
                 Esta es la sede de tu distribuidora. No aparece en el listado de
