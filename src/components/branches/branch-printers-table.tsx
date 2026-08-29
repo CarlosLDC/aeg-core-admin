@@ -1,8 +1,6 @@
-"use client";
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Layers, Loader2, Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import {
   filterPrintersByQuickFilter,
   filterPrintersForBranch,
@@ -13,10 +11,6 @@ import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-mqtt-badge";
 import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
-import {
-  PrinterBatchFormDialog,
-  type PrinterBatchSubmitPayload,
-} from "@/components/printers/printer-batch-form-dialog";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
@@ -64,7 +58,6 @@ import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchSoftware } from "@/lib/software-api";
-import { runSerialBatch } from "@/lib/batch-create";
 import {
   DEVICE_TYPE_LABELS,
   emptyPrinterForm,
@@ -181,7 +174,7 @@ export function BranchPrintersTable({
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
 
-  const [dialog, setDialog] = useState<"create" | "edit" | "batch" | null>(null);
+  const [dialog, setDialog] = useState<"create" | "edit" | null>(null);
   const [selected, setSelected] = useState<PrinterResponse | null>(null);
   const [assignmentPrinter, setAssignmentPrinter] =
     useState<PrinterResponse | null>(null);
@@ -190,10 +183,6 @@ export function BranchPrintersTable({
   const [dispositionPrinter, setDispositionPrinter] =
     useState<PrinterResponse | null>(null);
   const [saving, setSaving] = useState(false);
-  const [batchProgress, setBatchProgress] = useState<{
-    done: number;
-    total: number;
-  } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteBlocked, setDeleteBlocked] = useState<{
@@ -473,13 +462,6 @@ export function BranchPrintersTable({
     setDialog("create");
   }
 
-  function openBatchCreate() {
-    setSelected(null);
-    setFormError(null);
-    setBatchProgress(null);
-    setDialog("batch");
-  }
-
   function openEdit(printer: PrinterResponse) {
     setSelected(printer);
     setFormError(null);
@@ -490,7 +472,6 @@ export function BranchPrintersTable({
     setDialog(null);
     setSelected(null);
     setFormError(null);
-    setBatchProgress(null);
   }
 
   function openAssignment(printer: PrinterResponse) {
@@ -584,73 +565,6 @@ export function BranchPrintersTable({
       toast.error(message);
     } finally {
       setAssignmentSaving(false);
-    }
-  }
-
-  async function handleBatchSubmit({
-    serials,
-    base,
-  }: PrinterBatchSubmitPayload) {
-    if (!canCreate) {
-      setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
-      return;
-    }
-
-    if (
-      !(await confirm({
-        title: "Confirmar",
-        message: `¿Crear ${serials.length} impresora${serials.length === 1 ? "" : "s"} con seriales del rango indicado?`,
-        destructive: true,
-      }))
-    ) {
-      return;
-    }
-
-    setSaving(true);
-    setFormError(null);
-    setBatchProgress({ done: 0, total: serials.length });
-
-    const result = await runSerialBatch(
-      serials,
-      async (fiscalSerial, creationBatchId) => {
-        const bodyOrError = toPrinterRequest({ ...base, fiscalSerial });
-        if (typeof bodyOrError === "string") {
-          throw new Error(bodyOrError);
-        }
-        if (lockDistributor && distributorId != null) {
-          bodyOrError.distributorId = distributorId;
-        }
-        await createPrinter({ ...bodyOrError, creationBatchId });
-      },
-      (p) => setBatchProgress({ done: p.done, total: p.total }),
-    );
-
-    setSaving(false);
-    setBatchProgress(null);
-
-    if (result.succeeded > 0) {
-      toast.success(
-        `${result.succeeded} impresora${result.succeeded === 1 ? "" : "s"} creada${result.succeeded === 1 ? "" : "s"}.`,
-      );
-      await loadData();
-    }
-
-    if (result.failed.length > 0) {
-      const sample = result.failed
-        .slice(0, 3)
-        .map((f) => `${f.serial}: ${f.message}`)
-        .join(" · ");
-      const more =
-        result.failed.length > 3 ? ` (+${result.failed.length - 3} más)` : "";
-      setFormError(
-        `No se pudieron crear ${result.failed.length} registro(s). ${sample}${more}`,
-      );
-      toast.error(
-        `Lote incompleto: ${result.failed.length} error${result.failed.length === 1 ? "" : "es"}.`,
-      );
-      if (result.succeeded > 0) return;
-    } else {
-      closeDialog();
     }
   }
 
@@ -842,28 +756,15 @@ export function BranchPrintersTable({
           </p>
         </div>
         {canCreate && (
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-            {isAdmin && (
-              <button
-                type="button"
-                onClick={openBatchCreate}
-                disabled={catalogLoading || modelsLoading}
-                className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50 sm:w-auto"
-              >
-                <Layers className="size-4" />
-                Lote de impresoras
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={openCreate}
-              disabled={catalogLoading || modelsLoading}
-              className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:opacity-50 sm:w-auto"
-            >
-              <Plus className="size-4" />
-              Nueva impresora
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={openCreate}
+            disabled={catalogLoading || modelsLoading}
+            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:opacity-50 sm:w-auto"
+          >
+            <Plus className="size-4" />
+            Nueva impresora
+          </button>
         )}
       </div>
 
@@ -1177,24 +1078,6 @@ export function BranchPrintersTable({
           onContinue={handleDispositionContinue}
         />
       ) : null}
-
-      <PrinterBatchFormDialog
-        open={dialog === "batch"}
-        saving={saving}
-        progress={batchProgress}
-        error={formError}
-        modelOptions={modelOptions}
-        softwareOptions={software}
-        clientOptions={clientOptions}
-        distributorOptions={distributorOptions}
-        modelsLoading={modelsLoading}
-        catalogLoading={catalogLoading}
-        canPickSoftware={user?.role === "ADMIN"}
-        lockDistributor={lockDistributor}
-        defaultDistributorId={defaultDistributorId}
-        onClose={closeDialog}
-        onSubmit={(payload) => void handleBatchSubmit(payload)}
-      />
 
       <PrinterCreateWizardDialog
         open={dialog === "create"}
