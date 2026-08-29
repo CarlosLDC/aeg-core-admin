@@ -1,6 +1,6 @@
 import { normalizePrinterStatus } from "@/lib/printer-status";
-import type { BranchWithRoles } from "@/types/branch";
-import type { ClientResponse } from "@/types/branch-role";
+import type { BranchResponse, BranchWithRoles } from "@/types/branch";
+import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { PrinterResponse } from "@/types/printer";
 
 export type BranchPrinterQuickFilter = "all" | "asignada" | "enajenada" | "other";
@@ -49,6 +49,50 @@ export function filterPrintersForBranch(
       printer.clientId != null && clientIds.has(printer.clientId);
     const matchesDistributor =
       printer.distributorId != null && printer.distributorId === distributorId;
+
+    return matchesClient || matchesDistributor;
+  });
+}
+
+/**
+ * Filtra las impresoras asociadas a todas las sucursales de una empresa fiscal.
+ */
+export function filterPrintersForCompany(
+  printers: PrinterResponse[],
+  companyId: number,
+  branches: Pick<BranchResponse, "id" | "companyId">[],
+  clients: Pick<ClientResponse, "id" | "branchId">[] = [],
+  distributors: Pick<DistributorResponse, "id" | "branchId">[] = [],
+): PrinterResponse[] {
+  const companyBranchIds = new Set<number>(
+    branches
+      .filter((b) => b.companyId === companyId)
+      .map((b) => b.id),
+  );
+
+  if (companyBranchIds.size === 0) return [];
+
+  const clientIds = new Set<number>(
+    clients
+      .filter((c) => companyBranchIds.has(c.branchId))
+      .map((c) => c.id),
+  );
+
+  const distributorIds = new Set<number>(
+    distributors
+      .filter((d) => companyBranchIds.has(d.branchId))
+      .map((d) => d.id),
+  );
+
+  if (clientIds.size === 0 && distributorIds.size === 0) {
+    return [];
+  }
+
+  return printers.filter((printer) => {
+    const matchesClient =
+      printer.clientId != null && clientIds.has(printer.clientId);
+    const matchesDistributor =
+      printer.distributorId != null && distributorIds.has(printer.distributorId);
 
     return matchesClient || matchesDistributor;
   });

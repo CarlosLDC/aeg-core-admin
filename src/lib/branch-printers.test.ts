@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   filterPrintersByQuickFilter,
   filterPrintersForBranch,
+  filterPrintersForCompany,
   getBranchPrinterStats,
 } from "@/lib/branch-printers";
-import type { BranchWithRoles } from "@/types/branch";
+import type { BranchResponse, BranchWithRoles } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { PrinterResponse } from "@/types/printer";
 
@@ -205,3 +206,76 @@ describe("filterPrintersByQuickFilter", () => {
     expect(res.map((p) => p.fiscalSerial)).toEqual(["O1", "O2"]);
   });
 });
+
+describe("filterPrintersForCompany", () => {
+  const branches: Pick<BranchResponse, "id" | "companyId">[] = [
+    { id: 10, companyId: 1 },
+    { id: 11, companyId: 1 },
+    { id: 20, companyId: 2 },
+  ];
+
+  const clients: Pick<ClientResponse, "id" | "branchId">[] = [
+    { id: 100, branchId: 10 },
+    { id: 101, branchId: 11 },
+    { id: 200, branchId: 20 },
+  ];
+
+  const distributors: Pick<DistributorResponse, "id" | "branchId">[] = [
+    { id: 50, branchId: 11 },
+    { id: 60, branchId: 20 },
+  ];
+
+  it("filters printers for a company with multiple branches and roles", () => {
+    const printers: PrinterResponse[] = [
+      mockPrinter({ id: 1, fiscalSerial: "C1", clientId: 100 }),
+      mockPrinter({ id: 2, fiscalSerial: "C2", clientId: 101 }),
+      mockPrinter({ id: 3, fiscalSerial: "D1", distributorId: 50 }),
+      mockPrinter({ id: 4, fiscalSerial: "OTHER_C", clientId: 200 }),
+      mockPrinter({ id: 5, fiscalSerial: "OTHER_D", distributorId: 60 }),
+    ];
+
+    const result = filterPrintersForCompany(
+      printers,
+      1,
+      branches,
+      clients,
+      distributors,
+    );
+    expect(result.map((p) => p.fiscalSerial)).toEqual(["C1", "C2", "D1"]);
+  });
+
+  it("returns empty array when company has no branches", () => {
+    const printers: PrinterResponse[] = [
+      mockPrinter({ id: 1, fiscalSerial: "C1", clientId: 100 }),
+    ];
+
+    const result = filterPrintersForCompany(
+      printers,
+      999,
+      branches,
+      clients,
+      distributors,
+    );
+    expect(result).toEqual([]);
+  });
+
+  it("returns empty array when company branches have no roles", () => {
+    const customBranches: Pick<BranchResponse, "id" | "companyId">[] = [
+      { id: 30, companyId: 3 },
+    ];
+    const printers: PrinterResponse[] = [
+      mockPrinter({ id: 1, fiscalSerial: "C1", clientId: 100 }),
+    ];
+
+    const result = filterPrintersForCompany(
+      printers,
+      3,
+      customBranches,
+      clients,
+      distributors,
+    );
+    expect(result).toEqual([]);
+  });
+});
+
+

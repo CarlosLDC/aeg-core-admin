@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CompanyBranchesTable } from "@/components/companies/company-branches-table";
+import { CompanyPrintersTable } from "@/components/companies/company-printers-table";
 import { ContributorBadge } from "@/components/companies/contributor-badge";
 import {
   CompanyFormDialog,
@@ -34,7 +35,7 @@ import type { CompanyResponse } from "@/types/company";
 import { isFactoryCompany } from "@/lib/organization-roles";
 import { isDistributorPanelRole } from "@/types/user";
 
-type CompanyDetailPanel = "company" | "branches";
+type CompanyDetailPanel = "company" | "branches" | "printers";
 
 export function CompanyView() {
   const id = useResourceId();
@@ -195,6 +196,20 @@ export function CompanyView() {
               >
                 Sucursales
               </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={detailPanel === "printers"}
+                onClick={() => setDetailPanel("printers")}
+                className={cn(
+                  "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                  detailPanel === "printers"
+                    ? "bg-accent text-accent-foreground shadow-sm"
+                    : "text-muted hover:text-foreground",
+                )}
+              >
+                Impresoras
+              </button>
             </div>
 
             {detailPanel === "company" ? (
@@ -221,8 +236,13 @@ export function CompanyView() {
                   }
                 />
               </DetailSection>
-            ) : (
+            ) : detailPanel === "branches" ? (
               <CompanyBranchesTable
+                companyId={company.id}
+                companies={scope?.companies ?? [company]}
+              />
+            ) : (
+              <CompanyPrintersTable
                 companyId={company.id}
                 companies={scope?.companies ?? [company]}
               />

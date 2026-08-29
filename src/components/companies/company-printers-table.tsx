@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Layers, Loader2, Plus } from "lucide-react";
 import {
   filterPrintersByQuickFilter,
-  filterPrintersForBranch,
+  filterPrintersForCompany,
   getBranchPrinterStats,
   type BranchPrinterQuickFilter,
 } from "@/lib/branch-printers";
@@ -113,7 +113,7 @@ import {
 } from "@/lib/distributor-scope";
 import { printerDispositionPath, printerPath } from "@/lib/resource-routes";
 import { PRINTER_STATUSES } from "@/types/printer";
-import type { BranchResponse, BranchWithRoles } from "@/types/branch";
+import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import type { PrinterModelResponse } from "@/types/printer-model";
@@ -121,7 +121,7 @@ import type { PrinterResponse, PrinterStatus } from "@/types/printer";
 import type { PrinterDependencyRef } from "@/types/printer-dependencies";
 import { isDistributorPanelRole } from "@/types/user";
 
-type BranchPrinterSortKey =
+type CompanyPrinterSortKey =
   | "id"
   | "createdAt"
   | "fiscalSerial"
@@ -129,9 +129,9 @@ type BranchPrinterSortKey =
   | "status"
   | "installationDate";
 
-type BranchPrintersTableProps = {
-  branch: BranchWithRoles;
-  client?: ClientResponse | null;
+type CompanyPrintersTableProps = {
+  companyId: number;
+  companies: CompanyResponse[];
 };
 
 function clientLabel(
@@ -144,10 +144,10 @@ function clientLabel(
   return formatBranchShort(branch, companies);
 }
 
-export function BranchPrintersTable({
-  branch,
-  client,
-}: BranchPrintersTableProps) {
+export function CompanyPrintersTable({
+  companyId,
+  companies: initialCompanies,
+}: CompanyPrintersTableProps) {
   const router = useRouter();
   const toast = useToast();
   const confirm = useConfirm();
@@ -172,7 +172,7 @@ export function BranchPrintersTable({
   const [models, setModels] = useState<PrinterModelResponse[]>([]);
   const [software, setSoftware] = useState<SelectOption[]>([]);
   const [branches, setBranches] = useState<BranchResponse[]>([]);
-  const [companies, setCompanies] = useState<CompanyResponse[]>([]);
+  const [companies, setCompanies] = useState<CompanyResponse[]>(initialCompanies);
   const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
   const [clients, setClients] = useState<ClientResponse[]>([]);
 
@@ -209,9 +209,9 @@ export function BranchPrintersTable({
   const [quickFilter, setQuickFilter] =
     useState<BranchPrinterQuickFilter>("all");
   const [statusFilter, setStatusFilter] = useState<PrinterStatus | "all">("all");
-  const [sort, setSort] = useState<TableSortState<BranchPrinterSortKey>>(null);
+  const [sort, setSort] = useState<TableSortState<CompanyPrinterSortKey>>(null);
 
-  const tableColumns = useTableColumnVisibility(`branch-printers-${branch.id}`);
+  const tableColumns = useTableColumnVisibility(`company-printers-${companyId}`);
 
   const loadData = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false;
@@ -360,29 +360,21 @@ export function BranchPrintersTable({
     [scopedClients, branches, companies],
   );
 
-  const defaultClientId = useMemo(() => {
-    if (client?.id != null) return String(client.id);
-    if (branch.client?.id != null) return String(branch.client.id);
-    const matched = clients.find((c) => c.branchId === branch.id);
-    return matched ? String(matched.id) : "";
-  }, [client, branch, clients]);
-
-  const defaultDistributorId = useMemo(() => {
-    if (lockDistributor && distributorId != null) return distributorId;
-    if (branch.distributor?.id != null) return branch.distributor.id;
-    if (client?.distributorId != null) return client.distributorId;
-    if (branch.client?.distributorId != null) return branch.client.distributorId;
-    return null;
-  }, [lockDistributor, distributorId, branch, client]);
-
-  const branchPrinters = useMemo(
-    () => filterPrintersForBranch(allPrinters, branch, client, clients),
-    [allPrinters, branch, client, clients],
+  const companyPrinters = useMemo(
+    () =>
+      filterPrintersForCompany(
+        allPrinters,
+        companyId,
+        branches,
+        clients,
+        distributors,
+      ),
+    [allPrinters, companyId, branches, clients, distributors],
   );
 
   const stats = useMemo(
-    () => getBranchPrinterStats(branchPrinters),
-    [branchPrinters],
+    () => getBranchPrinterStats(companyPrinters),
+    [companyPrinters],
   );
 
   const statusFilterOptions = useMemo(
@@ -397,7 +389,7 @@ export function BranchPrintersTable({
   );
 
   const filteredPrinters = useMemo(() => {
-    let list = filterPrintersByQuickFilter(branchPrinters, quickFilter);
+    let list = filterPrintersByQuickFilter(companyPrinters, quickFilter);
 
     if (statusFilter !== "all") {
       list = list.filter(
@@ -430,7 +422,7 @@ export function BranchPrintersTable({
 
       return haystack.includes(q);
     });
-  }, [branchPrinters, quickFilter, statusFilter, search, modelsById]);
+  }, [companyPrinters, quickFilter, statusFilter, search, modelsById]);
 
   const sortedPrinters = useMemo(
     () =>
@@ -835,10 +827,10 @@ export function BranchPrintersTable({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-base font-semibold text-card-foreground">
-            Impresoras asociadas
+            Impresoras de la empresa
           </h3>
           <p className="text-xs text-muted">
-            Equipos fiscales registrados para esta empresa
+            Equipos fiscales vinculados a las sucursales de esta empresa
           </p>
         </div>
         {canCreate && (
@@ -882,7 +874,7 @@ export function BranchPrintersTable({
             <Loader2 className="size-5 animate-spin" />
             Cargando impresoras…
           </div>
-        ) : branchPrinters.length === 0 ? (
+        ) : companyPrinters.length === 0 ? (
           <EmptyState
             title="Esta empresa no tiene impresoras asociadas."
             description="Las impresoras vinculadas al cliente o gestionadas por la distribuidora aparecerán aquí."
@@ -936,7 +928,7 @@ export function BranchPrintersTable({
               onSearchChange={setSearch}
               searchPlaceholder="Buscar por serial, modelo, estatus…"
               resultCount={filteredPrinters.length}
-              totalCount={branchPrinters.length}
+              totalCount={companyPrinters.length}
               filters={[
                 {
                   id: "status",
@@ -1191,7 +1183,7 @@ export function BranchPrintersTable({
         catalogLoading={catalogLoading}
         canPickSoftware={user?.role === "ADMIN"}
         lockDistributor={lockDistributor}
-        defaultDistributorId={defaultDistributorId}
+        defaultDistributorId={distributorId}
         onClose={closeDialog}
         onSubmit={(payload) => void handleBatchSubmit(payload)}
       />
@@ -1201,9 +1193,10 @@ export function BranchPrintersTable({
         saving={saving}
         error={formError}
         initialValues={emptyPrinterForm({
-          clientId: defaultClientId,
           distributorId:
-            defaultDistributorId != null ? String(defaultDistributorId) : "",
+            lockDistributor && distributorId != null
+              ? String(distributorId)
+              : "",
         })}
         modelOptions={modelOptions}
         softwareOptions={software}
@@ -1213,7 +1206,7 @@ export function BranchPrintersTable({
         catalogLoading={catalogLoading}
         canPickSoftware={user?.role === "ADMIN"}
         lockDistributor={lockDistributor}
-        defaultDistributorId={defaultDistributorId}
+        defaultDistributorId={distributorId}
         onClose={closeDialog}
         onSubmit={handleSubmit}
       />
@@ -1263,4 +1256,3 @@ export function BranchPrintersTable({
     </section>
   );
 }
-
