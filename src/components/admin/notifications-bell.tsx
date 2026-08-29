@@ -16,10 +16,12 @@ import {
   RefreshCw,
   Settings2,
   Stamp,
+  Trash2,
   UserPlus,
   Wrench,
   X,
 } from "lucide-react";
+import { useConfirm } from "@/context/confirm-provider";
 import { useNotifications } from "@/context/notifications-provider";
 import type { NotificationKind } from "@/types/notification";
 import { cn } from "@/lib/utils";
@@ -80,8 +82,10 @@ export function NotificationsBell() {
     markRead,
     markAllRead,
     dismiss,
+    dismissAll,
     acknowledgeSeen,
   } = useNotifications();
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "unread">("all");
   const rootRef = useRef<HTMLDivElement>(null);
@@ -98,10 +102,31 @@ export function NotificationsBell() {
     }
   }
 
+  async function handleDismissAll() {
+    const confirmed = await confirm({
+      title: "¿Borrar todas las notificaciones?",
+      message:
+        "Se eliminarán todas las notificaciones de la lista. Esta acción no se puede deshacer.",
+      confirmLabel: "Borrar todas",
+      cancelLabel: "Cancelar",
+      destructive: true,
+    });
+    if (confirmed) {
+      dismissAll();
+    }
+  }
+
   useEffect(() => {
     if (!open) return;
     function onPointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.closest?.('[role="alertdialog"]') ||
+        target?.closest?.('[aria-modal="true"]')
+      ) {
+        return;
+      }
+      if (!rootRef.current?.contains(target as Node)) {
         handleOpenChange(false);
       }
     }
@@ -152,7 +177,7 @@ export function NotificationsBell() {
           <div
             role="dialog"
             aria-label="Panel de notificaciones"
-            className="absolute right-0 z-50 mt-2 w-[min(calc(100vw-1.5rem),22rem)] max-sm:fixed max-sm:right-3 max-sm:left-3 max-sm:w-auto overflow-hidden rounded-xl border border-border bg-card shadow-xl"
+            className="absolute right-0 z-50 mt-2 w-[min(calc(100vw-1.5rem),24rem)] max-sm:fixed max-sm:right-3 max-sm:left-3 max-sm:w-auto overflow-hidden rounded-xl border border-border bg-card shadow-xl"
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div>
@@ -226,16 +251,29 @@ export function NotificationsBell() {
                   </button>
                 ))}
               </div>
-              {unreadCount > 0 && (
-                <button
-                  type="button"
-                  onClick={markAllRead}
-                  className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-2 py-1 text-xs font-medium text-accent hover:bg-accent/10"
-                >
-                  <CheckCheck className="size-3.5" />
-                  Leer todas
-                </button>
-              )}
+              <div className="flex items-center gap-1">
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={markAllRead}
+                    className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-2 py-1 text-xs font-medium text-accent hover:bg-accent/10"
+                  >
+                    <CheckCheck className="size-3.5" />
+                    Leer todas
+                  </button>
+                )}
+                {items.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => void handleDismissAll()}
+                    className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-2 py-1 text-xs font-medium text-muted hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400"
+                    title="Borrar todas las notificaciones"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Borrar todas
+                  </button>
+                )}
+              </div>
             </div>
 
             <ul className="max-h-80 overflow-y-auto overscroll-contain py-1">

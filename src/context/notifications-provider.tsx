@@ -40,6 +40,7 @@ type NotificationsContextValue = {
   markRead: (id: string) => void;
   markAllRead: () => void;
   dismiss: (id: string) => void;
+  dismissAll: () => void;
   acknowledgeSeen: () => void;
 };
 
@@ -198,6 +199,20 @@ export function NotificationsProvider({
     [persistPrefs, prefs],
   );
 
+  const dismissAll = useCallback(() => {
+    const dismissed = new Set(prefs.dismissedIds);
+    for (const item of rawItems) {
+      dismissed.add(item.id);
+    }
+    for (const item of items) {
+      dismissed.add(item.id);
+    }
+    persistPrefs({
+      ...prefs,
+      dismissedIds: [...dismissed],
+    });
+  }, [items, persistPrefs, prefs, rawItems]);
+
   const acknowledgeSeen = useCallback(() => {
     persistPrefs({
       ...prefs,
@@ -215,6 +230,7 @@ export function NotificationsProvider({
       markRead,
       markAllRead,
       dismiss,
+      dismissAll,
       acknowledgeSeen,
     }),
     [
@@ -226,6 +242,7 @@ export function NotificationsProvider({
       markRead,
       markAllRead,
       dismiss,
+      dismissAll,
       acknowledgeSeen,
     ],
   );
