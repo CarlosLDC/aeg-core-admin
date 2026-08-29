@@ -467,8 +467,8 @@ export function BranchesManager() {
       });
       toast.success(
         result.companyLinkedExisting || result.branchLinkedExisting
-          ? `Empresa registrada en "${result.companyLabel}" — ${result.branchLabel}.`
-          : `Empresa "${result.companyLabel}" registrada en ${result.branchLabel}.`,
+          ? `Sucursal registrada en "${result.companyLabel}" — ${result.branchLabel}.`
+          : `Sucursal "${result.branchLabel}" registrada.`,
         { href: branchPath(result.branch.id) },
       );
       setResumeBranchId(null);
@@ -677,7 +677,7 @@ export function BranchesManager() {
                 ? contractErr.message
                 : "No se pudo registrar el contrato.";
             toast.error(
-              `Empresa creada, pero el contrato falló: ${contractMessage}. Complétalo en la ficha de la empresa.`,
+              `Sucursal creada, pero el contrato falló: ${contractMessage}. Complétalo en la ficha de la empresa.`,
               { href: branchPath(result.branch.id) },
             );
             closeWizard();
@@ -688,8 +688,8 @@ export function BranchesManager() {
         }
 
         const baseMessage = result.branchLinkedExisting
-          ? `Empresa "${result.branchLabel}" actualizada en el catálogo.`
-          : `Empresa "${result.branchLabel}" creada correctamente.`;
+          ? `Sucursal "${result.branchLabel}" actualizada en el catálogo.`
+          : `Sucursal "${result.branchLabel}" creada correctamente.`;
 
         toast.success(`${baseMessage}${contractNote}`, {
           href: branchPath(result.branch.id),
