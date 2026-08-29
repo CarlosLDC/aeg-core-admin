@@ -92,21 +92,12 @@ export function DetailSectionsPager({
       )}
 
       <div
-        className="min-w-0 w-full overflow-hidden"
+        className="min-w-0 w-full"
         role="tabpanel"
         id={`detail-panel-${current.id}`}
         aria-labelledby={`detail-tab-${current.id}`}
       >
-        <div
-          className="flex transition-transform duration-200 ease-out motion-reduce:transition-none"
-          style={{ transform: `translateX(-${safeIndex * 100}%)` }}
-        >
-          {steps.map((step) => (
-            <div key={step.id} className="w-full shrink-0">
-              {step.content}
-            </div>
-          ))}
-        </div>
+        {current.content}
       </div>
     </div>
   );
