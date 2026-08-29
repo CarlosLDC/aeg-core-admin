@@ -149,7 +149,7 @@ export function CompaniesManager() {
       if (dialog === "create") {
         const created = await createCompany(values);
         toast.success(
-          `Empresa "${values.businessName || values.rif}" creada correctamente.`,
+          `Sucursal de ${values.businessName || values.rif} creada exitosamente`,
           { href: companyPath(created.id) },
         );
       } else if (selected) {
