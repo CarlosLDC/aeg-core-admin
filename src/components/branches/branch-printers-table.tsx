@@ -759,8 +759,7 @@ export function BranchPrintersTable({
           <button
             type="button"
             onClick={openCreate}
-            disabled={catalogLoading || modelsLoading}
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:opacity-50 sm:w-auto"
+            className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 sm:w-auto"
           >
             <Plus className="size-4" />
             Nueva impresora
@@ -792,8 +791,7 @@ export function BranchPrintersTable({
                 <button
                   type="button"
                   onClick={openCreate}
-                  disabled={catalogLoading || modelsLoading}
-                  className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
                 >
                   <Plus className="size-4" />
                   Crear impresora
