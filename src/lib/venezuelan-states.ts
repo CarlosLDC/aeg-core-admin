@@ -1,32 +1,32 @@
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 
-/** Estados de Venezuela (mayúsculas, sin tildes). */
+/** Estados de Venezuela (capitalización estándar con tildes). */
 export const VENEZUELAN_STATES = [
-  "AMAZONAS",
-  "ANZOATEGUI",
-  "APURE",
-  "ARAGUA",
-  "BARINAS",
-  "BOLIVAR",
-  "CARABOBO",
-  "COJEDES",
-  "DELTA AMACURO",
-  "DEPENDENCIAS FEDERALES",
-  "DISTRITO CAPITAL",
-  "FALCON",
-  "GUARICO",
-  "LA GUAIRA",
-  "LARA",
-  "MERIDA",
-  "MIRANDA",
-  "MONAGAS",
-  "NUEVA ESPARTA",
-  "PORTUGUESA",
-  "SUCRE",
-  "TACHIRA",
-  "TRUJILLO",
-  "YARACUY",
-  "ZULIA",
+  "Amazonas",
+  "Anzoátegui",
+  "Apure",
+  "Aragua",
+  "Barinas",
+  "Bolívar",
+  "Carabobo",
+  "Cojedes",
+  "Delta Amacuro",
+  "Dependencias Federales",
+  "Distrito Capital",
+  "Falcón",
+  "Guárico",
+  "La Guaira",
+  "Lara",
+  "Mérida",
+  "Miranda",
+  "Monagas",
+  "Nueva Esparta",
+  "Portuguesa",
+  "Sucre",
+  "Táchira",
+  "Trujillo",
+  "Yaracuy",
+  "Zulia",
 ] as const;
 
 export type VenezuelanState = (typeof VENEZUELAN_STATES)[number];
@@ -37,10 +37,10 @@ const STATE_BY_KEY = new Map<string, VenezuelanState>(
 
 /** Alias frecuentes en documentos y datos legacy. */
 const STATE_ALIASES: Record<string, VenezuelanState> = {
-  VARGAS: "LA GUAIRA",
-  "DISTRITO FEDERAL": "DISTRITO CAPITAL",
-  CAPITAL: "DISTRITO CAPITAL",
-  "NUEVA ESPARTA (MARGARITA)": "NUEVA ESPARTA",
+  VARGAS: "La Guaira",
+  "DISTRITO FEDERAL": "Distrito Capital",
+  CAPITAL: "Distrito Capital",
+  "NUEVA ESPARTA (MARGARITA)": "Nueva Esparta",
 };
 
 export function stripStateAccents(value: string): string {
@@ -69,3 +69,4 @@ export function venezuelanStateSelectOptions(): SearchableSelectOption[] {
     searchText: state,
   }));
 }
+

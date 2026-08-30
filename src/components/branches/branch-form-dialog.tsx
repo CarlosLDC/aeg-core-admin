@@ -4,12 +4,17 @@ import { FormEvent, useEffect, useId, useState } from "react";
 import { X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { CompanySelect } from "@/components/companies/company-select";
 import { BranchOperationalRoleFields } from "@/components/branches/branch-operational-role-fields";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { organizationRoleFromBranch } from "@/lib/organization-roles";
 import { branchFormSchema } from "@/lib/schemas/branch-form-schema";
+import {
+  resolveVenezuelanStateCatalogValue,
+  venezuelanStateSelectOptions,
+} from "@/lib/venezuelan-states";
 import type { BranchRoleFormState } from "@/lib/branch-roles";
 import type { BranchResponse, BranchWithRoles } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
@@ -44,6 +49,8 @@ type BranchFormDialogProps = {
   onClose: () => void;
   onSubmit: (values: BranchFormValues) => void;
 };
+
+const stateSelectOptions = venezuelanStateSelectOptions();
 
 const emptyForm: BranchFormValues = {
   companyId: "",
@@ -240,15 +247,22 @@ export function BranchFormDialog({
               </label>
               <label className="block">
                 <FieldLabel required>Estado</FieldLabel>
-                <input
-                  type="text"
-                  required
-                  value={form.state}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, state: e.target.value }))
+                <SearchableSelect
+                  value={resolveVenezuelanStateCatalogValue(form.state)}
+                  onChange={(state) =>
+                    setForm((f) => ({ ...f, state }))
                   }
-                  className={inputClass}
+                  options={stateSelectOptions}
+                  disabled={saving}
+                  required
+                  preloadOptions
+                  emptyLabel="Seleccionar estado"
+                  searchPlaceholder="Buscar estado…"
+                  modalTitle="Estado"
                 />
+                {fieldErrors.state && (
+                  <p className="mt-1 text-xs text-rose-600">{fieldErrors.state}</p>
+                )}
               </label>
 
               <label className="block sm:col-span-2">
