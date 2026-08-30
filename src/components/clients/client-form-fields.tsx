@@ -2,6 +2,7 @@
 
 import { ContributorTypeToggle } from "@/components/companies/contributor-type-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { PrefixedDocumentInput } from "@/components/ui/prefixed-document-input";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { ClientOnboardingValues } from "@/lib/client-onboarding";
@@ -210,12 +211,11 @@ export function ClientFormFields({
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <FieldLabel>Teléfono</FieldLabel>
-          <input
-            type="tel"
+          <PhoneInput
             value={form.phone}
             disabled={saving}
-            onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-            placeholder="Ej. 0412 1234567"
+            onChange={(phone) => setForm((f) => ({ ...f, phone }))}
+            placeholder="412 185 1051"
             className={clientFormInputClass}
           />
         </label>

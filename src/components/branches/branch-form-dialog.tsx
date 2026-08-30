@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useId, useState } from "react";
 import { X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { CompanySelect } from "@/components/companies/company-select";
 import { BranchOperationalRoleFields } from "@/components/branches/branch-operational-role-fields";
@@ -312,12 +313,12 @@ export function BranchFormDialog({
 
               <label className="block">
                 <FieldLabel>Teléfono</FieldLabel>
-                <input
-                  type="tel"
+                <PhoneInput
                   value={form.phone}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, phone: e.target.value }))
+                  onChange={(phone) =>
+                    setForm((f) => ({ ...f, phone }))
                   }
+                  placeholder="412 185 1051"
                   className={inputClass}
                 />
               </label>

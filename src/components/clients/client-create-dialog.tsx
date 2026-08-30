@@ -11,6 +11,7 @@ import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import type { ClientOnboardingValues } from "@/lib/client-onboarding";
 import { normalizeStateName } from "@/lib/state-label";
 import { resolveVenezuelanStateCatalogValue } from "@/lib/venezuelan-states";
+import { formatVenezuelanPhone } from "@/lib/venezuelan-phone";
 import {
   collectAiFilledFields,
   type SeniatLockableField,
@@ -138,7 +139,7 @@ export function ClientCreateDialog({
         resolveVenezuelanStateCatalogValue(data.state || "") || f.state,
       city: data.city || f.city,
       address: data.address || f.address,
-      phone: data.phone ?? f.phone,
+      phone: data.phone ? formatVenezuelanPhone(data.phone) : f.phone,
       email: data.email ?? f.email,
     }));
     setAiFields(filled);
@@ -203,7 +204,7 @@ export function ClientCreateDialog({
       city: form.city.trim(),
       address: form.address.trim(),
       contactPersonName: form.contactPersonName.trim(),
-      phone: form.phone.trim(),
+      phone: formatVenezuelanPhone(form.phone) || form.phone.trim(),
       email: form.email.trim(),
     });
   }

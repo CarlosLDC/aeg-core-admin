@@ -42,6 +42,7 @@ import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
 import { normalizeStateName } from "@/lib/state-label";
+import { formatVenezuelanPhone } from "@/lib/venezuelan-phone";
 import { cn } from "@/lib/utils";
 
 export type { BranchWizardValues } from "@/components/branches/branch-wizard-types";
@@ -249,7 +250,7 @@ export function BranchCreateWizardDialog({
       state: data.state || f.state,
       city: data.city || f.city,
       address: data.address || f.address,
-      phone: data.phone ?? f.phone,
+      phone: data.phone ? formatVenezuelanPhone(data.phone) : f.phone,
       email: data.email ?? f.email,
     }));
     setAiFields(filled);
@@ -307,7 +308,7 @@ export function BranchCreateWizardDialog({
       city: form.city.trim(),
       address: form.address.trim(),
       contactPersonName: form.contactPersonName.trim(),
-      phone: form.phone.trim(),
+      phone: formatVenezuelanPhone(form.phone) || form.phone.trim(),
       email: form.email.trim(),
     });
   }

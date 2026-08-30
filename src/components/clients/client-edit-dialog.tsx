@@ -9,6 +9,7 @@ import {
 import type { ClientOnboardingValues } from "@/lib/client-onboarding";
 import { validateOnboardingSection } from "@/lib/distributor-onboarding-policy";
 import { normalizeStateName } from "@/lib/state-label";
+import { formatVenezuelanPhone } from "@/lib/venezuelan-phone";
 import type { BranchResponse } from "@/types/branch";
 import { type CompanyResponse, type ContributorType } from "@/types/company";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
@@ -158,7 +159,7 @@ export function ClientEditDialog({
       state: normalizeStateName(form.state),
       address: form.address.trim(),
       contactPersonName: form.contactPersonName.trim(),
-      phone: form.phone.trim(),
+      phone: formatVenezuelanPhone(form.phone) || form.phone.trim(),
       email: form.email.trim(),
     });
   }

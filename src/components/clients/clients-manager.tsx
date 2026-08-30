@@ -58,6 +58,7 @@ import {
   distributorClientRoles,
   type ClientOnboardingValues,
 } from "@/lib/client-onboarding";
+import { formatVenezuelanPhone } from "@/lib/venezuelan-phone";
 import {
   fetchClientByBranchId,
   fetchClients,
@@ -830,7 +831,7 @@ export function ClientsManager() {
                           </td>
                           <td className="max-w-[140px] px-5 py-3.5 text-muted">
                             <TruncatedText maxClassName="max-w-[120px]">
-                              {row.phone || "—"}
+                              {formatVenezuelanPhone(row.phone) || "—"}
                             </TruncatedText>
                           </td>
                           <td className="max-w-[200px] px-5 py-3.5 text-muted">

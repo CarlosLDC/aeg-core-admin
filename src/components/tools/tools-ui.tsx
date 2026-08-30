@@ -5,6 +5,7 @@ import type { LucideIcon } from "lucide-react";
 import { ChevronRight, Loader2, RefreshCw, TriangleAlert, WifiOff } from "lucide-react";
 import { DetailField } from "@/components/resource-view/detail-fields";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
+import { formatVenezuelanPhone } from "@/lib/venezuelan-phone";
 import type { ToolsSectionTone } from "@/lib/tools-sections";
 import type { ToolsPrinterPartySummary } from "@/modules/tools/shared/types";
 import {
@@ -352,8 +353,11 @@ export function ToolsPartyInfoFields({
     <ToolsDetailFields>
       <DetailField label="Nombre" value={party.name} />
       <DetailField label="RIF" value={party.rif || "—"} mono />
-      <DetailField label="Teléfono" value={party.phone} />
-      <DetailField label="Email" value={party.email} />
+      <DetailField
+        label="Teléfono"
+        value={formatVenezuelanPhone(party.phone) || party.phone || "—"}
+      />
+      <DetailField label="Email" value={party.email || "—"} />
     </ToolsDetailFields>
   );
 }

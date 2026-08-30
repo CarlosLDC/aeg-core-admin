@@ -68,6 +68,7 @@ import {
   getCompaniesErrorMessage,
   updateCompany,
 } from "@/lib/companies-api";
+import { formatVenezuelanPhone } from "@/lib/venezuelan-phone";
 import { fetchDistributors } from "@/lib/distributors-api";
 import {
   getBranchMissingContractKinds,
@@ -418,7 +419,9 @@ export function BranchView() {
         <DetailField
           label="Teléfono"
           value={
-            pendingProposed?.phone?.trim() || branch.phone?.trim() || "—"
+            formatVenezuelanPhone(
+              pendingProposed?.phone?.trim() || branch.phone?.trim() || "",
+            ) || "—"
           }
         />
         <DetailField
@@ -469,7 +472,10 @@ export function BranchView() {
               label="Persona de contacto"
               value={branch.contactPersonName?.trim() || "—"}
             />
-            <DetailField label="Teléfono" value={branch.phone || "—"} />
+            <DetailField
+              label="Teléfono"
+              value={formatVenezuelanPhone(branch.phone) || "—"}
+            />
             <DetailField label="Correo" value={branch.email || "—"} />
           </DetailSection>
         ),

@@ -37,6 +37,7 @@ import {
   fetchClientModificationRequestById,
   getClientModificationRequestsErrorMessage,
 } from "@/lib/client-modification-requests-api";
+import { formatVenezuelanPhone } from "@/lib/venezuelan-phone";
 import type { ClientModificationProposedData } from "@/types/client-modification-request";
 import {
   fetchCompanyById,
@@ -202,10 +203,12 @@ export function ClientView() {
         <DetailField
           label="Teléfono"
           value={
-            pendingProposed?.phone?.trim() ||
-            branch?.phone?.trim() ||
-            client.branchPhone?.trim() ||
-            "—"
+            formatVenezuelanPhone(
+              pendingProposed?.phone?.trim() ||
+                branch?.phone?.trim() ||
+                client.branchPhone?.trim() ||
+                "",
+            ) || "—"
           }
         />
         <DetailField
