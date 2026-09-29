@@ -302,6 +302,18 @@ export const TOOLS_MODULES: ToolsModule[] = [
     priority: "low",
     notes: "Prefer existing admin pagination and table patterns over a direct port.",
   },
+  {
+    id: "tools-broker-migration",
+    title: "Migración de broker",
+    description: "UI para la migración del broker MQTT de una impresora.",
+    sourcePath: "",
+    targetPath: "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\broker-migration",
+    route: "/tools/printers/[serial]/broker-migration",
+    status: "migrated",
+    dependsOn: ["tools-mqtt-core", "tools-printer-detail"],
+    priority: "high",
+    notes: "Nuevo panel para migrar de 13.51.138.105 a 206.189.231.128.",
+  },
 ];
 
 export function findToolsModule(id: string): ToolsModule | undefined {

@@ -76,6 +76,10 @@ export function toolsPrinterPath(serial: string): string {
   return `/tools/printers/${encodeURIComponent(serial)}`;
 }
 
+export function toolsPrinterBrokerMigrationPath(serial: string): string {
+  return `${toolsPrinterPath(serial)}/broker-migration`;
+}
+
 export function toolsPrinterWifiPath(serial: string): string {
   return `${toolsPrinterPath(serial)}/wifi`;
 }

@@ -8,12 +8,14 @@ import {
   ReceiptText,
   ScrollText,
   Wifi,
+  Server,
 } from "lucide-react";
 import {
   toolsPrinterFormasPagoPath,
   toolsPrinterHeaderFooterPath,
   toolsPrinterSummaryPath,
   toolsPrinterWifiPath,
+  toolsPrinterBrokerMigrationPath,
 } from "@/lib/resource-routes";
 
 export type ToolsSectionTone =
@@ -91,6 +93,13 @@ export const TOOLS_SECTIONS = {
     icon: FileStack,
     tone: "slate",
   },
+  brokerMigration: {
+    id: "broker-migration",
+    title: "Migración de broker",
+    description: "Migrar impresora al nuevo broker MQTT.",
+    icon: Server,
+    tone: "sky",
+  },
 } as const satisfies Record<string, ToolsSectionConfig>;
 
 export type ToolsSectionKey = keyof typeof TOOLS_SECTIONS;
@@ -100,6 +109,7 @@ export const TOOLS_PRINTER_NAV_SECTIONS = [
   "wifi",
   "formasPago",
   "headerFooter",
+  "brokerMigration",
 ] as const satisfies readonly ToolsSectionKey[];
 
 export type ToolsPrinterNavSectionKey =
@@ -118,6 +128,8 @@ export function toolsPrinterSectionHref(
       return toolsPrinterFormasPagoPath(serial);
     case "headerFooter":
       return toolsPrinterHeaderFooterPath(serial);
+    case "brokerMigration":
+      return toolsPrinterBrokerMigrationPath(serial);
     default: {
       const _exhaustive: never = section;
       return _exhaustive;
