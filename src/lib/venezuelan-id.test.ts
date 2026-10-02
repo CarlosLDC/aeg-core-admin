@@ -43,7 +43,7 @@ describe("parseCedula", () => {
 
 describe("formatPrefixedDocument helpers", () => {
   it("combines letter and digits", () => {
-    expect(formatRif("G", "1234567")).toBe("G1234567");
+    expect(formatRif("G", "1234567")).toBe("G-1234567");
     expect(formatCedula("V", "12345678")).toBe("V12345678");
   });
 

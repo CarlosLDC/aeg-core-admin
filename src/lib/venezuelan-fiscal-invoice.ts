@@ -181,10 +181,7 @@ export type VenezuelanFiscalInvoiceData = {
 export function formatRifForFiscalDisplay(raw: string): string {
   const normalized = normalizeRif(raw);
   if (!normalized) return "-";
-  const letter = normalized.charAt(0);
-  const digits = normalized.slice(1);
-  if (!digits) return normalized;
-  return `${letter}-${digits}`;
+  return normalized;
 }
 
 export function formatVenezuelanMoneyAmount(amount: number): string {

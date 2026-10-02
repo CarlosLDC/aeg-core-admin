@@ -1,5 +1,5 @@
 import { CONTRIBUTOR_TYPES, type ContributorType } from "@/types/company";
-import { RIF_PATTERN } from "@/lib/seniat-extract";
+import { normalizeRif, RIF_PATTERN } from "@/lib/seniat-extract";
 
 export type OnboardingStepSection =
   | "scan"
@@ -25,9 +25,9 @@ export function validateOnboardingSection(
 ): string | null {
   if (section === "fiscal") {
     const companyLocked = Boolean(form.linkedCompanyId);
-    const rif = form.rif.trim().toUpperCase();
+    const rif = normalizeRif(form.rif);
     if (!companyLocked && !RIF_PATTERN.test(rif)) {
-      return "Formato: letra V, E, J, P o G seguida de 7 a 9 dígitos.";
+      return "Formato: letra V, E, J, P o G seguida de guion y 7 a 9 dígitos.";
     }
     if (!companyLocked && !form.businessName.trim()) {
       return "Indica la razón social de la empresa.";

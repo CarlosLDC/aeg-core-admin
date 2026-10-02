@@ -52,7 +52,9 @@ export function parseCedula(raw: string): { letter: CedulaLetter; digits: string
 }
 
 export function formatRif(letter: string, digits: string): string {
-  return formatPrefixedDocument(letter, digits);
+  const normalizedDigits = digits.replace(/\D/g, "");
+  if (!normalizedDigits) return "";
+  return `${letter}-${normalizedDigits}`;
 }
 
 export function formatCedula(letter: string, digits: string): string {

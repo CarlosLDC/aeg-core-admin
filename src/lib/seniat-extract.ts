@@ -12,7 +12,8 @@ export const SENIAT_ACCEPT_MIME = [
   "application/pdf",
 ] as const;
 
-export const RIF_PATTERN = /^[VEJPG][0-9]{7,9}$/;
+export const RIF_PATTERN = /^[VEJPG]-[0-9]{7,9}$/;
+export const RIF_INPUT_PATTERN = /^[VEJPG]-?[0-9]{7,9}$/;
 
 /** Modelos compatibles con Google AI Studio (mayo 2026). */
 export const GEMINI_MODEL_DEFAULT = "gemini-2.5-flash";
@@ -40,7 +41,7 @@ export type SeniatExtractResult = z.infer<typeof rawExtractSchema>;
 const SENIAT_PROMPT = `Eres un asistente que extrae datos fiscales de documentos venezolanos (SENIAT, RIF, registro de contribuyente o comprobante fiscal).
 
 Analiza la imagen o PDF y devuelve ÚNICAMENTE un objeto JSON válido (sin markdown, sin comentarios) con estas claves:
-- rif: string (letra V, E, J, P o G + dígitos, sin guiones)
+- rif: string (letra V, E, J, P o G seguida de guion y dígitos, ej: J-123456789)
 - businessName: string (razón social)
 - contributorType: "ordinario" | "especial" | "formal" | null (null si no aparece claro)
 - state: string (estado de Venezuela)
@@ -52,15 +53,18 @@ Analiza la imagen o PDF y devuelve ÚNICAMENTE un objeto JSON válido (sin markd
 
 Reglas:
 - No inventes datos que no estén en el documento; usa "" para strings vacíos si no hay valor.
-- Normaliza el RIF sin guiones ni espacios.
 - Si el documento no es legible o no es fiscal venezolano, devuelve strings vacíos y contributorType null.`;
 
 export function normalizeRif(raw: string): string {
-  return raw
+  const clean = raw
     .trim()
     .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
-    .replace(/^([VEJPG])(\d)/, "$1$2");
+    .replace(/[^A-Z0-9]/g, "");
+  if (!clean) return "";
+  if (/^[VEJPG]\d+$/.test(clean)) {
+    return `${clean[0]}-${clean.slice(1)}`;
+  }
+  return clean;
 }
 
 export function mapContributorType(raw: string | null | undefined): ContributorType | null {
