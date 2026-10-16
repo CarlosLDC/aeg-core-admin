@@ -78,6 +78,27 @@ export function distributorLabel(
   return formatBranchShort(branch, companies);
 }
 
+export function clientLabel(
+  client: ClientResponse,
+  branches: BranchResponse[],
+  companies: CompanyResponse[],
+  extraBranches: BranchResponse[] = [],
+): string {
+  const branch =
+    branches.find((b) => b.id === client.branchId) ??
+    extraBranches.find((b) => b.id === client.branchId);
+  if (branch) {
+    return formatBranchShort(branch, companies);
+  }
+  const companyName = client.companyBusinessName?.trim();
+  const cityState = [client.branchCity, client.branchState]
+    .filter(Boolean)
+    .join(", ");
+  if (companyName && cityState) return `${companyName} — ${cityState}`;
+  if (companyName) return companyName;
+  return "Cliente desconocido";
+}
+
 export function clientDistributorSummary(
   branch: BranchWithRoles,
   distributors: DistributorResponse[],

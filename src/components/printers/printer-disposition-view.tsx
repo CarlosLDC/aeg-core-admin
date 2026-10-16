@@ -176,10 +176,10 @@ export function PrinterDispositionView({
     let cancelled = false;
     queueMicrotask(() => setCatalogLoading(true));
     Promise.all([
-      scope ? Promise.resolve(scope.companies) : fetchCompanies(),
-      scope ? Promise.resolve(scope.branches) : fetchBranches(),
-      fetchClients(),
-      fetchDistributors(),
+      scope ? Promise.resolve(scope.companies) : fetchCompanies().catch(() => []),
+      scope ? Promise.resolve(scope.branches) : fetchBranches().catch(() => []),
+      fetchClients().catch(() => []),
+      fetchDistributors().catch(() => []),
     ])
       .then(([companyRows, branchRows, clientRows, distributorRows]) => {
         if (!cancelled) {

@@ -51,8 +51,7 @@ import {
   toggleTableSort,
   type TableSortState,
 } from "@/lib/table-sort";
-import { distributorLabel } from "@/lib/branch-roles";
-import { formatBranchShort } from "@/lib/branches";
+import { clientLabel, distributorLabel } from "@/lib/branch-roles";
 import { fetchBranches } from "@/lib/branches-api";
 import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
@@ -126,16 +125,6 @@ type BranchPrintersTableProps = {
   branch: BranchWithRoles;
   client?: ClientResponse | null;
 };
-
-function clientLabel(
-  client: ClientResponse,
-  branches: BranchResponse[],
-  companies: CompanyResponse[],
-): string {
-  const branch = branches.find((b) => b.id === client.branchId);
-  if (!branch) return "Cliente desconocido";
-  return formatBranchShort(branch, companies);
-}
 
 export function BranchPrintersTable({
   branch,
@@ -228,12 +217,12 @@ export function BranchPrintersTable({
     try {
       const [companyRows, branchRows, distributorRows, clientRows, modelRows] =
         await Promise.all([
-          scope ? Promise.resolve(scope.companies) : fetchCompanies(),
-          scope ? Promise.resolve(scope.branches) : fetchBranches(),
+          scope ? Promise.resolve(scope.companies) : fetchCompanies().catch(() => []),
+          scope ? Promise.resolve(scope.branches) : fetchBranches().catch(() => []),
           isDistributor
             ? Promise.resolve([] as DistributorResponse[])
-            : fetchDistributors(),
-          fetchClients(),
+            : fetchDistributors().catch(() => []),
+          fetchClients().catch(() => []),
           fetchPrinterModels().catch(() => [] as PrinterModelResponse[]),
         ]);
       setCompanies(

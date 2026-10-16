@@ -239,6 +239,7 @@ export function PrinterWizardFields({
                 emptyLabel="Sin asignar"
                 searchPlaceholder="Buscar distribuidor…"
                 modalTitle="Seleccionar distribuidor"
+                preloadOptions
               />
             </div>
           ) : null}
@@ -253,6 +254,7 @@ export function PrinterWizardFields({
               emptyLabel="Sin asignar"
               searchPlaceholder="Buscar cliente…"
               modalTitle="Seleccionar cliente"
+              preloadOptions
             />
           </div>
         </div>
@@ -270,6 +272,7 @@ export function PrinterWizardFields({
               emptyLabel="Sin asignar"
               searchPlaceholder="Buscar software…"
               modalTitle="Seleccionar software"
+              preloadOptions
             />
           </div>
         )}
