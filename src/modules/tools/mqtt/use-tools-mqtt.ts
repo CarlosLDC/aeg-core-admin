@@ -8,6 +8,7 @@ import {
   areToolsSeniatActionsDisabled,
   areToolsSeniatActionsEnabled,
   getToolsConnectionIssue,
+  isToolsLegacyBroker,
   isToolsPrinterConnectionResolved,
   isToolsPrinterReachable,
   isToolsSeniatOnline,
@@ -119,6 +120,7 @@ export function useToolsPrinterConnection(
     effectiveError,
   );
   const isPrinterReachable = isToolsPrinterReachable(status, effectiveError);
+  const isLegacyBroker = isToolsLegacyBroker(status, effectiveError);
   const isSeniatOnline = isToolsSeniatOnline(status, effectiveError);
   const connectionIssue = getToolsConnectionIssue(loading, status, effectiveError);
   const networkInfo = resolveToolsPrinterNetworkInfo(
@@ -164,6 +166,7 @@ export function useToolsPrinterConnection(
     /** @deprecated Use connectionResolved */
     connectionKnown: connectionResolved,
     isPrinterReachable,
+    isLegacyBroker,
     isSeniatOnline,
     /** @deprecated Use isSeniatOnline */
     isOnline: isSeniatOnline,

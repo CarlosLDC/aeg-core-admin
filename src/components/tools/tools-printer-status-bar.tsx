@@ -25,6 +25,7 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
     error,
     refreshStatus,
     connectionIssue,
+    isLegacyBroker,
     isSeniatOnline,
     networkInfo,
   } = connection;
@@ -65,7 +66,8 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
                     ? "animate-pulse bg-muted"
                     : isSeniatOnline
                       ? "bg-emerald-500"
-                      : connectionIssue === "seniat"
+                      : connectionIssue === "seniat" ||
+                          connectionIssue === "legacy-broker"
                         ? "bg-amber-500"
                         : "bg-rose-500",
                 )}
@@ -86,10 +88,17 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
                 {formatToolsWifiStatusLine(networkInfo?.wifiNetwork)}
               </span>
             ) : null}
+            {isLegacyBroker ? (
+              <span className="inline-flex items-center gap-1.5 font-medium text-amber-700 dark:text-amber-300">
+                <span className="size-2 rounded-full bg-amber-500" aria-hidden />
+                Broker: Antiguo (requiere migración)
+              </span>
+            ) : null}
             {error ? (
               <span
                 className={cn(
-                  connectionIssue === "seniat"
+                  connectionIssue === "seniat" ||
+                    connectionIssue === "legacy-broker"
                     ? "text-amber-700 dark:text-amber-300"
                     : "text-rose-600 dark:text-rose-400",
                 )}

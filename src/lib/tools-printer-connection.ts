@@ -17,10 +17,17 @@ export const TOOLS_PRINTER_OFFLINE_MESSAGE =
 export const TOOLS_SENIAT_OFFLINE_MESSAGE =
   "Sin conexión con el SENIAT. La impresora responde, pero la transmisión al SENIAT no está disponible hasta restablecer esa conexión.";
 
+export const TOOLS_LEGACY_BROKER_MESSAGE =
+  "La impresora está conectada a WiFi pero sigue apuntando al broker antiguo. Ejecute la migración de broker para habilitar las operaciones remotas.";
+
 export const TOOLS_PRINTER_STATUS_TIMEOUT_MESSAGE =
   "Tiempo de espera agotado al consultar la impresora fiscal.";
 
-export type ToolsConnectionIssue = "none" | "printer" | "seniat";
+export type ToolsConnectionIssue =
+  | "none"
+  | "printer"
+  | "seniat"
+  | "legacy-broker";
 
 export function isUsableToolsNetworkField(
   value: string | null | undefined,
@@ -53,7 +60,7 @@ export function resolveToolsPrinterNetworkInfo(
   if (hasUsableToolsNetworkInfo(status?.additionalInfo)) {
     info = status?.additionalInfo ?? null;
   } else if (
-    connectionIssue === "seniat" &&
+    (connectionIssue === "seniat" || connectionIssue === "legacy-broker") &&
     hasUsableToolsNetworkInfo(cachedNetworkInfo)
   ) {
     info = cachedNetworkInfo;
@@ -125,6 +132,16 @@ export function isToolsPrinterReachable(
   return status.additionalInfo != null;
 }
 
+export function isToolsLegacyBroker(
+  status: ToolsMqttStatusResponse | null,
+  error: string | null,
+): boolean {
+  if (!isToolsPrinterReachable(status, error)) {
+    return false;
+  }
+  return status?.legacyBroker === true;
+}
+
 export function isToolsSeniatOnline(
   status: ToolsMqttStatusResponse | null,
   error: string | null,
@@ -162,6 +179,9 @@ export function getToolsConnectionIssue(
   if (!isToolsPrinterConnectionResolved(loading, status, error)) {
     return "none";
   }
+  if (isToolsLegacyBroker(status, error)) {
+    return "legacy-broker";
+  }
   if (isToolsSeniatOnline(status, error)) {
     return "none";
   }
@@ -183,6 +203,9 @@ export function areToolsRemoteActionsEnabled(
   if (loading) {
     return false;
   }
+  if (isToolsLegacyBroker(status, error)) {
+    return false;
+  }
   return isToolsPrinterReachable(status, error);
 }
 
@@ -196,6 +219,9 @@ export function areToolsSeniatActionsEnabled(
     return false;
   }
   if (loading) {
+    return false;
+  }
+  if (isToolsLegacyBroker(status, error)) {
     return false;
   }
   return isToolsSeniatOnline(status, error);

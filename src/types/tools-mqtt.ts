@@ -12,6 +12,7 @@ export type ToolsMqttStatusResponse = {
   seniatStatus?: "EN LINEA" | "SIN CONEXION" | null;
   additionalInfo?: ToolsMqttAdditionalInfo | null;
   code?: number | null;
+  legacyBroker?: boolean | null;
 };
 
 export type ToolsMqttSimpleResponse = {

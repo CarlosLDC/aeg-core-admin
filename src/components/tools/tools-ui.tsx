@@ -9,6 +9,7 @@ import { formatVenezuelanPhone } from "@/lib/venezuelan-phone";
 import type { ToolsSectionTone } from "@/lib/tools-sections";
 import type { ToolsPrinterPartySummary } from "@/modules/tools/shared/types";
 import {
+  TOOLS_LEGACY_BROKER_MESSAGE,
   TOOLS_PRINTER_OFFLINE_MESSAGE,
   TOOLS_SENIAT_OFFLINE_MESSAGE,
   type ToolsConnectionIssue,
@@ -600,22 +601,28 @@ export function ToolsConnectionWarning({
   variant = "printer",
   children,
 }: {
-  variant?: Extract<ToolsConnectionIssue, "printer" | "seniat">;
+  variant?: Extract<
+    ToolsConnectionIssue,
+    "printer" | "seniat" | "legacy-broker"
+  >;
   children?: React.ReactNode;
 }) {
   const message =
     children ??
-    (variant === "seniat"
-      ? TOOLS_SENIAT_OFFLINE_MESSAGE
-      : TOOLS_PRINTER_OFFLINE_MESSAGE);
-  const Icon = variant === "seniat" ? TriangleAlert : WifiOff;
+    (variant === "legacy-broker"
+      ? TOOLS_LEGACY_BROKER_MESSAGE
+      : variant === "seniat"
+        ? TOOLS_SENIAT_OFFLINE_MESSAGE
+        : TOOLS_PRINTER_OFFLINE_MESSAGE);
+  const isAmberWarning = variant === "seniat" || variant === "legacy-broker";
+  const Icon = isAmberWarning ? TriangleAlert : WifiOff;
 
   return (
     <div
       role="status"
       className={cn(
         "flex items-start gap-3 rounded-xl border px-4 py-3 text-sm",
-        variant === "seniat"
+        isAmberWarning
           ? "border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-200"
           : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-200",
       )}

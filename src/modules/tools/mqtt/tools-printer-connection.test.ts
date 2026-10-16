@@ -6,6 +6,7 @@ import {
   areToolsSeniatActionsEnabled,
   getToolsConnectionIssue,
   hasUsableToolsNetworkInfo,
+  isToolsLegacyBroker,
   isToolsPrinterConnectionResolved,
   isToolsPrinterReachable,
   isToolsSeniatOnline,
@@ -27,6 +28,13 @@ const onlineStatus = {
   additionalInfo: printerInfo,
 };
 
+const legacyBrokerStatus = {
+  success: true,
+  seniatStatus: "EN LINEA" as const,
+  additionalInfo: printerInfo,
+  legacyBroker: true,
+};
+
 const seniatOfflineStatus = {
   success: true,
   seniatStatus: "SIN CONEXION" as const,
@@ -46,6 +54,13 @@ describe("resolveToolsPrinterNetworkInfo", () => {
     ).toEqual(printerInfo);
     expect(
       resolveToolsPrinterNetworkInfo(printerOfflineStatus, printerInfo, "seniat"),
+    ).toEqual(printerInfo);
+    expect(
+      resolveToolsPrinterNetworkInfo(
+        legacyBrokerStatus,
+        null,
+        "legacy-broker",
+      ),
     ).toEqual(printerInfo);
     expect(
       resolveToolsPrinterNetworkInfo(printerOfflineStatus, printerInfo, "printer"),
@@ -77,12 +92,22 @@ describe("resolveToolsPrinterNetworkInfo", () => {
 describe("isToolsPrinterReachable", () => {
   it("returns true when StaInf includes printer network data", () => {
     expect(isToolsPrinterReachable(onlineStatus, null)).toBe(true);
+    expect(isToolsPrinterReachable(legacyBrokerStatus, null)).toBe(true);
     expect(isToolsPrinterReachable(seniatOfflineStatus, null)).toBe(true);
     expect(isToolsPrinterReachable(printerOfflineStatus, null)).toBe(false);
     expect(isToolsPrinterReachable(null, "Sin respuesta")).toBe(false);
     expect(
       isToolsPrinterReachable({ success: false, seniatStatus: "EN LINEA" }, null),
     ).toBe(false);
+  });
+});
+
+describe("isToolsLegacyBroker", () => {
+  it("detects when printer responded via the legacy broker", () => {
+    expect(isToolsLegacyBroker(legacyBrokerStatus, null)).toBe(true);
+    expect(isToolsLegacyBroker(onlineStatus, null)).toBe(false);
+    expect(isToolsLegacyBroker(printerOfflineStatus, null)).toBe(false);
+    expect(isToolsLegacyBroker(legacyBrokerStatus, "Error")).toBe(false);
   });
 });
 
@@ -96,8 +121,11 @@ describe("isToolsSeniatOnline", () => {
 });
 
 describe("getToolsConnectionIssue", () => {
-  it("distinguishes printer and SENIAT connectivity problems", () => {
+  it("distinguishes printer, legacy broker and SENIAT connectivity problems", () => {
     expect(getToolsConnectionIssue(false, onlineStatus, null)).toBe("none");
+    expect(getToolsConnectionIssue(false, legacyBrokerStatus, null)).toBe(
+      "legacy-broker",
+    );
     expect(getToolsConnectionIssue(false, seniatOfflineStatus, null)).toBe(
       "seniat",
     );
@@ -120,12 +148,15 @@ describe("isToolsPrinterConnectionResolved", () => {
 });
 
 describe("areToolsRemoteActionsEnabled", () => {
-  it("requires transport readiness, a finished check and a reachable printer", () => {
+  it("requires transport readiness, a finished check and a reachable printer on the new broker", () => {
     expect(areToolsRemoteActionsEnabled(true, true, null, null)).toBe(false);
     expect(areToolsRemoteActionsEnabled(true, false, null, null)).toBe(false);
     expect(
       areToolsRemoteActionsEnabled(true, false, seniatOfflineStatus, null),
     ).toBe(true);
+    expect(
+      areToolsRemoteActionsEnabled(true, false, legacyBrokerStatus, null),
+    ).toBe(false);
     expect(
       areToolsRemoteActionsEnabled(true, false, printerOfflineStatus, null),
     ).toBe(false);
@@ -139,8 +170,11 @@ describe("areToolsRemoteActionsEnabled", () => {
 });
 
 describe("areToolsSeniatActionsEnabled", () => {
-  it("requires transport readiness, a finished check and EN LINEA status", () => {
+  it("requires transport readiness, a finished check, new broker and EN LINEA status", () => {
     expect(areToolsSeniatActionsEnabled(true, false, seniatOfflineStatus, null)).toBe(
+      false,
+    );
+    expect(areToolsSeniatActionsEnabled(true, false, legacyBrokerStatus, null)).toBe(
       false,
     );
     expect(areToolsSeniatActionsEnabled(true, false, onlineStatus, null)).toBe(
@@ -152,6 +186,9 @@ describe("areToolsSeniatActionsEnabled", () => {
 describe("areToolsRemoteActionsDisabled", () => {
   it("mirrors the enabled helper", () => {
     expect(areToolsRemoteActionsDisabled(true, true, null, null)).toBe(true);
+    expect(
+      areToolsRemoteActionsDisabled(true, false, legacyBrokerStatus, null),
+    ).toBe(true);
     expect(
       areToolsRemoteActionsDisabled(true, false, seniatOfflineStatus, null),
     ).toBe(false);
@@ -165,6 +202,9 @@ describe("areToolsSeniatActionsDisabled", () => {
   it("mirrors the SENIAT enabled helper", () => {
     expect(
       areToolsSeniatActionsDisabled(true, false, seniatOfflineStatus, null),
+    ).toBe(true);
+    expect(
+      areToolsSeniatActionsDisabled(true, false, legacyBrokerStatus, null),
     ).toBe(true);
     expect(
       areToolsSeniatActionsDisabled(true, false, onlineStatus, null),

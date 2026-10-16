@@ -179,8 +179,10 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
           }
         />
 
-        {connectionResolved && connectionIssue === "printer" ? (
-          <ToolsConnectionWarning variant="printer" />
+        {connectionResolved &&
+        (connectionIssue === "printer" ||
+          connectionIssue === "legacy-broker") ? (
+          <ToolsConnectionWarning variant={connectionIssue} />
         ) : null}
 
         <div className={toolsPanelSectionClass}>

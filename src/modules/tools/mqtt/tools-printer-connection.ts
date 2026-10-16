@@ -1,4 +1,5 @@
 export {
+  TOOLS_LEGACY_BROKER_MESSAGE,
   TOOLS_PRINTER_OFFLINE_MESSAGE,
   TOOLS_SENIAT_OFFLINE_MESSAGE,
   TOOLS_PRINTER_STATUS_TIMEOUT_MESSAGE,
@@ -9,6 +10,7 @@ export {
   areToolsSeniatActionsEnabled,
   getToolsConnectionIssue,
   hasUsableToolsNetworkInfo,
+  isToolsLegacyBroker,
   isToolsPrinterConnectionKnown,
   isToolsPrinterConnectionResolved,
   isToolsPrinterOnline,
