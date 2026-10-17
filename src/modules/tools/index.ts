@@ -25,6 +25,20 @@ export {
 export { escPosToHtml } from "./escpos/esc-pos-to-html";
 
 export { loadToolsPrinterCatalog } from "./printers/tools-printers-api";
+export {
+  ToolsSectionProvider,
+  ToolsSectionContext,
+  useToolsSectionContext,
+  readStoredToolsTableState,
+  saveStoredToolsTableState,
+  clearStoredToolsTableState,
+  TOOLS_TABLE_STORAGE_KEY,
+  DEFAULT_TOOLS_PAGE_SIZE,
+  DEFAULT_TOOLS_SORT,
+  type ToolsTableState,
+  type ToolsPrinterSortKey,
+  type ToolsSectionContextValue,
+} from "./printers/tools-printers-context";
 export { useToolsPrinters } from "./printers/use-tools-printers";
 export { useToolsMqtt, useToolsPrinterConnection } from "./mqtt/use-tools-mqtt";
 export type { ToolsPrinterConnectionState } from "./mqtt/use-tools-mqtt";

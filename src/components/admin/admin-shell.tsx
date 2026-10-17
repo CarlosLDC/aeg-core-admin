@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { RouteAccessGuard } from "@/components/auth/route-access-guard";
+import { clearStoredToolsTableState } from "@/modules/tools";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { cn } from "@/lib/utils";
@@ -47,10 +49,19 @@ type AdminShellProps = {
 export function AdminShell({ title, description, children }: AdminShellProps) {
   const [collapsed, setCollapsed] = useState(initialCollapsedState);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (pathname && !pathname.startsWith("/tools")) {
+      clearStoredToolsTableState();
+    }
+  }, [pathname]);
 
   useLayoutEffect(() => {
     const preferred = readCollapsedPreference();
-    setCollapsed((current) => (current === preferred ? current : preferred));
+    queueMicrotask(() => {
+      setCollapsed((current) => (current === preferred ? current : preferred));
+    });
   }, []);
 
   const toggleCollapsed = useCallback(() => {

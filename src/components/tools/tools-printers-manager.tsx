@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   AlertTriangle,
   ChevronRight,
@@ -22,16 +22,12 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { usePagination } from "@/hooks/use-pagination";
-import {
-  DISTRIBUTOR_PRINTER_QUICK_FILTERS,
-  type DistributorPrinterQuickFilter,
-} from "@/lib/distributor-printer-filters";
+import { DISTRIBUTOR_PRINTER_QUICK_FILTERS } from "@/lib/distributor-printer-filters";
 import { PRINTER_STATUS_LABELS } from "@/lib/printer-form";
 import { filterAllOption } from "@/lib/table-filter-options";
 import {
   sortTableRows,
   toggleTableSort,
-  type TableSortState,
 } from "@/lib/table-sort";
 import { toolsPrinterPath } from "@/lib/resource-routes";
 import {
@@ -40,6 +36,7 @@ import {
   type ToolsStatusBucket,
 } from "@/modules/tools/shared/formatters";
 import { useToolsPrinters } from "@/modules/tools/printers/use-tools-printers";
+import type { ToolsPrinterSortKey } from "@/modules/tools";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import type { PrinterStatus } from "@/types/printer";
 import { PRINTER_STATUSES } from "@/types/printer";
@@ -50,13 +47,7 @@ import {
   ToolsSectionHeading,
 } from "@/components/tools/tools-ui";
 
-type ToolsPrinterSortKey = "serial";
-
 const TOOLS_PAGE_SIZE = 5;
-const DEFAULT_TOOLS_SORT: TableSortState<ToolsPrinterSortKey> = {
-  key: "serial",
-  direction: "asc",
-};
 
 const STATUS_COUNTER_FILTERS: Array<{
   bucket: ToolsStatusBucket;
@@ -121,18 +112,22 @@ export function ToolsPrintersManager() {
     setQuery,
     reload,
     statusCounts,
+    statusBucket,
+    setStatusBucket,
+    distributorFilter,
+    setDistributorFilter,
+    adminStatusFilter,
+    setAdminStatusFilter,
+    sort,
+    setSort,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
   } = useToolsPrinters();
 
   const isDistributor = role != null && isDistributorPanelRole(role);
   const isAdmin = role === "ADMIN";
-  const [statusBucket, setStatusBucket] = useState<ToolsStatusBucket>("all");
-  const [distributorFilter, setDistributorFilter] =
-    useState<DistributorPrinterQuickFilter>("all");
-  const [adminStatusFilter, setAdminStatusFilter] = useState<
-    PrinterStatus | "all"
-  >("all");
-  const [sort, setSort] =
-    useState<TableSortState<ToolsPrinterSortKey>>(DEFAULT_TOOLS_SORT);
 
   const statusFiltered = useMemo(() => {
     let rows = searchResults;
@@ -167,7 +162,12 @@ export function ToolsPrintersManager() {
     return sortTableRows(statusFiltered, sort, comparators);
   }, [statusFiltered, sort]);
 
-  const pagination = usePagination(sortedPrinters, TOOLS_PAGE_SIZE);
+  const pagination = usePagination(sortedPrinters, TOOLS_PAGE_SIZE, {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+  });
   const { paginatedItems: visiblePrinters } = pagination;
 
   const adminStatusFilterOptions = useMemo(
@@ -188,11 +188,18 @@ export function ToolsPrintersManager() {
     setStatusBucket("all");
     setDistributorFilter("all");
     setAdminStatusFilter("all");
+    setPage(1);
   }
 
   function handleStatusCounterClick(bucket: ToolsStatusBucket) {
     setStatusBucket((current) => (current === bucket ? "all" : bucket));
     setDistributorFilter("all");
+    setPage(1);
+  }
+
+  function handleSearchChange(nextQuery: string) {
+    setQuery(nextQuery);
+    setPage(1);
   }
 
   return (
@@ -270,6 +277,7 @@ export function ToolsPrintersManager() {
                     onClick={() => {
                       setStatusBucket("all");
                       setDistributorFilter(filter.value);
+                      setPage(1);
                     }}
                   >
                     {filter.label}
@@ -280,7 +288,7 @@ export function ToolsPrintersManager() {
 
             <DataTableToolbar
               search={query}
-              onSearchChange={setQuery}
+              onSearchChange={handleSearchChange}
               searchPlaceholder="Buscar por serial, cliente, ciudad, distribuidor…"
               resultCount={statusFiltered.length}
               totalCount={allPrinters.length}
@@ -299,6 +307,7 @@ export function ToolsPrintersManager() {
                               ? (value as PrinterStatus | "all")
                               : "all",
                           );
+                          setPage(1);
                         },
                         options: adminStatusFilterOptions,
                       },
