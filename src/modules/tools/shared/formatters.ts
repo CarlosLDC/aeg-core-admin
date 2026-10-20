@@ -224,9 +224,11 @@ export function filterPrinters(
   if (!term) return [...printers];
 
   return printers.filter((printer) => {
+    const sinMacBadge = !printer.macAddress ? "sin mac" : "";
     const haystack = [
       printer.serial,
       printer.macAddress ?? "",
+      sinMacBadge,
       printer.modelo,
       printer.marca,
       printer.estado,

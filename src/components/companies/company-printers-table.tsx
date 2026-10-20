@@ -388,12 +388,19 @@ export function CompanyPrintersTable({
       const haystack = [
         printer.id,
         printer.fiscalSerial,
+        printer.modelId,
+        model?.modelCode,
         modelLabel,
+        printer.status,
         statusLabel,
+        printer.deviceType,
         deviceTypeLabel,
         printer.versionFirmware ?? "",
         printer.macAddress ?? "",
         printer.installationDate ?? "",
+        formatDate(printer.installationDate),
+        printer.createdAt,
+        formatDate(printer.createdAt),
       ]
         .join(" ")
         .toLowerCase();

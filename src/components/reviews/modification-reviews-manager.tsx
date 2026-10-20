@@ -14,6 +14,7 @@ import {
   getClientModificationRequestsErrorMessage,
 } from "@/lib/client-modification-requests-api";
 import { formatDate } from "@/lib/datetime-form";
+import { useTableSearch } from "@/hooks/use-table-search";
 import {
   DEFAULT_POLL_INTERVAL_MS,
   DEFAULT_RETRY_DELAYS_MS,
@@ -53,7 +54,7 @@ export function ModificationReviewsManager() {
   const [rows, setRows] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useTableSearch("/reviews");
   const [statusFilter, setStatusFilter] = useState<ModificationRequestStatus | "all">(
     "all",
   );
@@ -153,9 +154,23 @@ export function ModificationReviewsManager() {
     return rows.filter((row) => {
       if (statusFilter !== "all" && row.status !== statusFilter) return false;
       if (!q) return true;
-      return `${row.id} ${row.resourceName} ${row.requestedByName} ${row.actionType}`
-        .toLowerCase()
-        .includes(q);
+      const actionLabel = ACTION_LABELS[row.actionType] ?? row.actionType;
+      const statusLabel = STATUS_LABELS[row.status] ?? row.status;
+      const haystack = [
+        row.id,
+        row.resourceName,
+        row.requestedByName,
+        row.actionType,
+        actionLabel,
+        row.status,
+        statusLabel,
+        row.createdAt,
+        formatDate(row.createdAt),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
     });
   }, [rows, search, statusFilter]);
 

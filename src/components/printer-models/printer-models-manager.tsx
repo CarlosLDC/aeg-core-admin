@@ -39,6 +39,8 @@ import {
   toPrinterModelRequest,
   type PrinterModelFormValues,
 } from "@/lib/printer-model-form";
+import { formatDate } from "@/lib/datetime-form";
+import { useTableSearch } from "@/hooks/use-table-search";
 import {
   createPrinterModel,
   deletePrinterModel,
@@ -77,7 +79,7 @@ export function PrinterModelsManager() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("printer-models");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useTableSearch("/printer-models");
   const [sort, setSort] = useState<TableSortState<PrinterModelSortKey>>(null);
 
   const filteredModels = useMemo(() => {
@@ -89,8 +91,13 @@ export function PrinterModelsManager() {
         model.modelCode,
         model.providencia,
         model.approvalDate,
+        formatPrinterModelDate(model.approvalDate),
         model.price,
+        formatPrinterModelPrice(model.price),
+        model.createdAt,
+        formatDate(model.createdAt),
       ]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);

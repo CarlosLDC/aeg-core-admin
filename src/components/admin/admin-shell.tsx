@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { RouteAccessGuard } from "@/components/auth/route-access-guard";
 import { clearStoredToolsTableState } from "@/modules/tools";
+import { cleanupStoredTableSearches } from "@/lib/table-search-storage";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { cn } from "@/lib/utils";
@@ -52,8 +53,11 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (pathname && !pathname.startsWith("/tools")) {
-      clearStoredToolsTableState();
+    if (pathname) {
+      cleanupStoredTableSearches(pathname);
+      if (!pathname.startsWith("/tools")) {
+        clearStoredToolsTableState();
+      }
     }
   }, [pathname]);
 

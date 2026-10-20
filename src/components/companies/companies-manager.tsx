@@ -26,6 +26,8 @@ import { useToast } from "@/context/toast-provider";
 import { reportListTableError } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
+import { useTableSearch } from "@/hooks/use-table-search";
+import { formatDate } from "@/lib/datetime-form";
 import {
   compareDateValues,
   compareNumberValues,
@@ -70,7 +72,7 @@ export function CompaniesManager() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("companies");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useTableSearch("/companies");
   const [contributorFilter, setContributorFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<CompanySortKey>>(null);
 
@@ -98,8 +100,20 @@ export function CompaniesManager() {
         return false;
       }
       if (!q) return true;
-      const haystack =
-        `${company.id} ${company.businessName} ${company.rif} ${company.contributorType}`.toLowerCase();
+      const contributorLabel =
+        CONTRIBUTOR_LABELS[company.contributorType] ?? company.contributorType;
+      const haystack = [
+        String(company.id),
+        company.businessName,
+        company.rif,
+        company.contributorType,
+        contributorLabel,
+        company.createdAt,
+        formatDate(company.createdAt),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
       return haystack.includes(q);
     });
   }, [companies, search, contributorFilter]);

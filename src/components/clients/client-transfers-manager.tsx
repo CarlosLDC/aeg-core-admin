@@ -14,7 +14,9 @@ import { TruncatedText } from "@/components/ui/truncated-text";
 import { useConfirm } from "@/context/confirm-provider";
 import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
+import { useTableSearch } from "@/hooks/use-table-search";
 import { distributorLabel } from "@/lib/branch-roles";
+import { formatDate } from "@/lib/datetime-form";
 import { fetchBranches } from "@/lib/branches-api";
 import {
   fetchClients,
@@ -82,7 +84,7 @@ export function ClientTransfersManager() {
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useTableSearch("/client-transfers");
   const [distributorFilter, setDistributorFilter] = useState<string>(FILTER_ALL);
   const [transferClient, setTransferClient] = useState<ClientResponse | null>(
     null,
@@ -157,10 +159,15 @@ export function ClientTransfersManager() {
     if (!q) return rows;
 
     return rows.filter((client) => {
+      const pendingText =
+        client.reviewStatus === "PENDING_REVIEW" ? "en revisión" : "";
       const haystack = [
         clientBusinessName(client),
         clientRif(client),
         clientBranchLabel(client),
+        client.branchAddress,
+        client.branchCity,
+        client.branchState,
         distributorName(
           client.distributorId,
           distributors,
@@ -168,7 +175,12 @@ export function ClientTransfersManager() {
           companies,
         ),
         String(client.id),
+        String(client.branchId),
+        pendingText,
+        client.createdAt,
+        formatDate(client.createdAt),
       ]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);

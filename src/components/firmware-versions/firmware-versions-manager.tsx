@@ -41,6 +41,8 @@ import {
   toggleTableSort,
   type TableSortState,
 } from "@/lib/table-sort";
+import { formatDate } from "@/lib/datetime-form";
+import { useTableSearch } from "@/hooks/use-table-search";
 import {
   createFirmware,
   deleteFirmware,
@@ -101,7 +103,7 @@ export function FirmwareVersionsManager() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("firmware-versions");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useTableSearch("/firmware-versions");
   const [modelFilter, setModelFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<FirmwareSortKey>>(null);
 
@@ -136,7 +138,12 @@ export function FirmwareVersionsManager() {
         fw.checksumSha256,
         fw.notes,
         model,
+        fw.sizeBytes,
+        formatBytes(fw.sizeBytes),
+        fw.createdAt,
+        formatDate(fw.createdAt),
       ]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);

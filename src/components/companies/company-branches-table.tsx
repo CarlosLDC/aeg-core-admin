@@ -61,6 +61,8 @@ import {
 import {
   branchPath,
 } from "@/lib/resource-routes";
+import { formatDate } from "@/lib/datetime-form";
+import { formatVenezuelanPhone } from "@/lib/venezuelan-phone";
 import {
   filterAllOption,
   uniqueStateFilterOptions,
@@ -197,16 +199,29 @@ export function CompanyBranchesTable({
         return false;
       }
       if (!q) return true;
+      const typeLabels = [
+        branch.client ? "cliente" : "",
+        branch.distributor ? "distribuidor" : "",
+        branch.serviceCenter ? "centro de servicio" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
       const haystack = [
         branch.id,
         branch.city,
         branch.state,
+        `${branch.city}, ${branch.state}`,
         branch.address,
         branch.contactPersonName,
         branch.phone,
+        formatVenezuelanPhone(branch.phone),
         branch.email,
+        typeLabels,
         clientDistributorSummary(branch, distributors, allBranches, companies),
+        branch.createdAt,
+        formatDate(branch.createdAt),
       ]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);

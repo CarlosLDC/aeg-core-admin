@@ -58,6 +58,8 @@ import {
   toggleTableSort,
   type TableSortState,
 } from "@/lib/table-sort";
+import { formatDate } from "@/lib/datetime-form";
+import { useTableSearch } from "@/hooks/use-table-search";
 import {
   deleteBranchRoles,
   distributorLabel,
@@ -193,7 +195,7 @@ export function BranchesManager() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("branches");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useTableSearch("/branches");
   const [typeFilter, setTypeFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
   const [companyFilter, setCompanyFilter] = useState("all");
@@ -291,6 +293,14 @@ export function BranchesManager() {
         return false;
       }
       if (!q) return true;
+      const roleLabels = [
+        branch.client ? "cliente" : "",
+        branch.distributor ? "distribuidor" : "",
+        branch.serviceCenter ? "centro de servicio" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+
       const haystack = [
         branch.id,
         companySearchTextById(companies, branch.companyId),
@@ -300,7 +310,11 @@ export function BranchesManager() {
         branch.contactPersonName,
         branch.phone,
         branch.email,
+        roleLabels,
+        branch.createdAt,
+        formatDate(branch.createdAt),
       ]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);

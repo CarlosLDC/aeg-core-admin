@@ -26,8 +26,10 @@ import {
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
 import { reportListTableError } from "@/lib/api-error-message";
+import { formatDate } from "@/lib/datetime-form";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
+import { useTableSearch } from "@/hooks/use-table-search";
 import {
   compareDateValues,
   compareNumberValues,
@@ -217,7 +219,7 @@ export function ClientsManager() {
   const [formError, setFormError] = useState<string | null>(null);
   const [resumeBranchId, setResumeBranchId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("clients");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useTableSearch("/clients");
   const [stateFilter, setStateFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<ClientSortKey>>(null);
 
@@ -364,15 +366,27 @@ export function ClientsManager() {
         return false;
       }
       if (!q) return true;
+      const pendingText = isPendingReview(row.client)
+        ? "en revisión por administrador"
+        : "";
+      const formattedPhone = formatVenezuelanPhone(row.phone);
       const haystack = [
+        String(row.client.id),
         row.businessName,
         row.rif,
         row.city,
         row.state,
+        `${row.city}, ${row.state}`,
+        row.branch?.address,
         row.phone,
+        formattedPhone,
         row.email,
         row.branch?.contactPersonName,
+        pendingText,
+        row.createdAt,
+        formatDate(row.createdAt),
       ]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);

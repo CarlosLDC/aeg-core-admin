@@ -63,6 +63,7 @@ import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import {
+  DEVICE_TYPE_LABELS,
   printerModelLabel,
   printerToAssignmentRequest,
   printerToFormValues,
@@ -73,6 +74,8 @@ import {
   toPrinterRequest,
   type PrinterFormValues,
 } from "@/lib/printer-form";
+import { formatDate } from "@/lib/datetime-form";
+import { useTableSearch } from "@/hooks/use-table-search";
 import { fetchPrinterModels } from "@/lib/printer-models-api";
 import {
   fetchMissingPrinterModels,
@@ -106,6 +109,7 @@ import {
   isBackwardPrinterStatusTransition,
   isPrinterUnassigned,
   normalizePrinterStatus,
+  printerStatusLabel,
 } from "@/lib/printer-status";
 import { getPrinterStatusQuickAction, getPrinterStatusBadgeTitle } from "@/lib/printer-quick-actions";
 import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
@@ -195,7 +199,7 @@ export function PrintersManager() {
   } | null>(null);
   const [forceDeleting, setForceDeleting] = useState(false);
   const tableColumns = useTableColumnVisibility("printers");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useTableSearch("/printers");
   const [statusFilter, setStatusFilter] = useState<
     PrinterStatus | "all" | DistributorPrinterQuickFilter
   >("all");
@@ -255,6 +259,77 @@ export function PrintersManager() {
     [models],
   );
 
+  const clientLabelById = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const c of clients) {
+      map.set(c.id, clientLabel(c, branches, companies));
+    }
+    return map;
+  }, [clients, branches, companies]);
+
+  const clientRifById = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const c of clients) {
+      const embedded = c.companyRif?.trim();
+      map.set(
+        c.id,
+        embedded || companyRifForBranch(c.branchId, branches, companies),
+      );
+    }
+    return map;
+  }, [clients, branches, companies]);
+
+  const distributorLabelById = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const d of distributors) {
+      map.set(d.id, distributorLabel(d, branches, companies));
+    }
+    return map;
+  }, [distributors, branches, companies]);
+
+  const distributorRifById = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const d of distributors) {
+      map.set(
+        d.id,
+        companyRifForBranch(d.branchId, branches, companies),
+      );
+    }
+    return map;
+  }, [distributors, branches, companies]);
+
+  const getDistributorLabel = useCallback(
+    (id: number | null): string => {
+      if (id == null) return "—";
+      return distributorLabelById.get(id) ?? "—";
+    },
+    [distributorLabelById],
+  );
+
+  const getClientLabel = useCallback(
+    (id: number | null): string => {
+      if (id == null) return "—";
+      return clientLabelById.get(id) ?? "—";
+    },
+    [clientLabelById],
+  );
+
+  const getDistributorRif = useCallback(
+    (id: number | null): string => {
+      if (id == null) return "—";
+      return distributorRifById.get(id) ?? "—";
+    },
+    [distributorRifById],
+  );
+
+  const getClientRif = useCallback(
+    (id: number | null): string => {
+      if (id == null) return "—";
+      return clientRifById.get(id) ?? "—";
+    },
+    [clientRifById],
+  );
+
   const serialFilterOptions = useMemo(() => {
     const serials = [
       ...new Set(
@@ -287,18 +362,48 @@ export function PrintersManager() {
       }
       if (!q) return true;
       const model = modelById.get(printer.modelId);
+      const distributorName =
+        printer.distributorId != null
+          ? distributorLabelById.get(printer.distributorId) ?? ""
+          : "";
+      const distributorRif =
+        printer.distributorId != null
+          ? distributorRifById.get(printer.distributorId) ?? ""
+          : "";
+      const clientName =
+        printer.clientId != null
+          ? clientLabelById.get(printer.clientId) ?? ""
+          : "";
+      const clientRif =
+        printer.clientId != null
+          ? clientRifById.get(printer.clientId) ?? ""
+          : "";
+      const statusLabel = printerStatusLabel(printer.status);
+      const deviceTypeLabel =
+        DEVICE_TYPE_LABELS[printer.deviceType] ?? printer.deviceType;
+
       const haystack = [
         printer.id,
         printer.fiscalSerial,
         printer.modelId,
         model ? printerModelLabel(model) : "",
+        model?.modelCode ?? "",
         printer.status,
+        statusLabel,
         printer.deviceType,
-        ...(isDistributor ? [] : [printer.distributorId]),
+        deviceTypeLabel,
+        distributorName,
+        distributorRif,
+        clientName,
+        clientRif,
         printer.clientId,
+        printer.distributorId,
         printer.macAddress,
         printer.versionFirmware,
+        printer.createdAt,
+        formatDate(printer.createdAt),
       ]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);
@@ -309,7 +414,10 @@ export function PrintersManager() {
     statusFilter,
     serialFilter,
     modelById,
-    isDistributor,
+    distributorLabelById,
+    distributorRifById,
+    clientLabelById,
+    clientRifById,
   ]);
 
   const sortedPrinters = useMemo(
@@ -470,35 +578,6 @@ export function PrintersManager() {
     };
   }, [visiblePrinters, models]);
 
-  function getDistributorLabel(distributorId: number | null): string {
-    if (distributorId == null) return "—";
-    const d = distributors.find((x) => x.id === distributorId);
-    if (!d) return "—";
-    return distributorLabel(d, branches, companies);
-  }
-
-  function getClientLabel(clientId: number | null): string {
-    if (clientId == null) return "—";
-    const c = clients.find((x) => x.id === clientId);
-    if (!c) return "—";
-    return clientLabel(c, branches, companies);
-  }
-
-  function getDistributorRif(distributorId: number | null): string {
-    if (distributorId == null) return "—";
-    const distributor = distributors.find((d) => d.id === distributorId);
-    if (!distributor) return "—";
-    return companyRifForBranch(distributor.branchId, branches, companies);
-  }
-
-  function getClientRif(clientId: number | null): string {
-    if (clientId == null) return "—";
-    const client = clients.find((c) => c.id === clientId);
-    if (!client) return "—";
-    const embedded = client.companyRif?.trim();
-    if (embedded) return embedded;
-    return companyRifForBranch(client.branchId, branches, companies);
-  }
 
   function openCreate() {
     setSelected(null);

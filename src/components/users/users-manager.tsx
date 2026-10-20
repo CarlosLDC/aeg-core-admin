@@ -57,6 +57,7 @@ import {
   toToastErrorMessage,
 } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
+import { useTableSearch } from "@/hooks/use-table-search";
 import { ROLE_LABELS } from "@/lib/roles";
 import {
   userCreateSuccessMessage,
@@ -122,7 +123,7 @@ export function UsersManager() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useTableSearch("/users");
   const [roleFilter, setRoleFilter] = useState("all");
   const [portalFilter, setPortalFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -145,8 +146,22 @@ export function UsersManager() {
         distributorLabelForUser(user, distributors, branches, companies),
       );
       const cedula = userNationalIdDisplayLabel(user.role, user.nationalId);
-      const haystack =
-        `${user.id} ${displayUserName(user)} ${user.email} ${user.role} ${userPortalAccessLabel(user.role)} ${distributor} ${cedula}`.toLowerCase();
+      const roleLabel = ROLE_LABELS[user.role] ?? user.role;
+      const statusLabel = user.enabled ? "activo" : "inactivo";
+      const haystack = [
+        user.id,
+        displayUserName(user),
+        user.email,
+        user.role,
+        roleLabel,
+        userPortalAccessLabel(user.role),
+        distributor,
+        cedula,
+        statusLabel,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
       return haystack.includes(q);
     });
   }, [users, search, roleFilter, portalFilter, statusFilter, branches, companies, distributors]);

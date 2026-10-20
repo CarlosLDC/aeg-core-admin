@@ -9,6 +9,7 @@ import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
+import { useTableSearch } from "@/hooks/use-table-search";
 import {
   fetchClientModificationRequests,
   getClientModificationRequestsErrorMessage,
@@ -41,7 +42,7 @@ export function ClientModificationRequestsManager() {
   const [rows, setRows] = useState<ClientModificationRequestListItemResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useTableSearch("/clients/reviews");
   const [statusFilter, setStatusFilter] = useState<ModificationRequestStatus | "all">(
     "all",
   );
@@ -126,7 +127,21 @@ export function ClientModificationRequestsManager() {
     return rows.filter((row) => {
       if (statusFilter !== "all" && row.status !== statusFilter) return false;
       if (!q) return true;
-      return `${row.id} ${row.clientName} ${row.requestedByName} ${row.actionType}`
+      const actionLabel = ACTION_LABELS[row.actionType] ?? row.actionType;
+      const statusLabel = STATUS_LABELS[row.status] ?? row.status;
+      return [
+        String(row.id),
+        row.clientName,
+        row.requestedByName,
+        row.actionType,
+        actionLabel,
+        row.status,
+        statusLabel,
+        row.createdAt,
+        formatDate(row.createdAt),
+      ]
+        .filter(Boolean)
+        .join(" ")
         .toLowerCase()
         .includes(q);
     });

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   History,
@@ -15,6 +15,7 @@ import {
 import { FieldLabel } from "@/components/ui/field-label";
 import { SealColorBadge } from "@/components/seals/seal-color-badge";
 import { SealStatusBadge } from "@/components/seals/seal-status-badge";
+import { SealSelect } from "@/components/seals/seal-select";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { toDatetimeLocalValue } from "@/lib/datetime-form";
 import {
@@ -71,6 +72,14 @@ export function PrinterSealsDialog({
   const [assignDate, setAssignDate] = useState<string>(() =>
     toDatetimeLocalValue(new Date().toISOString()),
   );
+
+  useEffect(() => {
+    if (availableSeals.length === 0) {
+      setSelectedSealId("");
+    } else if (!availableSeals.some((s) => String(s.id) === selectedSealId)) {
+      setSelectedSealId(String(availableSeals[0].id));
+    }
+  }, [availableSeals, selectedSealId]);
 
   // Create new seal state
   const [newSerial, setNewSerial] = useState("");
@@ -399,23 +408,19 @@ export function PrinterSealsDialog({
               </div>
             ) : (
               <>
-                <label className="block">
+                <div>
                   <FieldLabel required>Precinto disponible</FieldLabel>
-                  <select
-                    required
+                  <SealSelect
                     value={selectedSealId}
+                    onChange={(id) => {
+                      setSelectedSealId(id);
+                      setError(null);
+                    }}
+                    seals={availableSeals}
                     disabled={saving}
-                    onChange={(e) => setSelectedSealId(e.target.value)}
-                    className={formFieldInputClass}
-                  >
-                    {availableSeals.map((seal) => (
-                      <option key={seal.id} value={seal.id}>
-                        {seal.serial} — {SEAL_COLOR_LABELS[seal.color]} (ID #
-                        {seal.id})
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    required
+                  />
+                </div>
 
                 <label className="block">
                   <FieldLabel required>Fecha y hora de instalación</FieldLabel>

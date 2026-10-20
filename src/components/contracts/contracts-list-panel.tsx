@@ -45,12 +45,15 @@ import {
   type TableSortState,
 } from "@/lib/table-sort";
 import {
+  CONTRACT_STATUS_LABELS,
   contractStatus,
   formatContractDate,
   toDistributorContractBody,
   toServiceCenterContractBody,
   type ContractFormValues,
 } from "@/lib/contract-form";
+import { formatDate } from "@/lib/datetime-form";
+import { useTableSearch } from "@/hooks/use-table-search";
 import {
   createDistributorContract,
   deleteDistributorContract,
@@ -127,7 +130,7 @@ export function ContractsListPanel({
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility(`contracts-${kind}`);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useTableSearch("/contracts");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<ContractSortKey>>(null);
 
@@ -142,14 +145,22 @@ export function ContractsListPanel({
       const status = contractStatus(contract.startDate, contract.endDate);
       if (statusFilter !== "all" && status !== statusFilter) return false;
       if (!q) return true;
+      const statusLabel = CONTRACT_STATUS_LABELS[status] ?? status;
       const haystack = [
         contract.id,
         partyIdFromContract(kind, contract),
         getPartyLabel(contract),
         contract.startDate,
+        formatDate(contract.startDate),
         contract.endDate,
+        formatDate(contract.endDate),
+        status,
+        statusLabel,
+        contract.createdAt,
+        formatDate(contract.createdAt),
         ...(contract.photoUrls ?? []),
       ]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);

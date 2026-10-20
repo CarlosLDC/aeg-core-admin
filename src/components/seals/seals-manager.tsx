@@ -58,6 +58,8 @@ import {
   toSealRequest,
   type SealFormValues,
 } from "@/lib/seal-form";
+import { formatDate } from "@/lib/datetime-form";
+import { useTableSearch } from "@/hooks/use-table-search";
 import {
   createSeal,
   deleteSeal,
@@ -107,7 +109,7 @@ export function SealsManager() {
   } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useTableSearch("/seals");
   const [statusFilter, setStatusFilter] = useState<SealStatus | "all">("all");
   const [colorFilter, setColorFilter] = useState<SealColor | "all">("all");
   const [printerFilter, setPrinterFilter] = useState("all");
@@ -153,6 +155,8 @@ export function SealsManager() {
         return false;
       }
       if (!q) return true;
+      const statusLabel = SEAL_STATUS_LABELS[seal.status] ?? seal.status;
+      const colorLabel = SEAL_COLOR_LABELS[seal.color] ?? seal.color;
       const haystack = [
         seal.id,
         seal.serial,
@@ -160,8 +164,17 @@ export function SealsManager() {
         printerSerialById.get(seal.printerId ?? -1),
         printerLabelById.get(seal.printerId ?? -1),
         seal.status,
+        statusLabel,
         seal.color,
+        colorLabel,
+        seal.installationDate,
+        formatDate(seal.installationDate),
+        seal.removalDate,
+        formatDate(seal.removalDate),
+        seal.createdAt,
+        formatDate(seal.createdAt),
       ]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);

@@ -39,7 +39,8 @@ import {
   toggleTableSort,
   type TableSortState,
 } from "@/lib/table-sort";
-import { formatDateTime, formatMoney } from "@/lib/datetime-form";
+import { formatDate, formatDateTime, formatMoney } from "@/lib/datetime-form";
+import { useTableSearch } from "@/hooks/use-table-search";
 import { technicalServiceTechnicianLabel } from "@/lib/record-labels";
 import {
   toTechnicalServiceRequest,
@@ -80,7 +81,7 @@ export function TechnicalServicesManager() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("technical-services");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useTableSearch("/technical-services");
   const [printerFilter, setPrinterFilter] = useState("all");
   const [technicianFilter, setTechnicianFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<TechnicalServiceSortKey>>(null);
@@ -120,16 +121,33 @@ export function TechnicalServicesManager() {
         return false;
       }
       if (!q) return true;
+      const printerLabel = printerLabelById.get(String(row.printerId)) ?? "";
+      const technicianLabel = technicalServiceTechnicianLabel(
+        row,
+        catalog.technicianUserOptions,
+      );
+      const sealStatus = row.sealTampered ? "violentado" : "ok";
       const haystack = [
         row.id,
         row.printerId,
         row.userId,
-        printerLabelById.get(String(row.printerId)),
+        printerLabel,
+        technicianLabel,
         technicianLabelById.get(String(row.userId)),
         row.technicianName,
         row.technicianNationalId,
         row.reportedFailure,
+        row.cost,
+        formatMoney(row.cost),
+        sealStatus,
+        row.startAt,
+        formatDateTime(row.startAt),
+        row.endAt,
+        formatDateTime(row.endAt),
+        row.createdAt,
+        formatDate(row.createdAt),
       ]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);
@@ -141,6 +159,7 @@ export function TechnicalServicesManager() {
     technicianFilter,
     printerLabelById,
     technicianLabelById,
+    catalog.technicianUserOptions,
   ]);
 
   const sortedRows = useMemo(

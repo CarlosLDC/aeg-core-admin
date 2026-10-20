@@ -33,6 +33,7 @@ import { reportListTableError } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { formatDate } from "@/lib/datetime-form";
+import { useTableSearch } from "@/hooks/use-table-search";
 import { hasAnnualInspectionMqttAudit } from "@/lib/annual-inspection-mqtt-display";
 import { summarizeAnnualInspectionChecklist } from "@/lib/annual-inspection-checklist-display";
 import {
@@ -85,7 +86,7 @@ export function AnnualInspectionsManager() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("annual-inspections");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useTableSearch("/annual-inspections");
   const [printerFilter, setPrinterFilter] = useState("all");
   const [technicianFilter, setTechnicianFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<AnnualInspectionSortKey>>(null);
@@ -134,6 +135,10 @@ export function AnnualInspectionsManager() {
         return false;
       }
       if (!q) return true;
+      const checklistSummary = summarizeAnnualInspectionChecklist(row);
+      const remoteMqtt = hasAnnualInspectionMqttAudit(row)
+        ? row.mqttRegistroImpresora?.trim() || "SetDateRevO"
+        : "";
       const haystack = [
         row.id,
         row.printerId,
@@ -142,7 +147,13 @@ export function AnnualInspectionsManager() {
         technicianLabelById.get(String(row.userId)),
         row.notes,
         row.inspectionDate,
+        formatDate(row.inspectionDate),
+        checklistSummary,
+        remoteMqtt,
+        row.createdAt,
+        formatDate(row.createdAt),
       ]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);

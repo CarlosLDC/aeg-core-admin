@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { SearchablePickerModal } from "@/components/ui/searchable-picker-modal";
 import { formFieldSelectTriggerClass } from "@/lib/toggle-button-styles";
@@ -20,6 +20,8 @@ export type SearchableSelectOption = {
   searchText?: string;
   /** Línea secundaria bajo la etiqueta principal */
   description?: string;
+  /** Elemento visual opcional (p. ej. badge) */
+  badge?: ReactNode;
 };
 
 type SearchableSelectProps = {
@@ -119,8 +121,13 @@ export function SearchableSelect({
         aria-expanded={open}
         className={cn(formFieldSelectTriggerClass, mono && "font-mono")}
       >
-        <span className={cn("min-w-0 truncate", mono && "font-mono")}>
-          {triggerLabel}
+        <span className="flex min-w-0 items-center gap-2">
+          <span className={cn("truncate", mono && "font-mono")}>
+            {triggerLabel}
+          </span>
+          {!loading && value !== "" && selected?.badge ? (
+            <span className="shrink-0">{selected.badge}</span>
+          ) : null}
         </span>
         <ChevronDown className="size-4 shrink-0 text-muted" />
       </button>
@@ -171,13 +178,18 @@ export function SearchableSelect({
                     className="flex w-full items-start justify-between gap-2 px-4 py-2.5 text-left hover:bg-foreground/5"
                   >
                     <span className="min-w-0">
-                      <span
-                        className={cn(
-                          "block truncate text-sm text-card-foreground",
-                          mono && "font-mono",
-                        )}
-                      >
-                        {opt.label}
+                      <span className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "block truncate text-sm text-card-foreground",
+                            mono && "font-mono",
+                          )}
+                        >
+                          {opt.label}
+                        </span>
+                        {opt.badge ? (
+                          <span className="shrink-0">{opt.badge}</span>
+                        ) : null}
                       </span>
                       {opt.description && (
                         <span className="mt-0.5 block truncate text-xs text-muted">
