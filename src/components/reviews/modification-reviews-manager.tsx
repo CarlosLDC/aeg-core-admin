@@ -174,7 +174,9 @@ export function ModificationReviewsManager() {
     });
   }, [rows, search, statusFilter]);
 
-  const pagination = usePagination(filtered);
+  const pagination = usePagination(filtered, undefined, {
+    section: "/reviews",
+  });
 
   return (
     <div className="admin-content-stack">

@@ -147,7 +147,9 @@ export function ClientModificationRequestsManager() {
     });
   }, [rows, search, statusFilter]);
 
-  const pagination = usePagination(filtered);
+  const pagination = usePagination(filtered, undefined, {
+    section: "/clients/reviews",
+  });
 
   return (
     <div className="admin-content-stack">

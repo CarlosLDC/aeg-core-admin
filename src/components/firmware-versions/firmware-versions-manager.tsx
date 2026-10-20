@@ -161,7 +161,9 @@ export function FirmwareVersionsManager() {
     [filteredFirmwares, sort],
   );
 
-  const pagination = usePagination(sortedFirmwares);
+  const pagination = usePagination(sortedFirmwares, undefined, {
+    section: "/firmware-versions",
+  });
 
   const loadFirmwares = useCallback(
     async (options?: { silent?: boolean }) => {

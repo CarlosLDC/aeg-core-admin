@@ -187,7 +187,9 @@ export function ClientTransfersManager() {
     });
   }, [clients, search, distributorFilter, distributors, branches, companies]);
 
-  const pagination = usePagination(filteredClients, 25);
+  const pagination = usePagination(filteredClients, 25, {
+    section: "/client-transfers",
+  });
   const pageClients = pagination.paginatedItems;
 
   const pendingCount = useMemo(

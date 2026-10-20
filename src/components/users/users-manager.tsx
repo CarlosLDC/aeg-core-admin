@@ -174,7 +174,9 @@ export function UsersManager() {
     [filteredUsers, sort],
   );
 
-  const pagination = usePagination(sortedUsers);
+  const pagination = usePagination(sortedUsers, undefined, {
+    section: "/users",
+  });
 
   const loadCatalog = useCallback(async () => {
     setCatalogLoading(true);

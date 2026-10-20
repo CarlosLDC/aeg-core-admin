@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   clearAllStoredTableSearches,
+  clearStoredTablePage,
   clearStoredTableSearch,
   cleanupStoredTableSearches,
+  getStoredTablePage,
   getStoredTableSearch,
   isPathInSection,
+  setStoredTablePage,
   setStoredTableSearch,
 } from "./table-search-storage";
 
@@ -124,24 +127,29 @@ describe("table-search-storage", () => {
     });
 
     it("faithfully reproduces the user's printer selection and return scenario", () => {
-      // 1. User is on /printers and types "kinpe"
+      // 1. User is on /printers, types "kinpe", and navigates to page 3
       setStoredTableSearch("/printers", "kinpe");
+      setStoredTablePage("/printers", 3);
       expect(getStoredTableSearch("/printers")).toBe("kinpe");
+      expect(getStoredTablePage("/printers")).toBe(3);
 
       // 2. User clicks printer, navigating to /printers/14
       cleanupStoredTableSearches("/printers/14");
-      // Search is retained while viewing printer detail
+      // Search and page are retained while viewing printer detail
       expect(getStoredTableSearch("/printers")).toBe("kinpe");
+      expect(getStoredTablePage("/printers")).toBe(3);
 
       // 3. User returns to /printers table
       cleanupStoredTableSearches("/printers");
-      // Search filter still remains
+      // Search filter and page still remain
       expect(getStoredTableSearch("/printers")).toBe("kinpe");
+      expect(getStoredTablePage("/printers")).toBe(3);
 
       // 4. User navigates out of impresoras (e.g. to /branches)
       cleanupStoredTableSearches("/branches");
-      // Search filter for /printers is now reset
+      // Search filter and page for /printers are now reset
       expect(getStoredTableSearch("/printers")).toBe("");
+      expect(getStoredTablePage("/printers")).toBe(null);
     });
 
     it("preserves searches across subroutes of all core sections", () => {
@@ -159,13 +167,45 @@ describe("table-search-storage", () => {
 
       for (const { section, subpath } of sections) {
         setStoredTableSearch(section, "query-test");
+        setStoredTablePage(section, 2);
         cleanupStoredTableSearches(subpath);
         expect(getStoredTableSearch(section)).toBe("query-test");
+        expect(getStoredTablePage(section)).toBe(2);
 
         // Leaving section
         cleanupStoredTableSearches("/other-section");
         expect(getStoredTableSearch(section)).toBe("");
+        expect(getStoredTablePage(section)).toBe(null);
       }
+    });
+  });
+
+  describe("getStoredTablePage and setStoredTablePage", () => {
+    it("returns null by default", () => {
+      expect(getStoredTablePage("/printers")).toBe(null);
+    });
+
+    it("stores and retrieves page numbers", () => {
+      setStoredTablePage("/printers", 4);
+      expect(getStoredTablePage("/printers")).toBe(4);
+    });
+
+    it("clears page when set to <= 1", () => {
+      setStoredTablePage("/printers", 4);
+      setStoredTablePage("/printers", 1);
+      expect(getStoredTablePage("/printers")).toBe(null);
+
+      setStoredTablePage("/printers", 4);
+      setStoredTablePage("/printers", 0);
+      expect(getStoredTablePage("/printers")).toBe(null);
+    });
+
+    it("clears specific section page via clearStoredTablePage", () => {
+      setStoredTablePage("/printers", 3);
+      setStoredTablePage("/branches", 5);
+      clearStoredTablePage("/printers");
+      expect(getStoredTablePage("/printers")).toBe(null);
+      expect(getStoredTablePage("/branches")).toBe(5);
     });
   });
 });

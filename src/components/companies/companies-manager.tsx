@@ -127,7 +127,9 @@ export function CompaniesManager() {
     [filteredCompanies, sort],
   );
 
-  const pagination = usePagination(sortedCompanies);
+  const pagination = usePagination(sortedCompanies, undefined, {
+    section: "/companies",
+  });
 
   const reload = useCallback(async () => {
     await refresh();

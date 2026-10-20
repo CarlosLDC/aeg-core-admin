@@ -201,7 +201,9 @@ export function SealsManager() {
     [filteredSeals, sort],
   );
 
-  const pagination = usePagination(sortedSeals);
+  const pagination = usePagination(sortedSeals, undefined, {
+    section: "/seals",
+  });
 
   const loadPrinters = useCallback(async () => {
     if (!user || !canLoadPrinters) {

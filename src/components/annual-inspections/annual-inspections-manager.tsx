@@ -178,7 +178,9 @@ export function AnnualInspectionsManager() {
     [filteredRows, sort],
   );
 
-  const pagination = usePagination(sortedRows);
+  const pagination = usePagination(sortedRows, undefined, {
+    section: "/annual-inspections",
+  });
 
   const loadRows = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false;

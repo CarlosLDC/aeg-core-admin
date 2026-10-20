@@ -402,7 +402,9 @@ export function ClientsManager() {
     [filtered, sort],
   );
 
-  const pagination = usePagination(sorted);
+  const pagination = usePagination(sorted, undefined, {
+    section: "/clients",
+  });
 
   async function handleCreate(
     values: ClientOnboardingValues,

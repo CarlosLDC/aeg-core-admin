@@ -338,7 +338,9 @@ export function BranchesManager() {
     [filteredBranches, sort],
   );
 
-  const pagination = usePagination(sortedBranches);
+  const pagination = usePagination(sortedBranches, undefined, {
+    section: "/branches",
+  });
 
   const loadBranches = useCallback(async (options?: { silent?: boolean }) => {
     if (!scope || !catalogRoles) return;

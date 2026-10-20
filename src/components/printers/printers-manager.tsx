@@ -433,7 +433,9 @@ export function PrintersManager() {
     [filteredPrinters, sort],
   );
 
-  const pagination = usePagination(sortedPrinters);
+  const pagination = usePagination(sortedPrinters, undefined, {
+    section: "/printers",
+  });
 
   const modelOptions = useMemo<SelectOption[]>(
     () =>

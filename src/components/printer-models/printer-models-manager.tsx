@@ -116,7 +116,9 @@ export function PrinterModelsManager() {
     [filteredModels, sort],
   );
 
-  const pagination = usePagination(sortedModels);
+  const pagination = usePagination(sortedModels, undefined, {
+    section: "/printer-models",
+  });
 
   const loadModels = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false;

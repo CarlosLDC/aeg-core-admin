@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import {
+  getStoredTablePage,
+  isPathInSection,
+  setStoredTablePage,
+} from "@/lib/table-search-storage";
 
 export const DEFAULT_PAGE_SIZE = 5;
 export const PAGE_SIZE_OPTIONS = [5, 10, 25, 50] as const;
@@ -11,6 +17,8 @@ export interface UsePaginationOptions {
   pageSize?: number;
   setPageSize?: React.Dispatch<React.SetStateAction<number>>;
   initialPage?: number;
+  /** Section path prefix (e.g. `/printers`) to persist page number across navigation within the section. */
+  section?: string;
 }
 
 export function usePagination<T>(
@@ -18,8 +26,30 @@ export function usePagination<T>(
   initialPageSize: number = DEFAULT_PAGE_SIZE,
   options?: UsePaginationOptions,
 ) {
-  const [internalPage, setInternalPage] = useState(options?.initialPage ?? 1);
+  const pathname = usePathname();
+  const section = options?.section;
+
+  const [internalPage, setInternalPageState] = useState(() => {
+    if (section && pathname && isPathInSection(pathname, section)) {
+      const stored = getStoredTablePage(section);
+      if (stored != null && stored >= 1) return stored;
+    }
+    return options?.initialPage ?? 1;
+  });
   const [internalPageSize, setInternalPageSize] = useState(initialPageSize);
+
+  const setInternalPage = useCallback(
+    (action: React.SetStateAction<number>) => {
+      setInternalPageState((prev) => {
+        const next = typeof action === "function" ? action(prev) : action;
+        if (section) {
+          setStoredTablePage(section, next);
+        }
+        return next;
+      });
+    },
+    [section],
+  );
 
   const page = options?.page ?? internalPage;
   const setPage = options?.setPage ?? setInternalPage;

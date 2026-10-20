@@ -181,7 +181,9 @@ export function ContractsListPanel({
     [filteredContracts, sort],
   );
 
-  const pagination = usePagination(sortedContracts);
+  const pagination = usePagination(sortedContracts, undefined, {
+    section: "/contracts",
+  });
 
   const loadContracts = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false;
