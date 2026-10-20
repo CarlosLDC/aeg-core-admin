@@ -37,6 +37,13 @@ describe("printer-enajenacion-ticket", () => {
     expect(hasPrinterTicketConfig(printer({ header: { lines: [] } }))).toBe(
       false,
     );
+    // Listado liviano: sin header, pero con el flag del backend.
+    expect(
+      hasPrinterTicketConfig(printer({ header: null, hasTicketConfig: true })),
+    ).toBe(true);
+    expect(
+      hasPrinterTicketConfig(printer({ header: null, hasTicketConfig: false })),
+    ).toBe(false);
   });
 
   it("flags printers waiting for Remoto enajenacion", () => {

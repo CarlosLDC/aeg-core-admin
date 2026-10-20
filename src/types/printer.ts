@@ -34,6 +34,8 @@ export type PrinterResponse = {
   deviceType: DeviceType;
   header: PrinterTicketSection | null;
   trailer: PrinterTicketSection | null;
+  /** El backend puede omitir header/trailer en listados; este flag indica si hay ticket configurado. */
+  hasTicketConfig?: boolean;
   encryptionKey?: string | null;
   llaveEncrip?: string | null;
 };
