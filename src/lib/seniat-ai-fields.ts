@@ -36,9 +36,9 @@ export function collectAiFilledFields(data: SeniatExtractResult): Set<SeniatLock
 }
 
 export function isFieldLockedByAi(
-  field: SeniatLockableField,
-  inputMode: "ai" | "manual",
-  aiFields: Set<SeniatLockableField>,
+  _field: SeniatLockableField,
+  _inputMode: "ai" | "manual",
+  _aiFields: Set<SeniatLockableField>,
 ): boolean {
-  return inputMode === "ai" && aiFields.has(field);
+  return false;
 }

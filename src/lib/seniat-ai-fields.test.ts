@@ -5,7 +5,7 @@ import {
 } from "./seniat-ai-fields";
 
 describe("seniat-ai-fields", () => {
-  it("locks fields filled by IA in ai mode", () => {
+  it("does not lock fields filled by IA so the user can edit them", () => {
     const aiFields = collectAiFilledFields({
       rif: "J123456789",
       businessName: "ACME",
@@ -16,8 +16,8 @@ describe("seniat-ai-fields", () => {
       phone: null,
       email: null,
     });
-    expect(isFieldLockedByAi("rif", "ai", aiFields)).toBe(true);
-    expect(isFieldLockedByAi("businessName", "ai", aiFields)).toBe(true);
+    expect(isFieldLockedByAi("rif", "ai", aiFields)).toBe(false);
+    expect(isFieldLockedByAi("businessName", "ai", aiFields)).toBe(false);
     expect(isFieldLockedByAi("rif", "manual", aiFields)).toBe(false);
   });
 
