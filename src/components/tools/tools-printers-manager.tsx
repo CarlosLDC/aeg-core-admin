@@ -30,11 +30,6 @@ import {
   toggleTableSort,
 } from "@/lib/table-sort";
 import { toolsPrinterPath } from "@/lib/resource-routes";
-import {
-  filterToolsPrintersByStatus,
-  type PrinterStatusCounts,
-  type ToolsStatusBucket,
-} from "@/modules/tools/shared/formatters";
 import { useToolsPrinters } from "@/modules/tools/printers/use-tools-printers";
 import type { ToolsPrinterSortKey } from "@/modules/tools";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
@@ -48,54 +43,6 @@ import {
 } from "@/components/tools/tools-ui";
 
 const TOOLS_PAGE_SIZE = 5;
-
-const STATUS_COUNTER_FILTERS: Array<{
-  bucket: ToolsStatusBucket;
-  label: string;
-  countKey: keyof PrinterStatusCounts;
-}> = [
-  { bucket: "enajenada", label: "Enajenadas", countKey: "enajenadas" },
-  { bucket: "no_enajenada", label: "No enajenadas", countKey: "noEnajenadas" },
-  {
-    bucket: "en_consignacion",
-    label: "En consignación",
-    countKey: "enConsignacion",
-  },
-  { bucket: "sin_asignar", label: "Sin asignar", countKey: "sinAsignar" },
-];
-
-function StatusCounter({
-  label,
-  value,
-  active,
-  onClick,
-}: {
-  label: string;
-  value: number;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        "rounded-xl border px-4 py-3 text-left transition-colors",
-        active
-          ? "border-accent/40 bg-accent/10 ring-1 ring-accent/20"
-          : "border-border bg-card hover:bg-foreground/[0.03]",
-      )}
-    >
-      <p className="text-xs font-medium uppercase tracking-wide text-muted">
-        {label}
-      </p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
-        {value}
-      </p>
-    </button>
-  );
-}
 
 function compareToolsPrinters(a: ToolsPrinter, b: ToolsPrinter): number {
   return (a.serial ?? "").localeCompare(b.serial ?? "", "es");
@@ -111,9 +58,6 @@ export function ToolsPrintersManager() {
     query,
     setQuery,
     reload,
-    statusCounts,
-    statusBucket,
-    setStatusBucket,
     distributorFilter,
     setDistributorFilter,
     adminStatusFilter,
@@ -133,9 +77,7 @@ export function ToolsPrintersManager() {
     let rows = searchResults;
 
     if (isDistributor) {
-      if (statusBucket !== "all") {
-        rows = filterToolsPrintersByStatus(rows, statusBucket);
-      } else if (distributorFilter !== "all") {
+      if (distributorFilter !== "all") {
         rows = rows.filter(
           (printer) => printer.status === distributorFilter,
         );
@@ -148,7 +90,6 @@ export function ToolsPrintersManager() {
   }, [
     searchResults,
     isDistributor,
-    statusBucket,
     distributorFilter,
     adminStatusFilter,
   ]);
@@ -181,22 +122,6 @@ export function ToolsPrintersManager() {
     [],
   );
 
-  const activeStatusBucket =
-    isDistributor && statusBucket !== "all" ? statusBucket : null;
-
-  function clearStatusFilters() {
-    setStatusBucket("all");
-    setDistributorFilter("all");
-    setAdminStatusFilter("all");
-    setPage(1);
-  }
-
-  function handleStatusCounterClick(bucket: ToolsStatusBucket) {
-    setStatusBucket((current) => (current === bucket ? "all" : bucket));
-    setDistributorFilter("all");
-    setPage(1);
-  }
-
   function handleSearchChange(nextQuery: string) {
     setQuery(nextQuery);
     setPage(1);
@@ -204,20 +129,6 @@ export function ToolsPrintersManager() {
 
   return (
     <ToolsPage>
-      {isDistributor && !loading && !error && allPrinters.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {STATUS_COUNTER_FILTERS.map((counter) => (
-            <StatusCounter
-              key={counter.bucket}
-              label={counter.label}
-              value={statusCounts[counter.countKey]}
-              active={statusBucket === counter.bucket}
-              onClick={() => handleStatusCounterClick(counter.bucket)}
-            />
-          ))}
-        </div>
-      )}
-
       <ToolsSectionHeading
         icon={PrinterIcon}
         tone="slate"
@@ -270,12 +181,8 @@ export function ToolsPrintersManager() {
                 {DISTRIBUTOR_PRINTER_QUICK_FILTERS.map((filter) => (
                   <TableQuickFilterButton
                     key={filter.value}
-                    active={
-                      distributorFilter === filter.value &&
-                      statusBucket === "all"
-                    }
+                    active={distributorFilter === filter.value}
                     onClick={() => {
-                      setStatusBucket("all");
                       setDistributorFilter(filter.value);
                       setPage(1);
                     }}
@@ -420,19 +327,6 @@ export function ToolsPrintersManager() {
           </>
         )}
       </div>
-
-      {activeStatusBucket != null ? (
-        <p className="text-center text-xs text-muted sm:text-left">
-          Filtro activo por contador.{" "}
-          <button
-            type="button"
-            onClick={clearStatusFilters}
-            className="font-medium text-accent hover:underline"
-          >
-            Limpiar filtros
-          </button>
-        </p>
-      ) : null}
     </ToolsPage>
   );
 }
