@@ -170,7 +170,9 @@ export function ToolsHeaderFooterPanel({ printer }: { printer: ToolsPrinter }) {
           }
         />
 
-        {connectionResolved && connectionIssue !== "none" ? (
+        {connectionResolved &&
+        connectionIssue !== "none" &&
+        connectionIssue !== "legacy-broker" ? (
           <ToolsConnectionWarning variant={connectionIssue} />
         ) : null}
 

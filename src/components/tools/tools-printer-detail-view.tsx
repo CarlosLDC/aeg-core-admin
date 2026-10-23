@@ -77,7 +77,8 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
 
       {connection.transportReady &&
       connection.connectionResolved &&
-      connection.connectionIssue !== "none" ? (
+      connection.connectionIssue !== "none" &&
+      connection.connectionIssue !== "legacy-broker" ? (
         <ToolsConnectionWarning variant={connection.connectionIssue} />
       ) : null}
 
