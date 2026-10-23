@@ -138,17 +138,24 @@ export function encFacFijoLinesToEncabezadoTail(
   return ensureContributorTypeInEncabezadoTail(lines, contributorType);
 }
 
-/** Aplica el pie de página guardado en la impresora; la dirección del encabezado siempre es la del cliente enajenado. */
+/** Aplica el encabezado (si corresponde al cliente seleccionado) y pie de página guardados en la impresora. */
 export function applyPrinterTicketToDispositionInvoice(
   invoice: VenezuelanFiscalInvoiceData,
   trailer: PrinterTicketSection | null | undefined,
   contributorType: ContributorType | string,
+  header?: PrinterTicketSection | null,
 ): VenezuelanFiscalInvoiceData {
   const prefix = invoice.encabezado.lineas.slice(0, FIXED_ENCABEZADO_PREFIX_LINES);
-  const addressTail = ensureContributorTypeInEncabezadoTail(
-    invoice.encabezado.lineas.slice(FIXED_ENCABEZADO_PREFIX_LINES),
-    contributorType,
-  );
+  const savedHeaderLines =
+    header?.lines?.map((line) => line.trim()).filter((line) => line.length > 0) ??
+    [];
+  const addressTail =
+    savedHeaderLines.length > 0
+      ? encFacFijoLinesToEncabezadoTail(savedHeaderLines, contributorType)
+      : ensureContributorTypeInEncabezadoTail(
+          invoice.encabezado.lineas.slice(FIXED_ENCABEZADO_PREFIX_LINES),
+          contributorType,
+        );
   const trailerLines =
     trailer?.lines?.length
       ? trailer.lines.map((line) => line.trim()).filter((line) => line.length > 0)

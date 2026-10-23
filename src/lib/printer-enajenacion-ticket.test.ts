@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  canReconfigurePrinterTicket,
   formatPrinterTicketSectionJson,
   hasPrinterTicketConfig,
   isPrinterPendingMqttEnajenacion,
@@ -63,6 +64,38 @@ describe("printer-enajenacion-ticket", () => {
           status: "enajenada",
           clientId: 10,
           header: { lines: ["ENCABEZADO"] },
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it("allows ticket reconfiguration for pending MQTT and disposed printers", () => {
+    expect(
+      canReconfigurePrinterTicket(
+        printer({
+          status: "asignada",
+          clientId: 10,
+          header: { lines: ["ENCABEZADO"] },
+        }),
+      ),
+    ).toBe(true);
+
+    expect(
+      canReconfigurePrinterTicket(
+        printer({
+          status: "enajenada",
+          clientId: 10,
+          header: { lines: ["ENCABEZADO"] },
+        }),
+      ),
+    ).toBe(true);
+
+    expect(
+      canReconfigurePrinterTicket(
+        printer({
+          status: "asignada",
+          clientId: 10,
+          header: null,
         }),
       ),
     ).toBe(false);

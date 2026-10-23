@@ -154,4 +154,62 @@ describe("enajenacion-ticket", () => {
     ]);
     expect(restored.piePagina.mensajes).toEqual(["PIE DE EJEMPLO"]);
   });
+
+  it("applies saved header lines when provided for the same client", () => {
+    const invoice: VenezuelanFiscalInvoiceData = {
+      encoding: "iso-8859-2",
+      encabezado: {
+        lineas: [
+          "SENIAT",
+          "J-503752890",
+          "ABASTO HERMANOS YEISAR 2023, C.A.",
+          "AV SANTA CRUZ LOCAL NRO 13 SECTOR POZUELOS",
+          "",
+          "PUERTO LA CRUZ, ANZOATEGUI",
+        ],
+      },
+      metadatos: { facturaNro: "00000001", fecha: "16/06/2026", hora: "10:00:00" },
+      cliente: { rifCi: "J-503752890", razonSocial: "ABASTO", condicion: "contado" },
+      items: [],
+      impuestos: {
+        alicuotaGeneralPorcentaje: 16,
+        baseImponibleG: 0,
+        ivaG: 0,
+        subtotal: 0,
+        ivaTotal: 0,
+      },
+      pagos: { formaPago: "CONTADO", montoPagado: 0, cambio: 0, totalGeneral: 0 },
+      piePagina: {
+        mensajes: [],
+        codigoImpresora: "GRA0000017",
+        serialFiscal: "GRA0000017",
+      },
+    };
+
+    const restored = applyPrinterTicketToDispositionInvoice(
+      invoice,
+      { lines: ["PIE DE EJEMPLO"] },
+      "ordinario",
+      {
+        lines: [
+          "DIRECCION PERSONALIZADA 1",
+          "PUERTO LA CRUZ, ANZOATEGUI",
+          "LINEA EXTRA",
+          "CONTRIBUYENTE ORDINARIO",
+        ],
+      },
+    );
+
+    expect(restored.encabezado.lineas).toEqual([
+      "SENIAT",
+      "J-503752890",
+      "ABASTO HERMANOS YEISAR 2023, C.A.",
+      "DIRECCION PERSONALIZADA 1",
+      "",
+      "PUERTO LA CRUZ, ANZOATEGUI",
+      "LINEA EXTRA",
+      "CONTRIBUYENTE ORDINARIO",
+    ]);
+    expect(restored.piePagina.mensajes).toEqual(["PIE DE EJEMPLO"]);
+  });
 });

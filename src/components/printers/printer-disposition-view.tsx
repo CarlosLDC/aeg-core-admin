@@ -33,7 +33,7 @@ import {
 } from "@/lib/printers-api";
 import { fetchAuthMe } from "@/lib/auth-me-api";
 import { printerPath } from "@/lib/resource-routes";
-import { isPrinterAssigned } from "@/lib/printer-status";
+import { isPrinterAssigned, isPrinterDisposed } from "@/lib/printer-status";
 import {
   buildDispositionInvoiceData,
   normalizeFacturaNroInput,
@@ -44,7 +44,7 @@ import {
   applyPrinterTicketToDispositionInvoice,
   extractEnajenacionTicketFromInvoice,
 } from "@/lib/enajenacion-ticket";
-import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
+import { canReconfigurePrinterTicket } from "@/lib/printer-enajenacion-ticket";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -132,8 +132,8 @@ export function PrinterDispositionView({
       }
       setPrinter(data);
       onPrinterLoaded?.(data);
-      if (!isPrinterAssigned(data.status)) {
-        setError("Solo se pueden enajenar impresoras con estatus Asignada.");
+      if (!isPrinterAssigned(data.status) && !isPrinterDisposed(data.status)) {
+        setError("Solo se pueden enajenar o reconfigurar impresoras con estatus Asignada o Enajenada.");
         return;
       }
       if (!data.paid) {
@@ -281,6 +281,7 @@ export function PrinterDispositionView({
       invoiceData,
       printer.trailer,
       selectedContributorType,
+      printer.clientId === clientId ? printer.header : null,
     );
     queueMicrotask(() => {
       setInvoiceDraft(merged);
@@ -339,8 +340,8 @@ export function PrinterDispositionView({
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
-    if (!isPrinterAssigned(printer.status)) {
-      toast.error("Solo se pueden enajenar impresoras con estatus Asignada.");
+    if (!isPrinterAssigned(printer.status) && !isPrinterDisposed(printer.status)) {
+      toast.error("Solo se pueden enajenar o reconfigurar impresoras con estatus Asignada o Enajenada.");
       return;
     }
     if (!printer.paid) {
@@ -370,7 +371,7 @@ export function PrinterDispositionView({
         trailer: ticket.trailer,
       });
       toast.success(
-        isPrinterPendingMqttEnajenacion(printer)
+        canReconfigurePrinterTicket(printer)
           ? `Configuración de ticket actualizada para ${printer.fiscalSerial}.`
           : `Configuración de ticket guardada para ${printer.fiscalSerial}. La impresora puede iniciar el ritual Remoto.`,
         {
@@ -406,7 +407,7 @@ export function PrinterDispositionView({
       }
     >
       {printer &&
-      isPrinterAssigned(printer.status) &&
+      (isPrinterAssigned(printer.status) || isPrinterDisposed(printer.status)) &&
       canDisposeAssigned &&
       invoiceDraft ? (
         <form

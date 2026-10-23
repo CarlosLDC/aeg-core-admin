@@ -27,6 +27,10 @@ export function isPrinterAssigned(status: string): boolean {
   return normalizePrinterStatus(status) === "asignada";
 }
 
+export function isPrinterDisposed(status: string): boolean {
+  return normalizePrinterStatus(status) === "enajenada";
+}
+
 export function isPrinterOnConsignment(status: string): boolean {
   return normalizePrinterStatus(status) === "en_consignacion";
 }

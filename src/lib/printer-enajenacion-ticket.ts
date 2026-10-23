@@ -1,4 +1,4 @@
-import { isPrinterAssigned } from "@/lib/printer-status";
+import { isPrinterAssigned, isPrinterDisposed } from "@/lib/printer-status";
 import type { PrinterResponse, PrinterTicketSection } from "@/types/printer";
 
 export const PRINTER_TICKET_RECONFIGURE_LABEL = "Reconfigurar ticket";
@@ -21,6 +21,16 @@ export function isPrinterPendingMqttEnajenacion(
     isPrinterAssigned(printer.status) &&
     printer.clientId != null &&
     hasPrinterTicketConfig(printer)
+  );
+}
+
+export function canReconfigurePrinterTicket(
+  printer: Pick<PrinterResponse, "status" | "header" | "clientId"> &
+    Partial<Pick<PrinterResponse, "hasTicketConfig">>,
+): boolean {
+  return (
+    isPrinterPendingMqttEnajenacion(printer) ||
+    isPrinterDisposed(printer.status)
   );
 }
 

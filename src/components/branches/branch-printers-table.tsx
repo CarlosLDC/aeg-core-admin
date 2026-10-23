@@ -96,7 +96,10 @@ import {
   getPrinterStatusBadgeTitle,
   getPrinterStatusQuickAction,
 } from "@/lib/printer-quick-actions";
-import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
+import {
+  canReconfigurePrinterTicket,
+  isPrinterPendingMqttEnajenacion,
+} from "@/lib/printer-enajenacion-ticket";
 import {
   DISTRIBUTOR_SELF_CLIENT_MESSAGE,
   excludeDistributorSelfClients,
@@ -1067,7 +1070,7 @@ export function BranchPrintersTable({
           companies={companies}
           distributors={distributors}
           catalogLoading={catalogLoading}
-          reconfigure={isPrinterPendingMqttEnajenacion(dispositionPrinter)}
+          reconfigure={canReconfigurePrinterTicket(dispositionPrinter)}
           onClose={closeDisposition}
           onContinue={handleDispositionContinue}
         />

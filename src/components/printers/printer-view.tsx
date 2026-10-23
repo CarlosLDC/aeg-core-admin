@@ -55,6 +55,7 @@ import {
   normalizePrinterStatus,
 } from "@/lib/printer-status";
 import {
+  canReconfigurePrinterTicket,
   isPrinterPendingMqttEnajenacion,
   PRINTER_TICKET_RECONFIGURE_LABEL,
 } from "@/lib/printer-enajenacion-ticket";
@@ -166,7 +167,7 @@ export function PrinterView() {
     canDispose && (isAdmin || (isDistributor && distributorId != null));
   const showTicketReconfigure =
     printer != null &&
-    isPrinterPendingMqttEnajenacion(printer) &&
+    canReconfigurePrinterTicket(printer) &&
     canDisposeAssigned;
   const distributorStaffBranchId = useDistributorStaffBranchId(
     isDistributor ? distributorId : null,
@@ -996,7 +997,7 @@ export function PrinterView() {
           companies={companies}
           distributors={distributors}
           catalogLoading={catalogLoading}
-          reconfigure={isPrinterPendingMqttEnajenacion(printer)}
+          reconfigure={canReconfigurePrinterTicket(printer)}
           onClose={() => setDispositionOpen(false)}
           onContinue={handleDispositionContinue}
         />
