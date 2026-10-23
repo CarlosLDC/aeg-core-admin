@@ -19,7 +19,7 @@ const ROUTE_RESOURCE: Array<{ prefix: string; resource: Resource }> = [
   { prefix: "/users", resource: "users" },
   { prefix: "/client-transfers", resource: "clientTransfers" },
   { prefix: "/tools", resource: "tools" },
-  { prefix: "/fiscalizacion", resource: "remoto" },
+  { prefix: "/fiscalizacion", resource: "printers" },
   { prefix: "/remoto", resource: "remoto" },
   { prefix: "/docs/enajenacion-remoto", resource: "remoto" },
   { prefix: "/docs/annual-inspection-remoto", resource: "remoto" },
