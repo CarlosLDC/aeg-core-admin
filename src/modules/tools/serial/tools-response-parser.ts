@@ -142,7 +142,8 @@ export function isHeaderFooterReadResponse(item: FiscalMqttResponseItem | null):
     isStatusResponse(item) ||
     isWifiScanResponse(item) ||
     isFormasPagoResponse(item) ||
-    isLastTransmittedZResponse(item)
+    isLastTransmittedZResponse(item) ||
+    isBrokerStatusResponse(item)
   ) {
     return false;
   }
@@ -332,3 +333,91 @@ export function parseReprintChunks(chunks: string[]): string {
 }
 
 export type ResponseMatcher = (item: FiscalMqttResponseItem) => boolean;
+
+export type UsbBrokerStatusInfo = {
+  host: string;
+  port: number | null;
+  mac: string | null;
+  topicCmd: string | null;
+  topicRx: string | null;
+};
+
+const COMPACT_MAC_IN_TOPIC = /\/?([0-9A-Fa-f]{12})(?:\/|$)/;
+const COLON_MAC_PATTERN = /\b([0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5})\b/;
+const FIRMWARE_VERSION_PATTERN = /(\d+(?:\.\d+)+)\s*$/;
+
+function formatColonMacFromCompact(compact: string): string {
+  const upper = compact.trim().toUpperCase();
+  return upper.match(/.{1,2}/g)?.join(":") ?? upper;
+}
+
+function extractMacFromNode(node: Record<string, unknown>): string | null {
+  for (const key of ["macAddr", "mac", "MacAddress", "direccionMAC"]) {
+    const raw = node[key];
+    if (typeof raw === "string" && raw.trim() !== "") {
+      const colonMatch = COLON_MAC_PATTERN.exec(raw);
+      if (colonMatch) return colonMatch[1].toUpperCase();
+      const compact = raw.replace(/[^0-9A-Fa-f]/g, "");
+      if (compact.length === 12) return formatColonMacFromCompact(compact);
+    }
+  }
+  for (const key of ["TopicCmd", "TopicRx", "topicCmd", "topicRx"]) {
+    const raw = node[key];
+    if (typeof raw === "string" && raw.trim() !== "") {
+      const match = COMPACT_MAC_IN_TOPIC.exec(raw.trim());
+      if (match) {
+        return formatColonMacFromCompact(match[1]);
+      }
+    }
+  }
+  return null;
+}
+
+export function isBrokerStatusResponse(item: FiscalMqttResponseItem | null): boolean {
+  if (item == null || !cmdEquals(item.cmd, CMD_STA_INF)) {
+    return false;
+  }
+  if (item.dataS == null || item.dataS.trim() === "") {
+    return false;
+  }
+  const node = parseStaInfDataNode(item.dataS);
+  return (
+    node != null &&
+    ("host" in node || "TopicCmd" in node || "TopicRx" in node)
+  );
+}
+
+export function parseBrokerStatusResponse(
+  response: FiscalMqttResponseItem,
+): UsbBrokerStatusInfo {
+  if (response.code != null && response.code !== 0) {
+    throw new Error(`Error al consultar credenciales MQTT (code: ${response.code})`);
+  }
+  if (response.dataS == null || response.dataS.trim() === "") {
+    throw new Error("La impresora no devolvió información del broker MQTT.");
+  }
+  const node = parseStaInfDataNode(response.dataS);
+  if (node == null) {
+    throw new Error("Respuesta de broker MQTT con formato no válido.");
+  }
+  const host = typeof node.host === "string" ? node.host.trim() : "";
+  const port = typeof node.port === "number" ? node.port : null;
+  const topicCmd = typeof node.TopicCmd === "string" ? node.TopicCmd.trim() : null;
+  const topicRx = typeof node.TopicRx === "string" ? node.TopicRx.trim() : null;
+  const mac = extractMacFromNode(node);
+  return { host, port, mac, topicCmd, topicRx };
+}
+
+export function parseFirmwareStatusResponse(
+  response: FiscalMqttResponseItem,
+): string {
+  if (response.code != null && response.code !== 0) {
+    throw new Error(`Error al consultar versión de firmware (code: ${response.code})`);
+  }
+  const raw = (response.dataS ?? "").trim();
+  const match = FIRMWARE_VERSION_PATTERN.exec(raw);
+  if (!match) {
+    throw new Error(`No se pudo leer la versión de firmware en la respuesta: "${raw}"`);
+  }
+  return match[1];
+}

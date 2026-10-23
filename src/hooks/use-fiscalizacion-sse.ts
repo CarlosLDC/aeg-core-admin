@@ -30,7 +30,11 @@ export type FiscalizacionSseEvent = {
 const MAX_RECONNECT_DELAY_MS = 15_000;
 const MAX_EVENT_LOG = 50;
 
-export function useFiscalizacionSse(mac: string | null, enabled = true) {
+export function useFiscalizacionSse(
+  mac: string | null,
+  enabled = true,
+  ptrReg?: string | null,
+) {
   const [status, setStatus] = useState<FiscalizacionSseStatus>("idle");
   const [lastEvent, setLastEvent] = useState<FiscalizacionSseEvent | null>(null);
   const [eventLog, setEventLog] = useState<FiscalizacionSseEvent[]>([]);
@@ -97,7 +101,9 @@ export function useFiscalizacionSse(mac: string | null, enabled = true) {
   }, []);
 
   const connect = useCallback(() => {
-    if (!enabled || !mac?.trim()) {
+    const hasMac = Boolean(mac?.trim());
+    const hasPtrReg = Boolean(ptrReg?.trim());
+    if (!enabled || (!hasMac && !hasPtrReg)) {
       disconnect();
       setStatus("idle");
       return;
@@ -108,7 +114,7 @@ export function useFiscalizacionSse(mac: string | null, enabled = true) {
 
     let url: string;
     try {
-      url = getFiscalizacionSseUrl(mac);
+      url = getFiscalizacionSseUrl(mac?.trim() ?? "", ptrReg?.trim());
     } catch {
       setStatus("closed");
       return;
@@ -153,7 +159,7 @@ export function useFiscalizacionSse(mac: string | null, enabled = true) {
       reconnectTimerRef.current = window.setTimeout(() => connect(), delay);
       setStatus("reconnecting");
     };
-  }, [applyEvent, disconnect, enabled, mac]);
+  }, [applyEvent, disconnect, enabled, mac, ptrReg]);
 
   useEffect(() => {
     resetState();

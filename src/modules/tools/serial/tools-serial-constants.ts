@@ -11,6 +11,10 @@ export const TOOLS_SERIAL_TIMEOUT_MS = {
   testInvoice: 5_000,
   testNote: 6_000,
   testGenerateZ: 5_000,
+  firmware: 15_000,
+  brokerStatus: 15_000,
+  brokerConfig: 20_000,
+  fiscalizarRemoto: 15_000,
 } as const;
 
 export const TOOLS_SERIAL_COMMAND_DELAY_MS = 50;
@@ -32,6 +36,10 @@ export const CMD_END_FAC = "endFac";
 export const CMD_END_NC = "endNC";
 export const CMD_END_ND = "endND";
 export const CMD_GEN_IMP_REP_Z = "genImpRepZ";
+export const CMD_STAT_FIRM_SIN_DNF = "statFirmSinDNF";
+export const CMD_CONFIG_MQTT_AEG = "configMqttAEG";
+export const CMD_PTR_FISCALIZAR_REMOTO = "ptrFiscalizarRemoto";
+export const CMD_RX_PTR_FISCALIZAR_REMOTO = "RxPtrFiscalizarRemoto";
 
 export const STA_CONEXION_SIN_DNF = "StaConexionSinDNF";
 export const STA_GET_ACC_POI = "GetAccPoi";
@@ -39,6 +47,11 @@ export const STA_ULT_Z_TX_SENI = "UltZTxSeni";
 export const STA_MEDIOS_PAGOS = "MediosPagos";
 export const STA_ENC_FIJ = "staEncFij";
 export const STA_PIE_FIJ = "staPieFij";
+export const STA_EST_CRED_MQTT1 = "EstCredMqtt1";
+
+/** Constante configurable para el campo Access de ptrFiscalizarRemoto. */
+export const FISCALIZACION_DEFAULT_ACCESS = "AA ";
+export const FISCALIZACION_DEFAULT_MEM_FIS = 1;
 
 export const SPIFF_ACCESS = "AeG-1968-2024";
 export const PARAM_FAC_SPIFF_FILE = "paramFacSPIFF.json";

@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  isBrokerStatusResponse,
   isStatusResponse,
   isWifiScanResponse,
   normalizeSeniatStatus,
+  parseBrokerStatusResponse,
+  parseFirmwareStatusResponse,
   parseFormasPagoResponse,
   parseStatusResponse,
   parseWifiScanResponse,
@@ -74,5 +77,36 @@ describe("tools-response-parser", () => {
       { nro: 1, descripcion: "Efectivo" },
       { nro: 2, descripcion: "Tarjeta" },
     ]);
+  });
+
+  it("parses EstCredMqtt1 broker status and extracts MAC from TopicCmd", () => {
+    const item = {
+      cmd: "StaInf",
+      code: 0,
+      dataS: JSON.stringify({
+        host: "13.51.138.105",
+        port: 1883,
+        TopicCmd: "/F412FACECEB8/AEG_Fiscal/Integracion/Comando",
+        TopicRx: "/F412FACECEB8/AEG_Fiscal/Integracion/Respuesta",
+      }),
+    };
+    expect(isBrokerStatusResponse(item)).toBe(true);
+    expect(parseBrokerStatusResponse(item)).toEqual({
+      host: "13.51.138.105",
+      port: 1883,
+      mac: "F4:12:FA:CE:CE:B8",
+      topicCmd: "/F412FACECEB8/AEG_Fiscal/Integracion/Comando",
+      topicRx: "/F412FACECEB8/AEG_Fiscal/Integracion/Respuesta",
+    });
+  });
+
+  it("parses firmware version from statFirmSinDNF", () => {
+    expect(
+      parseFirmwareStatusResponse({
+        cmd: "statFirmSinDNF",
+        code: 0,
+        dataS: "FIRMWARE DEL SISTEMA: 1.1.0",
+      }),
+    ).toBe("1.1.0");
   });
 });

@@ -21,9 +21,12 @@ describe("route permissions", () => {
     expect(canAccessRoute("DISTRIBUTOR", "/users")).toBe(false);
   });
 
-  it("respects nav role restrictions on /remoto", () => {
+  it("respects nav role restrictions on /remoto and /fiscalizacion", () => {
     const roles: Role[] = ["ADMIN", "TECHNICIAN", "DISTRIBUTOR"];
     expect(roles.filter((r) => canAccessRoute(r, "/remoto"))).toEqual(["ADMIN"]);
+    expect(roles.filter((r) => canAccessRoute(r, "/fiscalizacion"))).toEqual([
+      "ADMIN",
+    ]);
   });
 
   it("allows every role on /tools", () => {

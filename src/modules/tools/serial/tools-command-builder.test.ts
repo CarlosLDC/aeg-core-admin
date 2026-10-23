@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildBrokerStatusPayload,
+  buildFirmwareStatusPayload,
+  buildFiscalizarRemotoPayload,
   buildFooterWritePayload,
   buildHeaderWritePayload,
   buildReportXPayload,
@@ -51,5 +54,37 @@ describe("tools-command-builder", () => {
     const payload = JSON.parse(buildFooterWritePayload("PIE 1\nPIE 2"));
     expect(payload.cmd).toBe("pieTiF");
     expect(payload.data).toEqual(["PIE 1", "PIE 2"]);
+  });
+
+  it("builds broker status and firmware status payloads", () => {
+    expect(JSON.parse(buildBrokerStatusPayload())).toEqual({
+      cmd: "StaInf",
+      data: { status: "EstCredMqtt1" },
+    });
+    expect(JSON.parse(buildFirmwareStatusPayload())).toEqual({
+      cmd: "statFirmSinDNF",
+      data: 0,
+    });
+  });
+
+  it("builds ptrFiscalizarRemoto payload with default Access and NroMemFis", () => {
+    expect(
+      JSON.parse(
+        buildFiscalizarRemotoPayload({
+          nroRegistro: "gra0000017",
+          precintoNro: "G1B0033",
+          precintoColor: "Azul",
+        }),
+      ),
+    ).toEqual({
+      cmd: "ptrFiscalizarRemoto",
+      data: {
+        nroRegistro: "GRA0000017",
+        PrecintoNro: "G1B0033",
+        PrecintoColor: "Azul",
+        NroMemFis: 1,
+        Access: "AA ",
+      },
+    });
   });
 });

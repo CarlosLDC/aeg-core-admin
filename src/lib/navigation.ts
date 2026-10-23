@@ -14,6 +14,7 @@ import {
   Boxes,
   Radio,
   ArrowRightLeft,
+  Cable,
   type LucideIcon,
 } from "lucide-react";
 import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
@@ -56,6 +57,12 @@ export const navSections: NavSection[] = [
         href: "/printers",
         icon: Printer,
         roles: ["ADMIN", "DISTRIBUTOR"],
+      },
+      {
+        title: "Fiscalización",
+        href: "/fiscalizacion",
+        icon: Cable,
+        roles: ["ADMIN"],
       },
       {
         title: "Modelos fiscales",

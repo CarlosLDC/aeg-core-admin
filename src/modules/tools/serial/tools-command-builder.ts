@@ -4,17 +4,22 @@ import {
   CMD_GET_REP_Z,
   CMD_IMP_REP_X,
   CMD_PIE_TI_F,
+  CMD_PTR_FISCALIZAR_REMOTO,
   CMD_REIM_REP,
   CMD_REP_Z,
   CMD_RESET_MF,
   CMD_STA_INF,
+  CMD_STAT_FIRM_SIN_DNF,
   CMD_WIFI_CONF,
   CMD_W_FILE_SPIFF,
+  FISCALIZACION_DEFAULT_ACCESS,
+  FISCALIZACION_DEFAULT_MEM_FIS,
   RESET_MF_DATA,
   SPIFF_ACCESS,
   PARAM_FAC_SPIFF_FILE,
   STA_CONEXION_SIN_DNF,
   STA_ENC_FIJ,
+  STA_EST_CRED_MQTT1,
   STA_GET_ACC_POI,
   STA_MEDIOS_PAGOS,
   STA_PIE_FIJ,
@@ -57,6 +62,40 @@ export function buildHeaderReadPayload(): string {
 
 export function buildFooterReadPayload(): string {
   return staInfPayload(STA_PIE_FIJ);
+}
+
+export function buildBrokerStatusPayload(): string {
+  return staInfPayload(STA_EST_CRED_MQTT1);
+}
+
+export function buildFirmwareStatusPayload(): string {
+  return writeJson({
+    cmd: CMD_STAT_FIRM_SIN_DNF,
+    data: 0,
+  });
+}
+
+export function buildBrokerConfigPayload(payloadObj: Record<string, unknown>): string {
+  return writeJson(payloadObj);
+}
+
+export function buildFiscalizarRemotoPayload(options: {
+  nroRegistro: string;
+  precintoNro: string;
+  precintoColor: string;
+  nroMemFis?: number;
+  access?: string;
+}): string {
+  return writeJson({
+    cmd: CMD_PTR_FISCALIZAR_REMOTO,
+    data: {
+      nroRegistro: options.nroRegistro.trim().toUpperCase(),
+      PrecintoNro: options.precintoNro.trim(),
+      PrecintoColor: options.precintoColor.trim(),
+      NroMemFis: options.nroMemFis ?? FISCALIZACION_DEFAULT_MEM_FIS,
+      Access: options.access ?? FISCALIZACION_DEFAULT_ACCESS,
+    },
+  });
 }
 
 export function buildWifiConnectPayload(ssid: string, password: string): string {

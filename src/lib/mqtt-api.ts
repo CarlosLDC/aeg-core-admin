@@ -431,16 +431,22 @@ export async function getFiscalizacionActiveSessions(): Promise<
   return data ?? [];
 }
 
-export function getFiscalizacionSseUrl(mac: string): string {
+export function getFiscalizacionSseUrl(
+  mac: string,
+  ptrReg?: string,
+): string {
   const token = getStoredToken();
   if (!token) {
     throw new ApiError("No hay sesión activa", 401);
   }
   const httpBase = getApiBaseUrl().replace(/\/$/, "");
-  const params = new URLSearchParams({
-    mac,
-    token,
-  });
+  const params = new URLSearchParams({ token });
+  if (mac.trim()) {
+    params.set("mac", mac.trim());
+  }
+  if (ptrReg?.trim()) {
+    params.set("ptrReg", ptrReg.trim());
+  }
   return `${httpBase}/api/mqtt/fiscalizacion/stream?${params}`;
 }
 
