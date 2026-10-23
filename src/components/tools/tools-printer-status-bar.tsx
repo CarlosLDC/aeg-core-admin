@@ -91,7 +91,7 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
             {isLegacyBroker ? (
               <span className="inline-flex items-center gap-1.5 font-medium text-amber-700 dark:text-amber-300">
                 <span className="size-2 rounded-full bg-amber-500" aria-hidden />
-                Broker: Antiguo (requiere migración)
+                Broker: Antiguo (contingencia)
               </span>
             ) : null}
             {error ? (

@@ -18,7 +18,7 @@ export const TOOLS_SENIAT_OFFLINE_MESSAGE =
   "Sin conexión con el SENIAT. La impresora responde, pero la transmisión al SENIAT no está disponible hasta restablecer esa conexión.";
 
 export const TOOLS_LEGACY_BROKER_MESSAGE =
-  "La impresora está conectada a WiFi pero sigue apuntando al broker antiguo. Ejecute la migración de broker para habilitar las operaciones remotas.";
+  "La impresora está operando en contingencia a través del broker antiguo. Las operaciones remotas están habilitadas y la opción de migración al broker nuevo sigue disponible.";
 
 export const TOOLS_PRINTER_STATUS_TIMEOUT_MESSAGE =
   "Tiempo de espera agotado al consultar la impresora fiscal.";
@@ -203,9 +203,6 @@ export function areToolsRemoteActionsEnabled(
   if (loading) {
     return false;
   }
-  if (isToolsLegacyBroker(status, error)) {
-    return false;
-  }
   return isToolsPrinterReachable(status, error);
 }
 
@@ -219,9 +216,6 @@ export function areToolsSeniatActionsEnabled(
     return false;
   }
   if (loading) {
-    return false;
-  }
-  if (isToolsLegacyBroker(status, error)) {
     return false;
   }
   return isToolsSeniatOnline(status, error);

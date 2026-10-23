@@ -148,7 +148,7 @@ describe("isToolsPrinterConnectionResolved", () => {
 });
 
 describe("areToolsRemoteActionsEnabled", () => {
-  it("requires transport readiness, a finished check and a reachable printer on the new broker", () => {
+  it("requires transport readiness, a finished check and a reachable printer (including legacy broker contingency)", () => {
     expect(areToolsRemoteActionsEnabled(true, true, null, null)).toBe(false);
     expect(areToolsRemoteActionsEnabled(true, false, null, null)).toBe(false);
     expect(
@@ -156,7 +156,7 @@ describe("areToolsRemoteActionsEnabled", () => {
     ).toBe(true);
     expect(
       areToolsRemoteActionsEnabled(true, false, legacyBrokerStatus, null),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       areToolsRemoteActionsEnabled(true, false, printerOfflineStatus, null),
     ).toBe(false);
@@ -170,12 +170,12 @@ describe("areToolsRemoteActionsEnabled", () => {
 });
 
 describe("areToolsSeniatActionsEnabled", () => {
-  it("requires transport readiness, a finished check, new broker and EN LINEA status", () => {
+  it("requires transport readiness, a finished check and EN LINEA status (including legacy broker contingency)", () => {
     expect(areToolsSeniatActionsEnabled(true, false, seniatOfflineStatus, null)).toBe(
       false,
     );
     expect(areToolsSeniatActionsEnabled(true, false, legacyBrokerStatus, null)).toBe(
-      false,
+      true,
     );
     expect(areToolsSeniatActionsEnabled(true, false, onlineStatus, null)).toBe(
       true,
@@ -188,7 +188,7 @@ describe("areToolsRemoteActionsDisabled", () => {
     expect(areToolsRemoteActionsDisabled(true, true, null, null)).toBe(true);
     expect(
       areToolsRemoteActionsDisabled(true, false, legacyBrokerStatus, null),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       areToolsRemoteActionsDisabled(true, false, seniatOfflineStatus, null),
     ).toBe(false);
@@ -205,7 +205,7 @@ describe("areToolsSeniatActionsDisabled", () => {
     ).toBe(true);
     expect(
       areToolsSeniatActionsDisabled(true, false, legacyBrokerStatus, null),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       areToolsSeniatActionsDisabled(true, false, onlineStatus, null),
     ).toBe(false);
