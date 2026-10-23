@@ -10,6 +10,7 @@ import {
   Printer,
 } from "lucide-react";
 import { EnajenacionRitualStepper } from "@/components/mqtt/enajenacion-ritual-stepper";
+import { SealSelect } from "@/components/seals/seal-select";
 import {
   useFiscalizacionRitual,
   type FiscalizacionPhase,
@@ -91,7 +92,7 @@ export function FiscalizacionTestPanel() {
     ritual.phase !== "setup" && ritual.phase !== "failed";
 
   return (
-    <div className="mx-auto max-w-xl space-y-4">
+    <div className="mx-auto max-w-2xl space-y-4">
       <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -160,28 +161,27 @@ export function FiscalizacionTestPanel() {
             </label>
           </div>
 
-          <label className="block text-sm">
+          <div className="block text-sm">
             <span className="mb-1 block font-medium">Precinto</span>
-            <select
-              className="w-full rounded-lg border border-border bg-background px-3 py-2"
-              disabled={ritual.sealsLoading}
+            <SealSelect
               value={ritual.selectedSealId}
-              onChange={(e) => ritual.selectSeal(e.target.value)}
-            >
-              <option value="">
-                {ritual.sealsLoading
-                  ? "Cargando…"
-                  : ritual.availableSeals.length === 0
-                    ? "No hay precintos disponibles"
-                    : "Elegir precinto disponible…"}
-              </option>
-              {ritual.availableSeals.map((seal) => (
-                <option key={seal.id} value={String(seal.id)}>
-                  {seal.serial} · {seal.color}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={ritual.selectSeal}
+              seals={ritual.availableSeals}
+              disabled={
+                formLocked ||
+                (!ritual.sealsLoading &&
+                  ritual.availableSeals.length === 0 &&
+                  !ritual.selectedSealId)
+              }
+              loading={ritual.sealsLoading}
+              required={false}
+              emptyLabel={
+                ritual.availableSeals.length === 0
+                  ? "No hay precintos disponibles"
+                  : "Elegir precinto disponible…"
+              }
+            />
+          </div>
 
           <button
             type="button"
