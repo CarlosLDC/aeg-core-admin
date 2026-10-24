@@ -4,6 +4,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  color-scheme: light dark;
   --background: #f8fafc;
   --foreground: #0f172a;
   --sidebar: #000000;
@@ -42,6 +43,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
+    color-scheme: dark;
     --background: #020617;
     --foreground: #f1f5f9;
     --sidebar: #000000;
@@ -60,6 +62,7 @@
 }
 
 html.dark {
+  color-scheme: dark;
   --background: #020617;
   --foreground: #f1f5f9;
   --sidebar: #000000;
@@ -77,6 +80,7 @@ html.dark {
 }
 
 html.light {
+  color-scheme: light;
   --background: #f8fafc;
   --foreground: #0f172a;
   --card: #ffffff;

@@ -23,18 +23,26 @@ const STORAGE_KEY = "aeg-admin-theme";
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function applyTheme(theme: ThemePreference) {
-  document.documentElement.classList.toggle("dark", theme === "dark");
+  const isDark = theme === "dark";
+  document.documentElement.classList.toggle("dark", isDark);
+  document.documentElement.classList.toggle("light", !isDark);
+  document.documentElement.style.colorScheme = isDark ? "dark" : "light";
 }
 
 function readStoredTheme(): ThemePreference {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === "light" || stored === "dark") {
-    return stored;
-  }
-  if (stored === "system") {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === "light" || stored === "dark") {
+      return stored;
+    }
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    ) {
+      return "dark";
+    }
+  } catch {
+    // In private browsing or storage disabled
   }
   return "light";
 }
@@ -43,16 +51,36 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemePreference>("light");
 
   useEffect(() => {
-    setThemeState(readStoredTheme());
-  }, []);
+    const initial = readStoredTheme();
+    setThemeState(initial);
+    applyTheme(initial);
 
-  useEffect(() => {
-    applyTheme(theme);
-    localStorage.setItem(STORAGE_KEY, theme);
-  }, [theme]);
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) {
+          const next = mediaQuery.matches ? "dark" : "light";
+          setThemeState(next);
+          applyTheme(next);
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    mediaQuery.addEventListener?.("change", handleChange);
+    return () => mediaQuery.removeEventListener?.("change", handleChange);
+  }, []);
 
   const setTheme = useCallback((next: ThemePreference) => {
     setThemeState(next);
+    applyTheme(next);
+    try {
+      localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      // ignore
+    }
   }, []);
 
   return (
