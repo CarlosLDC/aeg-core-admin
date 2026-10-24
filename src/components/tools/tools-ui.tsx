@@ -556,7 +556,7 @@ export function ToolsRefreshStatusButton({
       loading={loading}
       disabled={disabled}
       onClick={() => void onRefresh()}
-      className={className}
+      className={cn("w-auto", className)}
     >
       {!loading ? <RefreshCw className="size-4" aria-hidden /> : null}
       Actualizar estado

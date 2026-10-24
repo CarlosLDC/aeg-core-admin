@@ -5,6 +5,7 @@ import { ToolsActionButton } from "@/components/tools/tools-ui";
 import { getToolsUsbErrorMessage } from "@/modules/tools/serial/tools-serial-port";
 import { useToolsTransportContext } from "@/modules/tools/transport/tools-transport-provider";
 import { useToast } from "@/context/toast-provider";
+import { cn } from "@/lib/utils";
 
 export function ToolsUsbConnectionButton({
   className,
@@ -54,9 +55,9 @@ export function ToolsUsbConnectionButton({
           ? "Desactivar conexión USB"
           : "Activar conexión USB"
       }
-      className={className}
+      className={cn("w-auto", className)}
     >
-      <Cable className="size-4 shrink-0" aria-hidden />
+      {!usbConnecting ? <Cable className="size-4 shrink-0" aria-hidden /> : null}
       USB
     </ToolsActionButton>
   );

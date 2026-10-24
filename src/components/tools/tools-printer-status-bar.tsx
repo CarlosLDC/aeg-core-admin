@@ -109,7 +109,7 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
           </div>
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
         <ToolsUsbConnectionButton />
         <ToolsRefreshStatusButton
           loading={loading}
