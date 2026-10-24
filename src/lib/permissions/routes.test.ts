@@ -26,7 +26,6 @@ describe("route permissions", () => {
     expect(roles.filter((r) => canAccessRoute(r, "/remoto"))).toEqual(["ADMIN"]);
     expect(roles.filter((r) => canAccessRoute(r, "/fiscalizacion"))).toEqual([
       "ADMIN",
-      "DISTRIBUTOR",
     ]);
   });
 

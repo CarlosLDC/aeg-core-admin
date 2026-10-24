@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { EnajenacionRitualStepper } from "@/components/mqtt/enajenacion-ritual-stepper";
 import { SealSelect } from "@/components/seals/seal-select";
-import { useAuth } from "@/context/auth-provider";
 import { SEAL_COLOR_LABELS } from "@/lib/seal-form";
 import { printerPath } from "@/lib/resource-routes";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
@@ -58,8 +57,6 @@ function StepBadge({
 }
 
 export function FiscalizacionUsbWizard() {
-  const { user } = useAuth();
-  const isDistributor = user?.role === "DISTRIBUTOR";
   const w = useFiscalizacionUsbWizard();
   const [showNewSealForm, setShowNewSealForm] = useState(false);
   const [showFallbackBroker, setShowFallbackBroker] = useState(false);
@@ -643,17 +640,8 @@ export function FiscalizacionUsbWizard() {
             </h2>
             <p className="mt-0.5 text-sm text-muted">
               Envía <code className="font-mono">ptrFiscalizarRemoto</code> por USB. La
-              impresora notificará al broker nuevo y AEG Core creará el registro{" "}
-              {isDistributor ? (
-                <>
-                  asignado automáticamente a su empresa distribuidora (en estado{" "}
-                  <span className="font-semibold">En consignación</span>).
-                </>
-              ) : (
-                <>
-                  en estado <span className="font-semibold">SIN_ASIGNAR</span>.
-                </>
-              )}
+              impresora notificará al broker nuevo y AEG Core creará el registro en
+              estado <span className="font-semibold">SIN_ASIGNAR</span>.
             </p>
           </div>
         </div>
@@ -755,20 +743,9 @@ export function FiscalizacionUsbWizard() {
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                     <span>
-                      {isDistributor ? (
-                        <>
-                          Fiscalización completada. La impresora fue creada y asignada
-                          automáticamente a su empresa distribuidora (
-                          <strong>En consignación</strong>) y el precinto quedó{" "}
-                          <strong>EN_IMPRESORA</strong>.
-                        </>
-                      ) : (
-                        <>
-                          Fiscalización completada. La impresora fue creada en estado{" "}
-                          <strong>SIN_ASIGNAR</strong> y el precinto quedó{" "}
-                          <strong>EN_IMPRESORA</strong>.
-                        </>
-                      )}
+                      Fiscalización completada. La impresora fue creada en estado{" "}
+                      <strong>SIN_ASIGNAR</strong> y el precinto quedó{" "}
+                      <strong>EN_IMPRESORA</strong>.
                     </span>
                   </div>
                   {w.sse.completedPrinterId != null ? (

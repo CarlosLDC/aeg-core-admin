@@ -62,7 +62,7 @@ export const navSections: NavSection[] = [
         title: "Fiscalización",
         href: "/fiscalizacion",
         icon: Cable,
-        roles: ["ADMIN", "DISTRIBUTOR"],
+        roles: ["ADMIN"],
       },
       {
         title: "Modelos fiscales",
