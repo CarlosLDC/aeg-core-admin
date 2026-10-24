@@ -6,6 +6,7 @@ import {
   toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
 import { ToolsUsbConnectionButton } from "@/components/tools/tools-connection-mode-switch";
+import { ToolsRebootPrinterButton } from "@/components/tools/tools-reboot-printer-button";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { formatToolsWifiStatusLine } from "@/lib/tools-wifi-networks";
 import { isUsableToolsNetworkField } from "@/lib/tools-printer-connection";
@@ -28,6 +29,8 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
     isLegacyBroker,
     isSeniatOnline,
     networkInfo,
+    remoteActionsDisabled,
+    transportReady,
   } = connection;
   const statusSection = TOOLS_SECTIONS.status;
 
@@ -111,6 +114,10 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
       </div>
       <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
         <ToolsUsbConnectionButton />
+        <ToolsRebootPrinterButton
+          disabled={!transportReady || remoteActionsDisabled}
+          onRebootSent={refreshStatus}
+        />
         <ToolsRefreshStatusButton
           loading={loading}
           onRefresh={refreshStatus}

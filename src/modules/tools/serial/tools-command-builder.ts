@@ -112,6 +112,10 @@ export function buildWifiResetPayload(): string {
   });
 }
 
+export function buildRebootPrinterPayload(): string {
+  return buildWifiResetPayload();
+}
+
 export function buildListReportZPayload(): string {
   return writeJson({ cmd: CMD_GET_REP_Z, data: -1 });
 }

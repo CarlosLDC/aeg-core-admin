@@ -24,6 +24,7 @@ export interface ToolsPrinterTransport {
   scanWifi(): Promise<ToolsWifiScanResponse>;
   connectWifi(ssid: string, password: string): Promise<ToolsMqttSimpleResponse>;
   resetWifi(): Promise<ToolsMqttSimpleResponse>;
+  rebootPrinter(): Promise<ToolsMqttSimpleResponse>;
   listReportZ(): Promise<ToolsReportZResponse>;
   generateReportZ(): Promise<ToolsReportZResponse>;
   getReportZ(reportNumber: number): Promise<ToolsReportZResponse>;

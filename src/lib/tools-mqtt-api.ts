@@ -195,6 +195,15 @@ export async function resetToolsWifi(printerId: number): Promise<ToolsMqttSimple
   return data;
 }
 
+export async function rebootToolsPrinter(printerId: number): Promise<ToolsMqttSimpleResponse> {
+  const { data, status } = await toolsMqttFetch<ToolsMqttSimpleResponse>(
+    `${BASE}/wifi/reset`,
+    { method: "POST", body: printerBody(printerId) },
+  );
+  ensureSuccess(status, data, "No se pudo reiniciar la impresora.");
+  return data;
+}
+
 export async function listToolsReportZ(printerId: number): Promise<ToolsReportZResponse> {
   const { data, status } = await toolsMqttFetch<ToolsReportZResponse>(
     `${BASE}/reports-z/list`,

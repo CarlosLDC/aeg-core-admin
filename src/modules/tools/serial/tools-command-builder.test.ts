@@ -5,6 +5,7 @@ import {
   buildFiscalizarRemotoPayload,
   buildFooterWritePayload,
   buildHeaderWritePayload,
+  buildRebootPrinterPayload,
   buildReportXPayload,
   buildReprintPayload,
   buildStatusPayload,
@@ -85,6 +86,13 @@ describe("tools-command-builder", () => {
         NroMemFis: 1,
         Access: "AA ",
       },
+    });
+  });
+
+  it("builds reboot printer payload with resetMF and 5555", () => {
+    expect(JSON.parse(buildRebootPrinterPayload())).toEqual({
+      cmd: "resetMF",
+      data: 5555,
     });
   });
 });

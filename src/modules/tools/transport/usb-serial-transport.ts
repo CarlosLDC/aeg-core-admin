@@ -119,6 +119,12 @@ export function createUsbSerialTransport(
       return { success: true, message: "Comando de reinicio enviado a la impresora." };
     },
 
+    rebootPrinter: async () => {
+      requireConnected();
+      await session.publishFireAndForget(buildWifiResetPayload());
+      return { success: true, message: "Comando de reinicio enviado a la impresora." };
+    },
+
     listReportZ: async () => {
       requireConnected();
       const response = await session.publishAndAwaitObject(
