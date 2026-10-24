@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, RefreshCw, ShieldCheck } from "lucide-react";
+import { BookOpen, ShieldCheck } from "lucide-react";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
@@ -54,11 +54,7 @@ import {
   isPrinterUnassigned,
   normalizePrinterStatus,
 } from "@/lib/printer-status";
-import {
-  canReconfigurePrinterTicket,
-  isPrinterPendingMqttEnajenacion,
-  PRINTER_TICKET_RECONFIGURE_LABEL,
-} from "@/lib/printer-enajenacion-ticket";
+import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
 import { getPrinterStatusQuickAction, getPrinterStatusBadgeTitle } from "@/lib/printer-quick-actions";
 import { assertPrinterInScope } from "@/lib/permissions/scope-access";
 import { useDistributorStaffBranchId } from "@/hooks/use-distributor-staff-branch-id";
@@ -165,10 +161,6 @@ export function PrinterView() {
   const lockDistributor = isDistributor && distributorId != null;
   const canDisposeAssigned =
     canDispose && (isAdmin || (isDistributor && distributorId != null));
-  const showTicketReconfigure =
-    printer != null &&
-    canReconfigurePrinterTicket(printer) &&
-    canDisposeAssigned;
   const distributorStaffBranchId = useDistributorStaffBranchId(
     isDistributor ? distributorId : null,
   );
@@ -835,15 +827,6 @@ export function PrinterView() {
     }
   }
 
-  function openTicketReconfigure() {
-    if (!printer) return;
-    if (!isPrinterPaidForDisposition(printer)) {
-      toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
-      return;
-    }
-    setDispositionOpen(true);
-  }
-
   async function handleDelete() {
     if (!printer || !canDelete) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
@@ -923,16 +906,6 @@ export function PrinterView() {
                   Libro fiscal
                 </a>
               ) : null}
-              {showTicketReconfigure ? (
-                <button
-                  type="button"
-                  onClick={openTicketReconfigure}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
-                >
-                  <RefreshCw className="size-4" aria-hidden />
-                  {PRINTER_TICKET_RECONFIGURE_LABEL}
-                </button>
-              ) : null}
               <ResourceViewActions
                 onEdit={
                   canModify
@@ -997,7 +970,7 @@ export function PrinterView() {
           companies={companies}
           distributors={distributors}
           catalogLoading={catalogLoading}
-          reconfigure={canReconfigurePrinterTicket(printer)}
+          reconfigure={isPrinterPendingMqttEnajenacion(printer)}
           onClose={() => setDispositionOpen(false)}
           onContinue={handleDispositionContinue}
         />

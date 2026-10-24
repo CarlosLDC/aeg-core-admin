@@ -74,7 +74,7 @@ describe("getPrinterStatusQuickAction", () => {
     expect(action?.label).toBe("Reconfigurar ticket");
   });
 
-  it("offers ticket reconfigure when printer is already disposed", () => {
+  it("does not offer disposition quick action when printer is already disposed", () => {
     const action = getPrinterStatusQuickAction({
       status: "enajenada",
       printer: {
@@ -87,7 +87,7 @@ describe("getPrinterStatusQuickAction", () => {
       canDispose: true,
       ...handlers,
     });
-    expect(action?.label).toBe("Reconfigurar ticket");
+    expect(action).toBeNull();
   });
 
   it("returns null when no action is allowed", () => {

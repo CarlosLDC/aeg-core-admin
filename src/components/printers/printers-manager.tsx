@@ -112,10 +112,7 @@ import {
   printerStatusLabel,
 } from "@/lib/printer-status";
 import { getPrinterStatusQuickAction, getPrinterStatusBadgeTitle } from "@/lib/printer-quick-actions";
-import {
-  canReconfigurePrinterTicket,
-  isPrinterPendingMqttEnajenacion,
-} from "@/lib/printer-enajenacion-ticket";
+import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { isDistributorPanelRole } from "@/types/user";
 import { cn } from "@/lib/utils";
@@ -1234,7 +1231,7 @@ export function PrintersManager() {
           companies={companies}
           distributors={distributors}
           catalogLoading={catalogLoading}
-          reconfigure={canReconfigurePrinterTicket(dispositionPrinter)}
+          reconfigure={isPrinterPendingMqttEnajenacion(dispositionPrinter)}
           onClose={closeDisposition}
           onContinue={handleDispositionContinue}
         />

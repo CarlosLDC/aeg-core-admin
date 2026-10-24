@@ -1,6 +1,5 @@
 import {
   isPrinterAssigned,
-  isPrinterDisposed,
   isPrinterOnConsignment,
   isPrinterUnassigned,
 } from "@/lib/printer-status";
@@ -9,7 +8,7 @@ import {
   PRINTER_UNPAID_DISPOSITION_MESSAGE,
 } from "@/lib/printer-form";
 import {
-  canReconfigurePrinterTicket,
+  isPrinterPendingMqttEnajenacion,
   PRINTER_TICKET_RECONFIGURE_LABEL,
 } from "@/lib/printer-enajenacion-ticket";
 import type { PrinterResponse } from "@/types/printer";
@@ -31,18 +30,15 @@ export function getPrinterStatusQuickAction(params: {
   if (params.canAssign && isPrinterUnassigned(params.status)) {
     return { onClick: params.onAssign, label: "Asignar impresora" };
   }
-  if (
-    params.canDispose &&
-    (isPrinterAssigned(params.status) || isPrinterDisposed(params.status))
-  ) {
+  if (params.canDispose && isPrinterAssigned(params.status)) {
     const paid =
       params.printer != null
         ? isPrinterPaidForDisposition(params.printer)
         : params.paid === true;
     if (!paid) return null;
     if (
-      isPrinterDisposed(params.status) ||
-      (params.printer != null && canReconfigurePrinterTicket(params.printer))
+      params.printer != null &&
+      isPrinterPendingMqttEnajenacion(params.printer)
     ) {
       return {
         onClick: params.onDispose,
