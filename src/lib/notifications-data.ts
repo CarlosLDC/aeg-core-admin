@@ -154,7 +154,10 @@ export async function loadNotifications(options: {
 
   const branches = branchesP.ok ? branchesP.value : [];
   const branchIds = branchIdsFromScope(scope, branches);
-  const companyIds = scope?.companyIds ?? new Set((companiesP.ok ? companiesP.value : []).map((c) => c.id));
+  const companiesList = companiesP.ok ? companiesP.value : [];
+  const companiesById = new Map(companiesList.map((c) => [c.id, c]));
+  const companyIds =
+    scope?.companyIds ?? new Set(companiesList.map((c) => c.id));
   const scopedBranches =
     branchIds.size > 0
       ? branches.filter((b) => branchIds.has(b.id))
@@ -180,12 +183,19 @@ export async function loadNotifications(options: {
   }
 
   for (const b of scopedBranches) {
-    const label = b.city?.trim() || b.address?.trim() || `empresa ${b.id}`;
+    const location =
+      [b.city?.trim(), b.state?.trim()].filter(Boolean).join(", ") ||
+      b.address?.trim() ||
+      `sucursal ${b.id}`;
+    const company = companiesById.get(b.companyId);
+    const companyName = company?.businessName?.trim();
     pushNotification(items, {
       id: `branch-${b.id}`,
       kind: "branch",
-      title: "Nueva empresa",
-      message: `Empresa registrada en ${label}.`,
+      title: "Nueva sucursal",
+      message: companyName
+        ? `Sucursal de ${companyName} registrada en ${location}.`
+        : `Sucursal registrada en ${location}.`,
       href: notificationHrefForBranch(b, role, clients),
       createdAt: b.createdAt,
     });
@@ -342,7 +352,7 @@ export function notificationKindLabel(kind: NotificationKind): string {
   const labels: Record<NotificationKind, string> = {
     printer: "Impresora",
     company: "Empresa",
-    branch: "Empresa",
+    branch: "Sucursal",
     employee: "Empleado",
     seal: "Precinto",
     technical_service: "Servicio técnico",

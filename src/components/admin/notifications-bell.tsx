@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useConfirm } from "@/context/confirm-provider";
 import { useNotifications } from "@/context/notifications-provider";
+import { notificationKindLabel } from "@/lib/notifications-data";
 import type { NotificationKind } from "@/types/notification";
 import { cn } from "@/lib/utils";
 
@@ -314,9 +315,14 @@ export function NotificationsBell() {
                         <Icon className="size-4" />
                       </div>
                       <div className="min-w-0 flex-1 pr-6">
-                        <p className="text-sm font-medium text-card-foreground">
-                          {item.title}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-medium text-card-foreground">
+                            {item.title}
+                          </p>
+                          <span className="shrink-0 rounded bg-foreground/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-muted">
+                            {notificationKindLabel(item.kind)}
+                          </span>
+                        </div>
                         <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted">
                           {item.message}
                         </p>
