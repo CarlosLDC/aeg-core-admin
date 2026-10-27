@@ -9,6 +9,7 @@ import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
 import { useConfirm } from "@/context/confirm-provider";
 import { printerPaidLabel } from "@/lib/printer-form";
+import { matchesSearch } from "@/components/ui/searchable-select";
 import type { PrinterResponse } from "@/types/printer";
 
 type PrinterAssignmentDialogProps = {
@@ -84,10 +85,13 @@ export function PrinterAssignmentDialog({
     return distributorOptions.find((opt) => opt.id === id)?.label ?? null;
   }, [distributorId, distributorOptions]);
   const filteredDistributorOptions = useMemo(() => {
-    const q = distributorQuery.trim().toLowerCase();
-    if (!q) return distributorOptions;
+    if (!distributorQuery.trim()) return distributorOptions;
     return distributorOptions.filter((opt) =>
-      `${opt.id} ${opt.label}`.toLowerCase().includes(q),
+      matchesSearch(
+        distributorQuery,
+        `${opt.id} ${opt.label}`,
+        `${opt.searchText ?? ""} ${opt.rif ?? ""} ${opt.description ?? ""}`,
+      ),
     );
   }, [distributorOptions, distributorQuery]);
 
@@ -171,7 +175,7 @@ export function PrinterAssignmentDialog({
         <>
           <PrinterActionPickerPanel
             label="Distribuidora"
-            searchPlaceholder="Buscar distribuidora por nombre o ID…"
+            searchPlaceholder="Buscar distribuidora por nombre, ID o RIF…"
             query={distributorQuery}
             onQueryChange={setDistributorQuery}
             options={filteredDistributorOptions}

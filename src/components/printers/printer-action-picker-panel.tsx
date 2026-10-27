@@ -131,8 +131,15 @@ export function PrinterActionPickerPanel({
                   isSelected && "bg-accent/10",
                 )}
               >
-                <span className="min-w-0 truncate text-card-foreground">
-                  {opt.label}
+                <span className="min-w-0">
+                  <span className="block truncate text-card-foreground">
+                    {opt.label}
+                  </span>
+                  {(opt.description || opt.rif) && (
+                    <span className="mt-0.5 block truncate text-xs text-muted">
+                      {opt.description ?? (opt.rif ? `RIF: ${opt.rif}` : "")}
+                    </span>
+                  )}
                 </span>
                 {isSelected ? (
                   <Check className="mt-0.5 size-4 shrink-0 text-accent" />

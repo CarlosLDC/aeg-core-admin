@@ -2,7 +2,11 @@
 
 import { useMemo } from "react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { distributorLabel } from "@/lib/branch-roles";
+import {
+  distributorLabel,
+  distributorRif,
+  distributorSearchText,
+} from "@/lib/branch-roles";
 import type { BranchResponse } from "@/types/branch";
 import type { DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -30,11 +34,15 @@ export function DistributorIdSelect({
 }: DistributorIdSelectProps) {
   const options = useMemo(
     () =>
-      distributors.map((distributor) => ({
-        value: String(distributor.id),
-        label: distributorLabel(distributor, branches, companies),
-        searchText: `${distributor.id} ${distributorLabel(distributor, branches, companies)}`,
-      })),
+      distributors.map((distributor) => {
+        const rif = distributorRif(distributor, branches, companies);
+        return {
+          value: String(distributor.id),
+          label: distributorLabel(distributor, branches, companies),
+          description: rif ? `RIF: ${rif}` : undefined,
+          searchText: distributorSearchText(distributor, branches, companies),
+        };
+      }),
     [distributors, branches, companies],
   );
 
@@ -47,7 +55,7 @@ export function DistributorIdSelect({
       loading={loading}
       required={required}
       emptyLabel="Seleccionar distribuidor"
-      searchPlaceholder="Buscar por ID o empresa…"
+      searchPlaceholder="Buscar por ID, empresa o RIF…"
       modalTitle="Seleccionar distribuidor"
     />
   );

@@ -286,7 +286,8 @@ export function TechnicalServiceFormDialog({
             options={serviceCenterOptions}
             disabled={disabled}
             loading={catalogLoading}
-            searchPlaceholder="Buscar centro..."
+            modalTitle="Seleccionar centro de servicio"
+            searchPlaceholder="Buscar centro o RIF…"
           />
         </div>
         <div>
@@ -299,7 +300,8 @@ export function TechnicalServiceFormDialog({
             options={distributorOptions}
             disabled={disabled}
             loading={catalogLoading}
-            searchPlaceholder="Buscar distribuidor..."
+            modalTitle="Seleccionar distribuidor"
+            searchPlaceholder="Buscar distribuidor o RIF…"
           />
         </div>
       </div>

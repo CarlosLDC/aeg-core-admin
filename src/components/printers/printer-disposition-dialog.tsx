@@ -13,6 +13,7 @@ import {
   validateFacturaNroInput,
 } from "@/lib/venezuelan-fiscal-invoice";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
+import { matchesSearch } from "@/components/ui/searchable-select";
 import { cn } from "@/lib/utils";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
@@ -94,10 +95,13 @@ export function PrinterDispositionDialog({
   const disabled = catalogLoading;
 
   const filteredClientOptions = useMemo(() => {
-    const q = clientQuery.trim().toLowerCase();
-    if (!q) return clientOptions;
+    if (!clientQuery.trim()) return clientOptions;
     return clientOptions.filter((opt) =>
-      `${opt.id} ${opt.label}`.toLowerCase().includes(q),
+      matchesSearch(
+        clientQuery,
+        `${opt.id} ${opt.label}`,
+        `${opt.searchText ?? ""} ${opt.rif ?? ""} ${opt.description ?? ""}`,
+      ),
     );
   }, [clientOptions, clientQuery]);
 
@@ -283,7 +287,7 @@ export function PrinterDispositionDialog({
       {step === 1 ? (
         <PrinterActionPickerPanel
           label="Cliente"
-          searchPlaceholder="Buscar cliente por nombre o ID…"
+          searchPlaceholder="Buscar cliente por nombre, ID o RIF…"
           query={clientQuery}
           onQueryChange={setClientQuery}
           options={filteredClientOptions}

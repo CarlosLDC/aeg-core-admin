@@ -83,7 +83,13 @@ import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 
-type PartyOption = { id: number; label: string };
+type PartyOption = {
+  id: number;
+  label: string;
+  searchText?: string;
+  description?: string;
+  rif?: string;
+};
 
 type ContractsListPanelProps = {
   kind: ContractKind;

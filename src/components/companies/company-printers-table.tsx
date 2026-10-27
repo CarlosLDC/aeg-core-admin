@@ -51,7 +51,14 @@ import {
   toggleTableSort,
   type TableSortState,
 } from "@/lib/table-sort";
-import { clientLabel, distributorLabel } from "@/lib/branch-roles";
+import {
+  clientLabel,
+  clientRif,
+  clientSearchText,
+  distributorLabel,
+  distributorRif,
+  distributorSearchText,
+} from "@/lib/branch-roles";
 import { fetchBranches } from "@/lib/branches-api";
 import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
@@ -320,20 +327,32 @@ export function CompanyPrintersTable({
         ? distributors.filter((d) => d.id === distributorId)
         : distributors;
     return rows
-      .map((d) => ({
-        id: d.id,
-        label: distributorLabel(d, branches, companies),
-      }))
+      .map((d) => {
+        const rif = distributorRif(d, branches, companies);
+        return {
+          id: d.id,
+          label: distributorLabel(d, branches, companies),
+          rif: rif || undefined,
+          description: rif ? `RIF: ${rif}` : undefined,
+          searchText: distributorSearchText(d, branches, companies),
+        };
+      })
       .sort((a, b) => a.label.localeCompare(b.label, "es"));
   }, [distributors, branches, companies, lockDistributor, distributorId]);
 
   const clientOptions = useMemo<SelectOption[]>(
     () =>
       scopedClients
-        .map((c) => ({
-          id: c.id,
-          label: clientLabel(c, branches, companies),
-        }))
+        .map((c) => {
+          const rif = clientRif(c, branches, companies);
+          return {
+            id: c.id,
+            label: clientLabel(c, branches, companies),
+            rif: rif || undefined,
+            description: rif ? `RIF: ${rif}` : undefined,
+            searchText: clientSearchText(c, branches, companies),
+          };
+        })
         .sort((a, b) => a.label.localeCompare(b.label, "es")),
     [scopedClients, branches, companies],
   );

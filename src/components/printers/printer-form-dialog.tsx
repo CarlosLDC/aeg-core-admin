@@ -26,13 +26,22 @@ import { zodFieldErrors } from "@/lib/form-zod";
 import { printerFormSchema } from "@/lib/schemas/printer-form-schema";
 import { cn } from "@/lib/utils";
 
-export type SelectOption = { id: number; label: string };
+export type SelectOption = {
+  id: number;
+  label: string;
+  searchText?: string;
+  description?: string;
+  rif?: string;
+};
 
 function toSearchableOptions(options: SelectOption[]): SearchableSelectOption[] {
   return options.map((opt) => ({
     value: String(opt.id),
     label: opt.label,
-    searchText: String(opt.id),
+    searchText:
+      opt.searchText ??
+      (opt.rif ? `${opt.id} ${opt.label} ${opt.rif}` : `${opt.id} ${opt.label}`),
+    description: opt.description ?? (opt.rif ? `RIF: ${opt.rif}` : undefined),
   }));
 }
 
@@ -353,7 +362,7 @@ export function PrinterFormDialog({
                       disabled={disabled}
                       loading={catalogLoading}
                       emptyLabel="Sin asignar"
-                      searchPlaceholder="Buscar distribuidor…"
+                      searchPlaceholder="Buscar distribuidora o RIF…"
                       modalTitle="Seleccionar distribuidor"
                     />
                   </div>
@@ -369,7 +378,7 @@ export function PrinterFormDialog({
                     disabled={disabled}
                     loading={catalogLoading}
                     emptyLabel="Sin asignar"
-                    searchPlaceholder="Buscar cliente…"
+                    searchPlaceholder="Buscar cliente o RIF…"
                     modalTitle="Seleccionar cliente"
                   />
                 </div>

@@ -9,6 +9,14 @@ export function companyNameById(
   return company?.businessName?.trim() || "Empresa desconocida";
 }
 
+export function companyRifById(
+  companies: CompanyResponse[],
+  companyId: number,
+): string {
+  const company = companies.find((c) => c.id === companyId);
+  return company?.rif?.trim() || "";
+}
+
 /** Texto para búsqueda: razón social y RIF de la empresa */
 export function companySearchTextById(
   companies: CompanyResponse[],
@@ -17,6 +25,15 @@ export function companySearchTextById(
   const company = companies.find((c) => c.id === companyId);
   if (!company) return "Empresa desconocida";
   return [company.businessName, company.rif].filter(Boolean).join(" ");
+}
+
+export function branchSearchText(
+  branch: BranchResponse,
+  companies: CompanyResponse[] = [],
+): string {
+  const company = companies.find((c) => c.id === branch.companyId);
+  const location = [branch.city, branch.state, branch.address].filter(Boolean).join(" ");
+  return [branch.id, company?.businessName, company?.rif, location].filter(Boolean).join(" ");
 }
 
 export function formatBranchLabel(

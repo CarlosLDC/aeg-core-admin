@@ -20,7 +20,7 @@ import {
 import { getCatalogForbiddenMessage } from "@/lib/api-permissions";
 import { organizationRoleFromBranch } from "@/lib/organization-roles";
 import { ApiError } from "@/types/auth";
-import { formatBranchShort } from "@/lib/branches";
+import { formatBranchShort, companyRifById } from "@/lib/branches";
 import type { BranchResponse, BranchWithRoles } from "@/types/branch";
 import type {
   ClientResponse,
@@ -97,6 +97,86 @@ export function clientLabel(
   if (companyName && cityState) return `${companyName} — ${cityState}`;
   if (companyName) return companyName;
   return "Cliente desconocido";
+}
+
+export function distributorRif(
+  distributor: DistributorResponse,
+  branches: BranchResponse[],
+  companies: CompanyResponse[],
+  extraBranches: BranchResponse[] = [],
+): string {
+  const branch =
+    branches.find((b) => b.id === distributor.branchId) ??
+    extraBranches.find((b) => b.id === distributor.branchId);
+  if (!branch) return "";
+  return companyRifById(companies, branch.companyId);
+}
+
+export function clientRif(
+  client: ClientResponse,
+  branches: BranchResponse[],
+  companies: CompanyResponse[],
+  extraBranches: BranchResponse[] = [],
+): string {
+  if (client.companyRif?.trim()) {
+    return client.companyRif.trim();
+  }
+  const branch =
+    branches.find((b) => b.id === client.branchId) ??
+    extraBranches.find((b) => b.id === client.branchId);
+  if (!branch) return "";
+  return companyRifById(companies, branch.companyId);
+}
+
+export function serviceCenterRif(
+  serviceCenter: ServiceCenterResponse,
+  branches: BranchResponse[],
+  companies: CompanyResponse[],
+  extraBranches: BranchResponse[] = [],
+): string {
+  const branch =
+    branches.find((b) => b.id === serviceCenter.branchId) ??
+    extraBranches.find((b) => b.id === serviceCenter.branchId);
+  if (!branch) return "";
+  return companyRifById(companies, branch.companyId);
+}
+
+export function distributorSearchText(
+  distributor: DistributorResponse,
+  branches: BranchResponse[],
+  companies: CompanyResponse[],
+  extraBranches: BranchResponse[] = [],
+): string {
+  const label = distributorLabel(distributor, branches, companies, extraBranches);
+  const rif = distributorRif(distributor, branches, companies, extraBranches);
+  return `${distributor.id} ${label} ${rif}`.trim();
+}
+
+export function clientSearchText(
+  client: ClientResponse,
+  branches: BranchResponse[],
+  companies: CompanyResponse[],
+  extraBranches: BranchResponse[] = [],
+): string {
+  const label = clientLabel(client, branches, companies, extraBranches);
+  const rif = clientRif(client, branches, companies, extraBranches);
+  return `${client.id} ${label} ${rif}`.trim();
+}
+
+export function serviceCenterSearchText(
+  serviceCenter: ServiceCenterResponse,
+  branches: BranchResponse[],
+  companies: CompanyResponse[],
+  extraBranches: BranchResponse[] = [],
+): string {
+  const branch =
+    branches.find((b) => b.id === serviceCenter.branchId) ??
+    extraBranches.find((b) => b.id === serviceCenter.branchId);
+  const label = branch
+    ? formatBranchShort(branch, companies)
+    : "Empresa desconocida";
+  const rif = serviceCenterRif(serviceCenter, branches, companies, extraBranches);
+  return `${serviceCenter.id} ${label} ${rif}`.trim();
 }
 
 export function clientDistributorSummary(

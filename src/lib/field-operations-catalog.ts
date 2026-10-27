@@ -58,10 +58,14 @@ export function serviceCenterSelectOptions(
   return centers
     .map((sc) => {
       const branch = branches.find((b) => b.id === sc.branchId);
+      const company = companies.find((c) => c.id === branch?.companyId);
+      const rif = company?.rif?.trim() || "";
       const label = branch
         ? formatBranchShort(branch, companies)
         : "Empresa desconocida";
-      return { value: String(sc.id), label, searchText: label };
+      const searchText = `${sc.id} ${label} ${rif}`.trim();
+      const description = rif ? `RIF: ${rif}` : undefined;
+      return { value: String(sc.id), label, searchText, description };
     })
     .sort((a, b) => a.label.localeCompare(b.label, "es"));
 }
@@ -74,10 +78,14 @@ export function distributorSelectOptions(
   return distributors
     .map((d) => {
       const branch = branches.find((b) => b.id === d.branchId);
+      const company = companies.find((c) => c.id === branch?.companyId);
+      const rif = company?.rif?.trim() || "";
       const label = branch
         ? formatBranchShort(branch, companies)
         : "Empresa desconocida";
-      return { value: String(d.id), label, searchText: label };
+      const searchText = `${d.id} ${label} ${rif}`.trim();
+      const description = rif ? `RIF: ${rif}` : undefined;
+      return { value: String(d.id), label, searchText, description };
     })
     .sort((a, b) => a.label.localeCompare(b.label, "es"));
 }

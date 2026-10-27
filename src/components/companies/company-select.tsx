@@ -31,6 +31,7 @@ export function CompanySelect({
       companies.map((company) => ({
         value: String(company.id),
         label: companyLabel(company),
+        description: company.rif ? `RIF: ${company.rif}` : undefined,
         searchText: `${company.id} ${company.rif} ${company.businessName ?? ""}`,
       })),
     [companies],
@@ -45,7 +46,7 @@ export function CompanySelect({
       loading={loading}
       required={required}
       emptyLabel={required ? "Selecciona una empresa" : "Sin empresa"}
-      searchPlaceholder="Buscar empresa…"
+      searchPlaceholder="Buscar empresa o RIF…"
       modalTitle="Seleccionar empresa"
     />
   );

@@ -6,11 +6,34 @@ import { SearchablePickerModal } from "@/components/ui/searchable-picker-modal";
 import { formFieldSelectTriggerClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
-function normalizeSearchText(value: string): string {
+export function normalizeSearchText(value: string): string {
   return value
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
     .toLocaleLowerCase("es");
+}
+
+export function matchesSearch(
+  query: string,
+  haystack: string,
+  extraSearchText?: string,
+): boolean {
+  const trimmed = query.trim();
+  if (!trimmed) return true;
+
+  const q = normalizeSearchText(trimmed);
+  const fullHaystack = normalizeSearchText(
+    extraSearchText ? `${haystack} ${extraSearchText}` : haystack,
+  );
+  if (fullHaystack.includes(q)) return true;
+
+  const qClean = q.replace(/[^a-z0-9]/g, "");
+  if (qClean.length >= 2) {
+    const haystackClean = fullHaystack.replace(/[^a-z0-9]/g, "");
+    if (haystackClean.includes(qClean)) return true;
+  }
+
+  return false;
 }
 
 export type SearchableSelectOption = {
@@ -65,16 +88,16 @@ export function SearchableSelect({
   const hasSearchQuery = queryTrimmed.length > 0;
 
   const filtered = useMemo(() => {
-    const q = normalizeSearchText(queryTrimmed);
     if (!hasSearchQuery) {
       return preloadOptions ? options : [];
     }
-    return options.filter((opt) => {
-      const haystack = normalizeSearchText(
-        `${opt.value} ${opt.label} ${opt.searchText ?? ""} ${opt.description ?? ""}`,
-      );
-      return haystack.includes(q);
-    });
+    return options.filter((opt) =>
+      matchesSearch(
+        queryTrimmed,
+        `${opt.value} ${opt.label}`,
+        `${opt.searchText ?? ""} ${opt.description ?? ""}`,
+      ),
+    );
   }, [options, queryTrimmed, hasSearchQuery, preloadOptions]);
 
   useEffect(() => {

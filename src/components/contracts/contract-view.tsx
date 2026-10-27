@@ -17,7 +17,13 @@ import {
 } from "@/lib/api-permissions";
 import { forbiddenMessage } from "@/lib/permissions/messages";
 import { useResourceId } from "@/hooks/use-resource-id";
-import { distributorLabel } from "@/lib/branch-roles";
+import {
+  distributorLabel,
+  distributorRif,
+  distributorSearchText,
+  serviceCenterRif,
+  serviceCenterSearchText,
+} from "@/lib/branch-roles";
 import { formatBranchShort } from "@/lib/branches";
 import { fetchBranches } from "@/lib/branches-api";
 import { fetchCompanies } from "@/lib/companies-api";
@@ -98,10 +104,16 @@ export function ContractView({ kind }: ContractViewProps) {
   const partyOptions = useMemo(() => {
     if (isDistributor) {
       return distributors
-        .map((d) => ({
-          id: d.id,
-          label: distributorLabel(d, branches, companies),
-        }))
+        .map((d) => {
+          const rif = distributorRif(d, branches, companies);
+          return {
+            id: d.id,
+            label: distributorLabel(d, branches, companies),
+            rif: rif || undefined,
+            description: rif ? `RIF: ${rif}` : undefined,
+            searchText: distributorSearchText(d, branches, companies),
+          };
+        })
         .sort((a, b) => a.label.localeCompare(b.label, "es"));
     }
     return serviceCenters
@@ -110,7 +122,14 @@ export function ContractView({ kind }: ContractViewProps) {
         const label = branch
           ? formatBranchShort(branch, companies)
           : "Centro de servicio desconocido";
-        return { id: sc.id, label };
+        const rif = serviceCenterRif(sc, branches, companies);
+        return {
+          id: sc.id,
+          label,
+          rif: rif || undefined,
+          description: rif ? `RIF: ${rif}` : undefined,
+          searchText: serviceCenterSearchText(sc, branches, companies),
+        };
       })
       .sort((a, b) => a.label.localeCompare(b.label, "es"));
   }, [isDistributor, distributors, serviceCenters, branches, companies]);

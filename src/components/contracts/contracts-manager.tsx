@@ -5,7 +5,13 @@ import { ContractsListPanel } from "@/components/contracts/contracts-list-panel"
 import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
-import { distributorLabel } from "@/lib/branch-roles";
+import {
+  distributorLabel,
+  distributorRif,
+  distributorSearchText,
+  serviceCenterRif,
+  serviceCenterSearchText,
+} from "@/lib/branch-roles";
 import { formatBranchShort } from "@/lib/branches";
 import { fetchBranches } from "@/lib/branches-api";
 import { fetchCompanies } from "@/lib/companies-api";
@@ -66,10 +72,16 @@ export function ContractsManager() {
   const distributorOptions = useMemo(
     () =>
       distributors
-        .map((d) => ({
-          id: d.id,
-          label: distributorLabel(d, branches, companies),
-        }))
+        .map((d) => {
+          const rif = distributorRif(d, branches, companies);
+          return {
+            id: d.id,
+            label: distributorLabel(d, branches, companies),
+            rif: rif || undefined,
+            description: rif ? `RIF: ${rif}` : undefined,
+            searchText: distributorSearchText(d, branches, companies),
+          };
+        })
         .sort((a, b) => a.label.localeCompare(b.label, "es")),
     [distributors, branches, companies],
   );
@@ -82,7 +94,14 @@ export function ContractsManager() {
           const label = branch
             ? formatBranchShort(branch, companies)
             : "Empresa desconocida";
-          return { id: sc.id, label };
+          const rif = serviceCenterRif(sc, branches, companies);
+          return {
+            id: sc.id,
+            label,
+            rif: rif || undefined,
+            description: rif ? `RIF: ${rif}` : undefined,
+            searchText: serviceCenterSearchText(sc, branches, companies),
+          };
         })
         .sort((a, b) => a.label.localeCompare(b.label, "es")),
     [serviceCenters, branches, companies],

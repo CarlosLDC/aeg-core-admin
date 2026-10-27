@@ -47,7 +47,10 @@ function toSearchableOptions(options: SelectOption[]): SearchableSelectOption[] 
   return options.map((opt) => ({
     value: String(opt.id),
     label: opt.label,
-    searchText: String(opt.id),
+    searchText:
+      opt.searchText ??
+      (opt.rif ? `${opt.id} ${opt.label} ${opt.rif}` : `${opt.id} ${opt.label}`),
+    description: opt.description ?? (opt.rif ? `RIF: ${opt.rif}` : undefined),
   }));
 }
 
@@ -237,7 +240,7 @@ export function PrinterWizardFields({
                 disabled={disabled}
                 loading={catalogLoading}
                 emptyLabel="Sin asignar"
-                searchPlaceholder="Buscar distribuidor…"
+                searchPlaceholder="Buscar distribuidora o RIF…"
                 modalTitle="Seleccionar distribuidor"
                 preloadOptions
               />
@@ -252,7 +255,7 @@ export function PrinterWizardFields({
               disabled={disabled}
               loading={catalogLoading}
               emptyLabel="Sin asignar"
-              searchPlaceholder="Buscar cliente…"
+              searchPlaceholder="Buscar cliente o RIF…"
               modalTitle="Seleccionar cliente"
               preloadOptions
             />

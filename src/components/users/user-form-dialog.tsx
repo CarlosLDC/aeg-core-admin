@@ -200,10 +200,16 @@ export function UserFormDialog({
         )
         .map((branch) => {
           const company = companies.find((c) => c.id === branch.companyId);
+          const rif = company?.rif?.trim() || "";
           const label = company
             ? `${company.businessName} — ${branch.city}, ${branch.state}`
             : `${branch.city}, ${branch.state}`;
-          return { value: String(branch.id), label };
+          return {
+            value: String(branch.id),
+            label,
+            description: rif ? `RIF: ${rif}` : undefined,
+            searchText: `${branch.id} ${label} ${rif}`.trim(),
+          };
         }),
     [branches, companies],
   );
@@ -541,7 +547,8 @@ export function UserFormDialog({
                   disabled={saving || catalogLoading}
                   loading={catalogLoading}
                   required
-                  searchPlaceholder="Buscar sucursal..."
+                  modalTitle="Seleccionar centro de servicio"
+                  searchPlaceholder="Buscar centro de servicio o RIF…"
                 />
               </div>
 

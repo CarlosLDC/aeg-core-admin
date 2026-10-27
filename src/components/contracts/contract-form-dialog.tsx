@@ -13,7 +13,13 @@ import type {
   DistributorContractResponse,
   ServiceCenterContractResponse,
 } from "@/types/contract";
-type PartyOption = { id: number; label: string };
+type PartyOption = {
+  id: number;
+  label: string;
+  searchText?: string;
+  description?: string;
+  rif?: string;
+};
 
 type ContractFormDialogProps = {
   kind: ContractKind;
@@ -72,6 +78,13 @@ export function ContractFormDialog({
       partyOptions.map((opt) => ({
         value: String(opt.id),
         label: opt.label,
+        description:
+          opt.description ?? (opt.rif ? `RIF: ${opt.rif}` : undefined),
+        searchText:
+          opt.searchText ??
+          (opt.rif
+            ? `${opt.id} ${opt.label} ${opt.rif}`
+            : `${opt.id} ${opt.label}`),
       })),
     [partyOptions],
   );
@@ -176,8 +189,8 @@ export function ContractFormDialog({
               }
               searchPlaceholder={
                 kind === "distributor"
-                  ? "Buscar distribuidora o empresa…"
-                  : "Buscar centro de servicio o empresa…"
+                  ? "Buscar distribuidora, empresa o RIF…"
+                  : "Buscar centro de servicio, empresa o RIF…"
               }
             />
           </label>

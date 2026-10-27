@@ -2,7 +2,11 @@
 
 import { useMemo } from "react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { formatBranchLabel, formatBranchShort } from "@/lib/branches";
+import {
+  branchSearchText,
+  companyRifById,
+  formatBranchShort,
+} from "@/lib/branches";
 import type { BranchResponse } from "@/types/branch";
 import type { CompanyResponse } from "@/types/company";
 
@@ -25,12 +29,20 @@ export function BranchSelect({
 }: BranchSelectProps) {
   const options = useMemo(
     () =>
-      branches.map((branch) => ({
-        value: String(branch.id),
-        label: formatBranchShort(branch, companies),
-        searchText: `${branch.id} ${formatBranchLabel(branch, companies)}`,
-        description: branch.address?.trim() || undefined,
-      })),
+      branches.map((branch) => {
+        const rif = companyRifById(companies, branch.companyId);
+        const descParts = [
+          rif ? `RIF: ${rif}` : null,
+          branch.address?.trim(),
+        ].filter(Boolean);
+        return {
+          value: String(branch.id),
+          label: formatBranchShort(branch, companies),
+          searchText: branchSearchText(branch, companies),
+          description:
+            descParts.length > 0 ? descParts.join(" · ") : undefined,
+        };
+      }),
     [branches, companies],
   );
 
@@ -42,7 +54,7 @@ export function BranchSelect({
       disabled={disabled}
       loading={loading}
       emptyLabel="Sin empresa"
-      searchPlaceholder="Buscar empresa…"
+      searchPlaceholder="Buscar empresa o RIF…"
       modalTitle="Seleccionar empresa"
     />
   );
