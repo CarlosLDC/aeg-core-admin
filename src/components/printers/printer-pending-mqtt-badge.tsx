@@ -36,19 +36,17 @@ export function PrinterPendingMqttBadge({
       const res = await verifyAndSyncPrinterStatus(printer.id, true);
       if (res.synced) {
         toast.success(
-          `Impresora ${printer.fiscalSerial} sincronizada a Enajenada con éxito.`,
-          {
-            description: res.message,
-          },
+          res.message ||
+            `Impresora ${printer.fiscalSerial} sincronizada a Enajenada con éxito.`,
         );
         onVerified?.();
       } else if (res.alreadyEnajenada && res.match) {
-        toast.info(res.message);
+        toast.success(res.message);
         onVerified?.();
       } else if (!res.match && res.reportedFiscalSerial) {
         toast.error(res.message);
       } else {
-        toast.info(res.message);
+        toast.error(res.message);
       }
     } catch (err: unknown) {
       const message =

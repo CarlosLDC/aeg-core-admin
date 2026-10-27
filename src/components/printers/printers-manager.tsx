@@ -1180,7 +1180,7 @@ export function PrintersManager() {
                               {isPrinterPendingMqttEnajenacion(printer) ? (
                                 <PrinterPendingMqttBadge
                                   printer={printer}
-                                  onVerified={reloadPrinters}
+                                  onVerified={loadPrinters}
                                 />
                               ) : null}
                             </div>
