@@ -16,8 +16,9 @@ export const RIF_PATTERN = /^[VEJPG]-[0-9]{7,9}$/;
 export const RIF_INPUT_PATTERN = /^[VEJPG]-?[0-9]{7,9}$/;
 
 /** Modelos compatibles con Google AI Studio (mayo 2026). */
-export const GEMINI_MODEL_DEFAULT = "gemini-2.5-flash";
+export const GEMINI_MODEL_DEFAULT = "gemini-3.5-flash-lite";
 export const GEMINI_MODEL_FALLBACKS = [
+  "gemini-3.5-flash-lite",
   "gemini-2.5-flash",
   "gemini-3-flash-preview",
 ] as const;
