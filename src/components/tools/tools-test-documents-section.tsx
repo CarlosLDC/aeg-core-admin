@@ -6,6 +6,7 @@ import {
   FileMinus,
   FilePlus,
   FileText,
+  ScrollText,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
@@ -21,7 +22,7 @@ import { getToolsMqttErrorMessage } from "@/lib/tools-mqtt-api";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { useToast } from "@/context/toast-provider";
 
-type TestAction = "invoice" | "credit-note" | "debit-note";
+type TestAction = "invoice" | "credit-note" | "debit-note" | "generate-z";
 
 type TestDocumentActionConfig = {
   id: TestAction;
@@ -51,6 +52,12 @@ const TEST_DOCUMENT_ACTIONS: TestDocumentActionConfig[] = [
     description: "Genera una nota de débito de prueba en la impresora.",
     icon: FilePlus,
     requiresFiscalSerial: true,
+  },
+  {
+    id: "generate-z",
+    title: "Generar Z de prueba",
+    description: "Genera un reporte Z de prueba en la impresora.",
+    icon: ScrollText,
   },
 ];
 
@@ -106,6 +113,9 @@ export function ToolsTestDocumentsSection({
           break;
         case "debit-note":
           result = await transport.sendTestDebitNote(printer.serial);
+          break;
+        case "generate-z":
+          result = await transport.sendTestGenerateZ();
           break;
       }
 
