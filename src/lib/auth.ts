@@ -11,6 +11,11 @@ import {
   setStoredToken,
 } from "@/lib/auth-storage";
 import { getUsernameFromToken, isTokenExpired } from "@/lib/jwt";
+import {
+  clearLastActivity,
+  isSessionExpiredByInactivity,
+  recordLastActivity,
+} from "@/lib/inactivity-timeout";
 import type { AuthResponse, LoginRequest } from "@/types/auth";
 import { ApiError } from "@/types/auth";
 
@@ -29,6 +34,7 @@ export async function login(
   });
 
   setStoredToken(data.token, remember);
+  recordLastActivity();
   await resolveAndStoreUserProfile(data.token, remember);
   return data;
 }
@@ -36,14 +42,16 @@ export async function login(
 export function logout() {
   clearStoredToken();
   clearUserProfile();
+  clearLastActivity();
 }
 
 export function getSession(): (UserProfile & { token: string }) | null {
   const token = getStoredToken();
-  if (!token || isTokenExpired(token)) {
+  if (!token || isTokenExpired(token) || isSessionExpiredByInactivity()) {
     if (token) {
       clearStoredToken();
       clearUserProfile();
+      clearLastActivity();
     }
     return null;
   }

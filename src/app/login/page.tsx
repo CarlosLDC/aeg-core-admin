@@ -37,6 +37,7 @@ function LoginForm() {
   const [submitting, setSubmitting] = useState(false);
 
   const redirectParam = searchParams.get("redirect");
+  const reasonParam = searchParams.get("reason");
 
   function handoffSeniatSession() {
     const session = getSession();
@@ -137,6 +138,19 @@ function LoginForm() {
           </div>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            {reasonParam === "inactivity" && !error && (
+              <div
+                role="status"
+                className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300"
+              >
+                <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                <span>
+                  Tu sesión se cerró automáticamente por inactividad. Inicia
+                  sesión de nuevo para continuar.
+                </span>
+              </div>
+            )}
+
             {error && (
               <div
                 role="alert"

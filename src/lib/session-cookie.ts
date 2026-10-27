@@ -15,6 +15,7 @@ export function setSessionCookie(remember: boolean) {
 export function clearSessionCookie() {
   if (typeof document === "undefined") return;
   document.cookie = `${SESSION_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+  document.cookie = "aeg_last_activity=; Path=/; Max-Age=0; SameSite=Lax";
 }
 
 export function getSessionCookieName() {

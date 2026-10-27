@@ -2,6 +2,7 @@ import {
   clearSessionCookie,
   setSessionCookie,
 } from "@/lib/session-cookie";
+import { clearLastActivity } from "@/lib/inactivity-timeout";
 
 const TOKEN_KEY = "aeg_auth_token";
 const REMEMBER_KEY = "aeg_auth_remember";
@@ -31,6 +32,7 @@ export function clearStoredToken() {
   sessionStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(REMEMBER_KEY);
   clearSessionCookie();
+  clearLastActivity();
 }
 
 export function isRemembered(): boolean {
