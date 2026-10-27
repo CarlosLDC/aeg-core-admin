@@ -30,7 +30,13 @@ import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
 
-type ReportAction = "list" | "generate" | "get" | "transmit" | "report-x";
+type ReportAction =
+  | "list"
+  | "generate-z"
+  | "generate"
+  | "get"
+  | "transmit"
+  | "report-x";
 
 type ReportZActionConfig = {
   id: ReportAction;
@@ -52,6 +58,14 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
     confirmOnly: true,
   },
   {
+    id: "generate-z",
+    title: "Imprimir Z",
+    description: "Imprime el reporte Z en la impresora fiscal.",
+    confirmMessage: "¿Imprimir el reporte Z en la impresora fiscal?",
+    icon: ScrollText,
+    confirmOnly: true,
+  },
+  {
     id: "get",
     title: "Consultar Z específico",
     description: "Consulta un reporte Z por su número.",
@@ -59,8 +73,6 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
     icon: FileSearch,
     requiresReportNumber: true,
   },
-  // NOTA: "Generar Z" (RepZ) se retira temporalmente por confusión de comandos.
-  // La emisión operativa de Reporte Z pasa a ser "Imprimir Z" (genImpRepZ) en Documentos de prueba.
   {
     id: "transmit",
     title: "Transmitir al SENIAT",
@@ -168,6 +180,13 @@ export function ToolsReporteZSection({
       if (action === "list") {
         const result = await transport.listReportZ();
         showReport(result.report?.report);
+      } else if (action === "generate-z") {
+        const result = await transport.sendTestGenerateZ();
+        if (result.success) {
+          toast.success(result.message ?? "Comando enviado a la impresora.");
+        } else {
+          toast.error(result.message ?? "No se pudo completar la operación.");
+        }
       } else if (action === "generate") {
         const result = await transport.generateReportZ();
         showReport(result.report?.report);
