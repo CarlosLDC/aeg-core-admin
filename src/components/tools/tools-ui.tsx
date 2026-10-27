@@ -591,7 +591,7 @@ export function ToolsSectionStatusActions({
 
 export function ToolsMacWarning({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
+    <div className="isolate flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
       {children}
     </div>
   );
@@ -621,7 +621,7 @@ export function ToolsConnectionWarning({
     <div
       role="status"
       className={cn(
-        "flex items-start gap-3 rounded-xl border px-4 py-3 text-sm",
+        "isolate flex items-start gap-3 rounded-xl border px-4 py-3 text-sm",
         isAmberWarning
           ? "border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-200"
           : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-200",
