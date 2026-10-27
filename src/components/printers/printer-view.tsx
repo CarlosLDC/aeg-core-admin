@@ -454,7 +454,10 @@ export function PrinterView() {
                   title={statusBadgeTitle}
                 />
                 {isPrinterPendingMqttEnajenacion(printer) ? (
-                  <PrinterPendingMqttBadge />
+                  <PrinterPendingMqttBadge
+                    printer={printer}
+                    onVerified={() => void load()}
+                  />
                 ) : null}
               </div>
             }
@@ -544,7 +547,10 @@ export function PrinterView() {
                     title={statusBadgeTitle}
                   />
                   {isPrinterPendingMqttEnajenacion(printer) ? (
-                    <PrinterPendingMqttBadge />
+                    <PrinterPendingMqttBadge
+                      printer={printer}
+                      onVerified={() => void load()}
+                    />
                   ) : null}
                 </div>
               }

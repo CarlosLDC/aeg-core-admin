@@ -52,6 +52,17 @@ export type PrinterEnajenacionTicketResponse = {
   trailer: PrinterTicketSection;
 };
 
+export type EnajenacionVerifyStatusResponse = {
+  printerId: number;
+  fiscalSerial: string;
+  reportedFiscalSerial: string | null;
+  match: boolean;
+  alreadyEnajenada: boolean;
+  synced: boolean;
+  message: string;
+  response?: unknown;
+};
+
 export type PrinterRequest = {
   modelId: number;
   softwareId?: number | null;

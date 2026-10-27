@@ -4,6 +4,7 @@ import { redirectToLoginAfterExpired } from "@/lib/session-expired";
 import { readErrorMessageFromResponse } from "@/lib/api-error-message";
 import { ApiError } from "@/types/auth";
 import type {
+  EnajenacionVerifyStatusResponse,
   PrinterDispositionRequest,
   PrinterEnajenacionTicketResponse,
   PrinterRequest,
@@ -80,6 +81,19 @@ export async function disposePrinter(
     method: "POST",
     body: JSON.stringify(body),
   });
+}
+
+export async function verifyAndSyncPrinterStatus(
+  printerId: number,
+  autoSync = true,
+): Promise<EnajenacionVerifyStatusResponse> {
+  return apiFetch<EnajenacionVerifyStatusResponse>(
+    "/api/mqtt/enajenacion/verify-status",
+    {
+      method: "POST",
+      body: JSON.stringify({ printerId, autoSync }),
+    },
+  );
 }
 
 export async function fetchEnajenacionTicketPreview(

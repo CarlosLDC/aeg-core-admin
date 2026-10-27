@@ -1178,7 +1178,10 @@ export function PrintersManager() {
                                 title={statusBadgeTitle}
                               />
                               {isPrinterPendingMqttEnajenacion(printer) ? (
-                                <PrinterPendingMqttBadge />
+                                <PrinterPendingMqttBadge
+                                  printer={printer}
+                                  onVerified={reloadPrinters}
+                                />
                               ) : null}
                             </div>
                           </td>
