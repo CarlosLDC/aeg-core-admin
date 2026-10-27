@@ -13,6 +13,7 @@ import {
   Download,
   Boxes,
   Radio,
+  AlertTriangle,
   ArrowRightLeft,
   Cable,
   type LucideIcon,
@@ -108,6 +109,12 @@ export const navSections: NavSection[] = [
         title: "Inspección anual",
         href: "/annual-inspections",
         icon: ClipboardCheck,
+        roles: ["ADMIN"],
+      },
+      {
+        title: "Anormalidades",
+        href: "/abnormalities",
+        icon: AlertTriangle,
         roles: ["ADMIN"],
       },
       {

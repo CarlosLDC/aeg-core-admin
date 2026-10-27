@@ -162,3 +162,7 @@ export function canUseSeniatExtract(role: Role): boolean {
 export function canAccessUploads(role: Role): boolean {
   return can(role, "uploads", "read");
 }
+
+export function canCreateAbnormalityRecord(role: Role): boolean {
+  return can(role, "abnormalities", "create");
+}

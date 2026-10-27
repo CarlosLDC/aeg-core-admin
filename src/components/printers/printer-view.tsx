@@ -6,6 +6,7 @@ import { BookOpen, ShieldCheck } from "lucide-react";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
+import { PrinterDecommissionDialog } from "@/components/printers/printer-decommission-dialog";
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
 import { PrinterSealsDialog } from "@/components/printers/printer-seals-dialog";
 import { PrinterSealsSection } from "@/components/printers/printer-seals-section";
@@ -35,6 +36,12 @@ import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
+import {
+  decommissionPrinter,
+  getDecommissionErrorMessage,
+} from "@/lib/decommissions-api";
+import { canDecommissionStatus } from "@/lib/decommission";
+import type { DecommissionRequest } from "@/types/decommission";
 import {
   canCreateSealRecord,
   canDisposePrinterRecord,
@@ -128,6 +135,9 @@ export function PrinterView() {
   const [seals, setSeals] = useState<SealResponse[]>([]);
   const [sealsLoading, setSealsLoading] = useState(true);
   const [sealsDialogOpen, setSealsDialogOpen] = useState(false);
+  const [decommissionOpen, setDecommissionOpen] = useState(false);
+  const [decommissionSaving, setDecommissionSaving] = useState(false);
+  const [decommissionError, setDecommissionError] = useState<string | null>(null);
   const [models, setModels] = useState<PrinterModelResponse[]>([]);
   const [software, setSoftware] = useState<SelectOption[]>([]);
   const [branches, setBranches] = useState<BranchResponse[]>([]);
@@ -359,6 +369,25 @@ export function PrinterView() {
     () => new Map(software.map((opt) => [opt.id, opt.label])),
     [software],
   );
+
+  async function handleDecommissionSubmit(payload: DecommissionRequest) {
+    if (!printer) return;
+    setDecommissionSaving(true);
+    setDecommissionError(null);
+    try {
+      await decommissionPrinter(printer.id, payload);
+      const refreshed = await fetchPrinterById(printer.id);
+      setPrinter(refreshed);
+      toast.success(`Impresora ${printer.fiscalSerial} desincorporada.`);
+      setDecommissionOpen(false);
+    } catch (err) {
+      const message = getDecommissionErrorMessage(err);
+      setDecommissionError(message);
+      toast.error(message);
+    } finally {
+      setDecommissionSaving(false);
+    }
+  }
 
   const statusQuickAction = printer
     ? getPrinterStatusQuickAction({
@@ -906,6 +935,18 @@ export function PrinterView() {
                   Libro fiscal
                 </a>
               ) : null}
+              {isAdmin && canDecommissionStatus(printer.status) ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDecommissionError(null);
+                    setDecommissionOpen(true);
+                  }}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
+                >
+                  Desincorporar
+                </button>
+              ) : null}
               <ResourceViewActions
                 onEdit={
                   canModify
@@ -957,6 +998,19 @@ export function PrinterView() {
             if (!assignmentSaving) setAssignmentOpen(false);
           }}
           onSubmit={(payload) => void handleAssignmentSubmit(payload)}
+        />
+      ) : null}
+
+      {printer && decommissionOpen ? (
+        <PrinterDecommissionDialog
+          key={`decommission-${printer.id}`}
+          printer={printer}
+          saving={decommissionSaving}
+          error={decommissionError}
+          onClose={() => {
+            if (!decommissionSaving) setDecommissionOpen(false);
+          }}
+          onSubmit={(payload) => void handleDecommissionSubmit(payload)}
         />
       ) : null}
 

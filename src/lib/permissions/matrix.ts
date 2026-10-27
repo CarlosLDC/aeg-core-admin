@@ -65,6 +65,10 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     update: ANNUAL_INSPECTION_WRITE,
     delete: ANNUAL_INSPECTION_WRITE,
   },
+  abnormalities: {
+    read: ADMIN_ONLY,
+    create: TECHNICAL_SERVICE_WRITE,
+  },
   contracts: {
     read: ADMIN_ONLY,
     create: ADMIN_ONLY,

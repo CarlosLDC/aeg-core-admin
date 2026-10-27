@@ -20,6 +20,7 @@ export const RESOURCES = [
   "seals",
   "technicalServices",
   "annualInspections",
+  "abnormalities",
   "contracts",
   "users",
   "clientTransfers",

@@ -29,6 +29,7 @@ describe("PERMISSION_MATRIX completeness", () => {
     const crudExceptions: Partial<Record<(typeof RESOURCES)[number], Action[]>> = {
       dashboard: ["read"],
       firmwares: ["read", "create", "update", "delete"],
+      abnormalities: ["read", "create"],
       clientTransfers: ["read", "update"],
       tools: ["read"],
       remoto: ["read", "create"],
