@@ -2,8 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import {
-  formFieldSegmentedToggleShellClass,
-  segmentedToggleActiveClass,
+  toggleButtonClass,
   type ToggleTone,
 } from "@/lib/toggle-button-styles";
 
@@ -32,21 +31,12 @@ export function SegmentedToggle<T extends string>({
   disabled,
   ariaLabel,
   className,
-  layout = "inline",
 }: SegmentedToggleProps<T>) {
-  const wrapLayout = layout === "wrap";
-
   return (
     <div
       role="group"
       aria-label={ariaLabel}
-      className={cn(
-        wrapLayout
-          ? "flex w-full flex-wrap gap-1 rounded-lg border border-border bg-foreground/[0.03] p-1"
-          : formFieldSegmentedToggleShellClass,
-        disabled && "pointer-events-none opacity-60",
-        className,
-      )}
+      className={cn("flex flex-wrap gap-2", className)}
     >
       {options.map((option) => {
         const selected = value === option.value;
@@ -57,15 +47,7 @@ export function SegmentedToggle<T extends string>({
             disabled={disabled}
             aria-pressed={selected}
             onClick={() => onChange(option.value)}
-            className={cn(
-              "flex items-center justify-center rounded-md text-sm font-medium transition-all",
-              wrapLayout
-                ? "h-10 min-w-[calc(50%-0.25rem)] flex-1 px-2 leading-tight sm:min-w-0 sm:px-3"
-                : "h-full min-w-0 flex-1 px-3",
-              selected
-                ? segmentedToggleActiveClass(option.tone)
-                : "text-muted hover:text-foreground",
-            )}
+            className={toggleButtonClass(selected, option.tone, { disabled })}
           >
             {option.label}
           </button>

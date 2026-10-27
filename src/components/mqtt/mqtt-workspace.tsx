@@ -79,7 +79,7 @@ export function MqttWorkspace() {
           onChange={handleTabChange}
           ariaLabel="Sección Remoto"
           options={VISIBLE_TAB_OPTIONS}
-          className="w-full max-w-2xl"
+          className="justify-center"
         />
       </div>
 

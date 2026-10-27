@@ -130,7 +130,7 @@ export function ContractsManager() {
             { value: "distributor", label: "Distribuidora" },
             { value: "serviceCenter", label: "Centro de servicio" },
           ]}
-          className="w-full max-w-md"
+          className="justify-center"
         />
       </div>
 

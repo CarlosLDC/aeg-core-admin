@@ -194,13 +194,16 @@ export function filterTabToggleClass(active: boolean, baseClass: string): string
 
 export function toggleButtonClass(
   active: boolean,
-  tone: ToggleTone,
+  tone?: ToggleTone,
   options?: { className?: string; disabled?: boolean },
 ): string {
+  const activeClass = tone
+    ? TOGGLE_TONE_ACTIVE[tone]
+    : TOGGLE_BUTTON_PRIMARY_ACTIVE;
   return cn(
     TOGGLE_BUTTON_BASE,
     options?.disabled && TOGGLE_BUTTON_DISABLED,
-    active ? TOGGLE_TONE_ACTIVE[tone] : TOGGLE_BUTTON_INACTIVE,
+    active ? activeClass : TOGGLE_BUTTON_INACTIVE,
     options?.className,
   );
 }
