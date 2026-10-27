@@ -9,6 +9,7 @@ import {
   buildReportXPayload,
   buildReprintPayload,
   buildStatusPayload,
+  buildTestGenerateZPayloads,
   buildWifiConnectPayload,
 } from "@/modules/tools/serial/tools-command-builder";
 
@@ -93,6 +94,15 @@ describe("tools-command-builder", () => {
     expect(JSON.parse(buildRebootPrinterPayload())).toEqual({
       cmd: "resetMF",
       data: 5555,
+    });
+  });
+
+  it("builds test generate Z payload with genImpRepZ and 1", () => {
+    const payloads = buildTestGenerateZPayloads();
+    expect(payloads).toHaveLength(1);
+    expect(JSON.parse(payloads[0])).toEqual({
+      cmd: "genImpRepZ",
+      data: 1,
     });
   });
 });

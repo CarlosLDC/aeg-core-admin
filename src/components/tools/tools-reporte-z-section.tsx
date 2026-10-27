@@ -59,14 +59,8 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
     icon: FileSearch,
     requiresReportNumber: true,
   },
-  {
-    id: "generate",
-    title: "Generar Z",
-    description: "Genera un nuevo reporte Z en la impresora.",
-    confirmMessage: "¿Generar un nuevo reporte Z en la impresora?",
-    icon: ScrollText,
-    confirmOnly: true,
-  },
+  // NOTA: "Generar Z" (RepZ) se retira temporalmente por confusión de comandos.
+  // La emisión operativa de Reporte Z pasa a ser "Imprimir Z" (genImpRepZ) en Documentos de prueba.
   {
     id: "transmit",
     title: "Transmitir al SENIAT",

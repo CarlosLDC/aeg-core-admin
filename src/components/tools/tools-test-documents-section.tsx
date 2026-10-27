@@ -55,8 +55,8 @@ const TEST_DOCUMENT_ACTIONS: TestDocumentActionConfig[] = [
   },
   {
     id: "generate-z",
-    title: "Generar Z de prueba",
-    description: "Genera un reporte Z de prueba en la impresora.",
+    title: "Imprimir Z",
+    description: "Imprime el reporte Z en la impresora fiscal.",
     icon: ScrollText,
   },
 ];

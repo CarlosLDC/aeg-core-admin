@@ -406,7 +406,7 @@ export async function sendToolsTestGenerateZ(
     `${BASE}/test-documents/generate-z`,
     { method: "POST", body: printerBody(printerId) },
   );
-  ensureSuccess(status, data, "No se pudo generar el reporte Z de prueba.");
+  ensureSuccess(status, data, "No se pudo generar el reporte Z.");
   return data;
 }
 

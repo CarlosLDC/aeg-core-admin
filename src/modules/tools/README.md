@@ -35,4 +35,4 @@ Ver [`tools-registry.ts`](tools-registry.ts) — operaciones MQTT de campo en es
 - `/printers` = catálogo CRUD; `/tools` = operaciones de campo MQTT
 - `/remoto` = lab ADMIN (diagnóstico); no duplicar en Tools
 - "Generar reporte X" (`impRepX`) es distinto de reimprimir reporte X (`reimRep` tipo RX)
-- "Generar Z de prueba" (`genImpRepZ`) es distinto del Reporte Z operacional (`RepZ`)
+- "Imprimir Z" usa `genImpRepZ` (comando real para emisión de Reporte Z fiscal). La opción anterior `RepZ` fue retirada temporalmente por confusión de comandos.

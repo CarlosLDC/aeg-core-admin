@@ -376,7 +376,7 @@ export function createUsbSerialTransport(
           message: response.dataS ?? `Error de impresora (code: ${response.code})`,
         };
       }
-      return { success: true, message: "Reporte Z de prueba generado correctamente." };
+      return { success: true, message: "Reporte Z generado correctamente." };
     },
   };
 }

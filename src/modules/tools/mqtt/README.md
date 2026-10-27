@@ -40,7 +40,7 @@ Cada endpoint valida `printerId` + `SecurityScopeService.assertPrinterInScope`.
 | POST | `/test-documents/invoice` | Factura de prueba (secuencia proF/endFac) |
 | POST | `/test-documents/credit-note` | NC de prueba (requiere serial fiscal) |
 | POST | `/test-documents/debit-note` | ND de prueba (requiere serial fiscal) |
-| POST | `/test-documents/generate-z` | genImpRepZ (distinto de RepZ operacional) |
+| POST | `/test-documents/generate-z` | genImpRepZ (comando real para imprimir Reporte Z) |
 
 ## Correlación
 
