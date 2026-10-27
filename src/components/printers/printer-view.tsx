@@ -51,9 +51,7 @@ import {
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
 import {
-  DISTRIBUTOR_SELF_CLIENT_MESSAGE,
   excludeDistributorSelfClients,
-  isDistributorSelfClient,
 } from "@/lib/distributor-scope";
 import {
   buildPrinterRollbackConsequences,
@@ -751,19 +749,11 @@ export function PrinterView() {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
-    if (!clientOptions.some((option) => option.id === clientId)) {
-      toast.error("Selecciona un cliente válido.");
-      return;
-    }
     if (
-      isDistributor &&
-      isDistributorSelfClient(
-        clientId,
-        clients,
-        distributorStaffBranchId,
-      )
+      !clientOptions.some((option) => option.id === clientId) &&
+      !clients.some((c) => c.id === clientId)
     ) {
-      toast.error(DISTRIBUTOR_SELF_CLIENT_MESSAGE);
+      toast.error("Selecciona un cliente válido.");
       return;
     }
     if (!isPrinterPaidForDisposition(printer)) {

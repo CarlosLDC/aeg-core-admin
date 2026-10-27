@@ -29,8 +29,8 @@ export function excludeDistributorSelfClients<T extends { branchId: number }>(
   clients: T[],
   staffBranchId: number | null,
 ): T[] {
-  if (staffBranchId == null) return clients;
-  return clients.filter((client) => client.branchId !== staffBranchId);
+  void staffBranchId;
+  return clients;
 }
 
 export function excludeDistributorStaffBranches<T extends { id: number }>(
@@ -53,9 +53,10 @@ export function isDistributorSelfClient(
   clients: ClientResponse[],
   staffBranchId: number | null,
 ): boolean {
-  if (staffBranchId == null) return false;
-  const client = clients.find((row) => row.id === clientId);
-  return client != null && client.branchId === staffBranchId;
+  void clientId;
+  void clients;
+  void staffBranchId;
+  return false;
 }
 
 /** Sucursal de la distribuidora (personal interno), no sucursales de clientes. */

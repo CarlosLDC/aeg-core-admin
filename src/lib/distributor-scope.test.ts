@@ -52,7 +52,7 @@ describe("distributor-scope", () => {
     expect([...ids]).toEqual([100]);
   });
 
-  it("excludes distributor staff branch from client options", () => {
+  it("keeps distributor staff branch in client options", () => {
     const rows = excludeDistributorSelfClients(
       [
         mockClient({ id: 1, branchId: 100, distributorId: 5 }),
@@ -60,7 +60,7 @@ describe("distributor-scope", () => {
       ],
       100,
     );
-    expect(rows.map((row) => row.id)).toEqual([2]);
+    expect(rows.map((row) => row.id)).toEqual([1, 2]);
   });
 
   it("excludes distributor staff branch from branch lists", () => {
@@ -72,18 +72,11 @@ describe("distributor-scope", () => {
     ).toEqual([200]);
   });
 
-  it("detects distributor self client by branch", () => {
+  it("allows distributor self client", () => {
     expect(
       isDistributorSelfClient(
         1,
         [mockClient({ id: 1, branchId: 100, distributorId: 5 })],
-        100,
-      ),
-    ).toBe(true);
-    expect(
-      isDistributorSelfClient(
-        2,
-        [mockClient({ id: 2, branchId: 200, distributorId: 5 })],
         100,
       ),
     ).toBe(false);

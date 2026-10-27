@@ -2,7 +2,6 @@ import { mergeBranchesWithRoles, syncBranchRoles } from "@/lib/branch-roles";
 import { normalizeStateName } from "@/lib/state-label";
 import {
   isDistributorClientOnlyRoles,
-  linkDistributorClientToBranch,
   linkDistributorClientWithRetry,
 } from "@/lib/client-link";
 import {
@@ -164,11 +163,12 @@ export async function assertBranchAvailableForDistributorClient(
     return;
   }
   const role = organizationRoleFromBranch(branch);
+  if (role === "SERVICE_CENTER" || branch.serviceCenter) {
+    throw new ClientReassignmentRequiredError();
+  }
   if (
-    role === "DISTRIBUTOR" ||
-    role === "SERVICE_CENTER" ||
-    branch.distributor ||
-    branch.serviceCenter
+    (role === "DISTRIBUTOR" || branch.distributor) &&
+    branch.distributor?.id !== distributorId
   ) {
     throw new ClientReassignmentRequiredError();
   }
@@ -184,7 +184,14 @@ export async function assertBranchAvailableForDistributorClient(
 /** Impide re-vincular una sucursal huérfana tras eliminación aprobada del cliente. */
 async function assertDistributorMayReuseBranch(
   branchId: number,
+  distributorId?: number,
 ): Promise<void> {
+  if (distributorId != null) {
+    const branch = await loadBranchWithRoles(branchId);
+    if (branch?.distributor?.id === distributorId) {
+      return;
+    }
+  }
   const linked = await fetchClientByBranchId(branchId);
   if (!linked) {
     throw new Error(CLIENT_RE_REGISTRATION_FORBIDDEN_MESSAGE);
@@ -295,7 +302,10 @@ export async function createClientOnboarding(
               linkingDistributorId,
             );
           }
-          await assertDistributorMayReuseBranch(existing.id);
+          await assertDistributorMayReuseBranch(
+            existing.id,
+            linkingDistributorId ?? undefined,
+          );
           created = existing;
           branchLinkedExisting = true;
         } else {

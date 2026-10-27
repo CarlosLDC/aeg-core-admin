@@ -4,8 +4,6 @@ import {
   fetchClientByBranchId,
   updateClient,
 } from "@/lib/clients-api";
-import { DISTRIBUTOR_SELF_CLIENT_MESSAGE } from "@/lib/distributor-scope";
-import { fetchDistributorById } from "@/lib/distributors-api";
 import type { ClientOnboardingRoleOptions } from "@/lib/client-onboarding";
 
 function parseDistributorId(roles: ClientOnboardingRoleOptions): number {
@@ -100,16 +98,6 @@ export async function linkDistributorClientWithRetry(
 }
 
 /** Vincula sucursal como cliente del distribuidor (POST idempotente; sin catálogos completos). */
-async function assertNotDistributorSelfClientBranch(
-  branchId: number,
-  distributorId: number,
-): Promise<void> {
-  const distributor = await fetchDistributorById(distributorId);
-  if (distributor.branchId === branchId) {
-    throw new Error(DISTRIBUTOR_SELF_CLIENT_MESSAGE);
-  }
-}
-
 export async function linkDistributorClientToBranch(
   branchId: number,
   roles: ClientOnboardingRoleOptions,
@@ -117,7 +105,6 @@ export async function linkDistributorClientToBranch(
   if (!roles.isClient) return;
 
   const distributorId = parseDistributorId(roles);
-  await assertNotDistributorSelfClientBranch(branchId, distributorId);
   await linkViaPost({ branchId, distributorId });
 }
 

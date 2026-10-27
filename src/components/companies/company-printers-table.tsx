@@ -105,10 +105,8 @@ import {
 } from "@/lib/printer-quick-actions";
 import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
 import {
-  DISTRIBUTOR_SELF_CLIENT_MESSAGE,
   excludeDistributorSelfClients,
   filterPrinterModelsForDistributor,
-  isDistributorSelfClient,
 } from "@/lib/distributor-scope";
 import { printerDispositionPath, printerPath } from "@/lib/resource-routes";
 import { PRINTER_STATUSES } from "@/types/printer";
@@ -514,15 +512,11 @@ export function CompanyPrintersTable({
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
-    if (!clientOptions.some((option) => option.id === clientId)) {
-      toast.error("Selecciona un cliente válido.");
-      return;
-    }
     if (
-      isDistributor &&
-      isDistributorSelfClient(clientId, clients, distributorStaffBranchId)
+      !clientOptions.some((option) => option.id === clientId) &&
+      !clients.some((c) => c.id === clientId)
     ) {
-      toast.error(DISTRIBUTOR_SELF_CLIENT_MESSAGE);
+      toast.error("Selecciona un cliente válido.");
       return;
     }
     if (!isPrinterPaidForDisposition(dispositionPrinter)) {

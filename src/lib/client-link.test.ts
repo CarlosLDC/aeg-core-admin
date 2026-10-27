@@ -21,7 +21,6 @@ import {
   updateClient,
 } from "@/lib/clients-api";
 import { fetchDistributorById } from "@/lib/distributors-api";
-import { DISTRIBUTOR_SELF_CLIENT_MESSAGE } from "@/lib/distributor-scope";
 import { mockClient } from "@/lib/test-fixtures";
 import { ApiError } from "@/types/auth";
 
@@ -48,18 +47,18 @@ describe("linkDistributorClientToBranch", () => {
     });
   });
 
-  it("rejects linking the distributor staff branch as client", async () => {
-    vi.mocked(fetchDistributorById).mockResolvedValue({
-      id: 3,
+  it("allows linking the distributor staff branch as client", async () => {
+    vi.mocked(fetchClientByBranchId).mockResolvedValue(null);
+    vi.mocked(createClient).mockResolvedValue(
+      mockClient({ id: 1, branchId: 10, distributorId: 3 }),
+    );
+
+    await linkDistributorClientToBranch(10, distributorClientRoles(3));
+
+    expect(createClient).toHaveBeenCalledWith({
       branchId: 10,
-      createdAt: "",
+      distributorId: 3,
     });
-
-    await expect(
-      linkDistributorClientToBranch(10, distributorClientRoles(3)),
-    ).rejects.toThrow(DISTRIBUTOR_SELF_CLIENT_MESSAGE);
-
-    expect(createClient).not.toHaveBeenCalled();
   });
 
   it("creates client when branch has no link", async () => {

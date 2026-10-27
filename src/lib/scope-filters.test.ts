@@ -13,7 +13,7 @@ describe("filterClientsInScope", () => {
   ];
   const distributors = [{ id: 7, branchId: 99, createdAt: "" }];
 
-  it("excludes distributor staff branch from client list", () => {
+  it("includes distributor staff branch in client list", () => {
     expect(
       filterClientsInScope(
         clients,
@@ -25,6 +25,7 @@ describe("filterClientsInScope", () => {
     ).toEqual([
       { id: 1, branchId: 10 },
       { id: 2, branchId: 20 },
+      { id: 3, branchId: 99 },
     ]);
   });
 });

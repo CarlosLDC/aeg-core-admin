@@ -8,7 +8,6 @@ import { ResourceViewShell } from "@/components/resource-view/resource-view-shel
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
-import { useDistributorStaffBranchId } from "@/hooks/use-distributor-staff-branch-id";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
   canDisposePrinterRecord,
@@ -16,13 +15,9 @@ import {
 } from "@/lib/api-permissions";
 import { assertPrinterInScope } from "@/lib/permissions/scope-access";
 import { fetchBranches, fetchBranchById } from "@/lib/branches-api";
-import { fetchClients } from "@/lib/clients-api";
+import { fetchClientById, fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
-import {
-  DISTRIBUTOR_SELF_CLIENT_MESSAGE,
-  isDistributorSelfClient,
-} from "@/lib/distributor-scope";
 import {
   PRINTER_UNPAID_DISPOSITION_MESSAGE,
 } from "@/lib/printer-form";
@@ -88,9 +83,6 @@ export function PrinterDispositionView({
     useState<VenezuelanFiscalInvoiceData | null>(null);
   const [invoiceEditSessionKey, setInvoiceEditSessionKey] = useState(0);
 
-  const distributorStaffBranchId = useDistributorStaffBranchId(
-    isDistributor ? distributorId : null,
-  );
   const canDisposeAssigned =
     canDispose && (isAdmin || (isDistributor && distributorId != null));
 
@@ -106,10 +98,34 @@ export function PrinterDispositionView({
     return normalizeFacturaNroInput(facturaNroParam);
   }, [facturaNroParam]);
 
+  const [extraClient, setExtraClient] = useState<ClientResponse | null>(null);
+
+  useEffect(() => {
+    if (clientId == null) return;
+    if (clients.some((c) => c.id === clientId)) return;
+    let cancelled = false;
+    void fetchClientById(clientId)
+      .then((c) => {
+        if (!cancelled && c) setExtraClient(c);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId, clients]);
+
+  const effectiveClients = useMemo(() => {
+    if (!extraClient) return clients;
+    if (clients.some((c) => c.id === extraClient.id)) return clients;
+    return [...clients, extraClient];
+  }, [clients, extraClient]);
+
   const scopedClients = useMemo(() => {
-    if (distributorId == null) return clients;
-    return clients.filter((c) => c.distributorId === distributorId);
-  }, [clients, distributorId]);
+    if (distributorId == null) return effectiveClients;
+    return effectiveClients.filter(
+      (c) => c.distributorId === distributorId || c.id === clientId,
+    );
+  }, [effectiveClients, distributorId, clientId]);
 
   const loadPrinter = useCallback(async () => {
     if (id == null) {
@@ -308,18 +324,8 @@ export function PrinterDispositionView({
     if (!scopedClients.some((client) => client.id === clientId)) {
       return "Selecciona un cliente válido.";
     }
-    if (
-      isDistributor &&
-      isDistributorSelfClient(
-        clientId,
-        scopedClients,
-        distributorStaffBranchId,
-      )
-    ) {
-      return DISTRIBUTOR_SELF_CLIENT_MESSAGE;
-    }
     return null;
-  }, [clientId, scopedClients, isDistributor, distributorStaffBranchId]);
+  }, [clientId, scopedClients]);
 
   const facturaValidationError = useMemo(() => {
     if (!facturaNroParam) {

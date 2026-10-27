@@ -110,8 +110,6 @@ export function BranchOperationalRoleFields({
                     organizationRole: option.value,
                     ...(option.value === "DISTRIBUTOR"
                       ? {
-                          isClient: false,
-                          clientDistributorId: "",
                           canWriteAnnualInspection: true,
                         }
                       : {}),
@@ -139,22 +137,37 @@ export function BranchOperationalRoleFields({
             aria-pressed={values.isClient}
             disabled={
               disabled ||
-              values.organizationRole === "DISTRIBUTOR" ||
               factoryCompany
             }
-            onClick={() =>
+            onClick={() => {
+              const nextIsClient = !values.isClient;
+              let nextClientDistributorId = values.clientDistributorId;
+              if (
+                nextIsClient &&
+                !nextClientDistributorId &&
+                values.organizationRole === "DISTRIBUTOR" &&
+                excludeBranchId != null
+              ) {
+                const selfDist = distributors.find(
+                  (d) => d.branchId === excludeBranchId,
+                );
+                if (selfDist) {
+                  nextClientDistributorId = String(selfDist.id);
+                }
+              } else if (!nextIsClient) {
+                nextClientDistributorId = "";
+              }
               onChange({
-                isClient: !values.isClient,
-                ...(values.isClient ? { clientDistributorId: "" } : {}),
-              })
-            }
+                isClient: nextIsClient,
+                clientDistributorId: nextClientDistributorId,
+              });
+            }}
             className={toggleButtonClass(
               values.isClient,
               BRANCH_ROLE_TOGGLE_TONE.isClient,
               {
                 disabled:
                   disabled ||
-                  values.organizationRole === "DISTRIBUTOR" ||
                   factoryCompany,
                 className: "w-full justify-center",
               },
@@ -173,7 +186,11 @@ export function BranchOperationalRoleFields({
             distributors={distributors}
             branches={branches}
             companies={companies}
-            excludeBranchId={excludeBranchId}
+            excludeBranchId={
+              values.organizationRole === "DISTRIBUTOR"
+                ? undefined
+                : excludeBranchId
+            }
           />
         </label>
       ) : null}

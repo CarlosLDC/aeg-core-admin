@@ -33,9 +33,6 @@ function resolveDefaultDistributorId(
   if (lockDistributor && defaultDistributorId != null) {
     return String(defaultDistributorId);
   }
-  if (!lockDistributor) {
-    return "";
-  }
   if (printer.distributorId != null) {
     return String(printer.distributorId);
   }

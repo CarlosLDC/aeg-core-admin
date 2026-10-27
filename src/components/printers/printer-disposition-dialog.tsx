@@ -2,6 +2,7 @@
 
 import { FormEvent, useId, useMemo, useState } from "react";
 import { FileText, User } from "lucide-react";
+import { useAuth } from "@/context/auth-provider";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { PrinterActionDialogShell } from "@/components/printers/printer-action-dialog-shell";
 import { PrinterActionPickerPanel } from "@/components/printers/printer-action-picker-panel";
@@ -12,6 +13,12 @@ import {
   resolveClientCompanyRif,
   validateFacturaNroInput,
 } from "@/lib/venezuelan-fiscal-invoice";
+import {
+  clientLabel,
+  clientRif,
+  clientSearchText,
+} from "@/lib/branch-roles";
+import { createClient } from "@/lib/clients-api";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { matchesSearch } from "@/components/ui/searchable-select";
 import { cn } from "@/lib/utils";
@@ -67,6 +74,8 @@ function stepSubtitle(step: WizardStep, reconfigure: boolean): string {
   }
 }
 
+const VIRTUAL_DISTRIBUTOR_CLIENT_ID = -999999;
+
 export function PrinterDispositionDialog({
   printer,
   clientOptions,
@@ -79,6 +88,7 @@ export function PrinterDispositionDialog({
   onClose,
   onContinue,
 }: PrinterDispositionDialogProps) {
+  const { user } = useAuth();
   const titleId = useId();
   const [step, setStep] = useState<WizardStep>(() =>
     reconfigure && printer.clientId != null ? 2 : 1,
@@ -94,20 +104,154 @@ export function PrinterDispositionDialog({
   const clientId = clientOverride ?? defaultClientId;
   const disabled = catalogLoading;
 
+  const effectiveDistributorId = useMemo(() => {
+    if (printer.distributorId != null) return printer.distributorId;
+    if (user?.role === "DISTRIBUTOR" && user.distributorId != null) {
+      return user.distributorId;
+    }
+    return null;
+  }, [printer.distributorId, user]);
+
+  const printerDistributor = useMemo(() => {
+    if (effectiveDistributorId == null) return undefined;
+    return distributors.find((d) => d.id === effectiveDistributorId);
+  }, [effectiveDistributorId, distributors]);
+
+  const distributorBranch = useMemo(() => {
+    if (!printerDistributor) return undefined;
+    return branches.find((b) => b.id === printerDistributor.branchId);
+  }, [printerDistributor, branches]);
+
+  const distributorCompany = useMemo(() => {
+    if (!distributorBranch) return undefined;
+    return companies.find((c) => c.id === distributorBranch.companyId);
+  }, [distributorBranch, companies]);
+
+  const existingDistributorClient = useMemo(() => {
+    if (!printerDistributor) return undefined;
+    const direct = clients.find(
+      (c) => c.branchId === printerDistributor.branchId,
+    );
+    if (direct) return direct;
+    if (distributorCompany) {
+      return clients.find((c) => {
+        const b = branches.find((branch) => branch.id === c.branchId);
+        return b && b.companyId === distributorCompany.id;
+      });
+    }
+    return undefined;
+  }, [printerDistributor, distributorCompany, clients, branches]);
+
+  const virtualDistributorClient = useMemo<ClientResponse | undefined>(() => {
+    if (existingDistributorClient || !printerDistributor || !distributorBranch) {
+      return undefined;
+    }
+    return {
+      id: VIRTUAL_DISTRIBUTOR_CLIENT_ID,
+      branchId: distributorBranch.id,
+      distributorId: printerDistributor.id,
+      createdAt: new Date().toISOString(),
+      reviewStatus: "ACTIVE",
+      companyBusinessName: distributorCompany?.businessName,
+      companyRif: distributorCompany?.rif,
+      branchCity: distributorBranch.city,
+      branchState: distributorBranch.state,
+    };
+  }, [
+    existingDistributorClient,
+    printerDistributor,
+    distributorBranch,
+    distributorCompany,
+  ]);
+
+  const [distributorClientState, setDistributorClientState] = useState<
+    ClientResponse | undefined
+  >(existingDistributorClient);
+  const [creatingDistributorClient, setCreatingDistributorClient] =
+    useState(false);
+
+  const resolvedDistributorClient =
+    distributorClientState ??
+    existingDistributorClient ??
+    virtualDistributorClient;
+
+  const mergedClients = useMemo(() => {
+    if (!resolvedDistributorClient) return clients;
+    if (clients.some((c) => c.id === resolvedDistributorClient.id)) {
+      return clients;
+    }
+    return [resolvedDistributorClient, ...clients];
+  }, [clients, resolvedDistributorClient]);
+
+  const mergedClientOptions = useMemo<SelectOption[]>(() => {
+    let opts = clientOptions;
+    if (resolvedDistributorClient) {
+      const existing = opts.find(
+        (opt) => opt.id === resolvedDistributorClient.id,
+      );
+      const companyName =
+        distributorCompany?.businessName ??
+        (distributorBranch
+          ? [distributorBranch.city, distributorBranch.state]
+              .filter(Boolean)
+              .join(", ")
+          : "Empresa distribuidora");
+      const rif =
+        distributorCompany?.rif ??
+        (resolvedDistributorClient.id > 0
+          ? clientRif(resolvedDistributorClient, branches, companies)
+          : undefined);
+
+      if (existing) {
+        opts = opts.map((opt) =>
+          opt.id === resolvedDistributorClient.id
+            ? {
+                ...opt,
+                label: `${opt.label} (Misma empresa distribuidora)`,
+                description: opt.description
+                  ? `${opt.description} • Misma empresa distribuidora`
+                  : "Misma empresa distribuidora propietaria del equipo",
+                searchText: `${opt.searchText ?? ""} ${companyName} ${rif ?? ""} distribuidor distribuidora misma empresa`,
+              }
+            : opt,
+        );
+      } else {
+        const newOpt: SelectOption = {
+          id: resolvedDistributorClient.id,
+          label: `${companyName} (Misma empresa distribuidora)`,
+          rif: rif || undefined,
+          description: rif
+            ? `RIF: ${rif} • Misma empresa distribuidora`
+            : "Misma empresa distribuidora propietaria del equipo",
+          searchText: `${companyName} ${rif ?? ""} distribuidor distribuidora misma empresa`,
+        };
+        opts = [newOpt, ...opts];
+      }
+    }
+    return opts;
+  }, [
+    clientOptions,
+    resolvedDistributorClient,
+    distributorCompany,
+    distributorBranch,
+    branches,
+    companies,
+  ]);
+
   const filteredClientOptions = useMemo(() => {
-    if (!clientQuery.trim()) return clientOptions;
-    return clientOptions.filter((opt) =>
+    if (!clientQuery.trim()) return mergedClientOptions;
+    return mergedClientOptions.filter((opt) =>
       matchesSearch(
         clientQuery,
         `${opt.id} ${opt.label}`,
         `${opt.searchText ?? ""} ${opt.rif ?? ""} ${opt.description ?? ""}`,
       ),
     );
-  }, [clientOptions, clientQuery]);
+  }, [mergedClientOptions, clientQuery]);
 
   const selectedClient = useMemo(
-    () => clients.find((c) => c.id === Number(clientId)),
-    [clients, clientId],
+    () => mergedClients.find((c) => c.id === Number(clientId)),
+    [mergedClients, clientId],
   );
 
   const selectedClientBranch = useMemo(
@@ -138,6 +282,35 @@ export function PrinterDispositionDialog({
     return name === "-" ? null : name;
   }, [selectedClient, selectedClientBranch, companies]);
 
+  const isDistributorClientSelected =
+    resolvedDistributorClient != null &&
+    clientId === String(resolvedDistributorClient.id);
+
+  async function handleSelectDistributorClient() {
+    setFieldError(null);
+    if (
+      resolvedDistributorClient?.id != null &&
+      resolvedDistributorClient.id > 0
+    ) {
+      setClientOverride(String(resolvedDistributorClient.id));
+      return;
+    }
+    if (!printerDistributor || !distributorBranch) return;
+    setCreatingDistributorClient(true);
+    try {
+      const created = await createClient({
+        branchId: distributorBranch.id,
+        distributorId: printerDistributor.id,
+      });
+      setDistributorClientState(created);
+      setClientOverride(String(created.id));
+    } catch {
+      setFieldError("No se pudo registrar la distribuidora como cliente.");
+    } finally {
+      setCreatingDistributorClient(false);
+    }
+  }
+
   function goToStep(target: WizardStep) {
     setFieldError(null);
     setStep(target);
@@ -151,19 +324,49 @@ export function PrinterDispositionDialog({
     onClose();
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
     if (step === 1) {
-      const id = Number(clientId);
-      if (!Number.isFinite(id) || id <= 0) {
+      let id = Number(clientId);
+      if (!Number.isFinite(id) || id === 0) {
         setFieldError("Selecciona un cliente válido.");
         return;
       }
+
+      if (id === VIRTUAL_DISTRIBUTOR_CLIENT_ID || id < 0) {
+        if (!printerDistributor || !distributorBranch) {
+          setFieldError("Distribuidora no encontrada.");
+          return;
+        }
+        setCreatingDistributorClient(true);
+        try {
+          const created = await createClient({
+            branchId: distributorBranch.id,
+            distributorId: printerDistributor.id,
+          });
+          setDistributorClientState(created);
+          setClientOverride(String(created.id));
+          id = created.id;
+        } catch {
+          setFieldError("No se pudo registrar la distribuidora como cliente.");
+          setCreatingDistributorClient(false);
+          return;
+        } finally {
+          setCreatingDistributorClient(false);
+        }
+      }
+
+      const clientListForInvoice =
+        distributorClientState?.id === id &&
+        !mergedClients.some((c) => c.id === id)
+          ? [distributorClientState, ...mergedClients]
+          : mergedClients;
+
       if (
         !buildDispositionInvoiceData({
           clientId: id,
-          clients,
+          clients: clientListForInvoice,
           branches,
           companies,
           distributors,
@@ -178,17 +381,29 @@ export function PrinterDispositionDialog({
       return;
     }
 
-    const id = Number(clientId);
+    let id = Number(clientId);
+    if (
+      (id === VIRTUAL_DISTRIBUTOR_CLIENT_ID || id < 0) &&
+      distributorClientState?.id != null
+    ) {
+      id = distributorClientState.id;
+    }
     const facturaError = validateFacturaNroInput(facturaNro);
     if (facturaError) {
       setFieldError(facturaError);
       return;
     }
     const normalizedFacturaNro = facturaNro.trim();
+    const clientListForInvoice =
+      distributorClientState?.id === id &&
+      !mergedClients.some((c) => c.id === id)
+        ? [distributorClientState, ...mergedClients]
+        : mergedClients;
+
     if (
       !buildDispositionInvoiceData({
         clientId: id,
-        clients,
+        clients: clientListForInvoice,
         branches,
         companies,
         distributors,
@@ -285,22 +500,66 @@ export function PrinterDispositionDialog({
       </nav>
 
       {step === 1 ? (
-        <PrinterActionPickerPanel
-          label="Cliente"
-          searchPlaceholder="Buscar cliente por nombre, ID o RIF…"
-          query={clientQuery}
-          onQueryChange={setClientQuery}
-          options={filteredClientOptions}
-          selectedValue={clientId}
-          onSelect={(value) => {
-            setClientOverride(value);
-            setFieldError(null);
-          }}
-          loading={catalogLoading}
-          disabled={disabled}
-          emptyMessage="Sin clientes disponibles"
-          noResultsMessage="Sin resultados"
-        />
+        <div className="space-y-4">
+          {printerDistributor && distributorBranch ? (
+            <div className="rounded-xl border border-border bg-foreground/[0.02] p-3 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <span className="inline-flex items-center gap-1 rounded bg-accent/10 px-2 py-0.5 text-[11px] font-semibold text-accent">
+                    Misma empresa distribuidora
+                  </span>
+                  <p className="mt-1 truncate font-medium text-foreground">
+                    {distributorCompany?.businessName ?? "Empresa distribuidora"}
+                  </p>
+                  <p className="truncate text-xs text-muted">
+                    {distributorCompany?.rif
+                      ? `RIF: ${distributorCompany.rif}`
+                      : ""}
+                    {[distributorBranch.city, distributorBranch.state]
+                      .filter(Boolean)
+                      .join(", ")
+                      ? `${distributorCompany?.rif ? " • " : ""}${[distributorBranch.city, distributorBranch.state].filter(Boolean).join(", ")}`
+                      : ""}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={disabled || creatingDistributorClient}
+                  onClick={() => void handleSelectDistributorClient()}
+                  className={cn(
+                    "shrink-0 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+                    isDistributorClientSelected
+                      ? "border-accent bg-accent text-white dark:text-black"
+                      : "border-border bg-card text-foreground hover:bg-foreground/5",
+                  )}
+                >
+                  {creatingDistributorClient
+                    ? "Registrando…"
+                    : isDistributorClientSelected
+                      ? "Seleccionada ✓"
+                      : "Escoger como cliente"}
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          <PrinterActionPickerPanel
+            label="Cliente"
+            searchPlaceholder="Buscar cliente por nombre, ID o RIF…"
+            query={clientQuery}
+            onQueryChange={setClientQuery}
+            options={filteredClientOptions}
+            selectedValue={clientId}
+            onSelect={(value) => {
+              setClientOverride(value);
+              setFieldError(null);
+            }}
+            loading={catalogLoading}
+            disabled={disabled}
+            emptyMessage="Sin clientes disponibles"
+            noResultsMessage="Sin resultados"
+          />
+        </div>
       ) : (
         <div className="space-y-4">
           {selectedClientRif || selectedClientCompanyName ? (

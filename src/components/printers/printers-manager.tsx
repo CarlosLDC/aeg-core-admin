@@ -99,10 +99,8 @@ import {
 import type { PrinterDependencyRef } from "@/types/printer-dependencies";
 import { fetchAuthMe } from "@/lib/auth-me-api";
 import {
-  DISTRIBUTOR_SELF_CLIENT_MESSAGE,
   excludeDistributorSelfClients,
   filterPrinterModelsForDistributor,
-  isDistributorSelfClient,
 } from "@/lib/distributor-scope";
 import { useDistributorStaffBranchId } from "@/hooks/use-distributor-staff-branch-id";
 import { fetchSoftware } from "@/lib/software-api";
@@ -659,19 +657,11 @@ export function PrintersManager() {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
-    if (!clientOptions.some((option) => option.id === clientId)) {
-      toast.error("Selecciona un cliente válido.");
-      return;
-    }
     if (
-      isDistributor &&
-      isDistributorSelfClient(
-        clientId,
-        clients,
-        distributorStaffBranchId,
-      )
+      !clientOptions.some((option) => option.id === clientId) &&
+      !clients.some((c) => c.id === clientId)
     ) {
-      toast.error(DISTRIBUTOR_SELF_CLIENT_MESSAGE);
+      toast.error("Selecciona un cliente válido.");
       return;
     }
     if (!isPrinterPaidForDisposition(dispositionPrinter)) {

@@ -1,6 +1,5 @@
 import { loadCatalogRoles } from "@/lib/catalog-roles-cache";
 import { fetchBranchById } from "@/lib/branches-api";
-import { fetchClients } from "@/lib/clients-api";
 import {
   createClient,
   deleteClient,
@@ -9,13 +8,11 @@ import {
 import {
   createDistributor,
   deleteDistributor,
-  fetchDistributors,
   updateDistributor,
 } from "@/lib/distributors-api";
 import {
   createServiceCenter,
   deleteServiceCenter,
-  fetchServiceCenters,
 } from "@/lib/service-centers-api";
 import { getCatalogForbiddenMessage } from "@/lib/api-permissions";
 import { organizationRoleFromBranch } from "@/lib/organization-roles";
@@ -221,14 +218,20 @@ export async function syncBranchRoles(
     : undefined;
 
   if (nextRole === "DISTRIBUTOR" && prevRole !== "DISTRIBUTOR") {
-    await createDistributor({
+    const createdDist = await createDistributor({
       branchId,
       canWriteAnnualInspection,
     });
+    if (clientDistributorId == null && createdDist?.id != null) {
+      clientDistributorId = createdDist.id;
+    }
     if (prevRole === "SERVICE_CENTER" && prev.serviceCenter) {
       await deleteServiceCenter(prev.serviceCenter.id);
     }
   } else if (nextRole === "DISTRIBUTOR" && prevRole === "DISTRIBUTOR" && prev.distributor) {
+    if (clientDistributorId == null) {
+      clientDistributorId = prev.distributor.id;
+    }
     const prevFlag = prev.distributor.canWriteAnnualInspection !== false;
     if (prevFlag !== canWriteAnnualInspection) {
       await updateDistributor(prev.distributor.id, {
@@ -253,13 +256,7 @@ export async function syncBranchRoles(
     await deleteServiceCenter(prev.serviceCenter.id);
   }
 
-  const isDistributorBranch = nextRole === "DISTRIBUTOR";
-
-  if (isDistributorBranch) {
-    if (prev.client) {
-      await deleteClient(prev.client.id);
-    }
-  } else if (roles.isClient && !prev.client) {
+  if (roles.isClient && !prev.client) {
     await createClient({ branchId, distributorId: clientDistributorId });
   } else if (!roles.isClient && prev.client) {
     await deleteClient(prev.client.id);
