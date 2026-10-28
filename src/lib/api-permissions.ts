@@ -83,6 +83,18 @@ export function canModifyCatalogRecord(role: Role): boolean {
   return canUpdateCatalogRecord(role);
 }
 
+export function canCreateSoftwareRecord(role: Role): boolean {
+  return can(role, "software", "create");
+}
+
+export function canManageSoftware(role: Role): boolean {
+  return can(role, "software", "update");
+}
+
+export function canDeleteSoftwareRecord(role: Role): boolean {
+  return can(role, "software", "delete");
+}
+
 export function canCreateSealRecord(role: Role): boolean {
   return can(role, "seals", "create");
 }

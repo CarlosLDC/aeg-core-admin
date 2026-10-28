@@ -28,6 +28,7 @@ export const RESOURCES = [
   "remoto",
   "seniatExtract",
   "uploads",
+  "software",
 ] as const;
 
 export type Resource = (typeof RESOURCES)[number];

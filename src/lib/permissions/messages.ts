@@ -19,6 +19,7 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   remoto: "pruebas Remoto",
   seniatExtract: "extracción SENIAT",
   uploads: "documentos adjuntos",
+  software: "software",
 };
 
 export const ACTION_LABELS: Record<Action, string> = {

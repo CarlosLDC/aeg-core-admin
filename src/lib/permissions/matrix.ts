@@ -100,6 +100,12 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     read: DISTRIBUTOR_PANEL,
     create: DISTRIBUTOR_PANEL,
   },
+  software: {
+    read: ADMIN_ONLY,
+    create: ADMIN_ONLY,
+    update: ADMIN_ONLY,
+    delete: ADMIN_ONLY,
+  },
 };
 
 /** Roles permitidos para recurso × acción; vacío si la acción no aplica al recurso. */

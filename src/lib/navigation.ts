@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   ArrowRightLeft,
   Cable,
+  AppWindow,
   type LucideIcon,
 } from "lucide-react";
 import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
@@ -81,6 +82,12 @@ export const navSections: NavSection[] = [
         title: "Precintos fiscales",
         href: "/seals",
         icon: Stamp,
+        roles: ["ADMIN"],
+      },
+      {
+        title: "Softwares",
+        href: "/software",
+        icon: AppWindow,
         roles: ["ADMIN"],
       },
     ],
