@@ -492,9 +492,7 @@ export function PrinterView() {
           <DetailField label="MAC" value={printer.macAddress || "—"} mono />
         </DetailCard>
 
-        <DetailSection title="Monitoreo de logs Remoto">
-          <PrinterLogsSection printer={printer} />
-        </DetailSection>
+        <PrinterLogsSection printer={printer} />
       </div>
     );
   }, [
@@ -693,11 +691,7 @@ export function PrinterView() {
       {
         id: "logs",
         label: "Logs",
-        content: (
-          <DetailSection title="Monitoreo de logs Remoto">
-            <PrinterLogsSection printer={printer} />
-          </DetailSection>
-        ),
+        content: <PrinterLogsSection printer={printer} />,
       },
     );
 
