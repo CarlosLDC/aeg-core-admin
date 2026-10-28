@@ -1,3 +1,4 @@
+import { normalizeRif, RIF_PATTERN } from "@/lib/seniat-extract";
 import type { SoftwareRequest, SoftwareResponse } from "@/types/software";
 
 export const COMMON_PROGRAMMING_LANGUAGES = [
@@ -27,7 +28,8 @@ export type SoftwareFormValues = {
   name: string;
   version: string;
   external: boolean;
-  developerCompanyId: string;
+  developerName: string;
+  developerRif: string;
   programmingLanguages: string[];
   operatingSystems: string[];
   distributorCompanyIds: number[];
@@ -37,7 +39,8 @@ export const INITIAL_SOFTWARE_FORM_VALUES: SoftwareFormValues = {
   name: "",
   version: "",
   external: false,
-  developerCompanyId: "",
+  developerName: "",
+  developerRif: "",
   programmingLanguages: [],
   operatingSystems: [],
   distributorCompanyIds: [],
@@ -52,7 +55,8 @@ export function softwareToFormValues(
     name: software.name ?? "",
     version: software.version ?? "",
     external: Boolean(software.external),
-    developerCompanyId: software.developerCompanyId != null ? String(software.developerCompanyId) : "",
+    developerName: software.developerName ?? "",
+    developerRif: software.developerRif ?? "",
     programmingLanguages: software.programmingLanguages ?? [],
     operatingSystems: software.operatingSystems ?? [],
     distributorCompanyIds: (software.distributors ?? []).map((d) => d.id),
@@ -72,12 +76,12 @@ export function toSoftwareRequest(
     return "La versión del software es obligatoria.";
   }
 
-  const developerCompanyId = values.developerCompanyId.trim()
-    ? Number(values.developerCompanyId)
-    : null;
+  const developerName = values.developerName.trim() || null;
+  const rawRif = values.developerRif.trim();
+  const developerRif = rawRif ? normalizeRif(rawRif) : null;
 
-  if (values.developerCompanyId.trim() && Number.isNaN(developerCompanyId)) {
-    return "La empresa desarrolladora seleccionada no es válida.";
+  if (developerRif && !RIF_PATTERN.test(developerRif)) {
+    return "El RIF del desarrollador debe tener formato válido (ej. J-123456789).";
   }
 
   const programmingLanguages = (values.programmingLanguages || [])
@@ -92,7 +96,8 @@ export function toSoftwareRequest(
     name,
     version,
     external: values.external,
-    developerCompanyId,
+    developerName,
+    developerRif,
     programmingLanguages,
     operatingSystems,
     distributorCompanyIds: values.distributorCompanyIds || [],

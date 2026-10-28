@@ -19,9 +19,8 @@ describe("software-form", () => {
       createdAt: "2026-10-27T10:00:00Z",
       programmingLanguages: ["C#", "SQL"],
       operatingSystems: ["Windows"],
-      developerCompanyId: 12,
       developerName: "Saint de Venezuela C.A.",
-      developerRif: "J-30401878-0",
+      developerRif: "J-304018780",
       external: true,
       distributors: [
         { id: 44, rif: "J-12345678-9", businessName: "Dist Partner 1" },
@@ -32,7 +31,8 @@ describe("software-form", () => {
     expect(form.name).toBe("Saint Enterprise");
     expect(form.version).toBe("2.1");
     expect(form.external).toBe(true);
-    expect(form.developerCompanyId).toBe("12");
+    expect(form.developerName).toBe("Saint de Venezuela C.A.");
+    expect(form.developerRif).toBe("J-304018780");
     expect(form.programmingLanguages).toEqual(["C#", "SQL"]);
     expect(form.operatingSystems).toEqual(["Windows"]);
     expect(form.distributorCompanyIds).toEqual([44]);
@@ -56,12 +56,25 @@ describe("software-form", () => {
     expect(res).toBe("La versión del software es obligatoria.");
   });
 
+  it("toSoftwareRequest rejects invalid developer RIF", () => {
+    const res = toSoftwareRequest({
+      ...INITIAL_SOFTWARE_FORM_VALUES,
+      name: "Saint",
+      version: "1.0",
+      developerRif: "J-123",
+    });
+    expect(res).toBe(
+      "El RIF del desarrollador debe tener formato válido (ej. J-123456789).",
+    );
+  });
+
   it("toSoftwareRequest produces valid request payload", () => {
     const res = toSoftwareRequest({
       name: "Saint Enterprise  ",
       version: " 1.0 ",
       external: true,
-      developerCompanyId: "12",
+      developerName: " Saint de Venezuela C.A. ",
+      developerRif: "J304018780",
       programmingLanguages: ["C#", " "],
       operatingSystems: ["Windows", "Linux"],
       distributorCompanyIds: [10, 20],
@@ -72,7 +85,8 @@ describe("software-form", () => {
       expect(res.name).toBe("Saint Enterprise");
       expect(res.version).toBe("1.0");
       expect(res.external).toBe(true);
-      expect(res.developerCompanyId).toBe(12);
+      expect(res.developerName).toBe("Saint de Venezuela C.A.");
+      expect(res.developerRif).toBe("J-304018780");
       expect(res.programmingLanguages).toEqual(["C#"]);
       expect(res.operatingSystems).toEqual(["Windows", "Linux"]);
       expect(res.distributorCompanyIds).toEqual([10, 20]);

@@ -12,7 +12,6 @@ export type SoftwareResponse = {
   programmingLanguages: string[];
   operatingSystems: string[];
   /** Empresa desarrolladora (Art. 46 h); null si aún no se ha registrado. */
-  developerCompanyId?: number | null;
   developerRif?: string | null;
   developerName?: string | null;
   external?: boolean;
@@ -25,7 +24,8 @@ export type SoftwareRequest = {
   version: string;
   programmingLanguages?: string[];
   operatingSystems?: string[];
-  developerCompanyId?: number | null;
+  developerName?: string | null;
+  developerRif?: string | null;
   external?: boolean;
   distributorCompanyIds?: number[];
 };

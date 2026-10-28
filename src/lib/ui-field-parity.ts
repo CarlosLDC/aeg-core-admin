@@ -465,8 +465,14 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
       {
         formLabels: ["Empresa desarrolladora"],
         viewLabels: ["Empresa desarrolladora"],
-        formBindings: ["form.developerCompanyId"],
+        formBindings: ["form.developerName"],
         viewBindings: ["software.developerName"],
+      },
+      {
+        formLabels: ["RIF desarrollador"],
+        viewLabels: ["RIF desarrollador"],
+        formBindings: ["form.developerRif"],
+        viewBindings: ["software.developerRif"],
       },
       {
         formLabels: ["Lenguajes de programación"],

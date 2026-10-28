@@ -256,13 +256,6 @@ export function SoftwareView() {
     }
   }
 
-  const devHref =
-    user &&
-    software?.developerCompanyId &&
-    canAccessRoute(user.role, companyPath(software.developerCompanyId))
-      ? companyPath(software.developerCompanyId)
-      : undefined;
-
   return (
     <ResourceViewShell
       backHref={softwareListPath}
@@ -339,7 +332,6 @@ export function SoftwareView() {
               <DetailField
                 label="Empresa desarrolladora"
                 value={software.developerName || "—"}
-                href={devHref}
               />
               <DetailField
                 label="RIF desarrollador"

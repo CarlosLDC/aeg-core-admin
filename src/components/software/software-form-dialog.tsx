@@ -14,6 +14,8 @@ import { CompanySelect } from "@/components/companies/company-select";
 import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
+import { PrefixedDocumentInput } from "@/components/ui/prefixed-document-input";
+import { normalizeRif, RIF_PATTERN } from "@/lib/seniat-extract";
 import {
   COMMON_OPERATING_SYSTEMS,
   COMMON_PROGRAMMING_LANGUAGES,
@@ -116,6 +118,10 @@ export function SoftwareFormDialog({
       }
       if (!form.version.trim()) {
         return "La versión del software es obligatoria.";
+      }
+      const rawRif = form.developerRif.trim();
+      if (rawRif && !RIF_PATTERN.test(normalizeRif(rawRif))) {
+        return "El RIF del desarrollador debe tener formato válido (ej. J-123456789).";
       }
       return null;
     }
@@ -362,16 +368,34 @@ export function SoftwareFormDialog({
                   />
                 </div>
 
-                <div>
-                  <FieldLabel>Empresa desarrolladora</FieldLabel>
-                  <CompanySelect
-                    value={form.developerCompanyId}
-                    onChange={(developerCompanyId) =>
-                      setForm((f) => ({ ...f, developerCompanyId }))
-                    }
-                    companies={companies}
-                    disabled={saving}
-                  />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block">
+                    <FieldLabel>Empresa desarrolladora</FieldLabel>
+                    <input
+                      type="text"
+                      disabled={saving}
+                      value={form.developerName}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          developerName: e.target.value,
+                        }))
+                      }
+                      placeholder="Ej. Saint de Venezuela C.A.…"
+                      className={formFieldInputClass}
+                    />
+                  </label>
+                  <label className="block">
+                    <FieldLabel>RIF desarrollador</FieldLabel>
+                    <PrefixedDocumentInput
+                      kind="rif"
+                      disabled={saving}
+                      value={form.developerRif}
+                      onChange={(developerRif) =>
+                        setForm((f) => ({ ...f, developerRif }))
+                      }
+                    />
+                  </label>
                 </div>
               </div>
             )}

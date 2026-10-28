@@ -31,8 +31,7 @@ import {
 import { fetchCompanies } from "@/lib/companies-api";
 import { formatDate } from "@/lib/datetime-form";
 import { forbiddenMessage } from "@/lib/permissions/messages";
-import { canAccessRoute } from "@/lib/permissions/routes";
-import { companyPath, softwarePath } from "@/lib/resource-routes";
+import { softwarePath } from "@/lib/resource-routes";
 import {
   createSoftware,
   deleteSoftware,
@@ -385,15 +384,6 @@ export function SoftwareManager() {
                         const href = softwarePath(item.id);
                         const isDeleting = deletingId === item.id;
                         const distList = item.distributors ?? [];
-                        const devHref =
-                          user &&
-                          item.developerCompanyId &&
-                          canAccessRoute(
-                            user.role,
-                            companyPath(item.developerCompanyId),
-                          )
-                            ? companyPath(item.developerCompanyId)
-                            : undefined;
                         const distSummary =
                           distList.length > 0
                             ? distList
@@ -454,17 +444,9 @@ export function SoftwareManager() {
                                   </span>
                                 )}
                               </td>
-                              <td
-                                className="max-w-[220px] px-5 py-3.5 text-muted"
-                                {...(devHref
-                                  ? { "data-row-click": "ignore" }
-                                  : {})}
-                              >
+                              <td className="max-w-[220px] px-5 py-3.5 text-muted">
                                 {item.developerName || item.developerRif ? (
-                                  <TruncatedText
-                                    maxClassName="max-w-[200px]"
-                                    href={devHref}
-                                  >
+                                  <TruncatedText maxClassName="max-w-[200px]">
                                     {item.developerName && item.developerRif
                                       ? `${item.developerName} (${item.developerRif})`
                                       : (item.developerName ??
