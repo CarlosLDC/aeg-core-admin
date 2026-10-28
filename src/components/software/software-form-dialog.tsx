@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { CompanySelect } from "@/components/companies/company-select";
+import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import {
@@ -22,8 +23,6 @@ import {
 } from "@/lib/software-form";
 import {
   formFieldInputClass,
-  formFieldSegmentedToggleShellClass,
-  segmentedToggleActiveClass,
   toggleButtonClass,
 } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
@@ -125,16 +124,6 @@ export function SoftwareFormDialog({
 
   function goToStep(target: WizardStep) {
     if (saving) return;
-    if (target > step) {
-      for (let s = step; s < target; s++) {
-        const err = validateStep(s as WizardStep);
-        if (err) {
-          setStepError(err);
-          setStep(s as WizardStep);
-          return;
-        }
-      }
-    }
     setStepError(null);
     setStep(target);
   }
@@ -359,44 +348,18 @@ export function SoftwareFormDialog({
 
                 <div>
                   <FieldLabel>Tipo de desarrollo</FieldLabel>
-                  <div
-                    role="group"
-                    aria-label="Tipo de desarrollo"
-                    className={formFieldSegmentedToggleShellClass}
-                  >
-                    <button
-                      type="button"
-                      disabled={saving}
-                      aria-pressed={!form.external}
-                      onClick={() =>
-                        setForm((f) => ({ ...f, external: false }))
-                      }
-                      className={cn(
-                        "flex-1 rounded-md px-3 text-sm font-medium transition-colors",
-                        !form.external
-                          ? segmentedToggleActiveClass("emerald")
-                          : "text-muted hover:text-card-foreground",
-                      )}
-                    >
-                      Propio
-                    </button>
-                    <button
-                      type="button"
-                      disabled={saving}
-                      aria-pressed={form.external}
-                      onClick={() =>
-                        setForm((f) => ({ ...f, external: true }))
-                      }
-                      className={cn(
-                        "flex-1 rounded-md px-3 text-sm font-medium transition-colors",
-                        form.external
-                          ? segmentedToggleActiveClass("amber")
-                          : "text-muted hover:text-card-foreground",
-                      )}
-                    >
-                      Terceros
-                    </button>
-                  </div>
+                  <BooleanToggle
+                    value={form.external}
+                    onChange={(external) =>
+                      setForm((f) => ({ ...f, external }))
+                    }
+                    disabled={saving}
+                    falseLabel="Propio"
+                    trueLabel="Terceros"
+                    falseTone="emerald"
+                    trueTone="amber"
+                    ariaLabel="Tipo de desarrollo"
+                  />
                 </div>
 
                 <div>
