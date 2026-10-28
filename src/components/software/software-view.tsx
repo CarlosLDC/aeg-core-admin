@@ -1,25 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  AppWindow,
-  Building2,
-  ExternalLink,
-  Plus,
-  Trash2,
-  Users,
-  X,
-} from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 import { CompanySelect } from "@/components/companies/company-select";
 import { SoftwareFormDialog } from "@/components/software/software-form-dialog";
-import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
+import {
+  DetailField,
+  DetailSection,
+} from "@/components/resource-view/detail-fields";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
+import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
+import { FieldLabel } from "@/components/ui/field-label";
+import { SortableTableHeader } from "@/components/ui/sortable-table-header";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { TableScroll } from "@/components/ui/table-scroll";
+import { TruncatedText } from "@/components/ui/truncated-text";
 import { useAuth } from "@/context/auth-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { useToast } from "@/context/toast-provider";
+import { usePagination } from "@/hooks/use-pagination";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
   canDeleteSoftwareRecord,
@@ -28,7 +31,12 @@ import {
 import { fetchCompanies } from "@/lib/companies-api";
 import { formatDate } from "@/lib/datetime-form";
 import { forbiddenMessage } from "@/lib/permissions/messages";
-import { companyPath, softwareListPath, softwarePath } from "@/lib/resource-routes";
+import { canAccessRoute } from "@/lib/permissions/routes";
+import {
+  companyPath,
+  softwareListPath,
+  softwarePath,
+} from "@/lib/resource-routes";
 import {
   addSoftwareDistributor,
   deleteSoftware,
@@ -41,8 +49,17 @@ import {
   toSoftwareRequest,
   type SoftwareFormValues,
 } from "@/lib/software-form";
+import {
+  compareNumberValues,
+  sortTableRows,
+  toggleTableSort,
+  type TableSortState,
+} from "@/lib/table-sort";
+import { cn } from "@/lib/utils";
 import type { CompanyResponse } from "@/types/company";
 import type { SoftwareResponse } from "@/types/software";
+
+type DistributorSortKey = "id" | "rif" | "businessName";
 
 export function SoftwareView() {
   const id = useResourceId();
@@ -57,19 +74,24 @@ export function SoftwareView() {
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [section, setSection] = useState<"software" | "distributors">(
+    "software",
+  );
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Modal para vincular distribuidor directamente desde el detalle
   const [addDistributorModalOpen, setAddDistributorModalOpen] = useState(false);
   const [distributorToAdd, setDistributorToAdd] = useState("");
   const [addingDistributor, setAddingDistributor] = useState(false);
+  const [distSearch, setDistSearch] = useState("");
+  const [distSort, setDistSort] =
+    useState<TableSortState<DistributorSortKey>>(null);
 
   const load = useCallback(async () => {
     if (id == null) {
-      setError("Identificador de software no válido.");
+      setError("ID inválido");
       setLoading(false);
       return;
     }
@@ -85,6 +107,7 @@ export function SoftwareView() {
       setCompanies(companyData);
     } catch (err) {
       setError(getSoftwareErrorMessage(err));
+      setSoftware(null);
     } finally {
       setLoading(false);
     }
@@ -93,6 +116,38 @@ export function SoftwareView() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const distributors = useMemo(
+    () => software?.distributors ?? [],
+    [software?.distributors],
+  );
+
+  const filteredDistributors = useMemo(() => {
+    const q = distSearch.trim().toLowerCase();
+    if (!q) return distributors;
+    return distributors.filter((d) =>
+      `${d.id} ${d.rif} ${d.businessName}`.toLowerCase().includes(q),
+    );
+  }, [distributors, distSearch]);
+
+  const sortedDistributors = useMemo(
+    () =>
+      sortTableRows(filteredDistributors, distSort, {
+        id: (a, b) => compareNumberValues(a.id, b.id),
+        rif: (a, b) => a.rif.localeCompare(b.rif, "es"),
+        businessName: (a, b) =>
+          (a.businessName ?? "").localeCompare(b.businessName ?? "", "es"),
+      }),
+    [filteredDistributors, distSort],
+  );
+
+  const distPagination = usePagination(sortedDistributors);
+
+  const availableDistributors = useMemo(
+    () =>
+      companies.filter((c) => !distributors.some((d) => d.id === c.id)),
+    [companies, distributors],
+  );
 
   async function handleSubmit(values: SoftwareFormValues) {
     if (!software) return;
@@ -128,7 +183,8 @@ export function SoftwareView() {
   }
 
   async function handleDelete() {
-    if (!software || !canDelete) {
+    if (!software) return;
+    if (!canDelete) {
       toast.error(forbiddenMessage("delete", "software"));
       return;
     }
@@ -136,8 +192,8 @@ export function SoftwareView() {
     const label = `${software.name} v${software.version}`;
     if (
       !(await confirm({
-        title: "Confirmar eliminación",
-        message: `¿Eliminar el software "${label}"? Esta acción no se puede deshacer.`,
+        title: "Confirmar",
+        message: `¿Eliminar el software "${label}"?`,
         destructive: true,
       }))
     ) {
@@ -151,6 +207,7 @@ export function SoftwareView() {
       router.push(softwareListPath);
     } catch (err) {
       toast.error(getSoftwareErrorMessage(err));
+    } finally {
       setDeleting(false);
     }
   }
@@ -164,7 +221,7 @@ export function SoftwareView() {
     try {
       const updated = await addSoftwareDistributor(software.id, companyId);
       setSoftware(updated);
-      toast.success("Distribuidor vinculado exitosamente.");
+      toast.success("Distribuidor vinculado.");
       setAddDistributorModalOpen(false);
       setDistributorToAdd("");
     } catch (err) {
@@ -178,7 +235,7 @@ export function SoftwareView() {
     if (!software) return;
     if (
       !(await confirm({
-        title: "Desvincular distribuidor",
+        title: "Confirmar",
         message: `¿Desvincular al distribuidor "${name}" de este software?`,
         destructive: true,
       }))
@@ -187,7 +244,10 @@ export function SoftwareView() {
     }
 
     try {
-      const updated = await removeSoftwareDistributor(software.id, distributorId);
+      const updated = await removeSoftwareDistributor(
+        software.id,
+        distributorId,
+      );
       setSoftware(updated);
       toast.success("Distribuidor desvinculado.");
     } catch (err) {
@@ -195,236 +255,274 @@ export function SoftwareView() {
     }
   }
 
-  if (loading) {
-    return (
-      <ResourceViewShell
-        title="Cargando software…"
-        backHref={softwareListPath}
-        loading
-      >
-        <div />
-      </ResourceViewShell>
-    );
-  }
-
-  if (error || !software) {
-    return (
-      <ResourceViewShell
-        title="Software no encontrado"
-        backHref={softwareListPath}
-      >
-        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-sm text-destructive">
-          {error ?? "Registro no encontrado."}
-        </div>
-      </ResourceViewShell>
-    );
-  }
-
-  const label = `${software.name} v${software.version}`;
-  const distributors = software.distributors ?? [];
-  const availableDistributors = companies.filter(
-    (c) => !distributors.some((d) => d.id === c.id),
-  );
+  const devHref =
+    user &&
+    software?.developerCompanyId &&
+    canAccessRoute(user.role, companyPath(software.developerCompanyId))
+      ? companyPath(software.developerCompanyId)
+      : undefined;
 
   return (
-    <>
-      <ResourceViewShell
-        title={software.name}
-        subtitle={`Versión ${software.version} · Catálogo fiscal (Art. 46 h SENIAT)`}
-        backHref={softwareListPath}
-        actions={
+    <ResourceViewShell
+      backHref={softwareListPath}
+      backLabel="Volver a softwares"
+      title={software ? `${software.name} v${software.version}` : "Software"}
+      subtitle={software ? `ID #${software.id}` : undefined}
+      loading={loading}
+      error={error}
+      actions={
+        software && (canModify || canDelete) ? (
           <ResourceViewActions
-            onEdit={canModify ? () => setEditOpen(true) : undefined}
-            onDelete={canDelete ? handleDelete : undefined}
+            onEdit={
+              canModify
+                ? () => {
+                    setFormError(null);
+                    setEditOpen(true);
+                  }
+                : undefined
+            }
+            onDelete={canDelete ? () => void handleDelete() : undefined}
             deleting={deleting}
           />
-        }
-      >
-        <div className="space-y-6">
-          <DetailSection title="Información del software" layout="quad">
-            <DetailField label="Nombre del programa" value={software.name} />
-            <DetailField label="Versión" value={`v${software.version}`} />
-            <DetailField
-              label="Tipo de desarrollo"
-              value={
-                software.external ? (
-                  <span className="inline-flex items-center rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
-                    Desarrollo de terceros
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                    Desarrollo propio AEG
-                  </span>
-                )
-              }
-            />
-            <DetailField
-              label="Fecha de registro"
-              value={formatDate(software.createdAt)}
-            />
-          </DetailSection>
-
-          <DetailSection title="Fabricante / Desarrollador (Art. 46 h)" layout="quad">
-            <DetailField
-              label="Empresa desarrolladora"
-              value={
-                software.developerCompanyId ? (
-                  <Link
-                    href={companyPath(software.developerCompanyId)}
-                    className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-                  >
-                    <Building2 className="size-3.5" />
-                    {software.developerName || "Ver empresa"}
-                    <ExternalLink className="size-3" />
-                  </Link>
-                ) : (
-                  <span className="italic text-muted">
-                    {software.external
-                      ? "Sin empresa asignada"
-                      : "AEG (Fabricante oficial)"}
-                  </span>
-                )
-              }
-            />
-            <DetailField
-              label="RIF del desarrollador"
-              value={
-                software.developerRif ? (
-                  <span className="font-mono">{software.developerRif}</span>
-                ) : (
-                  <span className="italic text-muted">—</span>
-                )
-              }
-            />
-          </DetailSection>
-
-          <DetailSection title="Especificaciones técnicas" layout="quad">
-            <DetailField
-              label="Lenguajes de programación"
-              value={
-                software.programmingLanguages && software.programmingLanguages.length > 0 ? (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {software.programmingLanguages.map((lang) => (
-                      <span
-                        key={lang}
-                        className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
-                      >
-                        {lang}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="italic text-muted">No especificado</span>
-                )
-              }
-            />
-            <DetailField
-              label="Sistemas operativos compatibles"
-              value={
-                software.operatingSystems && software.operatingSystems.length > 0 ? (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {software.operatingSystems.map((os) => (
-                      <span
-                        key={os}
-                        className="rounded border border-border bg-card px-2 py-0.5 text-xs font-medium text-card-foreground shadow-sm"
-                      >
-                        {os}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="italic text-muted">No especificado</span>
-                )
-              }
-            />
-          </DetailSection>
-
-          {/* Sección de Distribuidores autorizados del software */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h3 className="text-base font-semibold text-card-foreground flex items-center gap-2">
-                  <Users className="size-4 text-primary" />
-                  Distribuidores autorizados del software (Art. 46 h)
-                </h3>
-                <p className="mt-0.5 text-xs text-muted">
-                  Empresas autorizadas por el fabricante para la comercialización y distribución de este programa.
-                </p>
-              </div>
-              {canModify && (
-                <button
-                  type="button"
-                  onClick={() => setAddDistributorModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-card-foreground hover:bg-foreground/5 shadow-sm self-start sm:self-auto"
-                >
-                  <Plus className="size-3.5" />
-                  Vincular distribuidor
-                </button>
+        ) : null
+      }
+    >
+      {software && (
+        <>
+          <div
+            role="tablist"
+            aria-label="Secciones del software"
+            className="inline-flex rounded-lg border border-border bg-card p-1"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={section === "software"}
+              onClick={() => setSection("software")}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                section === "software"
+                  ? "bg-accent text-accent-foreground shadow-sm"
+                  : "text-muted hover:bg-foreground/5 hover:text-card-foreground",
               )}
-            </div>
-
-            {distributors.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted">
-                No hay distribuidores registrados para este software.
-              </div>
-            ) : (
-              <div className="overflow-x-auto rounded-lg border border-border">
-                <table className="w-full text-left text-sm">
-                  <thead className="border-b border-border bg-foreground/[0.02] text-xs font-medium text-muted uppercase">
-                    <tr>
-                      <th className="px-4 py-2.5">RIF</th>
-                      <th className="px-4 py-2.5">Razón social / Distribuidor</th>
-                      {canModify && (
-                        <th className="w-16 px-4 py-2.5 text-right">Acción</th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {distributors.map((dist) => (
-                      <tr
-                        key={dist.id}
-                        className="transition-colors hover:bg-foreground/[0.02]"
-                      >
-                        <td className="px-4 py-3 font-mono text-xs text-card-foreground">
-                          <Link
-                            href={companyPath(dist.id)}
-                            className="text-primary hover:underline inline-flex items-center gap-1"
-                          >
-                            {dist.rif}
-                            <ExternalLink className="size-3" />
-                          </Link>
-                        </td>
-                        <td className="px-4 py-3 font-medium text-card-foreground">
-                          {dist.businessName || "Empresa registrada"}
-                        </td>
-                        {canModify && (
-                          <td className="px-4 py-3 text-right">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleRemoveDistributor(
-                                  dist.id,
-                                  dist.businessName || dist.rif,
-                                )
-                              }
-                              title="Desvincular distribuidor"
-                              className="rounded p-1 text-muted hover:bg-destructive/10 hover:text-destructive transition-colors"
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            >
+              Software
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={section === "distributors"}
+              onClick={() => setSection("distributors")}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                section === "distributors"
+                  ? "bg-accent text-accent-foreground shadow-sm"
+                  : "text-muted hover:bg-foreground/5 hover:text-card-foreground",
+              )}
+            >
+              Distribuidores ({distributors.length})
+            </button>
           </div>
-        </div>
-      </ResourceViewShell>
 
-      {/* Modal para vincular distribuidor directamente */}
+          {section === "software" && (
+            <DetailSection title="Datos generales">
+              <DetailField
+                label="Nombre del software"
+                value={software.name}
+              />
+              <DetailField label="Versión" value={software.version} mono />
+              <DetailField
+                label="Tipo de desarrollo"
+                value={software.external ? "Terceros" : "Propio"}
+              />
+              <DetailField
+                label="Empresa desarrolladora"
+                value={software.developerName || "—"}
+                href={devHref}
+              />
+              <DetailField
+                label="RIF desarrollador"
+                value={software.developerRif || "—"}
+                mono
+              />
+              <DetailField
+                label="Lenguajes de programación"
+                value={
+                  (software.programmingLanguages ?? []).length > 0
+                    ? software.programmingLanguages.join(", ")
+                    : "—"
+                }
+              />
+              <DetailField
+                label="Sistemas operativos"
+                value={
+                  (software.operatingSystems ?? []).length > 0
+                    ? software.operatingSystems.join(", ")
+                    : "—"
+                }
+              />
+              <DetailField
+                label="Registrado"
+                value={formatDate(software.createdAt)}
+              />
+            </DetailSection>
+          )}
+
+          {section === "distributors" && (
+            <section className="space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h3 className="text-base font-semibold text-card-foreground">
+                  Distribuidores autorizados
+                </h3>
+                {canModify && (
+                  <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDistributorToAdd("");
+                        setAddDistributorModalOpen(true);
+                      }}
+                      className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 sm:w-auto"
+                    >
+                      <Plus className="size-4" />
+                      Vincular distribuidor
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                {distributors.length === 0 ? (
+                  <EmptyState
+                    title="Este software no tiene distribuidores vinculados."
+                    action={
+                      canModify ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDistributorToAdd("");
+                            setAddDistributorModalOpen(true);
+                          }}
+                          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
+                        >
+                          <Plus className="size-4" />
+                          Vincular distribuidor
+                        </button>
+                      ) : undefined
+                    }
+                  />
+                ) : (
+                  <>
+                    <DataTableToolbar
+                      search={distSearch}
+                      onSearchChange={setDistSearch}
+                      searchPlaceholder="Buscar por RIF o razón social…"
+                      resultCount={filteredDistributors.length}
+                      totalCount={distributors.length}
+                    />
+                    {filteredDistributors.length === 0 ? (
+                      <TableFilterEmptyState />
+                    ) : (
+                      <>
+                        <TableScroll>
+                          <table className="w-full min-w-[560px] text-left text-sm">
+                            <thead>
+                              <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+                                <SortableTableHeader
+                                  label="RIF"
+                                  sortDirection={
+                                    distSort?.key === "rif"
+                                      ? distSort.direction
+                                      : null
+                                  }
+                                  onToggle={() =>
+                                    setDistSort((current) =>
+                                      toggleTableSort(current, "rif"),
+                                    )
+                                  }
+                                />
+                                <SortableTableHeader
+                                  label="Razón social"
+                                  sortDirection={
+                                    distSort?.key === "businessName"
+                                      ? distSort.direction
+                                      : null
+                                  }
+                                  onToggle={() =>
+                                    setDistSort((current) =>
+                                      toggleTableSort(current, "businessName"),
+                                    )
+                                  }
+                                />
+                                {canModify && (
+                                  <th className="px-5 py-3 font-medium text-right">
+                                    Acciones
+                                  </th>
+                                )}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {distPagination.paginatedItems.map((dist) => {
+                                const distHref =
+                                  user &&
+                                  canAccessRoute(
+                                    user.role,
+                                    companyPath(dist.id),
+                                  )
+                                    ? companyPath(dist.id)
+                                    : undefined;
+
+                                return (
+                                  <ClickableTableRow
+                                    key={dist.id}
+                                    href={distHref ?? softwarePath(software.id)}
+                                  >
+                                    <td className="px-5 py-3.5 font-mono text-card-foreground">
+                                      {dist.rif}
+                                    </td>
+                                    <td className="px-5 py-3.5 font-medium text-card-foreground">
+                                      <TruncatedText maxClassName="max-w-[320px]">
+                                        {dist.businessName || "—"}
+                                      </TruncatedText>
+                                    </td>
+                                    {canModify && (
+                                      <td
+                                        className="px-5 py-3.5 text-right"
+                                        data-row-click="ignore"
+                                      >
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            void handleRemoveDistributor(
+                                              dist.id,
+                                              dist.businessName || dist.rif,
+                                            )
+                                          }
+                                          title="Desvincular distribuidor"
+                                          aria-label={`Desvincular distribuidor ${dist.businessName || dist.rif}`}
+                                          className="inline-flex items-center justify-center rounded-lg p-1.5 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600"
+                                        >
+                                          <Trash2 className="size-4" />
+                                        </button>
+                                      </td>
+                                    )}
+                                  </ClickableTableRow>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </TableScroll>
+                        <TablePagination pagination={distPagination} />
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            </section>
+          )}
+        </>
+      )}
+
       {addDistributorModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -437,55 +535,60 @@ export function SoftwareView() {
             aria-label="Cerrar"
             onClick={() => setAddDistributorModalOpen(false)}
           />
-          <div className="relative w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl space-y-4">
-            <div className="flex items-start justify-between">
+          <div className="relative w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl">
+            <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-base font-semibold text-card-foreground">
+                <h2 className="text-lg font-semibold text-card-foreground">
                   Vincular distribuidor
-                </h3>
-                <p className="mt-1 text-xs text-muted">
-                  Selecciona la empresa distribuidora de este software.
+                </h2>
+                <p className="mt-1 text-sm text-muted">
+                  Selecciona la empresa autorizada para distribuir este
+                  software.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setAddDistributorModalOpen(false)}
-                className="rounded-lg p-1 text-muted hover:bg-foreground/5"
+                className="rounded-lg p-1.5 text-muted hover:bg-foreground/5"
               >
-                <X className="size-4" />
+                <X className="size-5" />
               </button>
             </div>
 
-            <div>
-              <CompanySelect
-                value={distributorToAdd}
-                onChange={setDistributorToAdd}
-                companies={availableDistributors}
-              />
-            </div>
+            <div className="space-y-4">
+              <div>
+                <FieldLabel required>Empresa distribuidora</FieldLabel>
+                <CompanySelect
+                  value={distributorToAdd}
+                  onChange={setDistributorToAdd}
+                  companies={availableDistributors}
+                  disabled={addingDistributor}
+                />
+              </div>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setAddDistributorModalOpen(false)}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-card-foreground hover:bg-foreground/5"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleAddDistributor}
-                disabled={!distributorToAdd || addingDistributor}
-                className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              >
-                {addingDistributor ? "Vinculando…" : "Vincular"}
-              </button>
+              <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setAddDistributorModalOpen(false)}
+                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-card-foreground transition-colors hover:bg-foreground/5"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleAddDistributor()}
+                  disabled={!distributorToAdd || addingDistributor}
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:opacity-50"
+                >
+                  {addingDistributor ? "Vinculando…" : "Vincular"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {editOpen && (
+      {software && (
         <SoftwareFormDialog
           mode="edit"
           software={software}
@@ -500,6 +603,6 @@ export function SoftwareView() {
           onSubmit={handleSubmit}
         />
       )}
-    </>
+    </ResourceViewShell>
   );
 }

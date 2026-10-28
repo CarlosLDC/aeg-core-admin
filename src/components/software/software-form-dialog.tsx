@@ -12,7 +12,13 @@ import {
   softwareToFormValues,
   type SoftwareFormValues,
 } from "@/lib/software-form";
-import { formFieldInputClass } from "@/lib/toggle-button-styles";
+import {
+  formFieldInputClass,
+  formFieldSegmentedToggleShellClass,
+  segmentedToggleActiveClass,
+  toggleButtonClass,
+} from "@/lib/toggle-button-styles";
+import { cn } from "@/lib/utils";
 import type { CompanyResponse } from "@/types/company";
 import type { SoftwareResponse } from "@/types/software";
 
@@ -37,7 +43,9 @@ export function SoftwareFormDialog({
   onClose,
   onSubmit,
 }: SoftwareFormDialogProps) {
-  const [form, setForm] = useState<SoftwareFormValues>(INITIAL_SOFTWARE_FORM_VALUES);
+  const [form, setForm] = useState<SoftwareFormValues>(
+    INITIAL_SOFTWARE_FORM_VALUES,
+  );
   const [localError, setLocalError] = useState<string | null>(null);
   const [customLanguage, setCustomLanguage] = useState("");
   const [selectedDistributorToAdd, setSelectedDistributorToAdd] = useState("");
@@ -59,6 +67,14 @@ export function SoftwareFormDialog({
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLocalError(null);
+    if (!form.name.trim()) {
+      setLocalError("El nombre del software es obligatorio.");
+      return;
+    }
+    if (!form.version.trim()) {
+      setLocalError("La versión del software es obligatoria.");
+      return;
+    }
     onSubmit(form);
   }
 
@@ -113,7 +129,9 @@ export function SoftwareFormDialog({
   function removeDistributorCompany(id: number) {
     setForm((prev) => ({
       ...prev,
-      distributorCompanyIds: prev.distributorCompanyIds.filter((cid) => cid !== id),
+      distributorCompanyIds: prev.distributorCompanyIds.filter(
+        (cid) => cid !== id,
+      ),
     }));
   }
 
@@ -123,6 +141,10 @@ export function SoftwareFormDialog({
 
   const availableDistributorCompanies = companies.filter(
     (c) => !form.distributorCompanyIds.includes(c.id),
+  );
+
+  const allLanguageOptions = Array.from(
+    new Set([...COMMON_PROGRAMMING_LANGUAGES, ...form.programmingLanguages]),
   );
 
   return (
@@ -144,7 +166,7 @@ export function SoftwareFormDialog({
               {mode === "create" ? "Nuevo software" : "Editar software"}
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Catálogo de programas de computación y facturación (Art. 46 h SENIAT).
+              Catálogo de programas de computación y facturación (Art. 46 h).
             </p>
           </div>
           <button
@@ -156,218 +178,210 @@ export function SoftwareFormDialog({
           </button>
         </div>
 
-        {(localError || error) && (
-          <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">
-            {localError || error}
-          </div>
+        {(localError ?? error) && (
+          <p
+            role="alert"
+            className="mb-4 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
+          >
+            {localError ?? error}
+          </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="block">
-              <FieldLabel required>Nombre del software</FieldLabel>
-              <input
-                type="text"
-                required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Ej. Saint Enterprise, A2, Valery…"
-                className={formFieldInputClass}
-              />
-            </label>
-            <label className="block">
-              <FieldLabel required>Versión</FieldLabel>
-              <input
-                type="text"
-                required
-                value={form.version}
-                onChange={(e) => setForm({ ...form, version: e.target.value })}
-                placeholder="Ej. 1.0, 2.5.4…"
-                className={formFieldInputClass}
-              />
-            </label>
-          </div>
-
-          <div className="rounded-lg border border-border bg-background/50 p-4 space-y-4">
-            <div className="flex items-center gap-2">
-              <input
-                id="software-external"
-                type="checkbox"
-                checked={form.external}
-                onChange={(e) => setForm({ ...form, external: e.target.checked })}
-                className="size-4 rounded border-border text-primary focus:ring-primary"
-              />
-              <label
-                htmlFor="software-external"
-                className="text-sm font-medium text-card-foreground cursor-pointer select-none"
-              >
-                Software ajeno / de terceros (desarrollador externo)
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Datos generales
+            </legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <FieldLabel required>Nombre del software</FieldLabel>
+                <input
+                  type="text"
+                  required
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, name: e.target.value }))
+                  }
+                  placeholder="Ej. Saint Enterprise, A2, Valery…"
+                  className={formFieldInputClass}
+                />
+              </label>
+              <label className="block">
+                <FieldLabel required>Versión</FieldLabel>
+                <input
+                  type="text"
+                  required
+                  value={form.version}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, version: e.target.value }))
+                  }
+                  placeholder="Ej. 1.0, 2.5.4…"
+                  className={cn(formFieldInputClass, "font-mono")}
+                />
               </label>
             </div>
 
-            <div>
-              <FieldLabel>
-                Empresa fabricante / desarrolladora (Art. 46 h)
-              </FieldLabel>
-              <CompanySelect
-                value={form.developerCompanyId}
-                onChange={(developerCompanyId) =>
-                  setForm({ ...form, developerCompanyId })
-                }
-                companies={companies}
-              />
-              <p className="mt-1 text-xs text-muted">
-                Empresa o persona jurídica con RIF registrada como desarrolladora del software.
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-border bg-background/50 p-4 space-y-3">
-            <div>
-              <span className="text-sm font-medium text-card-foreground">
-                Distribuidores autorizados del software (Art. 46 h)
-              </span>
-              <p className="text-xs text-muted">
-                Empresas autorizadas para comercializar y distribuir este software.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="flex-1">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <FieldLabel>Tipo de desarrollo</FieldLabel>
+                <div
+                  role="group"
+                  aria-label="Tipo de desarrollo"
+                  className={formFieldSegmentedToggleShellClass}
+                >
+                  <button
+                    type="button"
+                    aria-pressed={!form.external}
+                    onClick={() => setForm((f) => ({ ...f, external: false }))}
+                    className={cn(
+                      "flex-1 rounded-md px-3 text-sm font-medium transition-colors",
+                      !form.external
+                        ? segmentedToggleActiveClass("emerald")
+                        : "text-muted hover:text-card-foreground",
+                    )}
+                  >
+                    Propio
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={form.external}
+                    onClick={() => setForm((f) => ({ ...f, external: true }))}
+                    className={cn(
+                      "flex-1 rounded-md px-3 text-sm font-medium transition-colors",
+                      form.external
+                        ? segmentedToggleActiveClass("amber")
+                        : "text-muted hover:text-card-foreground",
+                    )}
+                  >
+                    Terceros
+                  </button>
+                </div>
+              </div>
+              <div>
+                <FieldLabel>Empresa desarrolladora</FieldLabel>
                 <CompanySelect
-                  value={selectedDistributorToAdd}
-                  onChange={addDistributorCompany}
-                  companies={availableDistributorCompanies}
+                  value={form.developerCompanyId}
+                  onChange={(developerCompanyId) =>
+                    setForm((f) => ({ ...f, developerCompanyId }))
+                  }
+                  companies={companies}
+                  disabled={saving}
                 />
               </div>
             </div>
+          </fieldset>
+
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Especificaciones técnicas
+            </legend>
+            <div>
+              <FieldLabel>Lenguajes de programación</FieldLabel>
+              <div className="flex flex-wrap gap-2">
+                {allLanguageOptions.map((lang) => {
+                  const active = form.programmingLanguages.includes(lang);
+                  return (
+                    <button
+                      key={lang}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => toggleLanguage(lang)}
+                      className={toggleButtonClass(active, "sky")}
+                    >
+                      {lang}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-3 flex gap-2">
+                <input
+                  type="text"
+                  value={customLanguage}
+                  onChange={(e) => setCustomLanguage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addCustomLanguage();
+                    }
+                  }}
+                  placeholder="Agregar otro lenguaje…"
+                  className={cn(formFieldInputClass, "flex-1")}
+                />
+                <button
+                  type="button"
+                  onClick={addCustomLanguage}
+                  disabled={!customLanguage.trim()}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-card-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+                >
+                  <Plus className="size-4" />
+                  Agregar
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <FieldLabel>Sistemas operativos</FieldLabel>
+              <div className="flex flex-wrap gap-2">
+                {COMMON_OPERATING_SYSTEMS.map((os) => {
+                  const active = form.operatingSystems.includes(os);
+                  return (
+                    <button
+                      key={os}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => toggleOs(os)}
+                      className={toggleButtonClass(active, "sky")}
+                    >
+                      {os}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset className="space-y-4 rounded-xl border border-border p-4">
+            <legend className="px-1 text-sm font-semibold text-card-foreground">
+              Distribuidores autorizados
+            </legend>
+            <div>
+              <FieldLabel>Vincular empresa distribuidora</FieldLabel>
+              <CompanySelect
+                value={selectedDistributorToAdd}
+                onChange={addDistributorCompany}
+                companies={availableDistributorCompanies}
+                disabled={saving}
+              />
+            </div>
 
             {selectedDistributors.length > 0 ? (
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2">
                 {selectedDistributors.map((d) => (
                   <span
                     key={d.id}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-card-foreground shadow-sm"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-medium text-card-foreground"
                   >
                     <span>{d.businessName || d.rif}</span>
-                    <span className="text-muted text-[10px]">({d.rif})</span>
+                    <span className="font-mono text-muted">({d.rif})</span>
                     <button
                       type="button"
                       onClick={() => removeDistributorCompany(d.id)}
-                      className="ml-1 rounded-full p-0.5 text-muted hover:bg-foreground/10 hover:text-card-foreground"
-                      aria-label={`Quitar distribuidor ${d.businessName}`}
+                      className="rounded p-0.5 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600"
+                      aria-label={`Quitar distribuidor ${d.businessName || d.rif}`}
                     >
-                      <X className="size-3" />
+                      <X className="size-3.5" />
                     </button>
                   </span>
                 ))}
               </div>
             ) : (
-              <p className="text-xs italic text-muted">
-                No hay distribuidores vinculados aún a este software.
+              <p className="text-xs text-muted">
+                Sin distribuidores seleccionados.
               </p>
             )}
-          </div>
+          </fieldset>
 
-          <div>
-            <FieldLabel>Lenguajes de programación</FieldLabel>
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {COMMON_PROGRAMMING_LANGUAGES.map((lang) => {
-                const active = form.programmingLanguages.includes(lang);
-                return (
-                  <button
-                    key={lang}
-                    type="button"
-                    onClick={() => toggleLanguage(lang)}
-                    className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                      active
-                        ? "bg-primary text-primary-foreground"
-                        : "border border-border bg-card text-muted hover:bg-foreground/5 hover:text-card-foreground"
-                    }`}
-                  >
-                    {lang}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={customLanguage}
-                onChange={(e) => setCustomLanguage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addCustomLanguage();
-                  }
-                }}
-                placeholder="Otro lenguaje…"
-                className={`${formFieldInputClass} flex-1`}
-              />
-              <button
-                type="button"
-                onClick={addCustomLanguage}
-                className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-card-foreground hover:bg-foreground/5"
-              >
-                <Plus className="size-3.5" />
-                Agregar
-              </button>
-            </div>
-            {form.programmingLanguages.some(
-              (l) => !COMMON_PROGRAMMING_LANGUAGES.includes(l),
-            ) && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {form.programmingLanguages
-                  .filter((l) => !COMMON_PROGRAMMING_LANGUAGES.includes(l))
-                  .map((custom) => (
-                    <span
-                      key={custom}
-                      className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs text-primary"
-                    >
-                      {custom}
-                      <button
-                        type="button"
-                        onClick={() => toggleLanguage(custom)}
-                        className="hover:opacity-75"
-                      >
-                        <X className="size-3" />
-                      </button>
-                    </span>
-                  ))}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <FieldLabel>Sistemas operativos soportados</FieldLabel>
-            <div className="flex flex-wrap gap-1.5">
-              {COMMON_OPERATING_SYSTEMS.map((os) => {
-                const active = form.operatingSystems.includes(os);
-                return (
-                  <button
-                    key={os}
-                    type="button"
-                    onClick={() => toggleOs(os)}
-                    className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                      active
-                        ? "bg-primary text-primary-foreground"
-                        : "border border-border bg-card text-muted hover:bg-foreground/5 hover:text-card-foreground"
-                    }`}
-                  >
-                    {os}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <FormDialogFooter
-            mode={mode}
-            saving={saving}
-            onClose={onClose}
-            createLabel="Crear software"
-            saveLabel="Guardar cambios"
-          />
+          <FormDialogFooter mode={mode} saving={saving} onClose={onClose} />
         </form>
       </div>
     </div>

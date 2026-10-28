@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AppWindow, Building2, Loader2, Plus, Users } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { SoftwareFormDialog } from "@/components/software/software-form-dialog";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
@@ -29,8 +29,10 @@ import {
   canManageSoftware,
 } from "@/lib/api-permissions";
 import { fetchCompanies } from "@/lib/companies-api";
+import { formatDate } from "@/lib/datetime-form";
 import { forbiddenMessage } from "@/lib/permissions/messages";
-import { softwarePath } from "@/lib/resource-routes";
+import { canAccessRoute } from "@/lib/permissions/routes";
+import { companyPath, softwarePath } from "@/lib/resource-routes";
 import {
   createSoftware,
   deleteSoftware,
@@ -42,6 +44,7 @@ import {
   toSoftwareRequest,
   type SoftwareFormValues,
 } from "@/lib/software-form";
+import { filterAllOption } from "@/lib/table-filter-options";
 import {
   compareDateValues,
   compareNumberValues,
@@ -54,6 +57,12 @@ import type { CompanyResponse } from "@/types/company";
 import type { SoftwareResponse } from "@/types/software";
 
 type SoftwareSortKey = "name" | "version" | "id" | "createdAt";
+
+const TYPE_FILTER_OPTIONS = [
+  filterAllOption("Todos los tipos"),
+  { value: "own", label: "Propio" },
+  { value: "external", label: "Terceros" },
+];
 
 function softwareLabel(sw: SoftwareResponse) {
   return `${sw.name} v${sw.version}`.trim();
@@ -78,11 +87,14 @@ export function SoftwareManager() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("software");
   const [search, setSearch] = useTableSearch("/software");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [sort, setSort] = useState<TableSortState<SoftwareSortKey>>(null);
 
   const filteredSoftwares = useMemo(() => {
     const q = search.trim().toLowerCase();
     return softwares.filter((item) => {
+      if (typeFilter === "own" && item.external) return false;
+      if (typeFilter === "external" && !item.external) return false;
       if (!q) return true;
       const distHaystack = (item.distributors ?? [])
         .map((d) => `${d.rif} ${d.businessName}`)
@@ -91,19 +103,21 @@ export function SoftwareManager() {
         item.id,
         item.name,
         item.version,
-        item.external ? "externo" : "propio",
+        item.external ? "terceros externo" : "propio",
         item.developerName,
         item.developerRif,
         (item.programmingLanguages ?? []).join(" "),
         (item.operatingSystems ?? []).join(" "),
         distHaystack,
+        item.createdAt,
+        formatDate(item.createdAt),
       ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [softwares, search]);
+  }, [softwares, search, typeFilter]);
 
   const sortedSoftwares = useMemo(
     () =>
@@ -189,7 +203,7 @@ export function SoftwareManager() {
     try {
       if (dialog === "create") {
         const created = await createSoftware(bodyOrError);
-        toast.success(`Software "${label}" registrado.`, {
+        toast.success(`Software "${label}" creado.`, {
           href: softwarePath(created.id),
         });
       } else if (dialog === "edit" && selected) {
@@ -214,11 +228,11 @@ export function SoftwareManager() {
       toast.error(forbiddenMessage("delete", "software"));
       return;
     }
-    const label = `${software.name} v${software.version}`;
+    const label = softwareLabel(software);
     if (
       !(await confirm({
-        title: "Confirmar eliminación",
-        message: `¿Eliminar el software "${label}"? Esta acción no se puede deshacer.`,
+        title: "Confirmar",
+        message: `¿Eliminar el software "${label}"?`,
         destructive: true,
       }))
     ) {
@@ -228,10 +242,15 @@ export function SoftwareManager() {
     setDeletingId(software.id);
     try {
       await deleteSoftware(software.id);
-      toast.success(`Software "${label}" eliminado.`);
       await loadData({ silent: true });
+      toast.success(`Software "${label}" eliminado.`);
     } catch (err) {
-      toast.error(getSoftwareErrorMessage(err));
+      reportListTableError({
+        message: getSoftwareErrorMessage(err),
+        recordLabel: label,
+        setListError,
+        toast,
+      });
     } finally {
       setDeletingId(null);
     }
@@ -250,7 +269,7 @@ export function SoftwareManager() {
                 "bg-accent text-accent-foreground",
               )}
             >
-              <Plus className="size-4 mr-1.5" />
+              <Plus className="size-4" />
               Nuevo software
             </button>
           ) : undefined
@@ -270,7 +289,7 @@ export function SoftwareManager() {
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-16 text-muted">
             <Loader2 className="size-5 animate-spin" />
-            Cargando catálogo de softwares…
+            Cargando softwares…
           </div>
         ) : softwares.length === 0 ? (
           <EmptyState title="No hay softwares registrados." />
@@ -279,9 +298,18 @@ export function SoftwareManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por nombre, versión, RIF, desarrollador, distribuidor…"
+              searchPlaceholder="Buscar por nombre, versión, desarrollador, distribuidor…"
               resultCount={filteredSoftwares.length}
               totalCount={softwares.length}
+              filters={[
+                {
+                  id: "type",
+                  label: "Tipo",
+                  value: typeFilter,
+                  onChange: setTypeFilter,
+                  options: TYPE_FILTER_OPTIONS,
+                },
+              ]}
               columns={tableColumns.toolbarColumns}
             />
             {filteredSoftwares.length === 0 ? (
@@ -289,7 +317,7 @@ export function SoftwareManager() {
             ) : (
               <>
                 <TableScroll>
-                  <table className="w-full min-w-[960px] text-left text-sm">
+                  <table className="w-full min-w-[840px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <TableRowMetaHeaders
@@ -340,9 +368,15 @@ export function SoftwareManager() {
                             }
                           />
                           <th className="px-5 py-3 font-medium">Tipo</th>
-                          <th className="px-5 py-3 font-medium">Fabricante / Desarrollador</th>
-                          <th className="px-5 py-3 font-medium">Distribuidores autorizados</th>
-                          <th className="px-5 py-3 font-medium">Lenguajes y SO</th>
+                          <th className="px-5 py-3 font-medium">
+                            Desarrollador
+                          </th>
+                          <th className="px-5 py-3 font-medium">
+                            Distribuidores
+                          </th>
+                          <th className="px-5 py-3 font-medium">
+                            Lenguajes / SO
+                          </th>
                         </TableRowMetaHeaders>
                       </tr>
                     </thead>
@@ -351,6 +385,25 @@ export function SoftwareManager() {
                         const href = softwarePath(item.id);
                         const isDeleting = deletingId === item.id;
                         const distList = item.distributors ?? [];
+                        const devHref =
+                          user &&
+                          item.developerCompanyId &&
+                          canAccessRoute(
+                            user.role,
+                            companyPath(item.developerCompanyId),
+                          )
+                            ? companyPath(item.developerCompanyId)
+                            : undefined;
+                        const distSummary =
+                          distList.length > 0
+                            ? distList
+                                .map((d) => d.businessName || d.rif)
+                                .join(", ")
+                            : "—";
+                        const techSummary = [
+                          ...(item.programmingLanguages ?? []),
+                          ...(item.operatingSystems ?? []),
+                        ].join(", ");
 
                         return (
                           <ClickableTableRow key={item.id} href={href}>
@@ -368,93 +421,69 @@ export function SoftwareManager() {
                                     viewHref={href}
                                     viewLabel={`Ver software ${softwareLabel(item)}`}
                                     onEdit={
-                                      canModify ? () => openEdit(item) : undefined
+                                      canModify
+                                        ? () => openEdit(item)
+                                        : undefined
                                     }
                                     onDelete={
-                                      canDelete ? () => handleDelete(item) : undefined
+                                      canDelete
+                                        ? () => handleDelete(item)
+                                        : undefined
                                     }
                                     deleting={isDeleting}
                                   />
                                 </td>
                               }
                             >
-                              <td className="px-5 py-3.5 font-medium text-card-foreground">
-                                <div className="flex items-center gap-2">
-                                  <AppWindow className="size-4 text-primary shrink-0" />
-                                  <TruncatedText maxClassName="max-w-[200px]">
-                                    {item.name}
-                                  </TruncatedText>
-                                </div>
+                              <td className="max-w-[200px] px-5 py-3.5 font-medium text-card-foreground">
+                                <TruncatedText maxClassName="max-w-[180px]">
+                                  {item.name}
+                                </TruncatedText>
                               </td>
-                              <td className="px-5 py-3.5 font-mono text-xs text-card-foreground">
-                                v{item.version}
+                              <td className="px-5 py-3.5 font-mono text-card-foreground">
+                                {item.version}
                               </td>
-                              <td className="px-5 py-3.5 text-xs">
+                              <td className="px-5 py-3.5">
                                 {item.external ? (
-                                  <span className="inline-flex items-center rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+                                  <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
                                     Terceros
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                                  <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-800 dark:text-emerald-200">
                                     Propio
                                   </span>
                                 )}
                               </td>
-                              <td className="px-5 py-3.5 text-xs text-card-foreground">
+                              <td
+                                className="max-w-[220px] px-5 py-3.5 text-muted"
+                                {...(devHref
+                                  ? { "data-row-click": "ignore" }
+                                  : {})}
+                              >
                                 {item.developerName || item.developerRif ? (
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">
-                                      {item.developerName ?? "Empresa registrada"}
-                                    </span>
-                                    {item.developerRif && (
-                                      <span className="text-muted font-mono text-[11px]">
-                                        {item.developerRif}
-                                      </span>
-                                    )}
-                                  </div>
+                                  <TruncatedText
+                                    maxClassName="max-w-[200px]"
+                                    href={devHref}
+                                  >
+                                    {item.developerName && item.developerRif
+                                      ? `${item.developerName} (${item.developerRif})`
+                                      : (item.developerName ??
+                                        item.developerRif ??
+                                        "—")}
+                                  </TruncatedText>
                                 ) : (
-                                  <span className="text-muted italic">No asignado</span>
+                                  "—"
                                 )}
                               </td>
-                              <td className="px-5 py-3.5 text-xs text-card-foreground">
-                                {distList.length === 0 ? (
-                                  <span className="text-muted italic">
-                                    Sin distribuidores
-                                  </span>
-                                ) : distList.length === 1 ? (
-                                  <div className="flex items-center gap-1.5">
-                                    <Building2 className="size-3.5 text-muted shrink-0" />
-                                    <span className="truncate max-w-[180px]">
-                                      {distList[0].businessName || distList[0].rif}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-1.5">
-                                    <Users className="size-3.5 text-muted shrink-0" />
-                                    <span className="font-medium">
-                                      {distList.length} distribuidores
-                                    </span>
-                                  </div>
-                                )}
+                              <td className="max-w-[220px] px-5 py-3.5 text-muted">
+                                <TruncatedText maxClassName="max-w-[200px]">
+                                  {distSummary}
+                                </TruncatedText>
                               </td>
-                              <td className="px-5 py-3.5 text-xs text-muted">
-                                <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                  {(item.programmingLanguages ?? [])
-                                    .slice(0, 2)
-                                    .map((l: string) => (
-                                      <span
-                                        key={l}
-                                        className="rounded bg-foreground/5 px-1.5 py-0.5 text-[10px]"
-                                      >
-                                        {l}
-                                      </span>
-                                    ))}
-                                  {(item.programmingLanguages ?? []).length > 2 && (
-                                    <span className="text-[10px] text-muted self-center">
-                                      +{item.programmingLanguages.length - 2}
-                                    </span>
-                                  )}
-                                </div>
+                              <td className="max-w-[220px] px-5 py-3.5 text-muted">
+                                <TruncatedText maxClassName="max-w-[200px]">
+                                  {techSummary || "—"}
+                                </TruncatedText>
                               </td>
                             </TableRowMetaCells>
                           </ClickableTableRow>

@@ -439,4 +439,53 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
       { formLabels: ["Precio"], viewLabels: ["Precio"] },
     ],
   },
+  {
+    resource: "software",
+    formPath: "src/components/software/software-form-dialog.tsx",
+    viewPath: "src/components/software/software-view.tsx",
+    fields: [
+      {
+        formLabels: ["Nombre del software"],
+        viewLabels: ["Nombre del software"],
+        formBindings: ["form.name"],
+        viewBindings: ["software.name"],
+      },
+      {
+        formLabels: ["Versión"],
+        viewLabels: ["Versión"],
+        formBindings: ["form.version"],
+        viewBindings: ["software.version"],
+      },
+      {
+        formLabels: ["Tipo de desarrollo"],
+        viewLabels: ["Tipo de desarrollo"],
+        formBindings: ["form.external"],
+        viewBindings: ["software.external"],
+      },
+      {
+        formLabels: ["Empresa desarrolladora"],
+        viewLabels: ["Empresa desarrolladora"],
+        formBindings: ["form.developerCompanyId"],
+        viewBindings: ["software.developerName"],
+      },
+      {
+        formLabels: ["Lenguajes de programación"],
+        viewLabels: ["Lenguajes de programación"],
+        formBindings: ["form.programmingLanguages"],
+        viewBindings: ["software.programmingLanguages"],
+      },
+      {
+        formLabels: ["Sistemas operativos"],
+        viewLabels: ["Sistemas operativos"],
+        formBindings: ["form.operatingSystems"],
+        viewBindings: ["software.operatingSystems"],
+      },
+      {
+        formLabels: ["Distribuidores autorizados"],
+        viewLabels: ["Distribuidores autorizados"],
+        formBindings: ["form.distributorCompanyIds"],
+        viewBindings: ["software?.distributors"],
+      },
+    ],
+  },
 ];
