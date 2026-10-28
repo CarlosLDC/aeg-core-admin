@@ -15,6 +15,7 @@ import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
 import { FieldLabel } from "@/components/ui/field-label";
+import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { TableScroll } from "@/components/ui/table-scroll";
@@ -533,57 +534,62 @@ export function SoftwareView() {
             type="button"
             className="absolute inset-0 bg-black/50"
             aria-label="Cerrar"
+            disabled={addingDistributor}
             onClick={() => setAddDistributorModalOpen(false)}
           />
-          <div className="relative w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl">
-            <div className="mb-6 flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-semibold text-card-foreground">
-                  Vincular distribuidor
-                </h2>
-                <p className="mt-1 text-sm text-muted">
-                  Selecciona la empresa autorizada para distribuir este
-                  software.
-                </p>
+          <div className="relative flex max-h-[min(92vh,100dvh)] w-full max-w-md flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+            <div className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <h2 className="text-lg font-semibold text-card-foreground">
+                    Vincular distribuidor
+                  </h2>
+                  <p className="mt-1 text-sm text-muted">
+                    Selecciona la empresa autorizada para distribuir este
+                    software.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={addingDistributor}
+                  onClick={() => setAddDistributorModalOpen(false)}
+                  className="shrink-0 rounded-lg p-1.5 text-muted hover:bg-foreground/5 disabled:opacity-50"
+                  aria-label="Cerrar"
+                >
+                  <X className="size-5" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setAddDistributorModalOpen(false)}
-                className="rounded-lg p-1.5 text-muted hover:bg-foreground/5"
-              >
-                <X className="size-5" />
-              </button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <FieldLabel required>Empresa distribuidora</FieldLabel>
-                <CompanySelect
-                  value={distributorToAdd}
-                  onChange={setDistributorToAdd}
-                  companies={availableDistributors}
-                  disabled={addingDistributor}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleAddDistributor();
+              }}
+              className="flex min-h-0 flex-1 flex-col overflow-hidden"
+            >
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+                <div>
+                  <FieldLabel required>Empresa distribuidora</FieldLabel>
+                  <CompanySelect
+                    value={distributorToAdd}
+                    onChange={setDistributorToAdd}
+                    companies={availableDistributors}
+                    disabled={addingDistributor}
+                  />
+                </div>
+              </div>
+
+              <div className="shrink-0 border-t border-border px-4 py-4 sm:px-6">
+                <FormDialogFooter
+                  mode="create"
+                  createLabel="Vincular"
+                  saving={addingDistributor}
+                  submitDisabled={!distributorToAdd}
+                  onClose={() => setAddDistributorModalOpen(false)}
                 />
               </div>
-
-              <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  onClick={() => setAddDistributorModalOpen(false)}
-                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-card-foreground transition-colors hover:bg-foreground/5"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleAddDistributor()}
-                  disabled={!distributorToAdd || addingDistributor}
-                  className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:opacity-50"
-                >
-                  {addingDistributor ? "Vinculando…" : "Vincular"}
-                </button>
-              </div>
-            </div>
+            </form>
           </div>
         </div>
       )}

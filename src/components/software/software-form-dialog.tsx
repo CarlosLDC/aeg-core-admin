@@ -1,10 +1,18 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { Plus, X } from "lucide-react";
+import { FormEvent, useEffect, useId, useState } from "react";
+import {
+  AppWindow,
+  Building2,
+  Cpu,
+  Loader2,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
 import { CompanySelect } from "@/components/companies/company-select";
 import { FieldLabel } from "@/components/ui/field-label";
-import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
+import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import {
   COMMON_OPERATING_SYSTEMS,
   COMMON_PROGRAMMING_LANGUAGES,
@@ -33,6 +41,40 @@ type SoftwareFormDialogProps = {
   onSubmit: (values: SoftwareFormValues) => void;
 };
 
+type WizardStep = 1 | 2 | 3;
+type WizardSection = "general" | "technical" | "distributors";
+
+const FORM_STEPS: {
+  step: WizardStep;
+  section: WizardSection;
+  label: string;
+}[] = [
+  { step: 1, section: "general", label: "Identificación" },
+  { step: 2, section: "technical", label: "Tecnología" },
+  { step: 3, section: "distributors", label: "Distribuidores" },
+];
+
+const STEP_ICONS = {
+  1: AppWindow,
+  2: Cpu,
+  3: Building2,
+} as const;
+
+const LAST_WIZARD_STEP: WizardStep = 3;
+
+function stepSubtitle(step: WizardStep): string {
+  switch (step) {
+    case 1:
+      return "Indica el nombre, la versión, el tipo de desarrollo y el fabricante.";
+    case 2:
+      return "Selecciona los lenguajes de programación y sistemas operativos.";
+    case 3:
+      return "Asocia las empresas autorizadas para distribuir este software.";
+    default:
+      return "";
+  }
+}
+
 export function SoftwareFormDialog({
   mode,
   software,
@@ -43,10 +85,13 @@ export function SoftwareFormDialog({
   onClose,
   onSubmit,
 }: SoftwareFormDialogProps) {
+  const formId = useId();
+  const titleId = useId();
+  const [step, setStep] = useState<WizardStep>(1);
   const [form, setForm] = useState<SoftwareFormValues>(
     INITIAL_SOFTWARE_FORM_VALUES,
   );
-  const [localError, setLocalError] = useState<string | null>(null);
+  const [stepError, setStepError] = useState<string | null>(null);
   const [customLanguage, setCustomLanguage] = useState("");
   const [selectedDistributorToAdd, setSelectedDistributorToAdd] = useState("");
 
@@ -57,24 +102,74 @@ export function SoftwareFormDialog({
     } else {
       setForm(INITIAL_SOFTWARE_FORM_VALUES);
     }
-    setLocalError(null);
+    setStep(1);
+    setStepError(null);
     setCustomLanguage("");
     setSelectedDistributorToAdd("");
   }, [open, mode, software]);
 
   if (!open) return null;
 
+  function validateStep(targetStep: WizardStep): string | null {
+    if (targetStep === 1) {
+      if (!form.name.trim()) {
+        return "El nombre del software es obligatorio.";
+      }
+      if (!form.version.trim()) {
+        return "La versión del software es obligatoria.";
+      }
+      return null;
+    }
+    return null;
+  }
+
+  function goToStep(target: WizardStep) {
+    if (saving) return;
+    if (target > step) {
+      for (let s = step; s < target; s++) {
+        const err = validateStep(s as WizardStep);
+        if (err) {
+          setStepError(err);
+          setStep(s as WizardStep);
+          return;
+        }
+      }
+    }
+    setStepError(null);
+    setStep(target);
+  }
+
+  function goBack() {
+    if (saving || step === 1) return;
+    setStepError(null);
+    setStep((current) => Math.max(1, current - 1) as WizardStep);
+  }
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setLocalError(null);
-    if (!form.name.trim()) {
-      setLocalError("El nombre del software es obligatorio.");
+
+    const currentError = validateStep(step);
+    if (currentError) {
+      setStepError(currentError);
       return;
     }
-    if (!form.version.trim()) {
-      setLocalError("La versión del software es obligatoria.");
+
+    if (step < LAST_WIZARD_STEP) {
+      setStepError(null);
+      setStep((current) => (current + 1) as WizardStep);
       return;
     }
+
+    for (const { step: checkStep } of FORM_STEPS) {
+      const checkError = validateStep(checkStep);
+      if (checkError) {
+        setStepError(checkError);
+        setStep(checkStep);
+        return;
+      }
+    }
+
+    setStepError(null);
     onSubmit(form);
   }
 
@@ -147,242 +242,344 @@ export function SoftwareFormDialog({
     new Set([...COMMON_PROGRAMMING_LANGUAGES, ...form.programmingLanguages]),
   );
 
+  const displayError = stepError ?? error;
+  const currentSection =
+    FORM_STEPS.find((item) => item.step === step)?.section ?? "general";
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
+      aria-labelledby={titleId}
     >
       <button
         type="button"
         className="absolute inset-0 bg-black/50"
         aria-label="Cerrar"
+        disabled={saving}
         onClick={onClose}
       />
-      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-card-foreground">
-              {mode === "create" ? "Nuevo software" : "Editar software"}
-            </h2>
-            <p className="mt-1 text-sm text-muted">
-              Catálogo de programas de computación y facturación (Art. 46 h).
-            </p>
+      <div className="relative flex max-h-[min(92vh,100dvh)] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+        <div className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h2
+                id={titleId}
+                className="text-lg font-semibold text-card-foreground"
+              >
+                {mode === "create" ? "Nuevo software" : "Editar software"}
+              </h2>
+              <p className="mt-1 text-sm text-muted">{stepSubtitle(step)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="shrink-0 rounded-lg p-1.5 text-muted hover:bg-foreground/5 disabled:opacity-50"
+              aria-label="Cerrar"
+            >
+              <X className="size-5" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-muted hover:bg-foreground/5"
-          >
-            <X className="size-5" />
-          </button>
+
+          <nav className="mt-4 flex gap-1" aria-label="Pasos del registro">
+            {FORM_STEPS.map(({ step: wizardStep, label }) => {
+              const Icon = STEP_ICONS[wizardStep];
+              const isActive = step === wizardStep;
+              const isDone = step > wizardStep;
+              return (
+                <button
+                  key={wizardStep}
+                  type="button"
+                  disabled={saving}
+                  onClick={() => goToStep(wizardStep)}
+                  className={cn(
+                    "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2 text-center transition-colors",
+                    "hover:bg-foreground/5 disabled:opacity-50",
+                    isActive && "bg-accent/10 text-accent",
+                    isDone && !isActive && "text-card-foreground",
+                    !isActive && !isDone && "text-muted",
+                  )}
+                  aria-current={isActive ? "step" : undefined}
+                >
+                  <Icon className="size-4 shrink-0" aria-hidden />
+                  <span className="text-[11px] font-medium leading-tight sm:text-xs">
+                    {label}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
         </div>
 
-        {(localError ?? error) && (
-          <p
-            role="alert"
-            className="mb-4 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
-          >
-            {localError ?? error}
-          </p>
-        )}
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+          {displayError && (
+            <p
+              role="alert"
+              className="mb-4 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
+            >
+              {displayError}
+            </p>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <fieldset className="space-y-4 rounded-xl border border-border p-4">
-            <legend className="px-1 text-sm font-semibold text-card-foreground">
-              Datos generales
-            </legend>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <FieldLabel required>Nombre del software</FieldLabel>
-                <input
-                  type="text"
-                  required
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, name: e.target.value }))
-                  }
-                  placeholder="Ej. Saint Enterprise, A2, Valery…"
-                  className={formFieldInputClass}
-                />
-              </label>
-              <label className="block">
-                <FieldLabel required>Versión</FieldLabel>
-                <input
-                  type="text"
-                  required
-                  value={form.version}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, version: e.target.value }))
-                  }
-                  placeholder="Ej. 1.0, 2.5.4…"
-                  className={cn(formFieldInputClass, "font-mono")}
-                />
-              </label>
-            </div>
+          <form id={formId} onSubmit={handleSubmit} className="space-y-4">
+            {currentSection === "general" && (
+              <div className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block">
+                    <FieldLabel required>Nombre del software</FieldLabel>
+                    <input
+                      type="text"
+                      required
+                      disabled={saving}
+                      value={form.name}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, name: e.target.value }))
+                      }
+                      placeholder="Ej. Saint Enterprise, A2, Valery…"
+                      className={formFieldInputClass}
+                    />
+                  </label>
+                  <label className="block">
+                    <FieldLabel required>Versión</FieldLabel>
+                    <input
+                      type="text"
+                      required
+                      disabled={saving}
+                      value={form.version}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, version: e.target.value }))
+                      }
+                      placeholder="Ej. 1.0, 2.5.4…"
+                      className={cn(formFieldInputClass, "font-mono")}
+                    />
+                  </label>
+                </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <FieldLabel>Tipo de desarrollo</FieldLabel>
-                <div
-                  role="group"
-                  aria-label="Tipo de desarrollo"
-                  className={formFieldSegmentedToggleShellClass}
-                >
-                  <button
-                    type="button"
-                    aria-pressed={!form.external}
-                    onClick={() => setForm((f) => ({ ...f, external: false }))}
-                    className={cn(
-                      "flex-1 rounded-md px-3 text-sm font-medium transition-colors",
-                      !form.external
-                        ? segmentedToggleActiveClass("emerald")
-                        : "text-muted hover:text-card-foreground",
-                    )}
+                <div>
+                  <FieldLabel>Tipo de desarrollo</FieldLabel>
+                  <div
+                    role="group"
+                    aria-label="Tipo de desarrollo"
+                    className={formFieldSegmentedToggleShellClass}
                   >
-                    Propio
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={form.external}
-                    onClick={() => setForm((f) => ({ ...f, external: true }))}
-                    className={cn(
-                      "flex-1 rounded-md px-3 text-sm font-medium transition-colors",
-                      form.external
-                        ? segmentedToggleActiveClass("amber")
-                        : "text-muted hover:text-card-foreground",
-                    )}
-                  >
-                    Terceros
-                  </button>
+                    <button
+                      type="button"
+                      disabled={saving}
+                      aria-pressed={!form.external}
+                      onClick={() =>
+                        setForm((f) => ({ ...f, external: false }))
+                      }
+                      className={cn(
+                        "flex-1 rounded-md px-3 text-sm font-medium transition-colors",
+                        !form.external
+                          ? segmentedToggleActiveClass("emerald")
+                          : "text-muted hover:text-card-foreground",
+                      )}
+                    >
+                      Propio
+                    </button>
+                    <button
+                      type="button"
+                      disabled={saving}
+                      aria-pressed={form.external}
+                      onClick={() =>
+                        setForm((f) => ({ ...f, external: true }))
+                      }
+                      className={cn(
+                        "flex-1 rounded-md px-3 text-sm font-medium transition-colors",
+                        form.external
+                          ? segmentedToggleActiveClass("amber")
+                          : "text-muted hover:text-card-foreground",
+                      )}
+                    >
+                      Terceros
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <FieldLabel>Empresa desarrolladora</FieldLabel>
+                  <CompanySelect
+                    value={form.developerCompanyId}
+                    onChange={(developerCompanyId) =>
+                      setForm((f) => ({ ...f, developerCompanyId }))
+                    }
+                    companies={companies}
+                    disabled={saving}
+                  />
                 </div>
               </div>
-              <div>
-                <FieldLabel>Empresa desarrolladora</FieldLabel>
-                <CompanySelect
-                  value={form.developerCompanyId}
-                  onChange={(developerCompanyId) =>
-                    setForm((f) => ({ ...f, developerCompanyId }))
-                  }
-                  companies={companies}
-                  disabled={saving}
-                />
-              </div>
-            </div>
-          </fieldset>
+            )}
 
-          <fieldset className="space-y-4 rounded-xl border border-border p-4">
-            <legend className="px-1 text-sm font-semibold text-card-foreground">
-              Especificaciones técnicas
-            </legend>
-            <div>
-              <FieldLabel>Lenguajes de programación</FieldLabel>
-              <div className="flex flex-wrap gap-2">
-                {allLanguageOptions.map((lang) => {
-                  const active = form.programmingLanguages.includes(lang);
-                  return (
+            {currentSection === "technical" && (
+              <div className="space-y-4">
+                <div>
+                  <FieldLabel>Lenguajes de programación</FieldLabel>
+                  <div className="flex flex-wrap gap-2">
+                    {allLanguageOptions.map((lang) => {
+                      const active = form.programmingLanguages.includes(lang);
+                      return (
+                        <button
+                          key={lang}
+                          type="button"
+                          disabled={saving}
+                          aria-pressed={active}
+                          onClick={() => toggleLanguage(lang)}
+                          className={toggleButtonClass(active, "sky")}
+                        >
+                          {lang}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      type="text"
+                      disabled={saving}
+                      value={customLanguage}
+                      onChange={(e) => setCustomLanguage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addCustomLanguage();
+                        }
+                      }}
+                      placeholder="Agregar otro lenguaje…"
+                      className={cn(formFieldInputClass, "flex-1")}
+                    />
                     <button
-                      key={lang}
                       type="button"
-                      aria-pressed={active}
-                      onClick={() => toggleLanguage(lang)}
-                      className={toggleButtonClass(active, "sky")}
+                      onClick={addCustomLanguage}
+                      disabled={saving || !customLanguage.trim()}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-card-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
                     >
-                      {lang}
+                      <Plus className="size-4" />
+                      Agregar
                     </button>
-                  );
-                })}
+                  </div>
+                </div>
+
+                <div>
+                  <FieldLabel>Sistemas operativos</FieldLabel>
+                  <div className="flex flex-wrap gap-2">
+                    {COMMON_OPERATING_SYSTEMS.map((os) => {
+                      const active = form.operatingSystems.includes(os);
+                      return (
+                        <button
+                          key={os}
+                          type="button"
+                          disabled={saving}
+                          aria-pressed={active}
+                          onClick={() => toggleOs(os)}
+                          className={toggleButtonClass(active, "sky")}
+                        >
+                          {os}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-              <div className="mt-3 flex gap-2">
-                <input
-                  type="text"
-                  value={customLanguage}
-                  onChange={(e) => setCustomLanguage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addCustomLanguage();
-                    }
-                  }}
-                  placeholder="Agregar otro lenguaje…"
-                  className={cn(formFieldInputClass, "flex-1")}
-                />
+            )}
+
+            {currentSection === "distributors" && (
+              <div className="space-y-4">
+                <div>
+                  <FieldLabel>Distribuidores autorizados</FieldLabel>
+                  <CompanySelect
+                    value={selectedDistributorToAdd}
+                    onChange={addDistributorCompany}
+                    companies={availableDistributorCompanies}
+                    disabled={saving}
+                  />
+                </div>
+
+                {selectedDistributors.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedDistributors.map((d) => (
+                      <div
+                        key={d.id}
+                        className="flex items-center justify-between gap-2.5 rounded-lg border border-border bg-background p-2.5"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-card-foreground">
+                            {d.businessName || d.rif}
+                          </p>
+                          <p className="font-mono text-xs text-muted">
+                            {d.rif}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() => removeDistributorCompany(d.id)}
+                          className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600 disabled:opacity-50"
+                          aria-label={`Quitar distribuidor ${d.businessName || d.rif}`}
+                        >
+                          <Trash2 className="size-4" aria-hidden />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="rounded-lg border border-dashed border-border bg-foreground/[0.02] px-4 py-6 text-center text-sm text-muted">
+                    No hay distribuidores seleccionados para este software.
+                  </p>
+                )}
+              </div>
+            )}
+          </form>
+        </div>
+
+        <div className="shrink-0 border-t border-border px-4 py-4 sm:px-6">
+          <FormDialogFooterBar>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between [&_button]:w-full sm:[&_button]:w-auto">
+              <button
+                type="button"
+                onClick={goBack}
+                disabled={saving || step === 1}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
+              >
+                Atrás
+              </button>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row">
                 <button
                   type="button"
-                  onClick={addCustomLanguage}
-                  disabled={!customLanguage.trim()}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-card-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+                  onClick={onClose}
+                  disabled={saving}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
                 >
-                  <Plus className="size-4" />
-                  Agregar
+                  Cancelar
                 </button>
-              </div>
-            </div>
-
-            <div>
-              <FieldLabel>Sistemas operativos</FieldLabel>
-              <div className="flex flex-wrap gap-2">
-                {COMMON_OPERATING_SYSTEMS.map((os) => {
-                  const active = form.operatingSystems.includes(os);
-                  return (
-                    <button
-                      key={os}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => toggleOs(os)}
-                      className={toggleButtonClass(active, "sky")}
-                    >
-                      {os}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </fieldset>
-
-          <fieldset className="space-y-4 rounded-xl border border-border p-4">
-            <legend className="px-1 text-sm font-semibold text-card-foreground">
-              Distribuidores autorizados
-            </legend>
-            <div>
-              <FieldLabel>Vincular empresa distribuidora</FieldLabel>
-              <CompanySelect
-                value={selectedDistributorToAdd}
-                onChange={addDistributorCompany}
-                companies={availableDistributorCompanies}
-                disabled={saving}
-              />
-            </div>
-
-            {selectedDistributors.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {selectedDistributors.map((d) => (
-                  <span
-                    key={d.id}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-medium text-card-foreground"
+                {step < LAST_WIZARD_STEP ? (
+                  <button
+                    type="submit"
+                    form={formId}
+                    disabled={saving}
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
                   >
-                    <span>{d.businessName || d.rif}</span>
-                    <span className="font-mono text-muted">({d.rif})</span>
-                    <button
-                      type="button"
-                      onClick={() => removeDistributorCompany(d.id)}
-                      className="rounded p-0.5 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600"
-                      aria-label={`Quitar distribuidor ${d.businessName || d.rif}`}
-                    >
-                      <X className="size-3.5" />
-                    </button>
-                  </span>
-                ))}
+                    Siguiente
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    form={formId}
+                    disabled={saving}
+                    className={cn(
+                      "flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
+                      saving && "cursor-not-allowed opacity-70",
+                    )}
+                  >
+                    {saving && <Loader2 className="size-4 animate-spin" />}
+                    {mode === "create" ? "Crear" : "Guardar"}
+                  </button>
+                )}
               </div>
-            ) : (
-              <p className="text-xs text-muted">
-                Sin distribuidores seleccionados.
-              </p>
-            )}
-          </fieldset>
-
-          <FormDialogFooter mode={mode} saving={saving} onClose={onClose} />
-        </form>
+            </div>
+          </FormDialogFooterBar>
+        </div>
       </div>
     </div>
   );
