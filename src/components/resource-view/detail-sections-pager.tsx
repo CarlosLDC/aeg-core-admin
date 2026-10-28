@@ -20,10 +20,6 @@ export function DetailSectionsPager({
 }: DetailSectionsPagerProps) {
   const [index, setIndex] = useState(0);
 
-  useEffect(() => {
-    setIndex(0);
-  }, [steps]);
-
   const stepCount = steps.length;
   const safeIndex =
     stepCount === 0 ? 0 : Math.min(index, stepCount - 1);
