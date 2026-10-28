@@ -249,7 +249,7 @@ export function SoftwareFormDialog({
         disabled={saving}
         onClick={onClose}
       />
-      <div className="relative flex max-h-[min(92vh,100dvh)] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+      <div className="relative flex max-h-[min(92vh,100dvh)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
         <div className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
