@@ -29,6 +29,7 @@ import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
 import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-mqtt-badge";
 import { PrinterTicketConfigPanel } from "@/components/printers/printer-ticket-json-preview";
+import { PrinterLogsSection } from "@/components/printers/printer-logs-section";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
@@ -490,6 +491,10 @@ export function PrinterView() {
           />
           <DetailField label="MAC" value={printer.macAddress || "—"} mono />
         </DetailCard>
+
+        <DetailSection title="Monitoreo de logs Remoto">
+          <PrinterLogsSection printer={printer} />
+        </DetailSection>
       </div>
     );
   }, [
@@ -682,6 +687,15 @@ export function PrinterView() {
                 mono
               />
             ) : null}
+          </DetailSection>
+        ),
+      },
+      {
+        id: "logs",
+        label: "Logs",
+        content: (
+          <DetailSection title="Monitoreo de logs Remoto">
+            <PrinterLogsSection printer={printer} />
           </DetailSection>
         ),
       },
