@@ -492,7 +492,7 @@ export function PrinterView() {
           <DetailField label="MAC" value={printer.macAddress || "—"} mono />
         </DetailCard>
 
-        <PrinterLogsSection printer={printer} />
+        {isAdmin ? <PrinterLogsSection printer={printer} /> : null}
       </div>
     );
   }, [
@@ -502,6 +502,7 @@ export function PrinterView() {
     clientLabelById,
     statusQuickAction,
     statusBadgeTitle,
+    isAdmin,
   ]);
 
   const adminDetailSteps = useMemo(() => {
@@ -688,12 +689,15 @@ export function PrinterView() {
           </DetailSection>
         ),
       },
-      {
+    );
+
+    if (isAdmin) {
+      steps.push({
         id: "logs",
         label: "Logs",
         content: <PrinterLogsSection printer={printer} />,
-      },
-    );
+      });
+    }
 
     return steps;
   }, [
