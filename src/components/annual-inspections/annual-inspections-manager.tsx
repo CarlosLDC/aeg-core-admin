@@ -34,6 +34,7 @@ import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { formatDate } from "@/lib/datetime-form";
 import { useTableSearch } from "@/hooks/use-table-search";
+import { useTableFilter } from "@/hooks/use-table-filter";
 import { hasAnnualInspectionMqttAudit } from "@/lib/annual-inspection-mqtt-display";
 import { summarizeAnnualInspectionChecklist } from "@/lib/annual-inspection-checklist-display";
 import {
@@ -87,8 +88,16 @@ export function AnnualInspectionsManager() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("annual-inspections");
   const [search, setSearch] = useTableSearch("/annual-inspections");
-  const [printerFilter, setPrinterFilter] = useState("all");
-  const [technicianFilter, setTechnicianFilter] = useState("all");
+  const [printerFilter, setPrinterFilter] = useTableFilter(
+    "/annual-inspections",
+    "printer",
+    "all",
+  );
+  const [technicianFilter, setTechnicianFilter] = useTableFilter(
+    "/annual-inspections",
+    "technician",
+    "all",
+  );
   const [sort, setSort] = useState<TableSortState<AnnualInspectionSortKey>>(null);
 
   const printerLabelById = useMemo(

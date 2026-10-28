@@ -1,12 +1,18 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   clearAllStoredTableSearches,
+  clearStoredTableFilter,
+  clearStoredTableFilters,
   clearStoredTablePage,
   clearStoredTableSearch,
   cleanupStoredTableSearches,
+  getStoredTableFilter,
+  getStoredTableFilters,
   getStoredTablePage,
   getStoredTableSearch,
+  hasStoredTableFilter,
   isPathInSection,
+  setStoredTableFilter,
   setStoredTablePage,
   setStoredTableSearch,
 } from "./table-search-storage";
@@ -103,6 +109,47 @@ describe("table-search-storage", () => {
     });
   });
 
+  describe("getStoredTableFilter and setStoredTableFilter", () => {
+    it("returns null by default", () => {
+      expect(getStoredTableFilter("/printers", "status")).toBe(null);
+      expect(hasStoredTableFilter("/printers", "status")).toBe(false);
+    });
+
+    it("stores and retrieves filter values", () => {
+      setStoredTableFilter("/printers", "status", "enajenada");
+      expect(getStoredTableFilter("/printers", "status")).toBe("enajenada");
+      expect(hasStoredTableFilter("/printers", "status")).toBe(true);
+
+      setStoredTableFilter("/printers", "serial", "ABC-123");
+      expect(getStoredTableFilter("/printers", "serial")).toBe("ABC-123");
+      expect(getStoredTableFilters("/printers")).toEqual({
+        status: "enajenada",
+        serial: "ABC-123",
+      });
+    });
+
+    it("clears individual filter key when null or empty", () => {
+      setStoredTableFilter("/printers", "status", "enajenada");
+      setStoredTableFilter("/printers", "status", null);
+      expect(getStoredTableFilter("/printers", "status")).toBe(null);
+
+      setStoredTableFilter("/printers", "status", "enajenada");
+      clearStoredTableFilter("/printers", "status");
+      expect(getStoredTableFilter("/printers", "status")).toBe(null);
+    });
+
+    it("clears all filters for a section via clearStoredTableFilters", () => {
+      setStoredTableFilter("/printers", "status", "enajenada");
+      setStoredTableFilter("/printers", "serial", "ABC");
+      setStoredTableFilter("/branches", "state", "Miranda");
+
+      clearStoredTableFilters("/printers");
+      expect(getStoredTableFilter("/printers", "status")).toBe(null);
+      expect(getStoredTableFilter("/printers", "serial")).toBe(null);
+      expect(getStoredTableFilter("/branches", "state")).toBe("Miranda");
+    });
+  });
+
   describe("cleanupStoredTableSearches", () => {
     it("preserves searches within the active section and clears others", () => {
       setStoredTableSearch("/printers", "kinpe");
@@ -126,28 +173,37 @@ describe("table-search-storage", () => {
       expect(getStoredTableSearch("/printers")).toBe("");
     });
 
-    it("faithfully reproduces the user's printer selection and return scenario", () => {
-      // 1. User is on /printers, types "kinpe", and navigates to page 3
+    it("faithfully reproduces the user's printer selection and return scenario with filters", () => {
+      // 1. User is on /printers, filters by "enajenada", types "kinpe", and navigates to page 3
+      setStoredTableFilter("/printers", "status", "enajenada");
       setStoredTableSearch("/printers", "kinpe");
       setStoredTablePage("/printers", 3);
+
+      expect(getStoredTableFilter("/printers", "status")).toBe("enajenada");
       expect(getStoredTableSearch("/printers")).toBe("kinpe");
       expect(getStoredTablePage("/printers")).toBe(3);
 
-      // 2. User clicks printer, navigating to /printers/14
+      // 2. User clicks printer element, navigating to /printers/14
       cleanupStoredTableSearches("/printers/14");
-      // Search and page are retained while viewing printer detail
+
+      // Filter, search and page are retained while viewing printer detail
+      expect(getStoredTableFilter("/printers", "status")).toBe("enajenada");
       expect(getStoredTableSearch("/printers")).toBe("kinpe");
       expect(getStoredTablePage("/printers")).toBe(3);
 
       // 3. User returns to /printers table
       cleanupStoredTableSearches("/printers");
-      // Search filter and page still remain
+
+      // Filter, search and page still remain active
+      expect(getStoredTableFilter("/printers", "status")).toBe("enajenada");
       expect(getStoredTableSearch("/printers")).toBe("kinpe");
       expect(getStoredTablePage("/printers")).toBe(3);
 
       // 4. User navigates out of impresoras (e.g. to /branches)
       cleanupStoredTableSearches("/branches");
-      // Search filter and page for /printers are now reset
+
+      // Filter, search and page for /printers are now reset
+      expect(getStoredTableFilter("/printers", "status")).toBe(null);
       expect(getStoredTableSearch("/printers")).toBe("");
       expect(getStoredTablePage("/printers")).toBe(null);
     });
@@ -168,14 +224,18 @@ describe("table-search-storage", () => {
       for (const { section, subpath } of sections) {
         setStoredTableSearch(section, "query-test");
         setStoredTablePage(section, 2);
+        setStoredTableFilter(section, "filter-key", "filter-val");
+
         cleanupStoredTableSearches(subpath);
         expect(getStoredTableSearch(section)).toBe("query-test");
         expect(getStoredTablePage(section)).toBe(2);
+        expect(getStoredTableFilter(section, "filter-key")).toBe("filter-val");
 
         // Leaving section
         cleanupStoredTableSearches("/other-section");
         expect(getStoredTableSearch(section)).toBe("");
         expect(getStoredTablePage(section)).toBe(null);
+        expect(getStoredTableFilter(section, "filter-key")).toBe(null);
       }
     });
   });

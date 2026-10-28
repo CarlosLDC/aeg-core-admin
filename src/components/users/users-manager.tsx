@@ -58,6 +58,7 @@ import {
 } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableSearch } from "@/hooks/use-table-search";
+import { useTableFilter } from "@/hooks/use-table-filter";
 import { ROLE_LABELS } from "@/lib/roles";
 import {
   userCreateSuccessMessage,
@@ -124,9 +125,17 @@ export function UsersManager() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useTableSearch("/users");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [portalFilter, setPortalFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useTableFilter("/users", "role", "all");
+  const [portalFilter, setPortalFilter] = useTableFilter(
+    "/users",
+    "portal",
+    "all",
+  );
+  const [statusFilter, setStatusFilter] = useTableFilter(
+    "/users",
+    "status",
+    "all",
+  );
   const tableColumns = useTableColumnVisibility("users", {
     includeCreatedAt: false,
   });

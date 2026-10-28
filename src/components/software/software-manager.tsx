@@ -22,6 +22,7 @@ import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { useTableSearch } from "@/hooks/use-table-search";
+import { useTableFilter } from "@/hooks/use-table-filter";
 import { reportListTableError } from "@/lib/api-error-message";
 import {
   canCreateSoftwareRecord,
@@ -86,7 +87,11 @@ export function SoftwareManager() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("software");
   const [search, setSearch] = useTableSearch("/software");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useTableFilter(
+    "/software",
+    "type",
+    "all",
+  );
   const [sort, setSort] = useState<TableSortState<SoftwareSortKey>>(null);
 
   const filteredSoftwares = useMemo(() => {

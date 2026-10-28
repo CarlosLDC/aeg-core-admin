@@ -24,6 +24,7 @@ import { useFieldOperationsCatalog } from "@/hooks/use-field-operations-catalog"
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { useTableSearch } from "@/hooks/use-table-search";
+import { useTableFilter } from "@/hooks/use-table-filter";
 import {
   ABNORMALITY_ORIGIN_LABELS,
   ABNORMALITY_TYPE_LABELS,
@@ -67,7 +68,11 @@ export function AbnormalitiesManager() {
   const [formError, setFormError] = useState<string | null>(null);
   const tableColumns = useTableColumnVisibility("abnormalities");
   const [search, setSearch] = useTableSearch("/abnormalities");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useTableFilter(
+    "/abnormalities",
+    "type",
+    "all",
+  );
   const [sort, setSort] = useState<TableSortState<AbnormalitySortKey>>(null);
 
   const printerLabelById = useMemo(

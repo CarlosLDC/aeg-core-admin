@@ -10,6 +10,8 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableSearch } from "@/hooks/use-table-search";
+import { useTableFilter } from "@/hooks/use-table-filter";
+import { hasStoredTableFilter } from "@/lib/table-search-storage";
 import {
   fetchClientModificationRequests,
   getClientModificationRequestsErrorMessage,
@@ -43,10 +45,14 @@ export function ClientModificationRequestsManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useTableSearch("/clients/reviews");
-  const [statusFilter, setStatusFilter] = useState<ModificationRequestStatus | "all">(
+  const [statusFilter, setStatusFilter] = useTableFilter<ModificationRequestStatus | "all">(
+    "/clients/reviews",
+    "status",
     "all",
   );
-  const userChangedStatusFilter = useRef(false);
+  const userChangedStatusFilter = useRef(
+    hasStoredTableFilter("/clients/reviews", "status"),
+  );
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false;

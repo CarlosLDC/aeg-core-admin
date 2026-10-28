@@ -15,6 +15,8 @@ import {
 } from "@/lib/client-modification-requests-api";
 import { formatDate } from "@/lib/datetime-form";
 import { useTableSearch } from "@/hooks/use-table-search";
+import { useTableFilter } from "@/hooks/use-table-filter";
+import { hasStoredTableFilter } from "@/lib/table-search-storage";
 import {
   DEFAULT_POLL_INTERVAL_MS,
   DEFAULT_RETRY_DELAYS_MS,
@@ -55,10 +57,14 @@ export function ModificationReviewsManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useTableSearch("/reviews");
-  const [statusFilter, setStatusFilter] = useState<ModificationRequestStatus | "all">(
+  const [statusFilter, setStatusFilter] = useTableFilter<ModificationRequestStatus | "all">(
+    "/reviews",
+    "status",
     "all",
   );
-  const userChangedStatusFilter = useRef(false);
+  const userChangedStatusFilter = useRef(
+    hasStoredTableFilter("/reviews", "status"),
+  );
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false;

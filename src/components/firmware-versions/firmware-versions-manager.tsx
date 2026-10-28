@@ -43,6 +43,7 @@ import {
 } from "@/lib/table-sort";
 import { formatDate } from "@/lib/datetime-form";
 import { useTableSearch } from "@/hooks/use-table-search";
+import { useTableFilter } from "@/hooks/use-table-filter";
 import {
   createFirmware,
   deleteFirmware,
@@ -104,7 +105,11 @@ export function FirmwareVersionsManager() {
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("firmware-versions");
   const [search, setSearch] = useTableSearch("/firmware-versions");
-  const [modelFilter, setModelFilter] = useState("all");
+  const [modelFilter, setModelFilter] = useTableFilter(
+    "/firmware-versions",
+    "model",
+    "all",
+  );
   const [sort, setSort] = useState<TableSortState<FirmwareSortKey>>(null);
 
   const modelMap = useMemo(() => {

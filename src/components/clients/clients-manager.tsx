@@ -30,6 +30,7 @@ import { formatDate } from "@/lib/datetime-form";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { useTableSearch } from "@/hooks/use-table-search";
+import { useTableFilter } from "@/hooks/use-table-filter";
 import {
   compareDateValues,
   compareNumberValues,
@@ -220,7 +221,11 @@ export function ClientsManager() {
   const [resumeBranchId, setResumeBranchId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("clients");
   const [search, setSearch] = useTableSearch("/clients");
-  const [stateFilter, setStateFilter] = useState("all");
+  const [stateFilter, setStateFilter] = useTableFilter(
+    "/clients",
+    "state",
+    "all",
+  );
   const [sort, setSort] = useState<TableSortState<ClientSortKey>>(null);
 
   const loadClients = useCallback(async (options?: { silent?: boolean }) => {

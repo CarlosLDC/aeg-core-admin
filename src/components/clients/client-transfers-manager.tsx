@@ -15,6 +15,7 @@ import { useConfirm } from "@/context/confirm-provider";
 import { useToast } from "@/context/toast-provider";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableSearch } from "@/hooks/use-table-search";
+import { useTableFilter } from "@/hooks/use-table-filter";
 import { distributorLabel } from "@/lib/branch-roles";
 import { formatDate } from "@/lib/datetime-form";
 import { fetchBranches } from "@/lib/branches-api";
@@ -85,7 +86,11 @@ export function ClientTransfersManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useTableSearch("/client-transfers");
-  const [distributorFilter, setDistributorFilter] = useState<string>(FILTER_ALL);
+  const [distributorFilter, setDistributorFilter] = useTableFilter<string>(
+    "/client-transfers",
+    "distributor",
+    FILTER_ALL,
+  );
   const [transferClient, setTransferClient] = useState<ClientResponse | null>(
     null,
   );

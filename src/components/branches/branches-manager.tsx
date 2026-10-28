@@ -60,6 +60,7 @@ import {
 } from "@/lib/table-sort";
 import { formatDate } from "@/lib/datetime-form";
 import { useTableSearch } from "@/hooks/use-table-search";
+import { useTableFilter } from "@/hooks/use-table-filter";
 import {
   deleteBranchRoles,
   distributorLabel,
@@ -196,9 +197,21 @@ export function BranchesManager() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("branches");
   const [search, setSearch] = useTableSearch("/branches");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [stateFilter, setStateFilter] = useState("all");
-  const [companyFilter, setCompanyFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useTableFilter(
+    "/branches",
+    "type",
+    "all",
+  );
+  const [stateFilter, setStateFilter] = useTableFilter(
+    "/branches",
+    "state",
+    "all",
+  );
+  const [companyFilter, setCompanyFilter] = useTableFilter(
+    "/branches",
+    "company",
+    "all",
+  );
   const [sort, setSort] = useState<TableSortState<BranchSortKey>>(null);
 
   const clients = catalogRoles?.clients ?? [];

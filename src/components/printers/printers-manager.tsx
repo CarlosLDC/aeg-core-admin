@@ -83,6 +83,7 @@ import {
 } from "@/lib/printer-form";
 import { formatDate } from "@/lib/datetime-form";
 import { useTableSearch } from "@/hooks/use-table-search";
+import { useTableFilter } from "@/hooks/use-table-filter";
 import { fetchPrinterModels } from "@/lib/printer-models-api";
 import {
   fetchMissingPrinterModels,
@@ -205,10 +206,14 @@ export function PrintersManager() {
   const [forceDeleting, setForceDeleting] = useState(false);
   const tableColumns = useTableColumnVisibility("printers");
   const [search, setSearch] = useTableSearch("/printers");
-  const [statusFilter, setStatusFilter] = useState<
+  const [statusFilter, setStatusFilter] = useTableFilter<
     PrinterStatus | "all" | DistributorPrinterQuickFilter
-  >("all");
-  const [serialFilter, setSerialFilter] = useState("all");
+  >("/printers", "status", "all");
+  const [serialFilter, setSerialFilter] = useTableFilter(
+    "/printers",
+    "serial",
+    "all",
+  );
 
   const distributorStatusFilterOptions = useMemo(
     () => [

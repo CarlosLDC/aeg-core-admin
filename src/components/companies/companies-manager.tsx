@@ -27,6 +27,7 @@ import { reportListTableError } from "@/lib/api-error-message";
 import { usePagination } from "@/hooks/use-pagination";
 import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { useTableSearch } from "@/hooks/use-table-search";
+import { useTableFilter } from "@/hooks/use-table-filter";
 import { formatDate } from "@/lib/datetime-form";
 import {
   compareDateValues,
@@ -73,7 +74,11 @@ export function CompaniesManager() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("companies");
   const [search, setSearch] = useTableSearch("/companies");
-  const [contributorFilter, setContributorFilter] = useState("all");
+  const [contributorFilter, setContributorFilter] = useTableFilter(
+    "/companies",
+    "contributor",
+    "all",
+  );
   const [sort, setSort] = useState<TableSortState<CompanySortKey>>(null);
 
   const canCreate = user ? canCreateCatalogRecord(user.role) : false;

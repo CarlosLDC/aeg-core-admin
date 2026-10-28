@@ -41,6 +41,7 @@ import {
 } from "@/lib/table-sort";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/datetime-form";
 import { useTableSearch } from "@/hooks/use-table-search";
+import { useTableFilter } from "@/hooks/use-table-filter";
 import { technicalServiceTechnicianLabel } from "@/lib/record-labels";
 import {
   toTechnicalServiceRequest,
@@ -82,8 +83,16 @@ export function TechnicalServicesManager() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("technical-services");
   const [search, setSearch] = useTableSearch("/technical-services");
-  const [printerFilter, setPrinterFilter] = useState("all");
-  const [technicianFilter, setTechnicianFilter] = useState("all");
+  const [printerFilter, setPrinterFilter] = useTableFilter(
+    "/technical-services",
+    "printer",
+    "all",
+  );
+  const [technicianFilter, setTechnicianFilter] = useTableFilter(
+    "/technical-services",
+    "technician",
+    "all",
+  );
   const [sort, setSort] = useState<TableSortState<TechnicalServiceSortKey>>(null);
 
   const printerLabelById = useMemo(

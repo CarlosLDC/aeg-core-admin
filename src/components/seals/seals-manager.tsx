@@ -60,6 +60,7 @@ import {
 } from "@/lib/seal-form";
 import { formatDate } from "@/lib/datetime-form";
 import { useTableSearch } from "@/hooks/use-table-search";
+import { useTableFilter } from "@/hooks/use-table-filter";
 import {
   createSeal,
   deleteSeal,
@@ -110,9 +111,21 @@ export function SealsManager() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useTableSearch("/seals");
-  const [statusFilter, setStatusFilter] = useState<SealStatus | "all">("all");
-  const [colorFilter, setColorFilter] = useState<SealColor | "all">("all");
-  const [printerFilter, setPrinterFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useTableFilter<SealStatus | "all">(
+    "/seals",
+    "status",
+    "all",
+  );
+  const [colorFilter, setColorFilter] = useTableFilter<SealColor | "all">(
+    "/seals",
+    "color",
+    "all",
+  );
+  const [printerFilter, setPrinterFilter] = useTableFilter(
+    "/seals",
+    "printer",
+    "all",
+  );
   const tableColumns = useTableColumnVisibility("seals");
   const [sort, setSort] = useState<TableSortState<SealSortKey>>(null);
 

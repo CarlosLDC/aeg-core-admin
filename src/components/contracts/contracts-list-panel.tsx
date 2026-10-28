@@ -54,6 +54,7 @@ import {
 } from "@/lib/contract-form";
 import { formatDate } from "@/lib/datetime-form";
 import { useTableSearch } from "@/hooks/use-table-search";
+import { useTableFilter } from "@/hooks/use-table-filter";
 import {
   createDistributorContract,
   deleteDistributorContract,
@@ -137,7 +138,11 @@ export function ContractsListPanel({
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility(`contracts-${kind}`);
   const [search, setSearch] = useTableSearch("/contracts");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useTableFilter(
+    "/contracts",
+    "status",
+    "all",
+  );
   const [sort, setSort] = useState<TableSortState<ContractSortKey>>(null);
 
   const getErrorMessage =
