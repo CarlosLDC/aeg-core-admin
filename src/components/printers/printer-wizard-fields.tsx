@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
@@ -15,7 +16,9 @@ import {
   PRINTER_STATUS_LABELS,
   type PrinterFormValues,
 } from "@/lib/printer-form";
+import { fetchFirmwares } from "@/lib/firmwares-api";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
+import type { FirmwareResponse } from "@/types/firmware";
 import { DEVICE_TYPES, PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
 
@@ -72,6 +75,44 @@ export function PrinterWizardFields({
 }: WizardFieldsProps & { section: PrinterWizardSection }) {
   const disabled = saving || modelsLoading || catalogLoading;
   const modelSelectDisabled = disabled || modelOptions.length === 0;
+  const [firmwares, setFirmwares] = useState<FirmwareResponse[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchFirmwares()
+      .then((rows) => {
+        if (!cancelled) setFirmwares(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setFirmwares([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredFirmwares = useMemo(() => {
+    const modelIdNum = Number(form.modelId);
+    const hasModel = Number.isFinite(modelIdNum) && modelIdNum > 0;
+    return firmwares.filter(
+      (fw) =>
+        !hasModel ||
+        fw.printerModelId == null ||
+        fw.printerModelId === modelIdNum,
+    );
+  }, [firmwares, form.modelId]);
+
+  useEffect(() => {
+    if (form.firmwareId || !form.versionFirmware.trim() || filteredFirmwares.length === 0) {
+      return;
+    }
+    const matched = filteredFirmwares.find(
+      (fw) => fw.version === form.versionFirmware.trim(),
+    );
+    if (matched) {
+      setForm((f) => ({ ...f, firmwareId: String(matched.id) }));
+    }
+  }, [filteredFirmwares, form.firmwareId, form.versionFirmware, setForm]);
 
   if (section === "equipment") {
     return (
@@ -301,16 +342,29 @@ export function PrinterWizardFields({
         </label>
         <label className="block">
           <FieldLabel>Firmware</FieldLabel>
-          <input
-            type="text"
-            value={form.versionFirmware}
+          <select
+            value={form.firmwareId ?? ""}
             disabled={disabled}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, versionFirmware: e.target.value }))
-            }
+            onChange={(e) => {
+              const nextId = e.target.value;
+              const selectedFw = filteredFirmwares.find(
+                (fw) => String(fw.id) === nextId,
+              );
+              setForm((f) => ({
+                ...f,
+                firmwareId: nextId,
+                versionFirmware: selectedFw ? selectedFw.version : "",
+              }));
+            }}
             className={inputClass}
-            placeholder="1.0.0"
-          />
+          >
+            <option value="">Sin asignar</option>
+            {filteredFirmwares.map((fw) => (
+              <option key={fw.id} value={fw.id}>
+                {fw.version} ({fw.fileName})
+              </option>
+            ))}
+          </select>
         </label>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">

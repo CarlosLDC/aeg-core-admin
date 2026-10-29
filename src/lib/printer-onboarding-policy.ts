@@ -53,8 +53,12 @@ export function validatePrinterWizardSection(
   }
 
   if (section === "technical") {
+    const firmwareId = form.firmwareId?.trim() ?? "";
+    if (firmwareId && (!Number.isFinite(Number(firmwareId)) || Number(firmwareId) <= 0)) {
+      return "Versión de firmware no válida.";
+    }
     const firmware = form.versionFirmware.trim();
-    if (firmware && !FIRMWARE_RE.test(firmware)) {
+    if (!firmwareId && firmware && !FIRMWARE_RE.test(firmware)) {
       return "La versión de firmware debe tener el formato x.y.z (ej. 1.0.0).";
     }
     const mac = form.macAddress.trim().toUpperCase();

@@ -263,8 +263,8 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
       {
         formLabels: ["Firmware"],
         viewLabels: ["Firmware"],
-        formBindings: ["form.versionFirmware"],
-        viewBindings: ["printer.versionFirmware"],
+        formBindings: ["form.firmwareId", "form.versionFirmware"],
+        viewBindings: ["printer.versionFirmware", "printer.firmwareId"],
       },
       {
         formLabels: ["Dirección MAC"],

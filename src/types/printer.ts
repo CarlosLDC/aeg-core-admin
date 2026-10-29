@@ -29,6 +29,7 @@ export type PrinterResponse = {
   distributorId: number | null;
   paid: boolean;
   installationDate: string | null;
+  firmwareId?: number | null;
   versionFirmware: string | null;
   macAddress: string | null;
   deviceType: DeviceType;
@@ -72,6 +73,7 @@ export type PrinterRequest = {
   finalSalePrice?: number | null;
   paid: boolean;
   installationDate?: string | null;
+  firmwareId?: number | null;
   versionFirmware?: string | null;
   macAddress?: string | null;
   status: PrinterStatus;

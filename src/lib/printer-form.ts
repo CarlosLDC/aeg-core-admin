@@ -19,6 +19,7 @@ export type PrinterFormValues = {
   fiscalSerial: string;
   paid: boolean;
   installationDate: string;
+  firmwareId?: string;
   versionFirmware: string;
   macAddress: string;
   status: PrinterStatus;
@@ -84,6 +85,7 @@ export function printerToFormValues(
     fiscalSerial: printer.fiscalSerial,
     paid: printer.paid,
     installationDate: toDatetimeLocalValue(printer.installationDate),
+    firmwareId: printer.firmwareId != null ? String(printer.firmwareId) : "",
     versionFirmware: printer.versionFirmware ?? "",
     macAddress: printer.macAddress ?? "",
     status: normalizePrinterStatus(printer.status),
@@ -104,6 +106,7 @@ export const emptyPrinterForm = (
   fiscalSerial: "",
   paid: false,
   installationDate: "",
+  firmwareId: "",
   versionFirmware: "",
   macAddress: "",
   status: "de_fabrica",
@@ -145,6 +148,7 @@ export function printerToAssignmentRequest(
     finalSalePrice: printer.finalSalePrice,
     paid,
     installationDate: printer.installationDate,
+    firmwareId: printer.firmwareId ?? null,
     versionFirmware: printer.versionFirmware,
     macAddress: printer.macAddress,
     status: paid ? "asignada" : "en_consignacion",
@@ -175,6 +179,7 @@ export function printerToDispositionRequest(
     finalSalePrice: printer.finalSalePrice,
     paid: printer.paid,
     installationDate: new Date().toISOString(),
+    firmwareId: printer.firmwareId ?? null,
     versionFirmware: printer.versionFirmware,
     macAddress: printer.macAddress,
     status: "enajenada",
@@ -200,8 +205,14 @@ export function toPrinterRequest(
     return "El serial fiscal debe tener 3 letras y 7 dígitos (ej. ABC1234567).";
   }
 
+  const firmwareIdRaw = values.firmwareId?.trim() ?? "";
+  const firmwareId = firmwareIdRaw ? Number(firmwareIdRaw) : null;
+  if (firmwareIdRaw && (!Number.isFinite(firmwareId!) || firmwareId! <= 0)) {
+    return "Versión de firmware no válida.";
+  }
+
   const versionFirmware = values.versionFirmware.trim();
-  if (versionFirmware && !FIRMWARE_RE.test(versionFirmware)) {
+  if (!firmwareId && versionFirmware && !FIRMWARE_RE.test(versionFirmware)) {
     return "La versión de firmware debe tener el formato mayor.menor.parche (ej. 1.0.0).";
   }
 
@@ -257,6 +268,7 @@ export function toPrinterRequest(
     finalSalePrice: options?.finalSalePrice ?? null,
     paid: values.paid,
     installationDate,
+    ...(firmwareId != null ? { firmwareId } : {}),
     versionFirmware: versionFirmware || null,
     macAddress: macAddress || null,
     status: reconcileDistributorAssignmentStatus(

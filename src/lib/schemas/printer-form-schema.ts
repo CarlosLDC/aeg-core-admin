@@ -14,6 +14,7 @@ export const printerFormSchema = z
     fiscalSerial: z.string().trim(),
     paid: z.boolean(),
     installationDate: z.string(),
+    firmwareId: z.string().optional(),
     versionFirmware: z.string(),
     macAddress: z.string(),
     status: z.enum(PRINTER_STATUSES, { message: "Estatus no válido." }),

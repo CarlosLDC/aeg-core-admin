@@ -2,6 +2,7 @@ import { canAccessRoute } from "@/lib/permissions/routes";
 import {
   branchPath,
   clientPath,
+  firmwareVersionPath,
   printerModelPath,
   printerPath,
   sealPath,
@@ -36,6 +37,16 @@ function hrefFirstAccessible(
 
 export function hrefForPrinterModel(modelId: number, role: Role): string | undefined {
   return hrefIfAccessible(role, printerModelPath(modelId));
+}
+
+export function hrefForFirmware(
+  firmwareId: number | null | undefined,
+  role: Role,
+): string | undefined {
+  return hrefIfAccessible(
+    role,
+    firmwareId != null ? firmwareVersionPath(firmwareId) : undefined,
+  );
 }
 
 export function hrefForPrinter(

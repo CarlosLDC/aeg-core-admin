@@ -20,6 +20,8 @@ import {
   printerToFormValues,
   type PrinterFormValues,
 } from "@/lib/printer-form";
+import { fetchFirmwares } from "@/lib/firmwares-api";
+import type { FirmwareResponse } from "@/types/firmware";
 import type { PrinterResponse } from "@/types/printer";
 import { DEVICE_TYPES, PRINTER_STATUSES } from "@/types/printer";
 import { zodFieldErrors } from "@/lib/form-zod";
@@ -85,9 +87,36 @@ export function PrinterFormDialog({
   const formId = useId();
   const titleId = useId();
   const [form, setForm] = useState<PrinterFormValues>(emptyPrinterForm());
+  const [firmwares, setFirmwares] = useState<FirmwareResponse[]>([]);
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<keyof PrinterFormValues, string>>
   >({});
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    fetchFirmwares()
+      .then((rows) => {
+        if (!cancelled) setFirmwares(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setFirmwares([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  const filteredFirmwares = useMemo(() => {
+    const modelIdNum = Number(form.modelId);
+    const hasModel = Number.isFinite(modelIdNum) && modelIdNum > 0;
+    return firmwares.filter(
+      (fw) =>
+        !hasModel ||
+        fw.printerModelId == null ||
+        fw.printerModelId === modelIdNum,
+    );
+  }, [firmwares, form.modelId]);
 
   useEffect(() => {
     if (!open) return;
@@ -424,16 +453,29 @@ export function PrinterFormDialog({
                 </label>
                 <label className="block">
                   <FieldLabel>Firmware</FieldLabel>
-                  <input
-                    type="text"
-                    value={form.versionFirmware}
+                  <select
+                    value={form.firmwareId ?? ""}
                     disabled={disabled}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, versionFirmware: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      const nextId = e.target.value;
+                      const selectedFw = filteredFirmwares.find(
+                        (fw) => String(fw.id) === nextId,
+                      );
+                      setForm((f) => ({
+                        ...f,
+                        firmwareId: nextId,
+                        versionFirmware: selectedFw ? selectedFw.version : "",
+                      }));
+                    }}
                     className={inputClass}
-                    placeholder="1.0.0"
-                  />
+                  >
+                    <option value="">Sin asignar</option>
+                    {filteredFirmwares.map((fw) => (
+                      <option key={fw.id} value={fw.id}>
+                        {fw.version} ({fw.fileName})
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label className="block sm:col-span-2">
                   <FieldLabel>Dirección MAC</FieldLabel>

@@ -19,6 +19,7 @@ import {
 import {
   hrefForClient,
   hrefForDistributor,
+  hrefForFirmware,
   hrefForPrinterModel,
 } from "@/lib/table-foreign-hrefs";
 import {
@@ -487,6 +488,7 @@ export function PrinterView() {
           <DetailField
             label="Firmware"
             value={printer.versionFirmware || "—"}
+            href={user ? hrefForFirmware(printer.firmwareId, user.role) : undefined}
             mono
           />
           <DetailField label="MAC" value={printer.macAddress || "—"} mono />
@@ -672,6 +674,7 @@ export function PrinterView() {
             <DetailField
               label="Firmware"
               value={printer.versionFirmware || "—"}
+              href={user ? hrefForFirmware(printer.firmwareId, user.role) : undefined}
               mono
             />
             <DetailField
