@@ -18,7 +18,7 @@ export const TOOLS_SENIAT_OFFLINE_MESSAGE =
   "Sin conexión con el SENIAT. La impresora responde, pero la transmisión al SENIAT no está disponible hasta restablecer esa conexión.";
 
 export const TOOLS_LEGACY_BROKER_MESSAGE =
-  "La impresora está operando en contingencia a través del broker antiguo. Las operaciones remotas están habilitadas y la opción de migración al broker nuevo sigue disponible.";
+  "La impresora está operando en contingencia a través del broker antiguo. Las operaciones remotas están habilitadas y la opción de actualizar firmware sigue disponible.";
 
 export const TOOLS_PRINTER_STATUS_TIMEOUT_MESSAGE =
   "Tiempo de espera agotado al consultar la impresora fiscal.";

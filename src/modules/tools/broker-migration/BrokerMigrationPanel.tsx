@@ -60,9 +60,9 @@ const STATUS_TEXT: Partial<Record<MigrationPhase, string>> = {
   'checking-broker': "Verificando broker actual...",
   'broker-checked': "La impresora está en el broker antiguo. Requiere confirmación.",
   'configuring-broker': "Enviando credenciales del broker nuevo...",
-  'done': "Migración completada exitosamente.",
-  'already-migrated': "La impresora ya está conectada al broker nuevo.",
-  'uncertain': "El resultado de la migración es incierto.",
+  'done': "Actualización y configuración completadas exitosamente.",
+  'already-migrated': "El firmware está actualizado y la impresora apunta al broker nuevo.",
+  'uncertain': "El resultado de la configuración del broker es incierto.",
 };
 
 function StatusIcon({ status }: { status: StepStatus }) {
@@ -129,8 +129,8 @@ export function BrokerMigrationPanel({ printer }: BrokerMigrationPanelProps) {
         <div className="grid gap-6 md:grid-cols-2">
           {/* Controls Panel */}
           <ToolsPanelSection
-            title="Control de Migración"
-            description="Inicie el proceso manual para migrar esta impresora al nuevo broker MQTT."
+            title="Control de actualización"
+            description="Inicie el proceso para actualizar el firmware de esta impresora y verificar su conexión al broker MQTT."
             icon={Play}
             tone="sky"
           >
@@ -160,7 +160,7 @@ export function BrokerMigrationPanel({ printer }: BrokerMigrationPanelProps) {
 
                 <ToolsPanelActions>
                   <ToolsActionButton onClick={startMigration} variant="primary">
-                    {state.phase === 'error' ? 'Reintentar migración' : 'Iniciar migración'}
+                    {state.phase === 'error' ? 'Reintentar actualización' : 'Actualizar firmware'}
                   </ToolsActionButton>
                 </ToolsPanelActions>
               </div>
@@ -178,7 +178,7 @@ export function BrokerMigrationPanel({ printer }: BrokerMigrationPanelProps) {
                         ? state.needsFirmwareUpdate
                           ? 'Actualizar firmware'
                           : 'Verificar broker'
-                        : 'Migrar al broker nuevo'}
+                        : 'Configurar broker nuevo'}
                     </ToolsActionButton>
                   </ToolsPanelActions>
                 )}
@@ -210,8 +210,8 @@ export function BrokerMigrationPanel({ printer }: BrokerMigrationPanelProps) {
                   {state.firmwareVersion && (
                     <p className="text-sm text-muted mt-1">
                       Versión actual: <span className="font-semibold">{state.firmwareVersion}</span>
-                      {state.needsFirmwareUpdate === false && " (credenciales del servidor nuevo)"}
-                      {state.needsFirmwareUpdate === true && " (credenciales del servidor antiguo)"}
+                      {state.needsFirmwareUpdate === false && " (actualizado)"}
+                      {state.needsFirmwareUpdate === true && " (requiere actualización)"}
                     </p>
                   )}
                 </Step>
@@ -274,8 +274,8 @@ export function BrokerMigrationPanel({ printer }: BrokerMigrationPanelProps) {
                     )}
                     <div className="text-sm">
                       <p className="font-medium">
-                        {state.phase === 'done' && "Migración exitosa"}
-                        {state.phase === 'already-migrated' && "La impresora ya apunta al servidor nuevo"}
+                        {state.phase === 'done' && "Actualización completada"}
+                        {state.phase === 'already-migrated' && "El firmware está actualizado y conectado al broker nuevo"}
                         {state.phase === 'uncertain' && "Resultado incierto"}
                       </p>
                       {state.phase === 'done' && state.infoMessage && (
@@ -284,7 +284,7 @@ export function BrokerMigrationPanel({ printer }: BrokerMigrationPanelProps) {
                       {state.phase === 'uncertain' && (
                         <p className="mt-1 opacity-90">
                           {state.errorMessage ||
-                            "No se pudo confirmar si la migración se realizó. Verifique el broker nuevamente o revise la impresora físicamente."}
+                            "No se pudo confirmar si la configuración del broker se realizó. Verifique el broker nuevamente o revise la impresora físicamente."}
                         </p>
                       )}
                     </div>

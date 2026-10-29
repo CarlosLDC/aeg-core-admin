@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
+  Cpu,
   CreditCard,
   FileStack,
   FlaskConical,
@@ -8,7 +9,6 @@ import {
   ReceiptText,
   ScrollText,
   Wifi,
-  Server,
 } from "lucide-react";
 import {
   toolsPrinterFormasPagoPath,
@@ -95,9 +95,9 @@ export const TOOLS_SECTIONS = {
   },
   brokerMigration: {
     id: "broker-migration",
-    title: "Migración de broker",
-    description: "Migrar impresora al nuevo broker MQTT.",
-    icon: Server,
+    title: "Actualizar firmware",
+    description: "Actualizar el firmware de la impresora y verificar broker MQTT.",
+    icon: Cpu,
     tone: "sky",
   },
 } as const satisfies Record<string, ToolsSectionConfig>;

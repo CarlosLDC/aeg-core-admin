@@ -117,7 +117,7 @@ export function useBrokerMigration(printerId: number, rebootWaitSeconds: number)
       updateState({ firmwareVersion: res.firmwareVersion, needsFirmwareUpdate: res.needsUpdate });
       if (res.needsUpdate) {
         throw new Error(
-          `El firmware sigue en ${res.firmwareVersion}; la actualización no se aplicó. Reintente la migración.`,
+          `El firmware sigue en ${res.firmwareVersion}; la actualización no se aplicó. Reintente la actualización.`,
         );
       }
       verified = true;
