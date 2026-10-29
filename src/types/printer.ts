@@ -53,6 +53,11 @@ export type PrinterEnajenacionTicketResponse = {
   trailer: PrinterTicketSection;
 };
 
+export type PrinterFirmwareQueryResponse = {
+  versionFirmware: string;
+  firmwareId: number | null;
+};
+
 export type EnajenacionVerifyStatusResponse = {
   printerId: number;
   fiscalSerial: string;

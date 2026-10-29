@@ -7,6 +7,7 @@ import type {
   EnajenacionVerifyStatusResponse,
   PrinterDispositionRequest,
   PrinterEnajenacionTicketResponse,
+  PrinterFirmwareQueryResponse,
   PrinterRequest,
   PrinterResponse,
 } from "@/types/printer";
@@ -80,6 +81,19 @@ export async function disposePrinter(
   return apiFetch<PrinterResponse>(`${BASE}/${id}/enajenar`, {
     method: "POST",
     body: JSON.stringify(body),
+  });
+}
+
+export async function queryPrinterFirmwareByMac(
+  macAddress: string,
+  modelId?: number | null,
+): Promise<PrinterFirmwareQueryResponse> {
+  return apiFetch<PrinterFirmwareQueryResponse>(`${BASE}/query-firmware`, {
+    method: "POST",
+    body: JSON.stringify({
+      macAddress: macAddress.trim(),
+      modelId: modelId && Number.isFinite(modelId) && modelId > 0 ? modelId : null,
+    }),
   });
 }
 

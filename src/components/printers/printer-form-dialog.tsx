@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useId, useMemo, useState } from "react";
-import { X } from "lucide-react";
+import { RefreshCw, X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { BooleanToggle } from "@/components/ui/boolean-toggle";
@@ -21,6 +21,7 @@ import {
   type PrinterFormValues,
 } from "@/lib/printer-form";
 import { fetchFirmwares } from "@/lib/firmwares-api";
+import { queryPrinterFirmwareByMac } from "@/lib/printers-api";
 import type { FirmwareResponse } from "@/types/firmware";
 import type { PrinterResponse } from "@/types/printer";
 import { DEVICE_TYPES, PRINTER_STATUSES } from "@/types/printer";
@@ -88,6 +89,9 @@ export function PrinterFormDialog({
   const titleId = useId();
   const [form, setForm] = useState<PrinterFormValues>(emptyPrinterForm());
   const [firmwares, setFirmwares] = useState<FirmwareResponse[]>([]);
+  const [queryingFirmware, setQueryingFirmware] = useState(false);
+  const [firmwareQueryMessage, setFirmwareQueryMessage] = useState<string | null>(null);
+  const [firmwareQueryError, setFirmwareQueryError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<keyof PrinterFormValues, string>>
   >({});
@@ -167,6 +171,49 @@ export function PrinterFormDialog({
     if (!parsed.success) return;
     setFieldErrors({});
     onSubmit(form);
+  }
+
+  async function handleQueryFirmware() {
+    const mac = form.macAddress.trim();
+    if (!mac || queryingFirmware || saving || modelsLoading || catalogLoading) return;
+    setQueryingFirmware(true);
+    setFirmwareQueryMessage(null);
+    setFirmwareQueryError(null);
+    try {
+      const modelIdNum = Number(form.modelId);
+      const res = await queryPrinterFirmwareByMac(
+        mac,
+        Number.isFinite(modelIdNum) && modelIdNum > 0 ? modelIdNum : null,
+      );
+      const matched =
+        (res.firmwareId != null
+          ? filteredFirmwares.find((fw) => fw.id === res.firmwareId) ??
+            firmwares.find((fw) => fw.id === res.firmwareId)
+          : undefined) ??
+        filteredFirmwares.find((fw) => fw.version === res.versionFirmware) ??
+        firmwares.find((fw) => fw.version === res.versionFirmware);
+
+      if (matched) {
+        setForm((f) => ({
+          ...f,
+          firmwareId: String(matched.id),
+          versionFirmware: matched.version,
+        }));
+        setFirmwareQueryMessage(`Versión detectada: ${matched.version}`);
+      } else {
+        setFirmwareQueryError(
+          `La impresora reportó la versión ${res.versionFirmware}, pero no está registrada en el catálogo de firmwares.`,
+        );
+      }
+    } catch (err) {
+      setFirmwareQueryError(
+        err instanceof Error
+          ? err.message
+          : "No se pudo consultar la versión de firmware a la impresora.",
+      );
+    } finally {
+      setQueryingFirmware(false);
+    }
   }
 
   const inputClass = formFieldInputClass;
@@ -451,32 +498,63 @@ export function PrinterFormDialog({
                     className={inputClass}
                   />
                 </label>
-                <label className="block">
+                <div className="block">
                   <FieldLabel>Firmware</FieldLabel>
-                  <select
-                    value={form.firmwareId ?? ""}
-                    disabled={disabled}
-                    onChange={(e) => {
-                      const nextId = e.target.value;
-                      const selectedFw = filteredFirmwares.find(
-                        (fw) => String(fw.id) === nextId,
-                      );
-                      setForm((f) => ({
-                        ...f,
-                        firmwareId: nextId,
-                        versionFirmware: selectedFw ? selectedFw.version : "",
-                      }));
-                    }}
-                    className={inputClass}
-                  >
-                    <option value="">Sin asignar</option>
-                    {filteredFirmwares.map((fw) => (
-                      <option key={fw.id} value={fw.id}>
-                        {fw.version} ({fw.fileName})
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={form.firmwareId ?? ""}
+                      disabled={disabled || queryingFirmware}
+                      onChange={(e) => {
+                        const nextId = e.target.value;
+                        const selectedFw = filteredFirmwares.find(
+                          (fw) => String(fw.id) === nextId,
+                        );
+                        setFirmwareQueryMessage(null);
+                        setFirmwareQueryError(null);
+                        setForm((f) => ({
+                          ...f,
+                          firmwareId: nextId,
+                          versionFirmware: selectedFw ? selectedFw.version : "",
+                        }));
+                      }}
+                      className={cn(inputClass, "min-w-0 flex-1")}
+                    >
+                      <option value="">Sin asignar</option>
+                      {filteredFirmwares.map((fw) => (
+                        <option key={fw.id} value={fw.id}>
+                          {fw.version} ({fw.fileName})
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => void handleQueryFirmware()}
+                      disabled={disabled || queryingFirmware || !form.macAddress.trim()}
+                      title={
+                        form.macAddress.trim()
+                          ? "Solicitar versión de firmware a la impresora por MQTT"
+                          : "Ingresa la dirección MAC para consultar la versión"
+                      }
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-card-foreground transition-colors hover:bg-foreground/5 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <RefreshCw
+                        className={cn("size-3.5", queryingFirmware && "animate-spin")}
+                        aria-hidden
+                      />
+                      {queryingFirmware ? "Consultando…" : "Consultar"}
+                    </button>
+                  </div>
+                  {firmwareQueryMessage && (
+                    <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
+                      {firmwareQueryMessage}
+                    </p>
+                  )}
+                  {firmwareQueryError && (
+                    <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+                      {firmwareQueryError}
+                    </p>
+                  )}
+                </div>
                 <label className="block sm:col-span-2">
                   <FieldLabel>Dirección MAC</FieldLabel>
                   <input
