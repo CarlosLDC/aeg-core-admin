@@ -135,9 +135,11 @@ export function SoftwareFormDialog({
       if (!form.version.trim()) {
         return "La versión del software es obligatoria.";
       }
-      const rawRif = form.developerRif.trim();
-      if (rawRif && !RIF_PATTERN.test(normalizeRif(rawRif))) {
-        return "El RIF del desarrollador debe tener formato válido (ej. J-123456789).";
+      if (form.external) {
+        const rawRif = form.developerRif.trim();
+        if (rawRif && !RIF_PATTERN.test(normalizeRif(rawRif))) {
+          return "El RIF del desarrollador debe tener formato válido (ej. J-123456789).";
+        }
       }
       return null;
     }
@@ -398,36 +400,6 @@ export function SoftwareFormDialog({
                   </label>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="block">
-                    <FieldLabel>Empresa desarrolladora</FieldLabel>
-                    <input
-                      type="text"
-                      disabled={saving}
-                      value={form.developerName}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          developerName: e.target.value,
-                        }))
-                      }
-                      placeholder="Ej. Saint de Venezuela C.A.…"
-                      className={formFieldInputClass}
-                    />
-                  </label>
-                  <label className="block">
-                    <FieldLabel>RIF desarrollador</FieldLabel>
-                    <PrefixedDocumentInput
-                      kind="rif"
-                      disabled={saving}
-                      value={form.developerRif}
-                      onChange={(developerRif) =>
-                        setForm((f) => ({ ...f, developerRif }))
-                      }
-                    />
-                  </label>
-                </div>
-
                 <div>
                   <FieldLabel>Tipo de desarrollo</FieldLabel>
                   <BooleanToggle
@@ -436,13 +408,45 @@ export function SoftwareFormDialog({
                       setForm((f) => ({ ...f, external }))
                     }
                     disabled={saving}
-                    falseLabel="Propio"
+                    falseLabel="Propio (AEG)"
                     trueLabel="Terceros"
                     falseTone="emerald"
                     trueTone="amber"
                     ariaLabel="Tipo de desarrollo"
                   />
                 </div>
+
+                {form.external && (
+                  <div className="grid gap-4 sm:grid-cols-2 pt-1 animate-in fade-in duration-200">
+                    <label className="block">
+                      <FieldLabel>Empresa desarrolladora</FieldLabel>
+                      <input
+                        type="text"
+                        disabled={saving}
+                        value={form.developerName}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            developerName: e.target.value,
+                          }))
+                        }
+                        placeholder="Ej. Saint de Venezuela C.A.…"
+                        className={formFieldInputClass}
+                      />
+                    </label>
+                    <label className="block">
+                      <FieldLabel>RIF desarrollador</FieldLabel>
+                      <PrefixedDocumentInput
+                        kind="rif"
+                        disabled={saving}
+                        value={form.developerRif}
+                        onChange={(developerRif) =>
+                          setForm((f) => ({ ...f, developerRif }))
+                        }
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
             )}
 

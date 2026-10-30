@@ -76,13 +76,17 @@ export function toSoftwareRequest(
     return "La versión del software es obligatoria.";
   }
 
-  const developerName = values.developerName.trim() || null;
   const rawRif = values.developerRif.trim();
-  const developerRif = rawRif ? normalizeRif(rawRif) : null;
+  const normalizedRif = rawRif ? normalizeRif(rawRif) : null;
 
-  if (developerRif && !RIF_PATTERN.test(developerRif)) {
+  if (normalizedRif && !RIF_PATTERN.test(normalizedRif)) {
     return "El RIF del desarrollador debe tener formato válido (ej. J-123456789).";
   }
+
+  const developerName = values.external
+    ? values.developerName.trim() || null
+    : null;
+  const developerRif = values.external ? normalizedRif : null;
 
   const programmingLanguages = (values.programmingLanguages || [])
     .map((l) => l.trim())
