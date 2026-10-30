@@ -34,9 +34,12 @@ const STAT_ICONS: Record<string, LucideIcon> = {
   Empresas: Building2,
   Impresoras: Printer,
   Empleados: Contact,
+  Usuarios: Users,
+  Técnicos: Users,
   Clientes: Users,
   Distribuidores: Building2,
   "Centros de servicio": Building2,
+  Asignadas: Printer,
 };
 
 function iconForStat(stat: DashboardStat): LucideIcon {
@@ -158,7 +161,7 @@ export function DashboardManager() {
             </h2>
             <div
               className={cn(
-                "grid grid-cols-2 items-stretch gap-3 sm:gap-4",
+                "grid grid-cols-2 items-stretch gap-4 sm:gap-6",
                 snapshot.stats.length > 3 ? "lg:grid-cols-4" : "lg:grid-cols-3",
               )}
             >
