@@ -5,6 +5,7 @@ import { RefreshCw } from "lucide-react";
 import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
+  FORM_FIELD_HEIGHT_CLASS,
   formFieldInputClass,
   PRINTER_PAID_TOGGLE_TONE,
 } from "@/lib/toggle-button-styles";
@@ -388,7 +389,25 @@ export function PrinterWizardFields({
             className={inputClass}
           />
         </label>
-        <div className="block">
+        <label className="block">
+          <FieldLabel>Dirección MAC</FieldLabel>
+          <input
+            type="text"
+            value={form.macAddress}
+            disabled={disabled}
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                macAddress: e.target.value.toUpperCase(),
+              }))
+            }
+            className={cn(inputClass, "font-mono uppercase")}
+            placeholder="AA:BB:CC:DD:EE:FF"
+          />
+        </label>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="block sm:col-span-2">
           <FieldLabel>Firmware</FieldLabel>
           <div className="flex items-center gap-2">
             <select
@@ -425,44 +444,29 @@ export function PrinterWizardFields({
                   ? "Solicitar versión de firmware a la impresora por MQTT"
                   : "Ingresa la dirección MAC para consultar la versión"
               }
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-card-foreground transition-colors hover:bg-foreground/5 disabled:cursor-not-allowed disabled:opacity-50"
+              className={cn(
+                FORM_FIELD_HEIGHT_CLASS,
+                "inline-flex shrink-0 items-center gap-2 rounded-lg border border-border bg-background px-3.5 text-sm font-medium text-card-foreground transition-colors hover:bg-foreground/5 disabled:cursor-not-allowed disabled:opacity-50",
+              )}
             >
               <RefreshCw
-                className={cn("size-3.5", queryingFirmware && "animate-spin")}
+                className={cn("size-4 text-muted", queryingFirmware && "animate-spin")}
                 aria-hidden
               />
               {queryingFirmware ? "Consultando…" : "Consultar"}
             </button>
           </div>
           {firmwareQueryMessage && (
-            <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
+            <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">
               {firmwareQueryMessage}
             </p>
           )}
           {firmwareQueryError && (
-            <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+            <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">
               {firmwareQueryError}
             </p>
           )}
         </div>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block sm:col-span-2">
-          <FieldLabel>Dirección MAC</FieldLabel>
-          <input
-            type="text"
-            value={form.macAddress}
-            disabled={disabled}
-            onChange={(e) =>
-              setForm((f) => ({
-                ...f,
-                macAddress: e.target.value.toUpperCase(),
-              }))
-            }
-            className={cn(inputClass, "font-mono uppercase")}
-            placeholder="AA:BB:CC:DD:EE:FF"
-          />
-        </label>
       </div>
     </fieldset>
   );
