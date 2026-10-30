@@ -9,6 +9,10 @@ import {
   DetailField,
   DetailSection,
 } from "@/components/resource-view/detail-fields";
+import {
+  DetailSectionsPager,
+  type DetailPagerStep,
+} from "@/components/resource-view/detail-sections-pager";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
@@ -75,9 +79,6 @@ export function SoftwareView() {
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [section, setSection] = useState<"software" | "distributors">(
-    "software",
-  );
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -256,6 +257,267 @@ export function SoftwareView() {
     }
   }
 
+  const detailSteps = useMemo((): DetailPagerStep[] => {
+    if (!software) return [];
+
+    return [
+      {
+        id: "software",
+        label: "Software",
+        content: (
+          <DetailSection title="Software" layout="quad">
+            <DetailField label="Nombre del software" value={software.name} />
+            <DetailField label="Versión" value={software.version} mono />
+            <DetailField
+              label="Tipo de desarrollo"
+              value={
+                software.external ? (
+                  <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
+                    Terceros
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-800 dark:text-emerald-200">
+                    Propio (AEG)
+                  </span>
+                )
+              }
+            />
+            <DetailField
+              label="Registrado"
+              value={formatDate(software.createdAt)}
+            />
+            {software.external && (
+              <>
+                <DetailField
+                  label="Empresa desarrolladora"
+                  value={software.developerName || "—"}
+                />
+                <DetailField
+                  label="RIF desarrollador"
+                  value={software.developerRif || "—"}
+                  mono
+                />
+              </>
+            )}
+          </DetailSection>
+        ),
+      },
+      {
+        id: "technical",
+        label: "Tecnología",
+        content: (
+          <DetailSection title="Tecnología" layout="quad">
+            <DetailField
+              label="Lenguajes de programación"
+              value={
+                (software.programmingLanguages ?? []).length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {software.programmingLanguages.map((lang) => (
+                      <span
+                        key={lang}
+                        className="inline-flex items-center rounded-md border border-sky-500/25 bg-sky-500/10 px-2.5 py-0.5 text-xs font-medium text-sky-700 dark:text-sky-300"
+                      >
+                        {lang}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  "—"
+                )
+              }
+              span={2}
+            />
+            <DetailField
+              label="Sistemas operativos"
+              value={
+                (software.operatingSystems ?? []).length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {software.operatingSystems.map((os) => (
+                      <span
+                        key={os}
+                        className="inline-flex items-center rounded-md border border-border bg-foreground/5 px-2.5 py-0.5 text-xs font-medium text-card-foreground"
+                      >
+                        {os}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  "—"
+                )
+              }
+              span={2}
+            />
+          </DetailSection>
+        ),
+      },
+      {
+        id: "distributors",
+        label: `Distribuidores (${distributors.length})`,
+        content: (
+          <section className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="text-base font-semibold text-card-foreground">
+                Distribuidores autorizados
+              </h3>
+              {canModify && (
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDistributorToAdd("");
+                      setAddDistributorModalOpen(true);
+                    }}
+                    className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 sm:w-auto"
+                  >
+                    <Plus className="size-4" />
+                    Vincular distribuidor
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+              {distributors.length === 0 ? (
+                <EmptyState
+                  title="Este software no tiene distribuidores vinculados."
+                  action={
+                    canModify ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDistributorToAdd("");
+                          setAddDistributorModalOpen(true);
+                        }}
+                        className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
+                      >
+                        <Plus className="size-4" />
+                        Vincular distribuidor
+                      </button>
+                    ) : undefined
+                  }
+                />
+              ) : (
+                <>
+                  <DataTableToolbar
+                    search={distSearch}
+                    onSearchChange={setDistSearch}
+                    searchPlaceholder="Buscar por RIF o razón social…"
+                    resultCount={filteredDistributors.length}
+                    totalCount={distributors.length}
+                  />
+                  {filteredDistributors.length === 0 ? (
+                    <TableFilterEmptyState />
+                  ) : (
+                    <>
+                      <TableScroll>
+                        <table className="w-full min-w-[560px] text-left text-sm">
+                          <thead>
+                            <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+                              <SortableTableHeader
+                                label="RIF"
+                                sortDirection={
+                                  distSort?.key === "rif"
+                                    ? distSort.direction
+                                    : null
+                                }
+                                onToggle={() =>
+                                  setDistSort((current) =>
+                                    toggleTableSort(current, "rif"),
+                                  )
+                                }
+                              />
+                              <SortableTableHeader
+                                label="Razón social"
+                                sortDirection={
+                                  distSort?.key === "businessName"
+                                    ? distSort.direction
+                                    : null
+                                }
+                                onToggle={() =>
+                                  setDistSort((current) =>
+                                    toggleTableSort(current, "businessName"),
+                                  )
+                                }
+                              />
+                              {canModify && (
+                                <th className="px-5 py-3 font-medium text-right">
+                                  Acciones
+                                </th>
+                              )}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {distPagination.paginatedItems.map((dist) => {
+                              const distHref =
+                                user &&
+                                canAccessRoute(
+                                  user.role,
+                                  companyPath(dist.id),
+                                )
+                                  ? companyPath(dist.id)
+                                  : undefined;
+
+                              return (
+                                <ClickableTableRow
+                                  key={dist.id}
+                                  href={distHref ?? softwarePath(software.id)}
+                                >
+                                  <td className="px-5 py-3.5 font-mono text-card-foreground">
+                                    {dist.rif}
+                                  </td>
+                                  <td className="px-5 py-3.5 font-medium text-card-foreground">
+                                    <TruncatedText maxClassName="max-w-[320px]">
+                                      {dist.businessName || "—"}
+                                    </TruncatedText>
+                                  </td>
+                                  {canModify && (
+                                    <td
+                                      className="px-5 py-3.5 text-right"
+                                      data-row-click="ignore"
+                                    >
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          void handleRemoveDistributor(
+                                            dist.id,
+                                            dist.businessName || dist.rif,
+                                          )
+                                        }
+                                        title="Desvincular distribuidor"
+                                        aria-label={`Desvincular distribuidor ${dist.businessName || dist.rif}`}
+                                        className="inline-flex items-center justify-center rounded-lg p-1.5 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600"
+                                      >
+                                        <Trash2 className="size-4" />
+                                      </button>
+                                    </td>
+                                  )}
+                                </ClickableTableRow>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </TableScroll>
+                      <TablePagination pagination={distPagination} />
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </section>
+        ),
+      },
+    ];
+  }, [
+    software,
+    distributors,
+    canModify,
+    distSearch,
+    filteredDistributors.length,
+    distSort,
+    distPagination,
+    user,
+  ]);
+
   return (
     <ResourceViewShell
       backHref={softwareListPath}
@@ -282,238 +544,7 @@ export function SoftwareView() {
       }
     >
       {software && (
-        <>
-          <div
-            role="tablist"
-            aria-label="Secciones del software"
-            className="inline-flex rounded-lg border border-border bg-card p-1"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={section === "software"}
-              onClick={() => setSection("software")}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                section === "software"
-                  ? "bg-accent text-accent-foreground shadow-sm"
-                  : "text-muted hover:bg-foreground/5 hover:text-card-foreground",
-              )}
-            >
-              Software
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={section === "distributors"}
-              onClick={() => setSection("distributors")}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                section === "distributors"
-                  ? "bg-accent text-accent-foreground shadow-sm"
-                  : "text-muted hover:bg-foreground/5 hover:text-card-foreground",
-              )}
-            >
-              Distribuidores ({distributors.length})
-            </button>
-          </div>
-
-          {section === "software" && (
-            <DetailSection title="Datos generales">
-              <DetailField
-                label="Nombre del software"
-                value={software.name}
-              />
-              <DetailField label="Versión" value={software.version} mono />
-              <DetailField
-                label="Tipo de desarrollo"
-                value={software.external ? "Terceros" : "Propio"}
-              />
-              <DetailField
-                label="Empresa desarrolladora"
-                value={software.developerName || "—"}
-              />
-              <DetailField
-                label="RIF desarrollador"
-                value={software.developerRif || "—"}
-                mono
-              />
-              <DetailField
-                label="Lenguajes de programación"
-                value={
-                  (software.programmingLanguages ?? []).length > 0
-                    ? software.programmingLanguages.join(", ")
-                    : "—"
-                }
-              />
-              <DetailField
-                label="Sistemas operativos"
-                value={
-                  (software.operatingSystems ?? []).length > 0
-                    ? software.operatingSystems.join(", ")
-                    : "—"
-                }
-              />
-              <DetailField
-                label="Registrado"
-                value={formatDate(software.createdAt)}
-              />
-            </DetailSection>
-          )}
-
-          {section === "distributors" && (
-            <section className="space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h3 className="text-base font-semibold text-card-foreground">
-                  Distribuidores autorizados
-                </h3>
-                {canModify && (
-                  <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDistributorToAdd("");
-                        setAddDistributorModalOpen(true);
-                      }}
-                      className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 sm:w-auto"
-                    >
-                      <Plus className="size-4" />
-                      Vincular distribuidor
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                {distributors.length === 0 ? (
-                  <EmptyState
-                    title="Este software no tiene distribuidores vinculados."
-                    action={
-                      canModify ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDistributorToAdd("");
-                            setAddDistributorModalOpen(true);
-                          }}
-                          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
-                        >
-                          <Plus className="size-4" />
-                          Vincular distribuidor
-                        </button>
-                      ) : undefined
-                    }
-                  />
-                ) : (
-                  <>
-                    <DataTableToolbar
-                      search={distSearch}
-                      onSearchChange={setDistSearch}
-                      searchPlaceholder="Buscar por RIF o razón social…"
-                      resultCount={filteredDistributors.length}
-                      totalCount={distributors.length}
-                    />
-                    {filteredDistributors.length === 0 ? (
-                      <TableFilterEmptyState />
-                    ) : (
-                      <>
-                        <TableScroll>
-                          <table className="w-full min-w-[560px] text-left text-sm">
-                            <thead>
-                              <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                                <SortableTableHeader
-                                  label="RIF"
-                                  sortDirection={
-                                    distSort?.key === "rif"
-                                      ? distSort.direction
-                                      : null
-                                  }
-                                  onToggle={() =>
-                                    setDistSort((current) =>
-                                      toggleTableSort(current, "rif"),
-                                    )
-                                  }
-                                />
-                                <SortableTableHeader
-                                  label="Razón social"
-                                  sortDirection={
-                                    distSort?.key === "businessName"
-                                      ? distSort.direction
-                                      : null
-                                  }
-                                  onToggle={() =>
-                                    setDistSort((current) =>
-                                      toggleTableSort(current, "businessName"),
-                                    )
-                                  }
-                                />
-                                {canModify && (
-                                  <th className="px-5 py-3 font-medium text-right">
-                                    Acciones
-                                  </th>
-                                )}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {distPagination.paginatedItems.map((dist) => {
-                                const distHref =
-                                  user &&
-                                  canAccessRoute(
-                                    user.role,
-                                    companyPath(dist.id),
-                                  )
-                                    ? companyPath(dist.id)
-                                    : undefined;
-
-                                return (
-                                  <ClickableTableRow
-                                    key={dist.id}
-                                    href={distHref ?? softwarePath(software.id)}
-                                  >
-                                    <td className="px-5 py-3.5 font-mono text-card-foreground">
-                                      {dist.rif}
-                                    </td>
-                                    <td className="px-5 py-3.5 font-medium text-card-foreground">
-                                      <TruncatedText maxClassName="max-w-[320px]">
-                                        {dist.businessName || "—"}
-                                      </TruncatedText>
-                                    </td>
-                                    {canModify && (
-                                      <td
-                                        className="px-5 py-3.5 text-right"
-                                        data-row-click="ignore"
-                                      >
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            void handleRemoveDistributor(
-                                              dist.id,
-                                              dist.businessName || dist.rif,
-                                            )
-                                          }
-                                          title="Desvincular distribuidor"
-                                          aria-label={`Desvincular distribuidor ${dist.businessName || dist.rif}`}
-                                          className="inline-flex items-center justify-center rounded-lg p-1.5 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-600"
-                                        >
-                                          <Trash2 className="size-4" />
-                                        </button>
-                                      </td>
-                                    )}
-                                  </ClickableTableRow>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </TableScroll>
-                        <TablePagination pagination={distPagination} />
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-            </section>
-          )}
-        </>
+        <DetailSectionsPager key={software.id} steps={detailSteps} />
       )}
 
       {addDistributorModalOpen && (
