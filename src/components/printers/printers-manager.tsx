@@ -15,6 +15,8 @@ import {
 import { runSerialBatch } from "@/lib/batch-create";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-mqtt-badge";
+import { PrinterFirmwareUpdateBadge } from "@/components/printers/printer-firmware-update-badge";
+import { isFirmwareUpdateRequired } from "@/lib/firmware-update-policy";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import {
   TableQuickFilterButton,
@@ -1187,6 +1189,10 @@ export function PrintersManager() {
                                   printer={printer}
                                   onVerified={loadPrinters}
                                 />
+                              ) : null}
+                              {isDistributor &&
+                              isFirmwareUpdateRequired(printer.versionFirmware) ? (
+                                <PrinterFirmwareUpdateBadge />
                               ) : null}
                             </div>
                           </td>

@@ -29,6 +29,9 @@ import {
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
 import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-mqtt-badge";
+import { PrinterFirmwareUpdateBadge } from "@/components/printers/printer-firmware-update-badge";
+import { PrinterFirmwareUpdateBanner } from "@/components/printers/printer-firmware-update-banner";
+import { isFirmwareUpdateRequired } from "@/lib/firmware-update-policy";
 import { PrinterTicketConfigPanel } from "@/components/printers/printer-ticket-json-preview";
 import { PrinterLogsSection } from "@/components/printers/printer-logs-section";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
@@ -460,6 +463,10 @@ export function PrinterView() {
                     printer={printer}
                     onVerified={() => void load()}
                   />
+                ) : null}
+                {isDistributor &&
+                isFirmwareUpdateRequired(printer.versionFirmware) ? (
+                  <PrinterFirmwareUpdateBadge />
                 ) : null}
               </div>
             }
@@ -996,6 +1003,12 @@ export function PrinterView() {
         {printer &&
           (isDistributor ? (
             <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+              {isFirmwareUpdateRequired(printer.versionFirmware) ? (
+                <PrinterFirmwareUpdateBanner
+                  serial={printer.fiscalSerial}
+                  currentFirmwareVersion={printer.versionFirmware}
+                />
+              ) : null}
               {distributorDetailContent}
             </div>
           ) : (

@@ -36,6 +36,8 @@ import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import type { PrinterStatus } from "@/types/printer";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { isDistributorPanelRole } from "@/types/user";
+import { isFirmwareUpdateRequired } from "@/lib/firmware-update-policy";
+import { PrinterFirmwareUpdateBadge } from "@/components/printers/printer-firmware-update-badge";
 import { cn } from "@/lib/utils";
 import {
   ToolsPage,
@@ -277,6 +279,10 @@ export function ToolsPrintersManager() {
                                   />
                                   Sin MAC
                                 </span>
+                              ) : null}
+                              {isDistributor &&
+                              isFirmwareUpdateRequired(printer.firmware) ? (
+                                <PrinterFirmwareUpdateBadge />
                               ) : null}
                             </div>
                           </td>

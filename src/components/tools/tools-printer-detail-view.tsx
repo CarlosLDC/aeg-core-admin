@@ -26,6 +26,8 @@ import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import { useToolsTransportContext } from "@/modules/tools/transport/tools-transport-provider";
 import { useAuth } from "@/context/auth-provider";
 import { isDistributorPanelRole } from "@/types/user";
+import { isFirmwareUpdateRequired } from "@/lib/firmware-update-policy";
+import { PrinterFirmwareUpdateBanner } from "@/components/printers/printer-firmware-update-banner";
 import {
   TOOLS_PRINTER_NAV_SECTIONS,
   TOOLS_SECTIONS,
@@ -65,6 +67,14 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
 
   return (
     <ToolsPage>
+      {isDistributorPanelRole(user?.role) &&
+      isFirmwareUpdateRequired(printer.firmware) ? (
+        <PrinterFirmwareUpdateBanner
+          serial={printer.serial}
+          currentFirmwareVersion={printer.firmware}
+        />
+      ) : null}
+
       {showMacWarning ? (
         <ToolsMacWarning>
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
