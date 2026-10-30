@@ -305,7 +305,7 @@ export const TOOLS_MODULES: ToolsModule[] = [
   {
     id: "tools-broker-migration",
     title: "Actualizar firmware",
-    description: "UI para actualizar el firmware de la impresora y verificar broker MQTT.",
+    description: "UI para actualizar el firmware de la impresora.",
     sourcePath: "",
     targetPath: "C:\\Users\\sirgo\\Documents\\aeg-core-admin\\src\\modules\\tools\\broker-migration",
     route: "/tools/printers/[serial]/broker-migration",

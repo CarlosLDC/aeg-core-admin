@@ -96,7 +96,7 @@ export const TOOLS_SECTIONS = {
   brokerMigration: {
     id: "broker-migration",
     title: "Actualizar firmware",
-    description: "Actualizar el firmware de la impresora y verificar broker MQTT.",
+    description: "Actualizar el firmware de la impresora.",
     icon: Cpu,
     tone: "sky",
   },

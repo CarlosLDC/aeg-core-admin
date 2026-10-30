@@ -130,7 +130,7 @@ export function BrokerMigrationPanel({ printer }: BrokerMigrationPanelProps) {
           {/* Controls Panel */}
           <ToolsPanelSection
             title="Control de actualización"
-            description="Inicie el proceso para actualizar el firmware de esta impresora y verificar su conexión al broker MQTT."
+            description="Inicie el proceso para actualizar el firmware de esta impresora."
             icon={Play}
             tone="sky"
           >
