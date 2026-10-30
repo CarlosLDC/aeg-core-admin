@@ -25,6 +25,7 @@ import { useToolsPrinters } from "@/modules/tools/printers/use-tools-printers";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import { useToolsTransportContext } from "@/modules/tools/transport/tools-transport-provider";
 import { useAuth } from "@/context/auth-provider";
+import { isDistributorPanelRole } from "@/types/user";
 import {
   TOOLS_PRINTER_NAV_SECTIONS,
   TOOLS_SECTIONS,
@@ -39,7 +40,8 @@ type ToolsPrinterDetailViewProps = {
 
 function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
   const { user } = useAuth();
-  const isAdmin = user?.role === "ADMIN";
+  const canUpdateFirmware =
+    user?.role === "ADMIN" || isDistributorPanelRole(user?.role);
   const { loading, error, reload, findBySerial } = useToolsPrinters();
   const printer = findBySerial(serial);
   const connection = useToolsPrinterConnection(
@@ -91,7 +93,7 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
         />
         <ToolsSectionGrid>
           {TOOLS_PRINTER_NAV_SECTIONS.map((sectionKey) => {
-            if (sectionKey === "brokerMigration" && !isAdmin) {
+            if (sectionKey === "brokerMigration" && !canUpdateFirmware) {
               return null;
             }
             const section = TOOLS_SECTIONS[sectionKey];
