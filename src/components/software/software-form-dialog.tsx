@@ -488,18 +488,18 @@ export function SoftwareFormDialog({
                         {form.programmingLanguages.map((lang) => (
                           <span
                             key={lang}
-                            className="inline-flex items-center gap-2 rounded-lg border border-sky-500/35 bg-sky-500/10 px-3 py-1.5 text-sm font-medium text-sky-700 dark:text-sky-300"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-sky-500/35 bg-sky-500/10 py-1.5 pl-3 pr-2 text-sm font-medium text-sky-700 dark:text-sky-300"
                           >
                             <span>{lang}</span>
                             <button
                               type="button"
                               disabled={saving}
                               onClick={() => removeLanguage(lang)}
-                              className="inline-flex size-4 items-center justify-center rounded-full text-sky-700/70 hover:bg-rose-500/15 hover:text-rose-600 dark:text-sky-300/70 dark:hover:text-rose-400 transition-colors"
+                              className="inline-flex size-5 items-center justify-center rounded-full text-sky-700/60 transition-colors hover:bg-rose-500/20 hover:text-rose-600 focus:outline-none dark:text-sky-300/60 dark:hover:bg-rose-500/25 dark:hover:text-rose-300"
                               title={`Quitar ${lang}`}
                               aria-label={`Quitar ${lang}`}
                             >
-                              <X className="size-3.5" aria-hidden />
+                              <X className="size-3" aria-hidden />
                             </button>
                           </span>
                         ))}
@@ -569,7 +569,7 @@ export function SoftwareFormDialog({
                             <div
                               key={lang}
                               className={cn(
-                                "group inline-flex items-center rounded-lg border text-sm font-medium transition-colors",
+                                "group inline-flex items-center rounded-lg border text-sm font-medium transition-colors pr-1.5",
                                 active
                                   ? "border-sky-500/40 bg-sky-500/10 text-sky-700 dark:text-sky-300"
                                   : "border-border bg-background text-muted hover:border-foreground/20 hover:text-card-foreground",
@@ -580,7 +580,7 @@ export function SoftwareFormDialog({
                                 disabled={saving}
                                 aria-pressed={active}
                                 onClick={() => toggleLanguage(lang)}
-                                className="inline-flex items-center gap-2 px-3 py-1.5 focus:outline-none"
+                                className="inline-flex items-center gap-2 py-1.5 pl-3 pr-1.5 focus:outline-none"
                               >
                                 {active && (
                                   <Check className="size-3.5 shrink-0 text-sky-600 dark:text-sky-400" />
@@ -594,11 +594,16 @@ export function SoftwareFormDialog({
                                   e.stopPropagation();
                                   deleteLanguageOption(lang);
                                 }}
-                                className="inline-flex size-7 items-center justify-center rounded-r-lg text-muted/60 opacity-60 hover:opacity-100 hover:bg-rose-500/15 hover:text-rose-600 dark:hover:text-rose-400 transition-all focus:outline-none focus:opacity-100 pr-1.5"
+                                className={cn(
+                                  "inline-flex size-5 items-center justify-center rounded-full transition-colors focus:outline-none",
+                                  active
+                                    ? "text-sky-700/60 hover:bg-rose-500/20 hover:text-rose-600 dark:text-sky-300/60 dark:hover:bg-rose-500/25 dark:hover:text-rose-300"
+                                    : "text-muted/60 hover:bg-rose-500/15 hover:text-rose-600 dark:hover:bg-rose-500/25 dark:hover:text-rose-300",
+                                )}
                                 title={`Eliminar ${lang} de la lista`}
                                 aria-label={`Eliminar ${lang} de la lista`}
                               >
-                                <X className="size-3.5" aria-hidden />
+                                <X className="size-3" aria-hidden />
                               </button>
                             </div>
                           );
