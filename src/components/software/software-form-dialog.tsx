@@ -4,9 +4,13 @@ import { FormEvent, useEffect, useId, useState } from "react";
 import {
   AppWindow,
   Building2,
+  Check,
+  Code2,
   Cpu,
   Loader2,
+  Monitor,
   Plus,
+  RotateCcw,
   Trash2,
   X,
 } from "lucide-react";
@@ -94,14 +98,26 @@ export function SoftwareFormDialog({
   );
   const [stepError, setStepError] = useState<string | null>(null);
   const [customLanguage, setCustomLanguage] = useState("");
+  const [availableLanguages, setAvailableLanguages] = useState<string[]>(
+    () => [...COMMON_PROGRAMMING_LANGUAGES],
+  );
   const [selectedDistributorToAdd, setSelectedDistributorToAdd] = useState("");
 
   useEffect(() => {
     if (!open) return;
     if (mode === "edit" && software) {
       setForm(softwareToFormValues(software));
+      setAvailableLanguages(
+        Array.from(
+          new Set([
+            ...COMMON_PROGRAMMING_LANGUAGES,
+            ...(software.programmingLanguages ?? []),
+          ]),
+        ),
+      );
     } else {
       setForm(INITIAL_SOFTWARE_FORM_VALUES);
+      setAvailableLanguages([...COMMON_PROGRAMMING_LANGUAGES]);
     }
     setStep(1);
     setStepError(null);
@@ -180,16 +196,45 @@ export function SoftwareFormDialog({
     });
   }
 
+  function removeLanguage(lang: string) {
+    setForm((prev) => ({
+      ...prev,
+      programmingLanguages: prev.programmingLanguages.filter((l) => l !== lang),
+    }));
+  }
+
   function addCustomLanguage() {
     const val = customLanguage.trim();
     if (!val) return;
-    if (!form.programmingLanguages.includes(val)) {
-      setForm((prev) => ({
-        ...prev,
-        programmingLanguages: [...prev.programmingLanguages, val],
-      }));
-    }
+    setAvailableLanguages((prev) =>
+      prev.includes(val) ? prev : [...prev, val],
+    );
+    setForm((prev) => ({
+      ...prev,
+      programmingLanguages: prev.programmingLanguages.includes(val)
+        ? prev.programmingLanguages
+        : [...prev.programmingLanguages, val],
+    }));
     setCustomLanguage("");
+  }
+
+  function deleteLanguageOption(lang: string) {
+    setAvailableLanguages((prev) => prev.filter((l) => l !== lang));
+    setForm((prev) => ({
+      ...prev,
+      programmingLanguages: prev.programmingLanguages.filter((l) => l !== lang),
+    }));
+  }
+
+  function resetDefaultLanguages() {
+    setAvailableLanguages(
+      Array.from(
+        new Set([
+          ...COMMON_PROGRAMMING_LANGUAGES,
+          ...form.programmingLanguages,
+        ]),
+      ),
+    );
   }
 
   function toggleOs(os: string) {
@@ -231,10 +276,6 @@ export function SoftwareFormDialog({
 
   const availableDistributorCompanies = companies.filter(
     (c) => !form.distributorCompanyIds.includes(c.id),
-  );
-
-  const allLanguageOptions = Array.from(
-    new Set([...COMMON_PROGRAMMING_LANGUAGES, ...form.programmingLanguages]),
   );
 
   const displayError = stepError ?? error;
@@ -401,56 +442,194 @@ export function SoftwareFormDialog({
             )}
 
             {currentSection === "technical" && (
-              <div className="space-y-4">
-                <div>
-                  <FieldLabel>Lenguajes de programación</FieldLabel>
-                  <div className="flex flex-wrap gap-2">
-                    {allLanguageOptions.map((lang) => {
-                      const active = form.programmingLanguages.includes(lang);
-                      return (
+              <div className="space-y-6">
+                {/* Panel Lenguajes de programación */}
+                <div className="space-y-4 rounded-xl border border-border bg-card/40 p-4 sm:p-5">
+                  <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                        <Code2 className="size-4" aria-hidden />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-card-foreground">
+                          Lenguajes de programación
+                        </h3>
+                        <p className="text-xs text-muted">
+                          Selecciona los lenguajes utilizados o añade nuevos a la lista.
+                        </p>
+                      </div>
+                    </div>
+                    {form.programmingLanguages.length > 0 && (
+                      <span className="shrink-0 rounded-full border border-sky-500/30 bg-sky-500/10 px-2.5 py-0.5 text-xs font-medium text-sky-700 dark:text-sky-300">
+                        {form.programmingLanguages.length}{" "}
+                        {form.programmingLanguages.length === 1
+                          ? "seleccionado"
+                          : "seleccionados"}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Lenguajes seleccionados */}
+                  <div className="space-y-2">
+                    <span className="block text-xs font-medium text-muted">
+                      Lenguajes asignados
+                    </span>
+                    {form.programmingLanguages.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {form.programmingLanguages.map((lang) => (
+                          <span
+                            key={lang}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-sky-500/35 bg-sky-500/10 px-2.5 py-1 text-xs font-medium text-sky-700 dark:text-sky-300"
+                          >
+                            <span>{lang}</span>
+                            <button
+                              type="button"
+                              disabled={saving}
+                              onClick={() => removeLanguage(lang)}
+                              className="inline-flex size-4 items-center justify-center rounded-full text-sky-700/70 hover:bg-rose-500/15 hover:text-rose-600 dark:text-sky-300/70 dark:hover:text-rose-400 transition-colors"
+                              title={`Quitar ${lang}`}
+                              aria-label={`Quitar ${lang}`}
+                            >
+                              <X className="size-3" aria-hidden />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="rounded-lg border border-dashed border-border/80 bg-foreground/[0.02] px-3.5 py-3 text-center text-xs text-muted">
+                        No hay lenguajes seleccionados todavía. Elige de las opciones abajo o escribe uno nuevo.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Añadir nuevo lenguaje */}
+                  <div className="space-y-1.5 pt-1">
+                    <span className="block text-xs font-medium text-card-foreground">
+                      Añadir nuevo lenguaje
+                    </span>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        disabled={saving}
+                        value={customLanguage}
+                        onChange={(e) => setCustomLanguage(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addCustomLanguage();
+                          }
+                        }}
+                        placeholder="Ej. Rust, Go, Cobol…"
+                        className={cn(formFieldInputClass, "flex-1 text-xs sm:text-sm")}
+                      />
+                      <button
+                        type="button"
+                        onClick={addCustomLanguage}
+                        disabled={saving || !customLanguage.trim()}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-xs sm:text-sm font-medium text-card-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+                      >
+                        <Plus className="size-4" />
+                        Añadir
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Catálogo de opciones disponibles */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-medium text-muted">
+                        Opciones disponibles (haz clic para alternar o eliminar de la lista)
+                      </span>
+                      {availableLanguages.length < COMMON_PROGRAMMING_LANGUAGES.length && (
                         <button
-                          key={lang}
                           type="button"
                           disabled={saving}
-                          aria-pressed={active}
-                          onClick={() => toggleLanguage(lang)}
-                          className={toggleButtonClass(active, "sky")}
+                          onClick={resetDefaultLanguages}
+                          className="inline-flex items-center gap-1 text-[11px] font-medium text-accent hover:underline disabled:opacity-50"
                         >
-                          {lang}
+                          <RotateCcw className="size-3" />
+                          Restaurar sugerencias
                         </button>
-                      );
-                    })}
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <input
-                      type="text"
-                      disabled={saving}
-                      value={customLanguage}
-                      onChange={(e) => setCustomLanguage(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addCustomLanguage();
-                        }
-                      }}
-                      placeholder="Agregar otro lenguaje…"
-                      className={cn(formFieldInputClass, "flex-1")}
-                    />
-                    <button
-                      type="button"
-                      onClick={addCustomLanguage}
-                      disabled={saving || !customLanguage.trim()}
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-card-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
-                    >
-                      <Plus className="size-4" />
-                      Agregar
-                    </button>
+                      )}
+                    </div>
+                    {availableLanguages.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {availableLanguages.map((lang) => {
+                          const active = form.programmingLanguages.includes(lang);
+                          return (
+                            <div
+                              key={lang}
+                              className={cn(
+                                "group inline-flex items-center rounded-lg border text-xs font-medium transition-colors",
+                                active
+                                  ? "border-sky-500/40 bg-sky-500/10 text-sky-700 dark:text-sky-300"
+                                  : "border-border bg-background text-muted hover:border-foreground/20 hover:text-card-foreground",
+                              )}
+                            >
+                              <button
+                                type="button"
+                                disabled={saving}
+                                aria-pressed={active}
+                                onClick={() => toggleLanguage(lang)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 focus:outline-none"
+                              >
+                                {active && (
+                                  <Check className="size-3 shrink-0 text-sky-600 dark:text-sky-400" />
+                                )}
+                                <span>{lang}</span>
+                              </button>
+                              <button
+                                type="button"
+                                disabled={saving}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteLanguageOption(lang);
+                                }}
+                                className="inline-flex size-6 items-center justify-center rounded-r-lg text-muted/60 opacity-60 hover:opacity-100 hover:bg-rose-500/15 hover:text-rose-600 dark:hover:text-rose-400 transition-all focus:outline-none focus:opacity-100 pr-1.5"
+                                title={`Eliminar ${lang} de la lista`}
+                                aria-label={`Eliminar ${lang} de la lista`}
+                              >
+                                <X className="size-3.5" aria-hidden />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="rounded-lg border border-dashed border-border/80 bg-foreground/[0.02] px-3.5 py-2.5 text-center text-xs text-muted">
+                        No hay opciones en la lista. Puedes añadir nuevas arriba o restaurar las sugerencias.
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                <div>
-                  <FieldLabel>Sistemas operativos</FieldLabel>
-                  <div className="flex flex-wrap gap-2">
+                {/* Panel Sistemas operativos */}
+                <div className="space-y-4 rounded-xl border border-border bg-card/40 p-4 sm:p-5">
+                  <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                        <Monitor className="size-4" aria-hidden />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-card-foreground">
+                          Sistemas operativos
+                        </h3>
+                        <p className="text-xs text-muted">
+                          Plataformas y entornos compatibles con el software.
+                        </p>
+                      </div>
+                    </div>
+                    {form.operatingSystems.length > 0 && (
+                      <span className="shrink-0 rounded-full border border-sky-500/30 bg-sky-500/10 px-2.5 py-0.5 text-xs font-medium text-sky-700 dark:text-sky-300">
+                        {form.operatingSystems.length}{" "}
+                        {form.operatingSystems.length === 1
+                          ? "seleccionado"
+                          : "seleccionados"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-1">
                     {COMMON_OPERATING_SYSTEMS.map((os) => {
                       const active = form.operatingSystems.includes(os);
                       return (
@@ -460,9 +639,15 @@ export function SoftwareFormDialog({
                           disabled={saving}
                           aria-pressed={active}
                           onClick={() => toggleOs(os)}
-                          className={toggleButtonClass(active, "sky")}
+                          className={cn(
+                            toggleButtonClass(active, "sky"),
+                            "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium",
+                          )}
                         >
-                          {os}
+                          {active && (
+                            <Check className="size-3.5 shrink-0 text-sky-600 dark:text-sky-400" />
+                          )}
+                          <span>{os}</span>
                         </button>
                       );
                     })}
