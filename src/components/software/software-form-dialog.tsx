@@ -393,22 +393,6 @@ export function SoftwareFormDialog({
                   </label>
                 </div>
 
-                <div>
-                  <FieldLabel>Tipo de desarrollo</FieldLabel>
-                  <BooleanToggle
-                    value={form.external}
-                    onChange={(external) =>
-                      setForm((f) => ({ ...f, external }))
-                    }
-                    disabled={saving}
-                    falseLabel="Propio"
-                    trueLabel="Terceros"
-                    falseTone="emerald"
-                    trueTone="amber"
-                    ariaLabel="Tipo de desarrollo"
-                  />
-                </div>
-
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block">
                     <FieldLabel>Empresa desarrolladora</FieldLabel>
@@ -437,6 +421,22 @@ export function SoftwareFormDialog({
                       }
                     />
                   </label>
+                </div>
+
+                <div>
+                  <FieldLabel>Tipo de desarrollo</FieldLabel>
+                  <BooleanToggle
+                    value={form.external}
+                    onChange={(external) =>
+                      setForm((f) => ({ ...f, external }))
+                    }
+                    disabled={saving}
+                    falseLabel="Propio"
+                    trueLabel="Terceros"
+                    falseTone="emerald"
+                    trueTone="amber"
+                    ariaLabel="Tipo de desarrollo"
+                  />
                 </div>
               </div>
             )}
