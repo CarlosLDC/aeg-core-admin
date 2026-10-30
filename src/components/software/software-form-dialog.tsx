@@ -296,7 +296,12 @@ export function SoftwareFormDialog({
         disabled={saving}
         onClick={onClose}
       />
-      <div className="relative flex max-h-[min(92vh,100dvh)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+      <div
+        className={cn(
+          "relative flex max-h-[min(92vh,100dvh)] w-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl transition-[max-width] duration-200 ease-out",
+          currentSection === "technical" ? "max-w-3xl" : "max-w-2xl",
+        )}
+      >
         <div className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -444,23 +449,23 @@ export function SoftwareFormDialog({
             {currentSection === "technical" && (
               <div className="space-y-6">
                 {/* Panel Lenguajes de programación */}
-                <div className="space-y-4 rounded-xl border border-border bg-card/40 p-4 sm:p-5">
+                <div className="space-y-5 rounded-xl border border-border bg-card/40 p-5">
                   <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
-                        <Code2 className="size-4" aria-hidden />
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                        <Code2 className="size-5" aria-hidden />
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-card-foreground">
+                        <h3 className="text-base font-semibold text-card-foreground">
                           Lenguajes de programación
                         </h3>
-                        <p className="text-xs text-muted">
-                          Selecciona los lenguajes utilizados o añade nuevos a la lista.
+                        <p className="text-sm text-muted">
+                          Define los lenguajes utilizados o añade nuevos al catálogo.
                         </p>
                       </div>
                     </div>
                     {form.programmingLanguages.length > 0 && (
-                      <span className="shrink-0 rounded-full border border-sky-500/30 bg-sky-500/10 px-2.5 py-0.5 text-xs font-medium text-sky-700 dark:text-sky-300">
+                      <span className="shrink-0 rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-0.5 text-xs font-medium text-sky-700 dark:text-sky-300">
                         {form.programmingLanguages.length}{" "}
                         {form.programmingLanguages.length === 1
                           ? "seleccionado"
@@ -471,7 +476,7 @@ export function SoftwareFormDialog({
 
                   {/* Lenguajes seleccionados */}
                   <div className="space-y-2">
-                    <span className="block text-xs font-medium text-muted">
+                    <span className="block text-sm font-medium text-card-foreground">
                       Lenguajes asignados
                     </span>
                     {form.programmingLanguages.length > 0 ? (
@@ -479,7 +484,7 @@ export function SoftwareFormDialog({
                         {form.programmingLanguages.map((lang) => (
                           <span
                             key={lang}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-sky-500/35 bg-sky-500/10 px-2.5 py-1 text-xs font-medium text-sky-700 dark:text-sky-300"
+                            className="inline-flex items-center gap-2 rounded-lg border border-sky-500/35 bg-sky-500/10 px-3 py-1.5 text-sm font-medium text-sky-700 dark:text-sky-300"
                           >
                             <span>{lang}</span>
                             <button
@@ -490,21 +495,21 @@ export function SoftwareFormDialog({
                               title={`Quitar ${lang}`}
                               aria-label={`Quitar ${lang}`}
                             >
-                              <X className="size-3" aria-hidden />
+                              <X className="size-3.5" aria-hidden />
                             </button>
                           </span>
                         ))}
                       </div>
                     ) : (
-                      <p className="rounded-lg border border-dashed border-border/80 bg-foreground/[0.02] px-3.5 py-3 text-center text-xs text-muted">
-                        No hay lenguajes seleccionados todavía. Elige de las opciones abajo o escribe uno nuevo.
+                      <p className="rounded-lg border border-dashed border-border/80 bg-foreground/[0.02] px-4 py-3 text-sm text-muted">
+                        No hay lenguajes asignados todavía. Elige de las sugerencias abajo o escribe uno nuevo.
                       </p>
                     )}
                   </div>
 
                   {/* Añadir nuevo lenguaje */}
-                  <div className="space-y-1.5 pt-1">
-                    <span className="block text-xs font-medium text-card-foreground">
+                  <div className="space-y-2 pt-1">
+                    <span className="block text-sm font-medium text-card-foreground">
                       Añadir nuevo lenguaje
                     </span>
                     <div className="flex gap-2">
@@ -520,13 +525,13 @@ export function SoftwareFormDialog({
                           }
                         }}
                         placeholder="Ej. Rust, Go, Cobol…"
-                        className={cn(formFieldInputClass, "flex-1 text-xs sm:text-sm")}
+                        className={cn(formFieldInputClass, "flex-1 text-sm")}
                       />
                       <button
                         type="button"
                         onClick={addCustomLanguage}
                         disabled={saving || !customLanguage.trim()}
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-xs sm:text-sm font-medium text-card-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-card-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
                       >
                         <Plus className="size-4" />
                         Añadir
@@ -535,32 +540,32 @@ export function SoftwareFormDialog({
                   </div>
 
                   {/* Catálogo de opciones disponibles */}
-                  <div className="space-y-2 pt-1">
+                  <div className="space-y-2.5 pt-1">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-medium text-muted">
-                        Opciones disponibles (haz clic para alternar o eliminar de la lista)
+                      <span className="text-sm font-medium text-muted">
+                        Sugerencias y opciones disponibles
                       </span>
                       {availableLanguages.length < COMMON_PROGRAMMING_LANGUAGES.length && (
                         <button
                           type="button"
                           disabled={saving}
                           onClick={resetDefaultLanguages}
-                          className="inline-flex items-center gap-1 text-[11px] font-medium text-accent hover:underline disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline disabled:opacity-50"
                         >
-                          <RotateCcw className="size-3" />
+                          <RotateCcw className="size-3.5" />
                           Restaurar sugerencias
                         </button>
                       )}
                     </div>
                     {availableLanguages.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-2">
                         {availableLanguages.map((lang) => {
                           const active = form.programmingLanguages.includes(lang);
                           return (
                             <div
                               key={lang}
                               className={cn(
-                                "group inline-flex items-center rounded-lg border text-xs font-medium transition-colors",
+                                "group inline-flex items-center rounded-lg border text-sm font-medium transition-colors",
                                 active
                                   ? "border-sky-500/40 bg-sky-500/10 text-sky-700 dark:text-sky-300"
                                   : "border-border bg-background text-muted hover:border-foreground/20 hover:text-card-foreground",
@@ -571,10 +576,10 @@ export function SoftwareFormDialog({
                                 disabled={saving}
                                 aria-pressed={active}
                                 onClick={() => toggleLanguage(lang)}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 focus:outline-none"
+                                className="inline-flex items-center gap-2 px-3 py-1.5 focus:outline-none"
                               >
                                 {active && (
-                                  <Check className="size-3 shrink-0 text-sky-600 dark:text-sky-400" />
+                                  <Check className="size-3.5 shrink-0 text-sky-600 dark:text-sky-400" />
                                 )}
                                 <span>{lang}</span>
                               </button>
@@ -585,7 +590,7 @@ export function SoftwareFormDialog({
                                   e.stopPropagation();
                                   deleteLanguageOption(lang);
                                 }}
-                                className="inline-flex size-6 items-center justify-center rounded-r-lg text-muted/60 opacity-60 hover:opacity-100 hover:bg-rose-500/15 hover:text-rose-600 dark:hover:text-rose-400 transition-all focus:outline-none focus:opacity-100 pr-1.5"
+                                className="inline-flex size-7 items-center justify-center rounded-r-lg text-muted/60 opacity-60 hover:opacity-100 hover:bg-rose-500/15 hover:text-rose-600 dark:hover:text-rose-400 transition-all focus:outline-none focus:opacity-100 pr-1.5"
                                 title={`Eliminar ${lang} de la lista`}
                                 aria-label={`Eliminar ${lang} de la lista`}
                               >
@@ -596,7 +601,7 @@ export function SoftwareFormDialog({
                         })}
                       </div>
                     ) : (
-                      <p className="rounded-lg border border-dashed border-border/80 bg-foreground/[0.02] px-3.5 py-2.5 text-center text-xs text-muted">
+                      <p className="rounded-lg border border-dashed border-border/80 bg-foreground/[0.02] px-4 py-3 text-center text-sm text-muted">
                         No hay opciones en la lista. Puedes añadir nuevas arriba o restaurar las sugerencias.
                       </p>
                     )}
@@ -604,23 +609,23 @@ export function SoftwareFormDialog({
                 </div>
 
                 {/* Panel Sistemas operativos */}
-                <div className="space-y-4 rounded-xl border border-border bg-card/40 p-4 sm:p-5">
+                <div className="space-y-5 rounded-xl border border-border bg-card/40 p-5">
                   <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
-                        <Monitor className="size-4" aria-hidden />
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                        <Monitor className="size-5" aria-hidden />
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-card-foreground">
+                        <h3 className="text-base font-semibold text-card-foreground">
                           Sistemas operativos
                         </h3>
-                        <p className="text-xs text-muted">
+                        <p className="text-sm text-muted">
                           Plataformas y entornos compatibles con el software.
                         </p>
                       </div>
                     </div>
                     {form.operatingSystems.length > 0 && (
-                      <span className="shrink-0 rounded-full border border-sky-500/30 bg-sky-500/10 px-2.5 py-0.5 text-xs font-medium text-sky-700 dark:text-sky-300">
+                      <span className="shrink-0 rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-0.5 text-xs font-medium text-sky-700 dark:text-sky-300">
                         {form.operatingSystems.length}{" "}
                         {form.operatingSystems.length === 1
                           ? "seleccionado"
@@ -641,7 +646,7 @@ export function SoftwareFormDialog({
                           onClick={() => toggleOs(os)}
                           className={cn(
                             toggleButtonClass(active, "sky"),
-                            "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium",
+                            "inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium",
                           )}
                         >
                           {active && (
