@@ -9,6 +9,7 @@ import {
   Stamp,
   Wrench,
   ClipboardCheck,
+  FileCheck2,
   BookOpen,
   Download,
   Boxes,
@@ -52,6 +53,29 @@ export const navSections: NavSection[] = [
     ],
   },
   {
+    title: "Organización",
+    items: [
+      {
+        title: "Empresas",
+        href: "/branches",
+        icon: Building2,
+        roles: ["ADMIN", "DISTRIBUTOR"],
+      },
+      {
+        title: "Revisiones",
+        href: "/reviews",
+        icon: FileCheck2,
+        roles: ["ADMIN"],
+      },
+      {
+        title: "Transferir cliente",
+        href: "/client-transfers",
+        icon: ArrowRightLeft,
+        roles: ["ADMIN"],
+      },
+    ],
+  },
+  {
     title: "Equipos fiscales",
     items: [
       {
@@ -61,51 +85,29 @@ export const navSections: NavSection[] = [
         roles: ["ADMIN", "DISTRIBUTOR"],
       },
       {
-        title: "Fiscalización",
-        href: "/fiscalizacion",
-        icon: Cable,
-        roles: ["ADMIN"],
-      },
-      {
-        title: "Modelos fiscales",
-        href: "/printer-models",
-        icon: FileDigit,
-        roles: ["ADMIN"],
-      },
-      {
-        title: "Versiones de firmware",
-        href: "/firmware-versions",
-        icon: Cpu,
-        roles: ["ADMIN"],
-      },
-      {
         title: "Precintos fiscales",
         href: "/seals",
         icon: Stamp,
         roles: ["ADMIN"],
       },
       {
-        title: "Softwares",
-        href: "/software",
-        icon: AppWindow,
+        title: "Fiscalización",
+        href: "/fiscalizacion",
+        icon: Cable,
         roles: ["ADMIN"],
-      },
-    ],
-  },
-  {
-    title: "Organización",
-    items: [
-      {
-        title: "Empresas",
-        href: "/branches",
-        icon: Building2,
-        roles: ["ADMIN", "DISTRIBUTOR"],
       },
     ],
   },
   {
     title: "Operaciones",
     items: [
+      {
+        title: "Libro fiscal",
+        href: FISCAL_BOOK_ENTRY_PATH,
+        icon: BookOpen,
+        roles: ["ADMIN", "DISTRIBUTOR"],
+        openInNewTab: true,
+      },
       {
         title: "Servicio técnico",
         href: "/technical-services",
@@ -125,16 +127,15 @@ export const navSections: NavSection[] = [
         roles: ["ADMIN"],
       },
       {
-        title: "Libro fiscal",
-        href: FISCAL_BOOK_ENTRY_PATH,
-        icon: BookOpen,
-        roles: ["ADMIN", "DISTRIBUTOR"],
-        openInNewTab: true,
-      },
-      {
         title: "Tools",
         href: "/tools",
         icon: Boxes,
+      },
+      {
+        title: "Herramientas Remoto",
+        href: "/remoto",
+        icon: Radio,
+        roles: ["ADMIN"],
       },
       {
         title: "Descargas",
@@ -146,27 +147,32 @@ export const navSections: NavSection[] = [
     ],
   },
   {
+    title: "Catálogos",
+    items: [
+      {
+        title: "Modelos fiscales",
+        href: "/printer-models",
+        icon: FileDigit,
+        roles: ["ADMIN"],
+      },
+      {
+        title: "Versiones de firmware",
+        href: "/firmware-versions",
+        icon: Cpu,
+        roles: ["ADMIN"],
+      },
+      {
+        title: "Softwares",
+        href: "/software",
+        icon: AppWindow,
+        roles: ["ADMIN"],
+      },
+    ],
+  },
+  {
     title: "Administración",
     items: [
       { title: "Usuarios", href: "/users", icon: Users, roles: ["ADMIN"] },
-      {
-        title: "Revisiones",
-        href: "/reviews",
-        icon: ClipboardCheck,
-        roles: ["ADMIN"],
-      },
-      {
-        title: "Transferir cliente",
-        href: "/client-transfers",
-        icon: ArrowRightLeft,
-        roles: ["ADMIN"],
-      },
-      {
-        title: "Herramientas Remoto",
-        href: "/remoto",
-        icon: Radio,
-        roles: ["ADMIN"],
-      },
       {
         title: "Configuración",
         href: "/settings",

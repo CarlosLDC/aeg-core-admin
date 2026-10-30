@@ -22,6 +22,35 @@ describe("navSectionsForRole", () => {
     },
   );
 
+  it("orders ADMIN sections logically from high-frequency to system settings", () => {
+    const titles = navSectionsForRole("ADMIN").map((s) => s.title);
+    expect(titles).toEqual([
+      "Inicio",
+      "Organización",
+      "Equipos fiscales",
+      "Operaciones",
+      "Catálogos",
+      "Administración",
+    ]);
+  });
+
+  it("groups client management items under Organización and catalog items under Catálogos", () => {
+    const sections = navSectionsForRole("ADMIN");
+    const orgItems = sections
+      .find((s) => s.title === "Organización")
+      ?.items.map((i) => i.href);
+    expect(orgItems).toEqual(["/branches", "/reviews", "/client-transfers"]);
+
+    const catalogItems = sections
+      .find((s) => s.title === "Catálogos")
+      ?.items.map((i) => i.href);
+    expect(catalogItems).toEqual([
+      "/printer-models",
+      "/firmware-versions",
+      "/software",
+    ]);
+  });
+
   it("keeps Administración after Operaciones for ADMIN", () => {
     const titles = navSectionsForRole("ADMIN").map((s) => s.title);
     expect(titles.indexOf("Operaciones")).toBeLessThan(
