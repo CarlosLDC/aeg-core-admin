@@ -121,3 +121,11 @@ export function toolsPrinterHeaderFooterPath(serial: string): string {
 export function toolsPrinterSummaryPath(serial: string): string {
   return `${toolsPrinterPath(serial)}/resumen`;
 }
+
+export function toolsPrinterPeripheralsPath(serial: string): string {
+  return `${toolsPrinterPath(serial)}/perifericos`;
+}
+
+export function toolsPrinterTicketCustomizationPath(serial: string): string {
+  return `${toolsPrinterPath(serial)}/personalizacion-ticket`;
+}

@@ -5,6 +5,8 @@ import {
   CreditCard,
   FileStack,
   FlaskConical,
+  Palette,
+  Plug,
   Printer,
   ReceiptText,
   ScrollText,
@@ -16,6 +18,8 @@ import {
   toolsPrinterSummaryPath,
   toolsPrinterWifiPath,
   toolsPrinterBrokerMigrationPath,
+  toolsPrinterPeripheralsPath,
+  toolsPrinterTicketCustomizationPath,
 } from "@/lib/resource-routes";
 
 export type ToolsSectionTone =
@@ -79,6 +83,20 @@ export const TOOLS_SECTIONS = {
     icon: ReceiptText,
     tone: "rose",
   },
+  peripherals: {
+    id: "perifericos",
+    title: "Periféricos",
+    description: "Configurar gaveta de dinero y visor de precios.",
+    icon: Plug,
+    tone: "teal",
+  },
+  ticketCustomization: {
+    id: "personalizacion-ticket",
+    title: "Personalización del ticket",
+    description: "Logo y estilos de fuente del encabezado y pie.",
+    icon: Palette,
+    tone: "violet",
+  },
   status: {
     id: "status",
     title: "Estado en línea",
@@ -109,6 +127,8 @@ export const TOOLS_PRINTER_NAV_SECTIONS = [
   "wifi",
   "formasPago",
   "headerFooter",
+  "ticketCustomization",
+  "peripherals",
   "brokerMigration",
 ] as const satisfies readonly ToolsSectionKey[];
 
@@ -128,6 +148,10 @@ export function toolsPrinterSectionHref(
       return toolsPrinterFormasPagoPath(serial);
     case "headerFooter":
       return toolsPrinterHeaderFooterPath(serial);
+    case "ticketCustomization":
+      return toolsPrinterTicketCustomizationPath(serial);
+    case "peripherals":
+      return toolsPrinterPeripheralsPath(serial);
     case "brokerMigration":
       return toolsPrinterBrokerMigrationPath(serial);
     default: {

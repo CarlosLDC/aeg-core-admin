@@ -108,7 +108,10 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
             }
             const section = TOOLS_SECTIONS[sectionKey];
             const requiresConnection =
-              sectionKey !== "summary" && sectionKey !== "brokerMigration";
+              sectionKey !== "summary" &&
+              sectionKey !== "brokerMigration" &&
+              sectionKey !== "ticketCustomization" &&
+              sectionKey !== "peripherals";
             return (
               <ToolsNavCard
                 key={section.id}
