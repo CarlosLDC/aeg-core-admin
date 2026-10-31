@@ -995,10 +995,7 @@ export function CompanyPrintersTable({
                               <td className="px-5 py-3.5 text-card-foreground">
                                 {modelName}
                               </td>
-                              <td
-                                className="px-5 py-3.5"
-                                data-row-click="ignore"
-                              >
+                              <td className="px-5 py-3.5">
                                 <div className="flex flex-wrap items-center gap-2">
                                   <PrinterStatusBadge
                                     status={printer.status}

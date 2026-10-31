@@ -62,6 +62,7 @@ export function PrinterPendingMqttBadge({
   if (verifying) {
     return (
       <span
+        data-row-click="ignore"
         className={cn(
           "inline-flex items-center gap-1 text-xs font-normal text-amber-600 dark:text-amber-400",
           className,
