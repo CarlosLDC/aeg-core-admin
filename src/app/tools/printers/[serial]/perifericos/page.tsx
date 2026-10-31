@@ -5,7 +5,7 @@ import { ToolsPrinterOperationPage } from "@/components/tools/tools-printer-oper
 
 export default function ToolsPrinterPeripheralsPage() {
   return (
-    <ToolsPrinterOperationPage>
+    <ToolsPrinterOperationPage allow={["ADMIN"]}>
       {(printer) => <ToolsPeripheralsPanel printer={printer} />}
     </ToolsPrinterOperationPage>
   );

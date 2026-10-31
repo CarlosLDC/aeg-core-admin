@@ -42,8 +42,9 @@ type ToolsPrinterDetailViewProps = {
 
 function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
   const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
   const canUpdateFirmware =
-    user?.role === "ADMIN" || isDistributorPanelRole(user?.role);
+    isAdmin || isDistributorPanelRole(user?.role);
   const { loading, error, reload, findBySerial } = useToolsPrinters();
   const printer = findBySerial(serial);
   const connection = useToolsPrinterConnection(
@@ -104,6 +105,13 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
         <ToolsSectionGrid>
           {TOOLS_PRINTER_NAV_SECTIONS.map((sectionKey) => {
             if (sectionKey === "brokerMigration" && !canUpdateFirmware) {
+              return null;
+            }
+            if (
+              (sectionKey === "peripherals" ||
+                sectionKey === "ticketCustomization") &&
+              !isAdmin
+            ) {
               return null;
             }
             const section = TOOLS_SECTIONS[sectionKey];

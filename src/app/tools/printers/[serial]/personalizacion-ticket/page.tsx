@@ -5,7 +5,7 @@ import { ToolsTicketCustomizationPanel } from "@/components/tools/tools-ticket-c
 
 export default function ToolsPrinterTicketCustomizationPage() {
   return (
-    <ToolsPrinterOperationPage>
+    <ToolsPrinterOperationPage allow={["ADMIN"]}>
       {(printer) => <ToolsTicketCustomizationPanel printer={printer} />}
     </ToolsPrinterOperationPage>
   );

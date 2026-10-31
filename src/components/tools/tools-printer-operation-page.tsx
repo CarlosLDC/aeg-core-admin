@@ -6,12 +6,15 @@ import { RoleGuard } from "@/components/auth/role-guard";
 import { ToolsPrinterSubPage } from "@/components/tools/tools-printer-sub-page";
 import { toolsPageTitle } from "@/lib/tools-page-titles";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
+import type { Role } from "@/types/user";
 
 type ToolsPrinterOperationPageProps = {
+  allow?: Role[];
   children: (printer: ToolsPrinter) => React.ReactNode;
 };
 
 export function ToolsPrinterOperationPage({
+  allow,
   children,
 }: ToolsPrinterOperationPageProps) {
   const params = useParams();
@@ -20,7 +23,7 @@ export function ToolsPrinterOperationPage({
 
   return (
     <AdminShell title={toolsPageTitle(serial || undefined)}>
-      <RoleGuard path="/tools">
+      <RoleGuard allow={allow} path={allow ? undefined : "/tools"}>
         <ToolsPrinterSubPage>{children}</ToolsPrinterSubPage>
       </RoleGuard>
     </AdminShell>
