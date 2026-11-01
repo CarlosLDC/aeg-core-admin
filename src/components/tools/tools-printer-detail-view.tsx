@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, LayoutGrid, Printer } from "lucide-react";
+import { AlertTriangle, ArrowLeft, LayoutGrid } from "lucide-react";
 import { useEffect } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
@@ -18,6 +18,7 @@ import {
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterStatusBar } from "@/components/tools/tools-printer-status-bar";
 import { ToolsPrinterTransportShell } from "@/components/tools/tools-printer-transport-shell";
+import { ToolsRebootPrinterButton } from "@/components/tools/tools-reboot-printer-button";
 import { ToolsReporteZSection } from "@/components/tools/tools-reporte-z-section";
 import { ToolsReprintSection } from "@/components/tools/tools-reprint-section";
 import { ToolsTestDocumentsSection } from "@/components/tools/tools-test-documents-section";
@@ -33,7 +34,7 @@ import {
   TOOLS_SECTIONS,
   toolsPrinterSectionHref,
 } from "@/lib/tools-sections";
-import { printerPath, toolsListPath } from "@/lib/resource-routes";
+import { toolsListPath } from "@/lib/resource-routes";
 import { cn } from "@/lib/utils";
 
 type ToolsPrinterDetailViewProps = {
@@ -86,7 +87,7 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
         </ToolsMacWarning>
       ) : null}
 
-      <ToolsPrinterStatusBar connection={connection} />
+      <ToolsPrinterStatusBar connection={connection} printerId={printer.id} />
 
       {connection.transportReady &&
       connection.connectionResolved &&
@@ -132,6 +133,11 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
               />
             );
           })}
+          <ToolsRebootPrinterButton
+            variant="card"
+            disabled={!connection.transportReady || remoteActionsDisabled}
+            onRebootSent={connection.refreshStatus}
+          />
         </ToolsSectionGrid>
       </section>
 
@@ -194,22 +200,7 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
   }
 
   return (
-    <ResourceViewShell
-      backHref={toolsListPath}
-      backLabel="Volver al listado"
-      actions={
-        <Link
-          href={printerPath(printer.id)}
-          className={cn(
-            pageToolbarButtonClass,
-            "border border-border bg-card hover:bg-foreground/[0.03]",
-          )}
-        >
-          <Printer className="size-4" aria-hidden />
-          Ir a impresora
-        </Link>
-      }
-    >
+    <ResourceViewShell backHref={toolsListPath} backLabel="Volver al listado">
       <ToolsPrinterTransportShell printer={printer}>
         <ToolsPrinterDetailContent serial={serial} />
       </ToolsPrinterTransportShell>

@@ -6,7 +6,9 @@ import {
   toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
 import { ToolsUsbConnectionButton } from "@/components/tools/tools-connection-mode-switch";
-import { ToolsRebootPrinterButton } from "@/components/tools/tools-reboot-printer-button";
+import Link from "next/link";
+import { Printer } from "lucide-react";
+import { printerPath } from "@/lib/resource-routes";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { formatToolsWifiStatusLine } from "@/lib/tools-wifi-networks";
 import { isUsableToolsNetworkField } from "@/lib/tools-printer-connection";
@@ -16,9 +18,10 @@ import { cn } from "@/lib/utils";
 
 type ToolsPrinterStatusBarProps = {
   connection: ToolsPrinterConnectionState;
+  printerId?: number;
 };
 
-export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps) {
+export function ToolsPrinterStatusBar({ connection, printerId }: ToolsPrinterStatusBarProps) {
   const { usbConnected } = useToolsTransportContext();
   const {
     status,
@@ -113,11 +116,16 @@ export function ToolsPrinterStatusBar({ connection }: ToolsPrinterStatusBarProps
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
+        {printerId != null ? (
+          <Link
+            href={printerPath(printerId)}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
+          >
+            <Printer className="size-4" aria-hidden />
+            Ir a impresora
+          </Link>
+        ) : null}
         <ToolsUsbConnectionButton />
-        <ToolsRebootPrinterButton
-          disabled={!transportReady || remoteActionsDisabled}
-          onRebootSent={refreshStatus}
-        />
         <ToolsRefreshStatusButton
           loading={loading}
           onRefresh={refreshStatus}

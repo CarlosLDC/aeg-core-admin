@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { RotateCw } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { ToolsActionButton } from "@/components/tools/tools-ui";
+import { ToolsActionButton, ToolsActionCard } from "@/components/tools/tools-ui";
 import { useToolsTransport } from "@/modules/tools/transport/tools-transport-provider";
 import { getToolsMqttErrorMessage } from "@/lib/tools-mqtt-api";
 import { useToast } from "@/context/toast-provider";
@@ -14,6 +14,8 @@ type ToolsRebootPrinterButtonProps = {
   onRebootSent?: () => void | Promise<void>;
   className?: string;
   label?: string;
+  /** "card" muestra una tarjeta como las de Operaciones. */
+  variant?: "button" | "card";
 };
 
 export function ToolsRebootPrinterButton({
@@ -21,6 +23,7 @@ export function ToolsRebootPrinterButton({
   onRebootSent,
   className,
   label = "Reiniciar",
+  variant = "button",
 }: ToolsRebootPrinterButtonProps) {
   const transport = useToolsTransport();
   const toast = useToast();
@@ -49,6 +52,17 @@ export function ToolsRebootPrinterButton({
 
   return (
     <>
+      {variant === "card" ? (
+        <ToolsActionCard
+          icon={RotateCw}
+          tone="rose"
+          title="Reiniciar impresora"
+          description="Envía el comando de reinicio al módulo fiscal del equipo."
+          loading={submitting}
+          disabled={disabled}
+          onClick={() => setConfirmOpen(true)}
+        />
+      ) : (
       <ToolsActionButton
         loading={submitting}
         disabled={disabled || submitting}
@@ -60,6 +74,7 @@ export function ToolsRebootPrinterButton({
         {!submitting ? <RotateCw className="size-4 shrink-0" aria-hidden /> : null}
         {label}
       </ToolsActionButton>
+      )}
 
       <ConfirmDialog
         open={confirmOpen}
