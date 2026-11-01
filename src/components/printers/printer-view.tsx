@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpen, ShieldCheck, Wrench } from "lucide-react";
+import { Ban, BookOpen, ExternalLink, ShieldCheck, Wrench } from "lucide-react";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
@@ -942,6 +942,18 @@ export function PrinterView() {
     }
   }
 
+  const showToolsLink = Boolean(user && canAccessRoute(user.role, "/tools"));
+  const showFiscalBookLink = Boolean(
+    printer && canOpenFiscalBook && printer.status === "enajenada",
+  );
+  const showDecommission = Boolean(
+    printer && isAdmin && canDecommissionStatus(printer.status),
+  );
+  const outlineBtn =
+    "inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5";
+  const ghostBtn =
+    "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground";
+
   return (
     <>
       <ResourceViewShell
@@ -953,46 +965,32 @@ export function PrinterView() {
         error={error}
         actions={
           printer ? (
-            <div className="flex flex-wrap gap-2">
-              {canManageSeals ? (
-                <button
-                  type="button"
-                  onClick={() => setSealsDialogOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
-                >
-                  <ShieldCheck className="size-4" aria-hidden />
-                  Gestionar precintos
-                </button>
-              ) : null}
-              {user && canAccessRoute(user.role, "/tools") ? (
-                <Link
-                  href={toolsPrinterPath(printer.fiscalSerial)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
-                >
+            <div className="flex flex-wrap items-center gap-2">
+              {showToolsLink ? (
+                <Link href={toolsPrinterPath(printer.fiscalSerial)} className={ghostBtn}>
                   <Wrench className="size-4" aria-hidden />
                   Ir a tools
                 </Link>
               ) : null}
-              {canOpenFiscalBook && printer.status === "enajenada" ? (
+              {showFiscalBookLink ? (
                 <a
                   href={fiscalBooksAppUrl(printer.id)}
                   {...fiscalBookLinkProps}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
+                  className={ghostBtn}
                 >
                   <BookOpen className="size-4" aria-hidden />
                   Libro fiscal
+                  <ExternalLink className="size-3.5 opacity-60" aria-hidden />
                 </a>
               ) : null}
-              {isAdmin && canDecommissionStatus(printer.status) ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDecommissionError(null);
-                    setDecommissionOpen(true);
-                  }}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
-                >
-                  Desincorporar
+              {(showToolsLink || showFiscalBookLink) &&
+              (canManageSeals || canModify || showDecommission || canDelete) ? (
+                <span className="mx-1 hidden h-6 w-px bg-border sm:block" aria-hidden />
+              ) : null}
+              {canManageSeals ? (
+                <button type="button" onClick={() => setSealsDialogOpen(true)} className={outlineBtn}>
+                  <ShieldCheck className="size-4" aria-hidden />
+                  Gestionar precintos
                 </button>
               ) : null}
               <ResourceViewActions
@@ -1003,6 +1001,21 @@ export function PrinterView() {
                         setEditOpen(true);
                       }
                     : undefined
+                }
+                leadingActions={
+                  showDecommission ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDecommissionError(null);
+                        setDecommissionOpen(true);
+                      }}
+                      className="inline-flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-500/15 dark:text-amber-200"
+                    >
+                      <Ban className="size-4" aria-hidden />
+                      Desincorporar
+                    </button>
+                  ) : undefined
                 }
                 onDelete={canDelete ? () => void handleDelete() : undefined}
                 deleting={deleting}
