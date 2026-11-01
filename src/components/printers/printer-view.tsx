@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpen, ShieldCheck } from "lucide-react";
+import { BookOpen, ShieldCheck, Wrench } from "lucide-react";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
@@ -37,6 +38,7 @@ import { PrinterLogsSection } from "@/components/printers/printer-logs-section";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { useAuth } from "@/context/auth-provider";
+import { canAccessRoute } from "@/lib/permissions/routes";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
@@ -113,7 +115,7 @@ import {
   fiscalBooksAppUrl,
   fiscalBookLinkProps,
 } from "@/lib/fiscal-books-app";
-import { printerDispositionPath, printerPath } from "@/lib/resource-routes";
+import { printerDispositionPath, printerPath, toolsPrinterPath } from "@/lib/resource-routes";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -961,6 +963,15 @@ export function PrinterView() {
                   <ShieldCheck className="size-4" aria-hidden />
                   Gestionar precintos
                 </button>
+              ) : null}
+              {user && canAccessRoute(user.role, "/tools") ? (
+                <Link
+                  href={toolsPrinterPath(printer.fiscalSerial)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
+                >
+                  <Wrench className="size-4" aria-hidden />
+                  Ir a tools
+                </Link>
               ) : null}
               {canOpenFiscalBook ? (
                 <a

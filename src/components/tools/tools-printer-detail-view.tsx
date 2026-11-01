@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, LayoutGrid } from "lucide-react";
+import { AlertTriangle, ArrowLeft, LayoutGrid, Printer } from "lucide-react";
 import { useEffect } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
@@ -33,7 +33,7 @@ import {
   TOOLS_SECTIONS,
   toolsPrinterSectionHref,
 } from "@/lib/tools-sections";
-import { toolsListPath } from "@/lib/resource-routes";
+import { printerPath, toolsListPath } from "@/lib/resource-routes";
 import { cn } from "@/lib/utils";
 
 type ToolsPrinterDetailViewProps = {
@@ -194,7 +194,22 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
   }
 
   return (
-    <ResourceViewShell backHref={toolsListPath} backLabel="Volver al listado">
+    <ResourceViewShell
+      backHref={toolsListPath}
+      backLabel="Volver al listado"
+      actions={
+        <Link
+          href={printerPath(printer.id)}
+          className={cn(
+            pageToolbarButtonClass,
+            "border border-border bg-card hover:bg-foreground/[0.03]",
+          )}
+        >
+          <Printer className="size-4" aria-hidden />
+          Ir a impresora
+        </Link>
+      }
+    >
       <ToolsPrinterTransportShell printer={printer}>
         <ToolsPrinterDetailContent serial={serial} />
       </ToolsPrinterTransportShell>
