@@ -973,7 +973,7 @@ export function PrinterView() {
                   Ir a tools
                 </Link>
               ) : null}
-              {canOpenFiscalBook ? (
+              {canOpenFiscalBook && printer.status === "enajenada" ? (
                 <a
                   href={fiscalBooksAppUrl(printer.id)}
                   {...fiscalBookLinkProps}
