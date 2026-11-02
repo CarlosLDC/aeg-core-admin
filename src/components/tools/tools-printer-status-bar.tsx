@@ -3,6 +3,7 @@
 import {
   ToolsIconBadge,
   ToolsRefreshStatusButton,
+  toolsActionButtonClass,
   toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
 import { ToolsUsbConnectionButton } from "@/components/tools/tools-connection-mode-switch";
@@ -119,7 +120,7 @@ export function ToolsPrinterStatusBar({ connection, printerId }: ToolsPrinterSta
         {printerId != null ? (
           <Link
             href={printerPath(printerId)}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
+            className={cn(toolsActionButtonClass, "w-auto")}
           >
             <Printer className="size-4" aria-hidden />
             Ir a impresora
