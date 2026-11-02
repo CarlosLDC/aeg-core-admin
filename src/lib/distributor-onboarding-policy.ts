@@ -22,9 +22,11 @@ export type DistributorOnboardingForm = {
 export function validateOnboardingSection(
   section: OnboardingStepSection,
   form: DistributorOnboardingForm,
+  options?: { lockCompanyFields?: boolean },
 ): string | null {
   if (section === "fiscal") {
-    const companyLocked = Boolean(form.linkedCompanyId);
+    const companyLocked =
+      options?.lockCompanyFields ?? Boolean(form.linkedCompanyId);
     const rif = normalizeRif(form.rif);
     if (!companyLocked && !RIF_PATTERN.test(rif)) {
       return "Formato: letra V, E, J, P o G seguida de guion y 7 a 9 dígitos.";

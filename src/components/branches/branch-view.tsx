@@ -251,12 +251,22 @@ export function BranchView() {
     setSaving(true);
     setFormError(null);
     const formValues = toBranchFormValues(values);
-    const body = toBranchRequest(formValues);
+    const body = toBranchRequest({
+      ...formValues,
+      companyId: String(branch.companyId),
+    });
     const roles = toBranchRoleFormState(formValues);
     const label = `${values.city}, ${values.state}`;
 
     try {
-      await updateBranch(branch.id, body);
+      await Promise.all([
+        updateCompany(branch.companyId, {
+          businessName: values.businessName,
+          rif: values.rif,
+          contributorType: values.contributorType,
+        }),
+        updateBranch(branch.id, body),
+      ]);
       await syncBranchRoles(branch.id, branch, roles);
       const updated = await fetchBranchWithRolesById(branch.id);
       setBranch(updated);
@@ -268,7 +278,9 @@ export function BranchView() {
       await refresh();
     } catch (err) {
       const message =
-        getBranchesErrorMessage(err) || getBranchRolesErrorMessage(err);
+        getCompaniesErrorMessage(err) ||
+        getBranchesErrorMessage(err) ||
+        getBranchRolesErrorMessage(err);
       setFormError(message);
       toast.error(message);
     } finally {

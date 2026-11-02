@@ -32,6 +32,32 @@ describe("validateOnboardingSection", () => {
     ).toBe("El tipo de contribuyente es obligatorio.");
   });
 
+  it("requires valid RIF and business name when lockCompanyFields is false even if linkedCompanyId is set", () => {
+    expect(
+      validateOnboardingSection(
+        "fiscal",
+        {
+          ...baseForm,
+          rif: "invalid",
+          linkedCompanyId: 42,
+        },
+        { lockCompanyFields: false },
+      ),
+    ).toBe("Formato: letra V, E, J, P o G seguida de guion y 7 a 9 dígitos.");
+
+    expect(
+      validateOnboardingSection(
+        "fiscal",
+        {
+          ...baseForm,
+          businessName: "   ",
+          linkedCompanyId: 42,
+        },
+        { lockCompanyFields: false },
+      ),
+    ).toBe("Indica la razón social de la empresa.");
+  });
+
   it("requires address when creating a branch", () => {
     expect(
       validateOnboardingSection("location", {

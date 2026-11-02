@@ -36,6 +36,7 @@ type ClientFormFieldsProps = {
   setForm: React.Dispatch<React.SetStateAction<ClientOnboardingValues>>;
   saving: boolean;
   linkedCompany?: CompanyResponse;
+  lockCompanyFields?: boolean;
   inputMode: "ai" | "manual";
   aiFields: Set<SeniatLockableField>;
   section: ClientFormSection;
@@ -61,18 +62,19 @@ export function ClientFormFields({
   setForm,
   saving,
   linkedCompany,
+  lockCompanyFields,
   inputMode,
   aiFields,
   section,
 }: ClientFormFieldsProps) {
-  const companyLocked = Boolean(linkedCompany);
+  const companyLocked = lockCompanyFields ?? Boolean(linkedCompany);
 
   if (section === "fiscal") {
     return (
       <fieldset className="space-y-4">
         <legend className="sr-only">Datos fiscales</legend>
 
-        {linkedCompany && (
+        {companyLocked && linkedCompany && (
           <p className="rounded-lg border border-accent/20 bg-accent/5 px-3 py-2 text-sm text-card-foreground">
             Cliente vinculado a empresa existente:{" "}
             <span className="font-medium">
@@ -97,7 +99,7 @@ export function ClientFormFields({
               setForm((f) => ({
                 ...f,
                 rif,
-                linkedCompanyId: null,
+                linkedCompanyId: companyLocked ? null : f.linkedCompanyId,
               }))
             }
           />

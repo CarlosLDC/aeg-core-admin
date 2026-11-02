@@ -49,6 +49,7 @@ import {
 import type { BranchFormValues } from "@/components/branches/branch-form-dialog";
 import { invalidateCatalogRoles } from "@/lib/catalog-roles-cache";
 import { createBranch, deleteBranch, updateBranch } from "@/lib/branches-api";
+import { updateCompany } from "@/lib/companies-api";
 import { fetchBranchRoleIds } from "@/lib/client-onboarding";
 import {
   branchWizardNeedsContracts,
@@ -334,7 +335,14 @@ export function CompanyBranchesTable({
           href: branchPath(created.id),
         });
       } else if (selected) {
-        await updateBranch(selected.id, body);
+        await Promise.all([
+          updateCompany(companyId, {
+            businessName: values.businessName,
+            rif: values.rif,
+            contributorType: values.contributorType,
+          }),
+          updateBranch(selected.id, body),
+        ]);
         await syncBranchRoles(selected.id, selected, roles);
         toast.success(`Sucursal "${label}" actualizada.`, {
           href: branchPath(selected.id),

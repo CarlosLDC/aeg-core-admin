@@ -260,7 +260,9 @@ export function BranchCreateWizardDialog({
   }
 
   function validateSection(section: OnboardingStepSection): string | null {
-    return validateOnboardingSection(section, form);
+    return validateOnboardingSection(section, form, {
+      lockCompanyFields: isEdit ? false : undefined,
+    });
   }
 
   function goToStep(target: 1 | 2 | 3 | 4 | 5) {
@@ -482,6 +484,7 @@ export function BranchCreateWizardDialog({
                   setForm={setClientForm}
                   saving={saving}
                   linkedCompany={linkedCompany}
+                  lockCompanyFields={isEdit ? false : undefined}
                   inputMode={inputMode}
                   aiFields={aiFields}
                   section={currentFormStep.section}

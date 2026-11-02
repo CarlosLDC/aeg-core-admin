@@ -95,6 +95,7 @@ import {
 } from "@/lib/client-modification-requests-api";
 import {
   getCompaniesErrorMessage,
+  updateCompany,
 } from "@/lib/companies-api";
 import {
   getBranchMissingContractKinds,
@@ -730,11 +731,21 @@ export function BranchesManager() {
           return;
         }
         const formValues = toBranchFormValues(values);
-        const body = toBranchRequest(formValues);
+        const body = toBranchRequest({
+          ...formValues,
+          companyId: String(selected.companyId),
+        });
         const roles = toRoleFormState(formValues);
         const label = `${values.city}, ${values.state}`;
 
-        await updateBranch(selected.id, body);
+        await Promise.all([
+          updateCompany(selected.companyId, {
+            businessName: values.businessName,
+            rif: values.rif,
+            contributorType: values.contributorType,
+          }),
+          updateBranch(selected.id, body),
+        ]);
         await syncBranchRoles(selected.id, selected, roles);
         toast.success(`Empresa "${label}" actualizada.`, {
           href: branchPath(selected.id),
