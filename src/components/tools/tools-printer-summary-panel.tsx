@@ -13,7 +13,7 @@ import {
 import { ToolsPrinterStatusBadge } from "@/components/tools/tools-printer-status-badge";
 import { useToolsPrinters } from "@/modules/tools/printers/use-tools-printers";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
-import { TOOLS_SECTIONS } from "@/lib/tools-sections";
+import { TOOLS_SECTIONS, type ToolsSectionTone } from "@/lib/tools-sections";
 import { cn } from "@/lib/utils";
 
 type ToolsPrinterSummaryPanelProps = {
@@ -29,7 +29,7 @@ function DividedSection({
 }: {
   title: string;
   icon?: typeof Building2;
-  tone?: (typeof TOOLS_SECTIONS)["summary"]["tone"];
+  tone?: ToolsSectionTone;
   children: React.ReactNode;
   className?: string;
 }) {

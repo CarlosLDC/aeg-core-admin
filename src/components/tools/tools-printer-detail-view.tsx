@@ -99,7 +99,7 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
       <section className={toolsSubsectionClass}>
         <ToolsSectionHeading
           icon={LayoutGrid}
-          tone="indigo"
+          tone="sky"
           title="Operaciones"
           description="Acceda a las herramientas disponibles para esta impresora."
         />

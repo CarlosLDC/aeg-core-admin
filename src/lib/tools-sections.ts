@@ -60,7 +60,7 @@ export const TOOLS_SECTIONS = {
     title: "Formas de pago",
     description: "Consultar y editar descripciones de pago.",
     icon: CreditCard,
-    tone: "emerald",
+    tone: "sky",
   },
   testDocuments: {
     id: "documentos-prueba",
@@ -81,21 +81,21 @@ export const TOOLS_SECTIONS = {
     title: "Encabezado y pie",
     description: "Leer y editar el encabezado y pie de ticket en vista de factura.",
     icon: ReceiptText,
-    tone: "rose",
+    tone: "sky",
   },
   peripherals: {
     id: "perifericos",
     title: "Periféricos",
     description: "Configurar gaveta de dinero y visor de precios.",
     icon: Plug,
-    tone: "teal",
+    tone: "sky",
   },
   ticketCustomization: {
     id: "personalizacion-ticket",
     title: "Personalización del ticket",
     description: "Logo y estilos de fuente del encabezado y pie.",
     icon: Palette,
-    tone: "violet",
+    tone: "sky",
   },
   status: {
     id: "status",
@@ -109,7 +109,7 @@ export const TOOLS_SECTIONS = {
     title: "Resumen",
     description: "Datos de la impresora, cliente y distribuidor.",
     icon: FileStack,
-    tone: "slate",
+    tone: "sky",
   },
   brokerMigration: {
     id: "broker-migration",
@@ -125,11 +125,11 @@ export type ToolsSectionKey = keyof typeof TOOLS_SECTIONS;
 export const TOOLS_PRINTER_NAV_SECTIONS = [
   "summary",
   "wifi",
-  "formasPago",
+  "brokerMigration",
   "headerFooter",
   "ticketCustomization",
+  "formasPago",
   "peripherals",
-  "brokerMigration",
 ] as const satisfies readonly ToolsSectionKey[];
 
 export type ToolsPrinterNavSectionKey =

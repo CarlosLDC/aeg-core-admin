@@ -55,7 +55,7 @@ export function ToolsRebootPrinterButton({
       {variant === "card" ? (
         <ToolsActionCard
           icon={RotateCw}
-          tone="rose"
+          tone="sky"
           title="Reiniciar impresora"
           description="Envía el comando de reinicio al módulo fiscal del equipo."
           loading={submitting}
