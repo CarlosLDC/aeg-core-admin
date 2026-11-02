@@ -110,7 +110,7 @@ describe("countPrintersByStatus", () => {
   ] as PrinterResponse[];
 
   it("includes all statuses for admin", () => {
-    expect(countPrintersByStatus(printers, "ADMIN")).toHaveLength(7);
+    expect(countPrintersByStatus(printers, "ADMIN")).toHaveLength(6);
   });
 
   it("only includes en_consignacion, asignada and enajenada for technician", () => {

@@ -13,7 +13,9 @@ import {
 } from "./printer-status";
 
 describe("printer-status", () => {
-  it("normalizes legacy inicializada to sin_asignar", () => {
+  it("normalizes legacy de_fabrica and inicializada to sin_asignar", () => {
+    expect(normalizePrinterStatus("de_fabrica")).toBe("sin_asignar");
+    expect(printerStatusLabel("de_fabrica")).toBe("Sin asignar");
     expect(normalizePrinterStatus("inicializada")).toBe("sin_asignar");
     expect(printerStatusLabel("inicializada")).toBe("Sin asignar");
   });

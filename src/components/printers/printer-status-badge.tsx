@@ -3,7 +3,7 @@ import { printerStatusLabel, normalizePrinterStatus } from "@/lib/printer-status
 import type { PrinterStatus } from "@/types/printer";
 import { cn } from "@/lib/utils";
 
-const STATUS_STYLES: Record<PrinterStatus, string> = {
+const STATUS_STYLES: Record<string, string> = {
   de_fabrica:
     "border-sky-500/30 bg-sky-500/10 text-sky-800 dark:text-sky-200",
   sin_asignar:

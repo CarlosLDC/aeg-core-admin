@@ -117,7 +117,6 @@ async function settled<T>(
 }
 
 const ALL_PRINTER_STATUSES = [
-  "de_fabrica",
   "sin_asignar",
   "asignada",
   "en_consignacion",

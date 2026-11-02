@@ -1,5 +1,4 @@
 export const PRINTER_STATUSES = [
-  "de_fabrica",
   "sin_asignar",
   "asignada",
   "en_consignacion",
@@ -25,7 +24,7 @@ export type PrinterResponse = {
   finalSalePrice: number | null;
   createdAt: string;
   creationBatchId?: string | null;
-  status: PrinterStatus | "inicializada" | "de_demostracion";
+  status: PrinterStatus | "de_fabrica" | "inicializada" | "de_demostracion";
   distributorId: number | null;
   paid: boolean;
   installationDate: string | null;

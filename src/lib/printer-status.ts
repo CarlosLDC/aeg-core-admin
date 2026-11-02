@@ -4,19 +4,23 @@ import {
   type PrinterStatus,
 } from "@/types/printer";
 
-/** Valores históricos aún presentes en algunas filas de BD. */
-export const LEGACY_PRINTER_STATUSES = ["inicializada", "de_demostracion"] as const;
+/** Valores históricos aún presentes en algunas filas de BD o payloads antiguos. */
+export const LEGACY_PRINTER_STATUSES = [
+  "de_fabrica",
+  "inicializada",
+  "de_demostracion",
+] as const;
 export type LegacyPrinterStatus = (typeof LEGACY_PRINTER_STATUSES)[number];
 
 export type PrinterStatusApi = PrinterStatus | LegacyPrinterStatus;
 
 export function normalizePrinterStatus(status: string): PrinterStatus {
-  if (status === "inicializada") return "sin_asignar";
+  if (status === "de_fabrica" || status === "inicializada") return "sin_asignar";
   if (status === "de_demostracion") return "laboratorio";
   if ((PRINTER_STATUSES as readonly string[]).includes(status)) {
     return status as PrinterStatus;
   }
-  return "de_fabrica";
+  return "sin_asignar";
 }
 
 export function isPrinterUnassigned(status: string): boolean {
@@ -90,23 +94,21 @@ export function isBackwardPrinterStatusTransition(params: {
     (current === "asignada" ||
       current === "en_consignacion" ||
       current === "laboratorio") &&
-    (next === "sin_asignar" || next === "de_fabrica")
+    next === "sin_asignar"
   ) {
     return true;
   }
 
   if (
     params.currentClientId != null &&
-    (params.newClientId == null ||
-      next === "sin_asignar" ||
-      next === "de_fabrica")
+    (params.newClientId == null || next === "sin_asignar")
   ) {
     return true;
   }
 
   if (
     params.currentDistributorId != null &&
-    (next === "sin_asignar" || next === "de_fabrica")
+    next === "sin_asignar"
   ) {
     return true;
   }
@@ -125,12 +127,11 @@ export function buildPrinterRollbackConsequences(
     params.currentClientId != null &&
     (params.newClientId == null ||
       next === "sin_asignar" ||
-      next === "de_fabrica" ||
       (current === "enajenada" && next !== "enajenada"));
 
   const losingDistributor =
     params.currentDistributorId != null &&
-    (next === "sin_asignar" || next === "de_fabrica");
+    next === "sin_asignar";
 
   if (current === "enajenada" && next !== "enajenada") {
     consequences.push(
@@ -152,8 +153,7 @@ export function buildPrinterRollbackConsequences(
 
   if (
     current === "enajenada" ||
-    next === "sin_asignar" ||
-    next === "de_fabrica"
+    next === "sin_asignar"
   ) {
     consequences.push(
       "Se restablecerán los datos de fecha de enajenación y la configuración de ticket (encabezado/pie).",

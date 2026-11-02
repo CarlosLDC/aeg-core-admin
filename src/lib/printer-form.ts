@@ -54,7 +54,6 @@ export function isPrinterPaidForDisposition(printer: PrinterResponse): boolean {
 }
 
 export const PRINTER_STATUS_LABELS: Record<PrinterStatus, string> = {
-  de_fabrica: "De fábrica",
   sin_asignar: "Sin asignar",
   asignada: "Asignada",
   en_consignacion: "En consignación",
@@ -109,7 +108,7 @@ export const emptyPrinterForm = (
   firmwareId: "",
   versionFirmware: "",
   macAddress: "",
-  status: "de_fabrica",
+  status: "sin_asignar",
   deviceType: "interno",
   ...definedPrinterFormDefaults(defaults),
 });
@@ -126,7 +125,6 @@ function reconcileDistributorAssignmentStatus(
     status === "enajenada" ||
     status === "desincorporada" ||
     status === "laboratorio" ||
-    status === "de_fabrica" ||
     status === "sin_asignar"
   ) {
     return status;
@@ -188,7 +186,7 @@ export function printerToDispositionRequest(
 }
 
 function clearsPrinterAssignments(status: PrinterStatus): boolean {
-  return status === "sin_asignar" || status === "de_fabrica";
+  return status === "sin_asignar";
 }
 
 export function toPrinterRequest(
