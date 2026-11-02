@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Plus, ShieldAlert } from "lucide-react";
 import { DetailField } from "@/components/resource-view/detail-fields";
 import { SealColorBadge } from "@/components/seals/seal-color-badge";
 import { SealStatusBadge } from "@/components/seals/seal-status-badge";
@@ -45,16 +45,6 @@ export function PrinterSealsSection({
           <h3 className="text-sm font-semibold text-card-foreground">
             Precinto fiscal activo
           </h3>
-          {canManage && onOpenManage ? (
-            <button
-              type="button"
-              onClick={onOpenManage}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-foreground/5"
-            >
-              <ShieldCheck className="size-3.5 text-accent" aria-hidden />
-              Gestionar precintos
-            </button>
-          ) : null}
         </div>
         {loading ? (
           <p className="mt-4 text-sm text-muted">Cargando precintos…</p>
