@@ -355,26 +355,21 @@ export function SoftwareView() {
         label: `Distribuidores (${distributors.length})`,
         content: (
           <section className="space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h3 className="text-base font-semibold text-card-foreground">
-                Distribuidores autorizados
-              </h3>
-              {canModify && (
-                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDistributorToAdd("");
-                      setAddDistributorModalOpen(true);
-                    }}
-                    className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 sm:w-auto"
-                  >
-                    <Plus className="size-4" />
-                    Vincular distribuidor
-                  </button>
-                </div>
-              )}
-            </div>
+            {canModify && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDistributorToAdd("");
+                    setAddDistributorModalOpen(true);
+                  }}
+                  className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 sm:w-auto"
+                >
+                  <Plus className="size-4" />
+                  Vincular distribuidor
+                </button>
+              </div>
+            )}
 
             <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
               {distributors.length === 0 ? (

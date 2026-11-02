@@ -488,7 +488,7 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
       },
       {
         formLabels: ["Distribuidores autorizados"],
-        viewLabels: ["Distribuidores autorizados"],
+        viewLabels: ["Distribuidores autorizados", "Distribuidores"],
         formBindings: ["form.distributorCompanyIds"],
         viewBindings: ["software?.distributors"],
       },
