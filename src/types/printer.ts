@@ -31,6 +31,8 @@ export type PrinterResponse = {
   installationDate: string | null;
   firmwareId?: number | null;
   versionFirmware: string | null;
+  /** true si se lanzó una actualización de firmware y la impresora no respondió al verificarla. */
+  firmwareUpdateUnverified?: boolean;
   macAddress: string | null;
   deviceType: DeviceType;
   header: PrinterTicketSection | null;

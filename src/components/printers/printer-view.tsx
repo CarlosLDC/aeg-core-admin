@@ -32,6 +32,7 @@ import { PrinterStatusTransition } from "@/components/printers/printer-status-tr
 import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-mqtt-badge";
 import { PrinterFirmwareUpdateBadge } from "@/components/printers/printer-firmware-update-badge";
 import { PrinterFirmwareUpdateBanner } from "@/components/printers/printer-firmware-update-banner";
+import { PrinterFirmwareUnverifiedBanner } from "@/components/printers/printer-firmware-unverified-banner";
 import { isFirmwareUpdateRequired } from "@/lib/firmware-update-policy";
 import { PrinterTicketConfigPanel } from "@/components/printers/printer-ticket-json-preview";
 import { PrinterLogsSection } from "@/components/printers/printer-logs-section";
@@ -1024,6 +1025,12 @@ export function PrinterView() {
           ) : undefined
         }
       >
+        {printer?.firmwareUpdateUnverified ? (
+          <PrinterFirmwareUnverifiedBanner
+            currentFirmwareVersion={printer.versionFirmware}
+            className="mx-auto mb-4 w-full max-w-4xl"
+          />
+        ) : null}
         {printer &&
           (isDistributor ? (
             <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">

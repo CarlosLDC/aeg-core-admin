@@ -16,6 +16,7 @@ import { runSerialBatch } from "@/lib/batch-create";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-mqtt-badge";
 import { PrinterFirmwareUpdateBadge } from "@/components/printers/printer-firmware-update-badge";
+import { PrinterFirmwareUnverifiedBadge } from "@/components/printers/printer-firmware-unverified-badge";
 import { isFirmwareUpdateRequired } from "@/lib/firmware-update-policy";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import {
@@ -1193,6 +1194,9 @@ export function PrintersManager() {
                               {isDistributor &&
                               isFirmwareUpdateRequired(printer.versionFirmware) ? (
                                 <PrinterFirmwareUpdateBadge />
+                              ) : null}
+                              {printer.firmwareUpdateUnverified ? (
+                                <PrinterFirmwareUnverifiedBadge />
                               ) : null}
                             </div>
                           </td>
