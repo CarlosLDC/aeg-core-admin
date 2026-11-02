@@ -133,12 +133,14 @@ export function useToolsPrinterConnection(
     loading,
     status,
     effectiveError,
+    usbConnected,
   );
   const remoteActionsDisabled = areToolsRemoteActionsDisabled(
     transportReady,
     loading,
     status,
     effectiveError,
+    usbConnected,
   );
   const seniatActionsEnabled = areToolsSeniatActionsEnabled(
     transportReady,

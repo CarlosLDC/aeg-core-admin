@@ -8,6 +8,7 @@ import {
   parseFirmwareStatusResponse,
   parseFormasPagoResponse,
   parseStatusResponse,
+  parseWifiConnectResponse,
   parseWifiScanResponse,
 } from "@/modules/tools/serial/tools-response-parser";
 
@@ -65,6 +66,34 @@ describe("tools-response-parser", () => {
     expect(parseWifiScanResponse(item)).toEqual([
       { ssid: "AP", signal: -55 },
     ]);
+
+    const emptyScan = {
+      cmd: "StaInf",
+      code: 0,
+      dataS: "[]",
+    };
+    expect(isWifiScanResponse(emptyScan)).toBe(true);
+    expect(parseWifiScanResponse(emptyScan)).toEqual([]);
+  });
+
+  it("parses wifiConf responses on USB and throws on error codes", () => {
+    expect(() =>
+      parseWifiConnectResponse({ cmd: "wifiConf", code: 0, dataS: undefined }),
+    ).not.toThrow();
+    expect(() =>
+      parseWifiConnectResponse({
+        cmd: "wifiConf",
+        code: 0,
+        dataS: "EQUIPO SI CONECTADO AP",
+      }),
+    ).not.toThrow();
+    expect(() =>
+      parseWifiConnectResponse({
+        cmd: "wifiConf",
+        code: 1,
+        dataS: "Credenciales inválidas",
+      }),
+    ).toThrow("Credenciales inválidas");
   });
 
   it("parses formas de pago map keys", () => {

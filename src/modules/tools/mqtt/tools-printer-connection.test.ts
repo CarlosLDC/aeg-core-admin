@@ -166,6 +166,21 @@ describe("areToolsRemoteActionsEnabled", () => {
     expect(areToolsRemoteActionsEnabled(false, false, onlineStatus, null)).toBe(
       false,
     );
+    expect(
+      areToolsRemoteActionsEnabled(true, true, null, null, true),
+    ).toBe(true);
+    expect(
+      areToolsRemoteActionsEnabled(
+        true,
+        false,
+        printerOfflineStatus,
+        "Sin respuesta",
+        true,
+      ),
+    ).toBe(true);
+    expect(
+      areToolsRemoteActionsEnabled(false, false, null, null, true),
+    ).toBe(false);
   });
 });
 

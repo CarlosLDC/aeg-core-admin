@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { ToolsUsbConnectionButton } from "@/components/tools/tools-connection-mode-switch";
 import { ToolsPrinterTransportShell } from "@/components/tools/tools-printer-transport-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
@@ -89,6 +90,7 @@ export function ToolsPrinterMacGuard({
         compact
         title="MAC requerida"
         description="Registre la dirección MAC de la impresora en el catálogo antes de usar las operaciones remotas, o active la conexión USB."
+        action={transportContext ? <ToolsUsbConnectionButton /> : undefined}
       />
     );
   }

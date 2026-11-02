@@ -4,10 +4,12 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { ChevronRight, Loader2, RefreshCw, TriangleAlert, WifiOff } from "lucide-react";
 import { DetailField } from "@/components/resource-view/detail-fields";
+import { ToolsUsbConnectionButton } from "@/components/tools/tools-connection-mode-switch";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
 import { formatVenezuelanPhone } from "@/lib/venezuelan-phone";
 import type { ToolsSectionTone } from "@/lib/tools-sections";
 import type { ToolsPrinterPartySummary } from "@/modules/tools/shared/types";
+import { useOptionalToolsTransportContext } from "@/modules/tools/transport/tools-transport-provider";
 import {
   TOOLS_LEGACY_BROKER_MESSAGE,
   TOOLS_PRINTER_OFFLINE_MESSAGE,
@@ -571,14 +573,17 @@ export function ToolsSectionStatusActions({
   statusRefresh?: ToolsRefreshStatusControl | null;
   children?: React.ReactNode;
 }) {
+  const transportContext = useOptionalToolsTransportContext();
+  const showUsb = transportContext != null;
   const showRefresh = Boolean(statusRefresh?.mqttReady);
-  if (!showRefresh && !children) {
+  if (!showUsb && !showRefresh && !children) {
     return null;
   }
 
   return (
     <div className="flex flex-wrap items-center gap-2">
       {children}
+      {showUsb ? <ToolsUsbConnectionButton /> : null}
       {statusRefresh?.mqttReady ? (
         <ToolsRefreshStatusButton
           loading={statusRefresh.loading}

@@ -196,9 +196,13 @@ export function areToolsRemoteActionsEnabled(
   loading: boolean,
   status: ToolsMqttStatusResponse | null,
   error: string | null,
+  usbConnected = false,
 ): boolean {
   if (!transportReady) {
     return false;
+  }
+  if (usbConnected) {
+    return true;
   }
   if (loading) {
     return false;
@@ -226,8 +230,15 @@ export function areToolsRemoteActionsDisabled(
   loading: boolean,
   status: ToolsMqttStatusResponse | null,
   error: string | null,
+  usbConnected = false,
 ): boolean {
-  return !areToolsRemoteActionsEnabled(transportReady, loading, status, error);
+  return !areToolsRemoteActionsEnabled(
+    transportReady,
+    loading,
+    status,
+    error,
+    usbConnected,
+  );
 }
 
 export function areToolsSeniatActionsDisabled(

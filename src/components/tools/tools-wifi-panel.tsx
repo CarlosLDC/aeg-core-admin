@@ -18,7 +18,10 @@ import { ToolsRebootPrinterButton } from "@/components/tools/tools-reboot-printe
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import { useToolsSectionRefresh } from "@/modules/tools/mqtt/use-tools-section-refresh";
-import { useToolsTransport } from "@/modules/tools/transport/tools-transport-provider";
+import {
+  useOptionalToolsTransportContext,
+  useToolsTransport,
+} from "@/modules/tools/transport/tools-transport-provider";
 import { getToolsMqttErrorMessage } from "@/lib/tools-mqtt-api";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import {
@@ -103,6 +106,10 @@ const wifiNetworkListClass =
 export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const toast = useToast();
   const transport = useToolsTransport();
+  const transportContext = useOptionalToolsTransportContext();
+  const usbConnected =
+    transportContext?.usbConnected === true ||
+    (transport.mode === "usb" && transport.isReady);
   const section = TOOLS_SECTIONS.wifi;
   const { loading: statusLoading, refreshStatus, remoteActionsDisabled, connectionResolved, connectionIssue, networkInfo, mqttReady } =
     useToolsPrinterConnection(printer.id, printer.macAddress);
@@ -133,7 +140,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
     } finally {
       setScanning(false);
     }
-  }, [printer.id, toast]);
+  }, [transport, toast]);
 
   const { refreshAll, refreshLoading } = useToolsSectionRefresh(
     refreshStatus,
@@ -219,6 +226,11 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   };
 
   const busy = scanning || action != null;
+  const wifiActionsDisabled = remoteActionsDisabled && !usbConnected;
+  const connectDisabled =
+    action != null ||
+    !ssid.trim() ||
+    (usbConnected ? false : scanning || remoteActionsDisabled);
 
   return (
     <ToolsPrinterMacGuard macAddress={printer.macAddress}>
@@ -237,14 +249,14 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
               }}
             >
               <ToolsRebootPrinterButton
-                disabled={remoteActionsDisabled}
+                disabled={wifiActionsDisabled}
                 onRebootSent={refreshAll}
               />
             </ToolsSectionStatusActions>
           }
         />
 
-        {connectionResolved && connectionIssue === "printer" ? (
+        {connectionResolved && connectionIssue === "printer" && !usbConnected ? (
           <ToolsConnectionWarning variant="printer" />
         ) : null}
 
@@ -276,7 +288,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
                 <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center text-sm text-muted">
                   <p>No se detectaron redes WiFi.</p>
                   <ToolsActionButton
-                    disabled={busy || remoteActionsDisabled}
+                    disabled={busy || wifiActionsDisabled}
                     onClick={() => void runScan()}
                   >
                     Reintentar conexión
@@ -316,7 +328,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
                         {isConnected ? (
                           <button
                             type="button"
-                            disabled={busy || remoteActionsDisabled}
+                            disabled={busy || wifiActionsDisabled}
                             onClick={() => void runDisconnect(network.ssid)}
                             className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-foreground/[0.04] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                           >
@@ -339,7 +351,11 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
           <div ref={connectPanelRef}>
             <ToolsPanelSection
               title="Conectar"
-              description="Seleccione una red y envíe las credenciales a la impresora."
+              description={
+                usbConnected
+                  ? "Seleccione una red o ingrese manualmente las credenciales Wi-Fi que desee usar."
+                  : "Seleccione una red y envíe las credenciales a la impresora."
+              }
               icon={Link2}
               tone="sky"
             >
@@ -349,6 +365,8 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
                 <input
                   value={ssid}
                   onChange={(e) => setSsid(e.target.value)}
+                  placeholder="Nombre de la red Wi-Fi"
+                  disabled={action === "connect"}
                   className={formFieldInputClass}
                 />
               </label>
@@ -358,6 +376,8 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Contraseña de la red"
+                  disabled={action === "connect"}
                   className={formFieldInputClass}
                 />
               </label>
@@ -365,7 +385,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
             <ToolsPanelActions className="mt-4">
               <ToolsActionButton
                 loading={action === "connect"}
-                disabled={busy || !ssid.trim() || remoteActionsDisabled}
+                disabled={connectDisabled}
                 onClick={() => void runConnect()}
               >
                 Conectar

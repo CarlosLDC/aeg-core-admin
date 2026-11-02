@@ -2,7 +2,10 @@
 
 import type { ReactNode } from "react";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
-import { ToolsTransportProvider } from "@/modules/tools/transport/tools-transport-provider";
+import {
+  ToolsTransportProvider,
+  useOptionalToolsTransportContext,
+} from "@/modules/tools/transport/tools-transport-provider";
 
 type ToolsPrinterTransportShellProps = {
   printer: ToolsPrinter;
@@ -13,6 +16,11 @@ export function ToolsPrinterTransportShell({
   printer,
   children,
 }: ToolsPrinterTransportShellProps) {
+  const existingContext = useOptionalToolsTransportContext();
+  if (existingContext != null) {
+    return <>{children}</>;
+  }
+
   return (
     <ToolsTransportProvider
       printerSerial={printer.serial}

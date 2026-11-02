@@ -74,8 +74,11 @@ function isJsonArrayOfStrings(value: string): boolean {
 function isJsonArrayOfObjectsWithField(value: string, field: string): boolean {
   try {
     const node = JSON.parse(value);
-    if (!Array.isArray(node) || node.length === 0) {
+    if (!Array.isArray(node)) {
       return false;
+    }
+    if (node.length === 0) {
+      return true;
     }
     return node.every(
       (element) =>
@@ -238,7 +241,7 @@ export function parseWifiScanResponse(response: FiscalMqttResponseItem): ToolsWi
 }
 
 export function parseWifiConnectResponse(response: FiscalMqttResponseItem): void {
-  if (response.code === 0 && (response.dataS == null || response.dataS.trim() === "")) {
+  if (response.code === 0) {
     return;
   }
   const message =
