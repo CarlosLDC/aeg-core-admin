@@ -203,7 +203,7 @@ export function BrokerMigrationPanel({ printer }: BrokerMigrationPanelProps) {
               title="Progreso"
               description="Siga el avance de las operaciones."
               icon={Clock}
-              tone="slate"
+              tone="sky"
             >
               <ul className="space-y-4">
                 <Step status={firmwareStep} title="1. Verificar versión de firmware">

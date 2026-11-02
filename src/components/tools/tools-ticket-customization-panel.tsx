@@ -204,10 +204,10 @@ function LineStyleRow({
           ariaLabel={`Tamaño de la línea ${index + 1}`}
           className="gap-1"
           options={[
-            { value: "1x", label: "Normal", tone: "violet" },
-            { value: "alto", label: "2× alto", tone: "violet" },
-            { value: "ancho", label: "2× ancho", tone: "violet" },
-            { value: "2x", label: "2×", tone: "violet" },
+            { value: "1x", label: "Normal", tone: "sky" },
+            { value: "alto", label: "2× alto", tone: "sky" },
+            { value: "ancho", label: "2× ancho", tone: "sky" },
+            { value: "2x", label: "2×", tone: "sky" },
           ]}
         />
         <span className="mx-1 h-6 w-px bg-border" aria-hidden />
@@ -217,7 +217,7 @@ function LineStyleRow({
           disabled={disabled}
           ariaLabel={`Alineación de la línea ${index + 1}`}
           className="gap-1"
-          options={ALIGN_OPTIONS.map((option) => ({ ...option, tone: "violet" as const }))}
+          options={ALIGN_OPTIONS.map((option) => ({ ...option, tone: "sky" as const }))}
         />
       </div>
     </li>
@@ -478,7 +478,7 @@ export function ToolsTicketCustomizationPanel({ printer }: { printer: ToolsPrint
                 title="Logo"
                 description={`Imagen en blanco y negro impresa sobre el encabezado. Máximo ${paperWidth} × ${maxHeight} puntos.`}
                 icon={ImageUp}
-                tone="violet"
+                tone="sky"
                 headerActions={
                   <div className="flex flex-wrap gap-2">
                     <ToolsActionButton
@@ -640,7 +640,7 @@ export function ToolsTicketCustomizationPanel({ printer }: { printer: ToolsPrint
                 title="Estilos de fuente"
                 description="Negrita, subrayado, tamaño y alineación por línea. El doble ancho reduce el máximo a 25 caracteres."
                 icon={Type}
-                tone="violet"
+                tone="sky"
                 headerActions={
                   <Link
                     href={toolsPrinterHeaderFooterPath(printer.serial)}

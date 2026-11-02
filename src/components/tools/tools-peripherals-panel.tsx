@@ -252,7 +252,7 @@ export function ToolsPeripheralsPanel({ printer }: { printer: ToolsPrinter }) {
               title="Gaveta de dinero"
               description="Pulso eléctrico que abre la gaveta conectada al puerto RJ11/RJ12 de la impresora."
               icon={Banknote}
-              tone="emerald"
+              tone="sky"
               headerActions={
                 <ToolsActionButton
                   loading={testing === "drawer"}
@@ -341,7 +341,7 @@ export function ToolsPeripheralsPanel({ printer }: { printer: ToolsPrinter }) {
                             type="button"
                             aria-pressed={selected}
                             disabled={busy || !gaveta.activo}
-                            className={toggleButtonClass(selected, "emerald", {
+                            className={toggleButtonClass(selected, "sky", {
                               disabled: busy || !gaveta.activo,
                             })}
                             onClick={() =>

@@ -23,7 +23,7 @@ type ToolsPrinterSummaryPanelProps = {
 function DividedSection({
   title,
   icon,
-  tone = "slate",
+  tone = "sky",
   children,
   className,
 }: {
@@ -68,7 +68,7 @@ export function ToolsPrinterSummaryPanel({
         <DividedSection
           title="Datos de la impresora"
           icon={Printer}
-          tone="slate"
+          tone="sky"
         >
             <ToolsDetailFields>
               <DetailField
@@ -98,7 +98,7 @@ export function ToolsPrinterSummaryPanel({
               <DividedSection
                 title="Información del cliente"
                 icon={Building2}
-                tone="slate"
+                tone="sky"
               >
                 <ToolsPartyInfoFields party={client} />
               </DividedSection>
@@ -111,7 +111,7 @@ export function ToolsPrinterSummaryPanel({
               <DividedSection
                 title="Información del distribuidor"
                 icon={Truck}
-                tone="slate"
+                tone="sky"
               >
                 <ToolsPartyInfoFields party={distributor} />
               </DividedSection>
