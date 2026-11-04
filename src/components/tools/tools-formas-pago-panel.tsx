@@ -12,7 +12,6 @@ import {
   toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
-import { ToolsRebootPrinterButton } from "@/components/tools/tools-reboot-printer-button";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useToolsPrinterConnection } from "@/modules/tools/mqtt/use-tools-mqtt";
 import { useToolsSectionRefresh } from "@/modules/tools/mqtt/use-tools-section-refresh";
@@ -176,12 +175,7 @@ export function ToolsFormasPagoPanel({ printer }: { printer: ToolsPrinter }) {
                 refreshStatus: refreshAll,
                 mqttReady,
               }}
-            >
-              <ToolsRebootPrinterButton
-                disabled={remoteActionsDisabled}
-                onRebootSent={refreshAll}
-              />
-            </ToolsSectionStatusActions>
+            />
           }
         />
 

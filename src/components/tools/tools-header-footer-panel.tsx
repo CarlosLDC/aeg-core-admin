@@ -12,7 +12,6 @@ import {
   toolsPanelSectionClass,
 } from "@/components/tools/tools-ui";
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
-import { ToolsRebootPrinterButton } from "@/components/tools/tools-reboot-printer-button";
 import { useToast } from "@/context/toast-provider";
 import { getToolsMqttErrorMessage } from "@/lib/tools-mqtt-api";
 import {
@@ -167,12 +166,7 @@ export function ToolsHeaderFooterPanel({ printer }: { printer: ToolsPrinter }) {
                 refreshStatus: refreshAll,
                 mqttReady,
               }}
-            >
-              <ToolsRebootPrinterButton
-                disabled={remoteActionsDisabled}
-                onRebootSent={refreshAll}
-              />
-            </ToolsSectionStatusActions>
+            />
           }
         />
 
