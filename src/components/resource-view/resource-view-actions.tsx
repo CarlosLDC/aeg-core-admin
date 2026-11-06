@@ -28,7 +28,7 @@ export function ResourceViewActions({
   if (!onEdit && !onDelete && !onCancelReview && !leadingActions) return null;
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {onEdit ? (
         <button
           type="button"

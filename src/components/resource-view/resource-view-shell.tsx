@@ -40,7 +40,7 @@ export function ResourceViewShell({
       ) : null}
 
       {title || subtitle || titleBadge || actions ? (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {title || subtitle || titleBadge ? (
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
               <div className="min-w-0">
@@ -80,7 +80,7 @@ export function ResourceViewShell({
               {titleBadge ? <div className="shrink-0">{titleBadge}</div> : null}
             </div>
           ) : null}
-          {actions ? <div className="shrink-0">{actions}</div> : null}
+          {actions ? <div className="shrink-0 flex items-center">{actions}</div> : null}
         </div>
       ) : null}
 
