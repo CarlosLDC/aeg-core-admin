@@ -220,7 +220,7 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
       },
       {
         formLabels: ["Estatus"],
-        viewLabels: ["Estatus"],
+        viewLabels: ["Estatus", "PrinterStatusBadge"],
         formBindings: ["form.status"],
         viewBindings: ["printer.status"],
       },
