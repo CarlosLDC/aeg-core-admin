@@ -74,6 +74,16 @@ export async function updatePrinter(
   });
 }
 
+export async function updatePrinterSoftware(
+  id: number,
+  softwareId: number | null,
+): Promise<PrinterResponse> {
+  return apiFetch<PrinterResponse>(`${BASE}/${id}/software`, {
+    method: "PATCH",
+    body: JSON.stringify({ softwareId }),
+  });
+}
+
 export async function disposePrinter(
   id: number,
   body: PrinterDispositionRequest,

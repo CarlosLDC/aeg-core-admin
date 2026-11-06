@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  canAssignPrinterSoftware,
   canDisposePrinterRecord,
   canModifyPrinterRecord,
   canDeletePrinterRecord,
@@ -20,9 +21,14 @@ describe("canDisposePrinterRecord", () => {
 });
 
 describe("printer update permissions", () => {
-  it("allows admin and distributor to modify printers", () => {
+  it("restricts printer modification to admin only", () => {
     expect(canModifyPrinterRecord("ADMIN")).toBe(true);
-    expect(canModifyPrinterRecord("DISTRIBUTOR")).toBe(true);
+    expect(canModifyPrinterRecord("DISTRIBUTOR")).toBe(false);
+  });
+
+  it("allows admin and distributor to assign software to printers", () => {
+    expect(canAssignPrinterSoftware("ADMIN")).toBe(true);
+    expect(canAssignPrinterSoftware("DISTRIBUTOR")).toBe(true);
   });
 
   it("restricts printer deletion to admin only", () => {

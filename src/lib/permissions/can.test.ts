@@ -22,6 +22,7 @@ describe("can", () => {
     expect(can("ADMIN", "seals", "delete")).toBe(true);
     expect(can("DISTRIBUTOR", "printers", "read")).toBe(true);
     expect(can("DISTRIBUTOR", "printers", "create")).toBe(false);
+    expect(can("DISTRIBUTOR", "printers", "update")).toBe(false);
   });
 
   it("denies TECHNICIAN panel access", () => {

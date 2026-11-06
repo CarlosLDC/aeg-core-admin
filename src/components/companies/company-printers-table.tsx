@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Plus } from "lucide-react";
+import { Cpu, Loader2, Plus } from "lucide-react";
 import {
   filterPrintersByQuickFilter,
   filterPrintersForCompany,
@@ -14,6 +14,7 @@ import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
+import { PrinterSoftwareDialog } from "@/components/printers/printer-software-dialog";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import {
@@ -39,6 +40,7 @@ import { useTableColumnVisibility } from "@/hooks/use-table-column-visibility";
 import { useDistributorStaffBranchId } from "@/hooks/use-distributor-staff-branch-id";
 import { reportListTableError } from "@/lib/api-error-message";
 import {
+  canAssignPrinterSoftware,
   canCreatePrinterRecord,
   canDisposePrinterRecord,
   canModifyPrinterRecord,
@@ -145,6 +147,7 @@ export function CompanyPrintersTable({
   const isDistributor = isDistributorPanelRole(user?.role);
   const canCreate = user ? canCreatePrinterRecord(user.role) : false;
   const canModify = user ? canModifyPrinterRecord(user.role) : false;
+  const canAssignSoftware = user ? canAssignPrinterSoftware(user.role) : false;
   const canAssignInitialized = isAdmin && canModify;
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
   const distributorId = isDistributor ? (user?.distributorId ?? null) : null;
@@ -174,6 +177,8 @@ export function CompanyPrintersTable({
     useState<PrinterResponse | null>(null);
   const [assignmentSaving, setAssignmentSaving] = useState(false);
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
+  const [softwarePrinter, setSoftwarePrinter] =
+    useState<PrinterResponse | null>(null);
   const [dispositionPrinter, setDispositionPrinter] =
     useState<PrinterResponse | null>(null);
   const [saving, setSaving] = useState(false);
@@ -979,6 +984,23 @@ export function CompanyPrintersTable({
                                         ? () => openEdit(printer)
                                         : undefined
                                     }
+                                    customActions={
+                                      canAssignSoftware
+                                        ? [
+                                            {
+                                              label: "Gestionar software",
+                                              icon: (
+                                                <Cpu
+                                                  className="size-4 shrink-0"
+                                                  aria-hidden
+                                                />
+                                              ),
+                                              onClick: () =>
+                                                setSoftwarePrinter(printer),
+                                            },
+                                          ]
+                                        : undefined
+                                    }
                                     onDelete={
                                       canModify
                                         ? () => handleDelete(printer)
@@ -1129,6 +1151,17 @@ export function CompanyPrintersTable({
         onClose={closeDialog}
         onSubmit={handleSubmit}
       />
+
+      {softwarePrinter && (
+        <PrinterSoftwareDialog
+          printer={softwarePrinter}
+          open={softwarePrinter != null}
+          onClose={() => setSoftwarePrinter(null)}
+          onSaved={() => {
+            void loadData({ silent: true });
+          }}
+        />
+      )}
 
       <PrinterDeleteBlockedDialog
         open={deleteBlocked != null}

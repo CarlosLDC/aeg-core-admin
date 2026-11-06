@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Ban, BookOpen, ExternalLink, ShieldCheck, Wrench } from "lucide-react";
+import { Ban, BookOpen, Cpu, ExternalLink, ShieldCheck, Wrench } from "lucide-react";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
@@ -11,6 +11,7 @@ import { PrinterDecommissionDialog } from "@/components/printers/printer-decommi
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
 import { PrinterSealsDialog } from "@/components/printers/printer-seals-dialog";
 import { PrinterSealsSection } from "@/components/printers/printer-seals-section";
+import { PrinterSoftwareDialog } from "@/components/printers/printer-software-dialog";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import {
   DetailCard,
@@ -51,6 +52,7 @@ import {
 import { canDecommissionStatus } from "@/lib/decommission";
 import type { DecommissionRequest } from "@/types/decommission";
 import {
+  canAssignPrinterSoftware,
   canCreateSealRecord,
   canDisposePrinterRecord,
   canDeletePrinterRecord,
@@ -139,6 +141,7 @@ export function PrinterView() {
   const isAdmin = user?.role === "ADMIN";
   const isDistributor = isDistributorPanelRole(user?.role);
   const showSoftware = isAdmin || isDistributor;
+  const canAssignSoftware = user ? canAssignPrinterSoftware(user.role) : false;
   const canAssignInitialized = isAdmin && canModify;
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
   const canManageSeals = isAdmin;
@@ -169,6 +172,7 @@ export function PrinterView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [softwareDialogOpen, setSoftwareDialogOpen] = useState(false);
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [assignmentSaving, setAssignmentSaving] = useState(false);
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
@@ -504,6 +508,29 @@ export function PrinterView() {
             }
           />
           <DetailField
+            label="Software"
+            value={
+              <div className="flex items-center justify-between gap-2">
+                <span>
+                  {printer.softwareId != null
+                    ? softwareLabelById.get(printer.softwareId) ?? "—"
+                    : pendingSoftware
+                    ? `Pendiente: ${pendingSoftware.name} v${pendingSoftware.version}`
+                    : "Sin asignar"}
+                </span>
+                {canAssignSoftware && (
+                  <button
+                    type="button"
+                    onClick={() => setSoftwareDialogOpen(true)}
+                    className="text-xs font-medium text-accent hover:underline"
+                  >
+                    {printer.softwareId != null ? "Cambiar" : "Asignar"}
+                  </button>
+                )}
+              </div>
+            }
+          />
+          <DetailField
             label="Firmware"
             value={printer.versionFirmware || "—"}
             href={user ? hrefForFirmware(printer.firmwareId, user.role) : undefined}
@@ -674,10 +701,24 @@ export function PrinterView() {
               <DetailField
                 label="Software"
                 value={
-                  printer.softwareId != null
-                    ? softwareLabelById.get(printer.softwareId) ??
-                      "—"
-                    : "Sin asignar"
+                  <div className="flex items-center justify-between gap-2">
+                    <span>
+                      {printer.softwareId != null
+                        ? softwareLabelById.get(printer.softwareId) ?? "—"
+                        : pendingSoftware
+                        ? `Pendiente: ${pendingSoftware.name} v${pendingSoftware.version}`
+                        : "Sin asignar"}
+                    </span>
+                    {canAssignSoftware && (
+                      <button
+                        type="button"
+                        onClick={() => setSoftwareDialogOpen(true)}
+                        className="text-xs font-medium text-accent hover:underline"
+                      >
+                        {printer.softwareId != null ? "Cambiar" : "Asignar"}
+                      </button>
+                    )}
+                  </div>
                 }
               />
             ) : null}
@@ -993,13 +1034,23 @@ export function PrinterView() {
                 </a>
               ) : null}
               {(showToolsLink || showFiscalBookLink) &&
-              (canManageSeals || canModify || showDecommission || canDelete) ? (
+              (canManageSeals || canAssignSoftware || canModify || showDecommission || canDelete) ? (
                 <span className="mx-1 hidden h-6 w-px bg-border sm:block" aria-hidden />
               ) : null}
               {canManageSeals ? (
                 <button type="button" onClick={() => setSealsDialogOpen(true)} className={outlineBtn}>
                   <ShieldCheck className="size-4" aria-hidden />
                   Gestionar precintos
+                </button>
+              ) : null}
+              {canAssignSoftware ? (
+                <button
+                  type="button"
+                  onClick={() => setSoftwareDialogOpen(true)}
+                  className={outlineBtn}
+                >
+                  <Cpu className="size-4" aria-hidden />
+                  Gestionar software
                 </button>
               ) : null}
               <ResourceViewActions
@@ -1137,6 +1188,18 @@ export function PrinterView() {
           onContinue={handleDispositionContinue}
         />
       ) : null}
+
+      {printer && softwareDialogOpen && (
+        <PrinterSoftwareDialog
+          printer={printer}
+          open={softwareDialogOpen}
+          onClose={() => setSoftwareDialogOpen(false)}
+          onSaved={(updated) => {
+            setPrinter(updated);
+            void load();
+          }}
+        />
+      )}
 
       {printer && editOpen && (
         <PrinterCreateWizardDialog

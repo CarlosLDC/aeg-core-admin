@@ -38,6 +38,11 @@ export function canModifyPrinterRecord(role: Role): boolean {
   return can(role, "printers", "update");
 }
 
+/** Asignar o cambiar software de impresora: admin global o roles de panel distribuidor. */
+export function canAssignPrinterSoftware(role: Role): boolean {
+  return role === "ADMIN" || isDistributorPanelRole(role);
+}
+
 export function canDeletePrinterRecord(role: Role): boolean {
   return can(role, "printers", "delete");
 }

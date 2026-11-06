@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Layers, Loader2, Plus } from "lucide-react";
+import { Cpu, Layers, Loader2, Plus } from "lucide-react";
 import { PrinterBatchFormDialog, type PrinterBatchSubmitPayload } from "@/components/printers/printer-batch-form-dialog";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
+import { PrinterSoftwareDialog } from "@/components/printers/printer-software-dialog";
 import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
 import {
   type SelectOption,
@@ -43,6 +44,7 @@ import { filterAllOption } from "@/lib/table-filter-options";
 import { useAuth } from "@/context/auth-provider";
 import { useCompanyScope } from "@/context/company-scope-provider";
 import {
+  canAssignPrinterSoftware,
   canDisposePrinterRecord,
   canCreatePrinterRecord,
   canModifyPrinterRecord,
@@ -158,6 +160,7 @@ export function PrintersManager() {
   const canDelete = user ? canDeletePrinterRecord(user.role) : false;
   const isAdmin = user?.role === "ADMIN";
   const isDistributor = isDistributorPanelRole(user?.role);
+  const canAssignSoftware = user ? canAssignPrinterSoftware(user.role) : false;
   const canAssignInitialized = isAdmin && canModify;
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
   const [authMeDistributorId, setAuthMeDistributorId] = useState<number | null>(
@@ -192,6 +195,8 @@ export function PrintersManager() {
     useState<PrinterResponse | null>(null);
   const [assignmentSaving, setAssignmentSaving] = useState(false);
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
+  const [softwarePrinter, setSoftwarePrinter] =
+    useState<PrinterResponse | null>(null);
   const [dispositionPrinter, setDispositionPrinter] =
     useState<PrinterResponse | null>(null);
   const [saving, setSaving] = useState(false);
@@ -1166,6 +1171,23 @@ export function PrintersManager() {
                                   onEdit={
                                     canModify ? () => openEdit(printer) : undefined
                                   }
+                                  customActions={
+                                    canAssignSoftware
+                                      ? [
+                                          {
+                                            label: "Gestionar software",
+                                            icon: (
+                                              <Cpu
+                                                className="size-4 shrink-0"
+                                                aria-hidden
+                                              />
+                                            ),
+                                            onClick: () =>
+                                              setSoftwarePrinter(printer),
+                                          },
+                                        ]
+                                      : undefined
+                                  }
                                   onDelete={
                                     canDelete
                                       ? () => handleDelete(printer)
@@ -1329,6 +1351,17 @@ export function PrintersManager() {
         onClose={closeDialog}
         onSubmit={handleSubmit}
       />
+
+      {softwarePrinter && (
+        <PrinterSoftwareDialog
+          printer={softwarePrinter}
+          open={softwarePrinter != null}
+          onClose={() => setSoftwarePrinter(null)}
+          onSaved={() => {
+            void loadPrinters();
+          }}
+        />
+      )}
 
       <PrinterDeleteBlockedDialog
         open={deleteBlocked != null}

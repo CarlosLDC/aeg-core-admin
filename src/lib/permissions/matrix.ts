@@ -32,7 +32,7 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
   printers: {
     read: DISTRIBUTOR_PANEL,
     create: ADMIN_ONLY,
-    update: DISTRIBUTOR_PANEL,
+    update: ADMIN_ONLY,
     delete: ADMIN_ONLY,
   },
   printerModels: {

@@ -27,6 +27,11 @@ export type TableRowActionsMenuProps = {
   onCancelReview?: () => void;
   cancelReviewLabel?: string;
   deleting?: boolean;
+  customActions?: Array<{
+    label: string;
+    icon?: React.ReactNode;
+    onClick: () => void;
+  }>;
 };
 
 const menuItemClass =
@@ -46,13 +51,15 @@ function countMenuItems(
   hasEdit: boolean,
   hasDelete: boolean,
   hasCancelReview: boolean,
+  customCount = 0,
 ): number {
   return (
     1 +
     (hasDownload ? 1 : 0) +
     (hasEdit ? 1 : 0) +
     (hasDelete ? 1 : 0) +
-    (hasCancelReview ? 1 : 0)
+    (hasCancelReview ? 1 : 0) +
+    customCount
   );
 }
 
@@ -88,11 +95,12 @@ function computeMenuCoords(
   hasEdit: boolean,
   hasDelete: boolean,
   hasCancelReview: boolean,
+  customCount = 0,
 ): MenuCoords {
   const rect = trigger.getBoundingClientRect();
   const menuHeight =
     menu?.offsetHeight ??
-    countMenuItems(hasDownload, hasEdit, hasDelete, hasCancelReview) * 40 + 8;
+    countMenuItems(hasDownload, hasEdit, hasDelete, hasCancelReview, customCount) * 40 + 8;
   const openUp = shouldOpenMenuUp(trigger, menuHeight);
 
   return {
@@ -115,6 +123,7 @@ export function TableRowActionsMenu({
   onCancelReview,
   cancelReviewLabel = "Cancelar revisión",
   deleting = false,
+  customActions,
 }: TableRowActionsMenuProps) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<MenuCoords | null>(null);
@@ -127,6 +136,7 @@ export function TableRowActionsMenu({
   const hasEdit = Boolean(onEdit);
   const hasDelete = Boolean(onDelete);
   const hasCancelReview = Boolean(onCancelReview);
+  const customCount = customActions?.length ?? 0;
   const rowBusy = deleting || downloading;
 
   const updateCoords = () => {
@@ -140,6 +150,7 @@ export function TableRowActionsMenu({
         hasEdit,
         hasDelete,
         hasCancelReview,
+        customCount,
       ),
     );
   };
@@ -162,7 +173,7 @@ export function TableRowActionsMenu({
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", updateCoords);
     };
-  }, [open, hasDownload, hasEdit, hasDelete, hasCancelReview]);
+  }, [open, hasDownload, hasEdit, hasDelete, hasCancelReview, customCount]);
 
   useEffect(() => {
     if (!open) return;
@@ -248,6 +259,22 @@ export function TableRowActionsMenu({
             {editLabel}
           </button>
         ) : null}
+        {customActions?.map((action, idx) => (
+          <button
+            key={idx}
+            type="button"
+            role="menuitem"
+            disabled={rowBusy}
+            className={menuItemClass}
+            onClick={() => {
+              close();
+              action.onClick();
+            }}
+          >
+            {action.icon}
+            {action.label}
+          </button>
+        ))}
         {onCancelReview ? (
           <button
             type="button"
@@ -315,6 +342,7 @@ export function TableRowActionsMenu({
                 hasEdit,
                 hasDelete,
                 hasCancelReview,
+                customCount,
               ),
             );
           }

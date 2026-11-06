@@ -36,7 +36,7 @@ Los roles históricos `DISTRIBUTOR` y `SERVICE_CENTER` se consolidaron en `TECHN
 
 1. **TECHNICIAN** puede crear empresas y sucursales (coherente con wizard SENIAT); no puede eliminar registros existentes del catálogo.
 2. **PUT/DELETE** en empresas y sucursales: ADMIN y TECHNICIAN pueden editar; eliminar solo **ADMIN**.
-3. **Impresoras**: TECHNICIAN solo **lee** las de su alcance y puede **enajenar** (`POST /api/printers/{id}/enajenar`) impresoras asignadas y pagadas de su distribuidora; crear, editar catálogo y eliminar: solo **ADMIN**.
+3. **Impresoras**: TECHNICIAN solo **lee** las de su alcance, puede **asignar o solicitar software** para sus impresoras y puede **enajenar** (`POST /api/printers/{id}/enajenar`) impresoras asignadas y pagadas de su distribuidora; crear, editar catálogo completo y eliminar: solo **ADMIN**.
 4. Operaciones de campo (precintos, ST, inspección): roles con acceso al módulo pueden CRUD dentro del alcance que devuelva el API. El técnico logueado se asigna automáticamente en altas.
 
 ## Flujo técnico (Empresas `/branches`)
