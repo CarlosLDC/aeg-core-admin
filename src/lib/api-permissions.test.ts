@@ -26,8 +26,8 @@ describe("printer update permissions", () => {
     expect(canModifyPrinterRecord("DISTRIBUTOR")).toBe(false);
   });
 
-  it("allows admin and distributor to assign software to printers", () => {
-    expect(canAssignPrinterSoftware("ADMIN")).toBe(true);
+  it("allows only distributor to assign software via dedicated action", () => {
+    expect(canAssignPrinterSoftware("ADMIN")).toBe(false);
     expect(canAssignPrinterSoftware("DISTRIBUTOR")).toBe(true);
   });
 

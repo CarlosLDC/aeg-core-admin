@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText } from "lucide-react";
+import { BookOpen, ExternalLink, FileText } from "lucide-react";
+import {
+  canAccessFiscalBooksApp,
+  fiscalBooksAppUrl,
+  fiscalBookLinkProps,
+} from "@/lib/fiscal-books-app";
 import { BranchMissingContractNotice } from "@/components/branches/branch-missing-contract-notice";
 import { BranchContractDownloadModal } from "@/components/branches/branch-contract-download-modal";
 import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
@@ -602,6 +607,27 @@ export function BranchView() {
     );
   }, [branch, contractCoverage]);
 
+  const canOpenFiscalBook = user ? canAccessFiscalBooksApp(user.role) : false;
+  const showFiscalBookLink = Boolean(branch && canOpenFiscalBook);
+  const showContractBtn = Boolean(
+    canReadContracts &&
+    (branch?.distributor != null || branch?.serviceCenter != null),
+  );
+
+  const canEdit = technicianEmpresaView
+    ? client != null && !pendingReview
+    : canModify;
+  const canDel = technicianEmpresaView
+    ? client != null && canRequestReview && !pendingReview
+    : canDelete;
+  const canCancel = Boolean(
+    technicianEmpresaView && client != null && canCancelReview && pendingReview,
+  );
+  const hasPrimaryActions = canEdit || canDel || canCancel;
+
+  const ghostBtn =
+    "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground";
+
   return (
     <>
       <ResourceViewShell
@@ -612,56 +638,60 @@ export function BranchView() {
         loading={loading}
         error={error}
         actions={
-          branch ? (
-            <ResourceViewActions
-              onEdit={
-                technicianEmpresaView
-                  ? client != null && !pendingReview
+          branch && (showFiscalBookLink || showContractBtn || hasPrimaryActions) ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {showFiscalBookLink ? (
+                <a
+                  href={fiscalBooksAppUrl()}
+                  {...fiscalBookLinkProps}
+                  className={ghostBtn}
+                >
+                  <BookOpen className="size-4" aria-hidden />
+                  Libro fiscal
+                  <ExternalLink className="size-3.5 opacity-60" aria-hidden />
+                </a>
+              ) : null}
+              {showContractBtn ? (
+                <button
+                  type="button"
+                  onClick={() => setContractOpen(true)}
+                  className={ghostBtn}
+                >
+                  <FileText className="size-4" aria-hidden />
+                  Contrato
+                </button>
+              ) : null}
+              {(showFiscalBookLink || showContractBtn) && hasPrimaryActions ? (
+                <span className="mx-1 hidden h-6 w-px bg-border sm:block" aria-hidden />
+              ) : null}
+              <ResourceViewActions
+                onEdit={
+                  canEdit
                     ? () => {
                         setFormError(null);
                         setEditOpen(true);
                       }
                     : undefined
-                  : canModify
+                }
+                onDelete={
+                  canDel
                     ? () => {
-                        setFormError(null);
-                        setEditOpen(true);
+                        if (technicianEmpresaView) {
+                          void handleClientDelete();
+                        } else {
+                          void handleDelete();
+                        }
                       }
                     : undefined
-              }
-              leadingActions={
-                !isTechnician &&
-                canReadContracts &&
-                (branch.distributor != null || branch.serviceCenter != null) ? (
-                  <button
-                    type="button"
-                    onClick={() => setContractOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
-                  >
-                    <FileText className="size-4" aria-hidden />
-                    Contrato
-                  </button>
-                ) : null
-              }
-              onDelete={
-                technicianEmpresaView
-                  ? client != null && canRequestReview && !pendingReview
-                    ? () => void handleClientDelete()
+                }
+                onCancelReview={
+                  canCancel
+                    ? () => void handleCancelReview()
                     : undefined
-                  : canDelete
-                    ? () => void handleDelete()
-                    : undefined
-              }
-              onCancelReview={
-                technicianEmpresaView &&
-                client != null &&
-                canCancelReview &&
-                pendingReview
-                  ? () => void handleCancelReview()
-                  : undefined
-              }
-              deleting={saving || deleting || cancellingReview}
-            />
+                }
+                deleting={saving || deleting || cancellingReview}
+              />
+            </div>
           ) : undefined
         }
       >

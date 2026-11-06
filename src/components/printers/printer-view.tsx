@@ -700,24 +700,11 @@ export function PrinterView() {
               <DetailField
                 label="Software"
                 value={
-                  <div className="flex items-center justify-between gap-2">
-                    <span>
-                      {printer.softwareId != null
-                        ? softwareLabelById.get(printer.softwareId) ?? "—"
-                        : pendingSoftware
-                        ? `Pendiente: ${pendingSoftware.name} v${pendingSoftware.version}`
-                        : "Sin asignar"}
-                    </span>
-                    {canAssignSoftware && (
-                      <button
-                        type="button"
-                        onClick={() => setSoftwareDialogOpen(true)}
-                        className="text-xs font-medium text-accent hover:underline"
-                      >
-                        {printer.softwareId != null ? "Cambiar" : "Asignar"}
-                      </button>
-                    )}
-                  </div>
+                  printer.softwareId != null
+                    ? softwareLabelById.get(printer.softwareId) ?? "—"
+                    : pendingSoftware
+                    ? `Pendiente: ${pendingSoftware.name} v${pendingSoftware.version}`
+                    : "Sin asignar"
                 }
               />
             ) : null}

@@ -2,6 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { BookOpen, ExternalLink } from "lucide-react";
+import {
+  canAccessFiscalBooksApp,
+  fiscalBooksAppUrl,
+  fiscalBookLinkProps,
+} from "@/lib/fiscal-books-app";
 import {
   ClientEditDialog,
   type ClientEditValues,
@@ -420,6 +426,17 @@ export function ClientView() {
       ? clientModificationReviewPath(client.activeModificationRequestId)
       : clientModificationReviewsListPath;
 
+  const canOpenFiscalBook = user ? canAccessFiscalBooksApp(user.role) : false;
+  const showFiscalBookLink = Boolean(client && canOpenFiscalBook);
+  const canEdit =
+    (canRequestReview || (canEditCompany && canEditBranch)) && !pendingReview;
+  const canDel = canRequestReview && !pendingReview;
+  const canCancel = Boolean(canCancelReview && pendingReview);
+  const hasPrimaryActions = canEdit || canDel || canCancel;
+
+  const ghostBtn =
+    "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground";
+
   return (
     <>
       <ResourceViewShell
@@ -430,29 +447,38 @@ export function ClientView() {
         loading={loading}
         error={error}
         actions={
-          client ? (
-            <ResourceViewActions
-              onEdit={
-                (canRequestReview || (canEditCompany && canEditBranch)) &&
-                !pendingReview
-                  ? () => {
-                      setFormError(null);
-                      setEditOpen(true);
-                    }
-                  : undefined
-              }
-              onDelete={
-                canRequestReview && !pendingReview
-                  ? () => void handleDelete()
-                  : undefined
-              }
-              onCancelReview={
-                canCancelReview && pendingReview
-                  ? () => void handleCancelReview()
-                  : undefined
-              }
-              deleting={saving || deleting || cancellingReview}
-            />
+          client && (showFiscalBookLink || hasPrimaryActions) ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {showFiscalBookLink ? (
+                <a
+                  href={fiscalBooksAppUrl()}
+                  {...fiscalBookLinkProps}
+                  className={ghostBtn}
+                >
+                  <BookOpen className="size-4" aria-hidden />
+                  Libro fiscal
+                  <ExternalLink className="size-3.5 opacity-60" aria-hidden />
+                </a>
+              ) : null}
+              {showFiscalBookLink && hasPrimaryActions ? (
+                <span className="mx-1 hidden h-6 w-px bg-border sm:block" aria-hidden />
+              ) : null}
+              <ResourceViewActions
+                onEdit={
+                  canEdit
+                    ? () => {
+                        setFormError(null);
+                        setEditOpen(true);
+                      }
+                    : undefined
+                }
+                onDelete={canDel ? () => void handleDelete() : undefined}
+                onCancelReview={
+                  canCancel ? () => void handleCancelReview() : undefined
+                }
+                deleting={saving || deleting || cancellingReview}
+              />
+            </div>
           ) : undefined
         }
       >
