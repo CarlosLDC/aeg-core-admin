@@ -587,7 +587,7 @@ export function PrinterDispositionDialog({
               htmlFor={`${titleId}-factura-nro`}
               className="block text-sm font-medium text-foreground"
             >
-              Número de factura
+              Número de factura comercial
             </label>
             <input
               id={`${titleId}-factura-nro`}
@@ -604,6 +604,9 @@ export function PrinterDispositionDialog({
               className={cn(formFieldInputClass, "tabular-nums disabled:opacity-50")}
               placeholder="Ej. 00012345"
             />
+            <p className="text-xs text-muted">
+              Solo para previsualización del ticket de entrega; no afecta el correlativo fiscal de la impresora.
+            </p>
           </div>
         </div>
       )}

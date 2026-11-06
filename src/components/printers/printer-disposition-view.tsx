@@ -420,6 +420,12 @@ export function PrinterDispositionView({
           onSubmit={(e) => void handleSubmit(e)}
           className="mx-auto flex w-full max-w-4xl flex-col items-center gap-6"
         >
+          <div className="w-full rounded-lg border border-border/60 bg-muted/30 px-4 py-3 text-xs text-muted">
+            <p>
+              <strong className="text-foreground">Nota sobre la previsualización:</strong> El número de factura y datos mostrados en este ticket son exclusivamente referenciales para revisar el encabezado y pie de página de la enajenación. No modifican el correlativo fiscal de la impresora.
+            </p>
+          </div>
+
           <VenezuelanFiscalInvoicePreview
             key={invoiceEditSessionKey}
             data={invoiceDraft}
