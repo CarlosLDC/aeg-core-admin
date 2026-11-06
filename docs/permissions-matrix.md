@@ -19,7 +19,7 @@ Los roles históricos `DISTRIBUTOR` y `SERVICE_CENTER` se consolidaron en `TECHN
 | dashboard | ADMIN, TECHNICIAN | — | — | — | SENIAT no accede al panel |
 | companies | ADMIN, TECHNICIAN | ADMIN, TECHNICIAN | ADMIN, TECHNICIAN | ADMIN | TECH: API filtra por distribuidora |
 | branches | ADMIN, TECHNICIAN | ADMIN, TECHNICIAN | ADMIN, TECHNICIAN | ADMIN | Wizard SENIAT: create company+branch |
-| printers | ADMIN, TECHNICIAN | ADMIN | ADMIN | ADMIN | TECH: solo su cartera (`distributorId`); solo lectura |
+| printers | ADMIN, TECHNICIAN | ADMIN | ADMIN, TECHNICIAN | ADMIN | TECH: gestiona software de impresoras en alcance (`distributorId`); enajenación; eliminar solo ADMIN |
 | printerModels | ADMIN | ADMIN | ADMIN | ADMIN | Catálogo solo administrador; TECH resuelve modelos vía API al ver impresoras |
 | firmwares | ADMIN | ADMIN | ADMIN | ADMIN | Catálogo OTA; edición de metadatos (versión, modelo, notas) |
 | seals | ADMIN (ruta `/seals`) | ADMIN | ADMIN | ADMIN | Gestión de precintos solo para administradores |
@@ -27,6 +27,7 @@ Los roles históricos `DISTRIBUTOR` y `SERVICE_CENTER` se consolidaron en `TECHN
 | annualInspections | ADMIN, TECHNICIAN | Igual | Igual | Igual | Solo impresoras **asignada**; inspector = `userId` |
 | contracts | ADMIN | ADMIN | ADMIN | ADMIN | |
 | users | ADMIN | ADMIN | ADMIN | ADMIN | Incluye rol SENIAT (auditor libro, sin acceso panel) |
+| software | ADMIN, TECHNICIAN | ADMIN | ADMIN | ADMIN | TECH: lectura de software para asociación a impresoras |
 | remoto | ADMIN | ADMIN | — | — | |
 | seniatExtract | ADMIN, TECHNICIAN | — | — | — | Solo API Next |
 | uploads | Quien adjunta fotos en módulos permitidos | — | — | — | |

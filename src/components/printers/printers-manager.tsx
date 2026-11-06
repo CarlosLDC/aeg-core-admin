@@ -46,6 +46,7 @@ import {
   canDisposePrinterRecord,
   canCreatePrinterRecord,
   canModifyPrinterRecord,
+  canDeletePrinterRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
 import { useToast } from "@/context/toast-provider";
@@ -154,6 +155,7 @@ export function PrintersManager() {
   const { scope } = useCompanyScope();
   const canCreate = user ? canCreatePrinterRecord(user.role) : false;
   const canModify = user ? canModifyPrinterRecord(user.role) : false;
+  const canDelete = user ? canDeletePrinterRecord(user.role) : false;
   const isAdmin = user?.role === "ADMIN";
   const isDistributor = isDistributorPanelRole(user?.role);
   const canAssignInitialized = isAdmin && canModify;
@@ -557,7 +559,7 @@ export function PrintersManager() {
       setModelsLoading(false);
     }
 
-    if (user?.role === "ADMIN") {
+    if (user?.role === "ADMIN" || isDistributor) {
       try {
         const sw = await fetchSoftware();
         setSoftware(
@@ -1165,7 +1167,7 @@ export function PrintersManager() {
                                     canModify ? () => openEdit(printer) : undefined
                                   }
                                   onDelete={
-                                    canModify
+                                    canDelete
                                       ? () => handleDelete(printer)
                                       : undefined
                                   }
@@ -1314,13 +1316,14 @@ export function PrintersManager() {
               })
             : null
         }
+        printerId={selected?.id}
         modelOptions={modelOptions}
         softwareOptions={software}
         clientOptions={clientOptions}
         distributorOptions={distributorOptions}
         modelsLoading={modelsLoading}
         catalogLoading={catalogLoading}
-        canPickSoftware={user?.role === "ADMIN"}
+        canPickSoftware={user?.role === "ADMIN" || isDistributor}
         lockDistributor={lockDistributor}
         defaultDistributorId={distributorId}
         onClose={closeDialog}

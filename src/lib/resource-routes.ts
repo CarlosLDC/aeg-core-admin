@@ -74,6 +74,10 @@ export function clientModificationReviewPath(requestId: number): string {
   return `/reviews/clients/${requestId}`;
 }
 
+export function softwareModificationReviewPath(requestId: number): string {
+  return `/reviews/software/${requestId}`;
+}
+
 export const clientModificationReviewsListPath = "/reviews";
 
 export const toolsListPath = "/tools";

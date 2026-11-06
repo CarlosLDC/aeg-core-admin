@@ -400,18 +400,6 @@ export function BranchView() {
 
     return (
       <DetailCard>
-        <DetailField
-          label="Tipo de contribuyente"
-          value={
-            contributorType ? (
-              <ContributorBadge type={contributorType} />
-            ) : (
-              "—"
-            )
-          }
-        />
-        <DetailField label="RIF" value={rif} mono />
-        <DetailField label="Razón social" value={businessName} />
         <DetailField label="Estado" value={branch.state} />
         <DetailField label="Ciudad" value={branch.city} />
         <DetailField
@@ -419,6 +407,7 @@ export function BranchView() {
           value={
             pendingProposed?.address?.trim() || branch.address?.trim() || "—"
           }
+          fullWidth
         />
         <DetailField
           label="Persona de contacto"
@@ -444,13 +433,27 @@ export function BranchView() {
         />
       </DetailCard>
     );
-  }, [branch, businessName, client, contributorType, isStaffBranch, pendingProposed, rif]);
+  }, [branch, client, isStaffBranch, pendingProposed]);
 
   const title = branch
     ? technicianEmpresaView
       ? businessName || `${branch.city}, ${branch.state}`
       : companyLabel || `${branch.city}, ${branch.state}`
     : "Empresa";
+
+  const titleBadge =
+    branch && technicianEmpresaView ? (
+      <div className="flex flex-wrap items-center gap-2">
+        {rif !== "—" ? (
+          <span className="font-mono text-sm font-medium text-muted">
+            {rif}
+          </span>
+        ) : null}
+        {contributorType ? (
+          <ContributorBadge type={contributorType} />
+        ) : null}
+      </div>
+    ) : undefined;
   const detailSteps = useMemo(() => {
     if (!branch || isTechnician) return [];
 
@@ -598,11 +601,10 @@ export function BranchView() {
         backHref="/branches"
         backLabel="Volver a empresas"
         title={title}
+        titleBadge={titleBadge}
         subtitle={
           branch && technicianEmpresaView
-            ? rif !== "—"
-              ? rif
-              : `${branch.city}, ${branch.state}`
+            ? undefined
             : branch && companyLabel
               ? `${branch.city}, ${branch.state}`
               : undefined

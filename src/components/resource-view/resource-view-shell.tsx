@@ -7,8 +7,9 @@ import { TruncatedText } from "@/components/ui/truncated-text";
 type ResourceViewShellProps = {
   backHref?: string;
   backLabel?: string;
-  title?: string;
-  subtitle?: string;
+  title?: React.ReactNode;
+  subtitle?: React.ReactNode;
+  titleBadge?: React.ReactNode;
   loading?: boolean;
   error?: string | null;
   actions?: React.ReactNode;
@@ -20,6 +21,7 @@ export function ResourceViewShell({
   backLabel,
   title,
   subtitle,
+  titleBadge,
   loading,
   error,
   actions,
@@ -37,19 +39,26 @@ export function ResourceViewShell({
         </Link>
       ) : null}
 
-      {title || subtitle || actions ? (
+      {title || subtitle || titleBadge || actions ? (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          {title || subtitle ? (
+          {title || subtitle || titleBadge ? (
             <div className="min-w-0 flex-1">
               {title ? (
-                <h2 className="text-xl font-semibold text-card-foreground">
-                  <TruncatedText
-                    maxClassName="max-w-full"
-                    className="text-xl font-semibold text-card-foreground"
-                  >
-                    {title}
-                  </TruncatedText>
-                </h2>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h2 className="text-xl font-semibold text-card-foreground">
+                    {typeof title === "string" ? (
+                      <TruncatedText
+                        maxClassName="max-w-full"
+                        className="text-xl font-semibold text-card-foreground"
+                      >
+                        {title}
+                      </TruncatedText>
+                    ) : (
+                      title
+                    )}
+                  </h2>
+                  {titleBadge}
+                </div>
               ) : null}
               {subtitle ? (
                 <div
@@ -57,12 +66,16 @@ export function ResourceViewShell({
                     title ? "mt-1 text-sm text-muted" : "text-sm text-muted"
                   }
                 >
-                  <TruncatedText
-                    maxClassName="max-w-full"
-                    className="text-sm text-muted"
-                  >
-                    {subtitle}
-                  </TruncatedText>
+                  {typeof subtitle === "string" ? (
+                    <TruncatedText
+                      maxClassName="max-w-full"
+                      className="text-sm text-muted"
+                    >
+                      {subtitle}
+                    </TruncatedText>
+                  ) : (
+                    subtitle
+                  )}
                 </div>
               ) : null}
             </div>

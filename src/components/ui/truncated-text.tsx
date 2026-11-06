@@ -31,7 +31,7 @@ export function TruncatedText({
   );
 
   const inner = (
-    <span className={textClass} data-truncate-measure>
+    <span className={textClass} data-truncate-measure title={children}>
       {children}
     </span>
   );

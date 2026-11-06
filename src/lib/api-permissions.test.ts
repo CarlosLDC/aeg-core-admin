@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { canDisposePrinterRecord } from "@/lib/api-permissions";
+import {
+  canDisposePrinterRecord,
+  canModifyPrinterRecord,
+  canDeletePrinterRecord,
+} from "@/lib/api-permissions";
+import { can } from "@/lib/permissions/can";
 
 describe("canDisposePrinterRecord", () => {
   it("allows admins and distributors to dispose printers", () => {
@@ -11,5 +16,23 @@ describe("canDisposePrinterRecord", () => {
     expect(canDisposePrinterRecord("SENIAT")).toBe(false);
     expect(canDisposePrinterRecord("TECHNICIAN")).toBe(false);
     expect(canDisposePrinterRecord("SERVICE_CENTER")).toBe(false);
+  });
+});
+
+describe("printer update permissions", () => {
+  it("allows admin and distributor to modify printers", () => {
+    expect(canModifyPrinterRecord("ADMIN")).toBe(true);
+    expect(canModifyPrinterRecord("DISTRIBUTOR")).toBe(true);
+  });
+
+  it("restricts printer deletion to admin only", () => {
+    expect(canDeletePrinterRecord("ADMIN")).toBe(true);
+    expect(canDeletePrinterRecord("DISTRIBUTOR")).toBe(false);
+  });
+
+  it("allows distributor to read software", () => {
+    expect(can("DISTRIBUTOR", "software", "read")).toBe(true);
+    expect(can("ADMIN", "software", "read")).toBe(true);
+    expect(can("DISTRIBUTOR", "software", "create")).toBe(false);
   });
 });

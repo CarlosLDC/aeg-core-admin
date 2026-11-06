@@ -13,6 +13,7 @@ import {
   fetchClientModificationRequests,
   getClientModificationRequestsErrorMessage,
 } from "@/lib/client-modification-requests-api";
+import { fetchSoftwareModificationRequests } from "@/lib/software-modification-requests-api";
 import { formatDate } from "@/lib/datetime-form";
 import { useTableSearch } from "@/hooks/use-table-search";
 import { useTableFilter } from "@/hooks/use-table-filter";
@@ -22,7 +23,7 @@ import {
   DEFAULT_RETRY_DELAYS_MS,
   sleep,
 } from "@/lib/polling";
-import { clientPath } from "@/lib/resource-routes";
+import { clientPath, softwareModificationReviewPath } from "@/lib/resource-routes";
 import type {
   ModificationActionType,
   ModificationRequestStatus,
@@ -32,6 +33,8 @@ import { cn } from "@/lib/utils";
 type ReviewRow = {
   id: number;
   resourceId: number;
+  resourceType: "client" | "software";
+  resourceTypeName: string;
   resourceName: string;
   actionType: ModificationActionType;
   status: ModificationRequestStatus;
@@ -46,7 +49,8 @@ const STATUS_LABELS: Record<ModificationRequestStatus, string> = {
   REJECTED: "Rechazada",
 };
 
-const ACTION_LABELS: Record<ModificationActionType, string> = {
+const ACTION_LABELS: Record<ModificationActionType | "CREATE", string> = {
+  CREATE: "Creacion",
   UPDATE: "Actualizacion",
   DELETE: "Eliminacion",
 };
@@ -73,19 +77,27 @@ export function ModificationReviewsManager() {
       setError(null);
     }
     try {
-      const [pendingClients, approvedClients, rejectedClients] = await Promise.all([
+      const [
+        pendingClients, approvedClients, rejectedClients,
+        pendingSoftware, approvedSoftware, rejectedSoftware,
+      ] = await Promise.all([
         fetchClientModificationRequests("PENDING"),
         fetchClientModificationRequests("APPROVED"),
         fetchClientModificationRequests("REJECTED"),
+        fetchSoftwareModificationRequests("PENDING").catch(() => []),
+        fetchSoftwareModificationRequests("APPROVED").catch(() => []),
+        fetchSoftwareModificationRequests("REJECTED").catch(() => []),
       ]);
 
-      const nextRows: ReviewRow[] = [
+      const clientRows: ReviewRow[] = [
         ...pendingClients,
         ...approvedClients,
         ...rejectedClients,
       ].map((row) => ({
         id: row.id,
         resourceId: row.clientId,
+        resourceType: "client" as const,
+        resourceTypeName: "Cliente",
         resourceName: row.clientName,
         actionType: row.actionType,
         status: row.status,
@@ -94,8 +106,31 @@ export function ModificationReviewsManager() {
         reviewHref: `/reviews/clients/${row.id}`,
       }));
 
+      const softwareRows: ReviewRow[] = [
+        ...pendingSoftware,
+        ...approvedSoftware,
+        ...rejectedSoftware,
+      ].map((row) => ({
+        id: row.id,
+        resourceId: row.printerId,
+        resourceType: "software" as const,
+        resourceTypeName: "Software",
+        resourceName: `${row.softwareName} v${row.softwareVersion} (Impresora ${row.printerFiscalSerial})`,
+        actionType: row.actionType,
+        status: row.status,
+        requestedByName: row.requestedByName,
+        createdAt: row.createdAt,
+        reviewHref: softwareModificationReviewPath(row.id),
+      }));
+
+      const nextRows = [...clientRows, ...softwareRows];
+
       if (!userChangedStatusFilter.current) {
-        setStatusFilter(pendingClients.length > 0 ? "PENDING" : "all");
+        setStatusFilter(
+          pendingClients.length > 0 || pendingSoftware.length > 0
+            ? "PENDING"
+            : "all",
+        );
       }
       setRows(nextRows.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)));
       if (!silent) setError(null);
@@ -238,8 +273,9 @@ export function ModificationReviewsManager() {
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <th className="px-5 py-3 font-medium">Solicitud</th>
-                        <th className="px-5 py-3 font-medium">Cliente</th>
-                        <th className="px-5 py-3 font-medium">Accion</th>
+                        <th className="px-5 py-3 font-medium">Tipo</th>
+                        <th className="px-5 py-3 font-medium">Recurso</th>
+                        <th className="px-5 py-3 font-medium">Acción</th>
                         <th className="px-5 py-3 font-medium">Estado</th>
                         <th className="px-5 py-3 font-medium">Solicitado por</th>
                         <th className="px-5 py-3 font-medium">Fecha</th>
@@ -253,10 +289,22 @@ export function ModificationReviewsManager() {
                               {row.id}
                             </Link>
                           </td>
+                          <td className="px-5 py-3.5">
+                            <span
+                              className={cn(
+                                "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium border",
+                                row.resourceType === "client"
+                                  ? "border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300"
+                                  : "border-purple-500/20 bg-purple-500/10 text-purple-700 dark:text-purple-300",
+                              )}
+                            >
+                              {row.resourceTypeName}
+                            </span>
+                          </td>
                           <td className="px-5 py-3.5 text-card-foreground">
                             {row.resourceName}
                           </td>
-                          <td className="px-5 py-3.5">{ACTION_LABELS[row.actionType]}</td>
+                          <td className="px-5 py-3.5">{ACTION_LABELS[row.actionType] ?? row.actionType}</td>
                           <td className="px-5 py-3.5">
                             <span
                               className={cn(

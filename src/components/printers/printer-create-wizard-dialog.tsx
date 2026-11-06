@@ -7,7 +7,23 @@ import {
   type PrinterWizardSection,
 } from "@/components/printers/printer-wizard-fields";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
+import { SoftwareFormDialog } from "@/components/software/software-form-dialog";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
+import { useToast } from "@/context/toast-provider";
+import { useConfirm } from "@/context/confirm-provider";
+import { fetchCompanies } from "@/lib/companies-api";
+import {
+  cancelSoftwareModificationRequest,
+  createSoftwareModificationRequest,
+  fetchPendingSoftwareModificationRequest,
+  getSoftwareModificationRequestsErrorMessage,
+} from "@/lib/software-modification-requests-api";
+import {
+  toSoftwareRequest,
+  type SoftwareFormValues,
+} from "@/lib/software-form";
+import type { CompanyResponse } from "@/types/company";
+import type { SoftwareModificationRequestDetailResponse } from "@/types/software-modification-request";
 import {
   emptyPrinterForm,
   type PrinterFormValues,
@@ -22,6 +38,7 @@ type PrinterCreateWizardDialogProps = {
   saving: boolean;
   error: string | null;
   initialValues?: PrinterFormValues | null;
+  printerId?: number;
   modelOptions: SelectOption[];
   softwareOptions: SelectOption[];
   clientOptions: SelectOption[];
@@ -76,6 +93,7 @@ export function PrinterCreateWizardDialog({
   saving,
   error,
   initialValues = null,
+  printerId,
   modelOptions,
   softwareOptions,
   clientOptions,
@@ -89,12 +107,106 @@ export function PrinterCreateWizardDialog({
   onSubmit,
 }: PrinterCreateWizardDialogProps) {
   const formId = useId();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [step, setStep] = useState<WizardStep>(1);
   const [form, setForm] = useState<PrinterFormValues>(emptyPrinterForm);
   const [stepError, setStepError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<keyof PrinterFormValues, string>>
   >({});
+  const [pendingSoftware, setPendingSoftware] =
+    useState<SoftwareModificationRequestDetailResponse | null>(null);
+  const [softwareModalOpen, setSoftwareModalOpen] = useState(false);
+  const [softwareCompanies, setSoftwareCompanies] = useState<CompanyResponse[]>([]);
+  const [softwareSaving, setSoftwareSaving] = useState(false);
+  const [softwareError, setSoftwareError] = useState<string | null>(null);
+  const [cancellingPendingSoftware, setCancellingPendingSoftware] = useState(false);
+
+  useEffect(() => {
+    if (!open || !printerId) {
+      setPendingSoftware(null);
+      return;
+    }
+    let cancelled = false;
+    fetchPendingSoftwareModificationRequest(printerId)
+      .then((res) => {
+        if (!cancelled) setPendingSoftware(res);
+      })
+      .catch(() => {
+        if (!cancelled) setPendingSoftware(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, printerId]);
+
+  function handleOpenSoftwareModal() {
+    setSoftwareError(null);
+    setSoftwareModalOpen(true);
+    if (softwareCompanies.length === 0) {
+      fetchCompanies()
+        .then(setSoftwareCompanies)
+        .catch(() => setSoftwareCompanies([]));
+    }
+  }
+
+  async function handleSoftwareSubmit(values: SoftwareFormValues) {
+    if (!printerId) return;
+    const req = toSoftwareRequest(values);
+    if (typeof req === "string") {
+      setSoftwareError(req);
+      return;
+    }
+    setSoftwareSaving(true);
+    setSoftwareError(null);
+    try {
+      await createSoftwareModificationRequest({
+        printerId,
+        name: req.name,
+        version: req.version,
+        programmingLanguages: req.programmingLanguages,
+        operatingSystems: req.operatingSystems,
+        developerName: req.developerName,
+        developerRif: req.developerRif,
+        external: req.external,
+        distributorCompanyIds: req.distributorCompanyIds,
+      });
+      toast.success(
+        "Solicitud enviada con éxito. Un administrador debe aprobar la entrada primero.",
+      );
+      setSoftwareModalOpen(false);
+      const updated = await fetchPendingSoftwareModificationRequest(printerId);
+      setPendingSoftware(updated);
+    } catch (err) {
+      const msg = getSoftwareModificationRequestsErrorMessage(err);
+      setSoftwareError(msg);
+      toast.error(msg);
+    } finally {
+      setSoftwareSaving(false);
+    }
+  }
+
+  async function handleCancelPendingSoftware() {
+    if (!pendingSoftware) return;
+    const ok = await confirm({
+      title: "Cancelar solicitud",
+      message: "¿Deseas cancelar la solicitud pendiente de software?",
+      destructive: true,
+    });
+    if (!ok) return;
+
+    setCancellingPendingSoftware(true);
+    try {
+      await cancelSoftwareModificationRequest(pendingSoftware.id);
+      toast.success("Solicitud de software cancelada.");
+      setPendingSoftware(null);
+    } catch (err) {
+      toast.error(getSoftwareModificationRequestsErrorMessage(err));
+    } finally {
+      setCancellingPendingSoftware(false);
+    }
+  }
 
   const initialFormSnapshot = useMemo(
     () => (initialValues ? JSON.stringify(initialValues) : ""),
@@ -296,6 +408,11 @@ export function PrinterCreateWizardDialog({
               canPickSoftware={canPickSoftware}
               lockDistributor={lockDistributor}
               fieldErrors={fieldErrors}
+              printerId={printerId}
+              pendingSoftwareRequest={pendingSoftware}
+              onOpenSoftwareModal={handleOpenSoftwareModal}
+              onCancelPendingSoftware={() => void handleCancelPendingSoftware()}
+              cancellingPendingSoftware={cancellingPendingSoftware}
             />
           </form>
         </div>
@@ -347,6 +464,20 @@ export function PrinterCreateWizardDialog({
           </FormDialogFooterBar>
         </div>
       </div>
+
+      {softwareModalOpen && (
+        <SoftwareFormDialog
+          mode="create"
+          open={softwareModalOpen}
+          saving={softwareSaving}
+          error={softwareError}
+          companies={softwareCompanies}
+          onClose={() => {
+            if (!softwareSaving) setSoftwareModalOpen(false);
+          }}
+          onSubmit={(vals) => void handleSoftwareSubmit(vals)}
+        />
+      )}
     </div>
   );
 }

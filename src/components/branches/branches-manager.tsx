@@ -69,6 +69,7 @@ import {
 } from "@/lib/branch-roles";
 import {
   companyNameById,
+  companyRifById,
   companySearchTextById,
   formatBranchShort,
 } from "@/lib/branches";
@@ -868,7 +869,7 @@ export function BranchesManager() {
                   <table
                     className={cn(
                       "w-full text-left text-sm",
-                      isTechnician ? "min-w-[720px]" : "min-w-[880px]",
+                      isTechnician ? "min-w-[780px]" : "min-w-[880px]",
                     )}
                   >
                     <thead>
@@ -901,8 +902,9 @@ export function BranchesManager() {
                           }
                         >
                         <th className="px-5 py-3 font-medium">Razón social</th>
+                        <th className="px-5 py-3 font-medium">RIF</th>
                         <th className="px-5 py-3 font-medium">Ubicación</th>
-                        <th className="px-5 py-3 font-medium">Contacto</th>
+                        <th className="px-5 py-3 font-medium">Persona de contacto</th>
                         {!isTechnician ? (
                           <th className="px-5 py-3 font-medium">Roles</th>
                         ) : null}
@@ -914,10 +916,17 @@ export function BranchesManager() {
                         const client = clientByBranchId.get(branch.id);
                         const pendingReview =
                           client != null && isPendingClientReview(client);
-                        const companyName = companyNameById(
-                          companies,
-                          branch.companyId,
+                        const companyRecord = companies.find(
+                          (c) => c.id === branch.companyId,
                         );
+                        const companyName =
+                          companyRecord?.businessName?.trim() ||
+                          client?.companyBusinessName?.trim() ||
+                          companyNameById(companies, branch.companyId);
+                        const companyRif =
+                          companyRecord?.rif?.trim() ||
+                          client?.companyRif?.trim() ||
+                          companyRifById(companies, branch.companyId);
                         const missingContractLabelsForBranch =
                           !isTechnician && contractCoverage
                             ? missingContractLabels(
@@ -982,9 +991,9 @@ export function BranchesManager() {
                               ) : undefined
                             }
                           >
-                          <td className="max-w-[200px] px-5 py-3.5">
+                          <td className="max-w-[220px] px-5 py-3.5">
                             <div className="space-y-1">
-                              <TruncatedText maxClassName="max-w-[180px]">
+                              <TruncatedText maxClassName="max-w-[200px]">
                                 {companyName}
                               </TruncatedText>
                               {pendingReview ? (
@@ -993,6 +1002,9 @@ export function BranchesManager() {
                                 </p>
                               ) : null}
                             </div>
+                          </td>
+                          <td className="px-5 py-3.5 font-mono text-sm text-card-foreground">
+                            {companyRif || "—"}
                           </td>
                           <td className="max-w-[220px] px-5 text-card-foreground">
                             <TruncatedText maxClassName="max-w-[200px]">

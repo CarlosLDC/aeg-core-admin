@@ -116,7 +116,9 @@ import {
   fiscalBooksAppUrl,
   fiscalBookLinkProps,
 } from "@/lib/fiscal-books-app";
-import { printerDispositionPath, printerPath, toolsPrinterPath } from "@/lib/resource-routes";
+import { printerDispositionPath, printerPath, toolsPrinterPath, softwareModificationReviewPath } from "@/lib/resource-routes";
+import { fetchPendingSoftwareModificationRequest } from "@/lib/software-modification-requests-api";
+import type { SoftwareModificationRequestDetailResponse } from "@/types/software-modification-request";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -136,7 +138,7 @@ export function PrinterView() {
   const canDelete = user ? canDeletePrinterRecord(user.role) : false;
   const isAdmin = user?.role === "ADMIN";
   const isDistributor = isDistributorPanelRole(user?.role);
-  const showSoftware = isAdmin;
+  const showSoftware = isAdmin || isDistributor;
   const canAssignInitialized = isAdmin && canModify;
   const canDispose = user ? canDisposePrinterRecord(user.role) : false;
   const canManageSeals = isAdmin;
@@ -145,6 +147,8 @@ export function PrinterView() {
     : false;
 
   const [printer, setPrinter] = useState<PrinterResponse | null>(null);
+  const [pendingSoftware, setPendingSoftware] =
+    useState<SoftwareModificationRequestDetailResponse | null>(null);
   const [seals, setSeals] = useState<SealResponse[]>([]);
   const [sealsLoading, setSealsLoading] = useState(true);
   const [sealsDialogOpen, setSealsDialogOpen] = useState(false);
@@ -210,7 +214,10 @@ export function PrinterView() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchPrinterById(id);
+      const [data, swReq] = await Promise.all([
+        fetchPrinterById(id),
+        fetchPendingSoftwareModificationRequest(id),
+      ]);
       if (
         user &&
         !assertPrinterInScope(scope, data, user.role, distributorId)
@@ -220,6 +227,7 @@ export function PrinterView() {
         return;
       }
       setPrinter(data);
+      setPendingSoftware(swReq);
     } catch (err) {
       setError(getPrintersErrorMessage(err));
     } finally {
@@ -1025,6 +1033,32 @@ export function PrinterView() {
           ) : undefined
         }
       >
+        {pendingSoftware && (
+          <div className="mx-auto mb-4 flex w-full max-w-4xl items-start justify-between gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-200">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-amber-900 dark:text-amber-100">
+                Solicitud de software pendiente
+              </p>
+              <p className="mt-1 font-medium">
+                Se solicitó incorporar el software:{" "}
+                <strong>
+                  {pendingSoftware.name} v{pendingSoftware.version}
+                </strong>
+              </p>
+              <p className="mt-0.5 text-xs text-amber-700/90 dark:text-amber-300/90">
+                Un administrador debe aprobar la entrada en la base de datos primero. Una vez aprobada, se asignará automáticamente a esta impresora.
+              </p>
+            </div>
+            {isAdmin && (
+              <Link
+                href={softwareModificationReviewPath(pendingSoftware.id)}
+                className="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-amber-700"
+              >
+                Revisar solicitud
+              </Link>
+            )}
+          </div>
+        )}
         {printer?.firmwareUpdateUnverified ? (
           <PrinterFirmwareUnverifiedBanner
             currentFirmwareVersion={printer.versionFirmware}
@@ -1111,6 +1145,7 @@ export function PrinterView() {
           saving={saving}
           error={formError}
           initialValues={printerToFormValues(printer)}
+          printerId={printer.id}
           modelOptions={modelOptions}
           softwareOptions={software}
           clientOptions={clientOptions}

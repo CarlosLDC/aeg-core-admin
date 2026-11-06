@@ -22,6 +22,7 @@ import { fetchFirmwares } from "@/lib/firmwares-api";
 import { queryPrinterFirmwareByMac } from "@/lib/printers-api";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import type { FirmwareResponse } from "@/types/firmware";
+import type { SoftwareModificationRequestDetailResponse } from "@/types/software-modification-request";
 import { DEVICE_TYPES, PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +48,11 @@ type WizardFieldsProps = {
   lockDistributor: boolean;
   fieldErrors: Partial<Record<keyof PrinterFormValues, string>>;
   omitFiscalSerial?: boolean;
+  printerId?: number;
+  pendingSoftwareRequest?: SoftwareModificationRequestDetailResponse | null;
+  onOpenSoftwareModal?: () => void;
+  onCancelPendingSoftware?: () => void;
+  cancellingPendingSoftware?: boolean;
 };
 
 function toSearchableOptions(options: SelectOption[]): SearchableSelectOption[] {
@@ -74,6 +80,11 @@ export function PrinterWizardFields({
   lockDistributor,
   fieldErrors,
   omitFiscalSerial = false,
+  printerId,
+  pendingSoftwareRequest,
+  onOpenSoftwareModal,
+  onCancelPendingSoftware,
+  cancellingPendingSoftware = false,
   section,
 }: WizardFieldsProps & { section: PrinterWizardSection }) {
   const disabled = saving || modelsLoading || catalogLoading;
@@ -352,8 +363,48 @@ export function PrinterWizardFields({
           </div>
         </div>
         {canPickSoftware && (
-          <div className="block">
-            <FieldLabel>Software</FieldLabel>
+          <div className="block space-y-2">
+            <div className="flex items-center justify-between">
+              <FieldLabel>Software</FieldLabel>
+              {printerId != null && onOpenSoftwareModal && (
+                <button
+                  type="button"
+                  onClick={onOpenSoftwareModal}
+                  className="text-xs font-medium text-accent hover:underline"
+                >
+                  + Crear nuevo software
+                </button>
+              )}
+            </div>
+
+            {pendingSoftwareRequest && (
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-amber-900 dark:text-amber-100">
+                      Solicitud de software pendiente
+                    </p>
+                    <p className="mt-0.5 font-medium">
+                      {pendingSoftwareRequest.name} v{pendingSoftwareRequest.version}
+                    </p>
+                    <p className="mt-0.5 text-xs text-amber-700/90 dark:text-amber-300/90">
+                      Un administrador debe aprobar la entrada en la base de datos primero. Si se aprueba, se asignará automáticamente a esta impresora.
+                    </p>
+                  </div>
+                  {onCancelPendingSoftware && (
+                    <button
+                      type="button"
+                      onClick={onCancelPendingSoftware}
+                      disabled={cancellingPendingSoftware}
+                      className="shrink-0 text-xs font-medium text-rose-600 hover:underline disabled:opacity-50 dark:text-rose-400"
+                    >
+                      {cancellingPendingSoftware ? "Cancelando…" : "Cancelar"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             <SearchableSelect
               value={form.softwareId}
               onChange={(softwareId) =>

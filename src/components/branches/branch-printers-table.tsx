@@ -244,7 +244,7 @@ export function BranchPrintersTable({
       setModelsLoading(false);
     }
 
-    if (user?.role === "ADMIN") {
+    if (user?.role === "ADMIN" || isDistributor) {
       try {
         const sw = await fetchSoftware();
         setSoftware(
@@ -1123,13 +1123,14 @@ export function BranchPrintersTable({
               })
             : null
         }
+        printerId={selected?.id}
         modelOptions={modelOptions}
         softwareOptions={software}
         clientOptions={clientOptions}
         distributorOptions={distributorOptions}
         modelsLoading={modelsLoading}
         catalogLoading={catalogLoading}
-        canPickSoftware={user?.role === "ADMIN"}
+        canPickSoftware={user?.role === "ADMIN" || isDistributor}
         lockDistributor={lockDistributor}
         defaultDistributorId={distributorId}
         onClose={closeDialog}
