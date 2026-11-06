@@ -400,6 +400,17 @@ export function BranchView() {
 
     return (
       <DetailCard>
+        <DetailField
+          label="Tipo de contribuyente"
+          value={
+            contributorType ? (
+              <ContributorBadge type={contributorType} />
+            ) : (
+              "—"
+            )
+          }
+          fullWidth
+        />
         <DetailField label="Estado" value={branch.state} />
         <DetailField label="Ciudad" value={branch.city} />
         <DetailField
@@ -433,7 +444,7 @@ export function BranchView() {
         />
       </DetailCard>
     );
-  }, [branch, client, isStaffBranch, pendingProposed]);
+  }, [branch, client, contributorType, isStaffBranch, pendingProposed]);
 
   const title = branch
     ? technicianEmpresaView
@@ -450,10 +461,6 @@ export function BranchView() {
         ? `${branch.city}, ${branch.state}`
         : undefined;
 
-  const titleBadge =
-    branch && technicianEmpresaView && contributorType ? (
-      <ContributorBadge type={contributorType} />
-    ) : undefined;
   const detailSteps = useMemo(() => {
     if (!branch || isTechnician) return [];
 
@@ -602,7 +609,6 @@ export function BranchView() {
         backLabel="Volver a empresas"
         title={title}
         subtitle={subtitle}
-        titleBadge={titleBadge}
         loading={loading}
         error={error}
         actions={

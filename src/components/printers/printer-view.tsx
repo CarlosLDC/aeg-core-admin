@@ -31,7 +31,6 @@ import {
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
 import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-mqtt-badge";
-import { PrinterFirmwareUpdateBadge } from "@/components/printers/printer-firmware-update-badge";
 import { PrinterFirmwareUpdateBanner } from "@/components/printers/printer-firmware-update-banner";
 import { PrinterFirmwareUnverifiedBanner } from "@/components/printers/printer-firmware-unverified-banner";
 import { isFirmwareUpdateRequired } from "@/lib/firmware-update-policy";
@@ -453,30 +452,6 @@ export function PrinterView() {
       })
     : undefined;
 
-  const titleBadge = useMemo(() => {
-    if (!printer) return undefined;
-    return (
-      <div className="flex flex-wrap items-center gap-2">
-        <PrinterStatusBadge
-          status={printer.status}
-          onClick={statusQuickAction?.onClick}
-          actionLabel={statusQuickAction?.label}
-          title={statusBadgeTitle}
-        />
-        {isPrinterPendingMqttEnajenacion(printer) ? (
-          <PrinterPendingMqttBadge
-            printer={printer}
-            onVerified={() => void load()}
-          />
-        ) : null}
-        {isDistributor &&
-        isFirmwareUpdateRequired(printer.versionFirmware) ? (
-          <PrinterFirmwareUpdateBadge />
-        ) : null}
-      </div>
-    );
-  }, [printer, statusQuickAction, statusBadgeTitle, isDistributor, load]);
-
   const distributorDetailContent = useMemo(() => {
     if (!printer) return null;
 
@@ -486,6 +461,25 @@ export function PrinterView() {
           <DetailField
             label="Tipo de equipo"
             value={DEVICE_TYPE_LABELS[printer.deviceType]}
+          />
+          <DetailField
+            label="Estatus"
+            value={
+              <div className="flex flex-wrap items-center gap-2">
+                <PrinterStatusBadge
+                  status={printer.status}
+                  onClick={statusQuickAction?.onClick}
+                  actionLabel={statusQuickAction?.label}
+                  title={statusBadgeTitle}
+                />
+                {isPrinterPendingMqttEnajenacion(printer) ? (
+                  <PrinterPendingMqttBadge
+                    printer={printer}
+                    onVerified={() => void load()}
+                  />
+                ) : null}
+              </div>
+            }
           />
           <DetailField
             label="Estado de pago"
@@ -552,6 +546,9 @@ export function PrinterView() {
     canAssignSoftware,
     pendingSoftware,
     isAdmin,
+    statusQuickAction,
+    statusBadgeTitle,
+    load,
   ]);
 
   const adminDetailSteps = useMemo(() => {
@@ -589,6 +586,25 @@ export function PrinterView() {
         label: "Estado",
         content: (
           <DetailSection title="Estado operativo" layout="quad">
+            <DetailField
+              label="Estatus"
+              value={
+                <div className="flex flex-wrap items-center gap-2">
+                  <PrinterStatusBadge
+                    status={printer.status}
+                    onClick={statusQuickAction?.onClick}
+                    actionLabel={statusQuickAction?.label}
+                    title={statusBadgeTitle}
+                  />
+                  {isPrinterPendingMqttEnajenacion(printer) ? (
+                    <PrinterPendingMqttBadge
+                      printer={printer}
+                      onVerified={() => void load()}
+                    />
+                  ) : null}
+                </div>
+              }
+            />
             <DetailField
               label="Estado de pago"
               value={printerPaidLabel(printer.paid)}
@@ -762,6 +778,9 @@ export function PrinterView() {
     sealsLoading,
     canManageSeals,
     isAdmin,
+    statusQuickAction,
+    statusBadgeTitle,
+    load,
   ]);
 
   async function handleAssignmentSubmit({
@@ -993,7 +1012,6 @@ export function PrinterView() {
         backLabel="Volver a impresoras"
         title={printer?.fiscalSerial ?? "Impresora"}
         subtitle={modelLabel}
-        titleBadge={titleBadge}
         loading={loading}
         error={error}
         actions={

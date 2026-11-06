@@ -9,7 +9,6 @@ type ResourceViewShellProps = {
   backLabel?: string;
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
-  titleBadge?: React.ReactNode;
   loading?: boolean;
   error?: string | null;
   actions?: React.ReactNode;
@@ -21,7 +20,6 @@ export function ResourceViewShell({
   backLabel,
   title,
   subtitle,
-  titleBadge,
   loading,
   error,
   actions,
@@ -39,48 +37,45 @@ export function ResourceViewShell({
         </Link>
       ) : null}
 
-      {title || subtitle || titleBadge || actions ? (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {title || subtitle || titleBadge ? (
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
-              <div className="min-w-0">
-                {title ? (
-                  <h2 className="text-xl font-semibold text-card-foreground">
-                    {typeof title === "string" ? (
-                      <TruncatedText
-                        maxClassName="max-w-full"
-                        className="text-xl font-semibold text-card-foreground"
-                      >
-                        {title}
-                      </TruncatedText>
-                    ) : (
-                      title
-                    )}
-                  </h2>
-                ) : null}
-                {subtitle ? (
-                  <div
-                    className={
-                      title ? "mt-1 text-sm text-muted" : "text-sm text-muted"
-                    }
-                  >
-                    {typeof subtitle === "string" ? (
-                      <TruncatedText
-                        maxClassName="max-w-full"
-                        className="text-sm text-muted"
-                      >
-                        {subtitle}
-                      </TruncatedText>
-                    ) : (
-                      subtitle
-                    )}
-                  </div>
-                ) : null}
-              </div>
-              {titleBadge ? <div className="shrink-0">{titleBadge}</div> : null}
+      {title || subtitle || actions ? (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          {title || subtitle ? (
+            <div className="min-w-0 flex-1">
+              {title ? (
+                <h2 className="text-xl font-semibold text-card-foreground">
+                  {typeof title === "string" ? (
+                    <TruncatedText
+                      maxClassName="max-w-full"
+                      className="text-xl font-semibold text-card-foreground"
+                    >
+                      {title}
+                    </TruncatedText>
+                  ) : (
+                    title
+                  )}
+                </h2>
+              ) : null}
+              {subtitle ? (
+                <div
+                  className={
+                    title ? "mt-1 text-sm text-muted" : "text-sm text-muted"
+                  }
+                >
+                  {typeof subtitle === "string" ? (
+                    <TruncatedText
+                      maxClassName="max-w-full"
+                      className="text-sm text-muted"
+                    >
+                      {subtitle}
+                    </TruncatedText>
+                  ) : (
+                    subtitle
+                  )}
+                </div>
+              ) : null}
             </div>
           ) : null}
-          {actions ? <div className="shrink-0 flex items-center">{actions}</div> : null}
+          {actions ? <div className="shrink-0">{actions}</div> : null}
         </div>
       ) : null}
 
