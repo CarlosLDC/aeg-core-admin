@@ -60,8 +60,8 @@ const REPORT_Z_ACTIONS: ReportZActionConfig[] = [
   {
     id: "generate-z",
     title: "Imprimir Z",
-    description: "Imprime el reporte Z en la impresora fiscal.",
-    confirmMessage: "¿Imprimir el reporte Z en la impresora fiscal?",
+    description: "Imprime el reporte Z y realiza el cierre fiscal en la impresora.",
+    confirmMessage: "¿Imprimir el reporte Z en la impresora fiscal? Esta acción realiza el cierre fiscal de la jornada.",
     icon: ScrollText,
     confirmOnly: true,
   },
