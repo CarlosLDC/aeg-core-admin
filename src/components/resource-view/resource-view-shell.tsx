@@ -42,9 +42,9 @@ export function ResourceViewShell({
       {title || subtitle || titleBadge || actions ? (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           {title || subtitle || titleBadge ? (
-            <div className="min-w-0 flex-1">
-              {title ? (
-                <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+              <div className="min-w-0">
+                {title ? (
                   <h2 className="text-xl font-semibold text-card-foreground">
                     {typeof title === "string" ? (
                       <TruncatedText
@@ -57,27 +57,27 @@ export function ResourceViewShell({
                       title
                     )}
                   </h2>
-                  {titleBadge}
-                </div>
-              ) : null}
-              {subtitle ? (
-                <div
-                  className={
-                    title ? "mt-1 text-sm text-muted" : "text-sm text-muted"
-                  }
-                >
-                  {typeof subtitle === "string" ? (
-                    <TruncatedText
-                      maxClassName="max-w-full"
-                      className="text-sm text-muted"
-                    >
-                      {subtitle}
-                    </TruncatedText>
-                  ) : (
-                    subtitle
-                  )}
-                </div>
-              ) : null}
+                ) : null}
+                {subtitle ? (
+                  <div
+                    className={
+                      title ? "mt-1 text-sm text-muted" : "text-sm text-muted"
+                    }
+                  >
+                    {typeof subtitle === "string" ? (
+                      <TruncatedText
+                        maxClassName="max-w-full"
+                        className="text-sm text-muted"
+                      >
+                        {subtitle}
+                      </TruncatedText>
+                    ) : (
+                      subtitle
+                    )}
+                  </div>
+                ) : null}
+              </div>
+              {titleBadge ? <div className="shrink-0">{titleBadge}</div> : null}
             </div>
           ) : null}
           {actions ? <div className="shrink-0">{actions}</div> : null}

@@ -441,18 +441,18 @@ export function BranchView() {
       : companyLabel || `${branch.city}, ${branch.state}`
     : "Empresa";
 
+  const subtitle =
+    branch && technicianEmpresaView
+      ? rif !== "—"
+        ? rif
+        : `${branch.city}, ${branch.state}`
+      : branch && companyLabel
+        ? `${branch.city}, ${branch.state}`
+        : undefined;
+
   const titleBadge =
-    branch && technicianEmpresaView ? (
-      <div className="flex flex-wrap items-center gap-2">
-        {rif !== "—" ? (
-          <span className="font-mono text-sm font-medium text-muted">
-            {rif}
-          </span>
-        ) : null}
-        {contributorType ? (
-          <ContributorBadge type={contributorType} />
-        ) : null}
-      </div>
+    branch && technicianEmpresaView && contributorType ? (
+      <ContributorBadge type={contributorType} />
     ) : undefined;
   const detailSteps = useMemo(() => {
     if (!branch || isTechnician) return [];
@@ -601,14 +601,8 @@ export function BranchView() {
         backHref="/branches"
         backLabel="Volver a empresas"
         title={title}
+        subtitle={subtitle}
         titleBadge={titleBadge}
-        subtitle={
-          branch && technicianEmpresaView
-            ? undefined
-            : branch && companyLabel
-              ? `${branch.city}, ${branch.state}`
-              : undefined
-        }
         loading={loading}
         error={error}
         actions={
