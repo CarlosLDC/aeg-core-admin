@@ -944,7 +944,6 @@ export function BranchPrintersTable({
                               )
                             }
                           />
-                          <th className="px-5 py-3 font-medium">Pagada</th>
                         </TableRowMetaHeaders>
                       </tr>
                     </thead>
@@ -1049,17 +1048,6 @@ export function BranchPrintersTable({
                                 {printer.installationDate
                                   ? formatDate(printer.installationDate)
                                   : "—"}
-                              </td>
-                              <td className="px-5 py-3.5 text-muted">
-                                {printer.paid ? (
-                                  <span className="inline-flex rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:text-emerald-200">
-                                    Sí
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex rounded-full bg-slate-500/10 px-2 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-300">
-                                    No
-                                  </span>
-                                )}
                               </td>
                             </TableRowMetaCells>
                           </ClickableTableRow>

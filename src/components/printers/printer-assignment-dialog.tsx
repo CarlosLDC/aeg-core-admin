@@ -105,6 +105,7 @@ export function PrinterAssignmentDialog({
     }
     setFieldError(null);
 
+    const nextPaid = selfAssign ? printer.paid : paid;
     const accepted = await confirm({
       title: "Confirmar asignación",
       content: (
@@ -131,11 +132,14 @@ export function PrinterAssignmentDialog({
             <p className="mt-3 text-sm text-muted">
               Estado de pago registrado:{" "}
               <span className="font-medium text-card-foreground">
-                {printerPaidLabel(paid)}
+                {printerPaidLabel(nextPaid)}
               </span>
             </p>
           ) : null}
-          <PrinterStatusTransition from="sin_asignar" to="asignada" />
+          <PrinterStatusTransition
+            from="sin_asignar"
+            to={nextPaid ? "asignada" : "en_consignacion"}
+          />
         </>
       ),
       confirmLabel: "Asignar impresora",
@@ -143,7 +147,7 @@ export function PrinterAssignmentDialog({
     });
     if (!accepted) return;
 
-    onSubmit({ distributorId: id, paid: selfAssign ? printer.paid : paid });
+    onSubmit({ distributorId: id, paid: nextPaid });
   }
 
   return (

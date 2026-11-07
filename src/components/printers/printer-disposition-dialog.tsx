@@ -6,7 +6,11 @@ import { useAuth } from "@/context/auth-provider";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { PrinterActionDialogShell } from "@/components/printers/printer-action-dialog-shell";
 import { PrinterActionPickerPanel } from "@/components/printers/printer-action-picker-panel";
-import { printerDispositionModalTitle, PRINTER_UNPAID_DISPOSITION_MESSAGE } from "@/lib/printer-form";
+import {
+  isPrinterPaidForDisposition,
+  printerDispositionModalTitle,
+  PRINTER_UNPAID_DISPOSITION_MESSAGE,
+} from "@/lib/printer-form";
 import {
   buildDispositionInvoiceData,
   resolveClientCompanyName,
@@ -418,7 +422,7 @@ export function PrinterDispositionDialog({
     onContinue({ clientId: id, facturaNro: normalizedFacturaNro });
   }
 
-  if (!printer.paid) {
+  if (!isPrinterPaidForDisposition(printer)) {
     return (
       <PrinterActionDialogShell
         title={printerDispositionModalTitle(printer.fiscalSerial)}

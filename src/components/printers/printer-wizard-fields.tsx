@@ -2,18 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
-import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
 import {
   FORM_FIELD_HEIGHT_CLASS,
   formFieldInputClass,
-  PRINTER_PAID_TOGGLE_TONE,
 } from "@/lib/toggle-button-styles";
 import {
   SearchableSelect,
   type SearchableSelectOption,
 } from "@/components/ui/searchable-select";
 import {
+  derivePrinterPaidFromStatus,
   DEVICE_TYPE_LABELS,
   PRINTER_STATUS_LABELS,
   type PrinterFormValues,
@@ -265,12 +264,14 @@ export function PrinterWizardFields({
               required
               value={form.status}
               disabled={disabled}
-              onChange={(e) =>
+              onChange={(e) => {
+                const status = e.target.value as PrinterFormValues["status"];
                 setForm((f) => ({
                   ...f,
-                  status: e.target.value as PrinterFormValues["status"],
-                }))
-              }
+                  status,
+                  paid: derivePrinterPaidFromStatus(status),
+                }));
+              }}
               className={inputClass}
             >
               {PRINTER_STATUSES.map((status) => (
@@ -301,19 +302,6 @@ export function PrinterWizardFields({
               ))}
             </select>
           </label>
-          <div className="block">
-            <FieldLabel>Estado de pago</FieldLabel>
-            <BooleanToggle
-              value={form.paid}
-              onChange={(paid) => setForm((f) => ({ ...f, paid }))}
-              disabled={disabled}
-              falseLabel="No pagada"
-              trueLabel="Pagada"
-              falseTone={PRINTER_PAID_TOGGLE_TONE.false}
-              trueTone={PRINTER_PAID_TOGGLE_TONE.true}
-              ariaLabel="Estado de pago de la impresora"
-            />
-          </div>
         </div>
       </fieldset>
     );

@@ -5,7 +5,10 @@ import type {
   PrinterResponse,
   PrinterStatus,
 } from "@/types/printer";
-import { normalizePrinterStatus } from "@/lib/printer-status";
+import {
+  isPrinterOnConsignment,
+  normalizePrinterStatus,
+} from "@/lib/printer-status";
 import {
   DEVICE_TYPES,
   PRINTER_STATUSES,
@@ -49,7 +52,14 @@ export function printerPaidLabel(paid: boolean): string {
   return paid ? PRINTER_PAID_LABEL : PRINTER_UNPAID_LABEL;
 }
 
+export function derivePrinterPaidFromStatus(status: PrinterStatus): boolean {
+  return status === "asignada" || status === "enajenada";
+}
+
 export function isPrinterPaidForDisposition(printer: PrinterResponse): boolean {
+  if (printer.status != null && isPrinterOnConsignment(printer.status)) {
+    return false;
+  }
   return printer.paid === true;
 }
 
@@ -75,6 +85,7 @@ export function printerToFormValues(
   printer: PrinterResponse,
   defaults?: Partial<PrinterFormValues>,
 ): PrinterFormValues {
+  const status = normalizePrinterStatus(printer.status);
   return {
     modelId: String(printer.modelId),
     softwareId: printer.softwareId != null ? String(printer.softwareId) : "",
@@ -82,12 +93,12 @@ export function printerToFormValues(
     distributorId:
       printer.distributorId != null ? String(printer.distributorId) : "",
     fiscalSerial: printer.fiscalSerial,
-    paid: printer.paid,
+    paid: derivePrinterPaidFromStatus(status),
     installationDate: toDatetimeLocalValue(printer.installationDate),
     firmwareId: printer.firmwareId != null ? String(printer.firmwareId) : "",
     versionFirmware: printer.versionFirmware ?? "",
     macAddress: printer.macAddress ?? "",
-    status: normalizePrinterStatus(printer.status),
+    status,
     deviceType: DEVICE_TYPES.includes(printer.deviceType)
       ? printer.deviceType
       : "interno",
@@ -112,25 +123,6 @@ export const emptyPrinterForm = (
   deviceType: "interno",
   ...definedPrinterFormDefaults(defaults),
 });
-
-function reconcileDistributorAssignmentStatus(
-  status: PrinterStatus,
-  distributorId: number | null,
-  paid: boolean,
-): PrinterStatus {
-  if (distributorId == null) {
-    return status;
-  }
-  if (
-    status === "enajenada" ||
-    status === "desincorporada" ||
-    status === "laboratorio" ||
-    status === "sin_asignar"
-  ) {
-    return status;
-  }
-  return paid ? "asignada" : "en_consignacion";
-}
 
 export function printerToAssignmentRequest(
   printer: PrinterResponse,
@@ -264,16 +256,12 @@ export function toPrinterRequest(
     distributorId,
     fiscalSerial,
     finalSalePrice: options?.finalSalePrice ?? null,
-    paid: values.paid,
+    paid: derivePrinterPaidFromStatus(values.status),
     installationDate,
     ...(firmwareId != null ? { firmwareId } : {}),
     versionFirmware: versionFirmware || null,
     macAddress: macAddress || null,
-    status: reconcileDistributorAssignmentStatus(
-      values.status,
-      distributorId,
-      values.paid,
-    ),
+    status: values.status,
     deviceType: values.deviceType,
   };
 }

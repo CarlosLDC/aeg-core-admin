@@ -175,8 +175,31 @@ describe("toPrinterEditRequest", () => {
     if (typeof body === "string") return;
 
     expect(body.status).toBe("asignada");
+    expect(body.paid).toBe(true);
     expect(body.clientId).toBeNull();
     expect(body.distributorId).toBe(40);
     expect(body.installationDate).toBeNull();
+  });
+
+  it("derives paid from status (en_consignacion -> false, asignada -> true)", () => {
+    const consignmentValues = {
+      ...printerToFormValues(assignedPrinter),
+      status: "en_consignacion" as const,
+    };
+    const consignmentBody = toPrinterEditRequest(consignmentValues, assignedPrinter);
+    expect(typeof consignmentBody).not.toBe("string");
+    if (typeof consignmentBody === "string") return;
+    expect(consignmentBody.status).toBe("en_consignacion");
+    expect(consignmentBody.paid).toBe(false);
+
+    const assignedValues = {
+      ...printerToFormValues({ ...assignedPrinter, status: "en_consignacion", paid: false }),
+      status: "asignada" as const,
+    };
+    const assignedBody = toPrinterEditRequest(assignedValues, assignedPrinter);
+    expect(typeof assignedBody).not.toBe("string");
+    if (typeof assignedBody === "string") return;
+    expect(assignedBody.status).toBe("asignada");
+    expect(assignedBody.paid).toBe(true);
   });
 });

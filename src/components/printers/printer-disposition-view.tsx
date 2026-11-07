@@ -19,6 +19,7 @@ import { fetchClientById, fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import {
+  isPrinterPaidForDisposition,
   PRINTER_UNPAID_DISPOSITION_MESSAGE,
 } from "@/lib/printer-form";
 import {
@@ -152,7 +153,7 @@ export function PrinterDispositionView({
         setError("Solo se pueden enajenar impresoras con estatus Asignada.");
         return;
       }
-      if (!data.paid) {
+      if (!isPrinterPaidForDisposition(data)) {
         setError(PRINTER_UNPAID_DISPOSITION_MESSAGE);
         return;
       }
@@ -350,7 +351,7 @@ export function PrinterDispositionView({
       toast.error("Solo se pueden enajenar impresoras con estatus Asignada.");
       return;
     }
-    if (!printer.paid) {
+    if (!isPrinterPaidForDisposition(printer)) {
       toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
       return;
     }

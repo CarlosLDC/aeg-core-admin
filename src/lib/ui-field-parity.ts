@@ -231,12 +231,6 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         viewBindings: ["printer.deviceType"],
       },
       {
-        formLabels: ["Estado de pago"],
-        viewLabels: ["Pagada", "Estado de pago"],
-        formBindings: ["form.paid"],
-        viewBindings: ["printer.paid", "printerPaidLabel"],
-      },
-      {
         formLabels: ["Distribuidor"],
         viewLabels: ["Distribuidor"],
         formBindings: ["form.distributorId"],

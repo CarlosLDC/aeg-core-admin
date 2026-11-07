@@ -88,7 +88,6 @@ import { formatDate } from "@/lib/datetime-form";
 import {
   DEVICE_TYPE_LABELS,
   printerModelLabel,
-  printerPaidLabel,
   printerToAssignmentRequest,
   printerToFormValues,
   PRINTER_UNPAID_DISPOSITION_MESSAGE,
@@ -482,10 +481,6 @@ export function PrinterView() {
             }
           />
           <DetailField
-            label="Estado de pago"
-            value={printerPaidLabel(printer.paid)}
-          />
-          <DetailField
             label="Fecha de enajenación"
             value={formatDate(printer.installationDate)}
           />
@@ -604,10 +599,6 @@ export function PrinterView() {
                   ) : null}
                 </div>
               }
-            />
-            <DetailField
-              label="Estado de pago"
-              value={printerPaidLabel(printer.paid)}
             />
             <DetailField
               label="Fecha de enajenación"
