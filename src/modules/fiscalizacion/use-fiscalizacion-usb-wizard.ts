@@ -424,6 +424,17 @@ export function useFiscalizacionUsbWizard() {
         TOOLS_SERIAL_TIMEOUT_MS.wifi,
       );
       parseWifiConnectResponse(item);
+      const reportedIp =
+        item.dataS && typeof item.dataS === "string" && item.dataS.trim() !== ""
+          ? item.dataS.trim()
+          : null;
+      if (reportedIp) {
+        setDiagnostics((prev) => ({
+          ...prev,
+          ipAddress: reportedIp,
+          wifiNetwork: wifiSsid.trim(),
+        }));
+      }
       toast.success("Red Wi-Fi configurada. Verificando dirección IP…");
       await runDiagnostics();
     } catch (err) {
