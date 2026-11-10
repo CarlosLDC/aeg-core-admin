@@ -26,10 +26,14 @@ import {
 } from "@/modules/tools/serial/tools-command-builder";
 import {
   CMD_CONFIG_MQTT_AEG,
+  CMD_STA_INF,
   CMD_STAT_FIRM_SIN_DNF,
-   CMD_WIFI_CONF,
+  CMD_WIFI_CONF,
   TOOLS_SERIAL_TIMEOUT_MS,
 } from "@/modules/tools/serial/tools-serial-constants";
+import {
+  cmdEquals,
+} from "@/modules/tools/serial/tools-fiscal-response";
 import {
   isBrokerStatusResponse,
   isStatusResponse,
@@ -281,22 +285,24 @@ export function useFiscalizacionUsbWizard() {
         try {
           const statusItem = await session.publishAndAwaitMatcher(
             buildStatusPayload(),
-            isStatusResponse,
+            (item) => item != null && (cmdEquals(item.cmd, CMD_STA_INF) || isStatusResponse(item)),
             TOOLS_SERIAL_TIMEOUT_MS.status,
           );
-          const parsedStatus = parseStatusResponse(statusItem);
-          wifiNetwork = parsedStatus.additionalInfo?.wifiNetwork ?? null;
-          ipAddress = parsedStatus.additionalInfo?.ipAddress ?? null;
-          seniatStatus = parsedStatus.seniatStatus ?? null;
-          if (
-            wifiNetwork &&
-            wifiNetwork !== "N/A" &&
-            wifiNetwork.toUpperCase() !== "SIN CONEXION"
-          ) {
-            setWifiSsid((prev) => prev || wifiNetwork!);
+          if (isStatusResponse(statusItem)) {
+            const parsedStatus = parseStatusResponse(statusItem);
+            wifiNetwork = parsedStatus.additionalInfo?.wifiNetwork ?? null;
+            ipAddress = parsedStatus.additionalInfo?.ipAddress ?? null;
+            seniatStatus = parsedStatus.seniatStatus ?? null;
+            if (
+              wifiNetwork &&
+              wifiNetwork !== "N/A" &&
+              wifiNetwork.toUpperCase() !== "SIN CONEXION"
+            ) {
+              setWifiSsid((prev) => prev || wifiNetwork!);
+            }
           }
-        } catch (err) {
-          setUsbError(getToolsUsbErrorMessage(err, "No se pudo leer el estado general por USB."));
+        } catch {
+          // Opcional en impresoras de fábrica sin inicializar
         }
 
         // 2. Estado de credenciales MQTT (host actual + MAC en TopicCmd/TopicRx)
