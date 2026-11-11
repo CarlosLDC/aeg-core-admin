@@ -561,7 +561,8 @@ export function ToolsRefreshStatusButton({
       className={cn("w-auto", className)}
     >
       {!loading ? <RefreshCw className="size-4" aria-hidden /> : null}
-      Actualizar estado
+      <span className="sm:hidden">Actualizar</span>
+      <span className="hidden sm:inline">Actualizar estado</span>
     </ToolsActionButton>
   );
 }

@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   isBrokerStatusResponse,
+  isClockResponse,
   isStatusResponse,
   isWifiScanResponse,
   normalizeSeniatStatus,
   parseBrokerStatusResponse,
+  parseClockResponse,
   parseFirmwareStatusResponse,
   parseFormasPagoResponse,
   parseStatusResponse,
@@ -137,5 +139,27 @@ describe("tools-response-parser", () => {
         dataS: "FIRMWARE DEL SISTEMA: 1.1.0",
       }),
     ).toBe("1.1.0");
+  });
+
+  it("detects and parses StaInf verFecHor clock responses", () => {
+    const item = {
+      cmd: "StaInf",
+      code: 0,
+      dataS: "11/11/2026 14:28:31",
+    };
+    expect(isClockResponse(item)).toBe(true);
+    expect(isStatusResponse(item)).toBe(false);
+    expect(parseClockResponse(item)).toEqual({
+      success: true,
+      dateTime: "11/11/2026 14:28:31",
+    });
+
+    expect(() =>
+      parseClockResponse({
+        cmd: "StaInf",
+        code: 34,
+        dataS: "11/11/2026 14:28:31",
+      }),
+    ).toThrow("Error de impresora al consultar reloj (code: 34)");
   });
 });

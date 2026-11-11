@@ -51,6 +51,7 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
   const connection = useToolsPrinterConnection(
     printer?.id ?? null,
     printer?.macAddress ?? null,
+    { includeClock: true },
   );
   const { macRequired } = useToolsTransportContext();
 

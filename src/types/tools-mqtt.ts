@@ -15,6 +15,12 @@ export type ToolsMqttStatusResponse = {
   legacyBroker?: boolean | null;
 };
 
+export type ToolsMqttClockResponse = {
+  success: boolean;
+  message?: string | null;
+  dateTime?: string | null;
+};
+
 export type ToolsMqttSimpleResponse = {
   success: boolean;
   message?: string | null;

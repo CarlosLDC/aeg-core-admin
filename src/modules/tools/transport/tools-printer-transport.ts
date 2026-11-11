@@ -1,6 +1,7 @@
 import type {
   ToolsFormasPagoReadResponse,
   ToolsHeaderFooterReadResponse,
+  ToolsMqttClockResponse,
   ToolsMqttSimpleResponse,
   ToolsMqttStatusResponse,
   ToolsReprintMode,
@@ -21,6 +22,7 @@ export interface ToolsPrinterTransport {
   disconnect(): Promise<void>;
 
   fetchStatus(): Promise<ToolsMqttStatusResponse>;
+  fetchClock(): Promise<ToolsMqttClockResponse>;
   scanWifi(): Promise<ToolsWifiScanResponse>;
   connectWifi(ssid: string, password: string): Promise<ToolsMqttSimpleResponse>;
   resetWifi(): Promise<ToolsMqttSimpleResponse>;

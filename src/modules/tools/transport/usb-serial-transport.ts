@@ -1,4 +1,5 @@
 import {
+  buildClockReadPayload,
   buildFooterReadPayload,
   buildFooterWritePayload,
   buildFormasPagoReadPayload,
@@ -44,11 +45,13 @@ import {
   TOOLS_SERIAL_TIMEOUT_MS,
 } from "@/modules/tools/serial/tools-serial-constants";
 import {
+  isClockResponse,
   isFormasPagoResponse,
   isHeaderFooterReadResponse,
   isLastTransmittedZResponse,
   isStatusResponse,
   isWifiScanResponse,
+  parseClockResponse,
   parseFormasPagoResponse,
   parseHeaderFooterResponse,
   parseReportZResponse,
@@ -87,6 +90,16 @@ export function createUsbSerialTransport(
         TOOLS_SERIAL_TIMEOUT_MS.status,
       );
       return parseStatusResponse(response);
+    },
+
+    fetchClock: async () => {
+      requireConnected();
+      const response = await session.publishAndAwaitMatcher(
+        buildClockReadPayload(),
+        isClockResponse,
+        TOOLS_SERIAL_TIMEOUT_MS.status,
+      );
+      return parseClockResponse(response);
     },
 
     scanWifi: async () => {

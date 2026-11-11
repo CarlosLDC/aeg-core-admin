@@ -24,6 +24,7 @@ import {
   STA_MEDIOS_PAGOS,
   STA_PIE_FIJ,
   STA_ULT_Z_TX_SENI,
+  STA_VER_FEC_HOR,
   TEST_NOTE_DATE,
   TEST_PRODUCT_DESCRIPTION,
 } from "@/modules/tools/serial/tools-serial-constants";
@@ -62,6 +63,10 @@ export function buildHeaderReadPayload(): string {
 
 export function buildFooterReadPayload(): string {
   return staInfPayload(STA_PIE_FIJ);
+}
+
+export function buildClockReadPayload(): string {
+  return staInfPayload(STA_VER_FEC_HOR);
 }
 
 export function buildBrokerStatusPayload(): string {

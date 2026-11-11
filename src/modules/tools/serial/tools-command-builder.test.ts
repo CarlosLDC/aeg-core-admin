@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildBrokerStatusPayload,
+  buildClockReadPayload,
   buildFirmwareStatusPayload,
   buildFiscalizarRemotoPayload,
   buildFooterWritePayload,
@@ -103,6 +104,13 @@ describe("tools-command-builder", () => {
     expect(JSON.parse(payloads[0])).toEqual({
       cmd: "genImpRepZ",
       data: 1,
+    });
+  });
+
+  it("builds StaInf verFecHor clock read payload", () => {
+    expect(JSON.parse(buildClockReadPayload())).toEqual({
+      cmd: "StaInf",
+      data: { status: "verFecHor" },
     });
   });
 });

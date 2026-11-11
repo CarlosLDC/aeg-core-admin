@@ -1,6 +1,7 @@
 import type {
   ToolsFormasPagoItem,
   ToolsMqttAdditionalInfo,
+  ToolsMqttClockResponse,
   ToolsMqttStatusResponse,
   ToolsReportZData,
   ToolsTransmitZResponse,
@@ -13,6 +14,7 @@ import {
 } from "@/modules/tools/serial/tools-fiscal-response";
 
 const FORMA_PAGO_KEY = /^\[(\d+)\](.+)$/;
+const CLOCK_DATE_TIME_PATTERN = /^\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}(?::\d{2})?$/;
 
 function textOrNa(node: Record<string, unknown>, field: string): string {
   const value = node[field];
@@ -134,6 +136,13 @@ export function isLastTransmittedZResponse(item: FiscalMqttResponseItem | null):
   return item.dataS != null && isHexValue(item.dataS);
 }
 
+export function isClockResponse(item: FiscalMqttResponseItem | null): boolean {
+  if (item == null || !cmdEquals(item.cmd, CMD_STA_INF)) {
+    return false;
+  }
+  return item.dataS != null && CLOCK_DATE_TIME_PATTERN.test(item.dataS.trim());
+}
+
 export function isHeaderFooterReadResponse(item: FiscalMqttResponseItem | null): boolean {
   if (item == null || !cmdEquals(item.cmd, CMD_STA_INF)) {
     return false;
@@ -146,6 +155,7 @@ export function isHeaderFooterReadResponse(item: FiscalMqttResponseItem | null):
     isWifiScanResponse(item) ||
     isFormasPagoResponse(item) ||
     isLastTransmittedZResponse(item) ||
+    isClockResponse(item) ||
     isBrokerStatusResponse(item)
   ) {
     return false;
@@ -333,6 +343,19 @@ export function parseHeaderFooterResponse(response: FiscalMqttResponseItem): str
 
 export function parseReprintChunks(chunks: string[]): string {
   return chunks.join("").trim();
+}
+
+export function parseClockResponse(
+  response: FiscalMqttResponseItem,
+): ToolsMqttClockResponse {
+  if (response.code != null && response.code !== 0) {
+    throw new Error(`Error de impresora al consultar reloj (code: ${response.code})`);
+  }
+  const raw = response.dataS?.trim() ?? "";
+  if (!CLOCK_DATE_TIME_PATTERN.test(raw)) {
+    throw new Error("La impresora no devolvió una fecha y hora válida.");
+  }
+  return { success: true, dateTime: raw.replace(/\s+/g, " ") };
 }
 
 export type ResponseMatcher = (item: FiscalMqttResponseItem) => boolean;

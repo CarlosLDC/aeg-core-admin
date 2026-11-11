@@ -47,6 +47,7 @@ export const STA_ULT_Z_TX_SENI = "UltZTxSeni";
 export const STA_MEDIOS_PAGOS = "MediosPagos";
 export const STA_ENC_FIJ = "staEncFij";
 export const STA_PIE_FIJ = "staPieFij";
+export const STA_VER_FEC_HOR = "verFecHor";
 export const STA_EST_CRED_MQTT1 = "EstCredMqtt1";
 
 /** Constante configurable para el campo Access de ptrFiscalizarRemoto. */

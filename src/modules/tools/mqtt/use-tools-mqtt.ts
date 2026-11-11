@@ -27,10 +27,16 @@ import type {
   ToolsMqttStatusResponse,
 } from "@/types/tools-mqtt";
 
+export type ToolsPrinterConnectionOptions = {
+  includeClock?: boolean;
+};
+
 export function useToolsPrinterConnection(
   printerId: number | null,
   macAddress: string | null,
+  options?: ToolsPrinterConnectionOptions,
 ) {
+  const includeClock = options?.includeClock === true;
   const transportContext = useOptionalToolsTransportContext();
   const fallbackTransport = useMemo(
     () =>
@@ -55,15 +61,61 @@ export function useToolsPrinterConnection(
   const [error, setError] = useState<string | null>(null);
   const statusRequestIdRef = useRef(0);
 
+  const [clock, setClock] = useState<string | null>(null);
+  const [clockLoading, setClockLoading] = useState(false);
+  const [clockError, setClockError] = useState<string | null>(null);
+  const clockRequestIdRef = useRef(0);
+
   // Invalidate in-flight status probes when the channel changes. In particular,
   // a pending WiFi/MQTT timeout must not stick after a successful USB connect.
   useEffect(() => {
     statusRequestIdRef.current += 1;
+    clockRequestIdRef.current += 1;
     setLoading(false);
+    setClockLoading(false);
     if (usbConnected) {
       setError(null);
+      setClockError(null);
     }
   }, [usbConnected, transport.mode]);
+
+  const refreshClock = useCallback(async () => {
+    if (!transportReady) {
+      setClockError(
+        transport.mode === "usb"
+          ? "Conecte la impresora por USB."
+          : "La impresora no tiene MAC registrada.",
+      );
+      return;
+    }
+
+    const requestId = ++clockRequestIdRef.current;
+    setClockLoading(true);
+    setClockError(null);
+
+    try {
+      const response = await transport.fetchClock();
+      if (requestId !== clockRequestIdRef.current) {
+        return;
+      }
+      if (!response.success || !response.dateTime) {
+        setClockError(
+          response.message ?? "No se pudo consultar el reloj de la impresora.",
+        );
+        return;
+      }
+      setClock(response.dateTime);
+    } catch (err) {
+      if (requestId !== clockRequestIdRef.current) {
+        return;
+      }
+      setClockError(getToolsMqttErrorMessage(err));
+    } finally {
+      if (requestId === clockRequestIdRef.current) {
+        setClockLoading(false);
+      }
+    }
+  }, [transport, transportReady]);
 
   const refreshStatus = useCallback(async () => {
     if (!transportReady) {
@@ -79,6 +131,8 @@ export function useToolsPrinterConnection(
     setLoading(true);
     setError(null);
 
+    let shouldRefreshClock = false;
+
     try {
       const response = await transport.fetchStatus();
       if (requestId !== statusRequestIdRef.current) {
@@ -87,6 +141,8 @@ export function useToolsPrinterConnection(
       if (!response.success) {
         setError(response.message ?? "No se pudo consultar el estado.");
         setStatus(response);
+        setClock(null);
+        setClockError(null);
         return;
       }
       if (shouldPersistToolsNetworkInfo(response.additionalInfo)) {
@@ -95,17 +151,29 @@ export function useToolsPrinterConnection(
         );
       }
       setStatus(response);
+      shouldRefreshClock =
+        includeClock && (isToolsPrinterReachable(response, null) || usbConnected);
+      if (!isToolsPrinterReachable(response, null) && !usbConnected) {
+        setClock(null);
+        setClockError(null);
+      }
     } catch (err) {
       if (requestId !== statusRequestIdRef.current) {
         return;
       }
       setError(getToolsMqttErrorMessage(err));
+      setClock(null);
+      setClockError(null);
     } finally {
       if (requestId === statusRequestIdRef.current) {
         setLoading(false);
       }
     }
-  }, [transport, transportReady]);
+
+    if (shouldRefreshClock) {
+      void refreshClock();
+    }
+  }, [includeClock, refreshClock, transport, transportReady, usbConnected]);
 
   // USB connection supersedes a remote status timeout immediately (before the
   // effect clears state), so the UI does not keep showing/blocking on it.
@@ -159,6 +227,10 @@ export function useToolsPrinterConnection(
     status,
     loading,
     error: effectiveError,
+    clock,
+    clockLoading,
+    clockError,
+    refreshClock,
     /** @deprecated Use transportReady */
     mqttReady: transportReady,
     transportReady,

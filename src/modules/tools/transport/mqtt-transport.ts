@@ -1,5 +1,6 @@
 import {
   connectToolsWifi,
+  fetchToolsClock,
   fetchToolsMqttStatus,
   generateToolsReportZ,
   getToolsReportZ,
@@ -35,6 +36,7 @@ export function createMqttTransport(
     disconnect: async () => {},
 
     fetchStatus: () => fetchToolsMqttStatus(printerId),
+    fetchClock: () => fetchToolsClock(printerId),
     scanWifi: () => scanToolsWifi(printerId),
     connectWifi: (ssid, password) => connectToolsWifi(printerId, ssid, password),
     resetWifi: () => resetToolsWifi(printerId),

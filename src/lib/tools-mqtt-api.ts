@@ -5,6 +5,7 @@ import { ApiError } from "@/types/auth";
 import type {
   ToolsFormasPagoReadResponse,
   ToolsHeaderFooterReadResponse,
+  ToolsMqttClockResponse,
   ToolsMqttSimpleResponse,
   ToolsMqttStatusResponse,
   ToolsReprintMode,
@@ -143,6 +144,21 @@ export async function fetchToolsMqttStatus(
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+export async function fetchToolsClock(
+  printerId: number,
+): Promise<ToolsMqttClockResponse> {
+  const { data, status } = await toolsMqttFetch<ToolsMqttClockResponse>(
+    `${BASE}/clock`,
+    { method: "POST", body: printerBody(printerId) },
+  );
+  ensureMqttOperationSuccess(
+    status,
+    data,
+    "No se pudo consultar la fecha y hora de la impresora.",
+  );
+  return data;
 }
 
 export async function scanToolsWifi(printerId: number): Promise<ToolsWifiScanResponse> {
