@@ -33,6 +33,9 @@ type MenuCoords = {
   openUp: boolean;
 };
 
+const MENU_PADDING_PX = 8;
+const MENU_ESTIMATED_WIDTH_PX = 192;
+
 function computeMenuCoords(
   trigger: HTMLButtonElement,
   menu: HTMLDivElement | null,
@@ -41,12 +44,23 @@ function computeMenuCoords(
   const rect = trigger.getBoundingClientRect();
   const estimatedHeight = (hasPrinterLink ? 2 : 1) * 40 + 8;
   const menuHeight = menu?.offsetHeight ?? estimatedHeight;
-  const spaceBelow = window.innerHeight - 8 - rect.bottom;
-  const spaceAbove = rect.top - 8;
+  const menuWidth = menu?.offsetWidth ?? MENU_ESTIMATED_WIDTH_PX;
+  const spaceBelow = window.innerHeight - MENU_PADDING_PX - rect.bottom;
+  const spaceAbove = rect.top - MENU_PADDING_PX;
   const openUp = spaceBelow < menuHeight + 4 && spaceAbove > spaceBelow;
+
+  const rightAlignedLeft = rect.right - menuWidth;
+  const preferredLeft =
+    rightAlignedLeft >= MENU_PADDING_PX ? rightAlignedLeft : rect.left;
+  const maxLeft = Math.max(
+    MENU_PADDING_PX,
+    window.innerWidth - menuWidth - MENU_PADDING_PX,
+  );
+  const left = Math.min(Math.max(preferredLeft, MENU_PADDING_PX), maxLeft);
+
   return {
     top: openUp ? rect.top - 4 : rect.bottom + 4,
-    left: rect.right,
+    left,
     openUp,
   };
 }
@@ -125,13 +139,11 @@ function ToolsStatusActionsMenu({
         id={menuId}
         ref={menuRef}
         role="menu"
-        className="fixed z-[100] min-w-48 rounded-lg border border-border bg-card py-1 shadow-lg"
+        className="fixed z-[100] min-w-48 max-w-[calc(100vw-1rem)] rounded-lg border border-border bg-card py-1 shadow-lg"
         style={{
           top: coords.top,
           left: coords.left,
-          transform: coords.openUp
-            ? "translate(-100%, -100%)"
-            : "translateX(-100%)",
+          transform: coords.openUp ? "translateY(-100%)" : undefined,
         }}
       >
         <button
