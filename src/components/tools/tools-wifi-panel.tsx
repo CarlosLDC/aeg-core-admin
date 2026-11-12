@@ -128,18 +128,24 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
     [networks, connectedSsid],
   );
 
+  const isInitialScanRef = useRef(true);
+
   const runScan = useCallback(async () => {
+    const isInitial = isInitialScanRef.current;
+    isInitialScanRef.current = false;
     setScanning(true);
     try {
       const result = await transport.scanWifi();
       setNetworks(result.networks ?? []);
     } catch (err) {
       setNetworks([]);
-      toast.error(getToolsMqttErrorMessage(err));
+      if (!usbConnected || !isInitial) {
+        toast.error(getToolsMqttErrorMessage(err));
+      }
     } finally {
       setScanning(false);
     }
-  }, [transport, toast]);
+  }, [transport, toast, usbConnected]);
 
   const { refreshAll, refreshLoading } = useToolsSectionRefresh(
     refreshStatus,
@@ -281,11 +287,16 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
               ) : displayedNetworks.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center text-sm text-muted">
                   <p>No se detectaron redes WiFi.</p>
+                  {usbConnected && (
+                    <p className="max-w-xs text-xs text-muted/80">
+                      Para el primer enlace, ingrese el SSID y contraseña a la derecha y presione Conectar.
+                    </p>
+                  )}
                   <ToolsActionButton
                     disabled={busy || wifiActionsDisabled}
                     onClick={() => void runScan()}
                   >
-                    Reintentar conexión
+                    Reintentar escaneo
                   </ToolsActionButton>
                 </div>
               ) : (

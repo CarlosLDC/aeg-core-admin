@@ -109,8 +109,21 @@ export function isStatusResponse(item: FiscalMqttResponseItem | null): boolean {
 }
 
 export function isWifiScanResponse(item: FiscalMqttResponseItem | null): boolean {
-  if (item == null || !cmdEquals(item.cmd, CMD_STA_INF)) {
+  if (item == null) {
     return false;
+  }
+  if (cmdEquals(item.cmd, "getAccPoi")) {
+    return true;
+  }
+  if (!cmdEquals(item.cmd, CMD_STA_INF)) {
+    return false;
+  }
+  if (item.code != null && item.code !== 0) {
+    return (
+      !isStatusResponse(item) &&
+      !isBrokerStatusResponse(item) &&
+      !isClockResponse(item)
+    );
   }
   if (item.dataS == null || item.dataS.trim() === "") {
     return false;
@@ -222,21 +235,35 @@ function readWifiSignal(entry: Record<string, unknown>): number | null {
 
 export function parseWifiScanResponse(response: FiscalMqttResponseItem): ToolsWifiNetwork[] {
   if (response.code != null && response.code !== 0) {
-    throw new Error(`Error de impresora en escaneo WiFi (code: ${response.code})`);
+    return [];
   }
   if (response.dataS == null || response.dataS.trim() === "") {
-    throw new Error("La impresora no devolvió redes WiFi.");
+    return [];
   }
 
-  const raw = JSON.parse(response.dataS) as Record<string, unknown>[];
+  let raw: unknown[];
+  try {
+    const parsed = JSON.parse(response.dataS);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    raw = parsed;
+  } catch {
+    return [];
+  }
+
   const networksBySsid = new Map<string, ToolsWifiNetwork>();
 
   for (const entry of raw) {
-    const ssid = entry.ssid;
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      continue;
+    }
+    const record = entry as Record<string, unknown>;
+    const ssid = record.ssid;
     if (ssid == null || String(ssid).trim() === "") {
       continue;
     }
-    const signal = readWifiSignal(entry);
+    const signal = readWifiSignal(record);
     const ssidValue = String(ssid);
     const existing = networksBySsid.get(ssidValue);
     if (

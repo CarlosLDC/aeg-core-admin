@@ -76,6 +76,21 @@ describe("tools-response-parser", () => {
     };
     expect(isWifiScanResponse(emptyScan)).toBe(true);
     expect(parseWifiScanResponse(emptyScan)).toEqual([]);
+
+    const errorScan = {
+      cmd: "StaInf",
+      code: -1,
+      dataS: "EQUIPO NO CONECTADO",
+    };
+    expect(isWifiScanResponse(errorScan)).toBe(true);
+    expect(parseWifiScanResponse(errorScan)).toEqual([]);
+
+    const directCmdScan = {
+      cmd: "getAccPoi",
+      code: 0,
+      dataS: "[]",
+    };
+    expect(isWifiScanResponse(directCmdScan)).toBe(true);
   });
 
   it("parses wifiConf responses on USB and throws on error codes", () => {
