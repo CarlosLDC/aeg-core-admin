@@ -45,6 +45,7 @@ type SoftwareFormDialogProps = {
   saving: boolean;
   error: string | null;
   companies: CompanyResponse[];
+  hideDistributorsStep?: boolean;
   onClose: () => void;
   onSubmit: (values: SoftwareFormValues) => void;
 };
@@ -92,12 +93,14 @@ export function SoftwareFormDialog({
   saving,
   error,
   companies,
+  hideDistributorsStep,
   onClose,
   onSubmit,
 }: SoftwareFormDialogProps) {
   const { user } = useAuth();
   const isDistributor = isDistributorPanelRole(user?.role);
-  const steps = isDistributor ? DISTRIBUTOR_FORM_STEPS : FORM_STEPS;
+  const shouldHideDistributors = hideDistributorsStep ?? isDistributor;
+  const steps = shouldHideDistributors ? DISTRIBUTOR_FORM_STEPS : FORM_STEPS;
   const lastStep = steps[steps.length - 1].step;
 
   const formId = useId();
@@ -158,6 +161,7 @@ export function SoftwareFormDialog({
 
   function goToStep(target: WizardStep) {
     if (saving) return;
+    if (shouldHideDistributors && target === 3) return;
     setStepError(null);
     setStep(target);
   }

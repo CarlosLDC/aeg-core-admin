@@ -6,7 +6,7 @@ import type { PrinterResponse } from "@/types/printer";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import { cn } from "@/lib/utils";
 
-export type PrinterActionDialogSize = "md" | "lg" | "receipt";
+export type PrinterActionDialogSize = "md" | "lg" | "xl" | "receipt";
 
 type PrinterActionDialogShellProps = {
   title: string;
@@ -67,9 +67,11 @@ export function PrinterActionDialogShell({
           "relative flex max-h-[min(92vh,100dvh)] w-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl",
           size === "receipt"
             ? "max-w-lg"
-            : size === "lg"
-              ? "max-w-xl"
-              : "max-w-md",
+            : size === "xl"
+              ? "max-w-2xl"
+              : size === "lg"
+                ? "max-w-xl"
+                : "max-w-md",
         )}
       >
         <div className="shrink-0 border-b border-border px-4 py-3 sm:px-5">

@@ -204,6 +204,7 @@ export function PrinterSoftwareDialog({
         onSubmit={handleSubmit}
         submitDisabled={saving}
         submitLoading={saving}
+        size="lg"
       >
         <div className="space-y-4">
           {pendingSoftware && (
@@ -272,6 +273,7 @@ export function PrinterSoftwareDialog({
           saving={newSoftwareSaving}
           error={newSoftwareError}
           companies={companies}
+          hideDistributorsStep
           onClose={() => {
             if (!newSoftwareSaving) setNewSoftwareModalOpen(false);
           }}
