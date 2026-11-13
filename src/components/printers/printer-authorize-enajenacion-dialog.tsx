@@ -5,6 +5,7 @@ import { PrinterActionDialogShell } from "@/components/printers/printer-action-d
 import { FieldLabel } from "@/components/ui/field-label";
 import { useToast } from "@/context/toast-provider";
 import { authorizePrinterEnajenacion, getPrintersErrorMessage } from "@/lib/printers-api";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import type { PrinterResponse } from "@/types/printer";
 
 type PrinterAuthorizeEnajenacionDialogProps = {
@@ -94,7 +95,10 @@ export function PrinterAuthorizeEnajenacionDialog({
         </p>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
+          <label
+            htmlFor="grant-credit-installments"
+            className="flex flex-col justify-between"
+          >
             <FieldLabel required>
               Cuotas pactadas
             </FieldLabel>
@@ -108,11 +112,14 @@ export function PrinterAuthorizeEnajenacionDialog({
               value={creditInstallments}
               onChange={(e) => setCreditInstallments(e.target.value)}
               placeholder="Ej. 4"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
+              className={formFieldInputClass}
             />
-          </div>
+          </label>
 
-          <div>
+          <label
+            htmlFor="grant-final-sale-price"
+            className="flex flex-col justify-between"
+          >
             <FieldLabel>
               Monto total de venta (opcional)
             </FieldLabel>
@@ -125,9 +132,9 @@ export function PrinterAuthorizeEnajenacionDialog({
               value={finalSalePrice}
               onChange={(e) => setFinalSalePrice(e.target.value)}
               placeholder="Ej. 450.00"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
+              className={formFieldInputClass}
             />
-          </div>
+          </label>
         </div>
       </div>
     </PrinterActionDialogShell>

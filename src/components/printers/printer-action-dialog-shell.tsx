@@ -50,7 +50,7 @@ export function PrinterActionDialogShell({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -77,7 +77,7 @@ export function PrinterActionDialogShell({
             <div className="min-w-0">
               <h2
                 id={titleId}
-                className="text-lg font-semibold text-card-foreground"
+                className="text-base font-semibold leading-snug text-card-foreground sm:text-lg"
               >
                 {title}
               </h2>
@@ -123,7 +123,7 @@ export function PrinterActionDialogShell({
                 type="button"
                 onClick={handleCancel}
                 disabled={saving}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
+                className="inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
               >
                 {cancelLabel}
               </button>
@@ -131,7 +131,7 @@ export function PrinterActionDialogShell({
                 type="submit"
                 disabled={saving || submitDisabled}
                 className={cn(
-                  "flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium",
+                  "flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium",
                   submitDestructive
                     ? "bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-500"
                     : "bg-accent text-accent-foreground",
