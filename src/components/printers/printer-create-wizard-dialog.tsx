@@ -9,8 +9,10 @@ import {
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { SoftwareFormDialog } from "@/components/software/software-form-dialog";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
+import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
 import { useConfirm } from "@/context/confirm-provider";
+import { isDistributorPanelRole } from "@/types/user";
 import { fetchCompanies } from "@/lib/companies-api";
 import {
   cancelSoftwareModificationRequest,
@@ -107,6 +109,8 @@ export function PrinterCreateWizardDialog({
   onSubmit,
 }: PrinterCreateWizardDialogProps) {
   const formId = useId();
+  const { user } = useAuth();
+  const isDistributor = isDistributorPanelRole(user?.role);
   const toast = useToast();
   const confirm = useConfirm();
   const [step, setStep] = useState<WizardStep>(1);
@@ -144,7 +148,7 @@ export function PrinterCreateWizardDialog({
   function handleOpenSoftwareModal() {
     setSoftwareError(null);
     setSoftwareModalOpen(true);
-    if (softwareCompanies.length === 0) {
+    if (!isDistributor && softwareCompanies.length === 0) {
       fetchCompanies()
         .then(setSoftwareCompanies)
         .catch(() => setSoftwareCompanies([]));

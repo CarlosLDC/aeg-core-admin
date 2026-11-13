@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getInitialSoftwareFormValues,
   softwareToFormValues,
   toSoftwareRequest,
   INITIAL_SOFTWARE_FORM_VALUES,
@@ -9,6 +10,16 @@ import type { SoftwareResponse } from "@/types/software";
 describe("software-form", () => {
   it("softwareToFormValues handles empty input", () => {
     expect(softwareToFormValues(null)).toEqual(INITIAL_SOFTWARE_FORM_VALUES);
+  });
+
+  it("getInitialSoftwareFormValues sets external=true for distributor users", () => {
+    expect(getInitialSoftwareFormValues(false)).toEqual(
+      INITIAL_SOFTWARE_FORM_VALUES,
+    );
+    expect(getInitialSoftwareFormValues(true)).toEqual({
+      ...INITIAL_SOFTWARE_FORM_VALUES,
+      external: true,
+    });
   });
 
   it("softwareToFormValues maps full SoftwareResponse", () => {

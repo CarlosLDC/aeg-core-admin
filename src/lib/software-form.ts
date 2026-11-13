@@ -46,6 +46,15 @@ export const INITIAL_SOFTWARE_FORM_VALUES: SoftwareFormValues = {
   distributorCompanyIds: [],
 };
 
+export function getInitialSoftwareFormValues(
+  isDistributor = false,
+): SoftwareFormValues {
+  return {
+    ...INITIAL_SOFTWARE_FORM_VALUES,
+    external: isDistributor,
+  };
+}
+
 export function softwareToFormValues(
   software: SoftwareResponse | null | undefined,
 ): SoftwareFormValues {

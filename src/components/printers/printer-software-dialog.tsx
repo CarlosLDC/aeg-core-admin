@@ -6,6 +6,7 @@ import { PrinterActionDialogShell } from "@/components/printers/printer-action-d
 import { PrinterActionPickerPanel } from "@/components/printers/printer-action-picker-panel";
 import { SoftwareFormDialog } from "@/components/software/software-form-dialog";
 import { useConfirm } from "@/context/confirm-provider";
+import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
 import { fetchSoftware } from "@/lib/software-api";
 import { fetchCompanies } from "@/lib/companies-api";
@@ -21,6 +22,7 @@ import type { CompanyResponse } from "@/types/company";
 import type { PrinterResponse } from "@/types/printer";
 import type { SoftwareModificationRequestDetailResponse } from "@/types/software-modification-request";
 import type { SoftwareResponse } from "@/types/software";
+import { isDistributorPanelRole } from "@/types/user";
 
 export type PrinterSoftwareDialogProps = {
   printer: PrinterResponse;
@@ -35,6 +37,8 @@ export function PrinterSoftwareDialog({
   onClose,
   onSaved,
 }: PrinterSoftwareDialogProps) {
+  const { user } = useAuth();
+  const isDistributor = isDistributorPanelRole(user?.role);
   const toast = useToast();
   const confirm = useConfirm();
   const titleId = useId();
@@ -100,7 +104,7 @@ export function PrinterSoftwareDialog({
   function handleOpenNewSoftwareModal() {
     setNewSoftwareError(null);
     setNewSoftwareModalOpen(true);
-    if (companies.length === 0) {
+    if (!isDistributor && companies.length === 0) {
       fetchCompanies()
         .then(setCompanies)
         .catch(() => setCompanies([]));

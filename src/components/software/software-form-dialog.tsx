@@ -19,10 +19,12 @@ import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import { PrefixedDocumentInput } from "@/components/ui/prefixed-document-input";
+import { useAuth } from "@/context/auth-provider";
 import { normalizeRif, RIF_PATTERN } from "@/lib/seniat-extract";
 import {
   COMMON_OPERATING_SYSTEMS,
   COMMON_PROGRAMMING_LANGUAGES,
+  getInitialSoftwareFormValues,
   INITIAL_SOFTWARE_FORM_VALUES,
   softwareToFormValues,
   type SoftwareFormValues,
@@ -34,6 +36,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { CompanyResponse } from "@/types/company";
 import type { SoftwareResponse } from "@/types/software";
+import { isDistributorPanelRole } from "@/types/user";
 
 type SoftwareFormDialogProps = {
   mode: "create" | "edit";
@@ -59,18 +62,20 @@ const FORM_STEPS: {
   { step: 3, section: "distributors", label: "Distribuidores" },
 ];
 
+const DISTRIBUTOR_FORM_STEPS = FORM_STEPS.slice(0, 2);
+
 const STEP_ICONS = {
   1: AppWindow,
   2: Cpu,
   3: Building2,
 } as const;
 
-const LAST_WIZARD_STEP: WizardStep = 3;
-
-function stepSubtitle(step: WizardStep): string {
+function stepSubtitle(step: WizardStep, isDistributor: boolean): string {
   switch (step) {
     case 1:
-      return "Indica el nombre, la versión, el tipo de desarrollo y el fabricante.";
+      return isDistributor
+        ? "Indica el nombre, la versión y los datos del desarrollador."
+        : "Indica el nombre, la versión, el tipo de desarrollo y el fabricante.";
     case 2:
       return "Selecciona los lenguajes de programación y sistemas operativos.";
     case 3:
@@ -90,6 +95,11 @@ export function SoftwareFormDialog({
   onClose,
   onSubmit,
 }: SoftwareFormDialogProps) {
+  const { user } = useAuth();
+  const isDistributor = isDistributorPanelRole(user?.role);
+  const steps = isDistributor ? DISTRIBUTOR_FORM_STEPS : FORM_STEPS;
+  const lastStep = steps[steps.length - 1].step;
+
   const formId = useId();
   const titleId = useId();
   const [step, setStep] = useState<WizardStep>(1);
@@ -116,14 +126,14 @@ export function SoftwareFormDialog({
         ),
       );
     } else {
-      setForm(INITIAL_SOFTWARE_FORM_VALUES);
+      setForm(getInitialSoftwareFormValues(isDistributor));
       setAvailableLanguages([...COMMON_PROGRAMMING_LANGUAGES]);
     }
     setStep(1);
     setStepError(null);
     setCustomLanguage("");
     setSelectedDistributorToAdd("");
-  }, [open, mode, software]);
+  }, [open, mode, software, isDistributor]);
 
   if (!open) return null;
 
@@ -167,13 +177,13 @@ export function SoftwareFormDialog({
       return;
     }
 
-    if (step < LAST_WIZARD_STEP) {
+    if (step < lastStep) {
       setStepError(null);
       setStep((current) => (current + 1) as WizardStep);
       return;
     }
 
-    for (const { step: checkStep } of FORM_STEPS) {
+    for (const { step: checkStep } of steps) {
       const checkError = validateStep(checkStep);
       if (checkError) {
         setStepError(checkError);
@@ -282,7 +292,7 @@ export function SoftwareFormDialog({
 
   const displayError = stepError ?? error;
   const currentSection =
-    FORM_STEPS.find((item) => item.step === step)?.section ?? "general";
+    steps.find((item) => item.step === step)?.section ?? "general";
 
   return (
     <div
@@ -313,7 +323,9 @@ export function SoftwareFormDialog({
               >
                 {mode === "create" ? "Nuevo software" : "Editar software"}
               </h2>
-              <p className="mt-1 text-sm text-muted">{stepSubtitle(step)}</p>
+              <p className="mt-1 text-sm text-muted">
+                {stepSubtitle(step, isDistributor)}
+              </p>
             </div>
             <button
               type="button"
@@ -327,7 +339,7 @@ export function SoftwareFormDialog({
           </div>
 
           <nav className="mt-4 flex gap-1" aria-label="Pasos del registro">
-            {FORM_STEPS.map(({ step: wizardStep, label }) => {
+            {steps.map(({ step: wizardStep, label }) => {
               const Icon = STEP_ICONS[wizardStep];
               const isActive = step === wizardStep;
               const isDone = step > wizardStep;
@@ -400,21 +412,23 @@ export function SoftwareFormDialog({
                   </label>
                 </div>
 
-                <div>
-                  <FieldLabel>Tipo de desarrollo</FieldLabel>
-                  <BooleanToggle
-                    value={form.external}
-                    onChange={(external) =>
-                      setForm((f) => ({ ...f, external }))
-                    }
-                    disabled={saving}
-                    falseLabel="Propio (AEG)"
-                    trueLabel="Terceros"
-                    falseTone="emerald"
-                    trueTone="amber"
-                    ariaLabel="Tipo de desarrollo"
-                  />
-                </div>
+                {!isDistributor && (
+                  <div>
+                    <FieldLabel>Tipo de desarrollo</FieldLabel>
+                    <BooleanToggle
+                      value={form.external}
+                      onChange={(external) =>
+                        setForm((f) => ({ ...f, external }))
+                      }
+                      disabled={saving}
+                      falseLabel="Propio (AEG)"
+                      trueLabel="Terceros"
+                      falseTone="emerald"
+                      trueTone="amber"
+                      ariaLabel="Tipo de desarrollo"
+                    />
+                  </div>
+                )}
 
                 {form.external && (
                   <div className="grid gap-4 sm:grid-cols-2 pt-1 animate-in fade-in duration-200">
@@ -739,7 +753,7 @@ export function SoftwareFormDialog({
                 >
                   Cancelar
                 </button>
-                {step < LAST_WIZARD_STEP ? (
+                {step < lastStep ? (
                   <button
                     type="submit"
                     form={formId}
