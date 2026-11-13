@@ -2,14 +2,13 @@
 
 import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import {
-  IdCard,
+  Building2,
   Loader2,
   Shield,
   UserRound,
   X,
 } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
-import { PrefixedDocumentInput } from "@/components/ui/prefixed-document-input";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { SearchableSelect } from "@/components/ui/searchable-select";
@@ -130,7 +129,7 @@ const FORM_STEPS: {
 const STEP_ICONS = {
   1: UserRound,
   2: Shield,
-  3: IdCard,
+  3: Building2,
 } as const;
 
 const LAST_WIZARD_STEP: WizardStep = 3;
@@ -460,8 +459,8 @@ export function UserFormDialog({
           ) : null}
 
           {needsAdminEmployeeProfile && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block min-w-0 sm:col-span-2 lg:col-span-1">
+            <div>
+              <label className="block min-w-0">
                 <FieldLabel>Empresa</FieldLabel>
                 <input
                   type="text"
@@ -475,24 +474,12 @@ export function UserFormDialog({
                   className={`${formFieldInputClass} cursor-not-allowed opacity-80`}
                 />
               </label>
-
-              <label className="block min-w-0">
-                <FieldLabel>Cédula</FieldLabel>
-                <PrefixedDocumentInput
-                  kind="cedula"
-                  value={form.nationalId}
-                  disabled={saving || catalogLoading}
-                  onChange={(nationalId) =>
-                    setForm((f) => ({ ...f, nationalId }))
-                  }
-                />
-              </label>
             </div>
           )}
 
           {needsDistributorProfile && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="min-w-0 sm:col-span-2 lg:col-span-1">
+            <div>
+              <div className="min-w-0">
                 <FieldLabel required>Distribuidora</FieldLabel>
                 <DistributorIdSelect
                   value={form.distributorId}
@@ -512,24 +499,12 @@ export function UserFormDialog({
                   required
                 />
               </div>
-
-              <label className="block min-w-0">
-                <FieldLabel>Cédula</FieldLabel>
-                <PrefixedDocumentInput
-                  kind="cedula"
-                  value={form.nationalId}
-                  disabled={saving || catalogLoading}
-                  onChange={(nationalId) =>
-                    setForm((f) => ({ ...f, nationalId }))
-                  }
-                />
-              </label>
             </div>
           )}
 
           {needsServiceCenterBranch && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="min-w-0 sm:col-span-2 lg:col-span-1">
+            <div>
+              <div className="min-w-0">
                 <FieldLabel required>Sucursal</FieldLabel>
                 <SearchableSelect
                   value={form.branchId}
@@ -549,18 +524,6 @@ export function UserFormDialog({
                   searchPlaceholder="Buscar centro de servicio o RIF…"
                 />
               </div>
-
-              <label className="block min-w-0">
-                <FieldLabel>Cédula</FieldLabel>
-                <PrefixedDocumentInput
-                  kind="cedula"
-                  value={form.nationalId}
-                  disabled={saving || catalogLoading}
-                  onChange={(nationalId) =>
-                    setForm((f) => ({ ...f, nationalId }))
-                  }
-                />
-              </label>
             </div>
           )}
 

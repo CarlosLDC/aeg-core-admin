@@ -190,12 +190,6 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         formBindings: ["form.distributorId"],
         viewBindings: ["user.distributorId"],
       },
-      {
-        formLabels: ["Cédula"],
-        viewLabels: ["Cédula"],
-        formBindings: ["form.nationalId"],
-        viewBindings: ["user.nationalId"],
-      },
     ],
   },
   {
