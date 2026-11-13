@@ -13,8 +13,7 @@ describe("getPrinterStatusQuickAction", () => {
   const handlers = {
     onAssign: vi.fn(),
     onDispose: vi.fn(),
-    onRequestDispose: vi.fn(),
-    onViewPendingRequest: vi.fn(),
+    onGrantDispose: vi.fn(),
   };
 
   const paidPrinter = { paid: true } as PrinterResponse;
@@ -56,28 +55,30 @@ describe("getPrinterStatusQuickAction", () => {
     expect(action).toBeNull();
   });
 
-  it("offers request_dispose for unauthorized consignment printers", () => {
+  it("offers grant_dispose to admin for unauthorized consignment printers", () => {
     const action = getPrinterStatusQuickAction({
       status: "en_consignacion",
       printer: unpaidPrinter,
+      isAdmin: true,
       canAssign: false,
       canDispose: true,
       ...handlers,
     });
-    expect(action?.kind).toBe("request_dispose");
-    expect(action?.buttonLabel).toBe("Solicitar permiso");
+    expect(action?.kind).toBe("grant_dispose");
+    expect(action?.buttonLabel).toBe("Dar permiso");
+    expect(action?.label).toBe("Dar permiso para enajenar");
   });
 
-  it("offers pending_dispose when consignment request is pending", () => {
+  it("does not offer permission request to distributors on unauthorized consignment printers", () => {
     const action = getPrinterStatusQuickAction({
       status: "en_consignacion",
       printer: { ...unpaidPrinter, pendingEnajenacionRequestId: 55 },
+      isAdmin: false,
       canAssign: false,
       canDispose: true,
       ...handlers,
     });
-    expect(action?.kind).toBe("pending_dispose");
-    expect(action?.buttonLabel).toBe("Permiso solicitado");
+    expect(action).toBeNull();
   });
 
   it("offers dispose for authorized consignment printers", () => {

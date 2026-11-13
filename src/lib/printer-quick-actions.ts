@@ -17,8 +17,7 @@ import type { PrinterResponse } from "@/types/printer";
 
 export type PrinterStatusQuickActionKind =
   | "assign"
-  | "request_dispose"
-  | "pending_dispose"
+  | "grant_dispose"
   | "dispose"
   | "reconfigure";
 
@@ -35,12 +34,12 @@ export function getPrinterStatusQuickAction(params: {
   status: string;
   paid?: boolean;
   printer?: PrinterResponse;
+  isAdmin?: boolean;
   canAssign: boolean;
   canDispose: boolean;
   onAssign: () => void;
   onDispose: () => void;
-  onRequestDispose?: () => void;
-  onViewPendingRequest?: () => void;
+  onGrantDispose?: () => void;
 }): PrinterStatusQuickAction | null {
   if (params.canAssign && isPrinterUnassigned(params.status)) {
     return {
@@ -67,23 +66,12 @@ export function getPrinterStatusQuickAction(params: {
         label: "Enajenar impresora",
       };
     }
-    if (params.printer?.pendingEnajenacionRequestId != null) {
-      if (params.onViewPendingRequest) {
-        return {
-          kind: "pending_dispose",
-          onClick: params.onViewPendingRequest,
-          buttonLabel: "Permiso solicitado",
-          label: "Ver solicitud de permiso de enajenación",
-        };
-      }
-      return null;
-    }
-    if (params.onRequestDispose) {
+    if (params.isAdmin && params.onGrantDispose) {
       return {
-        kind: "request_dispose",
-        onClick: params.onRequestDispose,
-        buttonLabel: "Solicitar permiso",
-        label: "Solicitar permiso para enajenar",
+        kind: "grant_dispose",
+        onClick: params.onGrantDispose,
+        buttonLabel: "Dar permiso",
+        label: "Dar permiso para enajenar",
       };
     }
     return null;
@@ -126,9 +114,6 @@ export function getPrinterStatusBadgeTitle(params: {
   if (isPrinterOnConsignment(params.status)) {
     if (params.printer?.enajenacionAutorizada) {
       return undefined;
-    }
-    if (params.printer?.pendingEnajenacionRequestId != null) {
-      return "Permiso de enajenación solicitado; esperando aprobación del administrador.";
     }
     return PRINTER_CONSIGNMENT_PERMISSION_REQUIRED_MESSAGE;
   }

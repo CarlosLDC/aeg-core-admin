@@ -8,7 +8,7 @@ import { PrinterAssignmentDialog } from "@/components/printers/printer-assignmen
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterCreditPaymentsSection } from "@/components/printers/printer-credit-payments-section";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
-import { PrinterEnajenacionRequestDialog } from "@/components/printers/printer-enajenacion-request-dialog";
+import { PrinterAuthorizeEnajenacionDialog } from "@/components/printers/printer-authorize-enajenacion-dialog";
 import { PrinterDecommissionDialog } from "@/components/printers/printer-decommission-dialog";
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
 import { PrinterSealsDialog } from "@/components/printers/printer-seals-dialog";
@@ -444,6 +444,7 @@ export function PrinterView() {
     ? getPrinterStatusQuickAction({
         status: printer.status,
         printer,
+        isAdmin,
         canAssign: canAssignInitialized,
         canDispose: canDisposeAssigned,
         onAssign: () => {
@@ -457,15 +458,9 @@ export function PrinterView() {
           }
           setDispositionOpen(true);
         },
-        onRequestDispose: () => setEnajenacionRequestOpen(true),
-        onViewPendingRequest: () =>
-          isAdmin && printer.pendingEnajenacionRequestId != null
-            ? router.push(
-                printerEnajenacionReviewPath(
-                  printer.pendingEnajenacionRequestId,
-                ),
-              )
-            : setEnajenacionRequestOpen(true),
+        onGrantDispose: isAdmin
+          ? () => setEnajenacionRequestOpen(true)
+          : undefined,
       })
     : null;
   const statusBadgeTitle = printer
@@ -1191,37 +1186,26 @@ export function PrinterView() {
             )}
           </div>
         )}
-        {printer?.pendingEnajenacionRequestId != null &&
+        {isAdmin &&
+          printer?.pendingEnajenacionRequestId != null &&
           normalizePrinterStatus(printer.status) === "en_consignacion" && (
-            <div className="mx-auto mb-4 flex w-full max-w-4xl items-start justify-between gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-200">
+            <div className="mx-auto mb-4 flex w-full max-w-4xl flex-col items-start justify-between gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-800 sm:flex-row sm:items-center dark:text-amber-200">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-amber-900 dark:text-amber-100">
                   Permiso de enajenación pendiente
                 </p>
                 <p className="mt-1 text-xs text-amber-800/90 dark:text-amber-200/90">
-                  {isAdmin
-                    ? "El distribuidor solicitó autorización para enajenar esta impresora en consignación. Revisa la solicitud y define las cuotas para habilitar la enajenación."
-                    : "Se envió una solicitud de permiso al administrador. Podrás enajenar esta impresora cuando sea aprobada."}
+                  Existe una solicitud previa de autorización para enajenar esta impresora en consignación. Puedes revisarla o usar el botón Dar permiso.
                 </p>
               </div>
-              {isAdmin ? (
-                <Link
-                  href={printerEnajenacionReviewPath(
-                    printer.pendingEnajenacionRequestId,
-                  )}
-                  className="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-amber-700"
-                >
-                  Revisar solicitud
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setEnajenacionRequestOpen(true)}
-                  className="shrink-0 rounded-lg border border-amber-500/30 bg-card px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-500/10 dark:text-amber-100"
-                >
-                  Ver solicitud
-                </button>
-              )}
+              <Link
+                href={printerEnajenacionReviewPath(
+                  printer.pendingEnajenacionRequestId,
+                )}
+                className="w-full shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-center text-xs font-medium text-white shadow-sm hover:bg-amber-700 sm:w-auto"
+              >
+                Revisar solicitud
+              </Link>
             </div>
           )}
         {printer?.firmwareUpdateUnverified ? (
@@ -1303,11 +1287,10 @@ export function PrinterView() {
         />
       ) : null}
 
-      {printer && enajenacionRequestOpen ? (
-        <PrinterEnajenacionRequestDialog
-          key={`enajenacion-req-${printer.id}`}
+      {isAdmin && printer && enajenacionRequestOpen ? (
+        <PrinterAuthorizeEnajenacionDialog
+          key={`enajenacion-grant-${printer.id}`}
           printer={printer}
-          isAdmin={isAdmin}
           onClose={() => setEnajenacionRequestOpen(false)}
           onUpdated={() => {
             void load();

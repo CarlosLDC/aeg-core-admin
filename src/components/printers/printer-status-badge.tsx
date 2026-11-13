@@ -1,4 +1,4 @@
-import { ArrowRight, Clock, RefreshCw, Send } from "lucide-react";
+import { ArrowRight, KeyRound, RefreshCw } from "lucide-react";
 import { printerStatusLabel, normalizePrinterStatus } from "@/lib/printer-status";
 import type { PrinterStatusQuickAction } from "@/lib/printer-quick-actions";
 import type { PrinterStatus } from "@/types/printer";
@@ -53,22 +53,19 @@ type PrinterStatusActionButtonProps = {
   className?: string;
 };
 
-/** Botón de acción rápida (Asignar / Enajenar / Reconfigurar) junto al estatus de la impresora. */
+/** Botón de acción rápida (Asignar / Dar permiso / Enajenar / Reconfigurar) junto al estatus de la impresora. */
 export function PrinterStatusActionButton({
   action,
   size = "sm",
   className,
 }: PrinterStatusActionButtonProps) {
   const isReconfigure = action.kind === "reconfigure";
-  const isRequest = action.kind === "request_dispose";
-  const isPending = action.kind === "pending_dispose";
+  const isGrantDispose = action.kind === "grant_dispose";
   const Icon = isReconfigure
     ? RefreshCw
-    : isRequest
-      ? Send
-      : isPending
-        ? Clock
-        : ArrowRight;
+    : isGrantDispose
+      ? KeyRound
+      : ArrowRight;
 
   return (
     <button
@@ -84,9 +81,9 @@ export function PrinterStatusActionButton({
         size === "sm"
           ? "gap-1 rounded-md border px-2 py-0.5 text-xs"
           : "gap-2 rounded-lg border px-3 py-2 text-sm",
-        isReconfigure || isPending
+        isReconfigure
           ? "border-amber-500/35 bg-amber-500/10 text-amber-800 hover:bg-amber-500/20 dark:border-amber-400/40 dark:bg-amber-500/15 dark:text-amber-300 dark:hover:bg-amber-500/25"
-          : isRequest
+          : isGrantDispose
             ? "border-indigo-500/35 bg-indigo-500/10 text-indigo-800 hover:bg-indigo-500/20 dark:border-indigo-400/40 dark:bg-indigo-500/15 dark:text-indigo-300 dark:hover:bg-indigo-500/25"
             : "border-accent/35 bg-accent/10 text-accent hover:bg-accent/20 dark:border-accent/40 dark:bg-accent/15 dark:text-blue-300 dark:hover:bg-accent/25",
         className,

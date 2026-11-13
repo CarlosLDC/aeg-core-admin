@@ -93,6 +93,16 @@ export async function disposePrinter(
   });
 }
 
+export async function authorizePrinterEnajenacion(
+  id: number,
+  body: { creditInstallments: number; finalSalePrice?: number | null },
+): Promise<PrinterResponse> {
+  return apiFetch<PrinterResponse>(`${BASE}/${id}/autorizar-enajenacion`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
 export async function queryPrinterFirmwareByMac(
   macAddress: string,
   modelId?: number | null,

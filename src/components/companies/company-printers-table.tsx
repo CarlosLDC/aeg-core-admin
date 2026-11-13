@@ -16,7 +16,7 @@ import { PrinterStatusTransition } from "@/components/printers/printer-status-tr
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
-import { PrinterEnajenacionRequestDialog } from "@/components/printers/printer-enajenacion-request-dialog";
+import { PrinterAuthorizeEnajenacionDialog } from "@/components/printers/printer-authorize-enajenacion-dialog";
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
 import { PrinterSoftwareDialog } from "@/components/printers/printer-software-dialog";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
@@ -962,17 +962,14 @@ export function CompanyPrintersTable({
                         const statusQuickAction = getPrinterStatusQuickAction({
                           status: printer.status,
                           printer,
+                          isAdmin,
                           canAssign: canAssignInitialized,
                           canDispose: canDisposeAssigned,
                           onAssign: () => openAssignment(printer),
                           onDispose: () => openDisposition(printer),
-                          onRequestDispose: () => openEnajenacionRequest(printer),
-                          onViewPendingRequest: () =>
-                            isAdmin && printer.pendingEnajenacionRequestId != null
-                              ? router.push(
-                                  `/reviews/printers/${printer.pendingEnajenacionRequestId}`,
-                                )
-                              : openEnajenacionRequest(printer),
+                          onGrantDispose: isAdmin
+                            ? () => openEnajenacionRequest(printer)
+                            : undefined,
                         });
                         const statusBadgeTitle = getPrinterStatusBadgeTitle({
                           status: printer.status,
@@ -1115,11 +1112,10 @@ export function CompanyPrintersTable({
         />
       ) : null}
 
-      {enajenacionRequestPrinter ? (
-        <PrinterEnajenacionRequestDialog
+      {isAdmin && enajenacionRequestPrinter ? (
+        <PrinterAuthorizeEnajenacionDialog
           key={enajenacionRequestPrinter.id}
           printer={enajenacionRequestPrinter}
-          isAdmin={isAdmin}
           onClose={closeEnajenacionRequest}
           onUpdated={() => {
             void loadData({ silent: true });

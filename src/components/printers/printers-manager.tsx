@@ -7,7 +7,7 @@ import { PrinterBatchFormDialog, type PrinterBatchSubmitPayload } from "@/compon
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
-import { PrinterEnajenacionRequestDialog } from "@/components/printers/printer-enajenacion-request-dialog";
+import { PrinterAuthorizeEnajenacionDialog } from "@/components/printers/printer-authorize-enajenacion-dialog";
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
 import { PrinterSoftwareDialog } from "@/components/printers/printer-software-dialog";
 import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
@@ -133,7 +133,7 @@ import { isDistributorPanelRole } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
-import { printerDispositionPath, printerEnajenacionReviewPath, printerPath } from "@/lib/resource-routes";
+import { printerDispositionPath, printerPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { SortableTableHeader } from "@/components/ui/sortable-table-header";
@@ -1158,19 +1158,14 @@ export function PrintersManager() {
                         const statusQuickAction = getPrinterStatusQuickAction({
                           status: printer.status,
                           printer,
+                          isAdmin,
                           canAssign: canAssignInitialized,
                           canDispose: canDisposeAssigned,
                           onAssign: () => openAssignment(printer),
                           onDispose: () => openDisposition(printer),
-                          onRequestDispose: () => openEnajenacionRequest(printer),
-                          onViewPendingRequest: () =>
-                            isAdmin && printer.pendingEnajenacionRequestId != null
-                              ? router.push(
-                                  printerEnajenacionReviewPath(
-                                    printer.pendingEnajenacionRequestId,
-                                  ),
-                                )
-                              : openEnajenacionRequest(printer),
+                          onGrantDispose: isAdmin
+                            ? () => openEnajenacionRequest(printer)
+                            : undefined,
                         });
                         const statusBadgeTitle = getPrinterStatusBadgeTitle({
                           status: printer.status,
@@ -1313,11 +1308,10 @@ export function PrintersManager() {
         />
       ) : null}
 
-      {enajenacionRequestPrinter ? (
-        <PrinterEnajenacionRequestDialog
+      {isAdmin && enajenacionRequestPrinter ? (
+        <PrinterAuthorizeEnajenacionDialog
           key={enajenacionRequestPrinter.id}
           printer={enajenacionRequestPrinter}
-          isAdmin={isAdmin}
           onClose={closeEnajenacionRequest}
           onUpdated={() => {
             void loadPrinters({ silent: true });
