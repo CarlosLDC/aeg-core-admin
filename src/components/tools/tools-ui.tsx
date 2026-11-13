@@ -106,7 +106,7 @@ export function ToolsSectionGrid({
   return (
     <div
       className={cn(
-        "grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3",
+        "grid grid-cols-1 items-stretch gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3",
         "[&>*]:h-full",
         className,
       )}
@@ -184,20 +184,73 @@ export function ToolsSectionHeading({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
       <div className="flex min-w-0 items-center gap-3">
-        <ToolsIconBadge icon={icon} tone={tone} size="lg" />
+        <ToolsIconBadge
+          icon={icon}
+          tone={tone}
+          size="lg"
+          className="size-10 rounded-xl [&_svg]:size-5 sm:size-12 sm:[&_svg]:size-6"
+        />
         <div className="min-w-0 py-0.5">
-          <h2 className="text-lg font-semibold tracking-tight text-card-foreground">
+          <h2 className="text-base font-semibold tracking-tight text-card-foreground sm:text-lg">
             {title}
           </h2>
           {description ? (
-            <p className="mt-1 max-w-2xl text-sm text-muted">{description}</p>
+            <p className="mt-0.5 max-w-2xl text-xs text-muted sm:mt-1 sm:text-sm">
+              {description}
+            </p>
           ) : null}
         </div>
       </div>
       {actions ? <div className="shrink-0">{actions}</div> : null}
     </div>
+  );
+}
+
+const toolsCardBaseClass =
+  "group relative z-0 flex h-full w-full flex-row items-center gap-3 rounded-xl border border-border bg-card px-3.5 py-2.5 text-left shadow-sm transition-[color,background-color,border-color,transform] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 sm:grid sm:min-h-[10.25rem] sm:grid-cols-[1fr_auto] sm:grid-rows-[auto_1fr] sm:items-start sm:gap-x-3 sm:gap-y-0 sm:p-4 sm:active:scale-100";
+
+function ToolsCardContent({
+  icon,
+  tone,
+  title,
+  description,
+  loading = false,
+}: {
+  icon: LucideIcon;
+  tone: ToolsSectionTone;
+  title: string;
+  description: string;
+  loading?: boolean;
+}) {
+  return (
+    <>
+      <ToolsIconBadge
+        icon={icon}
+        tone={tone}
+        className="size-9 rounded-lg [&_svg]:size-4 sm:col-start-1 sm:row-start-1 sm:size-10 sm:rounded-xl sm:[&_svg]:size-5"
+      />
+      <div className="min-w-0 flex-1 sm:col-span-2 sm:row-start-2 sm:mt-4 sm:flex sm:min-h-0 sm:flex-col">
+        <p className="truncate text-sm font-medium leading-tight text-card-foreground sm:whitespace-normal sm:text-base sm:leading-normal">
+          {title}
+        </p>
+        <p className="mt-0.5 truncate text-xs leading-snug text-muted sm:mt-1 sm:line-clamp-2 sm:min-h-[2.5rem] sm:flex-1 sm:whitespace-normal sm:text-sm">
+          {description}
+        </p>
+      </div>
+      {loading ? (
+        <Loader2
+          className="size-4 shrink-0 animate-spin text-muted sm:col-start-2 sm:row-start-1 sm:self-start"
+          aria-hidden
+        />
+      ) : (
+        <ChevronRight
+          className="size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-foreground sm:col-start-2 sm:row-start-1 sm:self-start"
+          aria-hidden
+        />
+      )}
+    </>
   );
 }
 
@@ -217,27 +270,17 @@ export function ToolsNavCard({
   disabled?: boolean;
 }) {
   const className = cn(
-    "group relative z-0 flex h-full min-h-[10.25rem] flex-col rounded-xl border border-border bg-card p-4 shadow-sm transition-colors",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
-    disabled && "cursor-not-allowed opacity-50",
+    toolsCardBaseClass,
+    disabled && "cursor-not-allowed opacity-50 active:scale-100",
     toolsToneHoverBorderClass[tone],
   );
   const content = (
-    <>
-      <div className="flex items-start justify-between gap-3">
-        <ToolsIconBadge icon={icon} tone={tone} />
-        <ChevronRight
-          className="size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-foreground"
-          aria-hidden
-        />
-      </div>
-      <div className="mt-4 flex min-h-0 flex-1 flex-col">
-        <p className="font-medium text-card-foreground">{title}</p>
-        <p className="mt-1 line-clamp-2 min-h-[2.5rem] flex-1 text-sm leading-snug text-muted">
-          {description}
-        </p>
-      </div>
-    </>
+    <ToolsCardContent
+      icon={icon}
+      tone={tone}
+      title={title}
+      description={description}
+    />
   );
 
   if (disabled) {
@@ -278,32 +321,18 @@ export function ToolsActionCard({
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
-        "group relative z-0 flex h-full min-h-[10.25rem] w-full flex-col rounded-xl border border-border bg-card p-4 text-left shadow-sm transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
-        "disabled:cursor-not-allowed disabled:opacity-50",
+        toolsCardBaseClass,
+        "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100",
         toolsToneHoverBorderClass[tone],
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <ToolsIconBadge icon={icon} tone={tone} />
-        {loading ? (
-          <Loader2
-            className="size-4 shrink-0 animate-spin text-muted"
-            aria-hidden
-          />
-        ) : (
-          <ChevronRight
-            className="size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-foreground"
-            aria-hidden
-          />
-        )}
-      </div>
-      <div className="mt-4 flex min-h-0 flex-1 flex-col">
-        <p className="font-medium text-card-foreground">{title}</p>
-        <p className="mt-1 line-clamp-2 min-h-[2.5rem] flex-1 text-sm leading-snug text-muted">
-          {description}
-        </p>
-      </div>
+      <ToolsCardContent
+        icon={icon}
+        tone={tone}
+        title={title}
+        description={description}
+        loading={loading}
+      />
     </button>
   );
 }
