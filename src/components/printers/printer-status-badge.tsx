@@ -1,5 +1,6 @@
-import { ChevronRight } from "lucide-react";
+import { ArrowRight, RefreshCw } from "lucide-react";
 import { printerStatusLabel, normalizePrinterStatus } from "@/lib/printer-status";
+import type { PrinterStatusQuickAction } from "@/lib/printer-quick-actions";
 import type { PrinterStatus } from "@/types/printer";
 import { cn } from "@/lib/utils";
 
@@ -22,52 +23,71 @@ const STATUS_STYLES: Record<string, string> = {
 
 type PrinterStatusBadgeProps = {
   status: PrinterStatus | string;
-  onClick?: () => void;
-  actionLabel?: string;
   title?: string;
 };
 
 export function PrinterStatusBadge({
   status,
-  onClick,
-  actionLabel,
   title,
 }: PrinterStatusBadgeProps) {
   const normalized = normalizePrinterStatus(status);
   const label = printerStatusLabel(status);
-  const hoverTitle = title ?? (onClick ? actionLabel : undefined);
   const className = cn(
     "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium",
     STATUS_STYLES[normalized] ?? STATUS_STYLES.desincorporada,
-    hoverTitle && !onClick && "cursor-help",
+    title && "cursor-help",
   );
 
-  if (onClick) {
-    return (
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClick();
-        }}
-        className={cn(
-          className,
-          "cursor-pointer transition hover:ring-2 hover:ring-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
-        )}
-        aria-label={actionLabel ?? `Acción de impresora (${label})`}
-        title={hoverTitle}
-      >
-        <span className="inline-flex items-center gap-1">
-          {label}
-          <ChevronRight className="size-3 shrink-0 opacity-80" aria-hidden />
-        </span>
-      </button>
-    );
-  }
-
   return (
-    <span className={className} title={hoverTitle}>
+    <span className={className} title={title}>
       {label}
     </span>
+  );
+}
+
+type PrinterStatusActionButtonProps = {
+  action: PrinterStatusQuickAction;
+  size?: "sm" | "md";
+};
+
+/** Botón de acción rápida (Asignar / Enajenar / Reconfigurar) junto al estatus de la impresora. */
+export function PrinterStatusActionButton({
+  action,
+  size = "sm",
+}: PrinterStatusActionButtonProps) {
+  const isReconfigure = action.kind === "reconfigure";
+  const Icon = isReconfigure ? RefreshCw : ArrowRight;
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        action.onClick();
+      }}
+      title={action.label}
+      aria-label={action.label}
+      className={cn(
+        "inline-flex cursor-pointer items-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
+        size === "sm"
+          ? "gap-1 rounded-md border px-2 py-0.5 text-xs"
+          : "gap-2 rounded-lg border px-3 py-2 text-sm",
+        isReconfigure
+          ? "border-amber-500/35 bg-amber-500/10 text-amber-800 hover:bg-amber-500/20 dark:text-amber-200"
+          : "border-accent/35 bg-accent/10 text-accent hover:bg-accent/20",
+      )}
+    >
+      {size === "md" ? (
+        <>
+          <Icon className="size-4 shrink-0" aria-hidden />
+          {action.label}
+        </>
+      ) : (
+        <>
+          {action.buttonLabel}
+          <Icon className="size-3 shrink-0 opacity-80" aria-hidden />
+        </>
+      )}
+    </button>
   );
 }

@@ -13,8 +13,14 @@ import {
 } from "@/lib/printer-enajenacion-ticket";
 import type { PrinterResponse } from "@/types/printer";
 
+export type PrinterStatusQuickActionKind = "assign" | "dispose" | "reconfigure";
+
 export type PrinterStatusQuickAction = {
+  kind: PrinterStatusQuickActionKind;
   onClick: () => void;
+  /** Texto corto para el botón inline junto al badge de estatus. */
+  buttonLabel: string;
+  /** Etiqueta descriptiva para accesibilidad, tooltips y acciones de vista. */
   label: string;
 };
 
@@ -28,7 +34,12 @@ export function getPrinterStatusQuickAction(params: {
   onDispose: () => void;
 }): PrinterStatusQuickAction | null {
   if (params.canAssign && isPrinterUnassigned(params.status)) {
-    return { onClick: params.onAssign, label: "Asignar impresora" };
+    return {
+      kind: "assign",
+      onClick: params.onAssign,
+      buttonLabel: "Asignar",
+      label: "Asignar impresora",
+    };
   }
   if (params.canDispose && isPrinterAssigned(params.status)) {
     const paid =
@@ -41,11 +52,18 @@ export function getPrinterStatusQuickAction(params: {
       isPrinterPendingMqttEnajenacion(params.printer)
     ) {
       return {
+        kind: "reconfigure",
         onClick: params.onDispose,
+        buttonLabel: PRINTER_TICKET_RECONFIGURE_LABEL,
         label: PRINTER_TICKET_RECONFIGURE_LABEL,
       };
     }
-    return { onClick: params.onDispose, label: "Enajenar impresora" };
+    return {
+      kind: "dispose",
+      onClick: params.onDispose,
+      buttonLabel: "Enajenar",
+      label: "Enajenar impresora",
+    };
   }
   return null;
 }

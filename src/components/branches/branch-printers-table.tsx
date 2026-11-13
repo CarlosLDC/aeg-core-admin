@@ -7,7 +7,10 @@ import {
   getBranchPrinterStats,
   type BranchPrinterQuickFilter,
 } from "@/lib/branch-printers";
-import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
+import {
+  PrinterStatusActionButton,
+  PrinterStatusBadge,
+} from "@/components/printers/printer-status-badge";
 import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-mqtt-badge";
 import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
@@ -1028,10 +1031,13 @@ export function BranchPrintersTable({
                                 <div className="flex flex-wrap items-center gap-2">
                                   <PrinterStatusBadge
                                     status={printer.status}
-                                    onClick={statusQuickAction?.onClick}
-                                    actionLabel={statusQuickAction?.label}
                                     title={statusBadgeTitle}
                                   />
+                                  {statusQuickAction ? (
+                                    <PrinterStatusActionButton
+                                      action={statusQuickAction}
+                                    />
+                                  ) : null}
                                   {isPrinterPendingMqttEnajenacion(printer) ? (
                                     <PrinterPendingMqttBadge
                                       printer={printer}

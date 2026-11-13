@@ -22,6 +22,8 @@ describe("getPrinterStatusQuickAction", () => {
       canDispose: true,
       ...handlers,
     });
+    expect(action?.kind).toBe("assign");
+    expect(action?.buttonLabel).toBe("Asignar");
     expect(action?.label).toBe("Asignar impresora");
   });
 
@@ -33,6 +35,8 @@ describe("getPrinterStatusQuickAction", () => {
       canDispose: true,
       ...handlers,
     });
+    expect(action?.kind).toBe("dispose");
+    expect(action?.buttonLabel).toBe("Enajenar");
     expect(action?.label).toBe("Enajenar impresora");
   });
 
@@ -71,6 +75,8 @@ describe("getPrinterStatusQuickAction", () => {
       canDispose: true,
       ...handlers,
     });
+    expect(action?.kind).toBe("reconfigure");
+    expect(action?.buttonLabel).toBe("Reconfigurar ticket");
     expect(action?.label).toBe("Reconfigurar ticket");
   });
 

@@ -14,7 +14,10 @@ import {
   type SelectOption,
 } from "@/components/printers/printer-form-dialog";
 import { runSerialBatch } from "@/lib/batch-create";
-import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
+import {
+  PrinterStatusActionButton,
+  PrinterStatusBadge,
+} from "@/components/printers/printer-status-badge";
 import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-mqtt-badge";
 import { PrinterFirmwareUpdateBadge } from "@/components/printers/printer-firmware-update-badge";
 import { PrinterFirmwareUnverifiedBadge } from "@/components/printers/printer-firmware-unverified-badge";
@@ -1205,10 +1208,13 @@ export function PrintersManager() {
                             <div className="flex flex-wrap items-center gap-2">
                               <PrinterStatusBadge
                                 status={printer.status}
-                                onClick={statusQuickAction?.onClick}
-                                actionLabel={statusQuickAction?.label}
                                 title={statusBadgeTitle}
                               />
+                              {statusQuickAction ? (
+                                <PrinterStatusActionButton
+                                  action={statusQuickAction}
+                                />
+                              ) : null}
                               {isPrinterPendingMqttEnajenacion(printer) ? (
                                 <PrinterPendingMqttBadge
                                   printer={printer}

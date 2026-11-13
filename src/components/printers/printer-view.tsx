@@ -28,7 +28,10 @@ import {
   DetailSectionsPager,
   type DetailPagerStep,
 } from "@/components/resource-view/detail-sections-pager";
-import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
+import {
+  PrinterStatusActionButton,
+  PrinterStatusBadge,
+} from "@/components/printers/printer-status-badge";
 import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
 import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-mqtt-badge";
 import { PrinterFirmwareUpdateBanner } from "@/components/printers/printer-firmware-update-banner";
@@ -467,10 +470,11 @@ export function PrinterView() {
               <div className="flex flex-wrap items-center gap-2">
                 <PrinterStatusBadge
                   status={printer.status}
-                  onClick={statusQuickAction?.onClick}
-                  actionLabel={statusQuickAction?.label}
                   title={statusBadgeTitle}
                 />
+                {statusQuickAction ? (
+                  <PrinterStatusActionButton action={statusQuickAction} />
+                ) : null}
                 {isPrinterPendingMqttEnajenacion(printer) ? (
                   <PrinterPendingMqttBadge
                     printer={printer}
@@ -587,10 +591,11 @@ export function PrinterView() {
                 <div className="flex flex-wrap items-center gap-2">
                   <PrinterStatusBadge
                     status={printer.status}
-                    onClick={statusQuickAction?.onClick}
-                    actionLabel={statusQuickAction?.label}
                     title={statusBadgeTitle}
                   />
+                  {statusQuickAction ? (
+                    <PrinterStatusActionButton action={statusQuickAction} />
+                  ) : null}
                   {isPrinterPendingMqttEnajenacion(printer) ? (
                     <PrinterPendingMqttBadge
                       printer={printer}
@@ -1013,8 +1018,16 @@ export function PrinterView() {
                 </a>
               ) : null}
               {(showToolsLink || showFiscalBookLink) &&
-              (canManageSeals || canAssignSoftware || canModify || showDecommission || canDelete) ? (
+              (statusQuickAction ||
+                canManageSeals ||
+                canAssignSoftware ||
+                canModify ||
+                showDecommission ||
+                canDelete) ? (
                 <span className="mx-1 hidden h-6 w-px bg-border sm:block" aria-hidden />
+              ) : null}
+              {statusQuickAction ? (
+                <PrinterStatusActionButton action={statusQuickAction} size="md" />
               ) : null}
               {canManageSeals ? (
                 <button type="button" onClick={() => setSealsDialogOpen(true)} className={outlineBtn}>
