@@ -112,18 +112,6 @@ export function canDeleteSealRecord(role: Role): boolean {
   return can(role, "seals", "delete");
 }
 
-export function canCreateInventoryBoxRecord(role: Role): boolean {
-  return can(role, "inventoryBoxes", "create");
-}
-
-export function canModifyInventoryBoxRecord(role: Role): boolean {
-  return can(role, "inventoryBoxes", "update");
-}
-
-export function canDeleteInventoryBoxRecord(role: Role): boolean {
-  return can(role, "inventoryBoxes", "delete");
-}
-
 export function canCreateTechnicalServiceRecord(role: Role): boolean {
   return can(role, "technicalServices", "create");
 }

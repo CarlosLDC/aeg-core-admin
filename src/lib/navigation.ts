@@ -18,7 +18,6 @@ import {
   ArrowRightLeft,
   Cable,
   AppWindow,
-  Package,
   type LucideIcon,
 } from "lucide-react";
 import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
@@ -89,12 +88,6 @@ export const navSections: NavSection[] = [
         title: "Precintos fiscales",
         href: "/seals",
         icon: Stamp,
-        roles: ["ADMIN"],
-      },
-      {
-        title: "Cajas de inventario",
-        href: "/inventory-boxes",
-        icon: Package,
         roles: ["ADMIN"],
       },
       {

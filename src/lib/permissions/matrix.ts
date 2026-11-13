@@ -53,12 +53,6 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     update: ADMIN_ONLY,
     delete: ADMIN_ONLY,
   },
-  inventoryBoxes: {
-    read: ADMIN_ONLY,
-    create: ADMIN_ONLY,
-    update: ADMIN_ONLY,
-    delete: ADMIN_ONLY,
-  },
   technicalServices: {
     read: ADMIN_ONLY,
     create: TECHNICAL_SERVICE_WRITE,

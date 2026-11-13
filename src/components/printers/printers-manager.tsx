@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Cpu, Layers, Loader2, Plus } from "lucide-react";
+import { Cpu, Layers, List, Loader2, Package, Plus } from "lucide-react";
+import { InventoryBoxFormDialog } from "@/components/inventory-boxes/inventory-box-form-dialog";
+import { PrinterBoxSheetView } from "@/components/printers/printer-box-sheet-view";
 import { PrinterBatchFormDialog, type PrinterBatchSubmitPayload } from "@/components/printers/printer-batch-form-dialog";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
@@ -113,7 +115,21 @@ import {
   filterPrinterModelsForDistributor,
 } from "@/lib/distributor-scope";
 import { useDistributorStaffBranchId } from "@/hooks/use-distributor-staff-branch-id";
+import {
+  formatInventoryBoxLabel,
+  toInventoryBoxRequest,
+  type InventoryBoxFormValues,
+} from "@/lib/inventory-box-form";
+import {
+  createInventoryBox,
+  deleteInventoryBox,
+  fetchInventoryBoxes,
+  getInventoryBoxesErrorMessage,
+  updateInventoryBox,
+} from "@/lib/inventory-boxes-api";
+import { buildPrinterBoxPages } from "@/lib/printer-box-pages";
 import { fetchSoftware } from "@/lib/software-api";
+import type { InventoryBoxResponse } from "@/types/inventory-box";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -180,6 +196,7 @@ export function PrintersManager() {
   );
 
   const [printers, setPrinters] = useState<PrinterResponse[]>([]);
+  const [inventoryBoxes, setInventoryBoxes] = useState<InventoryBoxResponse[]>([]);
   const [models, setModels] = useState<PrinterModelResponse[]>([]);
   const [software, setSoftware] = useState<SelectOption[]>([]);
   const [branches, setBranches] = useState<BranchResponse[]>([]);
@@ -219,6 +236,13 @@ export function PrintersManager() {
     consequences: string[];
   } | null>(null);
   const [forceDeleting, setForceDeleting] = useState(false);
+  const [viewMode, setViewMode] = useState<"table" | "by-box">("table");
+  const [boxPageIndex, setBoxPageIndex] = useState(0);
+  const [boxDialog, setBoxDialog] = useState<"create" | "edit" | null>(null);
+  const [selectedBox, setSelectedBox] = useState<InventoryBoxResponse | null>(null);
+  const [boxSaving, setBoxSaving] = useState(false);
+  const [boxFormError, setBoxFormError] = useState<string | null>(null);
+  const [deletingBoxId, setDeletingBoxId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("printers");
   const [search, setSearch] = useTableSearch("/printers");
   const [statusFilter, setStatusFilter] = useTableFilter<
@@ -424,6 +448,7 @@ export function PrintersManager() {
         printer.distributorId,
         printer.macAddress,
         printer.versionFirmware,
+        printer.boxNumber != null ? formatInventoryBoxLabel(printer.boxNumber) : "",
         printer.createdAt,
         formatDate(printer.createdAt),
       ]
@@ -460,6 +485,26 @@ export function PrintersManager() {
   const pagination = usePagination(sortedPrinters, undefined, {
     section: "/printers",
   });
+
+  const hasActiveFilters =
+    search.trim().length > 0 ||
+    statusFilter !== "all" ||
+    serialFilter !== "all";
+
+  const boxPages = useMemo(
+    () =>
+      buildPrinterBoxPages({
+        printers: filteredPrinters,
+        boxes: inventoryBoxes,
+        hasActiveFilters,
+      }),
+    [filteredPrinters, inventoryBoxes, hasActiveFilters],
+  );
+
+  const nextSuggestedBoxNumber = useMemo(() => {
+    if (inventoryBoxes.length === 0) return 1;
+    return Math.max(...inventoryBoxes.map((box) => box.boxNumber)) + 1;
+  }, [inventoryBoxes]);
 
   const modelOptions = useMemo<SelectOption[]>(
     () =>
@@ -548,8 +593,14 @@ export function PrintersManager() {
     setCatalogLoading(true);
     setModelsLoading(true);
     try {
-      const [companyRows, branchRows, distributorRows, clientRows, modelRows] =
-        await Promise.all([
+      const [
+        companyRows,
+        branchRows,
+        distributorRows,
+        clientRows,
+        modelRows,
+        boxRows,
+      ] = await Promise.all([
           scope ? Promise.resolve(scope.companies) : fetchCompanies().catch(() => []),
           scope ? Promise.resolve(scope.branches) : fetchBranches().catch(() => []),
           isDistributor
@@ -557,6 +608,7 @@ export function PrintersManager() {
             : fetchDistributors().catch(() => []),
           fetchClients().catch(() => []),
           fetchPrinterModels().catch(() => [] as PrinterModelResponse[]),
+          fetchInventoryBoxes().catch(() => [] as InventoryBoxResponse[]),
         ]);
       setCompanies(
         [...companyRows].sort((a, b) =>
@@ -567,6 +619,7 @@ export function PrintersManager() {
       setDistributors(distributorRows);
       setClients(clientRows);
       setModels(modelRows);
+      setInventoryBoxes([...boxRows].sort((a, b) => a.boxNumber - b.boxNumber));
     } finally {
       setCatalogLoading(false);
       setModelsLoading(false);
@@ -981,15 +1034,313 @@ export function PrintersManager() {
     }
   }
 
+  function openCreateBox() {
+    setSelectedBox(null);
+    setBoxFormError(null);
+    setBoxDialog("create");
+  }
+
+  function openEditBox(box: InventoryBoxResponse) {
+    setSelectedBox(box);
+    setBoxFormError(null);
+    setBoxDialog("edit");
+  }
+
+  function closeBoxDialog() {
+    setBoxDialog(null);
+    setSelectedBox(null);
+    setBoxFormError(null);
+  }
+
+  async function refreshBoxesAndPrinters() {
+    const [boxRows] = await Promise.all([
+      fetchInventoryBoxes().catch(() => inventoryBoxes),
+      loadPrinters({ silent: true }),
+    ]);
+    setInventoryBoxes([...boxRows].sort((a, b) => a.boxNumber - b.boxNumber));
+  }
+
+  async function handleBoxSubmit(values: InventoryBoxFormValues) {
+    if (!isAdmin) return;
+    const bodyOrError = toInventoryBoxRequest(values);
+    if (typeof bodyOrError === "string") {
+      setBoxFormError(bodyOrError);
+      return;
+    }
+
+    setBoxSaving(true);
+    setBoxFormError(null);
+    const label = formatInventoryBoxLabel(bodyOrError.boxNumber);
+
+    try {
+      if (boxDialog === "create") {
+        const created = await createInventoryBox(bodyOrError);
+        toast.success(`${label} creada correctamente.`);
+        const nextBoxes = [...inventoryBoxes, created].sort(
+          (a, b) => a.boxNumber - b.boxNumber,
+        );
+        setInventoryBoxes(nextBoxes);
+        const createdIdx = nextBoxes.findIndex((b) => b.id === created.id);
+        if (createdIdx >= 0) setBoxPageIndex(createdIdx);
+      } else if (selectedBox) {
+        await updateInventoryBox(selectedBox.id, bodyOrError);
+        toast.success(`${label} actualizada.`);
+        await refreshBoxesAndPrinters();
+      }
+      closeBoxDialog();
+    } catch (err) {
+      const message = getInventoryBoxesErrorMessage(err);
+      setBoxFormError(message);
+      toast.error(message);
+    } finally {
+      setBoxSaving(false);
+    }
+  }
+
+  async function handleDeleteBox(box: InventoryBoxResponse) {
+    if (!isAdmin) return;
+    const label = formatInventoryBoxLabel(box.boxNumber);
+    const assignedCount = printers.filter((p) => p.boxId === box.id).length;
+    const warningSuffix =
+      assignedCount > 0
+        ? ` Sus ${assignedCount} impresora(s) quedarán sin caja.`
+        : "";
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar la ${label}?${warningSuffix}`,
+        destructive: true,
+      }))
+    ) {
+      return;
+    }
+
+    setDeletingBoxId(box.id);
+    try {
+      await deleteInventoryBox(box.id);
+      toast.success(`${label} eliminada.`);
+      await refreshBoxesAndPrinters();
+      setBoxPageIndex((idx) => Math.max(0, idx - 1));
+    } catch (err) {
+      toast.error(getInventoryBoxesErrorMessage(err));
+    } finally {
+      setDeletingBoxId(null);
+    }
+  }
+
+  function renderPrintersTable(rows: PrinterResponse[]) {
+    return (
+      <TableScroll>
+        <table
+          className={
+            isDistributor
+              ? "w-full min-w-[720px] text-left text-sm"
+              : "w-full min-w-[900px] text-left text-sm"
+          }
+        >
+          <thead>
+            <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+              <TableRowMetaHeaders
+                showId={tableColumns.showId}
+                showCreatedAt={tableColumns.showCreatedAt}
+                idSort={{
+                  sortDirection: sort?.key === "id" ? sort.direction : null,
+                  onSortToggle: () =>
+                    setSort((current) => toggleTableSort(current, "id")),
+                }}
+                createdAtSort={{
+                  sortDirection:
+                    sort?.key === "createdAt" ? sort.direction : null,
+                  onSortToggle: () =>
+                    setSort((current) => toggleTableSort(current, "createdAt")),
+                }}
+                actions={
+                  <th className="px-5 py-3 text-right font-medium">Acciones</th>
+                }
+              >
+                <SortableTableHeader
+                  label="Serial"
+                  sortDirection={
+                    sort?.key === "fiscalSerial" ? sort.direction : null
+                  }
+                  onToggle={() =>
+                    setSort((current) =>
+                      toggleTableSort(current, "fiscalSerial"),
+                    )
+                  }
+                />
+                <th className="px-5 py-3 font-medium">Estatus</th>
+                {!isDistributor ? (
+                  <th className="px-5 py-3 font-medium">Distribuidor</th>
+                ) : null}
+                <th className="px-5 py-3 font-medium">Cliente</th>
+                {isDistributor ? (
+                  <th className="px-5 py-3 font-medium">RIF Cliente</th>
+                ) : (
+                  <th className="px-5 py-3 font-medium">RIF Distribuidor</th>
+                )}
+              </TableRowMetaHeaders>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((printer) => {
+              const statusQuickAction = getPrinterStatusQuickAction({
+                status: printer.status,
+                printer,
+                isAdmin,
+                canAssign: canAssignInitialized,
+                canDispose: canDisposeAssigned,
+                onAssign: () => openAssignment(printer),
+                onDispose: () => openDisposition(printer),
+                onGrantDispose: isAdmin
+                  ? () => openEnajenacionRequest(printer)
+                  : undefined,
+              });
+              const statusBadgeTitle = getPrinterStatusBadgeTitle({
+                status: printer.status,
+                printer,
+                canDispose: canDisposeAssigned,
+              });
+
+              return (
+                <ClickableTableRow
+                  key={printer.id}
+                  href={printerPath(printer.id)}
+                >
+                  <TableRowMetaCells
+                    showId={tableColumns.showId}
+                    showCreatedAt={tableColumns.showCreatedAt}
+                    id={printer.id}
+                    createdAt={printer.createdAt}
+                    actions={
+                      <td className="px-5 py-3.5" data-row-click="ignore">
+                        <TableRowActionsMenu
+                          viewHref={printerPath(printer.id)}
+                          viewLabel={`Ver impresora ${printer.fiscalSerial}`}
+                          onEdit={
+                            canModify ? () => openEdit(printer) : undefined
+                          }
+                          customActions={
+                            canAssignSoftware
+                              ? [
+                                  {
+                                    label: "Gestionar software",
+                                    icon: (
+                                      <Cpu
+                                        className="size-4 shrink-0"
+                                        aria-hidden
+                                      />
+                                    ),
+                                    onClick: () => setSoftwarePrinter(printer),
+                                  },
+                                ]
+                              : undefined
+                          }
+                          onDelete={
+                            canDelete ? () => handleDelete(printer) : undefined
+                          }
+                          deleting={deletingId === printer.id}
+                        />
+                      </td>
+                    }
+                  >
+                    <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
+                      {printer.fiscalSerial}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex flex-nowrap items-center gap-2 whitespace-nowrap">
+                        <PrinterStatusBadge
+                          status={printer.status}
+                          title={statusBadgeTitle}
+                        />
+                        {statusQuickAction ? (
+                          <PrinterStatusActionButton
+                            action={statusQuickAction}
+                          />
+                        ) : null}
+                        {isPrinterPendingMqttEnajenacion(printer) ? (
+                          <PrinterPendingMqttBadge printer={printer} />
+                        ) : null}
+                        {isDistributor &&
+                        isFirmwareUpdateRequired(printer.versionFirmware) ? (
+                          <PrinterFirmwareUpdateBadge />
+                        ) : null}
+                        {printer.firmwareUpdateUnverified ? (
+                          <PrinterFirmwareUnverifiedBadge />
+                        ) : null}
+                      </div>
+                    </td>
+                    {!isDistributor ? (
+                      <td className="max-w-[160px] px-5 py-3.5 text-muted">
+                        <TruncatedText maxClassName="max-w-[140px]">
+                          {getDistributorLabel(printer.distributorId)}
+                        </TruncatedText>
+                      </td>
+                    ) : null}
+                    <td className="max-w-[160px] px-5 py-3.5 text-muted">
+                      <TruncatedText maxClassName="max-w-[140px]">
+                        {getClientLabel(printer.clientId)}
+                      </TruncatedText>
+                    </td>
+                    <td className="px-5 py-3.5 font-mono text-muted">
+                      {isDistributor
+                        ? getClientRif(printer.clientId)
+                        : getDistributorRif(printer.distributorId)}
+                    </td>
+                  </TableRowMetaCells>
+                </ClickableTableRow>
+              );
+            })}
+          </tbody>
+        </table>
+      </TableScroll>
+    );
+  }
+
   return (
     <div className="admin-content-stack">
       <PageToolbar
         actions={
-          canCreate ? (
-            <>
+          <div className="flex flex-wrap items-center gap-2">
+            <div
+              role="group"
+              aria-label="Modo de vista de impresoras"
+              className="inline-flex items-center rounded-lg border border-border bg-card p-1"
+            >
               <button
                 type="button"
-                onClick={openBatchCreate}
+                onClick={() => setViewMode("table")}
+                aria-pressed={viewMode === "table"}
+                className={cn(
+                  "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition",
+                  viewMode === "table"
+                    ? "bg-accent text-accent-foreground shadow-xs"
+                    : "text-muted hover:text-card-foreground",
+                )}
+              >
+                <List className="size-3.5" />
+                Tabla
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("by-box")}
+                aria-pressed={viewMode === "by-box"}
+                className={cn(
+                  "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition",
+                  viewMode === "by-box"
+                    ? "bg-accent text-accent-foreground shadow-xs"
+                    : "text-muted hover:text-card-foreground",
+                )}
+              >
+                <Package className="size-3.5" />
+                Ver por caja
+              </button>
+            </div>
+            {canCreate ? (
+              <>
+                <button
+                  type="button"
+                  onClick={openBatchCreate}
                   className={cn(
                     pageToolbarButtonClass,
                     "border border-border bg-card text-foreground hover:bg-foreground/5",
@@ -1010,7 +1361,8 @@ export function PrintersManager() {
                   Nueva impresora
                 </button>
               </>
-          ) : undefined
+            ) : null}
+          </div>
         }
       />
 
@@ -1090,185 +1442,26 @@ export function PrintersManager() {
               ]}
               columns={tableColumns.toolbarColumns}
             />
-            {filteredPrinters.length === 0 ? (
+            {viewMode === "by-box" ? (
+              <div className="border-t border-border bg-background/40 p-4">
+                <PrinterBoxSheetView
+                  pages={boxPages}
+                  pageIndex={boxPageIndex}
+                  onPageIndexChange={setBoxPageIndex}
+                  canManageBoxes={isAdmin}
+                  onCreateBox={openCreateBox}
+                  onEditBox={openEditBox}
+                  onDeleteBox={(box) => void handleDeleteBox(box)}
+                  deletingBoxId={deletingBoxId}
+                  renderTable={(rows) => renderPrintersTable(rows)}
+                />
+              </div>
+            ) : filteredPrinters.length === 0 ? (
               <TableFilterEmptyState />
             ) : (
               <>
-                <TableScroll>
-                  <table
-                    className={
-                      isDistributor
-                        ? "w-full min-w-[720px] text-left text-sm"
-                        : "w-full min-w-[900px] text-left text-sm"
-                    }
-                  >
-                    <thead>
-                      <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                        <TableRowMetaHeaders
-                          showId={tableColumns.showId}
-                          showCreatedAt={tableColumns.showCreatedAt}
-                          idSort={{
-                            sortDirection:
-                              sort?.key === "id" ? sort.direction : null,
-                            onSortToggle: () =>
-                              setSort((current) =>
-                                toggleTableSort(current, "id"),
-                              ),
-                          }}
-                          createdAtSort={{
-                            sortDirection:
-                              sort?.key === "createdAt" ? sort.direction : null,
-                            onSortToggle: () =>
-                              setSort((current) =>
-                                toggleTableSort(current, "createdAt"),
-                              ),
-                          }}
-                          actions={
-                            <th className="px-5 py-3 font-medium text-right">
-                              Acciones
-                            </th>
-                          }
-                        >
-                        <SortableTableHeader
-                          label="Serial"
-                          sortDirection={
-                            sort?.key === "fiscalSerial" ? sort.direction : null
-                          }
-                          onToggle={() =>
-                            setSort((current) =>
-                              toggleTableSort(current, "fiscalSerial"),
-                            )
-                          }
-                        />
-                        <th className="px-5 py-3 font-medium">Estatus</th>
-                        {!isDistributor ? (
-                          <th className="px-5 py-3 font-medium">Distribuidor</th>
-                        ) : null}
-                        <th className="px-5 py-3 font-medium">Cliente</th>
-                        {isDistributor ? (
-                          <th className="px-5 py-3 font-medium">RIF Cliente</th>
-                        ) : (
-                          <th className="px-5 py-3 font-medium">RIF Distribuidor</th>
-                        )}
-                        </TableRowMetaHeaders>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pagination.paginatedItems.map((printer) => {
-                        const statusQuickAction = getPrinterStatusQuickAction({
-                          status: printer.status,
-                          printer,
-                          isAdmin,
-                          canAssign: canAssignInitialized,
-                          canDispose: canDisposeAssigned,
-                          onAssign: () => openAssignment(printer),
-                          onDispose: () => openDisposition(printer),
-                          onGrantDispose: isAdmin
-                            ? () => openEnajenacionRequest(printer)
-                            : undefined,
-                        });
-                        const statusBadgeTitle = getPrinterStatusBadgeTitle({
-                          status: printer.status,
-                          printer,
-                          canDispose: canDisposeAssigned,
-                        });
-
-                        return (
-                        <ClickableTableRow
-                          key={printer.id}
-                          href={printerPath(printer.id)}
-                        >
-                          <TableRowMetaCells
-                            showId={tableColumns.showId}
-                            showCreatedAt={tableColumns.showCreatedAt}
-                            id={printer.id}
-                            createdAt={printer.createdAt}
-                            actions={
-                              <td className="px-5 py-3.5" data-row-click="ignore">
-                                <TableRowActionsMenu
-                                  viewHref={printerPath(printer.id)}
-                                  viewLabel={`Ver impresora ${printer.fiscalSerial}`}
-                                  onEdit={
-                                    canModify ? () => openEdit(printer) : undefined
-                                  }
-                                  customActions={
-                                    canAssignSoftware
-                                      ? [
-                                          {
-                                            label: "Gestionar software",
-                                            icon: (
-                                              <Cpu
-                                                className="size-4 shrink-0"
-                                                aria-hidden
-                                              />
-                                            ),
-                                            onClick: () =>
-                                              setSoftwarePrinter(printer),
-                                          },
-                                        ]
-                                      : undefined
-                                  }
-                                  onDelete={
-                                    canDelete
-                                      ? () => handleDelete(printer)
-                                      : undefined
-                                  }
-                                  deleting={deletingId === printer.id}
-                                />
-                              </td>
-                            }
-                          >
-                          <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
-                            {printer.fiscalSerial}
-                          </td>
-                          <td className="px-5 py-3.5">
-                            <div className="flex flex-nowrap items-center gap-2 whitespace-nowrap">
-                              <PrinterStatusBadge
-                                status={printer.status}
-                                title={statusBadgeTitle}
-                              />
-                              {statusQuickAction ? (
-                                <PrinterStatusActionButton
-                                  action={statusQuickAction}
-                                />
-                              ) : null}
-                              {isPrinterPendingMqttEnajenacion(printer) ? (
-                                <PrinterPendingMqttBadge printer={printer} />
-                              ) : null}
-                              {isDistributor &&
-                              isFirmwareUpdateRequired(printer.versionFirmware) ? (
-                                <PrinterFirmwareUpdateBadge />
-                              ) : null}
-                              {printer.firmwareUpdateUnverified ? (
-                                <PrinterFirmwareUnverifiedBadge />
-                              ) : null}
-                            </div>
-                          </td>
-                          {!isDistributor ? (
-                            <td className="max-w-[160px] px-5 py-3.5 text-muted">
-                              <TruncatedText maxClassName="max-w-[140px]">
-                                {getDistributorLabel(printer.distributorId)}
-                              </TruncatedText>
-                            </td>
-                          ) : null}
-                          <td className="max-w-[160px] px-5 py-3.5 text-muted">
-                            <TruncatedText maxClassName="max-w-[140px]">
-                              {getClientLabel(printer.clientId)}
-                            </TruncatedText>
-                          </td>
-                          <td className="px-5 py-3.5 font-mono text-muted">
-                            {isDistributor
-                              ? getClientRif(printer.clientId)
-                              : getDistributorRif(printer.distributorId)}
-                          </td>
-                          </TableRowMetaCells>
-                        </ClickableTableRow>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </TableScroll>
-            <TablePagination pagination={pagination} />
+                {renderPrintersTable(pagination.paginatedItems)}
+                <TablePagination pagination={pagination} />
               </>
             )}
           </>
@@ -1408,6 +1601,19 @@ export function PrintersManager() {
           if (!forceDeleting) setDeleteBlocked(null);
         }}
         onForceDelete={handleForceDelete}
+      />
+
+      <InventoryBoxFormDialog
+        mode={boxDialog === "create" ? "create" : "edit"}
+        box={selectedBox ?? undefined}
+        suggestedBoxNumber={
+          boxDialog === "create" ? nextSuggestedBoxNumber : undefined
+        }
+        open={boxDialog !== null}
+        saving={boxSaving}
+        error={boxFormError}
+        onClose={closeBoxDialog}
+        onSubmit={handleBoxSubmit}
       />
     </div>
   );

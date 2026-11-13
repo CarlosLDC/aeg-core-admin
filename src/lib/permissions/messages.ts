@@ -9,7 +9,6 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   printerModels: "modelos fiscales",
   firmwares: "versiones de firmware",
   seals: "precintos",
-  inventoryBoxes: "cajas de inventario",
   technicalServices: "servicios técnicos",
   annualInspections: "inspecciones anuales",
   abnormalities: "anormalidades",

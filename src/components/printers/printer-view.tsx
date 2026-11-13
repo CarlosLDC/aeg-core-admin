@@ -24,7 +24,6 @@ import {
   hrefForClient,
   hrefForDistributor,
   hrefForFirmware,
-  hrefForInventoryBox,
   hrefForPrinterModel,
 } from "@/lib/table-foreign-hrefs";
 import { formatInventoryBoxLabel } from "@/lib/inventory-box-form";
@@ -552,9 +551,6 @@ export function PrinterView() {
                   ? `Caja #${printer.boxId}`
                   : "Sin caja"
             }
-            href={
-              user ? hrefForInventoryBox(printer.boxId, user.role) : undefined
-            }
           />
           {printer.status === "a_credito" ||
           printer.creditInstallments != null ||
@@ -634,9 +630,6 @@ export function PrinterView() {
                   : printer.boxId != null
                     ? `Caja #${printer.boxId}`
                     : "Sin caja"
-              }
-              href={
-                user ? hrefForInventoryBox(printer.boxId, user.role) : undefined
               }
             />
           </DetailSection>

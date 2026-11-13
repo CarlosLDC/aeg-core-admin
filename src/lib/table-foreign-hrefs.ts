@@ -3,7 +3,6 @@ import {
   branchPath,
   clientPath,
   firmwareVersionPath,
-  inventoryBoxPath,
   printerModelPath,
   printerPath,
   sealPath,
@@ -103,16 +102,6 @@ export function hrefForSeal(
   return hrefIfAccessible(
     role,
     sealId != null ? sealPath(sealId) : undefined,
-  );
-}
-
-export function hrefForInventoryBox(
-  boxId: number | null | undefined,
-  role: Role,
-): string | undefined {
-  return hrefIfAccessible(
-    role,
-    boxId != null ? inventoryBoxPath(boxId) : undefined,
   );
 }
 
