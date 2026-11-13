@@ -44,7 +44,7 @@ export function InactivityTimeoutDialog({
         <button
           type="button"
           onClick={onStayConnected}
-          className="mt-6 w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground transition-colors hover:opacity-90"
+          className="mt-6 inline-flex h-10 w-full items-center justify-center rounded-lg bg-accent px-4 text-sm font-medium text-accent-foreground transition-colors hover:opacity-90"
         >
           Permanecer conectado
         </button>

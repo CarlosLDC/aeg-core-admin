@@ -698,7 +698,7 @@ export function FiscalizacionUsbWizard() {
                 ritualRunning ||
                 w.ritualPhase === "done"
               }
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent/90 disabled:opacity-50"
+              className="inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-5 text-sm font-semibold text-white hover:bg-accent/90 disabled:opacity-50"
             >
               {ritualRunning ? (
                 <Loader2 className="size-4 animate-spin" />

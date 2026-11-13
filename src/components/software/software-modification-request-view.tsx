@@ -134,7 +134,7 @@ export function SoftwareModificationRequestView({
               type="button"
               onClick={() => void handleReject()}
               disabled={saving}
-              className="inline-flex h-9 items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3.5 text-sm font-medium text-rose-700 hover:bg-rose-500/20 disabled:opacity-50 dark:text-rose-400"
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3.5 text-sm font-medium text-rose-700 hover:bg-rose-500/20 disabled:opacity-50 dark:text-rose-400"
             >
               {saving ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -147,7 +147,7 @@ export function SoftwareModificationRequestView({
               type="button"
               onClick={() => void handleApprove()}
               disabled={saving}
-              className="inline-flex h-9 items-center gap-2 rounded-lg bg-emerald-600 px-3.5 text-sm font-medium text-white shadow hover:bg-emerald-700 disabled:opacity-50"
+              className="inline-flex h-10 items-center gap-2 rounded-lg bg-emerald-600 px-3.5 text-sm font-medium text-white shadow hover:bg-emerald-700 disabled:opacity-50"
             >
               {saving ? (
                 <Loader2 className="size-4 animate-spin" />

@@ -40,7 +40,7 @@ export function FormDialogFooter({
         type="button"
         onClick={onClose}
         disabled={saving}
-        className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
+        className="inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
       >
         Cancelar
       </button>
@@ -49,7 +49,7 @@ export function FormDialogFooter({
         form={formId}
         disabled={submitBlocked}
         className={cn(
-          "flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground",
+          "flex h-10 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-medium text-accent-foreground",
           submitBlocked && "cursor-not-allowed opacity-70",
         )}
       >

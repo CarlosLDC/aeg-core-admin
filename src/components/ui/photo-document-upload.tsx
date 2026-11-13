@@ -229,7 +229,7 @@ export function PhotoDocumentUpload({
             </div>
             <span
               className={cn(
-                "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm font-medium text-foreground",
+                "inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground",
                 !disabled && !uploading && "group-hover:border-accent/30",
               )}
             >

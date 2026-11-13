@@ -172,7 +172,7 @@ function LoginForm() {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full rounded-lg border border-border/80 bg-login-field py-2.5 pl-10 pr-4 text-sm outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-ring/20"
+                  className="h-10 w-full rounded-lg border border-border/80 bg-login-field pl-10 pr-4 text-sm outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-ring/20"
                   placeholder="tu.usuario@empresa.com"
                 />
               </div>
@@ -189,7 +189,7 @@ function LoginForm() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-border/80 bg-login-field py-2.5 pl-10 pr-11 text-sm outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-ring/20"
+                  className="h-10 w-full rounded-lg border border-border/80 bg-login-field pl-10 pr-11 text-sm outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-ring/20"
                   placeholder="••••••••"
                 />
                 <button
@@ -224,7 +224,7 @@ function LoginForm() {
               type="submit"
               disabled={submitting}
               className={cn(
-                "flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground transition-opacity",
+                "flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-medium text-accent-foreground transition-opacity",
                 submitting && "cursor-not-allowed opacity-70",
               )}
             >

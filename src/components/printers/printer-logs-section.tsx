@@ -607,7 +607,7 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
                         setLimit(Number(e.target.value));
                         setPage(0);
                       }}
-                      className="h-8 appearance-none rounded-lg border border-border bg-background pl-2.5 pr-7 text-xs text-foreground outline-none focus:border-accent"
+                      className="h-10 appearance-none rounded-lg border border-border bg-background pl-2.5 pr-7 text-xs text-foreground outline-none focus:border-accent"
                     >
                       {PAGE_LIMIT_OPTIONS.map((size) => (
                         <option key={size} value={size}>
