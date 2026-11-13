@@ -109,7 +109,7 @@ function validateServiceCenterProfile(
   return null;
 }
 
-export type UserWizardSection = "identity" | "role" | "assignment";
+export type UserWizardSection = "identity" | "assignment";
 
 function validateUserIdentity(
   values: UserFormFields,
@@ -158,7 +158,6 @@ export function validateUserWizardStep(
   mode: "create" | "edit",
 ): string | null {
   if (section === "identity") return validateUserIdentity(values, mode);
-  if (section === "role") return null;
   return validateUserAssignment(values);
 }
 

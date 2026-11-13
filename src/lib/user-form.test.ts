@@ -146,14 +146,7 @@ describe("validateUserWizardStep", () => {
     ).toBeNull();
   });
 
-  it("skips role validation and checks assignment on last step", () => {
-    expect(
-      validateUserWizardStep(
-        "role",
-        { ...baseForm, role: "ADMIN", nationalId: "" },
-        "create",
-      ),
-    ).toBeNull();
+  it("validates assignment on last step", () => {
     expect(
       validateUserWizardStep(
         "assignment",

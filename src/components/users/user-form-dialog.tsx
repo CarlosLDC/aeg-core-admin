@@ -4,7 +4,6 @@ import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import {
   Building2,
   Loader2,
-  Shield,
   UserRound,
   X,
 } from "lucide-react";
@@ -114,25 +113,23 @@ const emptyForm: UserFormValues = {
   enabled: true,
 };
 
-type WizardStep = 1 | 2 | 3;
+type WizardStep = 1 | 2;
 
 const FORM_STEPS: {
   step: WizardStep;
   section: UserWizardSection;
   label: string;
 }[] = [
-  { step: 1, section: "identity", label: "Identidad" },
-  { step: 2, section: "role", label: "Rol" },
-  { step: 3, section: "assignment", label: "Asignacion" },
+  { step: 1, section: "identity", label: "Identidad y rol" },
+  { step: 2, section: "assignment", label: "Asignación" },
 ];
 
 const STEP_ICONS = {
   1: UserRound,
-  2: Shield,
-  3: Building2,
+  2: Building2,
 } as const;
 
-const LAST_WIZARD_STEP: WizardStep = 3;
+const LAST_WIZARD_STEP: WizardStep = 2;
 
 function roleCategory(role: Role): UserRoleCategory {
   if (role === "ADMIN" || role === "SENIAT") return role;
@@ -148,12 +145,10 @@ function stepSubtitle(step: WizardStep, mode: "create" | "edit"): string {
   switch (step) {
     case 1:
       return mode === "create"
-        ? "Define nombre, correo y clave de acceso."
-        : "Actualiza nombre, correo y clave (opcional).";
+        ? "Define nombre, correo, clave y rol del usuario."
+        : "Actualiza nombre, correo, clave (opcional) y rol.";
     case 2:
-      return "Elige el rol que determina permisos y alcance.";
-    case 3:
-      return "Completa la vinculacion segun el tipo de usuario.";
+      return "Completa la vinculación según el tipo de usuario.";
     default:
       return "";
   }
@@ -378,6 +373,34 @@ export function UserFormDialog({
         </label>
       </div>
 
+      <div className="space-y-2">
+        <FieldLabel required>Rol</FieldLabel>
+        <SegmentedToggle
+          value={selectedCategory}
+          onChange={handleCategoryChange}
+          layout="wrap"
+          ariaLabel="Rol del usuario"
+          disabled={saving}
+          options={USER_FORM_ROLE_CATEGORIES.map((category) => ({
+            value: category,
+            label: (
+              <>
+                <span className="sm:hidden">
+                  {USER_ROLE_CATEGORY_COMPACT_LABELS[category]}
+                </span>
+                <span className="hidden sm:inline">
+                  {USER_ROLE_CATEGORY_LABELS[category]}
+                </span>
+              </>
+            ),
+            tone: USER_ROLE_CATEGORY_TONE[category],
+          }))}
+        />
+        <p className="text-xs leading-relaxed text-muted">
+          {USER_ROLE_CATEGORY_DESCRIPTION[selectedCategory]}
+        </p>
+      </div>
+
       {mode === "edit" && (
         <label className="flex cursor-pointer items-center gap-2 text-sm">
           <input
@@ -392,35 +415,6 @@ export function UserFormDialog({
           <span>Cuenta activa</span>
         </label>
       )}
-    </div>
-  );
-
-  const roleSection = (
-    <div className="space-y-4">
-      <SegmentedToggle
-        value={selectedCategory}
-        onChange={handleCategoryChange}
-        layout="wrap"
-        ariaLabel="Rol del usuario"
-        disabled={saving}
-        options={USER_FORM_ROLE_CATEGORIES.map((category) => ({
-          value: category,
-          label: (
-            <>
-              <span className="sm:hidden">
-                {USER_ROLE_CATEGORY_COMPACT_LABELS[category]}
-              </span>
-              <span className="hidden sm:inline">
-                {USER_ROLE_CATEGORY_LABELS[category]}
-              </span>
-            </>
-          ),
-          tone: USER_ROLE_CATEGORY_TONE[category],
-        }))}
-      />
-      <p className="text-xs leading-relaxed text-muted">
-        {USER_ROLE_CATEGORY_DESCRIPTION[selectedCategory]}
-      </p>
     </div>
   );
 
@@ -556,7 +550,6 @@ export function UserFormDialog({
 
   function renderWizardSection() {
     if (currentSection === "identity") return identitySection;
-    if (currentSection === "role") return roleSection;
     return assignmentSection;
   }
 
@@ -573,7 +566,7 @@ export function UserFormDialog({
         aria-label="Cerrar"
         onClick={onClose}
       />
-      <div className="relative flex max-h-[min(92vh,100dvh)] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+      <div className="relative flex max-h-[min(92vh,100dvh)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
         <div className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
