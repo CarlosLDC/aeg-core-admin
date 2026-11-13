@@ -1,7 +1,7 @@
 import type { ContributorType } from "@/types/company";
 
 export type ModificationActionType = "UPDATE" | "DELETE";
-export type ModificationRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type ModificationRequestStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
 export type ClientReviewStatus = "ACTIVE" | "PENDING_REVIEW";
 
 export type ClientModificationProposedData = {

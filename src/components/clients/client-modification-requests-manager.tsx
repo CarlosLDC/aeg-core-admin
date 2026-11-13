@@ -32,6 +32,7 @@ const STATUS_LABELS: Record<ModificationRequestStatus, string> = {
   PENDING: "Pendiente",
   APPROVED: "Aprobada",
   REJECTED: "Rechazada",
+  CANCELLED: "Cancelada",
 };
 
 const ACTION_LABELS = {
@@ -65,6 +66,7 @@ export function ClientModificationRequestsManager() {
         ...(await fetchClientModificationRequests("PENDING")),
         ...(await fetchClientModificationRequests("APPROVED")),
         ...(await fetchClientModificationRequests("REJECTED")),
+        ...(await fetchClientModificationRequests("CANCELLED").catch(() => [])),
       ];
       const pendingCount = data.filter((row) => row.status === "PENDING").length;
       if (!userChangedStatusFilter.current) {
@@ -198,6 +200,7 @@ export function ClientModificationRequestsManager() {
                     { value: "PENDING", label: "Pendientes" },
                     { value: "APPROVED", label: "Aprobadas" },
                     { value: "REJECTED", label: "Rechazadas" },
+                    { value: "CANCELLED", label: "Canceladas" },
                   ],
                 },
               ]}
@@ -248,6 +251,8 @@ export function ClientModificationRequestsManager() {
                                   "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
                                 row.status === "REJECTED" &&
                                   "bg-rose-500/10 text-rose-700 dark:text-rose-300",
+                                row.status === "CANCELLED" &&
+                                  "bg-slate-500/10 text-slate-700 dark:text-slate-300",
                               )}
                             >
                               {STATUS_LABELS[row.status]}

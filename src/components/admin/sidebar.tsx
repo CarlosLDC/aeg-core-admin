@@ -13,6 +13,8 @@ import {
 } from "@/lib/navigation";
 import { useAuth } from "@/context/auth-provider";
 import { fetchClientModificationRequests } from "@/lib/client-modification-requests-api";
+import { fetchSoftwareModificationRequests } from "@/lib/software-modification-requests-api";
+import { fetchPrinterEnajenacionRequests } from "@/lib/printer-enajenacion-requests-api";
 import {
   DEFAULT_POLL_INTERVAL_MS,
   DEFAULT_RETRY_DELAYS_MS,
@@ -204,8 +206,19 @@ export function Sidebar({
 
     const loadPending = async () => {
       try {
-        const pendingClients = await fetchClientModificationRequests("PENDING");
-        if (!cancelled) setPendingClientReviewCount(pendingClients.length);
+        const [pendingClients, pendingSoftware, pendingPrinters] =
+          await Promise.all([
+            fetchClientModificationRequests("PENDING"),
+            fetchSoftwareModificationRequests("PENDING").catch(() => []),
+            fetchPrinterEnajenacionRequests("PENDING").catch(() => []),
+          ]);
+        if (!cancelled) {
+          setPendingClientReviewCount(
+            pendingClients.length +
+              pendingSoftware.length +
+              pendingPrinters.length,
+          );
+        }
         return true;
       } catch {
         return false;

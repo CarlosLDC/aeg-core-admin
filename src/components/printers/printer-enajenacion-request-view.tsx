@@ -27,12 +27,14 @@ const STATUS_LABELS: Record<ModificationRequestStatus, string> = {
   PENDING: "Pendiente",
   APPROVED: "Aprobada",
   REJECTED: "Rechazada",
+  CANCELLED: "Cancelada",
 };
 
 const STATUS_STYLES: Record<ModificationRequestStatus, string> = {
   PENDING: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20",
   APPROVED: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
   REJECTED: "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20",
+  CANCELLED: "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/20",
 };
 
 type PrinterEnajenacionRequestViewProps = {

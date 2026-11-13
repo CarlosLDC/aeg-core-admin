@@ -32,6 +32,7 @@ const STATUS_LABELS: Record<ModificationRequestStatus, string> = {
   PENDING: "Pendiente",
   APPROVED: "Aprobada",
   REJECTED: "Rechazada",
+  CANCELLED: "Cancelada",
 };
 
 function formatAfterValue(
@@ -198,8 +199,12 @@ export function ClientModificationRequestView({
             <DetailField label="Solicitud" value={formatResourceId(row.id)} mono />
             <DetailField
               label="Cliente"
-              value={row.currentClientSnapshot?.businessName ?? "Cliente"}
-              href={clientPath(row.clientId)}
+              value={
+                row.currentClientSnapshot?.businessName ??
+                row.proposedData?.businessName ??
+                "Cliente eliminado"
+              }
+              href={row.currentClientSnapshot ? clientPath(row.clientId) : undefined}
             />
             <DetailField label="Acción" value={row.actionType} />
             <DetailField label="Estado" value={STATUS_LABELS[row.status]} />
@@ -298,8 +303,12 @@ export function ClientModificationRequestView({
                 <DetailField label="Solicitud" value={formatResourceId(row.id)} mono />
                 <DetailField
                   label="Cliente"
-                  value={row.currentClientSnapshot?.businessName ?? "Cliente"}
-                  href={clientPath(row.clientId)}
+                  value={
+                    row.currentClientSnapshot?.businessName ??
+                    row.proposedData?.businessName ??
+                    "Cliente eliminado"
+                  }
+                  href={row.currentClientSnapshot ? clientPath(row.clientId) : undefined}
                 />
                 <DetailField label="Acción" value={row.actionType} />
                 <DetailField label="Estado" value={STATUS_LABELS[row.status]} />

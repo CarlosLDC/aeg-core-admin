@@ -52,6 +52,7 @@ const STATUS_LABELS: Record<ModificationRequestStatus, string> = {
   PENDING: "Pendiente",
   APPROVED: "Aprobada",
   REJECTED: "Rechazada",
+  CANCELLED: "Cancelada",
 };
 
 const ACTION_LABELS: Record<ModificationActionType | "CREATE", string> = {
@@ -83,25 +84,29 @@ export function ModificationReviewsManager() {
     }
     try {
       const [
-        pendingClients, approvedClients, rejectedClients,
-        pendingSoftware, approvedSoftware, rejectedSoftware,
-        pendingPrinters, approvedPrinters, rejectedPrinters,
+        pendingClients, approvedClients, rejectedClients, cancelledClients,
+        pendingSoftware, approvedSoftware, rejectedSoftware, cancelledSoftware,
+        pendingPrinters, approvedPrinters, rejectedPrinters, cancelledPrinters,
       ] = await Promise.all([
         fetchClientModificationRequests("PENDING"),
         fetchClientModificationRequests("APPROVED"),
         fetchClientModificationRequests("REJECTED"),
+        fetchClientModificationRequests("CANCELLED").catch(() => []),
         fetchSoftwareModificationRequests("PENDING").catch(() => []),
         fetchSoftwareModificationRequests("APPROVED").catch(() => []),
         fetchSoftwareModificationRequests("REJECTED").catch(() => []),
+        fetchSoftwareModificationRequests("CANCELLED").catch(() => []),
         fetchPrinterEnajenacionRequests("PENDING").catch(() => []),
         fetchPrinterEnajenacionRequests("APPROVED").catch(() => []),
         fetchPrinterEnajenacionRequests("REJECTED").catch(() => []),
+        fetchPrinterEnajenacionRequests("CANCELLED").catch(() => []),
       ]);
 
       const clientRows: ReviewRow[] = [
         ...pendingClients,
         ...approvedClients,
         ...rejectedClients,
+        ...cancelledClients,
       ].map((row) => ({
         id: row.id,
         resourceId: row.clientId,
@@ -119,6 +124,7 @@ export function ModificationReviewsManager() {
         ...pendingSoftware,
         ...approvedSoftware,
         ...rejectedSoftware,
+        ...cancelledSoftware,
       ].map((row) => ({
         id: row.id,
         resourceId: row.printerId,
@@ -136,6 +142,7 @@ export function ModificationReviewsManager() {
         ...pendingPrinters,
         ...approvedPrinters,
         ...rejectedPrinters,
+        ...cancelledPrinters,
       ].map((row) => ({
         id: row.id,
         resourceId: row.printerId,
@@ -289,6 +296,7 @@ export function ModificationReviewsManager() {
                     { value: "PENDING", label: "Pendientes" },
                     { value: "APPROVED", label: "Aprobadas" },
                     { value: "REJECTED", label: "Rechazadas" },
+                    { value: "CANCELLED", label: "Canceladas" },
                   ],
                 },
               ]}
@@ -346,6 +354,8 @@ export function ModificationReviewsManager() {
                                   "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
                                 row.status === "REJECTED" &&
                                   "bg-rose-500/10 text-rose-700 dark:text-rose-300",
+                                row.status === "CANCELLED" &&
+                                  "bg-slate-500/10 text-slate-700 dark:text-slate-300",
                               )}
                             >
                               {STATUS_LABELS[row.status]}
