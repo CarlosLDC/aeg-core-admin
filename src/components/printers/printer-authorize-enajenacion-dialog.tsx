@@ -85,57 +85,46 @@ export function PrinterAuthorizeEnajenacionDialog({
       cancelLabel="Cancelar"
     >
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
-        <p className="text-sm text-muted">
-          Autoriza la enajenación de esta impresora en estatus{" "}
-          <strong className="text-foreground">En consignación</strong>. Al otorgar
-          el permiso, se habilitará el botón{" "}
-          <strong className="text-foreground">Enajenar</strong> y la impresora
-          pasará al estatus <strong className="text-foreground">A crédito</strong>{" "}
-          al completar la enajenación.
-        </p>
+        <label
+          htmlFor="grant-credit-installments"
+          className="block"
+        >
+          <FieldLabel required>
+            Cuotas pactadas
+          </FieldLabel>
+          <input
+            id="grant-credit-installments"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            step={1}
+            required
+            value={creditInstallments}
+            onChange={(e) => setCreditInstallments(e.target.value)}
+            placeholder="Ej. 4"
+            className={formFieldInputClass}
+          />
+        </label>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <label
-            htmlFor="grant-credit-installments"
-            className="flex flex-col justify-between"
-          >
-            <FieldLabel required>
-              Cuotas pactadas
-            </FieldLabel>
-            <input
-              id="grant-credit-installments"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              step={1}
-              required
-              value={creditInstallments}
-              onChange={(e) => setCreditInstallments(e.target.value)}
-              placeholder="Ej. 4"
-              className={formFieldInputClass}
-            />
-          </label>
-
-          <label
-            htmlFor="grant-final-sale-price"
-            className="flex flex-col justify-between"
-          >
-            <FieldLabel>
-              Monto total de venta (opcional)
-            </FieldLabel>
-            <input
-              id="grant-final-sale-price"
-              type="number"
-              inputMode="decimal"
-              min={0}
-              step="0.01"
-              value={finalSalePrice}
-              onChange={(e) => setFinalSalePrice(e.target.value)}
-              placeholder="Ej. 450.00"
-              className={formFieldInputClass}
-            />
-          </label>
-        </div>
+        <label
+          htmlFor="grant-final-sale-price"
+          className="block"
+        >
+          <FieldLabel>
+            Monto total de venta (opcional)
+          </FieldLabel>
+          <input
+            id="grant-final-sale-price"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            step="0.01"
+            value={finalSalePrice}
+            onChange={(e) => setFinalSalePrice(e.target.value)}
+            placeholder="Ej. 450.00"
+            className={formFieldInputClass}
+          />
+        </label>
       </div>
     </PrinterActionDialogShell>
   );
