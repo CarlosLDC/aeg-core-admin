@@ -295,3 +295,12 @@ body {
 .sidebar-nav-scroll::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

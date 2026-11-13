@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export type DetailPagerStep = {
@@ -19,6 +19,8 @@ export function DetailSectionsPager({
   className,
 }: DetailSectionsPagerProps) {
   const [index, setIndex] = useState(0);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const hasMountedRef = useRef(false);
 
   const stepCount = steps.length;
   const safeIndex =
@@ -27,6 +29,18 @@ export function DetailSectionsPager({
   const isLast = safeIndex === stepCount - 1;
   const showNav = stepCount > 1;
   const current = steps[safeIndex];
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+    tabRefs.current[safeIndex]?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  }, [safeIndex]);
 
   useEffect(() => {
     if (!showNav) return;
@@ -58,32 +72,39 @@ export function DetailSectionsPager({
   return (
     <div className={cn("space-y-4", className)}>
       {showNav && (
-        <div
-          className="flex flex-wrap justify-center gap-1"
-          role="tablist"
-          aria-label="Secciones del detalle"
-        >
-          {steps.map((step, stepIndex) => {
-            const isActive = stepIndex === safeIndex;
-            return (
-              <button
-                key={step.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                id={`detail-tab-${step.id}`}
-                aria-controls={`detail-panel-${step.id}`}
-                onClick={() => setIndex(stepIndex)}
-                className={cn(
-                  "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm",
-                  "hover:bg-foreground/5",
-                  isActive ? "bg-accent/10 text-accent" : "text-muted",
-                )}
-              >
-                {step.label}
-              </button>
-            );
-          })}
+        <div className="no-scrollbar -mx-1 overflow-x-auto border-b border-border px-1">
+          <div
+            className="flex flex-nowrap items-center gap-1 sm:justify-center"
+            role="tablist"
+            aria-label="Secciones del detalle"
+          >
+            {steps.map((step, stepIndex) => {
+              const isActive = stepIndex === safeIndex;
+              return (
+                <button
+                  key={step.id}
+                  ref={(el) => {
+                    tabRefs.current[stepIndex] = el;
+                  }}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  id={`detail-tab-${step.id}`}
+                  aria-controls={`detail-panel-${step.id}`}
+                  onClick={() => setIndex(stepIndex)}
+                  className={cn(
+                    "shrink-0 whitespace-nowrap border-b-2 px-3 py-2 text-xs font-medium transition-colors sm:px-3.5 sm:py-2.5 sm:text-sm",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
+                    isActive
+                      ? "border-accent text-accent"
+                      : "border-transparent text-muted hover:border-border hover:text-foreground",
+                  )}
+                >
+                  {step.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 

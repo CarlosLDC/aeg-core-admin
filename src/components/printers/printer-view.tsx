@@ -43,6 +43,7 @@ import { PrinterTicketConfigPanel } from "@/components/printers/printer-ticket-j
 import { PrinterLogsSection } from "@/components/printers/printer-logs-section";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-provider";
 import { canAccessRoute } from "@/lib/permissions/routes";
 import { useCompanyScope } from "@/context/company-scope-provider";
@@ -1062,9 +1063,9 @@ export function PrinterView() {
     printer && isAdmin && canDecommissionStatus(printer.status),
   );
   const outlineBtn =
-    "inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5";
+    "inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5";
   const ghostBtn =
-    "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground";
+    "inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground sm:border-transparent sm:bg-transparent";
 
   return (
     <>
@@ -1077,23 +1078,13 @@ export function PrinterView() {
         error={error}
         actions={
           printer ? (
-            <div className="flex flex-wrap items-center gap-2">
-              {showToolsLink ? (
-                <Link href={toolsPrinterPath(printer.fiscalSerial)} className={ghostBtn}>
-                  <Wrench className="size-4" aria-hidden />
-                  Ir a tools
-                </Link>
-              ) : null}
-              {showFiscalBookLink ? (
-                <a
-                  href={fiscalBooksAppUrl(printer.id)}
-                  {...fiscalBookLinkProps}
-                  className={ghostBtn}
-                >
-                  <BookOpen className="size-4" aria-hidden />
-                  Libro fiscal
-                  <ExternalLink className="size-3.5 opacity-60" aria-hidden />
-                </a>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+              {statusQuickAction ? (
+                <PrinterStatusActionButton
+                  action={statusQuickAction}
+                  size="md"
+                  className="w-full justify-center sm:order-3 sm:w-auto"
+                />
               ) : null}
               {(showToolsLink || showFiscalBookLink) &&
               (statusQuickAction ||
@@ -1102,54 +1093,79 @@ export function PrinterView() {
                 canModify ||
                 showDecommission ||
                 canDelete) ? (
-                <span className="mx-1 hidden h-6 w-px bg-border sm:block" aria-hidden />
+                <span className="mx-1 hidden h-6 w-px bg-border sm:order-2 sm:block" aria-hidden />
               ) : null}
-              {statusQuickAction ? (
-                <PrinterStatusActionButton action={statusQuickAction} size="md" />
-              ) : null}
-              {canManageSeals ? (
-                <button type="button" onClick={() => setSealsDialogOpen(true)} className={outlineBtn}>
-                  <ShieldCheck className="size-4" aria-hidden />
-                  Gestionar precintos
-                </button>
-              ) : null}
-              {canAssignSoftware ? (
-                <button
-                  type="button"
-                  onClick={() => setSoftwareDialogOpen(true)}
-                  className={outlineBtn}
-                >
-                  <Cpu className="size-4" aria-hidden />
-                  Gestionar software
-                </button>
-              ) : null}
-              <ResourceViewActions
-                onEdit={
-                  canModify
-                    ? () => {
-                        setFormError(null);
-                        setEditOpen(true);
-                      }
-                    : undefined
-                }
-                leadingActions={
-                  showDecommission ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDecommissionError(null);
-                        setDecommissionOpen(true);
-                      }}
-                      className="inline-flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-500/15 dark:text-amber-200"
-                    >
-                      <Ban className="size-4" aria-hidden />
-                      Desincorporar
-                    </button>
-                  ) : undefined
-                }
-                onDelete={canDelete ? () => void handleDelete() : undefined}
-                deleting={deleting}
-              />
+              <div className="grid grid-cols-2 gap-2 sm:contents [&>*:last-child:nth-child(odd)]:col-span-2 sm:[&>*:last-child:nth-child(odd)]:col-span-1">
+                {showToolsLink ? (
+                  <Link
+                    href={toolsPrinterPath(printer.fiscalSerial)}
+                    className={cn(ghostBtn, "sm:order-1")}
+                  >
+                    <Wrench className="size-4 shrink-0" aria-hidden />
+                    Ir a tools
+                  </Link>
+                ) : null}
+                {showFiscalBookLink ? (
+                  <a
+                    href={fiscalBooksAppUrl(printer.id)}
+                    {...fiscalBookLinkProps}
+                    className={cn(ghostBtn, "sm:order-1")}
+                  >
+                    <BookOpen className="size-4 shrink-0" aria-hidden />
+                    Libro fiscal
+                    <ExternalLink className="size-3.5 shrink-0 opacity-60" aria-hidden />
+                  </a>
+                ) : null}
+                {canManageSeals ? (
+                  <button
+                    type="button"
+                    onClick={() => setSealsDialogOpen(true)}
+                    className={cn(outlineBtn, "sm:order-4")}
+                  >
+                    <ShieldCheck className="size-4 shrink-0" aria-hidden />
+                    Gestionar precintos
+                  </button>
+                ) : null}
+                {canAssignSoftware ? (
+                  <button
+                    type="button"
+                    onClick={() => setSoftwareDialogOpen(true)}
+                    className={cn(outlineBtn, "sm:order-4")}
+                  >
+                    <Cpu className="size-4 shrink-0" aria-hidden />
+                    Gestionar software
+                  </button>
+                ) : null}
+                <ResourceViewActions
+                  asFragment
+                  buttonClassName="sm:order-5"
+                  onEdit={
+                    canModify
+                      ? () => {
+                          setFormError(null);
+                          setEditOpen(true);
+                        }
+                      : undefined
+                  }
+                  leadingActions={
+                    showDecommission ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDecommissionError(null);
+                          setDecommissionOpen(true);
+                        }}
+                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-500/15 sm:order-5 dark:text-amber-200"
+                      >
+                        <Ban className="size-4 shrink-0" aria-hidden />
+                        Desincorporar
+                      </button>
+                    ) : undefined
+                  }
+                  onDelete={canDelete ? () => void handleDelete() : undefined}
+                  deleting={deleting}
+                />
+              </div>
             </div>
           ) : undefined
         }

@@ -50,12 +50,14 @@ export function PrinterStatusBadge({
 type PrinterStatusActionButtonProps = {
   action: PrinterStatusQuickAction;
   size?: "sm" | "md";
+  className?: string;
 };
 
 /** Botón de acción rápida (Asignar / Enajenar / Reconfigurar) junto al estatus de la impresora. */
 export function PrinterStatusActionButton({
   action,
   size = "sm",
+  className,
 }: PrinterStatusActionButtonProps) {
   const isReconfigure = action.kind === "reconfigure";
   const isRequest = action.kind === "request_dispose";
@@ -87,6 +89,7 @@ export function PrinterStatusActionButton({
           : isRequest
             ? "border-indigo-500/35 bg-indigo-500/10 text-indigo-800 hover:bg-indigo-500/20 dark:text-indigo-200"
             : "border-accent/35 bg-accent/10 text-accent hover:bg-accent/20",
+        className,
       )}
     >
       {size === "md" ? (
