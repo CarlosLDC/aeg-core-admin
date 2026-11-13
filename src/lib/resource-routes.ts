@@ -78,6 +78,10 @@ export function softwareModificationReviewPath(requestId: number): string {
   return `/reviews/software/${requestId}`;
 }
 
+export function printerEnajenacionReviewPath(requestId: number): string {
+  return `/reviews/printers/${requestId}`;
+}
+
 export const clientModificationReviewsListPath = "/reviews";
 
 export const toolsListPath = "/tools";

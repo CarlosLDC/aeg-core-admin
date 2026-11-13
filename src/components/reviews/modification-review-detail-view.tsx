@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { ClientModificationRequestView } from "@/components/clients/client-modification-request-view";
+import { PrinterEnajenacionRequestView } from "@/components/printers/printer-enajenacion-request-view";
 import { SoftwareModificationRequestView } from "@/components/software/software-modification-request-view";
 
 export function ModificationReviewDetailView() {
@@ -13,6 +14,9 @@ export function ModificationReviewDetailView() {
   }
   if (section === "software") {
     return <SoftwareModificationRequestView backHref="/reviews" />;
+  }
+  if (section === "printers") {
+    return <PrinterEnajenacionRequestView backHref="/reviews" />;
   }
   return (
     <p

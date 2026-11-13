@@ -7,6 +7,7 @@ import { PrinterBatchFormDialog, type PrinterBatchSubmitPayload } from "@/compon
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
+import { PrinterEnajenacionRequestDialog } from "@/components/printers/printer-enajenacion-request-dialog";
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
 import { PrinterSoftwareDialog } from "@/components/printers/printer-software-dialog";
 import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
@@ -80,11 +81,11 @@ import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import {
   DEVICE_TYPE_LABELS,
+  getPrinterDispositionBlockedMessage,
   printerModelLabel,
   printerToAssignmentRequest,
   printerToFormValues,
   PRINTER_STATUS_LABELS,
-  PRINTER_UNPAID_DISPOSITION_MESSAGE,
   isPrinterPaidForDisposition,
   toPrinterEditRequest,
   toPrinterRequest,
@@ -133,7 +134,7 @@ import { isDistributorPanelRole } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
-import { printerDispositionPath, printerPath } from "@/lib/resource-routes";
+import { printerDispositionPath, printerEnajenacionReviewPath, printerPath } from "@/lib/resource-routes";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { SortableTableHeader } from "@/components/ui/sortable-table-header";
@@ -201,6 +202,8 @@ export function PrintersManager() {
   const [softwarePrinter, setSoftwarePrinter] =
     useState<PrinterResponse | null>(null);
   const [dispositionPrinter, setDispositionPrinter] =
+    useState<PrinterResponse | null>(null);
+  const [enajenacionRequestPrinter, setEnajenacionRequestPrinter] =
     useState<PrinterResponse | null>(null);
   const [saving, setSaving] = useState(false);
   const [batchProgress, setBatchProgress] = useState<{
@@ -657,7 +660,7 @@ export function PrintersManager() {
 
   function openDisposition(printer: PrinterResponse) {
     if (!isPrinterPaidForDisposition(printer)) {
-      toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+      toast.error(getPrinterDispositionBlockedMessage(printer));
       return;
     }
     setDispositionPrinter(printer);
@@ -665,6 +668,14 @@ export function PrintersManager() {
 
   function closeDisposition() {
     setDispositionPrinter(null);
+  }
+
+  function openEnajenacionRequest(printer: PrinterResponse) {
+    setEnajenacionRequestPrinter(printer);
+  }
+
+  function closeEnajenacionRequest() {
+    setEnajenacionRequestPrinter(null);
   }
 
   function handleDispositionContinue({
@@ -686,7 +697,7 @@ export function PrintersManager() {
       return;
     }
     if (!isPrinterPaidForDisposition(dispositionPrinter)) {
-      toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+      toast.error(getPrinterDispositionBlockedMessage(dispositionPrinter));
       return;
     }
     const printerId = dispositionPrinter.id;
@@ -1152,6 +1163,15 @@ export function PrintersManager() {
                           canDispose: canDisposeAssigned,
                           onAssign: () => openAssignment(printer),
                           onDispose: () => openDisposition(printer),
+                          onRequestDispose: () => openEnajenacionRequest(printer),
+                          onViewPendingRequest: () =>
+                            isAdmin && printer.pendingEnajenacionRequestId != null
+                              ? router.push(
+                                  printerEnajenacionReviewPath(
+                                    printer.pendingEnajenacionRequestId,
+                                  ),
+                                )
+                              : openEnajenacionRequest(printer),
                         });
                         const statusBadgeTitle = getPrinterStatusBadgeTitle({
                           status: printer.status,
@@ -1291,6 +1311,18 @@ export function PrintersManager() {
           reconfigure={isPrinterPendingMqttEnajenacion(dispositionPrinter)}
           onClose={closeDisposition}
           onContinue={handleDispositionContinue}
+        />
+      ) : null}
+
+      {enajenacionRequestPrinter ? (
+        <PrinterEnajenacionRequestDialog
+          key={enajenacionRequestPrinter.id}
+          printer={enajenacionRequestPrinter}
+          isAdmin={isAdmin}
+          onClose={closeEnajenacionRequest}
+          onUpdated={() => {
+            void loadPrinters({ silent: true });
+          }}
         />
       ) : null}
 

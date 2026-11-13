@@ -48,6 +48,9 @@ export const PRINTER_UNPAID_LABEL = "No pagada";
 export const PRINTER_UNPAID_DISPOSITION_MESSAGE =
   "Solo se pueden enajenar impresoras con estatus de pago Pagada.";
 
+export const PRINTER_CONSIGNMENT_PERMISSION_REQUIRED_MESSAGE =
+  "Esta impresora en consignación requiere autorización del administrador antes de poder enajenarse.";
+
 export function printerPaidLabel(paid: boolean): string {
   return paid ? PRINTER_PAID_LABEL : PRINTER_UNPAID_LABEL;
 }
@@ -57,14 +60,25 @@ export function derivePrinterPaidFromStatus(status: PrinterStatus): boolean {
 }
 
 export function isPrinterPaidForDisposition(printer: PrinterResponse): boolean {
+  if (printer.status != null && isPrinterOnConsignment(printer.status)) {
+    return printer.enajenacionAutorizada === true;
+  }
   if (
     printer.status != null &&
-    (isPrinterOnConsignment(printer.status) ||
-      normalizePrinterStatus(printer.status) === "a_credito")
+    normalizePrinterStatus(printer.status) === "a_credito"
   ) {
     return true;
   }
   return printer.paid === true;
+}
+
+export function getPrinterDispositionBlockedMessage(
+  printer: PrinterResponse,
+): string {
+  if (printer.status != null && isPrinterOnConsignment(printer.status)) {
+    return PRINTER_CONSIGNMENT_PERMISSION_REQUIRED_MESSAGE;
+  }
+  return PRINTER_UNPAID_DISPOSITION_MESSAGE;
 }
 
 export const PRINTER_STATUS_LABELS: Record<PrinterStatus, string> = {

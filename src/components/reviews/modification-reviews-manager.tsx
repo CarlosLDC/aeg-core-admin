@@ -14,6 +14,7 @@ import {
   getClientModificationRequestsErrorMessage,
 } from "@/lib/client-modification-requests-api";
 import { fetchSoftwareModificationRequests } from "@/lib/software-modification-requests-api";
+import { fetchPrinterEnajenacionRequests } from "@/lib/printer-enajenacion-requests-api";
 import { formatDate } from "@/lib/datetime-form";
 import { useTableSearch } from "@/hooks/use-table-search";
 import { useTableFilter } from "@/hooks/use-table-filter";
@@ -23,7 +24,11 @@ import {
   DEFAULT_RETRY_DELAYS_MS,
   sleep,
 } from "@/lib/polling";
-import { clientPath, softwareModificationReviewPath } from "@/lib/resource-routes";
+import {
+  clientPath,
+  printerEnajenacionReviewPath,
+  softwareModificationReviewPath,
+} from "@/lib/resource-routes";
 import type {
   ModificationActionType,
   ModificationRequestStatus,
@@ -33,7 +38,7 @@ import { cn } from "@/lib/utils";
 type ReviewRow = {
   id: number;
   resourceId: number;
-  resourceType: "client" | "software";
+  resourceType: "client" | "software" | "printer";
   resourceTypeName: string;
   resourceName: string;
   actionType: ModificationActionType;
@@ -80,6 +85,7 @@ export function ModificationReviewsManager() {
       const [
         pendingClients, approvedClients, rejectedClients,
         pendingSoftware, approvedSoftware, rejectedSoftware,
+        pendingPrinters, approvedPrinters, rejectedPrinters,
       ] = await Promise.all([
         fetchClientModificationRequests("PENDING"),
         fetchClientModificationRequests("APPROVED"),
@@ -87,6 +93,9 @@ export function ModificationReviewsManager() {
         fetchSoftwareModificationRequests("PENDING").catch(() => []),
         fetchSoftwareModificationRequests("APPROVED").catch(() => []),
         fetchSoftwareModificationRequests("REJECTED").catch(() => []),
+        fetchPrinterEnajenacionRequests("PENDING").catch(() => []),
+        fetchPrinterEnajenacionRequests("APPROVED").catch(() => []),
+        fetchPrinterEnajenacionRequests("REJECTED").catch(() => []),
       ]);
 
       const clientRows: ReviewRow[] = [
@@ -123,11 +132,30 @@ export function ModificationReviewsManager() {
         reviewHref: softwareModificationReviewPath(row.id),
       }));
 
-      const nextRows = [...clientRows, ...softwareRows];
+      const printerRows: ReviewRow[] = [
+        ...pendingPrinters,
+        ...approvedPrinters,
+        ...rejectedPrinters,
+      ].map((row) => ({
+        id: row.id,
+        resourceId: row.printerId,
+        resourceType: "printer" as const,
+        resourceTypeName: "Enajenación",
+        resourceName: `${row.fiscalSerial} · ${row.distributorName}`,
+        actionType: row.actionType,
+        status: row.status,
+        requestedByName: row.requestedByName,
+        createdAt: row.createdAt,
+        reviewHref: printerEnajenacionReviewPath(row.id),
+      }));
+
+      const nextRows = [...clientRows, ...softwareRows, ...printerRows];
 
       if (!userChangedStatusFilter.current) {
         setStatusFilter(
-          pendingClients.length > 0 || pendingSoftware.length > 0
+          pendingClients.length > 0 ||
+            pendingSoftware.length > 0 ||
+            pendingPrinters.length > 0
             ? "PENDING"
             : "all",
         );
@@ -199,6 +227,7 @@ export function ModificationReviewsManager() {
       const statusLabel = STATUS_LABELS[row.status] ?? row.status;
       const haystack = [
         row.id,
+        row.resourceTypeName,
         row.resourceName,
         row.requestedByName,
         row.actionType,
@@ -243,7 +272,7 @@ export function ModificationReviewsManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por cliente o solicitante..."
+              searchPlaceholder="Buscar por recurso, impresora o solicitante..."
               resultCount={filtered.length}
               totalCount={rows.length}
               filters={[
@@ -295,7 +324,9 @@ export function ModificationReviewsManager() {
                                 "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium border",
                                 row.resourceType === "client"
                                   ? "border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300"
-                                  : "border-purple-500/20 bg-purple-500/10 text-purple-700 dark:text-purple-300",
+                                  : row.resourceType === "printer"
+                                    ? "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                                    : "border-purple-500/20 bg-purple-500/10 text-purple-700 dark:text-purple-300",
                               )}
                             >
                               {row.resourceTypeName}

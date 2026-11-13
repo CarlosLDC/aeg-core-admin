@@ -16,6 +16,7 @@ import { PrinterStatusTransition } from "@/components/printers/printer-status-tr
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
+import { PrinterEnajenacionRequestDialog } from "@/components/printers/printer-enajenacion-request-dialog";
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
 import { PrinterSoftwareDialog } from "@/components/printers/printer-software-dialog";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
@@ -72,12 +73,12 @@ import { fetchSoftware } from "@/lib/software-api";
 import {
   DEVICE_TYPE_LABELS,
   emptyPrinterForm,
+  getPrinterDispositionBlockedMessage,
   isPrinterPaidForDisposition,
   printerModelLabel,
   printerToAssignmentRequest,
   printerToFormValues,
   PRINTER_STATUS_LABELS,
-  PRINTER_UNPAID_DISPOSITION_MESSAGE,
   toPrinterEditRequest,
   toPrinterRequest,
   type PrinterFormValues,
@@ -183,6 +184,8 @@ export function BranchPrintersTable({
   const [softwarePrinter, setSoftwarePrinter] =
     useState<PrinterResponse | null>(null);
   const [dispositionPrinter, setDispositionPrinter] =
+    useState<PrinterResponse | null>(null);
+  const [enajenacionRequestPrinter, setEnajenacionRequestPrinter] =
     useState<PrinterResponse | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -507,7 +510,7 @@ export function BranchPrintersTable({
 
   function openDisposition(printer: PrinterResponse) {
     if (!isPrinterPaidForDisposition(printer)) {
-      toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+      toast.error(getPrinterDispositionBlockedMessage(printer));
       return;
     }
     setDispositionPrinter(printer);
@@ -515,6 +518,14 @@ export function BranchPrintersTable({
 
   function closeDisposition() {
     setDispositionPrinter(null);
+  }
+
+  function openEnajenacionRequest(printer: PrinterResponse) {
+    setEnajenacionRequestPrinter(printer);
+  }
+
+  function closeEnajenacionRequest() {
+    setEnajenacionRequestPrinter(null);
   }
 
   function handleDispositionContinue({
@@ -536,7 +547,7 @@ export function BranchPrintersTable({
       return;
     }
     if (!isPrinterPaidForDisposition(dispositionPrinter)) {
-      toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+      toast.error(getPrinterDispositionBlockedMessage(dispositionPrinter));
       return;
     }
     const printerId = dispositionPrinter.id;
@@ -964,6 +975,13 @@ export function BranchPrintersTable({
                           canDispose: canDisposeAssigned,
                           onAssign: () => openAssignment(printer),
                           onDispose: () => openDisposition(printer),
+                          onRequestDispose: () => openEnajenacionRequest(printer),
+                          onViewPendingRequest: () =>
+                            isAdmin && printer.pendingEnajenacionRequestId != null
+                              ? router.push(
+                                  `/reviews/printers/${printer.pendingEnajenacionRequestId}`,
+                                )
+                              : openEnajenacionRequest(printer),
                         });
                         const statusBadgeTitle = getPrinterStatusBadgeTitle({
                           status: printer.status,
@@ -1096,6 +1114,18 @@ export function BranchPrintersTable({
           reconfigure={isPrinterPendingMqttEnajenacion(dispositionPrinter)}
           onClose={closeDisposition}
           onContinue={handleDispositionContinue}
+        />
+      ) : null}
+
+      {enajenacionRequestPrinter ? (
+        <PrinterEnajenacionRequestDialog
+          key={enajenacionRequestPrinter.id}
+          printer={enajenacionRequestPrinter}
+          isAdmin={isAdmin}
+          onClose={closeEnajenacionRequest}
+          onUpdated={() => {
+            void loadData({ silent: true });
+          }}
         />
       ) : null}
 

@@ -3,13 +3,18 @@ import {
   getPrinterStatusBadgeTitle,
   getPrinterStatusQuickAction,
 } from "./printer-quick-actions";
-import { PRINTER_UNPAID_DISPOSITION_MESSAGE } from "./printer-form";
+import {
+  PRINTER_CONSIGNMENT_PERMISSION_REQUIRED_MESSAGE,
+  PRINTER_UNPAID_DISPOSITION_MESSAGE,
+} from "./printer-form";
 import type { PrinterResponse } from "@/types/printer";
 
 describe("getPrinterStatusQuickAction", () => {
   const handlers = {
     onAssign: vi.fn(),
     onDispose: vi.fn(),
+    onRequestDispose: vi.fn(),
+    onViewPendingRequest: vi.fn(),
   };
 
   const paidPrinter = { paid: true } as PrinterResponse;
@@ -51,7 +56,7 @@ describe("getPrinterStatusQuickAction", () => {
     expect(action).toBeNull();
   });
 
-  it("offers dispose for printers on consignment", () => {
+  it("offers request_dispose for unauthorized consignment printers", () => {
     const action = getPrinterStatusQuickAction({
       status: "en_consignacion",
       printer: unpaidPrinter,
@@ -59,7 +64,32 @@ describe("getPrinterStatusQuickAction", () => {
       canDispose: true,
       ...handlers,
     });
+    expect(action?.kind).toBe("request_dispose");
+    expect(action?.buttonLabel).toBe("Solicitar permiso");
+  });
+
+  it("offers pending_dispose when consignment request is pending", () => {
+    const action = getPrinterStatusQuickAction({
+      status: "en_consignacion",
+      printer: { ...unpaidPrinter, pendingEnajenacionRequestId: 55 },
+      canAssign: false,
+      canDispose: true,
+      ...handlers,
+    });
+    expect(action?.kind).toBe("pending_dispose");
+    expect(action?.buttonLabel).toBe("Permiso solicitado");
+  });
+
+  it("offers dispose for authorized consignment printers", () => {
+    const action = getPrinterStatusQuickAction({
+      status: "en_consignacion",
+      printer: { ...unpaidPrinter, enajenacionAutorizada: true },
+      canAssign: false,
+      canDispose: true,
+      ...handlers,
+    });
     expect(action?.kind).toBe("dispose");
+    expect(action?.buttonLabel).toBe("Enajenar");
   });
 
   it("offers ticket reconfigure when Remoto is pending", () => {
@@ -120,11 +150,21 @@ describe("getPrinterStatusBadgeTitle", () => {
     ).toBe(PRINTER_UNPAID_DISPOSITION_MESSAGE);
   });
 
-  it("returns undefined for consignment printers", () => {
+  it("explains consignment permission requirement when not authorized", () => {
     expect(
       getPrinterStatusBadgeTitle({
         status: "en_consignacion",
         printer: unpaidPrinter,
+        canDispose: true,
+      }),
+    ).toBe(PRINTER_CONSIGNMENT_PERMISSION_REQUIRED_MESSAGE);
+  });
+
+  it("returns undefined for authorized consignment printers", () => {
+    expect(
+      getPrinterStatusBadgeTitle({
+        status: "en_consignacion",
+        printer: { ...unpaidPrinter, enajenacionAutorizada: true },
         canDispose: true,
       }),
     ).toBeUndefined();

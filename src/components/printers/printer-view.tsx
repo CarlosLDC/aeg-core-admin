@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import { Ban, BookOpen, Cpu, ExternalLink, ShieldCheck, Wrench } from "lucide-react";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
+import { PrinterCreditPaymentsSection } from "@/components/printers/printer-credit-payments-section";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
+import { PrinterEnajenacionRequestDialog } from "@/components/printers/printer-enajenacion-request-dialog";
 import { PrinterDecommissionDialog } from "@/components/printers/printer-decommission-dialog";
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
 import { PrinterSealsDialog } from "@/components/printers/printer-seals-dialog";
@@ -90,10 +92,10 @@ import { fetchDistributors } from "@/lib/distributors-api";
 import { formatDate } from "@/lib/datetime-form";
 import {
   DEVICE_TYPE_LABELS,
+  getPrinterDispositionBlockedMessage,
   printerModelLabel,
   printerToAssignmentRequest,
   printerToFormValues,
-  PRINTER_UNPAID_DISPOSITION_MESSAGE,
   isPrinterPaidForDisposition,
   toPrinterEditRequest,
   type PrinterFormValues,
@@ -119,7 +121,13 @@ import {
   fiscalBooksAppUrl,
   fiscalBookLinkProps,
 } from "@/lib/fiscal-books-app";
-import { printerDispositionPath, printerPath, toolsPrinterPath, softwareModificationReviewPath } from "@/lib/resource-routes";
+import {
+  printerDispositionPath,
+  printerEnajenacionReviewPath,
+  printerPath,
+  softwareModificationReviewPath,
+  toolsPrinterPath,
+} from "@/lib/resource-routes";
 import { fetchPendingSoftwareModificationRequest } from "@/lib/software-modification-requests-api";
 import type { SoftwareModificationRequestDetailResponse } from "@/types/software-modification-request";
 import type { BranchResponse } from "@/types/branch";
@@ -178,6 +186,7 @@ export function PrinterView() {
   const [assignmentSaving, setAssignmentSaving] = useState(false);
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
   const [dispositionOpen, setDispositionOpen] = useState(false);
+  const [enajenacionRequestOpen, setEnajenacionRequestOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteBlocked, setDeleteBlocked] = useState<{
@@ -439,11 +448,20 @@ export function PrinterView() {
         },
         onDispose: () => {
           if (!isPrinterPaidForDisposition(printer)) {
-            toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+            toast.error(getPrinterDispositionBlockedMessage(printer));
             return;
           }
           setDispositionOpen(true);
         },
+        onRequestDispose: () => setEnajenacionRequestOpen(true),
+        onViewPendingRequest: () =>
+          isAdmin && printer.pendingEnajenacionRequestId != null
+            ? router.push(
+                printerEnajenacionReviewPath(
+                  printer.pendingEnajenacionRequestId,
+                ),
+              )
+            : setEnajenacionRequestOpen(true),
       })
     : null;
   const statusBadgeTitle = printer
@@ -528,7 +546,35 @@ export function PrinterView() {
             mono
           />
           <DetailField label="MAC" value={printer.macAddress || "—"} mono />
+          {printer.status === "a_credito" ||
+          printer.creditInstallments != null ||
+          (printer.creditPaymentCount ?? 0) > 0 ? (
+            <>
+              <DetailField
+                label="Cuotas pactadas"
+                value={
+                  printer.creditInstallments != null
+                    ? `${printer.creditInstallments} cuota${printer.creditInstallments === 1 ? "" : "s"}`
+                    : "Sin definir"
+                }
+              />
+              <DetailField
+                label="Pagos registrados"
+                value={`${printer.creditPaymentCount ?? 0} (${Number(printer.creditPaidTotal ?? 0).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
+              />
+            </>
+          ) : null}
         </DetailCard>
+
+        {printer.status === "a_credito" ||
+        printer.creditInstallments != null ||
+        (printer.creditPaymentCount ?? 0) > 0 ? (
+          <PrinterCreditPaymentsSection
+            printer={printer}
+            isAdmin={isAdmin}
+            onPrinterUpdated={() => void load()}
+          />
+        ) : null}
 
         {isAdmin ? <PrinterLogsSection printer={printer} /> : null}
       </div>
@@ -603,10 +649,46 @@ export function PrinterView() {
               label="Fecha de enajenación"
               value={formatDate(printer.installationDate)}
             />
+            {printer.status === "a_credito" ||
+            printer.creditInstallments != null ||
+            (printer.creditPaymentCount ?? 0) > 0 ? (
+              <>
+                <DetailField
+                  label="Cuotas pactadas"
+                  value={
+                    printer.creditInstallments != null
+                      ? `${printer.creditInstallments} cuota${printer.creditInstallments === 1 ? "" : "s"}`
+                      : "Sin definir"
+                  }
+                />
+                <DetailField
+                  label="Pagos registrados"
+                  value={`${printer.creditPaymentCount ?? 0} (${Number(printer.creditPaidTotal ?? 0).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
+                />
+              </>
+            ) : null}
           </DetailSection>
         ),
       },
     ];
+
+    if (
+      printer.status === "a_credito" ||
+      printer.creditInstallments != null ||
+      (printer.creditPaymentCount ?? 0) > 0
+    ) {
+      steps.push({
+        id: "credit-payments",
+        label: "Crédito y pagos",
+        content: (
+          <PrinterCreditPaymentsSection
+            printer={printer}
+            isAdmin={isAdmin}
+            onPrinterUpdated={() => void load()}
+          />
+        ),
+      });
+    }
 
     if (isAdmin) {
       steps.push({
@@ -815,7 +897,7 @@ export function PrinterView() {
       return;
     }
     if (!isPrinterPaidForDisposition(printer)) {
-      toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+      toast.error(getPrinterDispositionBlockedMessage(printer));
       return;
     }
     setDispositionOpen(false);
@@ -1098,6 +1180,39 @@ export function PrinterView() {
             )}
           </div>
         )}
+        {printer?.pendingEnajenacionRequestId != null &&
+          normalizePrinterStatus(printer.status) === "en_consignacion" && (
+            <div className="mx-auto mb-4 flex w-full max-w-4xl items-start justify-between gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-200">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-amber-900 dark:text-amber-100">
+                  Permiso de enajenación pendiente
+                </p>
+                <p className="mt-1 text-xs text-amber-800/90 dark:text-amber-200/90">
+                  {isAdmin
+                    ? "El distribuidor solicitó autorización para enajenar esta impresora en consignación. Revisa la solicitud y define las cuotas para habilitar la enajenación."
+                    : "Se envió una solicitud de permiso al administrador. Podrás enajenar esta impresora cuando sea aprobada."}
+                </p>
+              </div>
+              {isAdmin ? (
+                <Link
+                  href={printerEnajenacionReviewPath(
+                    printer.pendingEnajenacionRequestId,
+                  )}
+                  className="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-amber-700"
+                >
+                  Revisar solicitud
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEnajenacionRequestOpen(true)}
+                  className="shrink-0 rounded-lg border border-amber-500/30 bg-card px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-500/10 dark:text-amber-100"
+                >
+                  Ver solicitud
+                </button>
+              )}
+            </div>
+          )}
         {printer?.firmwareUpdateUnverified ? (
           <PrinterFirmwareUnverifiedBanner
             currentFirmwareVersion={printer.versionFirmware}
@@ -1174,6 +1289,18 @@ export function PrinterView() {
           reconfigure={isPrinterPendingMqttEnajenacion(printer)}
           onClose={() => setDispositionOpen(false)}
           onContinue={handleDispositionContinue}
+        />
+      ) : null}
+
+      {printer && enajenacionRequestOpen ? (
+        <PrinterEnajenacionRequestDialog
+          key={`enajenacion-req-${printer.id}`}
+          printer={printer}
+          isAdmin={isAdmin}
+          onClose={() => setEnajenacionRequestOpen(false)}
+          onUpdated={() => {
+            void load();
+          }}
         />
       ) : null}
 

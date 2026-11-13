@@ -7,9 +7,9 @@ import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { PrinterActionDialogShell } from "@/components/printers/printer-action-dialog-shell";
 import { PrinterActionPickerPanel } from "@/components/printers/printer-action-picker-panel";
 import {
+  getPrinterDispositionBlockedMessage,
   isPrinterPaidForDisposition,
   printerDispositionModalTitle,
-  PRINTER_UNPAID_DISPOSITION_MESSAGE,
 } from "@/lib/printer-form";
 import {
   buildDispositionInvoiceData,
@@ -430,7 +430,7 @@ export function PrinterDispositionDialog({
         printer={printer}
         showPrinterSerialSubtitle={false}
         saving={false}
-        error={PRINTER_UNPAID_DISPOSITION_MESSAGE}
+        error={getPrinterDispositionBlockedMessage(printer)}
         onClose={onClose}
         submitLabel="Continuar"
         onSubmit={(e) => {

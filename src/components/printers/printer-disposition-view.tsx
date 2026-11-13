@@ -19,8 +19,8 @@ import { fetchClientById, fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import {
+  getPrinterDispositionBlockedMessage,
   isPrinterPaidForDisposition,
-  PRINTER_UNPAID_DISPOSITION_MESSAGE,
 } from "@/lib/printer-form";
 import {
   disposePrinter,
@@ -154,7 +154,7 @@ export function PrinterDispositionView({
         return;
       }
       if (!isPrinterPaidForDisposition(data)) {
-        setError(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+        setError(getPrinterDispositionBlockedMessage(data));
         return;
       }
     } catch (err) {
@@ -352,7 +352,7 @@ export function PrinterDispositionView({
       return;
     }
     if (!isPrinterPaidForDisposition(printer)) {
-      toast.error(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+      toast.error(getPrinterDispositionBlockedMessage(printer));
       return;
     }
     if (clientValidationError || clientId == null) {

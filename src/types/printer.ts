@@ -41,6 +41,12 @@ export type PrinterResponse = {
   hasTicketConfig?: boolean;
   encryptionKey?: string | null;
   llaveEncrip?: string | null;
+  enajenacionAutorizada?: boolean;
+  enajenacionAutorizadaAt?: string | null;
+  creditInstallments?: number | null;
+  pendingEnajenacionRequestId?: number | null;
+  creditPaidTotal?: number | null;
+  creditPaymentCount?: number | null;
 };
 
 export type PrinterDispositionRequest = {
@@ -77,4 +83,10 @@ export type PrinterRequest = {
   creationBatchId?: string | null;
   encryptionKey?: string | null;
   llaveEncrip?: string | null;
+  enajenacionAutorizada?: boolean;
+  enajenacionAutorizadaAt?: string | null;
+  creditInstallments?: number | null;
+  pendingEnajenacionRequestId?: number | null;
+  creditPaidTotal?: number | null;
+  creditPaymentCount?: number | null;
 };
