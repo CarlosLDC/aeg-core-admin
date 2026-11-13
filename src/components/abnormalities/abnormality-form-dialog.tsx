@@ -4,6 +4,7 @@ import { type FormEvent, useId, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
+import { NativeSelect } from "@/components/ui/native-select";
 import {
   SearchableSelect,
   type SearchableSelectOption,
@@ -14,7 +15,10 @@ import {
   isAbnormalityType,
   type AbnormalityFormValues,
 } from "@/lib/abnormalities";
-import { formFieldInputClass } from "@/lib/toggle-button-styles";
+import {
+  formFieldInputClass,
+  formFieldTextareaClass,
+} from "@/lib/toggle-button-styles";
 import { ABNORMALITY_TYPES } from "@/types/abnormality";
 
 type AbnormalityFormDialogProps = {
@@ -107,8 +111,7 @@ export function AbnormalityFormDialog({
 
             <label className="block space-y-1.5 text-sm">
               <FieldLabel required>Tipo de anormalidad</FieldLabel>
-              <select
-                className={formFieldInputClass}
+              <NativeSelect
                 value={form.type}
                 disabled={saving}
                 onChange={(e) => {
@@ -123,7 +126,7 @@ export function AbnormalityFormDialog({
                     {ABNORMALITY_TYPE_LABELS[type]}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </label>
 
             <label className="block space-y-1.5 text-sm">
@@ -166,7 +169,7 @@ export function AbnormalityFormDialog({
                 Descripción (opcional)
               </span>
               <textarea
-                className={`${formFieldInputClass} min-h-24 py-2`}
+                className={`${formFieldTextareaClass} min-h-24`}
                 value={form.description}
                 disabled={saving}
                 onChange={(e) =>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { NativeSelect } from "@/components/ui/native-select";
 import { can } from "@/lib/permissions/can";
 import {
   allowedRolesFor,
@@ -87,12 +88,13 @@ export function PermissionsMatrixTable({
         </p>
         <label className="flex items-center gap-2 text-sm">
           <span className="shrink-0 text-muted">Filtrar por rol</span>
-          <select
+          <NativeSelect
             value={roleFilter}
             onChange={(e) =>
               setRoleFilter(e.target.value as Role | "all")
             }
-            className="rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm text-card-foreground"
+            wrapperClassName="w-auto"
+            className="w-auto"
           >
             <option value="all">Todos los recursos</option>
             {ROLES.map((role) => (
@@ -100,7 +102,7 @@ export function PermissionsMatrixTable({
                 {ROLE_LABELS[role]}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
       </div>
 

@@ -2,18 +2,17 @@
 
 import { useState } from "react";
 import {
-  ChevronDown,
   Columns3,
   Filter,
   RotateCcw,
   Search,
   X,
 } from "lucide-react";
+import { NativeSelect } from "@/components/ui/native-select";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { FILTER_ALL } from "@/lib/table-filter-options";
 import {
   filterToggleButtonClass,
-  formFieldNativeSelectClass,
   formFieldSearchInputClass,
 } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
@@ -43,8 +42,6 @@ export type ColumnToggle = {
 };
 
 const searchInputClass = formFieldSearchInputClass;
-
-const nativeSelectClass = formFieldNativeSelectClass;
 
 type DataTableToolbarProps = {
   search: string;
@@ -95,24 +92,17 @@ function TableFilterField({ filter }: { filter: FilterSelect }) {
           modalTitle={filter.label}
         />
       ) : (
-        <div className="relative">
-          <select
-            id={`filter-${filter.id}`}
-            value={filter.value}
-            onChange={(e) => filter.onChange(e.target.value)}
-            className={nativeSelectClass}
-          >
-            {filter.options.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted"
-            aria-hidden
-          />
-        </div>
+        <NativeSelect
+          id={`filter-${filter.id}`}
+          value={filter.value}
+          onChange={(e) => filter.onChange(e.target.value)}
+        >
+          {filter.options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </NativeSelect>
       )}
     </div>
   );

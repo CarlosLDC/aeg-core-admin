@@ -14,9 +14,10 @@ import { ToolsSimulatedDataNotice } from "@/components/tools/tools-ticket-previe
 import { ToolsPrinterMacGuard } from "@/components/tools/tools-printer-sub-page";
 import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { useToast } from "@/context/toast-provider";
-import { formFieldInputClass, formFieldNativeSelectClass, toggleButtonClass } from "@/lib/toggle-button-styles";
+import { formFieldInputClass, toggleButtonClass } from "@/lib/toggle-button-styles";
 import {
   CASH_DRAWER_PULSE_MAX_MS,
   CASH_DRAWER_PULSE_MIN_MS,
@@ -390,8 +391,7 @@ export function ToolsPeripheralsPanel({ printer }: { printer: ToolsPrinter }) {
                   </div>
                   <label className="block">
                     <FieldLabel>Protocolo</FieldLabel>
-                    <select
-                      className={formFieldNativeSelectClass}
+                    <NativeSelect
                       value={visor.proto}
                       disabled={busy || !visor.activo}
                       onChange={(e) =>
@@ -403,7 +403,7 @@ export function ToolsPeripheralsPanel({ printer }: { printer: ToolsPrinter }) {
                           {option.label}
                         </option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </label>
                   <div className="sm:col-span-2">
                     <FieldLabel>Velocidad (baudios)</FieldLabel>

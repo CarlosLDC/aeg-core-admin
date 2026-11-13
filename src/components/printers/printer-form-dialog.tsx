@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import { RefreshCw, X } from "lucide-react";
 import { FiscalSerialInput } from "@/components/printers/fiscal-serial-input";
 import { FieldLabel } from "@/components/ui/field-label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { applyModelPrefixToFiscalSerial } from "@/lib/serial-range";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import {
@@ -299,7 +300,7 @@ export function PrinterFormDialog({
                 <label className="block sm:col-span-2">
                   <FieldLabel required>Modelo fiscal</FieldLabel>
                   {modelOptions.length > 0 ? (
-                    <select
+                    <NativeSelect
                       required
                       value={form.modelId}
                       disabled={modelSelectDisabled}
@@ -318,7 +319,6 @@ export function PrinterFormDialog({
                           ),
                         }));
                       }}
-                      className={inputClass}
                     >
                       <option value="">Seleccionar modelo…</option>
                       {modelOptions.map((opt) => (
@@ -326,7 +326,7 @@ export function PrinterFormDialog({
                           {opt.label}
                         </option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   ) : (
                     <input
                       type="number"
@@ -367,7 +367,7 @@ export function PrinterFormDialog({
 
                 <label className="block sm:col-span-2">
                   <FieldLabel required>Estatus</FieldLabel>
-                  <select
+                  <NativeSelect
                     required
                     value={form.status}
                     disabled={disabled}
@@ -379,14 +379,13 @@ export function PrinterFormDialog({
                         paid: derivePrinterPaidFromStatus(status),
                       }));
                     }}
-                    className={inputClass}
                   >
                     {PRINTER_STATUSES.map((status) => (
                       <option key={status} value={status}>
                         {PRINTER_STATUS_LABELS[status]}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </label>
               </div>
             </fieldset>
@@ -493,9 +492,10 @@ export function PrinterFormDialog({
                 <div className="block sm:col-span-2">
                   <FieldLabel>Firmware</FieldLabel>
                   <div className="flex items-center gap-2">
-                    <select
+                    <NativeSelect
                       value={form.firmwareId ?? ""}
                       disabled={disabled || queryingFirmware}
+                      wrapperClassName="min-w-0 flex-1"
                       onChange={(e) => {
                         const nextId = e.target.value;
                         const selectedFw = filteredFirmwares.find(
@@ -509,7 +509,6 @@ export function PrinterFormDialog({
                           versionFirmware: selectedFw ? selectedFw.version : "",
                         }));
                       }}
-                      className={cn(inputClass, "min-w-0 flex-1")}
                     >
                       <option value="">Sin asignar</option>
                       {filteredFirmwares.map((fw) => (
@@ -517,7 +516,7 @@ export function PrinterFormDialog({
                           {fw.version} ({fw.fileName})
                         </option>
                       ))}
-                    </select>
+                    </NativeSelect>
                     <button
                       type="button"
                       onClick={() => void handleQueryFirmware()}

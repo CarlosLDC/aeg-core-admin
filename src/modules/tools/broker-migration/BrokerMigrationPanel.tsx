@@ -13,7 +13,7 @@ import {
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import type { ToolsPrinter } from "@/modules/tools/shared/types";
 import { useBrokerMigration, type MigrationPhase, type MigrationState } from "./use-broker-migration";
-import { formFieldInputClass } from "@/lib/toggle-button-styles";
+import { NativeSelect } from "@/components/ui/native-select";
 import { cn } from "@/lib/utils";
 
 interface BrokerMigrationPanelProps {
@@ -138,17 +138,16 @@ export function BrokerMigrationPanel({ printer }: BrokerMigrationPanelProps) {
               <div className="space-y-4">
                 <label className="block">
                   <span className="mb-1.5 block text-sm font-medium text-muted">Tiempo de espera tras reinicio (segundos)</span>
-                  <select
+                  <NativeSelect
                     value={rebootWaitSeconds}
                     onChange={(e) => setRebootWaitSeconds(Number(e.target.value))}
-                    className={formFieldInputClass}
                   >
                     <option value={30}>30s</option>
                     <option value={45}>45s</option>
                     <option value={60}>60s (Recomendado)</option>
                     <option value={90}>90s</option>
                     <option value={120}>120s</option>
-                  </select>
+                  </NativeSelect>
                 </label>
 
                 {state.errorMessage && (

@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { NativeSelect } from "@/components/ui/native-select";
 import { PAGE_SIZE_OPTIONS, type UsePaginationReturn } from "@/hooks/use-pagination";
 import { cn } from "@/lib/utils";
 
@@ -8,9 +9,6 @@ type TablePaginationProps<T> = {
   pagination: UsePaginationReturn<T>;
   className?: string;
 };
-
-const pageSizeSelectClass =
-  "h-10 w-full appearance-none rounded-lg border border-border bg-background pl-3 pr-9 text-sm text-foreground outline-none focus:border-accent focus:ring-1 focus:ring-ring/30 sm:w-auto sm:min-w-[4.5rem]";
 
 export function TablePagination<T>({
   pagination,
@@ -46,24 +44,19 @@ export function TablePagination<T>({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
         <label className="flex w-full flex-col gap-2 rounded-lg border border-border bg-foreground/[0.02] p-3 text-sm text-muted sm:w-auto sm:flex-row sm:items-center sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0">
           <span className="shrink-0">Filas por página</span>
-          <div className="relative w-full sm:w-auto">
-            <select
-              value={pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value))}
-              className={pageSizeSelectClass}
-              aria-label="Filas por página"
-            >
-              {PAGE_SIZE_OPTIONS.map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted"
-              aria-hidden
-            />
-          </div>
+          <NativeSelect
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            wrapperClassName="w-full sm:w-auto"
+            className="sm:w-auto sm:min-w-[4.5rem]"
+            aria-label="Filas por página"
+          >
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </NativeSelect>
         </label>
 
         <nav

@@ -15,6 +15,10 @@ import {
   getPrinterEnajenacionRequestsErrorMessage,
 } from "@/lib/printer-enajenacion-requests-api";
 import { printerEnajenacionReviewPath } from "@/lib/resource-routes";
+import {
+  formFieldInputClass,
+  formFieldTextareaClass,
+} from "@/lib/toggle-button-styles";
 import type { PrinterResponse } from "@/types/printer";
 import type { PrinterEnajenacionRequestDetailResponse } from "@/types/printer-enajenacion-request";
 
@@ -239,7 +243,7 @@ export function PrinterEnajenacionRequestDialog({
             value={suggestedInstallments}
             onChange={(e) => setSuggestedInstallments(e.target.value)}
             placeholder="Ej. 4"
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
+            className={formFieldInputClass}
           />
         </div>
 
@@ -253,7 +257,7 @@ export function PrinterEnajenacionRequestDialog({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Ej. Cliente interesado en adquirir el equipo en 4 cuotas mensuales."
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
+            className={formFieldTextareaClass}
           />
         </div>
       </div>

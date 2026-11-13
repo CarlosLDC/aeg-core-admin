@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { EnajenacionRitualStepper } from "@/components/mqtt/enajenacion-ritual-stepper";
 import { SealSelect } from "@/components/seals/seal-select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { SEAL_COLOR_LABELS } from "@/lib/seal-form";
 import { printerPath } from "@/lib/resource-routes";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
@@ -551,17 +552,16 @@ export function FiscalizacionUsbWizard() {
                 </label>
                 <label className="block text-sm">
                   <span className="mb-1 block font-medium">Color</span>
-                  <select
+                  <NativeSelect
                     value={w.newSealColor}
                     onChange={(e) => w.setNewSealColor(e.target.value as SealColor)}
-                    className={formFieldInputClass}
                   >
                     {SEAL_COLORS.map((c) => (
                       <option key={c} value={c}>
                         {SEAL_COLOR_LABELS[c]}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </label>
                 <div className="flex items-end">
                   <button

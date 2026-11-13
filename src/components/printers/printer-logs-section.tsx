@@ -23,9 +23,9 @@ import { useToast } from "@/context/toast-provider";
 import { usePrinterLogs } from "@/hooks/use-printer-logs";
 import { PrinterLogsDeleteDialog } from "@/components/printers/printer-logs-delete-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { NativeSelect } from "@/components/ui/native-select";
 import {
   formFieldInputClass,
-  formFieldNativeSelectClass,
   formFieldSearchInputClass,
 } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
@@ -402,23 +402,16 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
 
           <label className="space-y-1.5">
             <span className="text-xs font-medium text-muted">Orden</span>
-            <div className="relative">
-              <select
-                value={order}
-                onChange={(e) => {
-                  setOrder(e.target.value as "asc" | "desc");
-                  setPage(0);
-                }}
-                className={formFieldNativeSelectClass}
-              >
-                <option value="desc">Más recientes primero</option>
-                <option value="asc">Más antiguos primero</option>
-              </select>
-              <ChevronDown
-                className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted"
-                aria-hidden
-              />
-            </div>
+            <NativeSelect
+              value={order}
+              onChange={(e) => {
+                setOrder(e.target.value as "asc" | "desc");
+                setPage(0);
+              }}
+            >
+              <option value="desc">Más recientes primero</option>
+              <option value="asc">Más antiguos primero</option>
+            </NativeSelect>
           </label>
         </div>
 
@@ -600,26 +593,21 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
               <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-end">
                 <label className="flex items-center gap-2 text-xs text-muted">
                   <span>Filas por página</span>
-                  <div className="relative">
-                    <select
-                      value={limit}
-                      onChange={(e) => {
-                        setLimit(Number(e.target.value));
-                        setPage(0);
-                      }}
-                      className="h-10 appearance-none rounded-lg border border-border bg-background pl-2.5 pr-7 text-xs text-foreground outline-none focus:border-accent"
-                    >
-                      {PAGE_LIMIT_OPTIONS.map((size) => (
-                        <option key={size} value={size}>
-                          {size}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      className="pointer-events-none absolute right-2 top-1/2 size-3.5 -translate-y-1/2 text-muted"
-                      aria-hidden
-                    />
-                  </div>
+                  <NativeSelect
+                    value={limit}
+                    onChange={(e) => {
+                      setLimit(Number(e.target.value));
+                      setPage(0);
+                    }}
+                    wrapperClassName="w-auto"
+                    className="w-auto min-w-[4.5rem]"
+                  >
+                    {PAGE_LIMIT_OPTIONS.map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </NativeSelect>
                 </label>
 
                 <nav

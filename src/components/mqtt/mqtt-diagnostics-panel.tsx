@@ -14,7 +14,10 @@ import type {
   MqttPublishResponse,
 } from "@/types/mqtt";
 import { formatJsonText } from "@/lib/format-json-paste";
-import { formFieldInputClass } from "@/lib/toggle-button-styles";
+import {
+  formFieldInputClass,
+  formFieldTextareaClass,
+} from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_TOPIC = "aeg/test/manual";
@@ -256,7 +259,7 @@ export function MqttDiagnosticsPanel() {
               onChange={(e) => setPayloadText(e.target.value)}
               onPaste={handlePayloadPaste}
               className={cn(
-                inputClass,
+                formFieldTextareaClass,
                 "min-h-[120px] resize-none overflow-hidden py-1.5 font-mono text-xs leading-relaxed",
               )}
               spellCheck={false}

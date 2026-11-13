@@ -16,6 +16,7 @@ import {
   type FiscalizacionPhase,
 } from "@/hooks/use-fiscalizacion-ritual";
 import { printerPath } from "@/lib/resource-routes";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 import type { FiscalizacionSseStatus } from "@/hooks/use-fiscalizacion-sse";
 
@@ -142,7 +143,7 @@ export function FiscalizacionTestPanel() {
             <label className="block text-sm sm:col-span-1">
               <span className="mb-1 block font-medium">Registro</span>
               <input
-                className="w-full rounded-lg border border-border bg-background px-3 py-2"
+                className={formFieldInputClass}
                 value={ritual.form.ptrReg}
                 onChange={(e) => ritual.updateForm({ ptrReg: e.target.value })}
                 placeholder="GRA0000017"
@@ -152,7 +153,7 @@ export function FiscalizacionTestPanel() {
             <label className="block text-sm">
               <span className="mb-1 block font-medium">MAC</span>
               <input
-                className="w-full rounded-lg border border-border bg-background px-3 py-2"
+                className={formFieldInputClass}
                 value={ritual.form.mac}
                 onChange={(e) => ritual.updateForm({ mac: e.target.value })}
                 placeholder="20:6E:F1:88:4C:68"
@@ -201,7 +202,7 @@ export function FiscalizacionTestPanel() {
               <label className="block text-sm">
                 <span className="mb-1 block font-medium">Firmware</span>
                 <input
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2"
+                  className={formFieldInputClass}
                   value={ritual.form.firmwareVersion}
                   onChange={(e) =>
                     ritual.updateForm({ firmwareVersion: e.target.value })
@@ -212,7 +213,7 @@ export function FiscalizacionTestPanel() {
               <label className="block text-sm">
                 <span className="mb-1 block font-medium">Modelo</span>
                 <input
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2"
+                  className={formFieldInputClass}
                   value={ritual.form.model}
                   onChange={(e) => ritual.updateForm({ model: e.target.value })}
                   placeholder="AEG-R1"
@@ -221,7 +222,7 @@ export function FiscalizacionTestPanel() {
               <label className="block text-sm">
                 <span className="mb-1 block font-medium">PrecintoNro</span>
                 <input
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2"
+                  className={formFieldInputClass}
                   value={ritual.form.precintoNro}
                   onChange={(e) => {
                     ritual.selectSeal("");
@@ -233,7 +234,7 @@ export function FiscalizacionTestPanel() {
               <label className="block text-sm">
                 <span className="mb-1 block font-medium">Color</span>
                 <input
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2"
+                  className={formFieldInputClass}
                   value={ritual.form.precintoColor}
                   onChange={(e) =>
                     ritual.updateForm({ precintoColor: e.target.value })

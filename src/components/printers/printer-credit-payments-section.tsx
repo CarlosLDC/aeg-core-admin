@@ -7,6 +7,7 @@ import { FieldLabel } from "@/components/ui/field-label";
 import { useConfirm } from "@/context/confirm-provider";
 import { useToast } from "@/context/toast-provider";
 import { formatDate } from "@/lib/datetime-form";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import {
   deletePrinterCreditPayment,
   fetchPrinterCreditSummary,
@@ -292,7 +293,7 @@ export function PrinterCreditPaymentsSection({
                     required
                     value={planInstallments}
                     onChange={(e) => setPlanInstallments(e.target.value)}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                    className={formFieldInputClass}
                   />
                 </div>
                 <div>
@@ -307,7 +308,7 @@ export function PrinterCreditPaymentsSection({
                     value={planPrice}
                     onChange={(e) => setPlanPrice(e.target.value)}
                     placeholder="Ej. 450.00"
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                    className={formFieldInputClass}
                   />
                 </div>
                 <div className="flex items-end gap-2">
@@ -359,7 +360,7 @@ export function PrinterCreditPaymentsSection({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="Ej. 125.00"
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                className={formFieldInputClass}
               />
             </div>
 
@@ -373,7 +374,7 @@ export function PrinterCreditPaymentsSection({
                 required
                 value={paymentDate}
                 onChange={(e) => setPaymentDate(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                className={formFieldInputClass}
               />
             </div>
 
@@ -388,7 +389,7 @@ export function PrinterCreditPaymentsSection({
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
                 placeholder="Ej. Transferencia #4821"
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                className={formFieldInputClass}
               />
             </div>
 
@@ -402,7 +403,7 @@ export function PrinterCreditPaymentsSection({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Cuota 1 de 4"
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                className={formFieldInputClass}
               />
             </div>
 

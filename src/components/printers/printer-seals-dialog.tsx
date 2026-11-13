@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { SealColorBadge } from "@/components/seals/seal-color-badge";
 import { SealStatusBadge } from "@/components/seals/seal-status-badge";
 import { SealSelect } from "@/components/seals/seal-select";
@@ -492,19 +493,18 @@ export function PrinterSealsDialog({
               </label>
               <label className="block">
                 <FieldLabel required>Color</FieldLabel>
-                <select
+                <NativeSelect
                   required
                   value={newColor}
                   disabled={saving}
                   onChange={(e) => setNewColor(e.target.value as SealColor)}
-                  className={formFieldInputClass}
                 >
                   {SEAL_COLORS.map((color) => (
                     <option key={color} value={color}>
                       {SEAL_COLOR_LABELS[color]}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </label>
             </div>
 

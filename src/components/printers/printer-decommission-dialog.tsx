@@ -2,12 +2,16 @@
 
 import { useId, useState, type FormEvent } from "react";
 import { PrinterActionDialogShell } from "@/components/printers/printer-action-dialog-shell";
+import { NativeSelect } from "@/components/ui/native-select";
 import {
   DECOMMISSION_REASON_LABELS,
   isDecommissionReason,
   validateDecommissionDate,
 } from "@/lib/decommission";
-import { formFieldInputClass } from "@/lib/toggle-button-styles";
+import {
+  formFieldInputClass,
+  formFieldTextareaClass,
+} from "@/lib/toggle-button-styles";
 import {
   DECOMMISSION_REASONS,
   type DecommissionReason,
@@ -73,8 +77,7 @@ export function PrinterDecommissionDialog({
 
         <label className="block space-y-1.5 text-sm">
           <span className="font-medium text-card-foreground">Motivo</span>
-          <select
-            className={formFieldInputClass}
+          <NativeSelect
             value={reason}
             disabled={saving}
             onChange={(e) => {
@@ -86,7 +89,7 @@ export function PrinterDecommissionDialog({
                 {DECOMMISSION_REASON_LABELS[value]}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
 
         <label className="block space-y-1.5 text-sm">
@@ -122,7 +125,7 @@ export function PrinterDecommissionDialog({
             Observaciones (opcional)
           </span>
           <textarea
-            className={`${formFieldInputClass} min-h-24 py-2`}
+            className={`${formFieldTextareaClass} min-h-24`}
             value={notes}
             disabled={saving}
             onChange={(e) => setNotes(e.target.value)}

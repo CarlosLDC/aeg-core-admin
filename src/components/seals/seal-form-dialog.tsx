@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useId, useState } from "react";
 import { CalendarClock, Loader2, Stamp, X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
+import { NativeSelect } from "@/components/ui/native-select";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { sealFormSchema } from "@/lib/schemas/seal-form-schema";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
@@ -245,7 +246,7 @@ export function SealFormDialog({
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block">
                     <FieldLabel required>Color</FieldLabel>
-                    <select
+                    <NativeSelect
                       required
                       value={form.color}
                       disabled={disabled}
@@ -255,18 +256,17 @@ export function SealFormDialog({
                           color: e.target.value as SealFormValues["color"],
                         }))
                       }
-                      className={inputClass}
                     >
                       {SEAL_COLORS.map((color) => (
                         <option key={color} value={color}>
                           {SEAL_COLOR_LABELS[color]}
                         </option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </label>
                   <label className="block">
                     <FieldLabel required>Estatus</FieldLabel>
-                    <select
+                    <NativeSelect
                       required
                       value={form.status}
                       disabled={disabled}
@@ -276,14 +276,13 @@ export function SealFormDialog({
                           status: e.target.value as SealFormValues["status"],
                         }))
                       }
-                      className={inputClass}
                     >
                       {SEAL_STATUSES.map((status) => (
                         <option key={status} value={status}>
                           {SEAL_STATUS_LABELS[status]}
                         </option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </label>
                 </div>
               </fieldset>

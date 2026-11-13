@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { ChevronDown, Eye, Printer } from "lucide-react";
+import { Eye, Printer } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FieldLabel } from "@/components/ui/field-label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { ToolsDocumentPdfModal } from "@/components/tools/tools-document-pdf-modal";
 import {
   ToolsActionCard,
@@ -21,10 +22,7 @@ import {
   getToolsReprintErrorMessage,
 } from "@/lib/tools-mqtt-api";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
-import {
-  formFieldInputClass,
-  formFieldNativeSelectClass,
-} from "@/lib/toggle-button-styles";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
 
 type ReprintAction = "visualize" | "reprint";
@@ -200,23 +198,16 @@ export function ToolsReprintSection({
             </p>
             <label className="block">
                   <FieldLabel className="text-muted">Tipo</FieldLabel>
-                  <div className="relative">
-                    <select
-                      value={docType}
-                      onChange={(e) => setDocType(e.target.value)}
-                      className={formFieldNativeSelectClass}
-                    >
-                      {DOC_TYPE_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted"
-                      aria-hidden
-                    />
-                  </div>
+                  <NativeSelect
+                    value={docType}
+                    onChange={(e) => setDocType(e.target.value)}
+                  >
+                    {DOC_TYPE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </NativeSelect>
                 </label>
                 <label className="block">
                   <FieldLabel className="text-muted">

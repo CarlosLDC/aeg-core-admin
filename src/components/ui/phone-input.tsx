@@ -5,6 +5,7 @@ import {
   formatVenezuelanPhone,
   VENEZUELAN_PHONE_PLACEHOLDER,
 } from "@/lib/venezuelan-phone";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
 export interface PhoneInputProps
@@ -47,9 +48,9 @@ export function PhoneInput({
       placeholder={placeholder}
       onChange={handleChange}
       className={cn(
-        "flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-card-foreground shadow-xs transition-colors",
-        "placeholder:text-muted focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-ring/20",
-        "disabled:cursor-not-allowed disabled:bg-foreground/[0.03] disabled:text-muted disabled:opacity-100",
+        formFieldInputClass,
+        "text-card-foreground placeholder:text-muted",
+        "disabled:bg-foreground/[0.03] disabled:text-muted disabled:opacity-100",
         className,
       )}
     />

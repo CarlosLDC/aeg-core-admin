@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronRight, Eraser, Loader2, RefreshCw } from "lucide-react";
 import { useState } from "react";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useConfirm } from "@/context/confirm-provider";
 import { useToast } from "@/context/toast-provider";
 import { useEnajenacionActivity } from "@/hooks/use-enajenacion-activity";
@@ -125,14 +126,13 @@ export function EnajenacionActivityPanel() {
         </label>
         <label className="space-y-1.5">
           <span className="text-xs font-medium text-muted">Resultado</span>
-          <select
+          <NativeSelect
             value={activity.resultFilter}
             onChange={(e) =>
               activity.setResultFilter(
                 e.target.value as EnajenacionActivityResult | "",
               )
             }
-            className={inputClass}
           >
             <option value="">Todos</option>
             {RESULT_FILTER_VALUES.map((result) => (
@@ -140,25 +140,24 @@ export function EnajenacionActivityPanel() {
                 {activityResultLabel(result)}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
         <label className="space-y-1.5">
           <span className="text-xs font-medium text-muted">Dirección</span>
-          <select
+          <NativeSelect
             value={activity.directionFilter}
             onChange={(e) =>
               activity.setDirectionFilter(
                 e.target.value as typeof activity.directionFilter,
               )
             }
-            className={inputClass}
           >
             {DIRECTION_FILTER_OPTIONS.map((option) => (
               <option key={option.value || "all"} value={option.value}>
                 {option.label}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
       </div>
 

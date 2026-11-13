@@ -19,6 +19,10 @@ import {
   rejectPrinterEnajenacionRequest,
 } from "@/lib/printer-enajenacion-requests-api";
 import { printerPath } from "@/lib/resource-routes";
+import {
+  formFieldInputClass,
+  formFieldTextareaClass,
+} from "@/lib/toggle-button-styles";
 import type { ModificationRequestStatus } from "@/types/client-modification-request";
 import type { PrinterEnajenacionRequestDetailResponse } from "@/types/printer-enajenacion-request";
 import { cn } from "@/lib/utils";
@@ -268,7 +272,7 @@ export function PrinterEnajenacionRequestView({
                   required
                   value={creditInstallments}
                   onChange={(e) => setCreditInstallments(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                  className={formFieldInputClass}
                 />
               </div>
               <div className="sm:col-span-2">
@@ -283,7 +287,7 @@ export function PrinterEnajenacionRequestView({
                   value={finalSalePrice}
                   onChange={(e) => setFinalSalePrice(e.target.value)}
                   placeholder="Ej. 450.00"
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                  className={formFieldInputClass}
                 />
               </div>
               <div className="sm:col-span-4">
@@ -296,7 +300,7 @@ export function PrinterEnajenacionRequestView({
                   value={reviewNote}
                   onChange={(e) => setReviewNote(e.target.value)}
                   placeholder="Comentarios de aprobación o motivo de rechazo…"
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                  className={formFieldTextareaClass}
                 />
               </div>
               {formError ? (

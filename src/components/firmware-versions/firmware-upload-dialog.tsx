@@ -12,9 +12,10 @@ import {
 } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
+import { NativeSelect } from "@/components/ui/native-select";
 import {
   formFieldInputClass,
-  formFieldNativeSelectClass,
+  formFieldTextareaClass,
 } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 import type { FirmwareResponse } from "@/types/firmware";
@@ -447,7 +448,7 @@ export function FirmwareUploadDialog({
 
                 <label className="block">
                   <FieldLabel>Modelo fiscal</FieldLabel>
-                  <select
+                  <NativeSelect
                     value={form.printerModelId}
                     disabled={saving}
                     onChange={(e) =>
@@ -456,7 +457,6 @@ export function FirmwareUploadDialog({
                         printerModelId: e.target.value,
                       }))
                     }
-                    className={formFieldNativeSelectClass}
                   >
                     <option value="">Todos los modelos</option>
                     {modelOptions.map((opt) => (
@@ -464,7 +464,7 @@ export function FirmwareUploadDialog({
                         {opt.label}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </label>
               </div>
             ) : null}
@@ -483,7 +483,7 @@ export function FirmwareUploadDialog({
                       notes: e.target.value,
                     }))
                   }
-                  className={`${formFieldInputClass} h-auto min-h-[8rem] py-2`}
+                  className={`${formFieldTextareaClass} min-h-[8rem]`}
                   placeholder="Cambios, instrucciones o comentarios opcionales"
                 />
               </label>
