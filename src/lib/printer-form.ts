@@ -22,6 +22,7 @@ export type PrinterFormValues = {
   versionFirmware: string;
   macAddress: string;
   status: PrinterStatus;
+  boxId: string;
 };
 
 function definedPrinterFormDefaults(
@@ -108,6 +109,7 @@ export function printerToFormValues(
     versionFirmware: printer.versionFirmware ?? "",
     macAddress: printer.macAddress ?? "",
     status,
+    boxId: printer.boxId != null ? String(printer.boxId) : "",
     ...definedPrinterFormDefaults(defaults),
   };
 }
@@ -126,6 +128,7 @@ export const emptyPrinterForm = (
   versionFirmware: "",
   macAddress: "",
   status: "sin_asignar",
+  boxId: "",
   ...definedPrinterFormDefaults(defaults),
 });
 
@@ -147,6 +150,7 @@ export function printerToAssignmentRequest(
     versionFirmware: printer.versionFirmware,
     macAddress: printer.macAddress,
     status: paid ? "asignada" : "en_consignacion",
+    boxId: printer.boxId ?? null,
   };
 }
 
@@ -177,6 +181,7 @@ export function printerToDispositionRequest(
     versionFirmware: printer.versionFirmware,
     macAddress: printer.macAddress,
     status: "enajenada",
+    boxId: printer.boxId ?? null,
   };
 }
 
@@ -245,6 +250,11 @@ export function toPrinterRequest(
     return "Distribuidor no válido.";
   }
 
+  const boxId = values.boxId.trim() ? Number(values.boxId) : null;
+  if (values.boxId.trim() && (!Number.isFinite(boxId!) || boxId! <= 0)) {
+    return "Caja de inventario no válida.";
+  }
+
   if (!PRINTER_STATUSES.includes(values.status)) {
     return "Estatus no válido.";
   }
@@ -262,6 +272,7 @@ export function toPrinterRequest(
     versionFirmware: versionFirmware || null,
     macAddress: macAddress || null,
     status: values.status,
+    boxId,
   };
 }
 

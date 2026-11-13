@@ -48,6 +48,12 @@ export function sealPath(id: number): string {
 
 export const sealsListPath = "/seals";
 
+export function inventoryBoxPath(id: number): string {
+  return `/inventory-boxes/${id}`;
+}
+
+export const inventoryBoxesListPath = "/inventory-boxes";
+
 export function softwarePath(id: number): string {
   return `/software/${id}`;
 }

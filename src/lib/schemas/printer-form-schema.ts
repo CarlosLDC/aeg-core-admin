@@ -18,6 +18,7 @@ export const printerFormSchema = z
     versionFirmware: z.string(),
     macAddress: z.string(),
     status: z.enum(PRINTER_STATUSES, { message: "Estatus no válido." }),
+    boxId: z.string(),
   })
   .superRefine((data, ctx) => {
     if (data.fiscalSerial && !FISCAL_SERIAL_RE.test(data.fiscalSerial)) {

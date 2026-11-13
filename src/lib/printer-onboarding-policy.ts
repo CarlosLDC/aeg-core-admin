@@ -28,6 +28,10 @@ export function validatePrinterWizardSection(
         return "El serial fiscal debe tener 3 letras y 7 dígitos (ej. ABC1234567).";
       }
     }
+    const boxId = form.boxId.trim();
+    if (boxId && (!Number.isFinite(Number(boxId)) || Number(boxId) <= 0)) {
+      return "Caja de inventario no válida.";
+    }
     return null;
   }
 

@@ -24,8 +24,10 @@ import {
   hrefForClient,
   hrefForDistributor,
   hrefForFirmware,
+  hrefForInventoryBox,
   hrefForPrinterModel,
 } from "@/lib/table-foreign-hrefs";
+import { formatInventoryBoxLabel } from "@/lib/inventory-box-form";
 import {
   DetailSectionsPager,
   type DetailPagerStep,
@@ -541,6 +543,19 @@ export function PrinterView() {
             mono
           />
           <DetailField label="MAC" value={printer.macAddress || "—"} mono />
+          <DetailField
+            label="Caja de inventario"
+            value={
+              printer.boxNumber != null
+                ? formatInventoryBoxLabel(printer.boxNumber)
+                : printer.boxId != null
+                  ? `Caja #${printer.boxId}`
+                  : "Sin caja"
+            }
+            href={
+              user ? hrefForInventoryBox(printer.boxId, user.role) : undefined
+            }
+          />
           {printer.status === "a_credito" ||
           printer.creditInstallments != null ||
           (printer.creditPaymentCount ?? 0) > 0 ? (
@@ -609,6 +624,19 @@ export function PrinterView() {
                 user && model
                   ? hrefForPrinterModel(model.id, user.role)
                   : undefined
+              }
+            />
+            <DetailField
+              label="Caja de inventario"
+              value={
+                printer.boxNumber != null
+                  ? formatInventoryBoxLabel(printer.boxNumber)
+                  : printer.boxId != null
+                    ? `Caja #${printer.boxId}`
+                    : "Sin caja"
+              }
+              href={
+                user ? hrefForInventoryBox(printer.boxId, user.role) : undefined
               }
             />
           </DetailSection>

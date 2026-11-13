@@ -43,6 +43,8 @@ export type PrinterResponse = {
   pendingEnajenacionRequestId?: number | null;
   creditPaidTotal?: number | null;
   creditPaymentCount?: number | null;
+  boxId?: number | null;
+  boxNumber?: number | null;
 };
 
 export type PrinterDispositionRequest = {
@@ -84,4 +86,5 @@ export type PrinterRequest = {
   pendingEnajenacionRequestId?: number | null;
   creditPaidTotal?: number | null;
   creditPaymentCount?: number | null;
+  boxId?: number | null;
 };

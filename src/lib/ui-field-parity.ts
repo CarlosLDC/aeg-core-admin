@@ -254,6 +254,12 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         formBindings: ["form.macAddress"],
         viewBindings: ["printer.macAddress"],
       },
+      {
+        formLabels: ["Caja de inventario"],
+        viewLabels: ["Caja de inventario"],
+        formBindings: ["form.boxId"],
+        viewBindings: ["printer.boxId", "printer.boxNumber"],
+      },
     ],
   },
   {
@@ -473,6 +479,25 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         viewLabels: ["Distribuidores autorizados", "Distribuidores"],
         formBindings: ["form.distributorCompanyIds"],
         viewBindings: ["software?.distributors"],
+      },
+    ],
+  },
+  {
+    resource: "inventory-boxes",
+    formPath: "src/components/inventory-boxes/inventory-box-form-dialog.tsx",
+    viewPath: "src/components/inventory-boxes/inventory-box-view.tsx",
+    fields: [
+      {
+        formLabels: ["Número de caja"],
+        viewLabels: ["Número de caja"],
+        formBindings: ["form.boxNumber"],
+        viewBindings: ["box.boxNumber"],
+      },
+      {
+        formLabels: ["Observaciones"],
+        viewLabels: ["Observaciones"],
+        formBindings: ["form.observations"],
+        viewBindings: ["box.observations"],
       },
     ],
   },

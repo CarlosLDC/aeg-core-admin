@@ -201,4 +201,31 @@ describe("toPrinterEditRequest", () => {
     expect(assignedBody.status).toBe("asignada");
     expect(assignedBody.paid).toBe(true);
   });
+
+  it("maps and preserves boxId between printer form and request", () => {
+    const boxedPrinter: PrinterResponse = {
+      ...assignedPrinter,
+      boxId: 12,
+      boxNumber: 12,
+    };
+
+    const formValues = printerToFormValues(boxedPrinter);
+    expect(formValues.boxId).toBe("12");
+
+    const updatedBody = toPrinterEditRequest(
+      { ...formValues, boxId: "45" },
+      boxedPrinter,
+    );
+    expect(typeof updatedBody).not.toBe("string");
+    if (typeof updatedBody === "string") return;
+    expect(updatedBody.boxId).toBe(45);
+
+    const clearedBody = toPrinterEditRequest(
+      { ...formValues, boxId: "" },
+      boxedPrinter,
+    );
+    expect(typeof clearedBody).not.toBe("string");
+    if (typeof clearedBody === "string") return;
+    expect(clearedBody.boxId).toBeNull();
+  });
 });

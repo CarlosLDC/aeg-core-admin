@@ -23,8 +23,11 @@ import {
   type PrinterFormValues,
 } from "@/lib/printer-form";
 import { fetchFirmwares } from "@/lib/firmwares-api";
+import { formatInventoryBoxLabel } from "@/lib/inventory-box-form";
+import { fetchInventoryBoxes } from "@/lib/inventory-boxes-api";
 import { queryPrinterFirmwareByMac } from "@/lib/printers-api";
 import type { FirmwareResponse } from "@/types/firmware";
+import type { InventoryBoxResponse } from "@/types/inventory-box";
 import type { PrinterResponse } from "@/types/printer";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { zodFieldErrors } from "@/lib/form-zod";
@@ -92,6 +95,8 @@ export function PrinterFormDialog({
   const titleId = useId();
   const [form, setForm] = useState<PrinterFormValues>(emptyPrinterForm());
   const [firmwares, setFirmwares] = useState<FirmwareResponse[]>([]);
+  const [inventoryBoxes, setInventoryBoxes] = useState<InventoryBoxResponse[]>([]);
+  const [boxesLoading, setBoxesLoading] = useState(true);
   const [queryingFirmware, setQueryingFirmware] = useState(false);
   const [firmwareQueryMessage, setFirmwareQueryMessage] = useState<string | null>(null);
   const [firmwareQueryError, setFirmwareQueryError] = useState<string | null>(null);
@@ -102,6 +107,7 @@ export function PrinterFormDialog({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+    setBoxesLoading(true);
     fetchFirmwares()
       .then((rows) => {
         if (!cancelled) setFirmwares(rows);
@@ -109,10 +115,35 @@ export function PrinterFormDialog({
       .catch(() => {
         if (!cancelled) setFirmwares([]);
       });
+    fetchInventoryBoxes()
+      .then((rows) => {
+        if (!cancelled) {
+          setInventoryBoxes(rows.sort((a, b) => a.boxNumber - b.boxNumber));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setInventoryBoxes([]);
+      })
+      .finally(() => {
+        if (!cancelled) setBoxesLoading(false);
+      });
     return () => {
       cancelled = true;
     };
   }, [open]);
+
+  const inventoryBoxOptions = useMemo<SearchableSelectOption[]>(
+    () =>
+      inventoryBoxes.map((box) => ({
+        value: String(box.id),
+        label: formatInventoryBoxLabel(box.boxNumber),
+        description:
+          box.observations ||
+          `${box.printerCount} ${box.printerCount === 1 ? "impresora" : "impresoras"}`,
+        searchText: `${box.boxNumber} ${box.observations ?? ""}`,
+      })),
+    [inventoryBoxes],
+  );
 
   const filteredFirmwares = useMemo(() => {
     const modelIdNum = Number(form.modelId);
@@ -365,7 +396,7 @@ export function PrinterFormDialog({
                   ) : null}
                 </div>
 
-                <label className="block sm:col-span-2">
+                <label className="block">
                   <FieldLabel required>Estatus</FieldLabel>
                   <NativeSelect
                     required
@@ -387,6 +418,21 @@ export function PrinterFormDialog({
                     ))}
                   </NativeSelect>
                 </label>
+
+                <div className="block">
+                  <FieldLabel>Caja de inventario</FieldLabel>
+                  <SearchableSelect
+                    value={form.boxId}
+                    onChange={(boxId) => setForm((f) => ({ ...f, boxId }))}
+                    options={inventoryBoxOptions}
+                    disabled={disabled}
+                    loading={boxesLoading}
+                    emptyLabel="Sin caja"
+                    searchPlaceholder="Buscar por número de caja u observaciones…"
+                    modalTitle="Seleccionar caja de inventario"
+                    preloadOptions
+                  />
+                </div>
               </div>
             </fieldset>
 

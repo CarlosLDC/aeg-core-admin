@@ -20,9 +20,12 @@ import {
   type PrinterFormValues,
 } from "@/lib/printer-form";
 import { fetchFirmwares } from "@/lib/firmwares-api";
+import { formatInventoryBoxLabel } from "@/lib/inventory-box-form";
+import { fetchInventoryBoxes } from "@/lib/inventory-boxes-api";
 import { queryPrinterFirmwareByMac } from "@/lib/printers-api";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import type { FirmwareResponse } from "@/types/firmware";
+import type { InventoryBoxResponse } from "@/types/inventory-box";
 import type { SoftwareModificationRequestDetailResponse } from "@/types/software-modification-request";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
@@ -97,6 +100,8 @@ export function PrinterWizardFields({
     [modelOptions, form.modelId],
   );
   const [firmwares, setFirmwares] = useState<FirmwareResponse[]>([]);
+  const [inventoryBoxes, setInventoryBoxes] = useState<InventoryBoxResponse[]>([]);
+  const [boxesLoading, setBoxesLoading] = useState(true);
   const [queryingFirmware, setQueryingFirmware] = useState(false);
   const [firmwareQueryMessage, setFirmwareQueryMessage] = useState<string | null>(null);
   const [firmwareQueryError, setFirmwareQueryError] = useState<string | null>(null);
@@ -110,10 +115,35 @@ export function PrinterWizardFields({
       .catch(() => {
         if (!cancelled) setFirmwares([]);
       });
+    fetchInventoryBoxes()
+      .then((rows) => {
+        if (!cancelled) {
+          setInventoryBoxes(rows.sort((a, b) => a.boxNumber - b.boxNumber));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setInventoryBoxes([]);
+      })
+      .finally(() => {
+        if (!cancelled) setBoxesLoading(false);
+      });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  const inventoryBoxOptions = useMemo<SearchableSelectOption[]>(
+    () =>
+      inventoryBoxes.map((box) => ({
+        value: String(box.id),
+        label: formatInventoryBoxLabel(box.boxNumber),
+        description:
+          box.observations ||
+          `${box.printerCount} ${box.printerCount === 1 ? "impresora" : "impresoras"}`,
+        searchText: `${box.boxNumber} ${box.observations ?? ""}`,
+      })),
+    [inventoryBoxes],
+  );
 
   const filteredFirmwares = useMemo(() => {
     const modelIdNum = Number(form.modelId);
@@ -265,7 +295,7 @@ export function PrinterWizardFields({
             </div>
           ) : null}
 
-          <label className={cn("block", !omitFiscalSerial && "sm:col-span-2")}>
+          <label className="block">
             <FieldLabel required>Estatus</FieldLabel>
             <NativeSelect
               required
@@ -287,6 +317,20 @@ export function PrinterWizardFields({
               ))}
             </NativeSelect>
           </label>
+          <div className="block">
+            <FieldLabel>Caja de inventario</FieldLabel>
+            <SearchableSelect
+              value={form.boxId}
+              onChange={(boxId) => setForm((f) => ({ ...f, boxId }))}
+              options={inventoryBoxOptions}
+              disabled={disabled}
+              loading={boxesLoading}
+              emptyLabel="Sin caja"
+              searchPlaceholder="Buscar por número de caja u observaciones…"
+              modalTitle="Seleccionar caja de inventario"
+              preloadOptions
+            />
+          </div>
         </div>
       </fieldset>
     );
