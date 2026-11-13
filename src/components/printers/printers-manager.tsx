@@ -1216,10 +1216,7 @@ export function PrintersManager() {
                                 />
                               ) : null}
                               {isPrinterPendingMqttEnajenacion(printer) ? (
-                                <PrinterPendingMqttBadge
-                                  printer={printer}
-                                  onVerified={loadPrinters}
-                                />
+                                <PrinterPendingMqttBadge />
                               ) : null}
                               {isDistributor &&
                               isFirmwareUpdateRequired(printer.versionFirmware) ? (

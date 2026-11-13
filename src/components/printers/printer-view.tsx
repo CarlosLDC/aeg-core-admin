@@ -476,10 +476,7 @@ export function PrinterView() {
                   <PrinterStatusActionButton action={statusQuickAction} />
                 ) : null}
                 {isPrinterPendingMqttEnajenacion(printer) ? (
-                  <PrinterPendingMqttBadge
-                    printer={printer}
-                    onVerified={() => void load()}
-                  />
+                  <PrinterPendingMqttBadge />
                 ) : null}
               </div>
             }
@@ -597,10 +594,7 @@ export function PrinterView() {
                     <PrinterStatusActionButton action={statusQuickAction} />
                   ) : null}
                   {isPrinterPendingMqttEnajenacion(printer) ? (
-                    <PrinterPendingMqttBadge
-                      printer={printer}
-                      onVerified={() => void load()}
-                    />
+                    <PrinterPendingMqttBadge />
                   ) : null}
                 </div>
               }

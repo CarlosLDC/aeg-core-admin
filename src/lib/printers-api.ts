@@ -4,7 +4,6 @@ import { redirectToLoginAfterExpired } from "@/lib/session-expired";
 import { readErrorMessageFromResponse } from "@/lib/api-error-message";
 import { ApiError } from "@/types/auth";
 import type {
-  EnajenacionVerifyStatusResponse,
   PrinterDispositionRequest,
   PrinterEnajenacionTicketResponse,
   PrinterFirmwareQueryResponse,
@@ -105,19 +104,6 @@ export async function queryPrinterFirmwareByMac(
       modelId: modelId && Number.isFinite(modelId) && modelId > 0 ? modelId : null,
     }),
   });
-}
-
-export async function verifyAndSyncPrinterStatus(
-  printerId: number,
-  autoSync = true,
-): Promise<EnajenacionVerifyStatusResponse> {
-  return apiFetch<EnajenacionVerifyStatusResponse>(
-    "/api/mqtt/enajenacion/verify-status",
-    {
-      method: "POST",
-      body: JSON.stringify({ printerId, autoSync }),
-    },
-  );
 }
 
 export async function fetchEnajenacionTicketPreview(

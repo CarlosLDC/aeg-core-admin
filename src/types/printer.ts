@@ -59,17 +59,6 @@ export type PrinterFirmwareQueryResponse = {
   firmwareId: number | null;
 };
 
-export type EnajenacionVerifyStatusResponse = {
-  printerId: number;
-  fiscalSerial: string;
-  reportedFiscalSerial: string | null;
-  match: boolean;
-  alreadyEnajenada: boolean;
-  synced: boolean;
-  message: string;
-  response?: unknown;
-};
-
 export type PrinterRequest = {
   modelId: number;
   softwareId?: number | null;
