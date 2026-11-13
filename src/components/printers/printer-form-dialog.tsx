@@ -362,13 +362,11 @@ export function PrinterFormDialog({
                     <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
                       {fieldErrors.fiscalSerial}
                     </span>
-                  ) : (
+                  ) : !selectedModelPrefix ? (
                     <p className="mt-1 text-xs text-muted">
-                      {selectedModelPrefix
-                        ? `Prefijo ${selectedModelPrefix} deducido del modelo · Edita los 7 dígitos.`
-                        : "Selecciona un modelo para deducir el prefijo (7 dígitos)."}
+                      Selecciona un modelo para deducir el prefijo (7 dígitos).
                     </p>
-                  )}
+                  ) : null}
                 </div>
 
                 <label className="block sm:col-span-2">
