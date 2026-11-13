@@ -71,7 +71,7 @@ export function PrinterDecommissionDialog({
           para la declaración informativa al SENIAT.
         </p>
 
-        <label className="block space-y-1 text-sm">
+        <label className="block space-y-1.5 text-sm">
           <span className="font-medium text-card-foreground">Motivo</span>
           <select
             className={formFieldInputClass}
@@ -89,7 +89,7 @@ export function PrinterDecommissionDialog({
           </select>
         </label>
 
-        <label className="block space-y-1 text-sm">
+        <label className="block space-y-1.5 text-sm">
           <span className="font-medium text-card-foreground">
             Fecha (opcional)
           </span>
@@ -117,7 +117,7 @@ export function PrinterDecommissionDialog({
           </span>
         </label>
 
-        <label className="block space-y-1 text-sm">
+        <label className="block space-y-1.5 text-sm">
           <span className="font-medium text-card-foreground">
             Observaciones (opcional)
           </span>

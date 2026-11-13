@@ -103,7 +103,7 @@ export function EnajenacionActivityPanel() {
   return (
     <section className="mx-auto max-w-4xl space-y-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <label className="space-y-1">
+        <label className="space-y-1.5">
           <span className="text-xs font-medium text-muted">MAC</span>
           <input
             type="text"
@@ -113,7 +113,7 @@ export function EnajenacionActivityPanel() {
             placeholder="20:6E:F1:88:4C:68"
           />
         </label>
-        <label className="space-y-1">
+        <label className="space-y-1.5">
           <span className="text-xs font-medium text-muted">Serial fiscal</span>
           <input
             type="text"
@@ -123,7 +123,7 @@ export function EnajenacionActivityPanel() {
             placeholder="GRA0000017"
           />
         </label>
-        <label className="space-y-1">
+        <label className="space-y-1.5">
           <span className="text-xs font-medium text-muted">Resultado</span>
           <select
             value={activity.resultFilter}
@@ -142,7 +142,7 @@ export function EnajenacionActivityPanel() {
             ))}
           </select>
         </label>
-        <label className="space-y-1">
+        <label className="space-y-1.5">
           <span className="text-xs font-medium text-muted">Dirección</span>
           <select
             value={activity.directionFilter}

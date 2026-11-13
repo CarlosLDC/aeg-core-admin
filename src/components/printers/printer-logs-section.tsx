@@ -335,7 +335,7 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
       {/* Filtros de búsqueda por fecha, hora y contenido */}
       <div className="mt-4 space-y-3">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="space-y-1">
+          <label className="space-y-1.5">
             <span className="text-xs font-medium text-muted">
               Desde (Fecha y hora)
             </span>
@@ -350,7 +350,7 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
             />
           </label>
 
-          <label className="space-y-1">
+          <label className="space-y-1.5">
             <span className="text-xs font-medium text-muted">
               Hasta (Fecha y hora)
             </span>
@@ -365,7 +365,7 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
             />
           </label>
 
-          <label className="space-y-1">
+          <label className="space-y-1.5">
             <span className="text-xs font-medium text-muted">
               Buscar en contenido
             </span>
@@ -400,7 +400,7 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
             </div>
           </label>
 
-          <label className="space-y-1">
+          <label className="space-y-1.5">
             <span className="text-xs font-medium text-muted">Orden</span>
             <div className="relative">
               <select

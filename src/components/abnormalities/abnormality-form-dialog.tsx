@@ -105,7 +105,7 @@ export function AbnormalityFormDialog({
               />
             </div>
 
-            <label className="block space-y-1 text-sm">
+            <label className="block space-y-1.5 text-sm">
               <FieldLabel required>Tipo de anormalidad</FieldLabel>
               <select
                 className={formFieldInputClass}
@@ -126,7 +126,7 @@ export function AbnormalityFormDialog({
               </select>
             </label>
 
-            <label className="block space-y-1 text-sm">
+            <label className="block space-y-1.5 text-sm">
               <span className="font-medium text-card-foreground">
                 Fecha de detección (opcional)
               </span>
@@ -161,7 +161,7 @@ export function AbnormalityFormDialog({
               </span>
             </label>
 
-            <label className="block space-y-1 text-sm">
+            <label className="block space-y-1.5 text-sm">
               <span className="font-medium text-card-foreground">
                 Descripción (opcional)
               </span>
