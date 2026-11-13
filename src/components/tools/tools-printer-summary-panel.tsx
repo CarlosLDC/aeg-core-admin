@@ -64,7 +64,7 @@ export function ToolsPrinterSummaryPanel({
         description={section.description}
       />
 
-      <section className={cn(toolsPanelSectionClass, "space-y-6")}>
+      <section className={cn(toolsPanelSectionClass, "space-y-7 sm:space-y-8")}>
         <DividedSection
           title="Datos de la impresora"
           icon={Printer}

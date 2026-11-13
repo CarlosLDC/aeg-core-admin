@@ -93,7 +93,7 @@ export function ToolsPage({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={cn("admin-content-stack", className)}>{children}</div>;
+  return <div className={cn("flex flex-col gap-6 sm:gap-8", className)}>{children}</div>;
 }
 
 export function ToolsSectionGrid({
