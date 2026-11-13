@@ -69,11 +69,12 @@ describe("tools formatters", () => {
   it("filters printers by status bucket", () => {
     const printers = [
       samplePrinter({ status: "enajenada" }),
+      samplePrinter({ id: 4, status: "a_credito", estado: "A crédito" }),
       samplePrinter({ id: 2, status: "asignada", estado: "Asignada" }),
       samplePrinter({ id: 3, status: "sin_asignar", estado: "Sin asignar" }),
     ];
 
-    expect(filterToolsPrintersByStatus(printers, "enajenada")).toHaveLength(1);
+    expect(filterToolsPrintersByStatus(printers, "enajenada")).toHaveLength(2);
     expect(filterToolsPrintersByStatus(printers, "no_enajenada")).toHaveLength(1);
     expect(filterToolsPrintersByStatus(printers, "sin_asignar")).toHaveLength(1);
   });

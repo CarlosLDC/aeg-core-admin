@@ -1,4 +1,4 @@
-import { normalizePrinterStatus } from "@/lib/printer-status";
+import { isPrinterDisposed, normalizePrinterStatus } from "@/lib/printer-status";
 import type { BranchResponse, BranchWithRoles } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { PrinterResponse } from "@/types/printer";
@@ -111,7 +111,7 @@ export function getBranchPrinterStats(
     const status = normalizePrinterStatus(printer.status);
     if (status === "asignada") {
       assigned += 1;
-    } else if (status === "enajenada") {
+    } else if (isPrinterDisposed(status)) {
       disposed += 1;
     }
   }
@@ -138,14 +138,12 @@ export function filterPrintersByQuickFilter(
     );
   }
   if (filter === "enajenada") {
-    return printers.filter(
-      (p) => normalizePrinterStatus(p.status) === "enajenada",
-    );
+    return printers.filter((p) => isPrinterDisposed(p.status));
   }
   if (filter === "other") {
     return printers.filter((p) => {
       const status = normalizePrinterStatus(p.status);
-      return status !== "asignada" && status !== "enajenada";
+      return status !== "asignada" && !isPrinterDisposed(status);
     });
   }
   return printers;

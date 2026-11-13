@@ -154,15 +154,16 @@ describe("getBranchPrinterStats", () => {
       mockPrinter({ id: 1, status: "asignada" }),
       mockPrinter({ id: 2, status: "asignada" }),
       mockPrinter({ id: 3, status: "enajenada" }),
-      mockPrinter({ id: 4, status: "sin_asignar" }),
-      mockPrinter({ id: 5, status: "laboratorio" }),
+      mockPrinter({ id: 4, status: "a_credito" }),
+      mockPrinter({ id: 5, status: "sin_asignar" }),
+      mockPrinter({ id: 6, status: "laboratorio" }),
     ];
 
     const stats = getBranchPrinterStats(printers);
     expect(stats).toEqual({
-      total: 5,
+      total: 6,
       assigned: 2,
-      disposed: 1,
+      disposed: 2,
       other: 2,
     });
   });
@@ -182,13 +183,14 @@ describe("filterPrintersByQuickFilter", () => {
     mockPrinter({ id: 1, fiscalSerial: "A1", status: "asignada" }),
     mockPrinter({ id: 2, fiscalSerial: "A2", status: "asignada" }),
     mockPrinter({ id: 3, fiscalSerial: "E1", status: "enajenada" }),
-    mockPrinter({ id: 4, fiscalSerial: "O1", status: "sin_asignar" }),
-    mockPrinter({ id: 5, fiscalSerial: "O2", status: "desincorporada" }),
+    mockPrinter({ id: 4, fiscalSerial: "C1", status: "a_credito" }),
+    mockPrinter({ id: 5, fiscalSerial: "O1", status: "sin_asignar" }),
+    mockPrinter({ id: 6, fiscalSerial: "O2", status: "desincorporada" }),
   ];
 
   it("returns all printers for 'all'", () => {
     const res = filterPrintersByQuickFilter(printers, "all");
-    expect(res).toHaveLength(5);
+    expect(res).toHaveLength(6);
   });
 
   it("filters assigned printers for 'asignada'", () => {
@@ -198,7 +200,7 @@ describe("filterPrintersByQuickFilter", () => {
 
   it("filters disposed printers for 'enajenada'", () => {
     const res = filterPrintersByQuickFilter(printers, "enajenada");
-    expect(res.map((p) => p.fiscalSerial)).toEqual(["E1"]);
+    expect(res.map((p) => p.fiscalSerial)).toEqual(["E1", "C1"]);
   });
 
   it("filters other printers for 'other'", () => {

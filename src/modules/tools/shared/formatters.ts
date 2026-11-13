@@ -207,10 +207,12 @@ export function filterToolsPrintersByStatus(
   if (filter === "all") return printers;
 
   return printers.filter((printer) => {
-    if (filter === "enajenada") return printer.status === "enajenada";
+    if (filter === "enajenada") {
+      return printer.status === "enajenada" || printer.status === "a_credito";
+    }
     if (filter === "en_consignacion") return printer.status === "en_consignacion";
     if (filter === "sin_asignar") return printer.status === "sin_asignar";
-    return !["enajenada", "en_consignacion", "sin_asignar"].includes(
+    return !["enajenada", "a_credito", "en_consignacion", "sin_asignar"].includes(
       printer.status,
     );
   });

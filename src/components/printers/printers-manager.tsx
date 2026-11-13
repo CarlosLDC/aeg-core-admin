@@ -374,7 +374,10 @@ export function PrintersManager() {
   const filteredPrinters = useMemo(() => {
     const q = search.trim().toLowerCase();
     return visiblePrinters.filter((printer) => {
-      if (statusFilter !== "all" && printer.status !== statusFilter) {
+      if (
+        statusFilter !== "all" &&
+        normalizePrinterStatus(printer.status) !== statusFilter
+      ) {
         return false;
       }
       if (
