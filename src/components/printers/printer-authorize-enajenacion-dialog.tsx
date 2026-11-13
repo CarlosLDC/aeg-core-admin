@@ -73,16 +73,16 @@ export function PrinterAuthorizeEnajenacionDialog({
 
   return (
     <PrinterActionDialogShell
-      title={`Dar permiso para enajenar · ${printer.fiscalSerial}`}
+      title="Dar permiso para enajenar"
       titleId={titleId}
       printer={printer}
-      showPrinterSerialSubtitle={false}
       saving={saving}
       error={error}
       onClose={onClose}
       onSubmit={(e) => void handleSubmit(e)}
       submitLabel="Dar permiso"
-      cancelLabel="Cancelar"
+      submitDisabled={!creditInstallments.trim()}
+      submitLoading={saving}
     >
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
         <label
