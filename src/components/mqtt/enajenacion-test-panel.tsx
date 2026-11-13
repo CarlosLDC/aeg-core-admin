@@ -122,7 +122,8 @@ export function EnajenacionTestPanel() {
             <span
               className={cn(
                 "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                ritual.printerStatus.status === "enajenada"
+                ritual.printerStatus.status === "enajenada" ||
+                ritual.printerStatus.status === "a_credito"
                   ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
                   : "bg-foreground/5 text-muted",
               )}

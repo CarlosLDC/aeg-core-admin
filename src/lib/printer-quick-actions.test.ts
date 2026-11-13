@@ -51,7 +51,7 @@ describe("getPrinterStatusQuickAction", () => {
     expect(action).toBeNull();
   });
 
-  it("blocks dispose for printers on consignment", () => {
+  it("offers dispose for printers on consignment", () => {
     const action = getPrinterStatusQuickAction({
       status: "en_consignacion",
       printer: unpaidPrinter,
@@ -59,7 +59,7 @@ describe("getPrinterStatusQuickAction", () => {
       canDispose: true,
       ...handlers,
     });
-    expect(action).toBeNull();
+    expect(action?.kind).toBe("dispose");
   });
 
   it("offers ticket reconfigure when Remoto is pending", () => {
@@ -120,14 +120,14 @@ describe("getPrinterStatusBadgeTitle", () => {
     ).toBe(PRINTER_UNPAID_DISPOSITION_MESSAGE);
   });
 
-  it("explains why consignment printers cannot be disposed", () => {
+  it("returns undefined for consignment printers", () => {
     expect(
       getPrinterStatusBadgeTitle({
         status: "en_consignacion",
         printer: unpaidPrinter,
         canDispose: true,
       }),
-    ).toBe(PRINTER_UNPAID_DISPOSITION_MESSAGE);
+    ).toBeUndefined();
   });
 
   it("returns undefined for paid assigned printers", () => {

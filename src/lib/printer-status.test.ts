@@ -38,11 +38,12 @@ describe("printer-status", () => {
 
   it("detects printers eligible for Remoto enajenacion", () => {
     expect(isPrinterEligibleForMqttEnajenacion("asignada")).toBe(true);
+    expect(isPrinterEligibleForMqttEnajenacion("en_consignacion")).toBe(true);
     expect(isPrinterEligibleForMqttEnajenacion("laboratorio")).toBe(true);
     expect(isPrinterEligibleForMqttEnajenacion("de_demostracion")).toBe(true);
     expect(isPrinterEligibleForMqttEnajenacion("sin_asignar")).toBe(false);
-    expect(isPrinterEligibleForMqttEnajenacion("en_consignacion")).toBe(false);
     expect(isPrinterEligibleForMqttEnajenacion("enajenada")).toBe(false);
+    expect(isPrinterEligibleForMqttEnajenacion("a_credito")).toBe(false);
   });
 
   it("detects backward status transitions correctly", () => {

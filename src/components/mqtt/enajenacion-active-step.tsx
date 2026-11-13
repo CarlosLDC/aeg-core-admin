@@ -149,7 +149,9 @@ export function EnajenacionSuccessCard({
   printer: PrinterResponse;
   printerStatus: PrinterResponse | null;
 }) {
-  const enajenada = printerStatus?.status === "enajenada";
+  const enajenada =
+    printerStatus?.status === "enajenada" ||
+    printerStatus?.status === "a_credito";
 
   return (
     <article

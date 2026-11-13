@@ -3,6 +3,7 @@ export const PRINTER_STATUSES = [
   "asignada",
   "en_consignacion",
   "enajenada",
+  "a_credito",
   "desincorporada",
   "laboratorio",
 ] as const;

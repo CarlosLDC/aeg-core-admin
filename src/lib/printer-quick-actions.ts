@@ -1,5 +1,6 @@
 import {
   isPrinterAssigned,
+  isPrinterAssignedToDistributor,
   isPrinterOnConsignment,
   isPrinterUnassigned,
 } from "@/lib/printer-status";
@@ -41,9 +42,10 @@ export function getPrinterStatusQuickAction(params: {
       label: "Asignar impresora",
     };
   }
-  if (params.canDispose && isPrinterAssigned(params.status)) {
-    const paid =
-      params.printer != null
+  if (params.canDispose && isPrinterAssignedToDistributor(params.status)) {
+    const paid = isPrinterOnConsignment(params.status)
+      ? true
+      : params.printer != null
         ? isPrinterPaidForDisposition(params.printer)
         : params.paid === true;
     if (!paid) return null;
@@ -75,9 +77,6 @@ export function getPrinterStatusBadgeTitle(params: {
 }): string | undefined {
   if (!params.canDispose) {
     return undefined;
-  }
-  if (isPrinterOnConsignment(params.status)) {
-    return PRINTER_UNPAID_DISPOSITION_MESSAGE;
   }
   if (!isPrinterAssigned(params.status)) {
     return undefined;

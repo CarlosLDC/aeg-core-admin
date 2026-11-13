@@ -1032,7 +1032,7 @@ export function CompanyPrintersTable({
                                     />
                                   ) : null}
                                   {isPrinterPendingMqttEnajenacion(printer) ? (
-                                    <PrinterPendingMqttBadge />
+                                    <PrinterPendingMqttBadge printer={printer} />
                                   ) : null}
                                 </div>
                               </td>

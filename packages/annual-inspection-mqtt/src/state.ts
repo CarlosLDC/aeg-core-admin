@@ -213,7 +213,7 @@ export function isPrinterEligibleForAnnualInspectionMqtt(
 ): boolean {
   const status = printer.status?.trim().toLowerCase();
   return (
-    status === "enajenada" &&
+    (status === "enajenada" || status === "a_credito") &&
     Boolean(printer.clientId) &&
     Boolean(printer.macAddress?.trim()) &&
     Boolean(printer.fiscalSerial?.trim())

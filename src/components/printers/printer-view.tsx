@@ -476,7 +476,7 @@ export function PrinterView() {
                   <PrinterStatusActionButton action={statusQuickAction} />
                 ) : null}
                 {isPrinterPendingMqttEnajenacion(printer) ? (
-                  <PrinterPendingMqttBadge />
+                  <PrinterPendingMqttBadge printer={printer} />
                 ) : null}
               </div>
             }
@@ -594,7 +594,7 @@ export function PrinterView() {
                     <PrinterStatusActionButton action={statusQuickAction} />
                   ) : null}
                   {isPrinterPendingMqttEnajenacion(printer) ? (
-                    <PrinterPendingMqttBadge />
+                    <PrinterPendingMqttBadge printer={printer} />
                   ) : null}
                 </div>
               }
@@ -972,7 +972,9 @@ export function PrinterView() {
 
   const showToolsLink = Boolean(user && canAccessRoute(user.role, "/tools"));
   const showFiscalBookLink = Boolean(
-    printer && canOpenFiscalBook && printer.status === "enajenada",
+    printer &&
+    canOpenFiscalBook &&
+    (printer.status === "enajenada" || printer.status === "a_credito"),
   );
   const showDecommission = Boolean(
     printer && isAdmin && canDecommissionStatus(printer.status),

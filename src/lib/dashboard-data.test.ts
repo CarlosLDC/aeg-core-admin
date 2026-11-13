@@ -110,16 +110,17 @@ describe("countPrintersByStatus", () => {
   ] as PrinterResponse[];
 
   it("includes all statuses for admin", () => {
-    expect(countPrintersByStatus(printers, "ADMIN")).toHaveLength(6);
+    expect(countPrintersByStatus(printers, "ADMIN")).toHaveLength(7);
   });
 
-  it("only includes en_consignacion, asignada and enajenada for technician", () => {
+  it("only includes en_consignacion, asignada, enajenada and a_credito for technician", () => {
     const rows = countPrintersByStatus(printers, "TECHNICIAN");
-    expect(rows).toHaveLength(3);
+    expect(rows).toHaveLength(4);
     expect(rows.map((r) => r.status)).toEqual([
       "en_consignacion",
       "asignada",
       "enajenada",
+      "a_credito",
     ]);
     expect(rows.find((r) => r.status === "asignada")?.count).toBe(1);
     expect(rows.find((r) => r.status === "enajenada")?.count).toBe(1);

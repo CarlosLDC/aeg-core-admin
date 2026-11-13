@@ -13,6 +13,8 @@ const STATUS_STYLES: Record<string, string> = {
     "border-indigo-500/30 bg-indigo-500/10 text-indigo-800 dark:text-indigo-200",
   enajenada:
     "border-orange-500/30 bg-orange-500/10 text-orange-800 dark:text-orange-200",
+  a_credito:
+    "border-cyan-500/30 bg-cyan-500/10 text-cyan-800 dark:text-cyan-200",
   desincorporada:
     "border-slate-500/30 bg-slate-500/10 text-slate-700 dark:text-slate-300",
   laboratorio:

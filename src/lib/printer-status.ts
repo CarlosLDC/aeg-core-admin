@@ -32,11 +32,16 @@ export function isPrinterAssigned(status: string): boolean {
 }
 
 export function isPrinterDisposed(status: string): boolean {
-  return normalizePrinterStatus(status) === "enajenada";
+  const normalized = normalizePrinterStatus(status);
+  return normalized === "enajenada" || normalized === "a_credito";
 }
 
 export function isPrinterOnConsignment(status: string): boolean {
   return normalizePrinterStatus(status) === "en_consignacion";
+}
+
+export function isPrinterOnCredit(status: string): boolean {
+  return normalizePrinterStatus(status) === "a_credito";
 }
 
 export function isPrinterAssignedToDistributor(status: string): boolean {
@@ -51,7 +56,11 @@ export function isPrinterLaboratorio(status: string): boolean {
 /** Estados desde los que se puede iniciar o simular enajenación Remoto. */
 export function isPrinterEligibleForMqttEnajenacion(status: string): boolean {
   const normalized = normalizePrinterStatus(status);
-  return normalized === "asignada" || normalized === "laboratorio";
+  return (
+    normalized === "asignada" ||
+    normalized === "en_consignacion" ||
+    normalized === "laboratorio"
+  );
 }
 
 export function isPrinterOperative(status: string): boolean {
@@ -86,7 +95,11 @@ export function isBackwardPrinterStatusTransition(params: {
   const current = normalizePrinterStatus(params.currentStatus);
   const next = normalizePrinterStatus(params.newStatus);
 
-  if (current === "enajenada" && next !== "enajenada") {
+  if (
+    (current === "enajenada" || current === "a_credito") &&
+    next !== "enajenada" &&
+    next !== "a_credito"
+  ) {
     return true;
   }
 
@@ -127,13 +140,19 @@ export function buildPrinterRollbackConsequences(
     params.currentClientId != null &&
     (params.newClientId == null ||
       next === "sin_asignar" ||
-      (current === "enajenada" && next !== "enajenada"));
+      ((current === "enajenada" || current === "a_credito") &&
+        next !== "enajenada" &&
+        next !== "a_credito"));
 
   const losingDistributor =
     params.currentDistributorId != null &&
     next === "sin_asignar";
 
-  if (current === "enajenada" && next !== "enajenada") {
+  if (
+    (current === "enajenada" || current === "a_credito") &&
+    next !== "enajenada" &&
+    next !== "a_credito"
+  ) {
     consequences.push(
       "La impresora dejará de considerarse enajenada y volverá al flujo de asignación.",
     );

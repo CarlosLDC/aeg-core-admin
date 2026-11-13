@@ -1039,7 +1039,7 @@ export function BranchPrintersTable({
                                     />
                                   ) : null}
                                   {isPrinterPendingMqttEnajenacion(printer) ? (
-                                    <PrinterPendingMqttBadge />
+                                    <PrinterPendingMqttBadge printer={printer} />
                                   ) : null}
                                 </div>
                               </td>

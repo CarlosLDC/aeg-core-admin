@@ -57,8 +57,12 @@ export function derivePrinterPaidFromStatus(status: PrinterStatus): boolean {
 }
 
 export function isPrinterPaidForDisposition(printer: PrinterResponse): boolean {
-  if (printer.status != null && isPrinterOnConsignment(printer.status)) {
-    return false;
+  if (
+    printer.status != null &&
+    (isPrinterOnConsignment(printer.status) ||
+      normalizePrinterStatus(printer.status) === "a_credito")
+  ) {
+    return true;
   }
   return printer.paid === true;
 }
@@ -68,6 +72,7 @@ export const PRINTER_STATUS_LABELS: Record<PrinterStatus, string> = {
   asignada: "Asignada",
   en_consignacion: "En consignación",
   enajenada: "Enajenada",
+  a_credito: "A crédito",
   desincorporada: "Desincorporada",
   laboratorio: "Laboratorio",
 };

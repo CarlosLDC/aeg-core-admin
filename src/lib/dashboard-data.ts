@@ -90,6 +90,7 @@ const DISTRIBUTOR_PRINTER_STATUSES = [
   "en_consignacion",
   "asignada",
   "enajenada",
+  "a_credito",
 ] as const;
 
 export type DashboardSnapshot = {
@@ -121,6 +122,7 @@ const ALL_PRINTER_STATUSES = [
   "asignada",
   "en_consignacion",
   "enajenada",
+  "a_credito",
   "desincorporada",
   "laboratorio",
 ] as const;
