@@ -204,7 +204,7 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
   }
 
   return (
-    <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+    <section className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5">
       {/* Encabezado y barra de acciones */}
       <div className="flex flex-col gap-4 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 space-y-1.5">
@@ -249,21 +249,21 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
           </div>
 
           {expectedTopic ? (
-            <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
-              <span>Tópico de captura:</span>
+            <div className="flex flex-col items-start gap-1 text-xs text-muted sm:flex-row sm:flex-wrap sm:items-center sm:gap-1.5">
+              <span className="shrink-0">Tópico de captura:</span>
               <button
                 type="button"
                 onClick={(e) =>
                   void handleCopyText(expectedTopic, "topic", "Tópico copiado", e)
                 }
-                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-foreground/[0.02] px-2 py-0.5 font-mono text-xs text-card-foreground transition-colors hover:bg-foreground/5"
+                className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-md border border-border bg-foreground/[0.02] px-2 py-1 font-mono text-xs text-card-foreground transition-colors hover:bg-foreground/5 sm:py-0.5"
                 title="Copiar tópico MQTT"
               >
-                <span className="truncate">{expectedTopic}</span>
+                <span className="min-w-0 truncate">{expectedTopic}</span>
                 {copiedId === "topic" ? (
-                  <Check className="size-3 text-emerald-600 dark:text-emerald-400" />
+                  <Check className="size-3 shrink-0 text-emerald-600 dark:text-emerald-400" />
                 ) : (
-                  <Copy className="size-3 text-muted" />
+                  <Copy className="size-3 shrink-0 text-muted" />
                 )}
               </button>
             </div>
@@ -275,21 +275,21 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center [&>*:last-child:nth-child(odd)]:col-span-2 sm:[&>*:last-child:nth-child(odd)]:col-span-1">
           <button
             type="button"
             disabled={!compactMac}
             onClick={() => setLiveEnabled((prev) => !prev)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50 sm:py-1.5"
           >
             {liveEnabled ? (
               <>
-                <Pause className="size-3.5 text-muted" />
+                <Pause className="size-3.5 shrink-0 text-muted" />
                 Pausar
               </>
             ) : (
               <>
-                <Play className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                <Play className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                 Reanudar
               </>
             )}
@@ -299,12 +299,12 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
             type="button"
             onClick={() => void refetch()}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50 sm:py-1.5"
           >
             {loading ? (
-              <Loader2 className="size-3.5 animate-spin text-muted" />
+              <Loader2 className="size-3.5 shrink-0 animate-spin text-muted" />
             ) : (
-              <RefreshCw className="size-3.5 text-muted" />
+              <RefreshCw className="size-3.5 shrink-0 text-muted" />
             )}
             Actualizar
           </button>
@@ -313,9 +313,9 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
             type="button"
             onClick={handleDownloadLogs}
             disabled={logs.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50 sm:py-1.5"
           >
-            <Download className="size-3.5 text-muted" />
+            <Download className="size-3.5 shrink-0 text-muted" />
             Exportar
           </button>
 
@@ -323,9 +323,9 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
             <button
               type="button"
               onClick={() => setDeleteDialogOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-700 dark:hover:text-rose-300"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-muted transition-colors hover:border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-700 sm:py-1.5 dark:hover:text-rose-300"
             >
-              <Eraser className="size-3.5" />
+              <Eraser className="size-3.5 shrink-0" />
               Limpiar por fecha
             </button>
           ) : null}
@@ -423,44 +423,58 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
         </div>
 
         {/* Atajos rápidos de rango temporal */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 text-xs text-muted">Rango rápido:</span>
-            <button
-              type="button"
-              onClick={() => applyQuickRange(1)}
-              className="rounded-md border border-border bg-foreground/[0.02] px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:bg-foreground/5 hover:text-card-foreground"
-            >
-              Última hora
-            </button>
-            <button
-              type="button"
-              onClick={applyTodayRange}
-              className="rounded-md border border-border bg-foreground/[0.02] px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:bg-foreground/5 hover:text-card-foreground"
-            >
-              Hoy
-            </button>
-            <button
-              type="button"
-              onClick={() => applyQuickRange(24)}
-              className="rounded-md border border-border bg-foreground/[0.02] px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:bg-foreground/5 hover:text-card-foreground"
-            >
-              Últimas 24 h
-            </button>
-            <button
-              type="button"
-              onClick={() => applyQuickRange(24 * 7)}
-              className="rounded-md border border-border bg-foreground/[0.02] px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:bg-foreground/5 hover:text-card-foreground"
-            >
-              Últimos 7 días
-            </button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="flex items-center justify-between gap-2 sm:mr-1">
+              <span className="text-xs text-muted">Rango rápido:</span>
+              {hasActiveFilters ? (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline sm:hidden"
+                >
+                  <RotateCcw className="size-3" />
+                  Restablecer filtros
+                </button>
+              ) : null}
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-center">
+              <button
+                type="button"
+                onClick={() => applyQuickRange(1)}
+                className="rounded-md border border-border bg-foreground/[0.02] px-2.5 py-1.5 text-center text-xs font-medium text-muted transition-colors hover:bg-foreground/5 hover:text-card-foreground sm:py-1"
+              >
+                Última hora
+              </button>
+              <button
+                type="button"
+                onClick={applyTodayRange}
+                className="rounded-md border border-border bg-foreground/[0.02] px-2.5 py-1.5 text-center text-xs font-medium text-muted transition-colors hover:bg-foreground/5 hover:text-card-foreground sm:py-1"
+              >
+                Hoy
+              </button>
+              <button
+                type="button"
+                onClick={() => applyQuickRange(24)}
+                className="rounded-md border border-border bg-foreground/[0.02] px-2.5 py-1.5 text-center text-xs font-medium text-muted transition-colors hover:bg-foreground/5 hover:text-card-foreground sm:py-1"
+              >
+                Últimas 24 h
+              </button>
+              <button
+                type="button"
+                onClick={() => applyQuickRange(24 * 7)}
+                className="rounded-md border border-border bg-foreground/[0.02] px-2.5 py-1.5 text-center text-xs font-medium text-muted transition-colors hover:bg-foreground/5 hover:text-card-foreground sm:py-1"
+              >
+                Últimos 7 días
+              </button>
+            </div>
           </div>
 
           {hasActiveFilters ? (
             <button
               type="button"
               onClick={handleResetFilters}
-              className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+              className="hidden items-center gap-1 text-xs font-medium text-accent hover:underline sm:inline-flex"
             >
               <RotateCcw className="size-3" />
               Restablecer filtros
@@ -495,7 +509,40 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
           </div>
         ) : (
           <div className="overflow-hidden rounded-lg border border-border bg-card">
-            <div className="overflow-x-auto">
+            {/* Vista móvil en tarjetas */}
+            <div className="divide-y divide-border/70 sm:hidden">
+              {logs.map((item) => {
+                const isExpanded = expandedId === item.id;
+                const info = parsePayloadInfo(item.payload);
+                const isCopied = copiedId === item.id;
+
+                return (
+                  <LogMobileCard
+                    key={item.id}
+                    item={item}
+                    info={info}
+                    expanded={isExpanded}
+                    copied={isCopied}
+                    onToggle={() =>
+                      setExpandedId((curr) =>
+                        curr === item.id ? null : item.id,
+                      )
+                    }
+                    onCopy={(e) =>
+                      void handleCopyText(
+                        info.formatted,
+                        item.id,
+                        "Payload copiado",
+                        e,
+                      )
+                    }
+                  />
+                );
+              })}
+            </div>
+
+            {/* Vista escritorio en tabla */}
+            <div className="hidden overflow-x-auto sm:block">
               <table className="w-full min-w-[42rem] text-left text-sm">
                 <thead>
                   <tr className="border-b border-border bg-foreground/[0.02] text-xs font-medium text-muted">
@@ -622,6 +669,137 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
         />
       ) : null}
     </section>
+  );
+}
+
+function LogMobileCard({
+  item,
+  info,
+  expanded,
+  copied,
+  onToggle,
+  onCopy,
+}: {
+  item: PrinterMqttLogItem;
+  info: { isJson: boolean; formatted: string; preview: string };
+  expanded: boolean;
+  copied: boolean;
+  onToggle: () => void;
+  onCopy: (e: MouseEvent) => void;
+}) {
+  return (
+    <div
+      className={cn(
+        "transition-colors",
+        expanded && "bg-foreground/[0.015]",
+      )}
+    >
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggle}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggle();
+          }
+        }}
+        aria-expanded={expanded}
+        className="w-full cursor-pointer space-y-2 px-3.5 py-3 text-left transition-colors active:bg-foreground/[0.03]"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <span
+              className={cn(
+                "inline-flex shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-medium",
+                info.isJson
+                  ? "bg-sky-500/10 text-sky-700 dark:text-sky-300"
+                  : "bg-foreground/5 text-muted",
+              )}
+            >
+              {info.isJson ? "JSON" : "TEXT"}
+            </span>
+            <span className="truncate font-mono text-[11px] text-muted">
+              <span className="text-card-foreground">
+                {formatDatePart(item.recordedAt)}
+              </span>{" "}
+              {formatTimePart(item.recordedAt)}
+            </span>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-0.5">
+            <button
+              type="button"
+              onClick={onCopy}
+              className="rounded-md p-1.5 text-muted transition-colors hover:bg-foreground/5 hover:text-card-foreground"
+              title="Copiar payload"
+              aria-label="Copiar payload"
+            >
+              {copied ? (
+                <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+              ) : (
+                <Copy className="size-3.5" />
+              )}
+            </button>
+            <span className="rounded-md p-1 text-muted" aria-hidden>
+              {expanded ? (
+                <ChevronDown className="size-4" />
+              ) : (
+                <ChevronRight className="size-4" />
+              )}
+            </span>
+          </div>
+        </div>
+
+        <p className="line-clamp-2 break-all font-mono text-xs leading-relaxed text-card-foreground">
+          {info.preview}
+        </p>
+      </div>
+
+      {expanded ? (
+        <div className="space-y-2.5 border-t border-border/60 px-3.5 py-3">
+          <div className="space-y-1 text-[11px] text-muted">
+            <p className="break-all">
+              <span className="font-medium">Tópico:</span>{" "}
+              <code className="font-mono text-card-foreground">
+                {item.topic}
+              </code>
+            </p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span>
+                <span className="font-medium">MAC:</span>{" "}
+                <code className="font-mono text-card-foreground">
+                  {item.mac}
+                </code>
+              </span>
+              <span className="break-all">
+                <span className="font-medium">UTC:</span>{" "}
+                <code className="font-mono text-card-foreground">
+                  {item.recordedAt}
+                </code>
+              </span>
+            </div>
+          </div>
+
+          <pre className="max-h-72 overflow-auto rounded-lg border border-border bg-background p-3 font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-all text-card-foreground">
+            {info.formatted}
+          </pre>
+
+          <button
+            type="button"
+            onClick={onCopy}
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-foreground/5"
+          >
+            {copied ? (
+              <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+            ) : (
+              <Copy className="size-3.5 text-muted" />
+            )}
+            {copied ? "Copiado" : "Copiar contenido"}
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
