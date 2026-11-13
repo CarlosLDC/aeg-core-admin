@@ -219,12 +219,6 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         viewBindings: ["printer.status"],
       },
       {
-        formLabels: ["Tipo de dispositivo"],
-        viewLabels: ["Tipo de equipo"],
-        formBindings: ["form.deviceType"],
-        viewBindings: ["printer.deviceType"],
-      },
-      {
         formLabels: ["Distribuidor"],
         viewLabels: ["Distribuidor"],
         formBindings: ["form.distributorId"],

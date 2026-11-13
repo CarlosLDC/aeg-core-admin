@@ -111,7 +111,6 @@ describe("distributor-scope", () => {
         installationDate: null,
         versionFirmware: "",
         macAddress: "",
-        deviceType: "interno",
         header: null,
         trailer: null,
       },

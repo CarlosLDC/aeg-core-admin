@@ -80,7 +80,6 @@ import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import {
-  DEVICE_TYPE_LABELS,
   getPrinterDispositionBlockedMessage,
   printerModelLabel,
   printerToAssignmentRequest,
@@ -408,8 +407,6 @@ export function PrintersManager() {
           ? clientRifById.get(printer.clientId) ?? ""
           : "";
       const statusLabel = printerStatusLabel(printer.status);
-      const deviceTypeLabel =
-        DEVICE_TYPE_LABELS[printer.deviceType] ?? printer.deviceType;
 
       const haystack = [
         printer.id,
@@ -419,8 +416,6 @@ export function PrintersManager() {
         model?.modelCode ?? "",
         printer.status,
         statusLabel,
-        printer.deviceType,
-        deviceTypeLabel,
         distributorName,
         distributorRif,
         clientName,

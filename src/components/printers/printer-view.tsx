@@ -92,7 +92,6 @@ import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { formatDate } from "@/lib/datetime-form";
 import {
-  DEVICE_TYPE_LABELS,
   getPrinterDispositionBlockedMessage,
   printerModelLabel,
   printerToAssignmentRequest,
@@ -480,10 +479,6 @@ export function PrinterView() {
       <div className="space-y-6">
         <DetailCard>
           <DetailField
-            label="Tipo de equipo"
-            value={DEVICE_TYPE_LABELS[printer.deviceType]}
-          />
-          <DetailField
             label="Estatus"
             value={
               <div className="flex flex-wrap items-center gap-2">
@@ -616,10 +611,6 @@ export function PrinterView() {
                   ? hrefForPrinterModel(model.id, user.role)
                   : undefined
               }
-            />
-            <DetailField
-              label="Tipo de equipo"
-              value={DEVICE_TYPE_LABELS[printer.deviceType]}
             />
           </DetailSection>
         ),

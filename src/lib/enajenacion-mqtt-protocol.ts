@@ -284,7 +284,6 @@ export function buildEnajenacionTestPrinterRequest(
     versionFirmware: base.versionFirmware,
     macAddress: macColon,
     status: "laboratorio",
-    deviceType: base.deviceType,
   };
 }
 

@@ -1,6 +1,5 @@
 import type { PrinterModelResponse } from "@/types/printer-model";
 import type {
-  DeviceType,
   PrinterRequest,
   PrinterResponse,
   PrinterStatus,
@@ -9,10 +8,7 @@ import {
   isPrinterOnConsignment,
   normalizePrinterStatus,
 } from "@/lib/printer-status";
-import {
-  DEVICE_TYPES,
-  PRINTER_STATUSES,
-} from "@/types/printer";
+import { PRINTER_STATUSES } from "@/types/printer";
 
 export type PrinterFormValues = {
   modelId: string;
@@ -26,7 +22,6 @@ export type PrinterFormValues = {
   versionFirmware: string;
   macAddress: string;
   status: PrinterStatus;
-  deviceType: DeviceType;
 };
 
 function definedPrinterFormDefaults(
@@ -91,11 +86,6 @@ export const PRINTER_STATUS_LABELS: Record<PrinterStatus, string> = {
   laboratorio: "Laboratorio",
 };
 
-export const DEVICE_TYPE_LABELS: Record<DeviceType, string> = {
-  interno: "Interno",
-  externo: "Externo",
-};
-
 export function printerModelLabel(model: PrinterModelResponse): string {
   return model.modelCode.trim();
 }
@@ -118,9 +108,6 @@ export function printerToFormValues(
     versionFirmware: printer.versionFirmware ?? "",
     macAddress: printer.macAddress ?? "",
     status,
-    deviceType: DEVICE_TYPES.includes(printer.deviceType)
-      ? printer.deviceType
-      : "interno",
     ...definedPrinterFormDefaults(defaults),
   };
 }
@@ -139,7 +126,6 @@ export const emptyPrinterForm = (
   versionFirmware: "",
   macAddress: "",
   status: "sin_asignar",
-  deviceType: "interno",
   ...definedPrinterFormDefaults(defaults),
 });
 
@@ -161,7 +147,6 @@ export function printerToAssignmentRequest(
     versionFirmware: printer.versionFirmware,
     macAddress: printer.macAddress,
     status: paid ? "asignada" : "en_consignacion",
-    deviceType: printer.deviceType,
   };
 }
 
@@ -192,7 +177,6 @@ export function printerToDispositionRequest(
     versionFirmware: printer.versionFirmware,
     macAddress: printer.macAddress,
     status: "enajenada",
-    deviceType: printer.deviceType,
   };
 }
 
@@ -264,9 +248,6 @@ export function toPrinterRequest(
   if (!PRINTER_STATUSES.includes(values.status)) {
     return "Estatus no válido.";
   }
-  if (!DEVICE_TYPES.includes(values.deviceType)) {
-    return "Tipo de dispositivo no válido.";
-  }
 
   return {
     modelId,
@@ -281,7 +262,6 @@ export function toPrinterRequest(
     versionFirmware: versionFirmware || null,
     macAddress: macAddress || null,
     status: values.status,
-    deviceType: values.deviceType,
   };
 }
 

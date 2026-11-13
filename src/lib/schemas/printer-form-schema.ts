@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DEVICE_TYPES, PRINTER_STATUSES } from "@/types/printer";
+import { PRINTER_STATUSES } from "@/types/printer";
 
 const FISCAL_SERIAL_RE = /^[A-Z]{3}[0-9]{7}$/i;
 const FIRMWARE_RE = /^[0-9]+\.[0-9]+\.[0-9]+$/;
@@ -18,7 +18,6 @@ export const printerFormSchema = z
     versionFirmware: z.string(),
     macAddress: z.string(),
     status: z.enum(PRINTER_STATUSES, { message: "Estatus no válido." }),
-    deviceType: z.enum(DEVICE_TYPES, { message: "Tipo de dispositivo no válido." }),
   })
   .superRefine((data, ctx) => {
     if (data.fiscalSerial && !FISCAL_SERIAL_RE.test(data.fiscalSerial)) {

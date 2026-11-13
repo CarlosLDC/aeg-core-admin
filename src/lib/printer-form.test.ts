@@ -22,7 +22,6 @@ const assignedPrinter: PrinterResponse = {
   installationDate: "2026-02-01T12:00:00.000Z",
   versionFirmware: "1.0.0",
   macAddress: "AA:BB:CC:DD:EE:FF",
-  deviceType: "interno",
   header: null,
   trailer: null,
 };

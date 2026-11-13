@@ -9,9 +9,6 @@ export const PRINTER_STATUSES = [
 ] as const;
 export type PrinterStatus = (typeof PRINTER_STATUSES)[number];
 
-export const DEVICE_TYPES = ["interno", "externo"] as const;
-export type DeviceType = (typeof DEVICE_TYPES)[number];
-
 export type PrinterTicketSection = {
   lines: string[];
 };
@@ -34,7 +31,6 @@ export type PrinterResponse = {
   /** true si se lanzó una actualización de firmware y la impresora no respondió al verificarla. */
   firmwareUpdateUnverified?: boolean;
   macAddress: string | null;
-  deviceType: DeviceType;
   header: PrinterTicketSection | null;
   trailer: PrinterTicketSection | null;
   /** El backend puede omitir header/trailer en listados; este flag indica si hay ticket configurado. */
@@ -79,7 +75,6 @@ export type PrinterRequest = {
   versionFirmware?: string | null;
   macAddress?: string | null;
   status: PrinterStatus;
-  deviceType: DeviceType;
   creationBatchId?: string | null;
   encryptionKey?: string | null;
   llaveEncrip?: string | null;

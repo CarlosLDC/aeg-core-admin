@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useId, useMemo, useState } from "react";
-import { Cpu, Link2, Loader2, Printer, Settings2, X } from "lucide-react";
+import { Cpu, Link2, Loader2, Printer, X } from "lucide-react";
 import {
   PrinterWizardFields,
   type PrinterWizardSection,
@@ -54,7 +54,7 @@ type PrinterCreateWizardDialogProps = {
   onSubmit: (values: PrinterFormValues) => void;
 };
 
-type WizardStep = 1 | 2 | 3 | 4;
+type WizardStep = 1 | 2 | 3;
 
 const FORM_STEPS: {
   step: WizardStep;
@@ -62,27 +62,23 @@ const FORM_STEPS: {
   label: string;
 }[] = [
   { step: 1, section: "equipment", label: "Equipo" },
-  { step: 2, section: "operation", label: "Estado" },
-  { step: 3, section: "assignment", label: "Asignación" },
-  { step: 4, section: "technical", label: "Detalles" },
+  { step: 2, section: "assignment", label: "Asignación" },
+  { step: 3, section: "technical", label: "Detalles" },
 ];
 
 const STEP_ICONS = {
   1: Printer,
-  2: Settings2,
-  3: Link2,
-  4: Cpu,
+  2: Link2,
+  3: Cpu,
 } as const;
 
 function stepSubtitle(step: WizardStep): string {
   switch (step) {
     case 1:
-      return "Modelo fiscal y serial de la impresora.";
+      return "Modelo fiscal, serial y estatus de la impresora.";
     case 2:
-      return "Estatus, tipo de dispositivo y estado de pago.";
-    case 3:
       return "Distribuidor, cliente y software asociados.";
-    case 4:
+    case 3:
       return "Enajenación, firmware y dirección MAC.";
     default:
       return "";
@@ -279,21 +275,21 @@ export function PrinterCreateWizardDialog({
       setFieldErrors(nextFieldErrors);
       setStepError(parsed.error.issues[0]?.message ?? "Revisa los datos del formulario.");
       const firstKey = parsed.error.issues[0]?.path[0];
-      if (firstKey === "modelId" || firstKey === "fiscalSerial") setStep(1);
-      else if (
+      if (
+        firstKey === "modelId" ||
+        firstKey === "fiscalSerial" ||
         firstKey === "status" ||
-        firstKey === "deviceType" ||
         firstKey === "paid"
       ) {
-        setStep(2);
+        setStep(1);
       } else if (
         firstKey === "distributorId" ||
         firstKey === "clientId" ||
         firstKey === "softwareId"
       ) {
-        setStep(3);
+        setStep(2);
       } else {
-        setStep(4);
+        setStep(3);
       }
       return;
     }
@@ -310,7 +306,7 @@ export function PrinterCreateWizardDialog({
 
   function handleFormSubmit(e: FormEvent) {
     e.preventDefault();
-    if (step < 4) {
+    if (step < 3) {
       goNext();
       return;
     }
@@ -440,7 +436,7 @@ export function PrinterCreateWizardDialog({
             >
               Cancelar
             </button>
-            {step < 4 ? (
+            {step < 3 ? (
               <button
                 type="submit"
                 form={formId}

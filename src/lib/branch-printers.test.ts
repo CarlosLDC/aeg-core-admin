@@ -24,7 +24,6 @@ function mockPrinter(overrides: Partial<PrinterResponse>): PrinterResponse {
     installationDate: "2026-01-02T00:00:00Z",
     versionFirmware: "1.0",
     macAddress: "AA:BB:CC:DD:EE:FF",
-    deviceType: "interno",
     header: null,
     trailer: null,
     ...overrides,

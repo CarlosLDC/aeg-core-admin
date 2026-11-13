@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/searchable-select";
 import {
   derivePrinterPaidFromStatus,
-  DEVICE_TYPE_LABELS,
   PRINTER_STATUS_LABELS,
   type PrinterFormValues,
 } from "@/lib/printer-form";
@@ -22,12 +21,11 @@ import { queryPrinterFirmwareByMac } from "@/lib/printers-api";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import type { FirmwareResponse } from "@/types/firmware";
 import type { SoftwareModificationRequestDetailResponse } from "@/types/software-modification-request";
-import { DEVICE_TYPES, PRINTER_STATUSES } from "@/types/printer";
+import { PRINTER_STATUSES } from "@/types/printer";
 import { cn } from "@/lib/utils";
 
 export type PrinterWizardSection =
   | "equipment"
-  | "operation"
   | "assignment"
   | "technical";
 
@@ -184,7 +182,7 @@ export function PrinterWizardFields({
           </p>
         )}
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className={cn("block", omitFiscalSerial && "sm:col-span-2")}>
+          <label className="block">
             <FieldLabel required>Modelo fiscal</FieldLabel>
             {modelOptions.length > 0 ? (
               <select
@@ -248,17 +246,8 @@ export function PrinterWizardFields({
               )}
             </label>
           ) : null}
-        </div>
-      </fieldset>
-    );
-  }
 
-  if (section === "operation") {
-    return (
-      <fieldset className="space-y-4">
-        <legend className="sr-only">Estado operativo</legend>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block">
+          <label className={cn("block", !omitFiscalSerial && "sm:col-span-2")}>
             <FieldLabel required>Estatus</FieldLabel>
             <select
               required
@@ -277,27 +266,6 @@ export function PrinterWizardFields({
               {PRINTER_STATUSES.map((status) => (
                 <option key={status} value={status}>
                   {PRINTER_STATUS_LABELS[status]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block">
-            <FieldLabel required>Tipo de dispositivo</FieldLabel>
-            <select
-              required
-              value={form.deviceType}
-              disabled={disabled}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  deviceType: e.target.value as PrinterFormValues["deviceType"],
-                }))
-              }
-              className={inputClass}
-            >
-              {DEVICE_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {DEVICE_TYPE_LABELS[type]}
                 </option>
               ))}
             </select>

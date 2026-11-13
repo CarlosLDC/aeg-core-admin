@@ -22,7 +22,6 @@ const printer: PrinterResponse = {
   installationDate: null,
   versionFirmware: "2.1.0",
   macAddress: "AA:BB:CC:DD:EE:FF",
-  deviceType: "interno",
   header: null,
   trailer: null,
 };

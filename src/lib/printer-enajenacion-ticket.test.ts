@@ -22,7 +22,6 @@ function printer(partial: Partial<PrinterResponse>): PrinterResponse {
     installationDate: null,
     versionFirmware: null,
     macAddress: null,
-    deviceType: "interno",
     header: null,
     trailer: null,
     ...partial,

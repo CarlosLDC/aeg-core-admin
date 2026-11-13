@@ -7,7 +7,6 @@ import {
   Link2,
   Loader2,
   Printer,
-  Settings2,
 } from "lucide-react";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import {
@@ -56,7 +55,7 @@ type PrinterBatchFormDialogProps = {
   onSubmit: (payload: PrinterBatchSubmitPayload) => void;
 };
 
-type BatchWizardStepIndex = 1 | 2 | 3 | 4 | 5;
+type BatchWizardStepIndex = 1 | 2 | 3 | 4;
 
 const WIZARD_STEPS: (BatchWizardStep & {
   step: BatchWizardStepIndex;
@@ -73,24 +72,17 @@ const WIZARD_STEPS: (BatchWizardStep & {
     section: "equipment",
     label: "Equipo",
     icon: Printer,
-    subtitle: "Modelo fiscal común para todo el lote.",
+    subtitle: "Modelo fiscal y estatus comunes para todo el lote.",
   },
   {
     step: 3,
-    section: "operation",
-    label: "Estado",
-    icon: Settings2,
-    subtitle: "Estatus, tipo de dispositivo y estado de pago.",
-  },
-  {
-    step: 4,
     section: "assignment",
     label: "Asignación",
     icon: Link2,
     subtitle: "Distribuidor, cliente y software asociados.",
   },
   {
-    step: 5,
+    step: 4,
     section: "technical",
     label: "Detalles",
     icon: Cpu,
@@ -205,21 +197,20 @@ export function PrinterBatchFormDialog({
         parsed.error.issues[0]?.message ?? "Revisa los datos del formulario.",
       );
       const firstKey = parsed.error.issues[0]?.path[0];
-      if (firstKey === "modelId") setStep(2);
-      else if (
+      if (
+        firstKey === "modelId" ||
         firstKey === "status" ||
-        firstKey === "deviceType" ||
         firstKey === "paid"
       ) {
-        setStep(3);
+        setStep(2);
       } else if (
         firstKey === "distributorId" ||
         firstKey === "clientId" ||
         firstKey === "softwareId"
       ) {
-        setStep(4);
+        setStep(3);
       } else {
-        setStep(5);
+        setStep(4);
       }
       return;
     }

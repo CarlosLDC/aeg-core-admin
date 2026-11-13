@@ -71,7 +71,6 @@ import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import { fetchSoftware } from "@/lib/software-api";
 import {
-  DEVICE_TYPE_LABELS,
   emptyPrinterForm,
   getPrinterDispositionBlockedMessage,
   isPrinterPaidForDisposition,
@@ -418,8 +417,6 @@ export function BranchPrintersTable({
       const model = modelsById.get(printer.modelId);
       const modelLabel = model ? printerModelLabel(model) : "";
       const statusLabel = printerStatusLabel(printer.status);
-      const deviceTypeLabel =
-        DEVICE_TYPE_LABELS[printer.deviceType] ?? printer.deviceType;
 
       const haystack = [
         printer.id,
@@ -429,8 +426,6 @@ export function BranchPrintersTable({
         modelLabel,
         printer.status,
         statusLabel,
-        printer.deviceType,
-        deviceTypeLabel,
         printer.versionFirmware ?? "",
         printer.macAddress ?? "",
         printer.installationDate ?? "",
@@ -944,7 +939,6 @@ export function BranchPrintersTable({
                               )
                             }
                           />
-                          <th className="px-5 py-3 font-medium">Dispositivo</th>
                           <SortableTableHeader
                             label="Fecha de instalación"
                             sortDirection={
@@ -1060,10 +1054,6 @@ export function BranchPrintersTable({
                                     <PrinterPendingMqttBadge printer={printer} />
                                   ) : null}
                                 </div>
-                              </td>
-                              <td className="px-5 py-3.5 text-muted">
-                                {DEVICE_TYPE_LABELS[printer.deviceType] ??
-                                  printer.deviceType}
                               </td>
                               <td className="px-5 py-3.5 text-muted">
                                 {printer.installationDate

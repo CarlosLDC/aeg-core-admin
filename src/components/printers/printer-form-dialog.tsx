@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/searchable-select";
 import {
   derivePrinterPaidFromStatus,
-  DEVICE_TYPE_LABELS,
   emptyPrinterForm,
   PRINTER_STATUS_LABELS,
   printerToFormValues,
@@ -24,7 +23,7 @@ import { fetchFirmwares } from "@/lib/firmwares-api";
 import { queryPrinterFirmwareByMac } from "@/lib/printers-api";
 import type { FirmwareResponse } from "@/types/firmware";
 import type { PrinterResponse } from "@/types/printer";
-import { DEVICE_TYPES, PRINTER_STATUSES } from "@/types/printer";
+import { PRINTER_STATUSES } from "@/types/printer";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { printerFormSchema } from "@/lib/schemas/printer-form-schema";
 import { cn } from "@/lib/utils";
@@ -349,15 +348,8 @@ export function PrinterFormDialog({
                     </p>
                   )}
                 </label>
-              </div>
-            </fieldset>
 
-            <fieldset className="space-y-4 rounded-xl border border-border p-4">
-              <legend className="px-1 text-sm font-semibold text-card-foreground">
-                Estado operativo
-              </legend>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block">
+                <label className="block sm:col-span-2">
                   <FieldLabel required>Estatus</FieldLabel>
                   <select
                     required
@@ -376,27 +368,6 @@ export function PrinterFormDialog({
                     {PRINTER_STATUSES.map((status) => (
                       <option key={status} value={status}>
                         {PRINTER_STATUS_LABELS[status]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="block">
-                  <FieldLabel required>Tipo de dispositivo</FieldLabel>
-                  <select
-                    required
-                    value={form.deviceType}
-                    disabled={disabled}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        deviceType: e.target.value as PrinterFormValues["deviceType"],
-                      }))
-                    }
-                    className={inputClass}
-                  >
-                    {DEVICE_TYPES.map((type) => (
-                      <option key={type} value={type}>
-                        {DEVICE_TYPE_LABELS[type]}
                       </option>
                     ))}
                   </select>

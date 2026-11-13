@@ -375,7 +375,6 @@ describe("enajenacion-mqtt-protocol", () => {
       versionFirmware: "1.0.0",
       macAddress: "20:6E:F1:88:4C:68",
       status: "asignada",
-      deviceType: "interno",
     } as PrinterResponse;
 
     expect(
@@ -396,7 +395,6 @@ describe("enajenacion-mqtt-protocol", () => {
       versionFirmware: "1.0.0",
       macAddress: "AA:BB:CC:DD:EE:FF",
       status: "laboratorio",
-      deviceType: "interno",
     });
   });
 

@@ -2,7 +2,6 @@ import type { PrinterFormValues } from "@/lib/printer-form";
 
 export type PrinterWizardStepSection =
   | "equipment"
-  | "operation"
   | "assignment"
   | "technical";
 
@@ -29,10 +28,6 @@ export function validatePrinterWizardSection(
         return "El serial fiscal debe tener 3 letras y 7 dígitos (ej. ABC1234567).";
       }
     }
-    return null;
-  }
-
-  if (section === "operation") {
     return null;
   }
 
