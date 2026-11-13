@@ -24,7 +24,7 @@ export function BranchMissingContractNotice({
         role="status"
         title={message}
         className={cn(
-          "inline-flex items-center gap-1 rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-200",
+          "inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-200",
           className,
         )}
       >

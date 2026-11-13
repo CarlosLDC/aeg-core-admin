@@ -1023,7 +1023,7 @@ export function BranchesManager() {
                           </td>
                           {!isTechnician ? (
                             <td className="px-5 py-3.5">
-                              <div className="flex flex-wrap items-center gap-1.5">
+                              <div className="flex flex-nowrap items-center gap-1.5 whitespace-nowrap">
                                 <BranchTypeBadges branch={branch} />
                                 {missingContractLabelsForBranch.length > 0 ? (
                                   <BranchMissingContractNotice

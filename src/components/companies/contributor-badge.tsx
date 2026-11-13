@@ -15,7 +15,7 @@ export function ContributorBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border border-current/15 px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex shrink-0 whitespace-nowrap items-center rounded-full border border-current/15 px-2.5 py-0.5 text-xs font-medium",
         CONTRIBUTOR_STYLES[type],
         className,
       )}

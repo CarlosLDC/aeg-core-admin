@@ -4,7 +4,7 @@ import type { Role } from "@/types/user";
 export function RoleBadge({ role }: { role: Role }) {
   return (
     <span
-      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${ROLE_STYLES[role]}`}
+      className={`inline-flex shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${ROLE_STYLES[role]}`}
       title={role}
     >
       {ROLE_LABELS[role]}

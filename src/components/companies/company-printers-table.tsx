@@ -1037,7 +1037,7 @@ export function CompanyPrintersTable({
                                 {modelName}
                               </td>
                               <td className="px-5 py-3.5">
-                                <div className="flex flex-wrap items-center gap-2">
+                                <div className="flex flex-nowrap items-center gap-2 whitespace-nowrap">
                                   <PrinterStatusBadge
                                     status={printer.status}
                                     title={statusBadgeTitle}

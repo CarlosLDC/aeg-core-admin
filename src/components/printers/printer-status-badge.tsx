@@ -35,7 +35,7 @@ export function PrinterStatusBadge({
   const normalized = normalizePrinterStatus(status);
   const label = printerStatusLabel(status);
   const className = cn(
-    "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium",
+    "inline-flex shrink-0 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium",
     STATUS_STYLES[normalized] ?? STATUS_STYLES.desincorporada,
     title && "cursor-help",
   );
@@ -80,7 +80,7 @@ export function PrinterStatusActionButton({
       title={action.label}
       aria-label={action.label}
       className={cn(
-        "inline-flex cursor-pointer items-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
+        "inline-flex shrink-0 whitespace-nowrap cursor-pointer items-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
         size === "sm"
           ? "gap-1 rounded-md border px-2 py-0.5 text-xs"
           : "gap-2 rounded-lg border px-3 py-2 text-sm",

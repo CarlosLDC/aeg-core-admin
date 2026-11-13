@@ -40,7 +40,7 @@ function MatrixCell({
   const roles = allowedRolesFor(resource, action);
 
   return (
-    <div className="flex flex-wrap justify-center gap-1">
+    <div className="flex flex-nowrap justify-center gap-1 whitespace-nowrap">
       {roles.map((role) => {
         const highlighted = highlightRole === role;
         return (
@@ -48,7 +48,7 @@ function MatrixCell({
             key={role}
             title={ROLE_LABELS[role]}
             className={cn(
-              "rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold leading-none",
+              "shrink-0 whitespace-nowrap rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold leading-none",
               highlighted
                 ? "bg-accent/20 text-accent ring-1 ring-accent/50"
                 : "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300",

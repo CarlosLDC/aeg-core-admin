@@ -532,7 +532,7 @@ export function UsersManager() {
                           <td className="px-5 py-3.5">
                             <span
                               className={cn(
-                                "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
+                                "inline-flex shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium",
                                 user.enabled
                                   ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                                   : "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",

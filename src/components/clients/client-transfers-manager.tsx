@@ -359,7 +359,7 @@ export function ClientTransfersManager() {
                                     {clientBusinessName(client)}
                                   </TruncatedText>
                                 </Link>
-                                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                                <div className="flex min-w-0 flex-nowrap items-center gap-x-2 whitespace-nowrap">
                                   <span className="font-mono text-xs text-muted">
                                     {clientRif(client)}
                                   </span>

@@ -11,7 +11,7 @@ export function PrinterFirmwareUnverifiedBadge({ className }: PrinterFirmwareUnv
     <span
       title="Se lanzó una actualización de firmware y la impresora no respondió al verificarla. La versión mostrada puede estar desactualizada."
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-xs font-medium text-sky-800 dark:text-sky-200",
+        "inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-xs font-medium text-sky-800 dark:text-sky-200",
         className,
       )}
     >

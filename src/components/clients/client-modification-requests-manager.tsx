@@ -241,7 +241,7 @@ export function ClientModificationRequestsManager() {
                           <td className="px-5 py-3.5">
                             <span
                               className={cn(
-                                "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
+                                "inline-flex shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium",
                                 row.status === "PENDING" &&
                                   "bg-amber-500/10 text-amber-800 dark:text-amber-200",
                                 row.status === "APPROVED" &&

@@ -15,7 +15,7 @@ type SealColorBadgeProps = {
 
 export function SealColorBadge({ color }: SealColorBadgeProps) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-sm text-card-foreground">
+    <span className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 text-sm text-card-foreground">
       <span
         className={cn("size-2.5 rounded-full", COLOR_DOT[color] ?? "bg-muted")}
         aria-hidden

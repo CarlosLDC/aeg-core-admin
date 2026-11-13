@@ -16,7 +16,7 @@ export function ContractStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium",
         CONTRACT_STATUS_STYLES[status],
       )}
     >

@@ -34,12 +34,12 @@ export function BranchTypeBadges({ branch }: { branch: BranchWithRoles }) {
     return <span className="text-xs text-muted">—</span>;
   }
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-nowrap items-center gap-1">
       {active.map((t) => (
         <span
           key={t.key}
           className={cn(
-            "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+            "inline-flex shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium",
             t.style,
           )}
         >

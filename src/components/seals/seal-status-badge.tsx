@@ -19,7 +19,7 @@ export function SealStatusBadge({ status }: SealStatusBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex shrink-0 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium",
         STATUS_STYLES[status] ?? STATUS_STYLES.sustituido,
       )}
     >
