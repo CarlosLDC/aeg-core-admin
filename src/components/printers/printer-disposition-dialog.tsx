@@ -286,35 +286,6 @@ export function PrinterDispositionDialog({
     return name === "-" ? null : name;
   }, [selectedClient, selectedClientBranch, companies]);
 
-  const isDistributorClientSelected =
-    resolvedDistributorClient != null &&
-    clientId === String(resolvedDistributorClient.id);
-
-  async function handleSelectDistributorClient() {
-    setFieldError(null);
-    if (
-      resolvedDistributorClient?.id != null &&
-      resolvedDistributorClient.id > 0
-    ) {
-      setClientOverride(String(resolvedDistributorClient.id));
-      return;
-    }
-    if (!printerDistributor || !distributorBranch) return;
-    setCreatingDistributorClient(true);
-    try {
-      const created = await createClient({
-        branchId: distributorBranch.id,
-        distributorId: printerDistributor.id,
-      });
-      setDistributorClientState(created);
-      setClientOverride(String(created.id));
-    } catch {
-      setFieldError("No se pudo registrar la distribuidora como cliente.");
-    } finally {
-      setCreatingDistributorClient(false);
-    }
-  }
-
   function goToStep(target: WizardStep) {
     setFieldError(null);
     setStep(target);
@@ -458,11 +429,12 @@ export function PrinterDispositionDialog({
       onSubmit={handleSubmit}
       submitDisabled={
         disabled ||
+        creatingDistributorClient ||
         (step === 1
-          ? !clientId || clientOptions.length === 0
+          ? !clientId || mergedClientOptions.length === 0
           : !facturaNro.trim())
       }
-      submitLoading={false}
+      submitLoading={creatingDistributorClient}
       size="lg"
       cancelLabel={step === 1 ? "Cancelar" : "Atrás"}
       onCancel={handleBack}
@@ -504,66 +476,22 @@ export function PrinterDispositionDialog({
       </nav>
 
       {step === 1 ? (
-        <div className="space-y-4">
-          {printerDistributor && distributorBranch ? (
-            <div className="rounded-xl border border-border bg-foreground/[0.02] p-3 text-sm">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <span className="inline-flex items-center gap-1 rounded bg-accent/10 px-2 py-0.5 text-[11px] font-semibold text-accent">
-                    Misma empresa distribuidora
-                  </span>
-                  <p className="mt-1 truncate font-medium text-foreground">
-                    {distributorCompany?.businessName ?? "Empresa distribuidora"}
-                  </p>
-                  <p className="truncate text-xs text-muted">
-                    {distributorCompany?.rif
-                      ? `RIF: ${distributorCompany.rif}`
-                      : ""}
-                    {[distributorBranch.city, distributorBranch.state]
-                      .filter(Boolean)
-                      .join(", ")
-                      ? `${distributorCompany?.rif ? " • " : ""}${[distributorBranch.city, distributorBranch.state].filter(Boolean).join(", ")}`
-                      : ""}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  disabled={disabled || creatingDistributorClient}
-                  onClick={() => void handleSelectDistributorClient()}
-                  className={cn(
-                    "shrink-0 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
-                    isDistributorClientSelected
-                      ? "border-accent bg-accent text-white dark:text-black"
-                      : "border-border bg-card text-foreground hover:bg-foreground/5",
-                  )}
-                >
-                  {creatingDistributorClient
-                    ? "Registrando…"
-                    : isDistributorClientSelected
-                      ? "Seleccionada ✓"
-                      : "Escoger como cliente"}
-                </button>
-              </div>
-            </div>
-          ) : null}
-
-          <PrinterActionPickerPanel
-            label="Cliente"
-            searchPlaceholder="Buscar cliente por nombre, ID o RIF…"
-            query={clientQuery}
-            onQueryChange={setClientQuery}
-            options={filteredClientOptions}
-            selectedValue={clientId}
-            onSelect={(value) => {
-              setClientOverride(value);
-              setFieldError(null);
-            }}
-            loading={catalogLoading}
-            disabled={disabled}
-            emptyMessage="Sin clientes disponibles"
-            noResultsMessage="Sin resultados"
-          />
-        </div>
+        <PrinterActionPickerPanel
+          label="Cliente"
+          searchPlaceholder="Buscar cliente por nombre, ID o RIF…"
+          query={clientQuery}
+          onQueryChange={setClientQuery}
+          options={filteredClientOptions}
+          selectedValue={clientId}
+          onSelect={(value) => {
+            setClientOverride(value);
+            setFieldError(null);
+          }}
+          loading={catalogLoading}
+          disabled={disabled}
+          emptyMessage="Sin clientes disponibles"
+          noResultsMessage="Sin resultados"
+        />
       ) : (
         <div className="space-y-4">
           {selectedClientRif || selectedClientCompanyName ? (
