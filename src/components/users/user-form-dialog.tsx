@@ -477,10 +477,9 @@ export function UserFormDialog({
               </label>
 
               <label className="block min-w-0">
-                <FieldLabel required>Cédula</FieldLabel>
+                <FieldLabel>Cédula</FieldLabel>
                 <PrefixedDocumentInput
                   kind="cedula"
-                  required
                   value={form.nationalId}
                   disabled={saving || catalogLoading}
                   onChange={(nationalId) =>
@@ -515,10 +514,9 @@ export function UserFormDialog({
               </div>
 
               <label className="block min-w-0">
-                <FieldLabel required>Cédula</FieldLabel>
+                <FieldLabel>Cédula</FieldLabel>
                 <PrefixedDocumentInput
                   kind="cedula"
-                  required
                   value={form.nationalId}
                   disabled={saving || catalogLoading}
                   onChange={(nationalId) =>
@@ -553,10 +551,9 @@ export function UserFormDialog({
               </div>
 
               <label className="block min-w-0">
-                <FieldLabel required>Cédula</FieldLabel>
+                <FieldLabel>Cédula</FieldLabel>
                 <PrefixedDocumentInput
                   kind="cedula"
-                  required
                   value={form.nationalId}
                   disabled={saving || catalogLoading}
                   onChange={(nationalId) =>

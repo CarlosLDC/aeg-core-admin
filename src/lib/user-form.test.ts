@@ -62,13 +62,36 @@ describe("validateUserCreateForm", () => {
     expect(error).toMatch(/sucursal/i);
   });
 
-  it("requires ADMIN national id", () => {
+  it("accepts TECHNICIAN without national id", () => {
+    const error = validateUserCreateForm({
+      ...baseForm,
+      role: "TECHNICIAN",
+      branchId: "12",
+      nationalId: "",
+    });
+    expect(error).toBeNull();
+    expect(resolveUserNationalId("TECHNICIAN", "")).toBeNull();
+  });
+
+  it("accepts DISTRIBUTOR without national id", () => {
+    const error = validateUserCreateForm({
+      ...baseForm,
+      role: "DISTRIBUTOR",
+      distributorId: "7",
+      nationalId: "",
+    });
+    expect(error).toBeNull();
+    expect(resolveUserNationalId("DISTRIBUTOR", "")).toBeNull();
+  });
+
+  it("accepts ADMIN without national id", () => {
     const error = validateUserCreateForm({
       ...baseForm,
       role: "ADMIN",
       nationalId: "",
     });
-    expect(error).toMatch(/cédula/i);
+    expect(error).toBeNull();
+    expect(resolveUserNationalId("ADMIN", "")).toBeNull();
   });
 
   it("accepts ADMIN with national id", () => {
@@ -84,14 +107,14 @@ describe("validateUserCreateForm", () => {
 });
 
 describe("validateUserEditForm", () => {
-  it("requires ADMIN national id on edit", () => {
+  it("accepts ADMIN without national id on edit", () => {
     const error = validateUserEditForm({
       ...baseForm,
       role: "ADMIN",
       password: "",
       nationalId: "",
     });
-    expect(error).toMatch(/cédula/i);
+    expect(error).toBeNull();
   });
 
   it("accepts ADMIN with national id on edit", () => {
@@ -137,7 +160,14 @@ describe("validateUserWizardStep", () => {
         { ...baseForm, role: "ADMIN", nationalId: "" },
         "create",
       ),
-    ).toMatch(/cédula/i);
+    ).toBeNull();
+    expect(
+      validateUserWizardStep(
+        "assignment",
+        { ...baseForm, role: "TECHNICIAN", branchId: "", nationalId: "" },
+        "create",
+      ),
+    ).toMatch(/sucursal/i);
   });
 });
 

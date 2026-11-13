@@ -80,18 +80,9 @@ export function resolveUserNationalId(
   return normalized || null;
 }
 
-function validateAdminEmployeeProfile(role: Role, nationalId: string): string | null {
-  if (!roleRequiresAdminEmployeeProfile(role)) return null;
-  if (!normalizeNationalId(nationalId)) {
-    return "La cédula es obligatoria para administradores.";
-  }
-  return null;
-}
-
 function validateDistributorProfile(
   role: Role,
   distributorId: string,
-  nationalId: string,
 ): string | null {
   if (!roleRequiresDistributorProfile(role)) return null;
 
@@ -101,16 +92,12 @@ function validateDistributorProfile(
   if (!distributorIdToNumber(distributorId)) {
     return "La distribuidora seleccionada no es válida.";
   }
-  if (!normalizeNationalId(nationalId)) {
-    return "La cédula es obligatoria para usuarios de distribuidora.";
-  }
   return null;
 }
 
 function validateServiceCenterProfile(
   role: Role,
   branchId: string,
-  nationalId: string,
 ): string | null {
   if (!roleRequiresServiceCenterBranch(role)) return null;
   if (!branchId.trim()) {
@@ -118,9 +105,6 @@ function validateServiceCenterProfile(
   }
   if (!branchIdToNumber(branchId)) {
     return "La sucursal seleccionada no es válida.";
-  }
-  if (role === "TECHNICIAN" && !normalizeNationalId(nationalId)) {
-    return "La cédula es obligatoria para técnicos.";
   }
   return null;
 }
@@ -153,20 +137,15 @@ function validateUserIdentity(
 }
 
 function validateUserAssignment(values: UserFormFields): string | null {
-  const adminError = validateAdminEmployeeProfile(values.role, values.nationalId);
-  if (adminError) return adminError;
-
   const distributorError = validateDistributorProfile(
     values.role,
     values.distributorId,
-    values.nationalId,
   );
   if (distributorError) return distributorError;
 
   const serviceCenterError = validateServiceCenterProfile(
     values.role,
     values.branchId,
-    values.nationalId,
   );
   if (serviceCenterError) return serviceCenterError;
 
