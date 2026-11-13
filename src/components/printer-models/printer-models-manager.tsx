@@ -89,6 +89,7 @@ export function PrinterModelsManager() {
       const haystack = [
         model.id,
         model.modelCode,
+        model.serialPrefix,
         model.providencia,
         model.approvalDate,
         formatPrinterModelDate(model.approvalDate),
@@ -315,6 +316,7 @@ export function PrinterModelsManager() {
                           }
                         >
                         <th className="px-5 py-3 font-medium">Modelo</th>
+                        <th className="px-5 py-3 font-medium">Prefijo</th>
                         <SortableTableHeader
                           label="Precio"
                           sortDirection={sort?.key === "price" ? sort.direction : null}
@@ -366,6 +368,9 @@ export function PrinterModelsManager() {
                           >
                           <td className="px-5 py-3.5 font-mono text-card-foreground">
                             {model.modelCode}
+                          </td>
+                          <td className="px-5 py-3.5 font-mono text-muted">
+                            {model.serialPrefix || "—"}
                           </td>
                           <td className="px-5 py-3.5 font-medium text-card-foreground">
                             {formatPrinterModelPrice(model.price)}

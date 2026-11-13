@@ -29,6 +29,7 @@ type SerialRangeFieldsProps = {
   mode: SerialRangeMode;
   values: SerialRangeFormValues;
   onChange: (values: SerialRangeFormValues) => void;
+  fixedPrefix?: string | null;
   disabled?: boolean;
 };
 
@@ -36,10 +37,20 @@ export function SerialRangeFields({
   mode,
   values,
   onChange,
+  fixedPrefix,
   disabled,
 }: SerialRangeFieldsProps) {
+  const isFiscal = mode === "fiscal";
+  const normalizedFixedPrefix = (fixedPrefix ?? "")
+    .replace(/[^a-zA-Z]/g, "")
+    .toUpperCase()
+    .slice(0, FISCAL_SERIAL_LETTER_COUNT);
+  const hasFixedPrefix =
+    isFiscal && normalizedFixedPrefix.length === FISCAL_SERIAL_LETTER_COUNT;
+  const effectivePrefix = hasFixedPrefix ? normalizedFixedPrefix : values.prefix;
+
   const preview = useMemo(() => {
-    if (!values.from.trim() || !values.to.trim() || !values.prefix.trim()) {
+    if (!values.from.trim() || !values.to.trim() || !effectivePrefix.trim()) {
       return null;
     }
     const digitLength =
@@ -48,7 +59,7 @@ export function SerialRangeFields({
         : Number(values.digitLength) || FISCAL_SERIAL_DIGIT_COUNT;
     const built = buildSerialRange(
       {
-        prefix: values.prefix,
+        prefix: effectivePrefix,
         from: values.from,
         to: values.to,
         digitLength,
@@ -64,13 +75,11 @@ export function SerialRangeFields({
       first: built[0] ?? "",
       last: built[built.length - 1] ?? "",
     };
-  }, [mode, values]);
+  }, [mode, values.from, values.to, values.digitLength, effectivePrefix]);
 
   function patch(partial: Partial<SerialRangeFormValues>) {
     onChange({ ...values, ...partial });
   }
-
-  const isFiscal = mode === "fiscal";
 
   return (
     <fieldset className="space-y-4" disabled={disabled}>
@@ -84,27 +93,38 @@ export function SerialRangeFields({
           isFiscal ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2",
         )}
       >
-        <label className="block">
+        <div className="block">
           <FieldLabel required>
             Prefijo {isFiscal ? "(3 letras)" : ""}
           </FieldLabel>
-          <input
-            type="text"
-            required
-            value={values.prefix}
-            disabled={disabled}
-            maxLength={isFiscal ? FISCAL_SERIAL_LETTER_COUNT : 20}
-            onChange={(e) =>
-              patch({
-                prefix: isFiscal
-                  ? e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase()
-                  : e.target.value,
-              })
-            }
-            className={cn(BATCH_FORM_INPUT_CLASS, isFiscal && "uppercase", "font-mono")}
-            placeholder={isFiscal ? "ABC" : "SN-"}
-          />
-        </label>
+          {hasFixedPrefix ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex h-10 items-center rounded-lg border border-border bg-foreground/[0.04] px-3.5 font-mono text-sm font-semibold tracking-wider text-card-foreground">
+                {normalizedFixedPrefix}
+              </span>
+              <span className="text-xs text-muted">
+                Deducido del modelo seleccionado.
+              </span>
+            </div>
+          ) : (
+            <input
+              type="text"
+              required
+              value={values.prefix}
+              disabled={disabled}
+              maxLength={isFiscal ? FISCAL_SERIAL_LETTER_COUNT : 20}
+              onChange={(e) =>
+                patch({
+                  prefix: isFiscal
+                    ? e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase()
+                    : e.target.value,
+                })
+              }
+              className={cn(BATCH_FORM_INPUT_CLASS, isFiscal && "uppercase", "font-mono")}
+              placeholder={isFiscal ? "ABC" : "SN-"}
+            />
+          )}
+        </div>
         {!isFiscal && (
           <label className="block">
             <FieldLabel required>Cifras</FieldLabel>

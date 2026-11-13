@@ -2,6 +2,60 @@
 export const FISCAL_SERIAL_LETTER_COUNT = 3;
 export const FISCAL_SERIAL_DIGIT_COUNT = 7;
 export const FISCAL_SERIAL_PATTERN = /^[A-Z]{3}[0-9]{7}$/;
+export const DEFAULT_FISCAL_SERIAL_DIGITS = "0000000";
+
+export function normalizeFiscalSerialDigits(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return DEFAULT_FISCAL_SERIAL_DIGITS;
+  if (digits.length < FISCAL_SERIAL_DIGIT_COUNT) {
+    return digits.padStart(FISCAL_SERIAL_DIGIT_COUNT, "0");
+  }
+  if (digits.length === FISCAL_SERIAL_DIGIT_COUNT) {
+    return digits;
+  }
+  if (digits.startsWith("0")) {
+    return digits
+      .replace(/^0+/, "")
+      .padStart(FISCAL_SERIAL_DIGIT_COUNT, "0")
+      .slice(-FISCAL_SERIAL_DIGIT_COUNT);
+  }
+  return digits.slice(0, FISCAL_SERIAL_DIGIT_COUNT);
+}
+
+export function extractFiscalSerialParts(
+  value: string,
+  deducedPrefix?: string | null,
+): { prefix: string; digits: string } {
+  const normalizedDeduced = (deducedPrefix ?? "")
+    .replace(/[^a-zA-Z]/g, "")
+    .toUpperCase()
+    .slice(0, FISCAL_SERIAL_LETTER_COUNT);
+  const trimmed = value.trim().toUpperCase();
+  const letterMatch = trimmed.match(/^([A-Z]{0,3})(.*)$/);
+  const rawPrefix = letterMatch?.[1] ?? "";
+  const rawRest = letterMatch?.[2] ?? trimmed;
+  const digitsOnly = rawRest.replace(/\D/g, "");
+  const digits = digitsOnly
+    ? normalizeFiscalSerialDigits(digitsOnly)
+    : DEFAULT_FISCAL_SERIAL_DIGITS;
+
+  return {
+    prefix: normalizedDeduced || rawPrefix,
+    digits,
+  };
+}
+
+export function applyModelPrefixToFiscalSerial(
+  currentSerial: string,
+  modelPrefix: string | null | undefined,
+): string {
+  const normalizedPrefix = (modelPrefix ?? "")
+    .replace(/[^a-zA-Z]/g, "")
+    .toUpperCase()
+    .slice(0, FISCAL_SERIAL_LETTER_COUNT);
+  const { digits } = extractFiscalSerialParts(currentSerial, normalizedPrefix);
+  return `${normalizedPrefix}${digits}`;
+}
 
 export const DEFAULT_BATCH_MAX_COUNT = 500;
 export const DEFAULT_SEAL_DIGIT_COUNT = 7;

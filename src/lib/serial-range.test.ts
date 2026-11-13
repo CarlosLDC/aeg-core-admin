@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyModelPrefixToFiscalSerial,
   buildSerialRange,
   describeSerialRangePreview,
+  extractFiscalSerialParts,
   formatSerialNumber,
+  normalizeFiscalSerialDigits,
 } from "@/lib/serial-range";
 
 describe("serial-range", () => {
@@ -38,5 +41,28 @@ describe("serial-range", () => {
   it("describes preview with ellipsis", () => {
     const serials = ["A1", "A2", "A3", "A4", "A5"];
     expect(describeSerialRangePreview(serials)).toBe("A1, A2, A3 … A5");
+  });
+
+  it("normalizes 7-digit fiscal serial suffix", () => {
+    expect(normalizeFiscalSerialDigits("")).toBe("0000000");
+    expect(normalizeFiscalSerialDigits("17")).toBe("0000017");
+    expect(normalizeFiscalSerialDigits("00000001")).toBe("0000001");
+    expect(normalizeFiscalSerialDigits("00000017")).toBe("0000017");
+    expect(normalizeFiscalSerialDigits("12345678")).toBe("1234567");
+  });
+
+  it("extracts and applies deduced model prefix", () => {
+    expect(extractFiscalSerialParts("", "gra")).toEqual({
+      prefix: "GRA",
+      digits: "0000000",
+    });
+    expect(extractFiscalSerialParts("ABC0000042", "GRA")).toEqual({
+      prefix: "GRA",
+      digits: "0000042",
+    });
+    expect(applyModelPrefixToFiscalSerial("", "gra")).toBe("GRA0000000");
+    expect(applyModelPrefixToFiscalSerial("ABC0000042", "GRA")).toBe(
+      "GRA0000042",
+    );
   });
 });

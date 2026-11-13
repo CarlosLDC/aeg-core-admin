@@ -156,6 +156,11 @@ export function PrinterModelView() {
         {model && (
           <DetailSection title="Modelo fiscal" layout="quad">
             <DetailField label="Modelo" value={model.modelCode} mono />
+            <DetailField
+              label="Prefijo serial"
+              value={model.serialPrefix || "—"}
+              mono
+            />
             <DetailField label="Precio" value={formatMoney(model.price)} />
             <DetailField
               label="Providencia"

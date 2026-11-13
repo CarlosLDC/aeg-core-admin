@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
+import { FiscalSerialInput } from "@/components/printers/fiscal-serial-input";
 import { FieldLabel } from "@/components/ui/field-label";
+import { applyModelPrefixToFiscalSerial } from "@/lib/serial-range";
 import {
   FORM_FIELD_HEIGHT_CLASS,
   formFieldInputClass,
@@ -86,6 +88,13 @@ export function PrinterWizardFields({
 }: WizardFieldsProps & { section: PrinterWizardSection }) {
   const disabled = saving || modelsLoading || catalogLoading;
   const modelSelectDisabled = disabled || modelOptions.length === 0;
+  const fiscalSerialInputId = useId();
+  const selectedModelPrefix = useMemo(
+    () =>
+      modelOptions.find((opt) => String(opt.id) === form.modelId)
+        ?.serialPrefix ?? null,
+    [modelOptions, form.modelId],
+  );
   const [firmwares, setFirmwares] = useState<FirmwareResponse[]>([]);
   const [queryingFirmware, setQueryingFirmware] = useState(false);
   const [firmwareQueryMessage, setFirmwareQueryMessage] = useState<string | null>(null);
@@ -189,9 +198,24 @@ export function PrinterWizardFields({
                 required
                 value={form.modelId}
                 disabled={modelSelectDisabled}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, modelId: e.target.value }))
-                }
+                onChange={(e) => {
+                  const nextModelId = e.target.value;
+                  const nextPrefix =
+                    modelOptions.find((opt) => String(opt.id) === nextModelId)
+                      ?.serialPrefix ?? null;
+                  setForm((f) => ({
+                    ...f,
+                    modelId: nextModelId,
+                    ...(omitFiscalSerial
+                      ? {}
+                      : {
+                          fiscalSerial: applyModelPrefixToFiscalSerial(
+                            f.fiscalSerial,
+                            nextPrefix,
+                          ),
+                        }),
+                  }));
+                }}
                 className={inputClass}
               >
                 <option value="">Seleccionar modelo…</option>
@@ -218,22 +242,20 @@ export function PrinterWizardFields({
           </label>
 
           {!omitFiscalSerial ? (
-            <label className="block">
-              <FieldLabel required>Serial fiscal</FieldLabel>
-              <input
-                type="text"
+            <div className="block">
+              <label htmlFor={fiscalSerialInputId} className="block">
+                <FieldLabel required>Serial fiscal</FieldLabel>
+              </label>
+              <FiscalSerialInput
+                id={fiscalSerialInputId}
                 required
-                maxLength={10}
                 value={form.fiscalSerial}
+                deducedPrefix={selectedModelPrefix}
+                hasSelectedModel={Boolean(form.modelId)}
                 disabled={disabled}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    fiscalSerial: e.target.value.toUpperCase(),
-                  }))
+                onChange={(fiscalSerial) =>
+                  setForm((f) => ({ ...f, fiscalSerial }))
                 }
-                className={cn(inputClass, "font-mono uppercase")}
-                placeholder="ABC1234567"
               />
               {fieldErrors.fiscalSerial ? (
                 <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
@@ -241,10 +263,12 @@ export function PrinterWizardFields({
                 </span>
               ) : (
                 <p className="mt-1 text-xs text-muted">
-                  Formato: 3 letras y 7 dígitos (ej. ABC1234567).
+                  {selectedModelPrefix
+                    ? `Prefijo ${selectedModelPrefix} deducido del modelo · Edita los 7 dígitos.`
+                    : "Selecciona un modelo para deducir el prefijo (7 dígitos)."}
                 </p>
               )}
-            </label>
+            </div>
           ) : null}
 
           <label className={cn("block", !omitFiscalSerial && "sm:col-span-2")}>

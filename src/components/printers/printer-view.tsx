@@ -346,7 +346,11 @@ export function PrinterView() {
         .sort((a, b) =>
           printerModelLabel(a).localeCompare(printerModelLabel(b), "es"),
         )
-        .map((m) => ({ id: m.id, label: printerModelLabel(m) })),
+        .map((m) => ({
+          id: m.id,
+          label: printerModelLabel(m),
+          serialPrefix: m.serialPrefix ?? null,
+        })),
     [models],
   );
 

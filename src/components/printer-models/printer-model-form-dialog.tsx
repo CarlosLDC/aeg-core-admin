@@ -20,6 +20,7 @@ type PrinterModelFormDialogProps = {
 
 const emptyForm: PrinterModelFormValues = {
   modelCode: "",
+  serialPrefix: "",
   price: "",
   providencia: "",
   approvalDate: "",
@@ -47,6 +48,7 @@ export function PrinterModelFormDialog({
     if (mode === "edit" && model) {
       setForm({
         modelCode: model.modelCode,
+        serialPrefix: model.serialPrefix ?? "",
         price: String(model.price),
         providencia: model.providencia ?? "",
         approvalDate: toDateInputValue(model.approvalDate),
@@ -114,19 +116,40 @@ export function PrinterModelFormDialog({
             <legend className="px-1 text-sm font-semibold text-card-foreground">
               Identificación del modelo
             </legend>
-            <label className="block">
-              <FieldLabel required>Modelo</FieldLabel>
-              <input
-                type="text"
-                required
-                value={form.modelCode}
-                placeholder="AEG-R1"
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, modelCode: e.target.value }))
-                }
-                className={inputClass}
-              />
-            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <FieldLabel required>Modelo</FieldLabel>
+                <input
+                  type="text"
+                  required
+                  value={form.modelCode}
+                  placeholder="AEG-R1"
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, modelCode: e.target.value }))
+                  }
+                  className={inputClass}
+                />
+              </label>
+              <label className="block">
+                <FieldLabel required>Prefijo serial (3 letras)</FieldLabel>
+                <input
+                  type="text"
+                  required
+                  maxLength={3}
+                  value={form.serialPrefix}
+                  placeholder="GRA"
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      serialPrefix: e.target.value
+                        .replace(/[^a-zA-Z]/g, "")
+                        .toUpperCase(),
+                    }))
+                  }
+                  className={`${inputClass} font-mono uppercase`}
+                />
+              </label>
+            </div>
             <label className="block">
               <FieldLabel required>Precio</FieldLabel>
               <input

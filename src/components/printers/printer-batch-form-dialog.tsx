@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useId, useState } from "react";
+import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import {
   Cpu,
   Layers,
@@ -63,16 +63,16 @@ const WIZARD_STEPS: (BatchWizardStep & {
 })[] = [
   {
     step: 1,
-    label: "Rango",
-    icon: Layers,
-    subtitle: "Define el rango de seriales fiscales a generar.",
-  },
-  {
-    step: 2,
     section: "equipment",
     label: "Equipo",
     icon: Printer,
     subtitle: "Modelo fiscal y estatus comunes para todo el lote.",
+  },
+  {
+    step: 2,
+    label: "Rango",
+    icon: Layers,
+    subtitle: "Define el rango de seriales fiscales a generar.",
   },
   {
     step: 3,
@@ -136,6 +136,19 @@ export function PrinterBatchFormDialog({
   const displayError = stepError ?? error;
   const lastStep = WIZARD_STEPS.length;
   const current = WIZARD_STEPS.find((s) => s.step === step)!;
+  const selectedModelPrefix = useMemo(
+    () =>
+      modelOptions.find((opt) => String(opt.id) === form.modelId)
+        ?.serialPrefix ?? null,
+    [modelOptions, form.modelId],
+  );
+  const effectiveRange = useMemo<SerialRangeFormValues>(
+    () => ({
+      ...range,
+      prefix: selectedModelPrefix || range.prefix,
+    }),
+    [range, selectedModelPrefix],
+  );
 
   function goToStep(target: BatchWizardStepIndex) {
     setStepError(null);
@@ -155,20 +168,13 @@ export function PrinterBatchFormDialog({
   }
 
   function validateRange(): string | null {
-    const serials = buildSerialRange(range, { mode: "fiscal" });
+    const serials = buildSerialRange(effectiveRange, { mode: "fiscal" });
     if (typeof serials === "string") return serials;
     if (serials.length === 0) return "El rango no genera seriales válidos.";
     return null;
   }
 
   function submitBatch() {
-    const rangeError = validateRange();
-    if (rangeError) {
-      setStepError(rangeError);
-      setStep(1);
-      return;
-    }
-
     for (const { section } of WIZARD_STEPS) {
       if (!section) continue;
       const err = validatePrinterWizardSection(section, form, {
@@ -180,6 +186,13 @@ export function PrinterBatchFormDialog({
         if (failed) setStep(failed.step);
         return;
       }
+    }
+
+    const rangeError = validateRange();
+    if (rangeError) {
+      setStepError(rangeError);
+      setStep(2);
+      return;
     }
 
     const parsed = printerFormSchema.safeParse({ ...form, fiscalSerial: "" });
@@ -202,7 +215,7 @@ export function PrinterBatchFormDialog({
         firstKey === "status" ||
         firstKey === "paid"
       ) {
-        setStep(2);
+        setStep(1);
       } else if (
         firstKey === "distributorId" ||
         firstKey === "clientId" ||
@@ -215,10 +228,10 @@ export function PrinterBatchFormDialog({
       return;
     }
 
-    const serials = buildSerialRange(range, { mode: "fiscal" });
+    const serials = buildSerialRange(effectiveRange, { mode: "fiscal" });
     if (typeof serials === "string") {
       setStepError(serials);
-      setStep(1);
+      setStep(2);
       return;
     }
 
@@ -298,10 +311,11 @@ export function PrinterBatchFormDialog({
         </div>
       }
     >
-      {step === 1 ? (
+      {step === 2 ? (
         <SerialRangeFields
           mode="fiscal"
           values={range}
+          fixedPrefix={selectedModelPrefix}
           onChange={setRange}
           disabled={disabled}
         />

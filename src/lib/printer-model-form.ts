@@ -2,6 +2,7 @@ import type { PrinterModelRequest } from "@/types/printer-model";
 
 export type PrinterModelFormValues = {
   modelCode: string;
+  serialPrefix: string;
   price: string;
   providencia: string;
   approvalDate: string;
@@ -13,6 +14,11 @@ export function toPrinterModelRequest(
   const modelCode = values.modelCode.trim();
   if (!modelCode) return "El modelo es obligatorio.";
 
+  const serialPrefix = values.serialPrefix.trim().toUpperCase();
+  if (!/^[A-Z]{3}$/.test(serialPrefix)) {
+    return "El prefijo serial debe tener exactamente 3 letras (ej. GRA).";
+  }
+
   const price = Number(values.price);
   if (!Number.isFinite(price) || price < 0) {
     return "El precio debe ser un número mayor o igual a cero.";
@@ -23,6 +29,7 @@ export function toPrinterModelRequest(
 
   return {
     modelCode,
+    serialPrefix,
     price,
     ...(providencia && { providencia }),
     ...(approvalDate && { approvalDate }),

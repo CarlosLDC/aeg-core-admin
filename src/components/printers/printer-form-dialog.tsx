@@ -2,7 +2,9 @@
 
 import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import { RefreshCw, X } from "lucide-react";
+import { FiscalSerialInput } from "@/components/printers/fiscal-serial-input";
 import { FieldLabel } from "@/components/ui/field-label";
+import { applyModelPrefixToFiscalSerial } from "@/lib/serial-range";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import {
   FORM_FIELD_HEIGHT_CLASS,
@@ -34,6 +36,7 @@ export type SelectOption = {
   searchText?: string;
   description?: string;
   rif?: string;
+  serialPrefix?: string | null;
 };
 
 function toSearchableOptions(options: SelectOption[]): SearchableSelectOption[] {
@@ -218,6 +221,13 @@ export function PrinterFormDialog({
   const inputClass = formFieldInputClass;
   const disabled = saving || modelsLoading || catalogLoading;
   const modelSelectDisabled = disabled || modelOptions.length === 0;
+  const fiscalSerialInputId = useId();
+  const selectedModelPrefix = useMemo(
+    () =>
+      modelOptions.find((opt) => String(opt.id) === form.modelId)
+        ?.serialPrefix ?? null,
+    [modelOptions, form.modelId],
+  );
 
   return (
     <div
@@ -293,9 +303,21 @@ export function PrinterFormDialog({
                       required
                       value={form.modelId}
                       disabled={modelSelectDisabled}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, modelId: e.target.value }))
-                      }
+                      onChange={(e) => {
+                        const nextModelId = e.target.value;
+                        const nextPrefix =
+                          modelOptions.find(
+                            (opt) => String(opt.id) === nextModelId,
+                          )?.serialPrefix ?? null;
+                        setForm((f) => ({
+                          ...f,
+                          modelId: nextModelId,
+                          fiscalSerial: applyModelPrefixToFiscalSerial(
+                            f.fiscalSerial,
+                            nextPrefix,
+                          ),
+                        }));
+                      }}
                       className={inputClass}
                     >
                       <option value="">Seleccionar modelo…</option>
@@ -321,22 +343,20 @@ export function PrinterFormDialog({
                   )}
                 </label>
 
-                <label className="block sm:col-span-2">
-                  <FieldLabel required>Serial fiscal</FieldLabel>
-                  <input
-                    type="text"
+                <div className="block sm:col-span-2">
+                  <label htmlFor={fiscalSerialInputId} className="block">
+                    <FieldLabel required>Serial fiscal</FieldLabel>
+                  </label>
+                  <FiscalSerialInput
+                    id={fiscalSerialInputId}
                     required
-                    maxLength={10}
                     value={form.fiscalSerial}
+                    deducedPrefix={selectedModelPrefix}
+                    hasSelectedModel={Boolean(form.modelId)}
                     disabled={disabled}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        fiscalSerial: e.target.value.toUpperCase(),
-                      }))
+                    onChange={(fiscalSerial) =>
+                      setForm((f) => ({ ...f, fiscalSerial }))
                     }
-                    className={cn(inputClass, "font-mono uppercase")}
-                    placeholder="ABC1234567"
                   />
                   {fieldErrors.fiscalSerial ? (
                     <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
@@ -344,10 +364,12 @@ export function PrinterFormDialog({
                     </span>
                   ) : (
                     <p className="mt-1 text-xs text-muted">
-                      Formato: 3 letras y 7 dígitos (ej. ABC1234567).
+                      {selectedModelPrefix
+                        ? `Prefijo ${selectedModelPrefix} deducido del modelo · Edita los 7 dígitos.`
+                        : "Selecciona un modelo para deducir el prefijo (7 dígitos)."}
                     </p>
                   )}
-                </label>
+                </div>
 
                 <label className="block sm:col-span-2">
                   <FieldLabel required>Estatus</FieldLabel>
