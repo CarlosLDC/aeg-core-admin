@@ -27,7 +27,7 @@ import {
   getCommercialPaymentsErrorMessage,
   updateCommercialPayment,
 } from "@/lib/commercial-payments-api";
-import { formatDateTime, formatMoney } from "@/lib/datetime-form";
+import { formatDate, formatMoney } from "@/lib/datetime-form";
 import { forbiddenMessage } from "@/lib/permissions/messages";
 import {
   commercialInvoicePath,
@@ -178,14 +178,10 @@ export function CommercialPaymentView() {
         backLabel="Volver a pagos comerciales"
         title={
           payment
-            ? payment.referencia
-              ? `Pago ${payment.referencia}`
-              : `Pago comercial #${payment.id}`
+            ? payment.referencia || `Pago #${payment.id}`
             : "Pago comercial"
         }
-        subtitle={
-          payment ? `${invoiceLabel} · ${formatMoney(payment.monto)}` : undefined
-        }
+        subtitle={payment ? invoiceLabel : undefined}
         loading={effectiveLoading}
         error={effectiveError}
         actions={
@@ -216,7 +212,9 @@ export function CommercialPaymentView() {
             <DetailField
               label="Cliente (factura)"
               value={
-                payment.facturaCliente ?? linkedInvoice?.facturaCliente ?? "—"
+                payment.facturaCliente ??
+                linkedInvoice?.facturaCliente ??
+                "Sin asignar"
               }
             />
             <DetailField
@@ -225,11 +223,7 @@ export function CommercialPaymentView() {
                 <CommercialPaymentMethodBadge method={payment.metodoBanco} />
               }
             />
-            <DetailField
-              label="Monto"
-              value={formatMoney(payment.monto)}
-              mono
-            />
+            <DetailField label="Monto" value={formatMoney(payment.monto)} />
             <DetailField
               label="Referencia"
               value={payment.referencia ?? "—"}
@@ -240,8 +234,8 @@ export function CommercialPaymentView() {
               value={payment.cuentaDestino ?? "—"}
             />
             <DetailField
-              label="Registro"
-              value={formatDateTime(payment.createdAt)}
+              label="Fecha de registro"
+              value={formatDate(payment.createdAt)}
             />
           </DetailSection>
         )}
