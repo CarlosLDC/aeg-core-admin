@@ -193,7 +193,14 @@ export function CompaniesManager() {
 
   async function handleDelete(company: CompanyResponse, fromDialog = false) {
     const label = company.businessName || company.rif;
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar "${label}"? Las sucursales vinculadas pueden verse afectadas.`, destructive: true }))) {
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar "${label}"? Las sucursales vinculadas pueden verse afectadas.`,
+        destructive: true,
+        requireConfirmationText: label,
+      }))
+    ) {
       return;
     }
     setDeletingId(company.id);

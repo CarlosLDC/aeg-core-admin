@@ -277,6 +277,7 @@ export function CommercialInvoicesManager() {
         title: "Confirmar",
         message: `¿Eliminar la factura comercial ${label}? También se eliminarán sus pagos comerciales asociados.`,
         destructive: true,
+        requireConfirmationText: label,
       }))
     ) {
       return;

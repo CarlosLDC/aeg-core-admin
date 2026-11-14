@@ -78,7 +78,7 @@ describe("navSectionsForRole", () => {
     expect(adminItems.some((i) => i.title === "Servicio técnico")).toBe(true);
     expect(adminItems.some((i) => i.title === "Inspección anual")).toBe(true);
     expect(adminItems.some((i) => i.title === "Facturas comerciales")).toBe(true);
-    expect(adminItems.some((i) => i.title === "Pagos comerciales")).toBe(true);
+    expect(adminItems.some((i) => i.title === "Pagos comerciales")).toBe(false);
   });
 
   it("shows Libro fiscal for DISTRIBUTOR via admin handoff path", () => {

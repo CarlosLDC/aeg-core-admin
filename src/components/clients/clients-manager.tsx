@@ -644,7 +644,14 @@ export function ClientsManager() {
     const message = canRequestReview
       ? `¿Eliminar el cliente "${label}"? Un administrador debe aprobar la solicitud.`
       : `¿Eliminar el cliente "${label}"?`;
-    if (!(await confirm({ title: "Confirmar", message, destructive: true }))) {
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message,
+        destructive: true,
+        requireConfirmationText: label,
+      }))
+    ) {
       return;
     }
     setDeletingId(row.client.id);

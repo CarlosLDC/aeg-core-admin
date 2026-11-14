@@ -224,6 +224,7 @@ export function FirmwareVersionView() {
         title: "Confirmar",
         message: `¿Eliminar el firmware ${label} (${firmware.fileName})? El archivo remoto también se borrará.`,
         destructive: true,
+        requireConfirmationText: label,
       }))
     ) {
       return;

@@ -196,6 +196,7 @@ export function CommercialInvoiceView() {
         title: "Confirmar",
         message: `¿Eliminar la factura comercial ${label}? También se eliminarán sus pagos comerciales asociados.`,
         destructive: true,
+        requireConfirmationText: label,
       }))
     ) {
       return;
@@ -262,6 +263,7 @@ export function CommercialInvoiceView() {
         toast.error(forbiddenMessage("delete", "commercialPayments"));
         return;
       }
+      const confirmValue = payment.referencia?.trim() || `#${payment.id}`;
       const refLabel = payment.referencia
         ? `con referencia ${payment.referencia}`
         : `#${payment.id}`;
@@ -270,6 +272,7 @@ export function CommercialInvoiceView() {
           title: "Confirmar",
           message: `¿Eliminar el pago comercial ${refLabel}?`,
           destructive: true,
+          requireConfirmationText: confirmValue,
         }))
       ) {
         return;

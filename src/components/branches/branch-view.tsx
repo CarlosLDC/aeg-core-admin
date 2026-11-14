@@ -226,7 +226,14 @@ export function BranchView() {
       return;
     }
     const label = `${branch.city}, ${branch.state}`;
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la empresa "${label}"? Se quitarán también sus roles (cliente, distribuidor, centro de servicio) si existen.`, destructive: true }))) {
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar la empresa "${label}"? Se quitarán también sus roles (cliente, distribuidor, centro de servicio) si existen.`,
+        destructive: true,
+        requireConfirmationText: label,
+      }))
+    ) {
       return;
     }
 
@@ -331,11 +338,14 @@ export function BranchView() {
       toast.error("Esta empresa ya tiene una solicitud pendiente de aprobación.");
       return;
     }
+    const label =
+      company?.businessName?.trim() ||
+      (branch ? `${branch.city}, ${branch.state}` : `#${client.id}`);
     const accepted = await confirm({
       title: "Eliminar",
-      message:
-        "¿Eliminar esta empresa? Un administrador debe aprobar la solicitud.",
+      message: `¿Eliminar la empresa "${label}"? Un administrador debe aprobar la solicitud.`,
       destructive: true,
+      requireConfirmationText: label,
     });
     if (!accepted) return;
     setDeleting(true);

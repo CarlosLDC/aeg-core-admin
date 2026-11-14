@@ -238,6 +238,7 @@ export function SoftwareManager() {
         title: "Confirmar",
         message: `¿Eliminar el software "${label}"?`,
         destructive: true,
+        requireConfirmationText: label,
       }))
     ) {
       return;

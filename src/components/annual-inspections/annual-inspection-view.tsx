@@ -159,7 +159,14 @@ export function AnnualInspectionView() {
       toast.error(forbiddenMessage("delete", "annualInspections"));
       return;
     }
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la inspección ${inspection.id}?`, destructive: true }))) {
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar la inspección ${inspection.id}?`,
+        destructive: true,
+        requireConfirmationText: String(inspection.id),
+      }))
+    ) {
       return;
     }
 

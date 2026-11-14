@@ -90,7 +90,7 @@ function PrinterBatchFormDialogContent({
     return Number.isInteger(n) && n > 0 ? n : null;
   }, [boxNumber]);
 
-  const isDuplicateBox =
+  const isExistingBox =
     parsedBoxNumber != null && existingBoxSet.has(parsedBoxNumber);
 
   const {
@@ -170,13 +170,6 @@ function PrinterBatchFormDialogContent({
       return;
     }
 
-    if (existingBoxSet.has(parsedBoxNumber)) {
-      setLocalError(
-        `El lote #${parsedBoxNumber} ya existe. Ingresa un número de lote que no se repita.`,
-      );
-      return;
-    }
-
     if (!hasValidPrefix) {
       setLocalError(
         selectedModelPrefix
@@ -217,13 +210,11 @@ function PrinterBatchFormDialogContent({
 
   const displayError = localError ?? error;
   const displayPrefix = hasValidPrefix ? prefix : "---";
-  const bannerError = isDuplicateBox
-    ? `El lote #${parsedBoxNumber} ya existe. Indica un número diferente.`
-    : overflowsDigits
-      ? `El serial inicial supera el máximo (${String(MAX_BATCH_START_NUMBER).padStart(FISCAL_SERIAL_DIGIT_COUNT, "0")}) para generar ${PRINTER_BATCH_SIZE} impresoras.`
-      : rangeSummary && !rangeSummary.ok
-        ? rangeSummary.message
-        : null;
+  const bannerError = overflowsDigits
+    ? `El serial inicial supera el máximo (${String(MAX_BATCH_START_NUMBER).padStart(FISCAL_SERIAL_DIGIT_COUNT, "0")}) para generar ${PRINTER_BATCH_SIZE} impresoras.`
+    : rangeSummary && !rangeSummary.ok
+      ? rangeSummary.message
+      : null;
 
   return (
     <BatchFormDialog
@@ -309,8 +300,6 @@ function PrinterBatchFormDialogContent({
               className={cn(
                 formFieldInputClass,
                 "font-mono text-card-foreground",
-                isDuplicateBox &&
-                  "border-rose-500/60 focus:border-rose-500 focus:ring-rose-500/20",
               )}
               placeholder={String(suggestedBoxNumber)}
             />
@@ -380,7 +369,7 @@ function PrinterBatchFormDialogContent({
               <span className="font-medium text-card-foreground">
                 Lote #{parsedBoxNumber}
               </span>{" "}
-              · {PRINTER_BATCH_SIZE} impresoras sin asignar
+              ({isExistingBox ? "caja existente" : "nueva caja"}) · {PRINTER_BATCH_SIZE} impresoras sin asignar
             </span>
             <span className="font-mono text-xs font-medium text-card-foreground">
               {rangeSummary.serials[0]} →{" "}

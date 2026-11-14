@@ -138,7 +138,14 @@ export function SealView() {
       toast.error(forbiddenMessage("delete", "seals"));
       return;
     }
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el precinto con serial ${seal.serial}?`, destructive: true }))) {
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar el precinto con serial ${seal.serial}?`,
+        destructive: true,
+        requireConfirmationText: seal.serial,
+      }))
+    ) {
       return;
     }
 

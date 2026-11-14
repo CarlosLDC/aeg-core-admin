@@ -116,7 +116,14 @@ export function CompanyView() {
       return;
     }
     const label = company.businessName || company.rif;
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar "${label}"? Las sucursales vinculadas pueden verse afectadas.`, destructive: true }))) {
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar "${label}"? Las sucursales vinculadas pueden verse afectadas.`,
+        destructive: true,
+        requireConfirmationText: label,
+      }))
+    ) {
       return;
     }
 

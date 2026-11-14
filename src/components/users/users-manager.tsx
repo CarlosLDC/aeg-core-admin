@@ -322,7 +322,15 @@ export function UsersManager() {
   }
 
   async function handleDelete(user: UserResponse, fromDialog = false) {
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar al usuario "${displayUserName(user)}"? Esta acción no se puede deshacer.`, destructive: true }))) {
+    const userLabel = displayUserName(user);
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar al usuario "${userLabel}"? Esta acción no se puede deshacer.`,
+        destructive: true,
+        requireConfirmationText: userLabel,
+      }))
+    ) {
       return;
     }
     setDeletingId(user.id);

@@ -315,7 +315,14 @@ export function ContractsListPanel({
       return;
     }
     const label = getPartyLabel(contract);
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el contrato ${contract.id} (${label})? Esta acción no se puede deshacer.`, destructive: true }))) {
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar el contrato ${contract.id} (${label})? Esta acción no se puede deshacer.`,
+        destructive: true,
+        requireConfirmationText: String(contract.id),
+      }))
+    ) {
       return;
     }
     setDeletingId(contract.id);

@@ -1022,7 +1022,14 @@ export function PrinterView() {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la impresora con serial ${printer.fiscalSerial}?`, destructive: true }))) {
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar la impresora con serial ${printer.fiscalSerial}?`,
+        destructive: true,
+        requireConfirmationText: printer.fiscalSerial,
+      }))
+    ) {
       return;
     }
 

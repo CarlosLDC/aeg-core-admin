@@ -590,6 +590,7 @@ export function BranchesManager() {
         title: "Confirmar",
         message: `¿Eliminar la empresa "${label}"? Un administrador debe aprobar la solicitud.`,
         destructive: true,
+        requireConfirmationText: label,
       }))
     ) {
       return;
@@ -786,7 +787,14 @@ export function BranchesManager() {
       return;
     }
     const label = branchSummary(branch, companies);
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la empresa "${label}"? Se quitarán también sus roles (cliente, distribuidor, centro de servicio) si existen.`, destructive: true }))) {
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar la empresa "${label}"? Se quitarán también sus roles (cliente, distribuidor, centro de servicio) si existen.`,
+        destructive: true,
+        requireConfirmationText: label,
+      }))
+    ) {
       return;
     }
     setDeletingId(branch.id);

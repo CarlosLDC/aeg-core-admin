@@ -261,7 +261,14 @@ export function ContractView({ kind }: ContractViewProps) {
       toast.error(forbiddenMessage("delete", "contracts"));
       return;
     }
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el contrato ${contract.id} (${partyLabel})? Esta acción no se puede deshacer.`, destructive: true }))) {
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar el contrato ${contract.id} (${partyLabel})? Esta acción no se puede deshacer.`,
+        destructive: true,
+        requireConfirmationText: String(contract.id),
+      }))
+    ) {
       return;
     }
 

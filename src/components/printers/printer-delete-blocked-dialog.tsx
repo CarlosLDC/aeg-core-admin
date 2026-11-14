@@ -3,6 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, ExternalLink, X } from "lucide-react";
+import {
+  isConfirmTextMatch,
+  normalizeConfirmText,
+} from "@/components/ui/confirm-dialog";
 import type { PrinterDependencyRef } from "@/types/printer-dependencies";
 import {
   annualInspectionPath,
@@ -55,16 +59,35 @@ type PrinterDeleteBlockedDialogProps = {
 export function PrinterDeleteBlockedDialog({
   open,
   printerLabel,
+  ...rest
+}: PrinterDeleteBlockedDialogProps) {
+  if (!open) return null;
+  const expectedLabel = normalizeConfirmText(printerLabel);
+  return (
+    <PrinterDeleteBlockedDialogInner
+      key={expectedLabel}
+      printerLabel={printerLabel}
+      expectedLabel={expectedLabel}
+      {...rest}
+    />
+  );
+}
+
+function PrinterDeleteBlockedDialogInner({
+  printerLabel,
+  expectedLabel,
   message,
   dependencies,
   consequences,
   forcing = false,
   onClose,
   onForceDelete,
-}: PrinterDeleteBlockedDialogProps) {
+}: Omit<PrinterDeleteBlockedDialogProps, "open"> & {
+  expectedLabel: string;
+}) {
   const [ack, setAck] = useState(false);
-
-  if (!open) return null;
+  const [typedLabel, setTypedLabel] = useState("");
+  const canForceDelete = ack && isConfirmTextMatch(typedLabel, expectedLabel);
 
   return (
     <div
@@ -168,6 +191,32 @@ export function PrinterDeleteBlockedDialog({
           </span>
         </label>
 
+        {expectedLabel ? (
+          <div className="mt-3 space-y-1.5">
+            <label
+              htmlFor="printer-delete-blocked-input"
+              className="block text-xs text-muted"
+            >
+              Para confirmar, escribe{" "}
+              <span className="select-all font-semibold text-card-foreground">
+                {expectedLabel}
+              </span>
+              :
+            </label>
+            <input
+              id="printer-delete-blocked-input"
+              type="text"
+              value={typedLabel}
+              onChange={(event) => setTypedLabel(event.target.value)}
+              disabled={forcing}
+              autoComplete="off"
+              spellCheck={false}
+              placeholder={expectedLabel}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-destructive focus:ring-2 focus:ring-destructive/20 disabled:opacity-50"
+            />
+          </div>
+        ) : null}
+
         <div className="mt-5 flex flex-wrap justify-end gap-2">
           <button
             type="button"
@@ -179,11 +228,11 @@ export function PrinterDeleteBlockedDialog({
           </button>
           <button
             type="button"
-            disabled={!ack || forcing}
+            disabled={!canForceDelete || forcing}
             onClick={() => {
               void onForceDelete();
             }}
-            className="rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground disabled:opacity-50"
+            className="rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
             {forcing ? "Eliminando…" : "Eliminar de todas formas"}
           </button>

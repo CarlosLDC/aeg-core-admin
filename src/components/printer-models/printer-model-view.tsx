@@ -109,7 +109,14 @@ export function PrinterModelView() {
       return;
     }
     const label = model.modelCode;
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el modelo "${label}"? Las impresoras vinculadas pueden verse afectadas.`, destructive: true }))) {
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar el modelo "${label}"? Las impresoras vinculadas pueden verse afectadas.`,
+        destructive: true,
+        requireConfirmationText: label,
+      }))
+    ) {
       return;
     }
 

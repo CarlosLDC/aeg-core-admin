@@ -169,8 +169,9 @@ export function PrinterCreditPaymentsSection({
   async function handleDeletePayment(paymentId: number) {
     const ok = await confirm({
       title: "Eliminar pago",
-      message: "¿Eliminar este registro de pago? Esta acción actualizará el total abonado.",
+      message: `¿Eliminar el registro de pago #${paymentId}? Esta acción actualizará el total abonado.`,
       destructive: true,
+      requireConfirmationText: String(paymentId),
     });
     if (!ok) return;
 

@@ -372,6 +372,7 @@ export function CompanyBranchesTable({
         title: "Confirmar",
         message: `¿Eliminar la sucursal "${label}"? Se quitarán también sus roles si existen.`,
         destructive: true,
+        requireConfirmationText: label,
       }))
     ) {
       return;

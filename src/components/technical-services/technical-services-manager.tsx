@@ -272,7 +272,16 @@ export function TechnicalServicesManager() {
       toast.error(forbiddenMessage("delete", "technicalServices"));
       return;
     }
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el servicio técnico ${row.id}?`, destructive: true }))) return;
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar el servicio técnico ${row.id}?`,
+        destructive: true,
+        requireConfirmationText: String(row.id),
+      }))
+    ) {
+      return;
+    }
     setDeletingId(row.id);
     try {
       await deleteTechnicalService(row.id);

@@ -214,7 +214,14 @@ export function PrinterModelsManager() {
       return;
     }
     const label = modelLabel(model);
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar el modelo "${label}"? Las impresoras vinculadas pueden verse afectadas.`, destructive: true }))) {
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar el modelo "${label}"? Las impresoras vinculadas pueden verse afectadas.`,
+        destructive: true,
+        requireConfirmationText: label,
+      }))
+    ) {
       return;
     }
     setDeletingId(model.id);

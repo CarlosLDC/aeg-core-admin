@@ -714,6 +714,7 @@ export function CompanyPrintersTable({
         title: "Confirmar",
         message: `¿Eliminar la impresora con serial ${printer.fiscalSerial}?`,
         destructive: true,
+        requireConfirmationText: printer.fiscalSerial,
       }))
     ) {
       return;

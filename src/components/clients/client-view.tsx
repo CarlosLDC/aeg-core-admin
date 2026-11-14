@@ -400,11 +400,14 @@ export function ClientView() {
 
   async function handleDelete() {
     if (!client || !canRequestReview) return;
+    const label =
+      company?.businessName?.trim() ||
+      (branch ? `${branch.city}, ${branch.state}` : `#${client.id}`);
     const accepted = await confirm({
       title: "Eliminar",
-      message:
-        "¿Eliminar este cliente? Un administrador debe aprobar la solicitud.",
+      message: `¿Eliminar el cliente "${label}"? Un administrador debe aprobar la solicitud.`,
       destructive: true,
+      requireConfirmationText: label,
     });
     if (!accepted) return;
     setDeleting(true);

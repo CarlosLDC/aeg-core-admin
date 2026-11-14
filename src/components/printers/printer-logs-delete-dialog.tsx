@@ -4,6 +4,10 @@ import { useId, useState, type FormEvent } from "react";
 import { AlertTriangle, CalendarClock } from "lucide-react";
 import { PrinterActionDialogShell } from "@/components/printers/printer-action-dialog-shell";
 import {
+  isConfirmTextMatch,
+  normalizeConfirmText,
+} from "@/components/ui/confirm-dialog";
+import {
   SegmentedToggle,
   type SegmentedToggleOption,
 } from "@/components/ui/segmented-toggle";
@@ -35,11 +39,27 @@ type PrinterLogsDeleteDialogProps = {
 };
 
 export function PrinterLogsDeleteDialog({
-  printer,
   open,
+  printer,
   onClose,
   onDeleted,
 }: PrinterLogsDeleteDialogProps) {
+  if (!open) return null;
+  return (
+    <PrinterLogsDeleteDialogInner
+      key={printer.id}
+      printer={printer}
+      onClose={onClose}
+      onDeleted={onDeleted}
+    />
+  );
+}
+
+function PrinterLogsDeleteDialogInner({
+  printer,
+  onClose,
+  onDeleted,
+}: Omit<PrinterLogsDeleteDialogProps, "open">) {
   const titleId = useId();
   const [mode, setMode] = useState<DeleteMode>("before");
   const [before, setBefore] = useState("");
@@ -47,8 +67,9 @@ export function PrinterLogsDeleteDialog({
   const [to, setTo] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  if (!open) return null;
+  const [typedSerial, setTypedSerial] = useState("");
+  const expectedSerial = normalizeConfirmText(printer.fiscalSerial);
+  const serialConfirmed = isConfirmTextMatch(typedSerial, expectedSerial);
 
   function applyPresetDaysAgo(days: number) {
     const cutoff = new Date();
@@ -61,6 +82,10 @@ export function PrinterLogsDeleteDialog({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!serialConfirmed) {
+      setError(`Escribe "${expectedSerial}" para confirmar la eliminación.`);
+      return;
+    }
 
     const params: DeletePrinterLogsParams = {};
     if (mode === "before") {
@@ -103,6 +128,7 @@ export function PrinterLogsDeleteDialog({
       error={error}
       onClose={onClose}
       submitLabel="Eliminar registros"
+      submitDisabled={!serialConfirmed}
       submitDestructive
       onSubmit={handleSubmit}
     >
@@ -200,6 +226,32 @@ export function PrinterLogsDeleteDialog({
             </label>
           </div>
         )}
+
+        {expectedSerial ? (
+          <div className="space-y-1.5 border-t border-border pt-3">
+            <label
+              htmlFor="printer-logs-delete-confirm-input"
+              className="block text-xs text-muted"
+            >
+              Para confirmar, escribe{" "}
+              <span className="select-all font-semibold text-card-foreground">
+                {expectedSerial}
+              </span>
+              :
+            </label>
+            <input
+              id="printer-logs-delete-confirm-input"
+              type="text"
+              value={typedSerial}
+              onChange={(e) => setTypedSerial(e.target.value)}
+              disabled={saving}
+              autoComplete="off"
+              spellCheck={false}
+              placeholder={expectedSerial}
+              className={formFieldInputClass}
+            />
+          </div>
+        ) : null}
       </div>
     </PrinterActionDialogShell>
   );

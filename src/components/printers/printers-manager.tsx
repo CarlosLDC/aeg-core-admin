@@ -469,9 +469,9 @@ export function PrintersManager() {
     section: "/printers",
   });
 
-  const nextSuggestedBoxNumber = useMemo(() => {
+  const lastSuggestedBoxNumber = useMemo(() => {
     if (inventoryBoxes.length === 0) return 1;
-    return Math.max(...inventoryBoxes.map((box) => box.boxNumber)) + 1;
+    return Math.max(...inventoryBoxes.map((box) => box.boxNumber));
   }, [inventoryBoxes]);
 
   const modelOptions = useMemo<SelectOption[]>(
@@ -786,10 +786,15 @@ export function PrintersManager() {
     setBatchProgress(null);
 
     try {
-      const createdBox = await createInventoryBox({
-        boxNumber: payload.boxNumber,
-        observations: null,
-      });
+      const existingBox = inventoryBoxes.find(
+        (box) => box.boxNumber === payload.boxNumber,
+      );
+      const targetBox =
+        existingBox ??
+        (await createInventoryBox({
+          boxNumber: payload.boxNumber,
+          observations: null,
+        }));
 
       setBatchProgress({ done: 0, total: payload.serials.length });
 
@@ -802,7 +807,7 @@ export function PrintersManager() {
             fiscalSerial,
             status: "sin_asignar",
             paid: false,
-            boxId: String(createdBox.id),
+            boxId: String(targetBox.id),
           });
           if (typeof bodyOrError === "string") {
             throw new Error(bodyOrError);
@@ -973,7 +978,14 @@ export function PrintersManager() {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
-    if (!(await confirm({ title: "Confirmar", message: `¿Eliminar la impresora con serial ${printer.fiscalSerial}?`, destructive: true }))) {
+    if (
+      !(await confirm({
+        title: "Confirmar",
+        message: `¿Eliminar la impresora con serial ${printer.fiscalSerial}?`,
+        destructive: true,
+        requireConfirmationText: printer.fiscalSerial,
+      }))
+    ) {
       return;
     }
     setDeletingId(printer.id);
@@ -1384,7 +1396,7 @@ export function PrintersManager() {
         error={formError}
         modelOptions={modelOptions}
         modelsLoading={modelsLoading}
-        suggestedBoxNumber={nextSuggestedBoxNumber}
+        suggestedBoxNumber={lastSuggestedBoxNumber}
         existingBoxNumbers={inventoryBoxes.map((box) => box.boxNumber)}
         onClose={closeDialog}
         onSubmit={(payload) => void handleBatchSubmit(payload)}

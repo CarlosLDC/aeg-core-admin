@@ -298,6 +298,7 @@ export function CommercialPaymentsManager() {
       toast.error(forbiddenMessage("delete", "commercialPayments"));
       return;
     }
+    const confirmValue = payment.referencia?.trim() || `#${payment.id}`;
     const refLabel = payment.referencia
       ? `con referencia ${payment.referencia}`
       : `#${payment.id}`;
@@ -306,6 +307,7 @@ export function CommercialPaymentsManager() {
         title: "Confirmar",
         message: `¿Eliminar el pago comercial ${refLabel}?`,
         destructive: true,
+        requireConfirmationText: confirmValue,
       }))
     ) {
       return;
