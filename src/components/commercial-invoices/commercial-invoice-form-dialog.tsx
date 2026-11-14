@@ -1,10 +1,15 @@
 "use client";
 
-import { FormEvent, useEffect, useId, useState } from "react";
+import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import { FileText, Loader2, Plus, ReceiptText, X } from "lucide-react";
+import { CommercialClientCreateDialog } from "@/components/commercial-invoices/commercial-client-create-dialog";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import { NativeSelect } from "@/components/ui/native-select";
+import {
+  SearchableSelect,
+  type SearchableSelectOption,
+} from "@/components/ui/searchable-select";
 import {
   COMMERCIAL_INVOICE_COLLECTION_STATUS_LABELS,
   COMMERCIAL_INVOICE_MODALITY_LABELS,
@@ -12,7 +17,6 @@ import {
   emptyCommercialInvoiceForm,
 } from "@/lib/commercial-invoice-form";
 import {
-  createCommercialClient,
   fetchCommercialClients,
   getCommercialInvoicesErrorMessage,
 } from "@/lib/commercial-invoices-api";
@@ -81,9 +85,7 @@ function CommercialInvoiceFormDialogContent({
 
   const [clients, setClients] = useState<CommercialClientResponse[]>([]);
   const [catalogError, setCatalogError] = useState<string | null>(null);
-  const [addingClient, setAddingClient] = useState(false);
-  const [newClientName, setNewClientName] = useState("");
-  const [savingClient, setSavingClient] = useState(false);
+  const [createClientOpen, setCreateClientOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -102,25 +104,18 @@ function CommercialInvoiceFormDialogContent({
     };
   }, []);
 
-  async function handleCreateClient() {
-    const trimmed = newClientName.trim();
-    if (!trimmed) return;
-    setSavingClient(true);
-    setCatalogError(null);
-    try {
-      const created = await createCommercialClient({ nombre: trimmed });
-      setClients((prev) =>
-        [...prev, created].sort((a, b) => a.nombre.localeCompare(b.nombre)),
-      );
-      setForm((f) => ({ ...f, clienteComercialId: String(created.id) }));
-      setNewClientName("");
-      setAddingClient(false);
-    } catch (err) {
-      setCatalogError(getCommercialInvoicesErrorMessage(err));
-    } finally {
-      setSavingClient(false);
-    }
-  }
+  const clientOptions: SearchableSelectOption[] = useMemo(
+    () =>
+      clients.map((c) => ({
+        value: String(c.id),
+        label: c.nombre,
+        description: c.rif ? `RIF: ${c.rif}` : (c.notas ?? undefined),
+        searchText: [String(c.id), c.nombre, c.rif, c.notas]
+          .filter(Boolean)
+          .join(" "),
+      })),
+    [clients],
+  );
 
   function goToStep(target: WizardStep) {
     setFieldErrors({});
@@ -321,62 +316,38 @@ function CommercialInvoiceFormDialogContent({
                   </label>
                 </div>
 
-                <div>
+                <div className="block">
                   <div className="mb-1 flex items-center justify-between gap-2">
                     <FieldLabel>Cliente comercial</FieldLabel>
                     <button
                       type="button"
-                      disabled={saving || savingClient}
-                      onClick={() => setAddingClient((v) => !v)}
+                      disabled={saving}
+                      onClick={() => setCreateClientOpen(true)}
                       className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline disabled:opacity-50"
                     >
                       <Plus className="size-3.5" aria-hidden />
-                      {addingClient ? "Cancelar" : "Nuevo cliente"}
+                      Nuevo cliente
                     </button>
                   </div>
-                  {addingClient ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        maxLength={120}
-                        value={newClientName}
-                        disabled={savingClient}
-                        onChange={(e) => setNewClientName(e.target.value)}
-                        className={inputClass}
-                        placeholder="Nombre del cliente comercial"
-                      />
-                      <button
-                        type="button"
-                        disabled={savingClient || !newClientName.trim()}
-                        onClick={() => void handleCreateClient()}
-                        className="shrink-0 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
-                      >
-                        {savingClient ? "Guardando..." : "Crear"}
-                      </button>
-                    </div>
-                  ) : (
-                    <NativeSelect
-                      value={form.clienteComercialId}
-                      disabled={saving}
-                      onChange={(e) => {
-                        setForm((f) => ({
-                          ...f,
-                          clienteComercialId: e.target.value,
-                        }));
-                        setFieldErrors((prev) => ({
-                          ...prev,
-                          clienteComercialId: undefined,
-                        }));
-                      }}
-                    >
-                      <option value="">Sin cliente asignado</option>
-                      {clients.map((c) => (
-                        <option key={c.id} value={String(c.id)}>
-                          {c.nombre}
-                        </option>
-                      ))}
-                    </NativeSelect>
-                  )}
+                  <SearchableSelect
+                    value={form.clienteComercialId}
+                    onChange={(clienteComercialId) => {
+                      setForm((f) => ({
+                        ...f,
+                        clienteComercialId,
+                      }));
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        clienteComercialId: undefined,
+                      }));
+                    }}
+                    options={clientOptions}
+                    disabled={saving}
+                    emptyLabel="Sin cliente asignado"
+                    searchPlaceholder="Buscar cliente comercial…"
+                    modalTitle="Seleccionar cliente comercial"
+                    preloadOptions
+                  />
                   {fieldErrors.clienteComercialId ? (
                     <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
                       {fieldErrors.clienteComercialId}
@@ -533,6 +504,22 @@ function CommercialInvoiceFormDialogContent({
           </FormDialogFooterBar>
         </div>
       </div>
+
+      <CommercialClientCreateDialog
+        open={createClientOpen}
+        onClose={() => setCreateClientOpen(false)}
+        onCreated={(created) => {
+          setClients((prev) =>
+            [...prev, created].sort((a, b) => a.nombre.localeCompare(b.nombre)),
+          );
+          setForm((f) => ({ ...f, clienteComercialId: String(created.id) }));
+          setFieldErrors((prev) => ({
+            ...prev,
+            clienteComercialId: undefined,
+          }));
+          setCreateClientOpen(false);
+        }}
+      />
     </div>
   );
 }
