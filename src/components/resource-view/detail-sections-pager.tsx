@@ -72,9 +72,9 @@ export function DetailSectionsPager({
   return (
     <div className={cn("space-y-4", className)}>
       {showNav && (
-        <div className="no-scrollbar -mx-1 overflow-x-auto border-b border-border px-1">
+        <div className="no-scrollbar -mx-1 overflow-x-auto px-1">
           <div
-            className="flex flex-nowrap items-center gap-1 sm:justify-center"
+            className="flex flex-nowrap items-center gap-1 sm:flex-wrap sm:justify-center"
             role="tablist"
             aria-label="Secciones del detalle"
           >
@@ -93,11 +93,11 @@ export function DetailSectionsPager({
                   aria-controls={`detail-panel-${step.id}`}
                   onClick={() => setIndex(stepIndex)}
                   className={cn(
-                    "shrink-0 whitespace-nowrap border-b-2 px-3 py-2 text-xs font-medium transition-colors sm:px-3.5 sm:py-2.5 sm:text-sm",
+                    "shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
                     isActive
-                      ? "border-accent text-accent"
-                      : "border-transparent text-muted hover:border-border hover:text-foreground",
+                      ? "bg-accent/10 text-accent"
+                      : "text-muted hover:bg-foreground/5 hover:text-foreground",
                   )}
                 >
                   {step.label}
