@@ -45,9 +45,7 @@ export function formatCommercialInvoiceTitle(invoice: {
 
 export const emptyCommercialInvoiceForm = (): CommercialInvoiceFormValues => ({
   numeroFactura: "",
-  recipientType: "DISTRIBUTOR",
-  distribuidorId: "",
-  clienteId: "",
+  empresaId: "",
   modalidad: "VENTA",
   estadoCobro: "PAGADO",
 });
@@ -55,13 +53,9 @@ export const emptyCommercialInvoiceForm = (): CommercialInvoiceFormValues => ({
 export function commercialInvoiceToFormValues(
   invoice: CommercialInvoiceResponse,
 ): CommercialInvoiceFormValues {
-  const isClient = invoice.clienteId != null && invoice.distribuidorId == null;
   return {
     numeroFactura: invoice.numeroFactura ?? "",
-    recipientType: isClient ? "CLIENT" : "DISTRIBUTOR",
-    distribuidorId:
-      invoice.distribuidorId != null ? String(invoice.distribuidorId) : "",
-    clienteId: invoice.clienteId != null ? String(invoice.clienteId) : "",
+    empresaId: invoice.empresaId != null ? String(invoice.empresaId) : "",
     modalidad: COMMERCIAL_INVOICE_MODALITIES.includes(invoice.modalidad)
       ? invoice.modalidad
       : "VENTA",
@@ -91,20 +85,9 @@ export function toCommercialInvoiceRequest(
     return "El número de factura no puede superar los 30 caracteres.";
   }
 
-  const distribuidorId =
-    values.recipientType === "DISTRIBUTOR"
-      ? parseOptionalId(values.distribuidorId)
-      : null;
-  const clienteId =
-    values.recipientType === "CLIENT"
-      ? parseOptionalId(values.clienteId)
-      : null;
-
-  if (values.recipientType === "DISTRIBUTOR" && distribuidorId == null) {
-    return "Debe seleccionar un distribuidor.";
-  }
-  if (values.recipientType === "CLIENT" && clienteId == null) {
-    return "Debe seleccionar un cliente.";
+  const empresaId = parseOptionalId(values.empresaId);
+  if (empresaId == null) {
+    return "La empresa es obligatoria.";
   }
 
   if (!COMMERCIAL_INVOICE_MODALITIES.includes(values.modalidad)) {
@@ -116,8 +99,7 @@ export function toCommercialInvoiceRequest(
 
   return {
     numeroFactura,
-    distribuidorId,
-    clienteId,
+    empresaId,
     modalidad: values.modalidad,
     estadoCobro: values.estadoCobro,
   };

@@ -496,12 +496,11 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         viewBindings: ["invoice.numeroFactura"],
       },
       {
-        formLabels: ["Distribuidor", "Cliente"],
-        viewLabels: ["Distribuidor", "Cliente"],
-        formBindings: ["form.distribuidorId", "form.clienteId"],
+        formLabels: ["Empresa"],
+        viewLabels: ["Empresa"],
+        formBindings: ["form.empresaId"],
         viewBindings: [
-          "invoice.distribuidorNombre",
-          "invoice.clienteNombre",
+          "invoice.empresaNombre",
           "invoice.clienteComercialNombre",
         ],
       },

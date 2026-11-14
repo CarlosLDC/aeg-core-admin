@@ -10,16 +10,6 @@ import {
   type SearchableSelectOption,
 } from "@/components/ui/searchable-select";
 import {
-  clientLabel,
-  clientRif,
-  clientSearchText,
-  distributorLabel,
-  distributorRif,
-  distributorSearchText,
-} from "@/lib/branch-roles";
-import { fetchBranches } from "@/lib/branches-api";
-import { loadCatalogRoles } from "@/lib/catalog-roles-cache";
-import {
   COMMERCIAL_INVOICE_COLLECTION_STATUS_LABELS,
   COMMERCIAL_INVOICE_MODALITY_LABELS,
   commercialInvoiceToFormValues,
@@ -29,14 +19,8 @@ import { getCommercialInvoicesErrorMessage } from "@/lib/commercial-invoices-api
 import { fetchCompanies } from "@/lib/companies-api";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { commercialInvoiceFormSchema } from "@/lib/schemas/commercial-invoice-form-schema";
-import {
-  formFieldInputClass,
-  formFieldSegmentedToggleShellClass,
-  segmentedToggleActiveClass,
-} from "@/lib/toggle-button-styles";
+import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
-import type { BranchResponse } from "@/types/branch";
-import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import {
   COMMERCIAL_INVOICE_COLLECTION_STATUSES,
   COMMERCIAL_INVOICE_MODALITIES,
@@ -81,25 +65,15 @@ function CommercialInvoiceFormDialogContent({
     Partial<Record<keyof CommercialInvoiceFormValues, string>>
   >({});
 
-  const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
-  const [clients, setClients] = useState<ClientResponse[]>([]);
-  const [branches, setBranches] = useState<BranchResponse[]>([]);
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
-    Promise.all([
-      loadCatalogRoles(),
-      fetchBranches().catch(() => [] as BranchResponse[]),
-      fetchCompanies().catch(() => [] as CompanyResponse[]),
-    ])
-      .then(([roles, branchList, companyList]) => {
+    fetchCompanies()
+      .then((companyList) => {
         if (!active) return;
-        setDistributors(roles.distributors);
-        setClients(roles.clients);
-        setBranches(branchList);
         setCompanies(companyList);
         setCatalogError(null);
       })
@@ -115,38 +89,22 @@ function CommercialInvoiceFormDialogContent({
     };
   }, []);
 
-  const distributorOptions: SearchableSelectOption[] = useMemo(
+  const companyOptions: SearchableSelectOption[] = useMemo(
     () =>
-      distributors
-        .map((d) => {
-          const rif = distributorRif(d, branches, companies);
-          const label = distributorLabel(d, branches, companies);
-          return {
-            value: String(d.id),
-            label,
-            description: rif ? `RIF: ${rif}` : undefined,
-            searchText: distributorSearchText(d, branches, companies),
-          };
-        })
-        .sort((a, b) => a.label.localeCompare(b.label, "es")),
-    [distributors, branches, companies],
-  );
-
-  const clientOptions: SearchableSelectOption[] = useMemo(
-    () =>
-      clients
+      companies
         .map((c) => {
-          const rif = clientRif(c, branches, companies);
-          const label = clientLabel(c, branches, companies);
+          const label = c.businessName?.trim() || c.rif;
           return {
             value: String(c.id),
             label,
-            description: rif ? `RIF: ${rif}` : undefined,
-            searchText: clientSearchText(c, branches, companies),
+            description: c.rif ? `RIF: ${c.rif}` : undefined,
+            searchText: [String(c.id), c.businessName, c.rif]
+              .filter(Boolean)
+              .join(" "),
           };
         })
         .sort((a, b) => a.label.localeCompare(b.label, "es")),
-    [clients, branches, companies],
+    [companies],
   );
 
   function handleFormSubmit(e: FormEvent) {
@@ -193,8 +151,8 @@ function CommercialInvoiceFormDialogContent({
               </h2>
               <p className="mt-1 text-sm text-muted">
                 {mode === "create"
-                  ? "Registra número de factura, distribuidor o cliente, modalidad y estado de cobro."
-                  : "Actualiza número de factura, distribuidor o cliente, modalidad y estado de cobro."}
+                  ? "Registra número de factura, empresa, modalidad y estado de cobro."
+                  : "Actualiza número de factura, empresa, modalidad y estado de cobro."}
               </p>
             </div>
             <button
@@ -257,129 +215,32 @@ function CommercialInvoiceFormDialogContent({
                 ) : null}
               </label>
 
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <FieldLabel required>
-                    {form.recipientType === "DISTRIBUTOR"
-                      ? "Distribuidor"
-                      : "Cliente"}
-                  </FieldLabel>
-                  <div
-                    role="group"
-                    aria-label="Tipo de destinatario"
-                    className={cn(
-                      formFieldSegmentedToggleShellClass,
-                      "w-auto min-w-[210px]",
-                    )}
-                  >
-                    <button
-                      type="button"
-                      disabled={disabled}
-                      onClick={() => {
-                        setForm((f) => ({
-                          ...f,
-                          recipientType: "DISTRIBUTOR",
-                          clienteId: "",
-                        }));
-                        setFieldErrors((prev) => ({
-                          ...prev,
-                          distribuidorId: undefined,
-                          clienteId: undefined,
-                        }));
-                      }}
-                      className={cn(
-                        "flex-1 rounded-md px-3 text-xs font-medium transition-colors",
-                        form.recipientType === "DISTRIBUTOR"
-                          ? segmentedToggleActiveClass()
-                          : "text-muted hover:text-foreground",
-                      )}
-                    >
-                      Distribuidor
-                    </button>
-                    <button
-                      type="button"
-                      disabled={disabled}
-                      onClick={() => {
-                        setForm((f) => ({
-                          ...f,
-                          recipientType: "CLIENT",
-                          distribuidorId: "",
-                        }));
-                        setFieldErrors((prev) => ({
-                          ...prev,
-                          distribuidorId: undefined,
-                          clienteId: undefined,
-                        }));
-                      }}
-                      className={cn(
-                        "flex-1 rounded-md px-3 text-xs font-medium transition-colors",
-                        form.recipientType === "CLIENT"
-                          ? segmentedToggleActiveClass()
-                          : "text-muted hover:text-foreground",
-                      )}
-                    >
-                      Cliente
-                    </button>
-                  </div>
-                </div>
-
-                {form.recipientType === "DISTRIBUTOR" ? (
-                  <SearchableSelect
-                    required
-                    value={form.distribuidorId}
-                    onChange={(distribuidorId) => {
-                      setForm((f) => ({
-                        ...f,
-                        distribuidorId,
-                        clienteId: "",
-                      }));
-                      setFieldErrors((prev) => ({
-                        ...prev,
-                        distribuidorId: undefined,
-                      }));
-                    }}
-                    options={distributorOptions}
-                    disabled={disabled}
-                    loading={catalogLoading}
-                    emptyLabel="Seleccionar distribuidor…"
-                    searchPlaceholder="Buscar distribuidora o RIF…"
-                    modalTitle="Seleccionar distribuidor"
-                    preloadOptions
-                  />
-                ) : (
-                  <SearchableSelect
-                    required
-                    value={form.clienteId}
-                    onChange={(clienteId) => {
-                      setForm((f) => ({
-                        ...f,
-                        clienteId,
-                        distribuidorId: "",
-                      }));
-                      setFieldErrors((prev) => ({
-                        ...prev,
-                        clienteId: undefined,
-                      }));
-                    }}
-                    options={clientOptions}
-                    disabled={disabled}
-                    loading={catalogLoading}
-                    emptyLabel="Seleccionar cliente…"
-                    searchPlaceholder="Buscar cliente o RIF…"
-                    modalTitle="Seleccionar cliente"
-                    preloadOptions
-                  />
-                )}
-
-                {form.recipientType === "DISTRIBUTOR" &&
-                fieldErrors.distribuidorId ? (
+              <div className="block">
+                <FieldLabel required>Empresa</FieldLabel>
+                <SearchableSelect
+                  required
+                  value={form.empresaId}
+                  onChange={(empresaId) => {
+                    setForm((f) => ({
+                      ...f,
+                      empresaId,
+                    }));
+                    setFieldErrors((prev) => ({
+                      ...prev,
+                      empresaId: undefined,
+                    }));
+                  }}
+                  options={companyOptions}
+                  disabled={disabled}
+                  loading={catalogLoading}
+                  emptyLabel="Seleccionar empresa…"
+                  searchPlaceholder="Buscar empresa o RIF…"
+                  modalTitle="Seleccionar empresa"
+                  preloadOptions
+                />
+                {fieldErrors.empresaId ? (
                   <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
-                    {fieldErrors.distribuidorId}
-                  </span>
-                ) : null}
-                {form.recipientType === "CLIENT" && fieldErrors.clienteId ? (
-                  <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
-                    {fieldErrors.clienteId}
+                    {fieldErrors.empresaId}
                   </span>
                 ) : null}
               </div>

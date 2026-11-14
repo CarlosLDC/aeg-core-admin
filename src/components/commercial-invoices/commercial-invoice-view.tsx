@@ -306,12 +306,9 @@ export function CommercialInvoiceView() {
               mono
             />
             <DetailField
-              label={
-                invoice.distribuidorId != null ? "Distribuidor" : "Cliente"
-              }
+              label="Empresa"
               value={
-                invoice.distribuidorNombre ??
-                invoice.clienteNombre ??
+                invoice.empresaNombre ??
                 invoice.clienteComercialNombre ??
                 "—"
               }
