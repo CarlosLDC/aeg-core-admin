@@ -91,7 +91,7 @@ function CommercialPaymentFormDialogContent({
       invoices.map((inv) => ({
         value: String(inv.id),
         label: formatCommercialInvoiceTitle(inv),
-        description: inv.facturaCliente ?? undefined,
+        description: inv.clienteComercialNombre ?? undefined,
         badge: (
           <CommercialInvoiceCollectionStatusBadge status={inv.estadoCobro} />
         ),
@@ -99,8 +99,8 @@ function CommercialPaymentFormDialogContent({
           String(inv.id),
           inv.numeroFactura,
           inv.sufijoControl,
-          inv.facturaCliente,
-          inv.promotorVendedor,
+          inv.clienteComercialNombre,
+          inv.promotorNombre,
         ]
           .filter(Boolean)
           .join(" "),

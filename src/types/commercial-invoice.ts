@@ -21,14 +21,44 @@ export const COMMERCIAL_INVOICE_COLLECTION_STATUSES = [
 export type CommercialInvoiceCollectionStatus =
   (typeof COMMERCIAL_INVOICE_COLLECTION_STATUSES)[number];
 
+export type CommercialClientResponse = {
+  id: number;
+  nombre: string;
+  rif: string | null;
+  notas: string | null;
+  activo: boolean;
+  createdAt: string;
+};
+
+export type CommercialClientRequest = {
+  nombre: string;
+  rif?: string | null;
+  notas?: string | null;
+  activo?: boolean;
+};
+
+export type CommercialPromoterResponse = {
+  id: number;
+  nombre: string;
+  activo: boolean;
+  createdAt: string;
+};
+
+export type CommercialPromoterRequest = {
+  nombre: string;
+  activo?: boolean;
+};
+
 export type CommercialInvoiceResponse = {
   id: number;
   numeroFactura: string | null;
   sufijoControl: string | null;
-  facturaCliente: string | null;
+  clienteComercialId: number | null;
+  clienteComercialNombre: string | null;
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;
-  promotorVendedor: string | null;
+  promotorId: number | null;
+  promotorNombre: string | null;
   notasComerciales: string | null;
   createdAt: string;
   paymentCount: number;
@@ -39,19 +69,19 @@ export type CommercialInvoiceResponse = {
 export type CommercialInvoiceRequest = {
   numeroFactura?: string | null;
   sufijoControl?: string | null;
-  facturaCliente?: string | null;
+  clienteComercialId?: number | null;
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;
-  promotorVendedor?: string | null;
+  promotorId?: number | null;
   notasComerciales?: string | null;
 };
 
 export type CommercialInvoiceFormValues = {
   numeroFactura: string;
   sufijoControl: string;
-  facturaCliente: string;
+  clienteComercialId: string;
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;
-  promotorVendedor: string;
+  promotorId: string;
   notasComerciales: string;
 };

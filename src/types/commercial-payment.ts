@@ -14,7 +14,8 @@ export type CommercialPaymentResponse = {
   id: number;
   facturaComercialId: number;
   numeroFactura: string | null;
-  facturaCliente: string | null;
+  clienteComercialId: number | null;
+  clienteComercialNombre: string | null;
   metodoBanco: CommercialPaymentMethod;
   referencia: string | null;
   monto: number | null;

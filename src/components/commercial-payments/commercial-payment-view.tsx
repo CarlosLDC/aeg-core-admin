@@ -218,10 +218,10 @@ export function CommercialPaymentView() {
               mono
             />
             <DetailField
-              label="Cliente (factura)"
+              label="Cliente comercial"
               value={
-                payment.facturaCliente ??
-                linkedInvoice?.facturaCliente ??
+                payment.clienteComercialNombre ??
+                linkedInvoice?.clienteComercialNombre ??
                 "Sin asignar"
               }
             />

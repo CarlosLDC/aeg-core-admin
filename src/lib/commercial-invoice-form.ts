@@ -47,10 +47,10 @@ export function formatCommercialInvoiceTitle(invoice: {
 export const emptyCommercialInvoiceForm = (): CommercialInvoiceFormValues => ({
   numeroFactura: "",
   sufijoControl: "",
-  facturaCliente: "",
+  clienteComercialId: "",
   modalidad: "VENTA",
   estadoCobro: "PAGADO",
-  promotorVendedor: "",
+  promotorId: "",
   notasComerciales: "",
 });
 
@@ -60,7 +60,10 @@ export function commercialInvoiceToFormValues(
   return {
     numeroFactura: invoice.numeroFactura ?? "",
     sufijoControl: invoice.sufijoControl ?? "",
-    facturaCliente: invoice.facturaCliente ?? "",
+    clienteComercialId:
+      invoice.clienteComercialId != null
+        ? String(invoice.clienteComercialId)
+        : "",
     modalidad: COMMERCIAL_INVOICE_MODALITIES.includes(invoice.modalidad)
       ? invoice.modalidad
       : "VENTA",
@@ -69,7 +72,7 @@ export function commercialInvoiceToFormValues(
     )
       ? invoice.estadoCobro
       : "PAGADO",
-    promotorVendedor: invoice.promotorVendedor ?? "",
+    promotorId: invoice.promotorId != null ? String(invoice.promotorId) : "",
     notasComerciales: invoice.notasComerciales ?? "",
   };
 }
@@ -77,6 +80,13 @@ export function commercialInvoiceToFormValues(
 function trimToNull(value: string): string | null {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function parseOptionalId(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const num = Number(trimmed);
+  return Number.isInteger(num) && num > 0 ? num : null;
 }
 
 export function toCommercialInvoiceRequest(
@@ -90,13 +100,13 @@ export function toCommercialInvoiceRequest(
   if (sufijoControl && sufijoControl.length > 10) {
     return "El sufijo de control no puede superar los 10 caracteres.";
   }
-  const facturaCliente = trimToNull(values.facturaCliente);
-  if (facturaCliente && facturaCliente.length > 50) {
-    return "El cliente de la factura no puede superar los 50 caracteres.";
+  const clienteComercialId = parseOptionalId(values.clienteComercialId);
+  if (values.clienteComercialId.trim() && clienteComercialId == null) {
+    return "El cliente seleccionado no es válido.";
   }
-  const promotorVendedor = trimToNull(values.promotorVendedor);
-  if (promotorVendedor && promotorVendedor.length > 100) {
-    return "El promotor / vendedor no puede superar los 100 caracteres.";
+  const promotorId = parseOptionalId(values.promotorId);
+  if (values.promotorId.trim() && promotorId == null) {
+    return "El promotor seleccionado no es válido.";
   }
   if (!COMMERCIAL_INVOICE_MODALITIES.includes(values.modalidad)) {
     return "Modalidad no válida.";
@@ -108,10 +118,10 @@ export function toCommercialInvoiceRequest(
   return {
     numeroFactura,
     sufijoControl,
-    facturaCliente,
+    clienteComercialId,
     modalidad: values.modalidad,
     estadoCobro: values.estadoCobro,
-    promotorVendedor,
+    promotorId,
     notasComerciales: trimToNull(values.notasComerciales),
   };
 }

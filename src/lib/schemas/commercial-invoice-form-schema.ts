@@ -13,20 +13,14 @@ export const commercialInvoiceFormSchema = z.object({
     .string()
     .trim()
     .max(10, "Máximo 10 caracteres."),
-  facturaCliente: z
-    .string()
-    .trim()
-    .max(50, "Máximo 50 caracteres."),
+  clienteComercialId: z.string().trim(),
   modalidad: z.enum(COMMERCIAL_INVOICE_MODALITIES, {
     message: "Modalidad no válida.",
   }),
   estadoCobro: z.enum(COMMERCIAL_INVOICE_COLLECTION_STATUSES, {
     message: "Estado de cobro no válido.",
   }),
-  promotorVendedor: z
-    .string()
-    .trim()
-    .max(100, "Máximo 100 caracteres."),
+  promotorId: z.string().trim(),
   notasComerciales: z
     .string()
     .max(5000, "Máximo 5000 caracteres."),

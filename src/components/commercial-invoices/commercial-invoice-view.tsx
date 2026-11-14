@@ -308,12 +308,12 @@ export function CommercialInvoiceView() {
               mono
             />
             <DetailField
-              label="Cliente (factura)"
-              value={invoice.facturaCliente ?? "—"}
+              label="Cliente comercial"
+              value={invoice.clienteComercialNombre ?? "—"}
             />
             <DetailField
               label="Promotor / Vendedor"
-              value={invoice.promotorVendedor ?? "—"}
+              value={invoice.promotorNombre ?? "—"}
             />
             <DetailField
               label="Impresoras asociadas"
@@ -497,7 +497,7 @@ export function CommercialInvoiceView() {
         title={
           invoice ? formatCommercialInvoiceTitle(invoice) : "Factura comercial"
         }
-        subtitle={invoice?.facturaCliente ?? undefined}
+        subtitle={invoice?.clienteComercialNombre ?? undefined}
         loading={effectiveLoading}
         error={effectiveError}
         actions={

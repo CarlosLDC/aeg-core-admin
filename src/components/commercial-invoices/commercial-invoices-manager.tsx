@@ -167,8 +167,8 @@ export function CommercialInvoicesManager() {
         invoice.id,
         invoice.numeroFactura,
         invoice.sufijoControl,
-        invoice.facturaCliente,
-        invoice.promotorVendedor,
+        invoice.clienteComercialNombre,
+        invoice.promotorNombre,
         invoice.notasComerciales,
         invoice.modalidad,
         modalityLabel,
@@ -490,7 +490,7 @@ export function CommercialInvoicesManager() {
                               </td>
                               <td className="max-w-[220px] px-5 py-3.5 text-card-foreground">
                                 <TruncatedText maxClassName="max-w-[200px]">
-                                  {invoice.facturaCliente ?? "—"}
+                                  {invoice.clienteComercialNombre ?? "—"}
                                 </TruncatedText>
                               </td>
                               <td className="px-5 py-3.5">

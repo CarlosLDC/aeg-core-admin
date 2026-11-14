@@ -40,20 +40,20 @@ describe("commercial-invoice-form", () => {
       ...empty,
       numeroFactura: "  FAC-2026-01 ",
       sufijoControl: "  ",
-      facturaCliente: " Distribuidora Norte ",
+      clienteComercialId: " 5 ",
       modalidad: "CONSIGNACION",
       estadoCobro: "PAGO_PARCIAL",
-      promotorVendedor: " Carlos ",
+      promotorId: " 3 ",
       notasComerciales: "  Entrega parcial ",
     });
 
     expect(req).toEqual({
       numeroFactura: "FAC-2026-01",
       sufijoControl: null,
-      facturaCliente: "Distribuidora Norte",
+      clienteComercialId: 5,
       modalidad: "CONSIGNACION",
       estadoCobro: "PAGO_PARCIAL",
-      promotorVendedor: "Carlos",
+      promotorId: 3,
       notasComerciales: "Entrega parcial",
     });
   });
@@ -63,10 +63,12 @@ describe("commercial-invoice-form", () => {
       id: 12,
       numeroFactura: "FAC-12",
       sufijoControl: "A",
-      facturaCliente: null,
+      clienteComercialId: null,
+      clienteComercialNombre: null,
       modalidad: "PRESTAMO",
       estadoCobro: "PENDIENTE_PAGO",
-      promotorVendedor: null,
+      promotorId: null,
+      promotorNombre: null,
       notasComerciales: "Préstamo temporal",
       createdAt: "2026-11-13T10:00:00Z",
       paymentCount: 1,
@@ -77,10 +79,10 @@ describe("commercial-invoice-form", () => {
     expect(values).toEqual({
       numeroFactura: "FAC-12",
       sufijoControl: "A",
-      facturaCliente: "",
+      clienteComercialId: "",
       modalidad: "PRESTAMO",
       estadoCobro: "PENDIENTE_PAGO",
-      promotorVendedor: "",
+      promotorId: "",
       notasComerciales: "Préstamo temporal",
     });
   });

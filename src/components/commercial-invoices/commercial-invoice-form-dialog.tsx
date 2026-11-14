@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useId, useState } from "react";
-import { FileText, Loader2, ReceiptText, X } from "lucide-react";
+import { FormEvent, useEffect, useId, useState } from "react";
+import { FileText, Loader2, Plus, ReceiptText, X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -11,6 +11,13 @@ import {
   commercialInvoiceToFormValues,
   emptyCommercialInvoiceForm,
 } from "@/lib/commercial-invoice-form";
+import {
+  createCommercialClient,
+  createCommercialPromoter,
+  fetchCommercialClients,
+  fetchCommercialPromoters,
+  getCommercialInvoicesErrorMessage,
+} from "@/lib/commercial-invoices-api";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { commercialInvoiceFormSchema } from "@/lib/schemas/commercial-invoice-form-schema";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
@@ -18,8 +25,10 @@ import { cn } from "@/lib/utils";
 import {
   COMMERCIAL_INVOICE_COLLECTION_STATUSES,
   COMMERCIAL_INVOICE_MODALITIES,
+  type CommercialClientResponse,
   type CommercialInvoiceFormValues,
   type CommercialInvoiceResponse,
+  type CommercialPromoterResponse,
 } from "@/types/commercial-invoice";
 
 type CommercialInvoiceFormDialogProps = {
@@ -73,6 +82,74 @@ function CommercialInvoiceFormDialogContent({
     Partial<Record<keyof CommercialInvoiceFormValues, string>>
   >({});
 
+  const [clients, setClients] = useState<CommercialClientResponse[]>([]);
+  const [promoters, setPromoters] = useState<CommercialPromoterResponse[]>([]);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [addingClient, setAddingClient] = useState(false);
+  const [newClientName, setNewClientName] = useState("");
+  const [savingClient, setSavingClient] = useState(false);
+  const [addingPromoter, setAddingPromoter] = useState(false);
+  const [newPromoterName, setNewPromoterName] = useState("");
+  const [savingPromoter, setSavingPromoter] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([fetchCommercialClients(), fetchCommercialPromoters()])
+      .then(([clientList, promoterList]) => {
+        if (!active) return;
+        setClients(clientList);
+        setPromoters(promoterList);
+        setCatalogError(null);
+      })
+      .catch((err) => {
+        if (!active) return;
+        setCatalogError(getCommercialInvoicesErrorMessage(err));
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function handleCreateClient() {
+    const trimmed = newClientName.trim();
+    if (!trimmed) return;
+    setSavingClient(true);
+    setCatalogError(null);
+    try {
+      const created = await createCommercialClient({ nombre: trimmed });
+      setClients((prev) =>
+        [...prev, created].sort((a, b) => a.nombre.localeCompare(b.nombre)),
+      );
+      setForm((f) => ({ ...f, clienteComercialId: String(created.id) }));
+      setNewClientName("");
+      setAddingClient(false);
+    } catch (err) {
+      setCatalogError(getCommercialInvoicesErrorMessage(err));
+    } finally {
+      setSavingClient(false);
+    }
+  }
+
+  async function handleCreatePromoter() {
+    const trimmed = newPromoterName.trim();
+    if (!trimmed) return;
+    setSavingPromoter(true);
+    setCatalogError(null);
+    try {
+      const created = await createCommercialPromoter({ nombre: trimmed });
+      setPromoters((prev) =>
+        [...prev, created].sort((a, b) => a.nombre.localeCompare(b.nombre)),
+      );
+      setForm((f) => ({ ...f, promotorId: String(created.id) }));
+      setNewPromoterName("");
+      setAddingPromoter(false);
+    } catch (err) {
+      setCatalogError(getCommercialInvoicesErrorMessage(err));
+    } finally {
+      setSavingPromoter(false);
+    }
+  }
+
   function goToStep(target: WizardStep) {
     setFieldErrors({});
     setStep(target);
@@ -85,14 +162,14 @@ function CommercialInvoiceFormDialogContent({
       errors &&
       (errors.numeroFactura ||
         errors.sufijoControl ||
-        errors.facturaCliente ||
-        errors.promotorVendedor)
+        errors.clienteComercialId ||
+        errors.promotorId)
     ) {
       setFieldErrors({
         numeroFactura: errors.numeroFactura,
         sufijoControl: errors.sufijoControl,
-        facturaCliente: errors.facturaCliente,
-        promotorVendedor: errors.promotorVendedor,
+        clienteComercialId: errors.clienteComercialId,
+        promotorId: errors.promotorId,
       });
       return;
     }
@@ -118,8 +195,8 @@ function CommercialInvoiceFormDialogContent({
       if (
         errors.numeroFactura ||
         errors.sufijoControl ||
-        errors.facturaCliente ||
-        errors.promotorVendedor
+        errors.clienteComercialId ||
+        errors.promotorId
       ) {
         setStep(1);
       }
@@ -275,59 +352,139 @@ function CommercialInvoiceFormDialogContent({
                   </label>
                 </div>
 
-                <label className="block">
-                  <FieldLabel>Cliente (factura)</FieldLabel>
-                  <input
-                    type="text"
-                    maxLength={50}
-                    value={form.facturaCliente}
-                    disabled={saving}
-                    onChange={(e) => {
-                      setForm((f) => ({
-                        ...f,
-                        facturaCliente: e.target.value,
-                      }));
-                      setFieldErrors((prev) => ({
-                        ...prev,
-                        facturaCliente: undefined,
-                      }));
-                    }}
-                    className={inputClass}
-                    placeholder="Nombre o razón social en factura"
-                  />
-                  {fieldErrors.facturaCliente ? (
+                <div>
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <FieldLabel>Cliente comercial</FieldLabel>
+                    <button
+                      type="button"
+                      disabled={saving || savingClient}
+                      onClick={() => setAddingClient((v) => !v)}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline disabled:opacity-50"
+                    >
+                      <Plus className="size-3.5" aria-hidden />
+                      {addingClient ? "Cancelar" : "Nuevo cliente"}
+                    </button>
+                  </div>
+                  {addingClient ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        maxLength={120}
+                        value={newClientName}
+                        disabled={savingClient}
+                        onChange={(e) => setNewClientName(e.target.value)}
+                        className={inputClass}
+                        placeholder="Nombre del cliente comercial"
+                      />
+                      <button
+                        type="button"
+                        disabled={savingClient || !newClientName.trim()}
+                        onClick={() => void handleCreateClient()}
+                        className="shrink-0 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                      >
+                        {savingClient ? "Guardando..." : "Crear"}
+                      </button>
+                    </div>
+                  ) : (
+                    <NativeSelect
+                      value={form.clienteComercialId}
+                      disabled={saving}
+                      onChange={(e) => {
+                        setForm((f) => ({
+                          ...f,
+                          clienteComercialId: e.target.value,
+                        }));
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          clienteComercialId: undefined,
+                        }));
+                      }}
+                    >
+                      <option value="">Sin cliente asignado</option>
+                      {clients.map((c) => (
+                        <option key={c.id} value={String(c.id)}>
+                          {c.nombre}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  )}
+                  {fieldErrors.clienteComercialId ? (
                     <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
-                      {fieldErrors.facturaCliente}
+                      {fieldErrors.clienteComercialId}
                     </span>
                   ) : null}
-                </label>
+                </div>
 
-                <label className="block">
-                  <FieldLabel>Promotor / Vendedor</FieldLabel>
-                  <input
-                    type="text"
-                    maxLength={100}
-                    value={form.promotorVendedor}
-                    disabled={saving}
-                    onChange={(e) => {
-                      setForm((f) => ({
-                        ...f,
-                        promotorVendedor: e.target.value,
-                      }));
-                      setFieldErrors((prev) => ({
-                        ...prev,
-                        promotorVendedor: undefined,
-                      }));
-                    }}
-                    className={inputClass}
-                    placeholder="Nombre del promotor o vendedor"
-                  />
-                  {fieldErrors.promotorVendedor ? (
+                <div>
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <FieldLabel>Promotor / Vendedor</FieldLabel>
+                    <button
+                      type="button"
+                      disabled={saving || savingPromoter}
+                      onClick={() => setAddingPromoter((v) => !v)}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline disabled:opacity-50"
+                    >
+                      <Plus className="size-3.5" aria-hidden />
+                      {addingPromoter ? "Cancelar" : "Nuevo promotor"}
+                    </button>
+                  </div>
+                  {addingPromoter ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        maxLength={100}
+                        value={newPromoterName}
+                        disabled={savingPromoter}
+                        onChange={(e) => setNewPromoterName(e.target.value)}
+                        className={inputClass}
+                        placeholder="Nombre del promotor o vendedor"
+                      />
+                      <button
+                        type="button"
+                        disabled={savingPromoter || !newPromoterName.trim()}
+                        onClick={() => void handleCreatePromoter()}
+                        className="shrink-0 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                      >
+                        {savingPromoter ? "Guardando..." : "Crear"}
+                      </button>
+                    </div>
+                  ) : (
+                    <NativeSelect
+                      value={form.promotorId}
+                      disabled={saving}
+                      onChange={(e) => {
+                        setForm((f) => ({
+                          ...f,
+                          promotorId: e.target.value,
+                        }));
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          promotorId: undefined,
+                        }));
+                      }}
+                    >
+                      <option value="">Sin promotor asignado</option>
+                      {promoters.map((p) => (
+                        <option key={p.id} value={String(p.id)}>
+                          {p.nombre}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  )}
+                  {fieldErrors.promotorId ? (
                     <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
-                      {fieldErrors.promotorVendedor}
+                      {fieldErrors.promotorId}
                     </span>
                   ) : null}
-                </label>
+                </div>
+                {catalogError ? (
+                  <p
+                    role="alert"
+                    className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-xs text-rose-700 dark:text-rose-300"
+                  >
+                    {catalogError}
+                  </p>
+                ) : null}
               </fieldset>
             ) : (
               <fieldset className="space-y-4">

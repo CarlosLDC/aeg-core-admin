@@ -502,16 +502,16 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         viewBindings: ["invoice.sufijoControl"],
       },
       {
-        formLabels: ["Cliente (factura)"],
-        viewLabels: ["Cliente (factura)"],
-        formBindings: ["form.facturaCliente"],
-        viewBindings: ["invoice.facturaCliente"],
+        formLabels: ["Cliente comercial"],
+        viewLabels: ["Cliente comercial"],
+        formBindings: ["form.clienteComercialId"],
+        viewBindings: ["invoice.clienteComercialNombre"],
       },
       {
         formLabels: ["Promotor / Vendedor"],
         viewLabels: ["Promotor / Vendedor"],
-        formBindings: ["form.promotorVendedor"],
-        viewBindings: ["invoice.promotorVendedor"],
+        formBindings: ["form.promotorId"],
+        viewBindings: ["invoice.promotorNombre"],
       },
       {
         formLabels: ["Modalidad"],
