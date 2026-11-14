@@ -45,7 +45,9 @@ export function formatCommercialInvoiceTitle(invoice: {
 
 export const emptyCommercialInvoiceForm = (): CommercialInvoiceFormValues => ({
   numeroFactura: "",
-  clienteComercialId: "",
+  recipientType: "DISTRIBUTOR",
+  distribuidorId: "",
+  clienteId: "",
   modalidad: "VENTA",
   estadoCobro: "PAGADO",
 });
@@ -53,12 +55,13 @@ export const emptyCommercialInvoiceForm = (): CommercialInvoiceFormValues => ({
 export function commercialInvoiceToFormValues(
   invoice: CommercialInvoiceResponse,
 ): CommercialInvoiceFormValues {
+  const isClient = invoice.clienteId != null && invoice.distribuidorId == null;
   return {
     numeroFactura: invoice.numeroFactura ?? "",
-    clienteComercialId:
-      invoice.clienteComercialId != null
-        ? String(invoice.clienteComercialId)
-        : "",
+    recipientType: isClient ? "CLIENT" : "DISTRIBUTOR",
+    distribuidorId:
+      invoice.distribuidorId != null ? String(invoice.distribuidorId) : "",
+    clienteId: invoice.clienteId != null ? String(invoice.clienteId) : "",
     modalidad: COMMERCIAL_INVOICE_MODALITIES.includes(invoice.modalidad)
       ? invoice.modalidad
       : "VENTA",
@@ -88,9 +91,20 @@ export function toCommercialInvoiceRequest(
     return "El número de factura no puede superar los 30 caracteres.";
   }
 
-  const clienteComercialId = parseOptionalId(values.clienteComercialId);
-  if (clienteComercialId == null) {
-    return "El cliente es obligatorio.";
+  const distribuidorId =
+    values.recipientType === "DISTRIBUTOR"
+      ? parseOptionalId(values.distribuidorId)
+      : null;
+  const clienteId =
+    values.recipientType === "CLIENT"
+      ? parseOptionalId(values.clienteId)
+      : null;
+
+  if (values.recipientType === "DISTRIBUTOR" && distribuidorId == null) {
+    return "Debe seleccionar un distribuidor.";
+  }
+  if (values.recipientType === "CLIENT" && clienteId == null) {
+    return "Debe seleccionar un cliente.";
   }
 
   if (!COMMERCIAL_INVOICE_MODALITIES.includes(values.modalidad)) {
@@ -102,7 +116,8 @@ export function toCommercialInvoiceRequest(
 
   return {
     numeroFactura,
-    clienteComercialId,
+    distribuidorId,
+    clienteId,
     modalidad: values.modalidad,
     estadoCobro: values.estadoCobro,
   };

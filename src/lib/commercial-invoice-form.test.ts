@@ -22,23 +22,44 @@ describe("commercial-invoice-form", () => {
     ).toBe("Factura #7");
   });
 
-  it("maps form values with all 4 required fields", () => {
+  it("maps form values with distributor or client", () => {
     const empty = emptyCommercialInvoiceForm();
+    expect(empty.recipientType).toBe("DISTRIBUTOR");
     expect(empty.modalidad).toBe("VENTA");
     expect(empty.estadoCobro).toBe("PAGADO");
 
-    const req = toCommercialInvoiceRequest({
+    const distributorReq = toCommercialInvoiceRequest({
       numeroFactura: "  FAC-2026-01 ",
-      clienteComercialId: " 5 ",
+      recipientType: "DISTRIBUTOR",
+      distribuidorId: " 5 ",
+      clienteId: "99",
       modalidad: "CONSIGNACION",
       estadoCobro: "PAGO_PARCIAL",
     });
 
-    expect(req).toEqual({
+    expect(distributorReq).toEqual({
       numeroFactura: "FAC-2026-01",
-      clienteComercialId: 5,
+      distribuidorId: 5,
+      clienteId: null,
       modalidad: "CONSIGNACION",
       estadoCobro: "PAGO_PARCIAL",
+    });
+
+    const clientReq = toCommercialInvoiceRequest({
+      numeroFactura: "FAC-2026-02",
+      recipientType: "CLIENT",
+      distribuidorId: "5",
+      clienteId: "12",
+      modalidad: "VENTA",
+      estadoCobro: "PAGADO",
+    });
+
+    expect(clientReq).toEqual({
+      numeroFactura: "FAC-2026-02",
+      distribuidorId: null,
+      clienteId: 12,
+      modalidad: "VENTA",
+      estadoCobro: "PAGADO",
     });
   });
 
@@ -46,7 +67,9 @@ describe("commercial-invoice-form", () => {
     expect(
       toCommercialInvoiceRequest({
         numeroFactura: "",
-        clienteComercialId: "5",
+        recipientType: "DISTRIBUTOR",
+        distribuidorId: "5",
+        clienteId: "",
         modalidad: "VENTA",
         estadoCobro: "PAGADO",
       }),
@@ -55,19 +78,36 @@ describe("commercial-invoice-form", () => {
     expect(
       toCommercialInvoiceRequest({
         numeroFactura: "FAC-001",
-        clienteComercialId: "",
+        recipientType: "DISTRIBUTOR",
+        distribuidorId: "",
+        clienteId: "",
         modalidad: "VENTA",
         estadoCobro: "PAGADO",
       }),
-    ).toMatch(/cliente es obligatorio/i);
+    ).toMatch(/distribuidor/i);
+
+    expect(
+      toCommercialInvoiceRequest({
+        numeroFactura: "FAC-001",
+        recipientType: "CLIENT",
+        distribuidorId: "",
+        clienteId: "",
+        modalidad: "VENTA",
+        estadoCobro: "PAGADO",
+      }),
+    ).toMatch(/cliente/i);
   });
 
   it("hydrates form values from response", () => {
-    const values = commercialInvoiceToFormValues({
+    const distributorValues = commercialInvoiceToFormValues({
       id: 12,
       numeroFactura: "FAC-12",
-      clienteComercialId: 5,
-      clienteComercialNombre: "Inversiones Demo",
+      distribuidorId: 5,
+      distribuidorNombre: "Distribuidora Demo",
+      clienteId: null,
+      clienteNombre: null,
+      clienteComercialId: null,
+      clienteComercialNombre: "Distribuidora Demo",
       modalidad: "PRESTAMO",
       estadoCobro: "PENDIENTE_PAGO",
       createdAt: "2026-11-13T10:00:00Z",
@@ -76,11 +116,39 @@ describe("commercial-invoice-form", () => {
       printerCount: 2,
     });
 
-    expect(values).toEqual({
+    expect(distributorValues).toEqual({
       numeroFactura: "FAC-12",
-      clienteComercialId: "5",
+      recipientType: "DISTRIBUTOR",
+      distribuidorId: "5",
+      clienteId: "",
       modalidad: "PRESTAMO",
       estadoCobro: "PENDIENTE_PAGO",
+    });
+
+    const clientValues = commercialInvoiceToFormValues({
+      id: 13,
+      numeroFactura: "FAC-13",
+      distribuidorId: null,
+      distribuidorNombre: null,
+      clienteId: 18,
+      clienteNombre: "Inversiones Demo",
+      clienteComercialId: null,
+      clienteComercialNombre: "Inversiones Demo",
+      modalidad: "VENTA",
+      estadoCobro: "PAGADO",
+      createdAt: "2026-11-13T10:00:00Z",
+      paymentCount: 0,
+      paidAmountTotal: 0,
+      printerCount: 1,
+    });
+
+    expect(clientValues).toEqual({
+      numeroFactura: "FAC-13",
+      recipientType: "CLIENT",
+      distribuidorId: "",
+      clienteId: "18",
+      modalidad: "VENTA",
+      estadoCobro: "PAGADO",
     });
   });
 });

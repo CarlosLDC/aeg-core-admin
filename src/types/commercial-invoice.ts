@@ -21,6 +21,8 @@ export const COMMERCIAL_INVOICE_COLLECTION_STATUSES = [
 export type CommercialInvoiceCollectionStatus =
   (typeof COMMERCIAL_INVOICE_COLLECTION_STATUSES)[number];
 
+export type CommercialInvoiceRecipientType = "DISTRIBUTOR" | "CLIENT";
+
 export type CommercialClientResponse = {
   id: number;
   nombre: string;
@@ -40,6 +42,10 @@ export type CommercialClientRequest = {
 export type CommercialInvoiceResponse = {
   id: number;
   numeroFactura: string;
+  distribuidorId: number | null;
+  distribuidorNombre: string | null;
+  clienteId: number | null;
+  clienteNombre: string | null;
   clienteComercialId: number | null;
   clienteComercialNombre: string | null;
   modalidad: CommercialInvoiceModality;
@@ -54,14 +60,17 @@ export type CommercialInvoiceResponse = {
 
 export type CommercialInvoiceRequest = {
   numeroFactura: string;
-  clienteComercialId: number;
+  distribuidorId?: number | null;
+  clienteId?: number | null;
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;
 };
 
 export type CommercialInvoiceFormValues = {
   numeroFactura: string;
-  clienteComercialId: string;
+  recipientType: CommercialInvoiceRecipientType;
+  distribuidorId: string;
+  clienteId: string;
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;
 };

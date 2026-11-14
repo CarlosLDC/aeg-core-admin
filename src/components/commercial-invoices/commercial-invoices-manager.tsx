@@ -167,6 +167,8 @@ export function CommercialInvoicesManager() {
         invoice.id,
         invoice.numeroFactura,
         invoice.sufijoControl,
+        invoice.distribuidorNombre,
+        invoice.clienteNombre,
         invoice.clienteComercialNombre,
         invoice.notasComerciales,
         invoice.modalidad,
@@ -427,7 +429,7 @@ export function CommercialInvoicesManager() {
                             }
                           />
                           <th className="px-5 py-3 font-medium">
-                            Cliente (factura)
+                            Distribuidor / Cliente
                           </th>
                           <th className="px-5 py-3 font-medium">Modalidad</th>
                           <th className="px-5 py-3 font-medium">

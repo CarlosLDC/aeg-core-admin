@@ -1,8 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useId, useMemo, useState } from "react";
-import { Plus, ReceiptText, X } from "lucide-react";
-import { CommercialClientCreateDialog } from "@/components/commercial-invoices/commercial-client-create-dialog";
+import { X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -11,26 +10,40 @@ import {
   type SearchableSelectOption,
 } from "@/components/ui/searchable-select";
 import {
+  clientLabel,
+  clientRif,
+  clientSearchText,
+  distributorLabel,
+  distributorRif,
+  distributorSearchText,
+} from "@/lib/branch-roles";
+import { fetchBranches } from "@/lib/branches-api";
+import { loadCatalogRoles } from "@/lib/catalog-roles-cache";
+import {
   COMMERCIAL_INVOICE_COLLECTION_STATUS_LABELS,
   COMMERCIAL_INVOICE_MODALITY_LABELS,
   commercialInvoiceToFormValues,
   emptyCommercialInvoiceForm,
 } from "@/lib/commercial-invoice-form";
-import {
-  fetchCommercialClients,
-  getCommercialInvoicesErrorMessage,
-} from "@/lib/commercial-invoices-api";
+import { getCommercialInvoicesErrorMessage } from "@/lib/commercial-invoices-api";
+import { fetchCompanies } from "@/lib/companies-api";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { commercialInvoiceFormSchema } from "@/lib/schemas/commercial-invoice-form-schema";
-import { formFieldInputClass } from "@/lib/toggle-button-styles";
+import {
+  formFieldInputClass,
+  formFieldSegmentedToggleShellClass,
+  segmentedToggleActiveClass,
+} from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
+import type { BranchResponse } from "@/types/branch";
+import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import {
   COMMERCIAL_INVOICE_COLLECTION_STATUSES,
   COMMERCIAL_INVOICE_MODALITIES,
-  type CommercialClientResponse,
   type CommercialInvoiceFormValues,
   type CommercialInvoiceResponse,
 } from "@/types/commercial-invoice";
+import type { CompanyResponse } from "@/types/company";
 
 type CommercialInvoiceFormDialogProps = {
   mode: "create" | "edit";
@@ -68,38 +81,72 @@ function CommercialInvoiceFormDialogContent({
     Partial<Record<keyof CommercialInvoiceFormValues, string>>
   >({});
 
-  const [clients, setClients] = useState<CommercialClientResponse[]>([]);
+  const [distributors, setDistributors] = useState<DistributorResponse[]>([]);
+  const [clients, setClients] = useState<ClientResponse[]>([]);
+  const [branches, setBranches] = useState<BranchResponse[]>([]);
+  const [companies, setCompanies] = useState<CompanyResponse[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
-  const [createClientOpen, setCreateClientOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
-    fetchCommercialClients()
-      .then((clientList) => {
+    Promise.all([
+      loadCatalogRoles(),
+      fetchBranches().catch(() => [] as BranchResponse[]),
+      fetchCompanies().catch(() => [] as CompanyResponse[]),
+    ])
+      .then(([roles, branchList, companyList]) => {
         if (!active) return;
-        setClients(clientList);
+        setDistributors(roles.distributors);
+        setClients(roles.clients);
+        setBranches(branchList);
+        setCompanies(companyList);
         setCatalogError(null);
       })
       .catch((err) => {
         if (!active) return;
         setCatalogError(getCommercialInvoicesErrorMessage(err));
+      })
+      .finally(() => {
+        if (active) setCatalogLoading(false);
       });
     return () => {
       active = false;
     };
   }, []);
 
+  const distributorOptions: SearchableSelectOption[] = useMemo(
+    () =>
+      distributors
+        .map((d) => {
+          const rif = distributorRif(d, branches, companies);
+          const label = distributorLabel(d, branches, companies);
+          return {
+            value: String(d.id),
+            label,
+            description: rif ? `RIF: ${rif}` : undefined,
+            searchText: distributorSearchText(d, branches, companies),
+          };
+        })
+        .sort((a, b) => a.label.localeCompare(b.label, "es")),
+    [distributors, branches, companies],
+  );
+
   const clientOptions: SearchableSelectOption[] = useMemo(
     () =>
-      clients.map((c) => ({
-        value: String(c.id),
-        label: c.nombre,
-        description: c.rif ? `RIF: ${c.rif}` : (c.notas ?? undefined),
-        searchText: [String(c.id), c.nombre, c.rif, c.notas]
-          .filter(Boolean)
-          .join(" "),
-      })),
-    [clients],
+      clients
+        .map((c) => {
+          const rif = clientRif(c, branches, companies);
+          const label = clientLabel(c, branches, companies);
+          return {
+            value: String(c.id),
+            label,
+            description: rif ? `RIF: ${rif}` : undefined,
+            searchText: clientSearchText(c, branches, companies),
+          };
+        })
+        .sort((a, b) => a.label.localeCompare(b.label, "es")),
+    [clients, branches, companies],
   );
 
   function handleFormSubmit(e: FormEvent) {
@@ -115,70 +162,73 @@ function CommercialInvoiceFormDialogContent({
     onSubmit(form);
   }
 
+  const disabled = saving || catalogLoading;
   const inputClass = formFieldInputClass;
   const displayError = error || catalogError;
 
   return (
-    <>
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-      >
-        <button
-          type="button"
-          className="absolute inset-0 bg-black/50"
-          aria-label="Cerrar"
-          onClick={onClose}
-        />
-        <div className="relative flex max-h-[min(90vh,36rem)] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
-          <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-5 py-4">
-            <div className="flex items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                <ReceiptText className="size-5" aria-hidden />
-              </div>
-              <div>
-                <h2
-                  id={titleId}
-                  className="text-base font-semibold leading-snug text-card-foreground sm:text-lg"
-                >
-                  {mode === "create"
-                    ? "Nueva factura comercial"
-                    : "Editar factura comercial"}
-                </h2>
-                <p className="mt-0.5 text-xs text-muted">
-                  4 campos requeridos para el registro comercial.
-                </p>
-              </div>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+    >
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/50"
+        aria-label="Cerrar"
+        onClick={onClose}
+      />
+      <div className="relative flex max-h-[min(92vh,100dvh)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+        <div className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2
+                id={titleId}
+                className="text-lg font-semibold text-card-foreground"
+              >
+                {mode === "create"
+                  ? "Nueva factura comercial"
+                  : "Editar factura comercial"}
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                {mode === "create"
+                  ? "Registra número de factura, distribuidor o cliente, modalidad y estado de cobro."
+                  : "Actualiza número de factura, distribuidor o cliente, modalidad y estado de cobro."}
+              </p>
             </div>
             <button
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="rounded-lg p-1.5 text-muted hover:bg-foreground/5 disabled:opacity-50"
               aria-label="Cerrar"
+              className="rounded-lg p-1.5 text-muted hover:bg-foreground/5 disabled:opacity-50"
             >
               <X className="size-5" />
             </button>
           </div>
+        </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-            <form
-              id={formId}
-              onSubmit={handleFormSubmit}
-              className="space-y-4"
-            >
-              {displayError && (
-                <p
-                  role="alert"
-                  className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-3.5 py-2.5 text-sm text-rose-700 dark:text-rose-300"
-                >
-                  {displayError}
-                </p>
-              )}
+        <form
+          id={formId}
+          onSubmit={handleFormSubmit}
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+        >
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4 sm:px-6">
+            {displayError && (
+              <p
+                role="alert"
+                className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
+              >
+                {displayError}
+              </p>
+            )}
 
-              {/* 1. Número de factura */}
+            <fieldset className="space-y-4 rounded-xl border border-border p-4">
+              <legend className="px-1 text-sm font-semibold text-card-foreground">
+                Datos de la factura
+              </legend>
+
               <label className="block">
                 <FieldLabel required>Número de factura</FieldLabel>
                 <input
@@ -207,48 +257,133 @@ function CommercialInvoiceFormDialogContent({
                 ) : null}
               </label>
 
-              {/* 2. Cliente comercial */}
-              <div className="block">
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <FieldLabel required>Cliente comercial</FieldLabel>
-                  <button
-                    type="button"
-                    disabled={saving}
-                    onClick={() => setCreateClientOpen(true)}
-                    className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline disabled:opacity-50"
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <FieldLabel required>
+                    {form.recipientType === "DISTRIBUTOR"
+                      ? "Distribuidor"
+                      : "Cliente"}
+                  </FieldLabel>
+                  <div
+                    role="group"
+                    aria-label="Tipo de destinatario"
+                    className={cn(
+                      formFieldSegmentedToggleShellClass,
+                      "w-auto min-w-[210px]",
+                    )}
                   >
-                    <Plus className="size-3.5" aria-hidden />
-                    Nuevo cliente
-                  </button>
+                    <button
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => {
+                        setForm((f) => ({
+                          ...f,
+                          recipientType: "DISTRIBUTOR",
+                          clienteId: "",
+                        }));
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          distribuidorId: undefined,
+                          clienteId: undefined,
+                        }));
+                      }}
+                      className={cn(
+                        "flex-1 rounded-md px-3 text-xs font-medium transition-colors",
+                        form.recipientType === "DISTRIBUTOR"
+                          ? segmentedToggleActiveClass()
+                          : "text-muted hover:text-foreground",
+                      )}
+                    >
+                      Distribuidor
+                    </button>
+                    <button
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => {
+                        setForm((f) => ({
+                          ...f,
+                          recipientType: "CLIENT",
+                          distribuidorId: "",
+                        }));
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          distribuidorId: undefined,
+                          clienteId: undefined,
+                        }));
+                      }}
+                      className={cn(
+                        "flex-1 rounded-md px-3 text-xs font-medium transition-colors",
+                        form.recipientType === "CLIENT"
+                          ? segmentedToggleActiveClass()
+                          : "text-muted hover:text-foreground",
+                      )}
+                    >
+                      Cliente
+                    </button>
+                  </div>
                 </div>
-                <SearchableSelect
-                  required
-                  value={form.clienteComercialId}
-                  onChange={(clienteComercialId) => {
-                    setForm((f) => ({
-                      ...f,
-                      clienteComercialId,
-                    }));
-                    setFieldErrors((prev) => ({
-                      ...prev,
-                      clienteComercialId: undefined,
-                    }));
-                  }}
-                  options={clientOptions}
-                  disabled={saving}
-                  emptyLabel="Seleccionar cliente comercial…"
-                  searchPlaceholder="Buscar cliente comercial…"
-                  modalTitle="Seleccionar cliente comercial"
-                  preloadOptions
-                />
-                {fieldErrors.clienteComercialId ? (
+
+                {form.recipientType === "DISTRIBUTOR" ? (
+                  <SearchableSelect
+                    required
+                    value={form.distribuidorId}
+                    onChange={(distribuidorId) => {
+                      setForm((f) => ({
+                        ...f,
+                        distribuidorId,
+                        clienteId: "",
+                      }));
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        distribuidorId: undefined,
+                      }));
+                    }}
+                    options={distributorOptions}
+                    disabled={disabled}
+                    loading={catalogLoading}
+                    emptyLabel="Seleccionar distribuidor…"
+                    searchPlaceholder="Buscar distribuidora o RIF…"
+                    modalTitle="Seleccionar distribuidor"
+                    preloadOptions
+                  />
+                ) : (
+                  <SearchableSelect
+                    required
+                    value={form.clienteId}
+                    onChange={(clienteId) => {
+                      setForm((f) => ({
+                        ...f,
+                        clienteId,
+                        distribuidorId: "",
+                      }));
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        clienteId: undefined,
+                      }));
+                    }}
+                    options={clientOptions}
+                    disabled={disabled}
+                    loading={catalogLoading}
+                    emptyLabel="Seleccionar cliente…"
+                    searchPlaceholder="Buscar cliente o RIF…"
+                    modalTitle="Seleccionar cliente"
+                    preloadOptions
+                  />
+                )}
+
+                {form.recipientType === "DISTRIBUTOR" &&
+                fieldErrors.distribuidorId ? (
                   <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
-                    {fieldErrors.clienteComercialId}
+                    {fieldErrors.distribuidorId}
+                  </span>
+                ) : null}
+                {form.recipientType === "CLIENT" && fieldErrors.clienteId ? (
+                  <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
+                    {fieldErrors.clienteId}
                   </span>
                 ) : null}
               </div>
 
-              {/* 3. Modalidad y 4. Estado de cobro */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block">
                   <FieldLabel required>Modalidad</FieldLabel>
@@ -304,38 +439,21 @@ function CommercialInvoiceFormDialogContent({
                   ) : null}
                 </label>
               </div>
-            </form>
+            </fieldset>
           </div>
 
-          <div className="shrink-0 border-t border-border px-5 py-3">
+          <div className="shrink-0 border-t border-border px-4 py-4 sm:px-6">
             <FormDialogFooter
               mode={mode}
               saving={saving}
+              submitDisabled={catalogLoading}
               onClose={onClose}
               createLabel="Crear factura"
               saveLabel="Guardar cambios"
-              formId={formId}
             />
           </div>
-        </div>
+        </form>
       </div>
-
-      <CommercialClientCreateDialog
-        open={createClientOpen}
-        onClose={() => setCreateClientOpen(false)}
-        onCreated={(newClient) => {
-          setClients((prev) => [newClient, ...prev]);
-          setForm((f) => ({
-            ...f,
-            clienteComercialId: String(newClient.id),
-          }));
-          setFieldErrors((prev) => ({
-            ...prev,
-            clienteComercialId: undefined,
-          }));
-          setCreateClientOpen(false);
-        }}
-      />
-    </>
+    </div>
   );
 }
