@@ -486,7 +486,7 @@ export function PrinterView() {
                   status={printer.status}
                   title={statusBadgeTitle}
                 />
-                {statusQuickAction ? (
+                {statusQuickAction && statusQuickAction.kind !== "reconfigure" ? (
                   <PrinterStatusActionButton action={statusQuickAction} />
                 ) : null}
                 {isPrinterPendingMqttEnajenacion(printer) ? (
@@ -529,7 +529,7 @@ export function PrinterView() {
                     onClick={() => setSoftwareDialogOpen(true)}
                     className="text-xs font-medium text-accent hover:underline"
                   >
-                    {printer.softwareId != null ? "Cambiar" : "Asignar"}
+                    {printer.softwareId != null ? "Cambiar" : "Asignar software"}
                   </button>
                 )}
               </div>
@@ -648,7 +648,7 @@ export function PrinterView() {
                     status={printer.status}
                     title={statusBadgeTitle}
                   />
-                  {statusQuickAction ? (
+                  {statusQuickAction && statusQuickAction.kind !== "reconfigure" ? (
                     <PrinterStatusActionButton action={statusQuickAction} />
                   ) : null}
                   {isPrinterPendingMqttEnajenacion(printer) ? (

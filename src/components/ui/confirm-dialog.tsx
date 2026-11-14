@@ -2,6 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 export function normalizeConfirmText(value?: string | null): string {
@@ -45,9 +46,12 @@ export function ConfirmDialog({
   requireConfirmationText,
   ...rest
 }: ConfirmDialogProps) {
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
   const expectedText = normalizeConfirmText(requireConfirmationText);
-  return <ConfirmDialogInner key={expectedText} expectedText={expectedText} {...rest} />;
+  return createPortal(
+    <ConfirmDialogInner key={expectedText} expectedText={expectedText} {...rest} />,
+    document.body,
+  );
 }
 
 function ConfirmDialogInner({

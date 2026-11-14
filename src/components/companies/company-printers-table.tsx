@@ -1040,7 +1040,8 @@ export function CompanyPrintersTable({
                                     status={printer.status}
                                     title={statusBadgeTitle}
                                   />
-                                  {statusQuickAction ? (
+                                  {statusQuickAction &&
+                                  statusQuickAction.kind !== "reconfigure" ? (
                                     <PrinterStatusActionButton
                                       action={statusQuickAction}
                                     />
