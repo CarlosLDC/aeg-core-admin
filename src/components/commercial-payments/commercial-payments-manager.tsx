@@ -404,7 +404,7 @@ export function CommercialPaymentsManager() {
             ) : (
               <>
                 <TableScroll>
-                  <table className="w-full min-w-[960px] text-left text-sm">
+                  <table className="w-full min-w-[640px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <TableRowMetaHeaders
@@ -436,9 +436,6 @@ export function CommercialPaymentsManager() {
                             Factura comercial
                           </th>
                           <th className="px-5 py-3 font-medium">
-                            Cliente (factura)
-                          </th>
-                          <th className="px-5 py-3 font-medium">
                             Método / Banco
                           </th>
                           <SortableTableHeader
@@ -453,9 +450,6 @@ export function CommercialPaymentsManager() {
                             }
                           />
                           <th className="px-5 py-3 font-medium">Referencia</th>
-                          <th className="px-5 py-3 font-medium">
-                            Cuenta destino
-                          </th>
                         </TableRowMetaHeaders>
                       </tr>
                     </thead>
@@ -520,13 +514,6 @@ export function CommercialPaymentsManager() {
                                   {invoiceLabel}
                                 </TruncatedText>
                               </td>
-                              <td className="max-w-[200px] px-5 py-3.5 text-muted">
-                                <TruncatedText maxClassName="max-w-[180px]">
-                                  {payment.facturaCliente ??
-                                    linked?.facturaCliente ??
-                                    "—"}
-                                </TruncatedText>
-                              </td>
                               <td className="px-5 py-3.5">
                                 <CommercialPaymentMethodBadge
                                   method={payment.metodoBanco}
@@ -541,11 +528,6 @@ export function CommercialPaymentsManager() {
                                   maxClassName="max-w-[160px]"
                                 >
                                   {payment.referencia ?? "—"}
-                                </TruncatedText>
-                              </td>
-                              <td className="max-w-[180px] px-5 py-3.5 text-muted">
-                                <TruncatedText maxClassName="max-w-[160px]">
-                                  {payment.cuentaDestino ?? "—"}
                                 </TruncatedText>
                               </td>
                             </TableRowMetaCells>

@@ -482,7 +482,7 @@ export function CommercialInvoiceView() {
                   ) : (
                     <>
                       <TableScroll>
-                        <table className="w-full min-w-[720px] text-left text-sm">
+                        <table className="w-full min-w-[600px] text-left text-sm">
                           <thead>
                             <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                               <SortableTableHeader
@@ -525,19 +525,6 @@ export function CommercialInvoiceView() {
                                 }
                               />
                               <SortableTableHeader
-                                label="Cuenta destino"
-                                sortDirection={
-                                  paymentSort?.key === "account"
-                                    ? paymentSort.direction
-                                    : null
-                                }
-                                onToggle={() =>
-                                  setPaymentSort((current) =>
-                                    toggleTableSort(current, "account"),
-                                  )
-                                }
-                              />
-                              <SortableTableHeader
                                 label="Fecha"
                                 sortDirection={
                                   paymentSort?.key === "date"
@@ -575,11 +562,6 @@ export function CommercialInvoiceView() {
                                     maxClassName="max-w-[160px]"
                                   >
                                     {payment.referencia ?? "—"}
-                                  </TruncatedText>
-                                </td>
-                                <td className="max-w-[180px] px-5 py-3.5 text-muted">
-                                  <TruncatedText maxClassName="max-w-[160px]">
-                                    {payment.cuentaDestino ?? "—"}
                                   </TruncatedText>
                                 </td>
                                 <td className="px-5 py-3.5 text-muted">

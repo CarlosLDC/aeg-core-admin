@@ -2,10 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
-import {
-  CommercialInvoiceCollectionStatusBadge,
-  CommercialInvoiceModalityBadge,
-} from "@/components/commercial-invoices/commercial-invoice-badges";
+import { CommercialInvoiceCollectionStatusBadge } from "@/components/commercial-invoices/commercial-invoice-badges";
 import { CommercialInvoiceFormDialog } from "@/components/commercial-invoices/commercial-invoice-form-dialog";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
@@ -385,7 +382,7 @@ export function CommercialInvoicesManager() {
             ) : (
               <>
                 <TableScroll>
-                  <table className="w-full min-w-[960px] text-left text-sm">
+                  <table className="w-full min-w-[640px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-border bg-foreground/[0.02] text-muted">
                         <TableRowMetaHeaders
@@ -426,15 +423,12 @@ export function CommercialInvoicesManager() {
                               )
                             }
                           />
-                          <th className="px-5 py-3 font-medium">Sufijo</th>
                           <th className="px-5 py-3 font-medium">
                             Cliente (factura)
                           </th>
-                          <th className="px-5 py-3 font-medium">Modalidad</th>
                           <th className="px-5 py-3 font-medium">
                             Estado de cobro
                           </th>
-                          <th className="px-5 py-3 font-medium">Promotor</th>
                           <SortableTableHeader
                             label="Abonado"
                             sortDirection={
@@ -445,19 +439,6 @@ export function CommercialInvoicesManager() {
                             onToggle={() =>
                               setSort((current) =>
                                 toggleTableSort(current, "paidAmountTotal"),
-                              )
-                            }
-                          />
-                          <SortableTableHeader
-                            label="Impresoras"
-                            sortDirection={
-                              sort?.key === "printerCount"
-                                ? sort.direction
-                                : null
-                            }
-                            onToggle={() =>
-                              setSort((current) =>
-                                toggleTableSort(current, "printerCount"),
                               )
                             }
                           />
@@ -501,30 +482,17 @@ export function CommercialInvoicesManager() {
                               }
                             >
                               <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
-                                {invoice.numeroFactura ?? "—"}
+                                {label}
                               </td>
-                              <td className="px-5 py-3.5 font-mono text-muted">
-                                {invoice.sufijoControl ?? "—"}
-                              </td>
-                              <td className="max-w-[200px] px-5 py-3.5 text-card-foreground">
-                                <TruncatedText maxClassName="max-w-[180px]">
+                              <td className="max-w-[220px] px-5 py-3.5 text-card-foreground">
+                                <TruncatedText maxClassName="max-w-[200px]">
                                   {invoice.facturaCliente ?? "—"}
                                 </TruncatedText>
-                              </td>
-                              <td className="px-5 py-3.5">
-                                <CommercialInvoiceModalityBadge
-                                  modality={invoice.modalidad}
-                                />
                               </td>
                               <td className="px-5 py-3.5">
                                 <CommercialInvoiceCollectionStatusBadge
                                   status={invoice.estadoCobro}
                                 />
-                              </td>
-                              <td className="max-w-[160px] px-5 py-3.5 text-muted">
-                                <TruncatedText maxClassName="max-w-[140px]">
-                                  {invoice.promotorVendedor ?? "—"}
-                                </TruncatedText>
                               </td>
                               <td className="px-5 py-3.5 text-card-foreground">
                                 <div className="font-mono text-sm">
@@ -534,9 +502,6 @@ export function CommercialInvoicesManager() {
                                   {invoice.paymentCount} pago
                                   {invoice.paymentCount === 1 ? "" : "s"}
                                 </div>
-                              </td>
-                              <td className="px-5 py-3.5 font-mono text-muted">
-                                {invoice.printerCount}
                               </td>
                             </TableRowMetaCells>
                           </ClickableTableRow>
