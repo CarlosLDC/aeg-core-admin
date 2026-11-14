@@ -37,20 +37,17 @@ export function formatCommercialInvoiceTitle(invoice: {
   sufijoControl?: string | null;
 }): string {
   const numero = invoice.numeroFactura?.trim();
-  const sufijo = invoice.sufijoControl?.trim();
   if (numero) {
-    return sufijo ? `${numero} (${sufijo})` : numero;
+    return numero;
   }
   return `Factura #${invoice.id}`;
 }
 
 export const emptyCommercialInvoiceForm = (): CommercialInvoiceFormValues => ({
   numeroFactura: "",
-  sufijoControl: "",
   clienteComercialId: "",
   modalidad: "VENTA",
   estadoCobro: "PAGADO",
-  notasComerciales: "",
 });
 
 export function commercialInvoiceToFormValues(
@@ -58,7 +55,6 @@ export function commercialInvoiceToFormValues(
 ): CommercialInvoiceFormValues {
   return {
     numeroFactura: invoice.numeroFactura ?? "",
-    sufijoControl: invoice.sufijoControl ?? "",
     clienteComercialId:
       invoice.clienteComercialId != null
         ? String(invoice.clienteComercialId)
@@ -71,13 +67,7 @@ export function commercialInvoiceToFormValues(
     )
       ? invoice.estadoCobro
       : "PAGADO",
-    notasComerciales: invoice.notasComerciales ?? "",
   };
-}
-
-function trimToNull(value: string): string | null {
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
 }
 
 function parseOptionalId(value: string): number | null {
@@ -90,18 +80,19 @@ function parseOptionalId(value: string): number | null {
 export function toCommercialInvoiceRequest(
   values: CommercialInvoiceFormValues,
 ): CommercialInvoiceRequest | string {
-  const numeroFactura = trimToNull(values.numeroFactura);
-  if (numeroFactura && numeroFactura.length > 30) {
+  const numeroFactura = values.numeroFactura.trim();
+  if (!numeroFactura) {
+    return "El número de factura es obligatorio.";
+  }
+  if (numeroFactura.length > 30) {
     return "El número de factura no puede superar los 30 caracteres.";
   }
-  const sufijoControl = trimToNull(values.sufijoControl);
-  if (sufijoControl && sufijoControl.length > 10) {
-    return "El sufijo de control no puede superar los 10 caracteres.";
-  }
+
   const clienteComercialId = parseOptionalId(values.clienteComercialId);
-  if (values.clienteComercialId.trim() && clienteComercialId == null) {
-    return "El cliente seleccionado no es válido.";
+  if (clienteComercialId == null) {
+    return "El cliente es obligatorio.";
   }
+
   if (!COMMERCIAL_INVOICE_MODALITIES.includes(values.modalidad)) {
     return "Modalidad no válida.";
   }
@@ -111,10 +102,8 @@ export function toCommercialInvoiceRequest(
 
   return {
     numeroFactura,
-    sufijoControl,
     clienteComercialId,
     modalidad: values.modalidad,
     estadoCobro: values.estadoCobro,
-    notasComerciales: trimToNull(values.notasComerciales),
   };
 }

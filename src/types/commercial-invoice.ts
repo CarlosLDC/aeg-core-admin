@@ -39,33 +39,29 @@ export type CommercialClientRequest = {
 
 export type CommercialInvoiceResponse = {
   id: number;
-  numeroFactura: string | null;
-  sufijoControl: string | null;
+  numeroFactura: string;
   clienteComercialId: number | null;
   clienteComercialNombre: string | null;
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;
-  notasComerciales: string | null;
   createdAt: string;
   paymentCount: number;
   paidAmountTotal: number;
   printerCount: number;
+  sufijoControl?: string | null;
+  notasComerciales?: string | null;
 };
 
 export type CommercialInvoiceRequest = {
-  numeroFactura?: string | null;
-  sufijoControl?: string | null;
-  clienteComercialId?: number | null;
+  numeroFactura: string;
+  clienteComercialId: number;
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;
-  notasComerciales?: string | null;
 };
 
 export type CommercialInvoiceFormValues = {
   numeroFactura: string;
-  sufijoControl: string;
   clienteComercialId: string;
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;
-  notasComerciales: string;
 };

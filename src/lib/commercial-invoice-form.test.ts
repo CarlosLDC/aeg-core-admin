@@ -7,65 +7,69 @@ import {
 } from "./commercial-invoice-form";
 
 describe("commercial-invoice-form", () => {
-  it("formats invoice title with control suffix or id fallback", () => {
+  it("formats invoice title with invoice number or id fallback", () => {
     expect(
       formatCommercialInvoiceTitle({
         id: 7,
         numeroFactura: "FAC-001",
-        sufijoControl: "B2",
-      }),
-    ).toBe("FAC-001 (B2)");
-    expect(
-      formatCommercialInvoiceTitle({
-        id: 7,
-        numeroFactura: "FAC-001",
-        sufijoControl: null,
       }),
     ).toBe("FAC-001");
     expect(
       formatCommercialInvoiceTitle({
         id: 7,
         numeroFactura: null,
-        sufijoControl: null,
       }),
     ).toBe("Factura #7");
   });
 
-  it("maps form values and trims blank optional fields to null", () => {
+  it("maps form values with all 4 required fields", () => {
     const empty = emptyCommercialInvoiceForm();
     expect(empty.modalidad).toBe("VENTA");
     expect(empty.estadoCobro).toBe("PAGADO");
 
     const req = toCommercialInvoiceRequest({
-      ...empty,
       numeroFactura: "  FAC-2026-01 ",
-      sufijoControl: "  ",
       clienteComercialId: " 5 ",
       modalidad: "CONSIGNACION",
       estadoCobro: "PAGO_PARCIAL",
-      notasComerciales: "  Entrega parcial ",
     });
 
     expect(req).toEqual({
       numeroFactura: "FAC-2026-01",
-      sufijoControl: null,
       clienteComercialId: 5,
       modalidad: "CONSIGNACION",
       estadoCobro: "PAGO_PARCIAL",
-      notasComerciales: "Entrega parcial",
     });
+  });
+
+  it("validates required fields", () => {
+    expect(
+      toCommercialInvoiceRequest({
+        numeroFactura: "",
+        clienteComercialId: "5",
+        modalidad: "VENTA",
+        estadoCobro: "PAGADO",
+      }),
+    ).toMatch(/número de factura es obligatorio/i);
+
+    expect(
+      toCommercialInvoiceRequest({
+        numeroFactura: "FAC-001",
+        clienteComercialId: "",
+        modalidad: "VENTA",
+        estadoCobro: "PAGADO",
+      }),
+    ).toMatch(/cliente es obligatorio/i);
   });
 
   it("hydrates form values from response", () => {
     const values = commercialInvoiceToFormValues({
       id: 12,
       numeroFactura: "FAC-12",
-      sufijoControl: "A",
-      clienteComercialId: null,
-      clienteComercialNombre: null,
+      clienteComercialId: 5,
+      clienteComercialNombre: "Inversiones Demo",
       modalidad: "PRESTAMO",
       estadoCobro: "PENDIENTE_PAGO",
-      notasComerciales: "Préstamo temporal",
       createdAt: "2026-11-13T10:00:00Z",
       paymentCount: 1,
       paidAmountTotal: 120,
@@ -74,11 +78,9 @@ describe("commercial-invoice-form", () => {
 
     expect(values).toEqual({
       numeroFactura: "FAC-12",
-      sufijoControl: "A",
-      clienteComercialId: "",
+      clienteComercialId: "5",
       modalidad: "PRESTAMO",
       estadoCobro: "PENDIENTE_PAGO",
-      notasComerciales: "Préstamo temporal",
     });
   });
 });

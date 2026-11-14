@@ -306,27 +306,9 @@ export function CommercialInvoiceView() {
               mono
             />
             <DetailField
-              label="Sufijo de control"
-              value={invoice.sufijoControl ?? "—"}
-              mono
-            />
-            <DetailField
               label="Cliente comercial"
               value={invoice.clienteComercialNombre ?? "—"}
             />
-            <DetailField
-              label="Impresoras asociadas"
-              value={String(invoice.printerCount)}
-            />
-            <DetailField label="Registro" value={formatDate(invoice.createdAt)} />
-          </DetailSection>
-        ),
-      },
-      {
-        id: "collection",
-        label: "Cobro y condiciones",
-        content: (
-          <DetailSection title="Condiciones y estado de cobro" layout="quad">
             <DetailField
               label="Modalidad"
               value={
@@ -350,18 +332,10 @@ export function CommercialInvoiceView() {
               value={String(invoice.paymentCount)}
             />
             <DetailField
-              label="Notas comerciales"
-              span={4}
-              value={
-                invoice.notasComerciales ? (
-                  <span className="whitespace-pre-wrap text-card-foreground">
-                    {invoice.notasComerciales}
-                  </span>
-                ) : (
-                  "—"
-                )
-              }
+              label="Impresoras asociadas"
+              value={String(invoice.printerCount)}
             />
+            <DetailField label="Registro" value={formatDate(invoice.createdAt)} />
           </DetailSection>
         ),
       },
