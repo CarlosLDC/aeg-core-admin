@@ -31,8 +31,8 @@ import { formatDate, formatMoney } from "@/lib/datetime-form";
 import { forbiddenMessage } from "@/lib/permissions/messages";
 import {
   commercialInvoicePath,
+  commercialInvoicesListPath,
   commercialPaymentPath,
-  commercialPaymentsListPath,
 } from "@/lib/resource-routes";
 import type { CommercialInvoiceResponse } from "@/types/commercial-invoice";
 import type {
@@ -148,7 +148,7 @@ export function CommercialPaymentView() {
     try {
       await deleteCommercialPayment(payment.id);
       toast.success("Pago comercial eliminado.");
-      router.push(commercialPaymentsListPath);
+      router.push(commercialInvoicePath(payment.facturaComercialId));
     } catch (err) {
       toast.error(getCommercialPaymentsErrorMessage(err));
     } finally {
@@ -174,8 +174,16 @@ export function CommercialPaymentView() {
   return (
     <>
       <ResourceViewShell
-        backHref={commercialPaymentsListPath}
-        backLabel="Volver a pagos comerciales"
+        backHref={
+          payment
+            ? commercialInvoicePath(payment.facturaComercialId)
+            : commercialInvoicesListPath
+        }
+        backLabel={
+          payment
+            ? "Volver a la factura comercial"
+            : "Volver a facturas comerciales"
+        }
         title={
           payment
             ? payment.referencia || `Pago #${payment.id}`
