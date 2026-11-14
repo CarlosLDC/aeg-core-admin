@@ -45,6 +45,8 @@ export type SearchableSelectOption = {
   description?: string;
   /** Elemento visual opcional (p. ej. badge) */
   badge?: ReactNode;
+  /** Deshabilita la opción para que no pueda ser seleccionada */
+  disabled?: boolean;
 };
 
 type SearchableSelectProps = {
@@ -191,14 +193,26 @@ export function SearchableSelect({
           ) : (
             filtered.map((opt) => {
               const isSelected = value === opt.value;
+              const isDisabled = Boolean(opt.disabled);
               return (
                 <li key={opt.value}>
                   <button
                     type="button"
                     role="option"
+                    disabled={isDisabled}
+                    aria-disabled={isDisabled}
                     aria-selected={isSelected}
-                    onClick={() => pick(opt.value)}
-                    className="flex w-full items-start justify-between gap-2 px-4 py-2.5 text-left hover:bg-foreground/5"
+                    onClick={() => {
+                      if (!isDisabled) {
+                        pick(opt.value);
+                      }
+                    }}
+                    className={cn(
+                      "flex w-full items-start justify-between gap-2 px-4 py-2.5 text-left",
+                      isDisabled
+                        ? "cursor-not-allowed opacity-50 select-none"
+                        : "hover:bg-foreground/5",
+                    )}
                   >
                     <span className="min-w-0">
                       <span className="flex items-center gap-2">

@@ -37,6 +37,7 @@ type PrinterBatchFormDialogProps = {
   modelsLoading?: boolean;
   suggestedBoxNumber: number;
   existingBoxNumbers: number[];
+  inventoryBoxes?: { id: number; boxNumber: number; printerCount: number }[];
   onClose: () => void;
   onSubmit: (payload: PrinterBatchSubmitPayload) => Promise<void> | void;
 };
@@ -55,6 +56,7 @@ function PrinterBatchFormDialogContent({
   modelsLoading = false,
   suggestedBoxNumber,
   existingBoxNumbers,
+  inventoryBoxes,
   onClose,
   onSubmit,
 }: PrinterBatchFormDialogProps) {
@@ -92,6 +94,13 @@ function PrinterBatchFormDialogContent({
 
   const isExistingBox =
     parsedBoxNumber != null && existingBoxSet.has(parsedBoxNumber);
+
+  const selectedBox = useMemo(() => {
+    if (parsedBoxNumber == null || !inventoryBoxes) return null;
+    return inventoryBoxes.find((b) => b.boxNumber === parsedBoxNumber) ?? null;
+  }, [parsedBoxNumber, inventoryBoxes]);
+
+  const isFullBox = selectedBox != null && selectedBox.printerCount >= 8;
 
   const {
     prefix,
@@ -170,6 +179,13 @@ function PrinterBatchFormDialogContent({
       return;
     }
 
+    if (isFullBox) {
+      setLocalError(
+        `La caja #${parsedBoxNumber} ya tiene 8 impresoras y está llena.`,
+      );
+      return;
+    }
+
     if (!hasValidPrefix) {
       setLocalError(
         selectedModelPrefix
@@ -210,11 +226,13 @@ function PrinterBatchFormDialogContent({
 
   const displayError = localError ?? error;
   const displayPrefix = hasValidPrefix ? prefix : "---";
-  const bannerError = overflowsDigits
-    ? `El serial inicial supera el máximo (${String(MAX_BATCH_START_NUMBER).padStart(FISCAL_SERIAL_DIGIT_COUNT, "0")}) para generar ${PRINTER_BATCH_SIZE} impresoras.`
-    : rangeSummary && !rangeSummary.ok
-      ? rangeSummary.message
-      : null;
+  const bannerError = isFullBox
+    ? `La caja #${parsedBoxNumber} ya tiene 8 impresoras y no puede recibir más.`
+    : overflowsDigits
+      ? `El serial inicial supera el máximo (${String(MAX_BATCH_START_NUMBER).padStart(FISCAL_SERIAL_DIGIT_COUNT, "0")}) para generar ${PRINTER_BATCH_SIZE} impresoras.`
+      : rangeSummary && !rangeSummary.ok
+        ? rangeSummary.message
+        : null;
 
   return (
     <BatchFormDialog
@@ -300,6 +318,8 @@ function PrinterBatchFormDialogContent({
               className={cn(
                 formFieldInputClass,
                 "font-mono text-card-foreground",
+                isFullBox &&
+                  "border-rose-500/60 focus:border-rose-500 focus:ring-rose-500/20",
               )}
               placeholder={String(suggestedBoxNumber)}
             />
@@ -369,7 +389,13 @@ function PrinterBatchFormDialogContent({
               <span className="font-medium text-card-foreground">
                 Lote #{parsedBoxNumber}
               </span>{" "}
-              ({isExistingBox ? "caja existente" : "nueva caja"}) · {PRINTER_BATCH_SIZE} impresoras sin asignar
+              (
+              {isFullBox
+                ? "caja llena · 8/8"
+                : isExistingBox
+                  ? `caja existente · ${selectedBox ? selectedBox.printerCount : 0}/8`
+                  : "nueva caja"}
+              ) · {PRINTER_BATCH_SIZE} impresoras sin asignar
             </span>
             <span className="font-mono text-xs font-medium text-card-foreground">
               {rangeSummary.serials[0]} →{" "}

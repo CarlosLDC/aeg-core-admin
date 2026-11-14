@@ -1398,6 +1398,7 @@ export function PrintersManager() {
         modelsLoading={modelsLoading}
         suggestedBoxNumber={lastSuggestedBoxNumber}
         existingBoxNumbers={inventoryBoxes.map((box) => box.boxNumber)}
+        inventoryBoxes={inventoryBoxes}
         onClose={closeDialog}
         onSubmit={(payload) => void handleBatchSubmit(payload)}
       />

@@ -12,7 +12,11 @@ const MAC_RE = /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/i;
 export function validatePrinterWizardSection(
   section: PrinterWizardStepSection,
   form: PrinterFormValues,
-  options?: { omitFiscalSerial?: boolean },
+  options?: {
+    omitFiscalSerial?: boolean;
+    inventoryBoxes?: { id: number; boxNumber: number; printerCount: number }[];
+    currentBoxId?: string | null;
+  },
 ): string | null {
   if (section === "equipment") {
     const modelId = Number(form.modelId);
@@ -31,6 +35,16 @@ export function validatePrinterWizardSection(
     const boxId = form.boxId.trim();
     if (boxId && (!Number.isFinite(Number(boxId)) || Number(boxId) <= 0)) {
       return "Caja de inventario no válida.";
+    }
+    if (boxId && options?.inventoryBoxes) {
+      const targetBox = options.inventoryBoxes.find(
+        (b) => String(b.id) === boxId,
+      );
+      const isCurrentBox =
+        options.currentBoxId != null && options.currentBoxId === boxId;
+      if (targetBox && !isCurrentBox && targetBox.printerCount >= 8) {
+        return `La caja ${targetBox.boxNumber} ya tiene 8 impresoras y está llena.`;
+      }
     }
     return null;
   }

@@ -134,15 +134,28 @@ export function PrinterFormDialog({
 
   const inventoryBoxOptions = useMemo<SearchableSelectOption[]>(
     () =>
-      inventoryBoxes.map((box) => ({
-        value: String(box.id),
-        label: formatInventoryBoxLabel(box.boxNumber),
-        description:
-          box.observations ||
-          `${box.printerCount} ${box.printerCount === 1 ? "impresora" : "impresoras"}`,
-        searchText: `${box.boxNumber} ${box.observations ?? ""}`,
-      })),
-    [inventoryBoxes],
+      inventoryBoxes.map((box) => {
+        const isCurrentBox = mode === "edit" && printer?.boxId === box.id;
+        const isFull = box.printerCount >= 8 && !isCurrentBox;
+        const countText = `${box.printerCount}/8 ${
+          box.printerCount === 1 ? "impresora" : "impresoras"
+        }`;
+        return {
+          value: String(box.id),
+          label: formatInventoryBoxLabel(box.boxNumber),
+          description: box.observations
+            ? `${box.observations} (${countText}${isFull ? " · Llena" : ""})`
+            : `${countText}${isFull ? " · Llena" : ""}`,
+          searchText: `${box.boxNumber} ${box.observations ?? ""} ${isFull ? "llena" : ""}`,
+          badge: isFull ? (
+            <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">
+              Llena
+            </span>
+          ) : undefined,
+          disabled: isFull,
+        };
+      }),
+    [inventoryBoxes, mode, printer?.boxId],
   );
 
   const filteredFirmwares = useMemo(() => {

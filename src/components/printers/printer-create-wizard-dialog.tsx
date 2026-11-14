@@ -409,6 +409,7 @@ export function PrinterCreateWizardDialog({
               lockDistributor={lockDistributor}
               fieldErrors={fieldErrors}
               printerId={printerId}
+              initialBoxId={initialValues?.boxId}
               pendingSoftwareRequest={pendingSoftware}
               onOpenSoftwareModal={handleOpenSoftwareModal}
               onCancelPendingSoftware={() => void handleCancelPendingSoftware()}
