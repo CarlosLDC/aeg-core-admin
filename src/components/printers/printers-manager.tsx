@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Cpu, Layers, List, Loader2, Package, Plus } from "lucide-react";
+import { Cpu, Layers, Loader2, Package, Plus } from "lucide-react";
 import { InventoryBoxFormDialog } from "@/components/inventory-boxes/inventory-box-form-dialog";
 import { PrinterBoxSheetView } from "@/components/printers/printer-box-sheet-view";
 import { PrinterBatchFormDialog, type PrinterBatchSubmitPayload } from "@/components/printers/printer-batch-form-dialog";
@@ -155,6 +155,18 @@ import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 
 type PrinterSortKey = "id" | "createdAt" | "fiscalSerial";
+
+const PRINTER_SORT_COMPARATORS: Record<
+  PrinterSortKey,
+  (a: PrinterResponse, b: PrinterResponse) => number
+> = {
+  id: (a, b) => compareNumberValues(a.id, b.id),
+  createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
+  fiscalSerial: (a, b) =>
+    a.fiscalSerial.localeCompare(b.fiscalSerial, "es", {
+      numeric: true,
+    }),
+};
 
 function companyRifForBranch(
   branchId: number | null | undefined,
@@ -470,15 +482,7 @@ export function PrintersManager() {
   ]);
 
   const sortedPrinters = useMemo(
-    () =>
-      sortTableRows(filteredPrinters, sort, {
-        id: (a, b) => compareNumberValues(a.id, b.id),
-        createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
-        fiscalSerial: (a, b) =>
-          a.fiscalSerial.localeCompare(b.fiscalSerial, "es", {
-            numeric: true,
-          }),
-      }),
+    () => sortTableRows(filteredPrinters, sort, PRINTER_SORT_COMPARATORS),
     [filteredPrinters, sort],
   );
 
@@ -1301,41 +1305,26 @@ export function PrintersManager() {
     <div className="admin-content-stack">
       <PageToolbar
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <div
-              role="group"
-              aria-label="Modo de vista de impresoras"
-              className="inline-flex items-center rounded-lg border border-border bg-card p-1"
+          <>
+            <button
+              type="button"
+              onClick={() =>
+                setViewMode((current) =>
+                  current === "by-box" ? "table" : "by-box",
+                )
+              }
+              aria-pressed={viewMode === "by-box"}
+              className={cn(
+                pageToolbarButtonClass,
+                "border",
+                viewMode === "by-box"
+                  ? "border-accent/35 bg-accent/10 text-accent"
+                  : "border-border bg-card text-foreground hover:bg-foreground/5",
+              )}
             >
-              <button
-                type="button"
-                onClick={() => setViewMode("table")}
-                aria-pressed={viewMode === "table"}
-                className={cn(
-                  "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition",
-                  viewMode === "table"
-                    ? "bg-accent text-accent-foreground shadow-xs"
-                    : "text-muted hover:text-card-foreground",
-                )}
-              >
-                <List className="size-3.5" />
-                Tabla
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("by-box")}
-                aria-pressed={viewMode === "by-box"}
-                className={cn(
-                  "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition",
-                  viewMode === "by-box"
-                    ? "bg-accent text-accent-foreground shadow-xs"
-                    : "text-muted hover:text-card-foreground",
-                )}
-              >
-                <Package className="size-3.5" />
-                Ver por caja
-              </button>
-            </div>
+              <Package className="size-4" aria-hidden />
+              Ver por caja
+            </button>
             {canCreate ? (
               <>
                 <button
@@ -1362,7 +1351,7 @@ export function PrintersManager() {
                 </button>
               </>
             ) : null}
-          </div>
+          </>
         }
       />
 
@@ -1443,19 +1432,23 @@ export function PrintersManager() {
               columns={tableColumns.toolbarColumns}
             />
             {viewMode === "by-box" ? (
-              <div className="border-t border-border bg-background/40 p-4">
-                <PrinterBoxSheetView
-                  pages={boxPages}
-                  pageIndex={boxPageIndex}
-                  onPageIndexChange={setBoxPageIndex}
-                  canManageBoxes={isAdmin}
-                  onCreateBox={openCreateBox}
-                  onEditBox={openEditBox}
-                  onDeleteBox={(box) => void handleDeleteBox(box)}
-                  deletingBoxId={deletingBoxId}
-                  renderTable={(rows) => renderPrintersTable(rows)}
-                />
-              </div>
+              <PrinterBoxSheetView
+                pages={boxPages}
+                pageIndex={boxPageIndex}
+                onPageIndexChange={setBoxPageIndex}
+                canManageBoxes={isAdmin}
+                onCreateBox={openCreateBox}
+                onEditBox={openEditBox}
+                onDeleteBox={(box) => void handleDeleteBox(box)}
+                deletingBoxId={deletingBoxId}
+                renderTable={(rows) =>
+                  renderPrintersTable(
+                    sort
+                      ? sortTableRows(rows, sort, PRINTER_SORT_COMPARATORS)
+                      : rows,
+                  )
+                }
+              />
             ) : filteredPrinters.length === 0 ? (
               <TableFilterEmptyState />
             ) : (
