@@ -2,9 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Cpu, Layers, Loader2, Package, Plus } from "lucide-react";
-import { InventoryBoxFormDialog } from "@/components/inventory-boxes/inventory-box-form-dialog";
-import { PrinterBoxSheetView } from "@/components/printers/printer-box-sheet-view";
+import { Cpu, Layers, Loader2, Plus } from "lucide-react";
 import { PrinterBatchFormDialog, type PrinterBatchSubmitPayload } from "@/components/printers/printer-batch-form-dialog";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
@@ -82,6 +80,7 @@ import { fetchClients } from "@/lib/clients-api";
 import { fetchCompanies } from "@/lib/companies-api";
 import { fetchDistributors } from "@/lib/distributors-api";
 import {
+  emptyPrinterForm,
   getPrinterDispositionBlockedMessage,
   printerModelLabel,
   printerToAssignmentRequest,
@@ -115,19 +114,12 @@ import {
   filterPrinterModelsForDistributor,
 } from "@/lib/distributor-scope";
 import { useDistributorStaffBranchId } from "@/hooks/use-distributor-staff-branch-id";
-import {
-  formatInventoryBoxLabel,
-  toInventoryBoxRequest,
-  type InventoryBoxFormValues,
-} from "@/lib/inventory-box-form";
+import { formatInventoryBoxLabel } from "@/lib/inventory-box-form";
 import {
   createInventoryBox,
-  deleteInventoryBox,
   fetchInventoryBoxes,
   getInventoryBoxesErrorMessage,
-  updateInventoryBox,
 } from "@/lib/inventory-boxes-api";
-import { buildPrinterBoxPages } from "@/lib/printer-box-pages";
 import { fetchSoftware } from "@/lib/software-api";
 import type { InventoryBoxResponse } from "@/types/inventory-box";
 import type { BranchResponse } from "@/types/branch";
@@ -154,7 +146,7 @@ import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 
-type PrinterSortKey = "id" | "createdAt" | "fiscalSerial";
+type PrinterSortKey = "id" | "createdAt" | "fiscalSerial" | "boxNumber";
 
 const PRINTER_SORT_COMPARATORS: Record<
   PrinterSortKey,
@@ -166,6 +158,7 @@ const PRINTER_SORT_COMPARATORS: Record<
     a.fiscalSerial.localeCompare(b.fiscalSerial, "es", {
       numeric: true,
     }),
+  boxNumber: (a, b) => compareNumberValues(a.boxNumber, b.boxNumber),
 };
 
 function companyRifForBranch(
@@ -248,13 +241,6 @@ export function PrintersManager() {
     consequences: string[];
   } | null>(null);
   const [forceDeleting, setForceDeleting] = useState(false);
-  const [viewMode, setViewMode] = useState<"table" | "by-box">("table");
-  const [boxPageIndex, setBoxPageIndex] = useState(0);
-  const [boxDialog, setBoxDialog] = useState<"create" | "edit" | null>(null);
-  const [selectedBox, setSelectedBox] = useState<InventoryBoxResponse | null>(null);
-  const [boxSaving, setBoxSaving] = useState(false);
-  const [boxFormError, setBoxFormError] = useState<string | null>(null);
-  const [deletingBoxId, setDeletingBoxId] = useState<number | null>(null);
   const tableColumns = useTableColumnVisibility("printers");
   const [search, setSearch] = useTableSearch("/printers");
   const [statusFilter, setStatusFilter] = useTableFilter<
@@ -375,14 +361,6 @@ export function PrintersManager() {
     [clientLabelById],
   );
 
-  const getDistributorRif = useCallback(
-    (id: number | null): string => {
-      if (id == null) return "—";
-      return distributorRifById.get(id) ?? "—";
-    },
-    [distributorRifById],
-  );
-
   const getClientRif = useCallback(
     (id: number | null): string => {
       if (id == null) return "—";
@@ -461,6 +439,7 @@ export function PrintersManager() {
         printer.macAddress,
         printer.versionFirmware,
         printer.boxNumber != null ? formatInventoryBoxLabel(printer.boxNumber) : "",
+        printer.boxNumber != null ? `Lote ${printer.boxNumber}` : "",
         printer.createdAt,
         formatDate(printer.createdAt),
       ]
@@ -489,21 +468,6 @@ export function PrintersManager() {
   const pagination = usePagination(sortedPrinters, undefined, {
     section: "/printers",
   });
-
-  const hasActiveFilters =
-    search.trim().length > 0 ||
-    statusFilter !== "all" ||
-    serialFilter !== "all";
-
-  const boxPages = useMemo(
-    () =>
-      buildPrinterBoxPages({
-        printers: filteredPrinters,
-        boxes: inventoryBoxes,
-        hasActiveFilters,
-      }),
-    [filteredPrinters, inventoryBoxes, hasActiveFilters],
-  );
 
   const nextSuggestedBoxNumber = useMemo(() => {
     if (inventoryBoxes.length === 0) return 1;
@@ -802,63 +766,86 @@ export function PrintersManager() {
     }
   }
 
-  async function handleBatchSubmit({ serials, base }: PrinterBatchSubmitPayload) {
+  async function handleBatchSubmit(payload: PrinterBatchSubmitPayload) {
     if (!canCreate) {
       setFormError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
       return;
     }
 
-    if (!(await confirm({ title: "Confirmar", message: `¿Crear ${serials.length} impresora${serials.length === 1 ? "" : "s"} con seriales del rango indicado?`, destructive: true }))) {
-      return;
-    }
+    const firstSerial = payload.serials[0] ?? "";
+    const lastSerial = payload.serials[payload.serials.length - 1] ?? "";
+    const confirmed = await confirm({
+      title: "Confirmar creación por lote",
+      message: `¿Crear el lote #${payload.boxNumber} con ${payload.serials.length} impresoras sin asignar (${firstSerial} a ${lastSerial})?`,
+      confirmLabel: `Crear ${payload.serials.length} impresoras`,
+    });
+    if (!confirmed) return;
 
     setSaving(true);
     setFormError(null);
-    setBatchProgress({ done: 0, total: serials.length });
-
-    const result = await runSerialBatch(
-      serials,
-      async (fiscalSerial, creationBatchId) => {
-        const bodyOrError = toPrinterRequest({ ...base, fiscalSerial });
-        if (typeof bodyOrError === "string") {
-          throw new Error(bodyOrError);
-        }
-        if (lockDistributor && distributorId != null) {
-          bodyOrError.distributorId = distributorId;
-        }
-        await createPrinter({ ...bodyOrError, creationBatchId });
-      },
-      (p) => setBatchProgress({ done: p.done, total: p.total }),
-    );
-
-    setSaving(false);
     setBatchProgress(null);
 
-    if (result.succeeded > 0) {
-      toast.success(
-        `${result.succeeded} impresora${result.succeeded === 1 ? "" : "s"} creada${result.succeeded === 1 ? "" : "s"}.`,
-      );
-      await loadPrinters();
-    }
+    try {
+      const createdBox = await createInventoryBox({
+        boxNumber: payload.boxNumber,
+        observations: null,
+      });
 
-    if (result.failed.length > 0) {
-      const sample = result.failed
-        .slice(0, 3)
-        .map((f) => `${f.serial}: ${f.message}`)
-        .join(" · ");
-      const more =
-        result.failed.length > 3
-          ? ` (+${result.failed.length - 3} más)`
-          : "";
-      setFormError(
-        `No se pudieron crear ${result.failed.length} registro(s). ${sample}${more}`,
+      setBatchProgress({ done: 0, total: payload.serials.length });
+
+      const summary = await runSerialBatch(
+        payload.serials,
+        async (fiscalSerial, creationBatchId) => {
+          const bodyOrError = toPrinterRequest({
+            ...emptyPrinterForm(),
+            modelId: payload.modelId,
+            fiscalSerial,
+            status: "sin_asignar",
+            paid: false,
+            boxId: String(createdBox.id),
+          });
+          if (typeof bodyOrError === "string") {
+            throw new Error(bodyOrError);
+          }
+          await createPrinter({ ...bodyOrError, creationBatchId });
+        },
+        (p) => setBatchProgress({ done: p.done, total: p.total }),
       );
-      toast.error(
-        `Lote incompleto: ${result.failed.length} error${result.failed.length === 1 ? "" : "es"}.`,
-      );
-      if (result.succeeded > 0) return;
-    } else {
+
+      await refreshBoxesAndPrinters();
+
+      if (summary.succeeded > 0) {
+        toast.success(
+          `${summary.succeeded} impresora${summary.succeeded === 1 ? "" : "s"} creada${summary.succeeded === 1 ? "" : "s"} en el lote #${payload.boxNumber}.`,
+        );
+      }
+
+      if (summary.failed.length > 0) {
+        const sample = summary.failed
+          .slice(0, 3)
+          .map((f) => `${f.serial}: ${f.message}`)
+          .join(" · ");
+        const more =
+          summary.failed.length > 3
+            ? ` (+${summary.failed.length - 3} más)`
+            : "";
+        setFormError(
+          `No se pudieron crear ${summary.failed.length} registro(s). ${sample}${more}`,
+        );
+        toast.error(
+          `Lote incompleto: ${summary.failed.length} error${summary.failed.length === 1 ? "" : "es"}.`,
+        );
+        return;
+      }
+
       closeDialog();
+    } catch (err) {
+      const message = getInventoryBoxesErrorMessage(err);
+      setFormError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
+      setBatchProgress(null);
     }
   }
 
@@ -1038,98 +1025,12 @@ export function PrintersManager() {
     }
   }
 
-  function openCreateBox() {
-    setSelectedBox(null);
-    setBoxFormError(null);
-    setBoxDialog("create");
-  }
-
-  function openEditBox(box: InventoryBoxResponse) {
-    setSelectedBox(box);
-    setBoxFormError(null);
-    setBoxDialog("edit");
-  }
-
-  function closeBoxDialog() {
-    setBoxDialog(null);
-    setSelectedBox(null);
-    setBoxFormError(null);
-  }
-
   async function refreshBoxesAndPrinters() {
     const [boxRows] = await Promise.all([
       fetchInventoryBoxes().catch(() => inventoryBoxes),
       loadPrinters({ silent: true }),
     ]);
     setInventoryBoxes([...boxRows].sort((a, b) => a.boxNumber - b.boxNumber));
-  }
-
-  async function handleBoxSubmit(values: InventoryBoxFormValues) {
-    if (!isAdmin) return;
-    const bodyOrError = toInventoryBoxRequest(values);
-    if (typeof bodyOrError === "string") {
-      setBoxFormError(bodyOrError);
-      return;
-    }
-
-    setBoxSaving(true);
-    setBoxFormError(null);
-    const label = formatInventoryBoxLabel(bodyOrError.boxNumber);
-
-    try {
-      if (boxDialog === "create") {
-        const created = await createInventoryBox(bodyOrError);
-        toast.success(`${label} creada correctamente.`);
-        const nextBoxes = [...inventoryBoxes, created].sort(
-          (a, b) => a.boxNumber - b.boxNumber,
-        );
-        setInventoryBoxes(nextBoxes);
-        const createdIdx = nextBoxes.findIndex((b) => b.id === created.id);
-        if (createdIdx >= 0) setBoxPageIndex(createdIdx);
-      } else if (selectedBox) {
-        await updateInventoryBox(selectedBox.id, bodyOrError);
-        toast.success(`${label} actualizada.`);
-        await refreshBoxesAndPrinters();
-      }
-      closeBoxDialog();
-    } catch (err) {
-      const message = getInventoryBoxesErrorMessage(err);
-      setBoxFormError(message);
-      toast.error(message);
-    } finally {
-      setBoxSaving(false);
-    }
-  }
-
-  async function handleDeleteBox(box: InventoryBoxResponse) {
-    if (!isAdmin) return;
-    const label = formatInventoryBoxLabel(box.boxNumber);
-    const assignedCount = printers.filter((p) => p.boxId === box.id).length;
-    const warningSuffix =
-      assignedCount > 0
-        ? ` Sus ${assignedCount} impresora(s) quedarán sin caja.`
-        : "";
-    if (
-      !(await confirm({
-        title: "Confirmar",
-        message: `¿Eliminar la ${label}?${warningSuffix}`,
-        destructive: true,
-      }))
-    ) {
-      return;
-    }
-
-    setDeletingBoxId(box.id);
-    try {
-      await deleteInventoryBox(box.id);
-      toast.success(`${label} eliminada.`);
-      await refreshBoxesAndPrinters();
-      setBoxPageIndex((idx) => Math.max(0, idx - 1));
-    } catch (err) {
-      toast.error(getInventoryBoxesErrorMessage(err));
-    } finally {
-      setDeletingBoxId(null);
-    }
   }
 
   function renderPrintersTable(rows: PrinterResponse[]) {
@@ -1181,7 +1082,17 @@ export function PrintersManager() {
                 {isDistributor ? (
                   <th className="px-5 py-3 font-medium">RIF Cliente</th>
                 ) : (
-                  <th className="px-5 py-3 font-medium">RIF Distribuidor</th>
+                  <SortableTableHeader
+                    label="Lote"
+                    sortDirection={
+                      sort?.key === "boxNumber" ? sort.direction : null
+                    }
+                    onToggle={() =>
+                      setSort((current) =>
+                        toggleTableSort(current, "boxNumber"),
+                      )
+                    }
+                  />
                 )}
               </TableRowMetaHeaders>
             </tr>
@@ -1289,7 +1200,7 @@ export function PrintersManager() {
                     <td className="px-5 py-3.5 font-mono text-muted">
                       {isDistributor
                         ? getClientRif(printer.clientId)
-                        : getDistributorRif(printer.distributorId)}
+                        : (printer.boxNumber ?? "—")}
                     </td>
                   </TableRowMetaCells>
                 </ClickableTableRow>
@@ -1305,53 +1216,32 @@ export function PrintersManager() {
     <div className="admin-content-stack">
       <PageToolbar
         actions={
-          <>
-            <button
-              type="button"
-              onClick={() =>
-                setViewMode((current) =>
-                  current === "by-box" ? "table" : "by-box",
-                )
-              }
-              aria-pressed={viewMode === "by-box"}
-              className={cn(
-                pageToolbarButtonClass,
-                "border",
-                viewMode === "by-box"
-                  ? "border-accent/35 bg-accent/10 text-accent"
-                  : "border-border bg-card text-foreground hover:bg-foreground/5",
-              )}
-            >
-              <Package className="size-4" aria-hidden />
-              Ver por caja
-            </button>
-            {canCreate ? (
-              <>
-                <button
-                  type="button"
-                  onClick={openBatchCreate}
-                  className={cn(
-                    pageToolbarButtonClass,
-                    "border border-border bg-card text-foreground hover:bg-foreground/5",
-                  )}
-                >
-                  <Layers className="size-4" />
-                  Crear por lote
-                </button>
-                <button
-                  type="button"
-                  onClick={openCreate}
-                  className={cn(
-                    pageToolbarButtonClass,
-                    "bg-accent text-accent-foreground",
-                  )}
-                >
-                  <Plus className="size-4" />
-                  Nueva impresora
-                </button>
-              </>
-            ) : null}
-          </>
+          canCreate ? (
+            <>
+              <button
+                type="button"
+                onClick={openBatchCreate}
+                className={cn(
+                  pageToolbarButtonClass,
+                  "border border-border bg-card text-foreground hover:bg-foreground/5",
+                )}
+              >
+                <Layers className="size-4" />
+                Crear por lote
+              </button>
+              <button
+                type="button"
+                onClick={openCreate}
+                className={cn(
+                  pageToolbarButtonClass,
+                  "bg-accent text-accent-foreground",
+                )}
+              >
+                <Plus className="size-4" />
+                Nueva impresora
+              </button>
+            </>
+          ) : null
         }
       />
 
@@ -1431,25 +1321,7 @@ export function PrintersManager() {
               ]}
               columns={tableColumns.toolbarColumns}
             />
-            {viewMode === "by-box" ? (
-              <PrinterBoxSheetView
-                pages={boxPages}
-                pageIndex={boxPageIndex}
-                onPageIndexChange={setBoxPageIndex}
-                canManageBoxes={isAdmin}
-                onCreateBox={openCreateBox}
-                onEditBox={openEditBox}
-                onDeleteBox={(box) => void handleDeleteBox(box)}
-                deletingBoxId={deletingBoxId}
-                renderTable={(rows) =>
-                  renderPrintersTable(
-                    sort
-                      ? sortTableRows(rows, sort, PRINTER_SORT_COMPARATORS)
-                      : rows,
-                  )
-                }
-              />
-            ) : filteredPrinters.length === 0 ? (
+            {filteredPrinters.length === 0 ? (
               <TableFilterEmptyState />
             ) : (
               <>
@@ -1511,14 +1383,9 @@ export function PrintersManager() {
         progress={batchProgress}
         error={formError}
         modelOptions={modelOptions}
-        softwareOptions={software}
-        clientOptions={clientOptions}
-        distributorOptions={distributorOptions}
         modelsLoading={modelsLoading}
-        catalogLoading={catalogLoading}
-        canPickSoftware={user?.role === "ADMIN"}
-        lockDistributor={lockDistributor}
-        defaultDistributorId={distributorId}
+        suggestedBoxNumber={nextSuggestedBoxNumber}
+        existingBoxNumbers={inventoryBoxes.map((box) => box.boxNumber)}
         onClose={closeDialog}
         onSubmit={(payload) => void handleBatchSubmit(payload)}
       />
@@ -1594,19 +1461,6 @@ export function PrintersManager() {
           if (!forceDeleting) setDeleteBlocked(null);
         }}
         onForceDelete={handleForceDelete}
-      />
-
-      <InventoryBoxFormDialog
-        mode={boxDialog === "create" ? "create" : "edit"}
-        box={selectedBox ?? undefined}
-        suggestedBoxNumber={
-          boxDialog === "create" ? nextSuggestedBoxNumber : undefined
-        }
-        open={boxDialog !== null}
-        saving={boxSaving}
-        error={boxFormError}
-        onClose={closeBoxDialog}
-        onSubmit={handleBoxSubmit}
       />
     </div>
   );
