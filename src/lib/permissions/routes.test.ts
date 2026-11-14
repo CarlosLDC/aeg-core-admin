@@ -94,6 +94,10 @@ describe("route permissions", () => {
     expect(canAccessRoute("ADMIN", "/seals")).toBe(true);
     expect(canAccessRoute("ADMIN", "/technical-services")).toBe(true);
     expect(canAccessRoute("ADMIN", "/annual-inspections")).toBe(true);
+    expect(canAccessRoute("ADMIN", "/commercial-invoices")).toBe(true);
+    expect(canAccessRoute("ADMIN", "/commercial-payments")).toBe(true);
+    expect(canAccessRoute("DISTRIBUTOR", "/commercial-invoices")).toBe(false);
+    expect(canAccessRoute("DISTRIBUTOR", "/commercial-payments")).toBe(false);
   });
 
   it("blocks service center staff from panel routes", () => {

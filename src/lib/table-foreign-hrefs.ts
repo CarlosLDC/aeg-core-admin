@@ -2,6 +2,8 @@ import { canAccessRoute } from "@/lib/permissions/routes";
 import {
   branchPath,
   clientPath,
+  commercialInvoicePath,
+  commercialPaymentPath,
   firmwareVersionPath,
   printerModelPath,
   printerPath,
@@ -102,6 +104,26 @@ export function hrefForSeal(
   return hrefIfAccessible(
     role,
     sealId != null ? sealPath(sealId) : undefined,
+  );
+}
+
+export function hrefForCommercialInvoice(
+  invoiceId: number | null | undefined,
+  role: Role,
+): string | undefined {
+  return hrefIfAccessible(
+    role,
+    invoiceId != null ? commercialInvoicePath(invoiceId) : undefined,
+  );
+}
+
+export function hrefForCommercialPayment(
+  paymentId: number | null | undefined,
+  role: Role,
+): string | undefined {
+  return hrefIfAccessible(
+    role,
+    paymentId != null ? commercialPaymentPath(paymentId) : undefined,
   );
 }
 

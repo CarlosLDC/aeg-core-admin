@@ -18,6 +18,8 @@ import {
   ArrowRightLeft,
   Cable,
   AppWindow,
+  ReceiptText,
+  Banknote,
   type LucideIcon,
 } from "lucide-react";
 import { FISCAL_BOOK_ENTRY_PATH } from "@/lib/safe-redirect";
@@ -94,6 +96,23 @@ export const navSections: NavSection[] = [
         title: "Fiscalización",
         href: "/fiscalizacion",
         icon: Cable,
+        roles: ["ADMIN"],
+      },
+    ],
+  },
+  {
+    title: "Comercial",
+    items: [
+      {
+        title: "Facturas comerciales",
+        href: "/commercial-invoices",
+        icon: ReceiptText,
+        roles: ["ADMIN"],
+      },
+      {
+        title: "Pagos comerciales",
+        href: "/commercial-payments",
+        icon: Banknote,
         roles: ["ADMIN"],
       },
     ],

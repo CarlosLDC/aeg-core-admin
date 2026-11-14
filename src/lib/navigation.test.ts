@@ -28,6 +28,7 @@ describe("navSectionsForRole", () => {
       "Inicio",
       "Organización",
       "Equipos fiscales",
+      "Comercial",
       "Operaciones",
       "Catálogos",
       "Administración",
@@ -65,6 +66,8 @@ describe("navSectionsForRole", () => {
     expect(items.some((i) => i.title === "Precintos fiscales")).toBe(false);
     expect(items.some((i) => i.title === "Servicio técnico")).toBe(false);
     expect(items.some((i) => i.title === "Inspección anual")).toBe(false);
+    expect(items.some((i) => i.title === "Facturas comerciales")).toBe(false);
+    expect(items.some((i) => i.title === "Pagos comerciales")).toBe(false);
 
     const adminItems = navItemsForRole("ADMIN");
     expect(adminItems.some((i) => i.title === "Modelos fiscales")).toBe(true);
@@ -74,6 +77,8 @@ describe("navSectionsForRole", () => {
     expect(adminItems.some((i) => i.title === "Precintos fiscales")).toBe(true);
     expect(adminItems.some((i) => i.title === "Servicio técnico")).toBe(true);
     expect(adminItems.some((i) => i.title === "Inspección anual")).toBe(true);
+    expect(adminItems.some((i) => i.title === "Facturas comerciales")).toBe(true);
+    expect(adminItems.some((i) => i.title === "Pagos comerciales")).toBe(true);
   });
 
   it("shows Libro fiscal for DISTRIBUTOR via admin handoff path", () => {

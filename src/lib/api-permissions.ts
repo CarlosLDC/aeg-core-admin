@@ -183,3 +183,27 @@ export function canAccessUploads(role: Role): boolean {
 export function canCreateAbnormalityRecord(role: Role): boolean {
   return can(role, "abnormalities", "create");
 }
+
+export function canCreateCommercialInvoiceRecord(role: Role): boolean {
+  return can(role, "commercialInvoices", "create");
+}
+
+export function canModifyCommercialInvoiceRecord(role: Role): boolean {
+  return can(role, "commercialInvoices", "update");
+}
+
+export function canDeleteCommercialInvoiceRecord(role: Role): boolean {
+  return can(role, "commercialInvoices", "delete");
+}
+
+export function canCreateCommercialPaymentRecord(role: Role): boolean {
+  return can(role, "commercialPayments", "create");
+}
+
+export function canModifyCommercialPaymentRecord(role: Role): boolean {
+  return can(role, "commercialPayments", "update");
+}
+
+export function canDeleteCommercialPaymentRecord(role: Role): boolean {
+  return can(role, "commercialPayments", "delete");
+}

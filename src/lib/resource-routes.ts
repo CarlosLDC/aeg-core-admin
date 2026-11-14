@@ -48,6 +48,18 @@ export function sealPath(id: number): string {
 
 export const sealsListPath = "/seals";
 
+export function commercialInvoicePath(id: number): string {
+  return `/commercial-invoices/${id}`;
+}
+
+export const commercialInvoicesListPath = "/commercial-invoices";
+
+export function commercialPaymentPath(id: number): string {
+  return `/commercial-payments/${id}`;
+}
+
+export const commercialPaymentsListPath = "/commercial-payments";
+
 export function softwarePath(id: number): string {
   return `/software/${id}`;
 }

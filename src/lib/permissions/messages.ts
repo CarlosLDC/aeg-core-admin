@@ -20,6 +20,8 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   seniatExtract: "extracción SENIAT",
   uploads: "documentos adjuntos",
   software: "software",
+  commercialInvoices: "facturas comerciales",
+  commercialPayments: "pagos comerciales",
 };
 
 export const ACTION_LABELS: Record<Action, string> = {

@@ -482,4 +482,94 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
       },
     ],
   },
+  {
+    resource: "commercial-invoices",
+    formPath:
+      "src/components/commercial-invoices/commercial-invoice-form-dialog.tsx",
+    viewPath:
+      "src/components/commercial-invoices/commercial-invoice-view.tsx",
+    fields: [
+      {
+        formLabels: ["Número de factura"],
+        viewLabels: ["Número de factura"],
+        formBindings: ["form.numeroFactura"],
+        viewBindings: ["invoice.numeroFactura"],
+      },
+      {
+        formLabels: ["Sufijo de control"],
+        viewLabels: ["Sufijo de control"],
+        formBindings: ["form.sufijoControl"],
+        viewBindings: ["invoice.sufijoControl"],
+      },
+      {
+        formLabels: ["Cliente (factura)"],
+        viewLabels: ["Cliente (factura)"],
+        formBindings: ["form.facturaCliente"],
+        viewBindings: ["invoice.facturaCliente"],
+      },
+      {
+        formLabels: ["Promotor / Vendedor"],
+        viewLabels: ["Promotor / Vendedor"],
+        formBindings: ["form.promotorVendedor"],
+        viewBindings: ["invoice.promotorVendedor"],
+      },
+      {
+        formLabels: ["Modalidad"],
+        viewLabels: ["Modalidad"],
+        formBindings: ["form.modalidad"],
+        viewBindings: ["invoice.modalidad"],
+      },
+      {
+        formLabels: ["Estado de cobro"],
+        viewLabels: ["Estado de cobro"],
+        formBindings: ["form.estadoCobro"],
+        viewBindings: ["invoice.estadoCobro"],
+      },
+      {
+        formLabels: ["Notas comerciales"],
+        viewLabels: ["Notas comerciales"],
+        formBindings: ["form.notasComerciales"],
+        viewBindings: ["invoice.notasComerciales"],
+      },
+    ],
+  },
+  {
+    resource: "commercial-payments",
+    formPath:
+      "src/components/commercial-payments/commercial-payment-form-dialog.tsx",
+    viewPath:
+      "src/components/commercial-payments/commercial-payment-view.tsx",
+    fields: [
+      {
+        formLabels: ["Factura comercial"],
+        viewLabels: ["Factura comercial"],
+        formBindings: ["form.facturaComercialId"],
+        viewBindings: ["payment.facturaComercialId"],
+      },
+      {
+        formLabels: ["Método / Banco"],
+        viewLabels: ["Método / Banco"],
+        formBindings: ["form.metodoBanco"],
+        viewBindings: ["payment.metodoBanco"],
+      },
+      {
+        formLabels: ["Monto"],
+        viewLabels: ["Monto"],
+        formBindings: ["form.monto"],
+        viewBindings: ["payment.monto"],
+      },
+      {
+        formLabels: ["Referencia"],
+        viewLabels: ["Referencia"],
+        formBindings: ["form.referencia"],
+        viewBindings: ["payment.referencia"],
+      },
+      {
+        formLabels: ["Cuenta destino"],
+        viewLabels: ["Cuenta destino"],
+        formBindings: ["form.cuentaDestino"],
+        viewBindings: ["payment.cuentaDestino"],
+      },
+    ],
+  },
 ];
