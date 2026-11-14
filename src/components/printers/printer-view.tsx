@@ -40,7 +40,6 @@ import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-m
 import { PrinterFirmwareUpdateBanner } from "@/components/printers/printer-firmware-update-banner";
 import { PrinterFirmwareUnverifiedBanner } from "@/components/printers/printer-firmware-unverified-banner";
 import { isFirmwareUpdateRequired } from "@/lib/firmware-update-policy";
-import { PrinterTicketConfigPanel } from "@/components/printers/printer-ticket-json-preview";
 import { PrinterLogsSection } from "@/components/printers/printer-logs-section";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
@@ -720,23 +719,6 @@ export function PrinterView() {
     }
 
     steps.push(
-      {
-        id: "ticket-remoto",
-        label: "Ticket Remoto",
-        content: (
-          <DetailSection title="Campos JSON del ticket">
-            <PrinterTicketConfigPanel
-              header={printer.header}
-              trailer={printer.trailer}
-            />
-            {!printer.header?.lines?.length && !printer.trailer?.lines?.length ? (
-              <p className="text-sm text-muted">
-                Aún no hay configuración de ticket guardada para esta impresora.
-              </p>
-            ) : null}
-          </DetailSection>
-        ),
-      },
       {
         id: "assignment",
         label: isDistributor ? "Cliente" : "Asignación",
