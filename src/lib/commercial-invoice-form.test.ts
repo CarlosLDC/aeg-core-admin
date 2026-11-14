@@ -43,7 +43,6 @@ describe("commercial-invoice-form", () => {
       clienteComercialId: " 5 ",
       modalidad: "CONSIGNACION",
       estadoCobro: "PAGO_PARCIAL",
-      promotorId: " 3 ",
       notasComerciales: "  Entrega parcial ",
     });
 
@@ -53,7 +52,6 @@ describe("commercial-invoice-form", () => {
       clienteComercialId: 5,
       modalidad: "CONSIGNACION",
       estadoCobro: "PAGO_PARCIAL",
-      promotorId: 3,
       notasComerciales: "Entrega parcial",
     });
   });
@@ -67,8 +65,6 @@ describe("commercial-invoice-form", () => {
       clienteComercialNombre: null,
       modalidad: "PRESTAMO",
       estadoCobro: "PENDIENTE_PAGO",
-      promotorId: null,
-      promotorNombre: null,
       notasComerciales: "Préstamo temporal",
       createdAt: "2026-11-13T10:00:00Z",
       paymentCount: 1,
@@ -82,7 +78,6 @@ describe("commercial-invoice-form", () => {
       clienteComercialId: "",
       modalidad: "PRESTAMO",
       estadoCobro: "PENDIENTE_PAGO",
-      promotorId: "",
       notasComerciales: "Préstamo temporal",
     });
   });

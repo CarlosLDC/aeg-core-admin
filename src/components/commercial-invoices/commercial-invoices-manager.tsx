@@ -168,7 +168,6 @@ export function CommercialInvoicesManager() {
         invoice.numeroFactura,
         invoice.sufijoControl,
         invoice.clienteComercialNombre,
-        invoice.promotorNombre,
         invoice.notasComerciales,
         invoice.modalidad,
         modalityLabel,
@@ -341,7 +340,7 @@ export function CommercialInvoicesManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por N° factura, sufijo, cliente, promotor, notas…"
+              searchPlaceholder="Buscar por N° factura, sufijo, cliente, notas…"
               resultCount={filteredInvoices.length}
               totalCount={invoices.length}
               filters={[

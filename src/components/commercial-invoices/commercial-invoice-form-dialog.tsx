@@ -13,9 +13,7 @@ import {
 } from "@/lib/commercial-invoice-form";
 import {
   createCommercialClient,
-  createCommercialPromoter,
   fetchCommercialClients,
-  fetchCommercialPromoters,
   getCommercialInvoicesErrorMessage,
 } from "@/lib/commercial-invoices-api";
 import { zodFieldErrors } from "@/lib/form-zod";
@@ -28,7 +26,6 @@ import {
   type CommercialClientResponse,
   type CommercialInvoiceFormValues,
   type CommercialInvoiceResponse,
-  type CommercialPromoterResponse,
 } from "@/types/commercial-invoice";
 
 type CommercialInvoiceFormDialogProps = {
@@ -56,7 +53,7 @@ const STEP_ICONS = {
 function stepSubtitle(step: WizardStep): string {
   switch (step) {
     case 1:
-      return "Número de factura, sufijo de control, cliente y promotor.";
+      return "Número de factura, sufijo de control y cliente comercial.";
     case 2:
       return "Modalidad comercial, estado de cobro y observaciones.";
   }
@@ -83,22 +80,17 @@ function CommercialInvoiceFormDialogContent({
   >({});
 
   const [clients, setClients] = useState<CommercialClientResponse[]>([]);
-  const [promoters, setPromoters] = useState<CommercialPromoterResponse[]>([]);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [addingClient, setAddingClient] = useState(false);
   const [newClientName, setNewClientName] = useState("");
   const [savingClient, setSavingClient] = useState(false);
-  const [addingPromoter, setAddingPromoter] = useState(false);
-  const [newPromoterName, setNewPromoterName] = useState("");
-  const [savingPromoter, setSavingPromoter] = useState(false);
 
   useEffect(() => {
     let active = true;
-    Promise.all([fetchCommercialClients(), fetchCommercialPromoters()])
-      .then(([clientList, promoterList]) => {
+    fetchCommercialClients()
+      .then((clientList) => {
         if (!active) return;
         setClients(clientList);
-        setPromoters(promoterList);
         setCatalogError(null);
       })
       .catch((err) => {
@@ -130,26 +122,6 @@ function CommercialInvoiceFormDialogContent({
     }
   }
 
-  async function handleCreatePromoter() {
-    const trimmed = newPromoterName.trim();
-    if (!trimmed) return;
-    setSavingPromoter(true);
-    setCatalogError(null);
-    try {
-      const created = await createCommercialPromoter({ nombre: trimmed });
-      setPromoters((prev) =>
-        [...prev, created].sort((a, b) => a.nombre.localeCompare(b.nombre)),
-      );
-      setForm((f) => ({ ...f, promotorId: String(created.id) }));
-      setNewPromoterName("");
-      setAddingPromoter(false);
-    } catch (err) {
-      setCatalogError(getCommercialInvoicesErrorMessage(err));
-    } finally {
-      setSavingPromoter(false);
-    }
-  }
-
   function goToStep(target: WizardStep) {
     setFieldErrors({});
     setStep(target);
@@ -162,14 +134,12 @@ function CommercialInvoiceFormDialogContent({
       errors &&
       (errors.numeroFactura ||
         errors.sufijoControl ||
-        errors.clienteComercialId ||
-        errors.promotorId)
+        errors.clienteComercialId)
     ) {
       setFieldErrors({
         numeroFactura: errors.numeroFactura,
         sufijoControl: errors.sufijoControl,
         clienteComercialId: errors.clienteComercialId,
-        promotorId: errors.promotorId,
       });
       return;
     }
@@ -195,8 +165,7 @@ function CommercialInvoiceFormDialogContent({
       if (
         errors.numeroFactura ||
         errors.sufijoControl ||
-        errors.clienteComercialId ||
-        errors.promotorId
+        errors.clienteComercialId
       ) {
         setStep(1);
       }
@@ -411,69 +380,6 @@ function CommercialInvoiceFormDialogContent({
                   {fieldErrors.clienteComercialId ? (
                     <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
                       {fieldErrors.clienteComercialId}
-                    </span>
-                  ) : null}
-                </div>
-
-                <div>
-                  <div className="mb-1 flex items-center justify-between gap-2">
-                    <FieldLabel>Promotor / Vendedor</FieldLabel>
-                    <button
-                      type="button"
-                      disabled={saving || savingPromoter}
-                      onClick={() => setAddingPromoter((v) => !v)}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline disabled:opacity-50"
-                    >
-                      <Plus className="size-3.5" aria-hidden />
-                      {addingPromoter ? "Cancelar" : "Nuevo promotor"}
-                    </button>
-                  </div>
-                  {addingPromoter ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        maxLength={100}
-                        value={newPromoterName}
-                        disabled={savingPromoter}
-                        onChange={(e) => setNewPromoterName(e.target.value)}
-                        className={inputClass}
-                        placeholder="Nombre del promotor o vendedor"
-                      />
-                      <button
-                        type="button"
-                        disabled={savingPromoter || !newPromoterName.trim()}
-                        onClick={() => void handleCreatePromoter()}
-                        className="shrink-0 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
-                      >
-                        {savingPromoter ? "Guardando..." : "Crear"}
-                      </button>
-                    </div>
-                  ) : (
-                    <NativeSelect
-                      value={form.promotorId}
-                      disabled={saving}
-                      onChange={(e) => {
-                        setForm((f) => ({
-                          ...f,
-                          promotorId: e.target.value,
-                        }));
-                        setFieldErrors((prev) => ({
-                          ...prev,
-                          promotorId: undefined,
-                        }));
-                      }}
-                    >
-                      <option value="">Sin promotor asignado</option>
-                      {promoters.map((p) => (
-                        <option key={p.id} value={String(p.id)}>
-                          {p.nombre}
-                        </option>
-                      ))}
-                    </NativeSelect>
-                  )}
-                  {fieldErrors.promotorId ? (
-                    <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
-                      {fieldErrors.promotorId}
                     </span>
                   ) : null}
                 </div>

@@ -508,12 +508,6 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         viewBindings: ["invoice.clienteComercialNombre"],
       },
       {
-        formLabels: ["Promotor / Vendedor"],
-        viewLabels: ["Promotor / Vendedor"],
-        formBindings: ["form.promotorId"],
-        viewBindings: ["invoice.promotorNombre"],
-      },
-      {
         formLabels: ["Modalidad"],
         viewLabels: ["Modalidad"],
         formBindings: ["form.modalidad"],

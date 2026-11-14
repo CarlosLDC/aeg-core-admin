@@ -312,10 +312,6 @@ export function CommercialInvoiceView() {
               value={invoice.clienteComercialNombre ?? "—"}
             />
             <DetailField
-              label="Promotor / Vendedor"
-              value={invoice.promotorNombre ?? "—"}
-            />
-            <DetailField
               label="Impresoras asociadas"
               value={String(invoice.printerCount)}
             />

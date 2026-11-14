@@ -20,7 +20,6 @@ export const commercialInvoiceFormSchema = z.object({
   estadoCobro: z.enum(COMMERCIAL_INVOICE_COLLECTION_STATUSES, {
     message: "Estado de cobro no válido.",
   }),
-  promotorId: z.string().trim(),
   notasComerciales: z
     .string()
     .max(5000, "Máximo 5000 caracteres."),

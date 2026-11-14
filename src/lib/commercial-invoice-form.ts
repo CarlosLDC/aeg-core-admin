@@ -50,7 +50,6 @@ export const emptyCommercialInvoiceForm = (): CommercialInvoiceFormValues => ({
   clienteComercialId: "",
   modalidad: "VENTA",
   estadoCobro: "PAGADO",
-  promotorId: "",
   notasComerciales: "",
 });
 
@@ -72,7 +71,6 @@ export function commercialInvoiceToFormValues(
     )
       ? invoice.estadoCobro
       : "PAGADO",
-    promotorId: invoice.promotorId != null ? String(invoice.promotorId) : "",
     notasComerciales: invoice.notasComerciales ?? "",
   };
 }
@@ -104,10 +102,6 @@ export function toCommercialInvoiceRequest(
   if (values.clienteComercialId.trim() && clienteComercialId == null) {
     return "El cliente seleccionado no es válido.";
   }
-  const promotorId = parseOptionalId(values.promotorId);
-  if (values.promotorId.trim() && promotorId == null) {
-    return "El promotor seleccionado no es válido.";
-  }
   if (!COMMERCIAL_INVOICE_MODALITIES.includes(values.modalidad)) {
     return "Modalidad no válida.";
   }
@@ -121,7 +115,6 @@ export function toCommercialInvoiceRequest(
     clienteComercialId,
     modalidad: values.modalidad,
     estadoCobro: values.estadoCobro,
-    promotorId,
     notasComerciales: trimToNull(values.notasComerciales),
   };
 }

@@ -100,7 +100,6 @@ function CommercialPaymentFormDialogContent({
           inv.numeroFactura,
           inv.sufijoControl,
           inv.clienteComercialNombre,
-          inv.promotorNombre,
         ]
           .filter(Boolean)
           .join(" "),

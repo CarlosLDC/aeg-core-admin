@@ -37,18 +37,6 @@ export type CommercialClientRequest = {
   activo?: boolean;
 };
 
-export type CommercialPromoterResponse = {
-  id: number;
-  nombre: string;
-  activo: boolean;
-  createdAt: string;
-};
-
-export type CommercialPromoterRequest = {
-  nombre: string;
-  activo?: boolean;
-};
-
 export type CommercialInvoiceResponse = {
   id: number;
   numeroFactura: string | null;
@@ -57,8 +45,6 @@ export type CommercialInvoiceResponse = {
   clienteComercialNombre: string | null;
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;
-  promotorId: number | null;
-  promotorNombre: string | null;
   notasComerciales: string | null;
   createdAt: string;
   paymentCount: number;
@@ -72,7 +58,6 @@ export type CommercialInvoiceRequest = {
   clienteComercialId?: number | null;
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;
-  promotorId?: number | null;
   notasComerciales?: string | null;
 };
 
@@ -82,6 +67,5 @@ export type CommercialInvoiceFormValues = {
   clienteComercialId: string;
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;
-  promotorId: string;
   notasComerciales: string;
 };
