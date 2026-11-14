@@ -4,12 +4,11 @@ import { FormEvent, useId, useMemo, useState } from "react";
 import { FiscalSerialInput } from "@/components/printers/fiscal-serial-input";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { BatchFormDialog } from "@/components/ui/batch-form-dialog";
-import { FieldLabel, RequiredFieldsLegend } from "@/components/ui/field-label";
+import { FieldLabel } from "@/components/ui/field-label";
 import { NativeSelect } from "@/components/ui/native-select";
 import {
   applyModelPrefixToFiscalSerial,
   buildSerialRange,
-  DEFAULT_FISCAL_SERIAL_DIGITS,
   extractFiscalSerialParts,
   FISCAL_SERIAL_DIGIT_COUNT,
   FISCAL_SERIAL_LETTER_COUNT,
@@ -114,7 +113,7 @@ function PrinterBatchFormDialogContent({
     const computedEndDigits =
       validStart && !overflows
         ? String(toNumber).padStart(FISCAL_SERIAL_DIGIT_COUNT, "0")
-        : DEFAULT_FISCAL_SERIAL_DIGITS;
+        : null;
 
     if (!validPrefix || !validStart || overflows) {
       return {
@@ -309,7 +308,7 @@ function PrinterBatchFormDialogContent({
               }}
               className={cn(
                 formFieldInputClass,
-                "font-mono",
+                "font-mono text-card-foreground",
                 isDuplicateBox &&
                   "border-rose-500/60 focus:border-rose-500 focus:ring-rose-500/20",
               )}
@@ -341,67 +340,54 @@ function PrinterBatchFormDialogContent({
             </span>
             <div
               aria-labelledby={endSerialLabelId}
-              className="flex h-10 w-full overflow-hidden rounded-lg border border-border bg-foreground/[0.03] opacity-85"
+              className="flex h-10 w-full overflow-hidden rounded-lg border border-border bg-foreground/[0.03]"
             >
               <span
                 aria-label="Prefijo del serial final"
-                className="flex shrink-0 select-none items-center border-r border-border bg-foreground/[0.04] px-3 font-mono text-sm font-semibold tracking-wider text-muted"
+                className={cn(
+                  "flex shrink-0 select-none items-center border-r border-border bg-foreground/[0.04] px-3 font-mono text-sm font-semibold tracking-wider",
+                  hasValidPrefix ? "text-card-foreground" : "text-muted",
+                )}
               >
                 {displayPrefix}
               </span>
               <span
                 aria-label="Dígitos del serial final"
-                className="flex min-w-0 flex-1 items-center px-3 font-mono text-sm tracking-[0.16em] text-muted sm:tracking-[0.2em]"
+                className={cn(
+                  "flex min-w-0 flex-1 items-center px-3 font-mono text-sm tracking-[0.16em] sm:tracking-[0.2em]",
+                  endDigits != null ? "text-card-foreground" : "text-muted/60",
+                )}
               >
-                {overflowsDigits ? "-------" : endDigits}
+                {endDigits ?? "-------"}
               </span>
             </div>
           </div>
         </div>
 
-        <div
-          className={cn(
-            "rounded-lg border px-3.5 py-2.5 text-sm",
-            bannerError
-              ? "border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300"
-              : "border-border bg-background/70 text-muted",
-          )}
-          role={bannerError ? "alert" : "status"}
-        >
-          {bannerError ? (
-            bannerError
-          ) : rangeSummary?.ok && parsedBoxNumber != null ? (
-            <>
+        {bannerError ? (
+          <div
+            className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-3.5 py-2.5 text-sm text-rose-700 dark:text-rose-300"
+            role="alert"
+          >
+            {bannerError}
+          </div>
+        ) : rangeSummary?.ok && parsedBoxNumber != null ? (
+          <div
+            className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-accent/25 bg-accent/5 px-3.5 py-2.5 text-sm text-muted"
+            role="status"
+          >
+            <span>
               <span className="font-medium text-card-foreground">
                 Lote #{parsedBoxNumber}
               </span>{" "}
-              · {PRINTER_BATCH_SIZE} impresoras sin asignar ·{" "}
-              <span className="font-mono text-xs text-card-foreground">
-                {rangeSummary.serials[0]} …{" "}
-                {rangeSummary.serials[rangeSummary.serials.length - 1]}
-              </span>
-            </>
-          ) : (
-            <>
-              Se registrarán{" "}
-              <span className="font-medium text-card-foreground">
-                {PRINTER_BATCH_SIZE} impresoras sin asignar
-              </span>
-              {parsedBoxNumber != null ? (
-                <>
-                  {" "}
-                  en el{" "}
-                  <span className="font-medium text-card-foreground">
-                    Lote #{parsedBoxNumber}
-                  </span>
-                </>
-              ) : null}{" "}
-              del mismo modelo fiscal.
-            </>
-          )}
-        </div>
-
-        <RequiredFieldsLegend />
+              · {PRINTER_BATCH_SIZE} impresoras sin asignar
+            </span>
+            <span className="font-mono text-xs font-medium text-card-foreground">
+              {rangeSummary.serials[0]} →{" "}
+              {rangeSummary.serials[rangeSummary.serials.length - 1]}
+            </span>
+          </div>
+        ) : null}
       </fieldset>
     </BatchFormDialog>
   );
