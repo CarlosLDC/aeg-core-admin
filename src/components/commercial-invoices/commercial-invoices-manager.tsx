@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
-import { CommercialInvoiceCollectionStatusBadge } from "@/components/commercial-invoices/commercial-invoice-badges";
+import {
+  CommercialInvoiceCollectionStatusBadge,
+  CommercialInvoiceModalityBadge,
+} from "@/components/commercial-invoices/commercial-invoice-badges";
 import { CommercialInvoiceFormDialog } from "@/components/commercial-invoices/commercial-invoice-form-dialog";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
@@ -426,6 +429,7 @@ export function CommercialInvoicesManager() {
                           <th className="px-5 py-3 font-medium">
                             Cliente (factura)
                           </th>
+                          <th className="px-5 py-3 font-medium">Modalidad</th>
                           <th className="px-5 py-3 font-medium">
                             Estado de cobro
                           </th>
@@ -488,6 +492,11 @@ export function CommercialInvoicesManager() {
                                 <TruncatedText maxClassName="max-w-[200px]">
                                   {invoice.facturaCliente ?? "—"}
                                 </TruncatedText>
+                              </td>
+                              <td className="px-5 py-3.5">
+                                <CommercialInvoiceModalityBadge
+                                  modality={invoice.modalidad}
+                                />
                               </td>
                               <td className="px-5 py-3.5">
                                 <CommercialInvoiceCollectionStatusBadge

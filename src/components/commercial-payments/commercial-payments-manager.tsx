@@ -436,6 +436,9 @@ export function CommercialPaymentsManager() {
                             Factura comercial
                           </th>
                           <th className="px-5 py-3 font-medium">
+                            Cliente (factura)
+                          </th>
+                          <th className="px-5 py-3 font-medium">
                             Método / Banco
                           </th>
                           <SortableTableHeader
@@ -512,6 +515,13 @@ export function CommercialPaymentsManager() {
                                   className="font-medium text-card-foreground"
                                 >
                                   {invoiceLabel}
+                                </TruncatedText>
+                              </td>
+                              <td className="max-w-[200px] px-5 py-3.5 text-muted">
+                                <TruncatedText maxClassName="max-w-[180px]">
+                                  {payment.facturaCliente ??
+                                    linked?.facturaCliente ??
+                                    "—"}
                                 </TruncatedText>
                               </td>
                               <td className="px-5 py-3.5">

@@ -405,6 +405,9 @@ export function CommercialInvoiceView() {
                       </th>
                       <th className="px-4 py-2.5 font-medium">Monto</th>
                       <th className="px-4 py-2.5 font-medium">Referencia</th>
+                      <th className="px-4 py-2.5 font-medium">
+                        Cuenta destino
+                      </th>
                       <th className="px-4 py-2.5 font-medium">Fecha</th>
                       <th className="px-4 py-2.5 text-right font-medium">
                         Acciones
@@ -428,6 +431,11 @@ export function CommercialInvoiceView() {
                         <td className="px-4 py-2.5 font-mono text-muted">
                           <TruncatedText mono maxClassName="max-w-[160px]">
                             {payment.referencia ?? "—"}
+                          </TruncatedText>
+                        </td>
+                        <td className="px-4 py-2.5 text-muted">
+                          <TruncatedText maxClassName="max-w-[160px]">
+                            {payment.cuentaDestino ?? "—"}
                           </TruncatedText>
                         </td>
                         <td className="px-4 py-2.5 whitespace-nowrap text-muted">
