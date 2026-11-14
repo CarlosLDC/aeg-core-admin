@@ -21,17 +21,11 @@ import {
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
-import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
-import { EmptyState, TableFilterEmptyState } from "@/components/ui/empty-state";
-import { SortableTableHeader } from "@/components/ui/sortable-table-header";
-import { TablePagination } from "@/components/ui/table-pagination";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
-import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { useAuth } from "@/context/auth-provider";
 import { useConfirm } from "@/context/confirm-provider";
 import { useToast } from "@/context/toast-provider";
-import { usePagination } from "@/hooks/use-pagination";
 import { useResourceId } from "@/hooks/use-resource-id";
 import {
   canCreateCommercialPaymentRecord,
@@ -50,10 +44,7 @@ import {
   getCommercialInvoicesErrorMessage,
   updateCommercialInvoice,
 } from "@/lib/commercial-invoices-api";
-import {
-  COMMERCIAL_PAYMENT_METHOD_LABELS,
-  toCommercialPaymentRequest,
-} from "@/lib/commercial-payment-form";
+import { toCommercialPaymentRequest } from "@/lib/commercial-payment-form";
 import {
   createCommercialPayment,
   deleteCommercialPayment,
@@ -68,13 +59,6 @@ import {
   commercialInvoicesListPath,
   commercialPaymentPath,
 } from "@/lib/resource-routes";
-import {
-  compareDateValues,
-  compareNumberValues,
-  sortTableRows,
-  toggleTableSort,
-  type TableSortState,
-} from "@/lib/table-sort";
 import type {
   CommercialInvoiceFormValues,
   CommercialInvoiceResponse,
@@ -83,8 +67,6 @@ import type {
   CommercialPaymentFormValues,
   CommercialPaymentResponse,
 } from "@/types/commercial-payment";
-
-type PaymentSortKey = "method" | "amount" | "reference" | "account" | "date";
 
 export function CommercialInvoiceView() {
   const id = useResourceId();
@@ -127,9 +109,6 @@ export function CommercialInvoiceView() {
   const [deletingPaymentId, setDeletingPaymentId] = useState<number | null>(
     null,
   );
-  const [paymentSearch, setPaymentSearch] = useState("");
-  const [paymentSort, setPaymentSort] =
-    useState<TableSortState<PaymentSortKey>>(null);
 
   const reloadAll = useCallback(async () => {
     if (id == null) return;
@@ -309,44 +288,6 @@ export function CommercialInvoiceView() {
     [canDeletePayment, confirm, reloadAll, toast],
   );
 
-  const filteredPayments = useMemo(() => {
-    const q = paymentSearch.trim().toLowerCase();
-    if (!q) return payments;
-    return payments.filter((p) => {
-      const methodLabel =
-        COMMERCIAL_PAYMENT_METHOD_LABELS[p.metodoBanco] ?? p.metodoBanco;
-      return `${p.id} ${methodLabel} ${p.referencia ?? ""} ${p.cuentaDestino ?? ""} ${p.monto ?? ""}`
-        .toLowerCase()
-        .includes(q);
-    });
-  }, [payments, paymentSearch]);
-
-  const sortedPayments = useMemo(
-    () =>
-      sortTableRows(filteredPayments, paymentSort, {
-        method: (a, b) =>
-          (
-            COMMERCIAL_PAYMENT_METHOD_LABELS[a.metodoBanco] ?? a.metodoBanco
-          ).localeCompare(
-            COMMERCIAL_PAYMENT_METHOD_LABELS[b.metodoBanco] ?? b.metodoBanco,
-            "es",
-          ),
-        amount: (a, b) => compareNumberValues(a.monto, b.monto),
-        reference: (a, b) =>
-          (a.referencia ?? "").localeCompare(b.referencia ?? "", "es", {
-            numeric: true,
-          }),
-        account: (a, b) =>
-          (a.cuentaDestino ?? "").localeCompare(b.cuentaDestino ?? "", "es", {
-            numeric: true,
-          }),
-        date: (a, b) => compareDateValues(a.createdAt, b.createdAt),
-      }),
-    [filteredPayments, paymentSort],
-  );
-
-  const paymentPagination = usePagination(sortedPayments);
-
   const detailSteps = useMemo((): DetailPagerStep[] => {
     if (!invoice) return [];
 
@@ -429,9 +370,12 @@ export function CommercialInvoiceView() {
         id: "payments",
         label: `Pagos (${payments.length})`,
         content: (
-          <section className="space-y-4">
-            {canCreatePayment && payments.length > 0 && (
-              <div className="flex justify-end">
+          <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-card-foreground">
+                Pagos comerciales registrados
+              </h3>
+              {canCreatePayment ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -439,181 +383,94 @@ export function CommercialInvoiceView() {
                     setPaymentFormError(null);
                     setPaymentDialog("create");
                   }}
-                  className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 sm:w-auto"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-foreground transition-opacity hover:opacity-90"
                 >
-                  <Plus className="size-4" />
+                  <Plus className="size-3.5" aria-hidden />
                   Registrar pago
                 </button>
+              ) : null}
+            </div>
+
+            {payments.length === 0 ? (
+              <p className="mt-4 text-sm text-muted">
+                Aún no hay pagos comerciales registrados para esta factura.
+              </p>
+            ) : (
+              <div className="mt-4 overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+                      <th className="px-4 py-2.5 font-medium">
+                        Método / Banco
+                      </th>
+                      <th className="px-4 py-2.5 font-medium">Monto</th>
+                      <th className="px-4 py-2.5 font-medium">Referencia</th>
+                      <th className="px-4 py-2.5 font-medium">Fecha</th>
+                      <th className="px-4 py-2.5 text-right font-medium">
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payments.map((payment) => (
+                      <ClickableTableRow
+                        key={payment.id}
+                        href={commercialPaymentPath(payment.id)}
+                      >
+                        <td className="px-4 py-2.5">
+                          <CommercialPaymentMethodBadge
+                            method={payment.metodoBanco}
+                          />
+                        </td>
+                        <td className="px-4 py-2.5 font-medium whitespace-nowrap text-card-foreground">
+                          {formatMoney(payment.monto)}
+                        </td>
+                        <td className="px-4 py-2.5 font-mono text-muted">
+                          <TruncatedText mono maxClassName="max-w-[160px]">
+                            {payment.referencia ?? "—"}
+                          </TruncatedText>
+                        </td>
+                        <td className="px-4 py-2.5 whitespace-nowrap text-muted">
+                          {formatDate(payment.createdAt)}
+                        </td>
+                        <td
+                          className="px-4 py-2.5"
+                          data-row-click="ignore"
+                        >
+                          <TableRowActionsMenu
+                            viewHref={commercialPaymentPath(payment.id)}
+                            viewLabel={`Ver pago #${payment.id}`}
+                            onEdit={
+                              canModifyPayment
+                                ? () => {
+                                    setSelectedPayment(payment);
+                                    setPaymentFormError(null);
+                                    setPaymentDialog("edit");
+                                  }
+                                : undefined
+                            }
+                            onDelete={
+                              canDeletePayment
+                                ? () => void handleDeletePayment(payment)
+                                : undefined
+                            }
+                            deleting={deletingPaymentId === payment.id}
+                          />
+                        </td>
+                      </ClickableTableRow>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
-
-            <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-              {payments.length === 0 ? (
-                <EmptyState
-                  title="Esta factura no tiene pagos comerciales registrados."
-                  action={
-                    canCreatePayment ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedPayment(null);
-                          setPaymentFormError(null);
-                          setPaymentDialog("create");
-                        }}
-                        className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
-                      >
-                        <Plus className="size-4" />
-                        Registrar pago
-                      </button>
-                    ) : undefined
-                  }
-                />
-              ) : (
-                <>
-                  <DataTableToolbar
-                    search={paymentSearch}
-                    onSearchChange={setPaymentSearch}
-                    searchPlaceholder="Buscar por método, referencia o cuenta destino…"
-                    resultCount={sortedPayments.length}
-                    totalCount={payments.length}
-                  />
-                  {sortedPayments.length === 0 ? (
-                    <TableFilterEmptyState />
-                  ) : (
-                    <>
-                      <TableScroll>
-                        <table className="w-full min-w-[600px] text-left text-sm">
-                          <thead>
-                            <tr className="border-b border-border bg-foreground/[0.02] text-muted">
-                              <SortableTableHeader
-                                label="Método / Banco"
-                                sortDirection={
-                                  paymentSort?.key === "method"
-                                    ? paymentSort.direction
-                                    : null
-                                }
-                                onToggle={() =>
-                                  setPaymentSort((current) =>
-                                    toggleTableSort(current, "method"),
-                                  )
-                                }
-                              />
-                              <SortableTableHeader
-                                label="Monto"
-                                sortDirection={
-                                  paymentSort?.key === "amount"
-                                    ? paymentSort.direction
-                                    : null
-                                }
-                                onToggle={() =>
-                                  setPaymentSort((current) =>
-                                    toggleTableSort(current, "amount"),
-                                  )
-                                }
-                              />
-                              <SortableTableHeader
-                                label="Referencia"
-                                sortDirection={
-                                  paymentSort?.key === "reference"
-                                    ? paymentSort.direction
-                                    : null
-                                }
-                                onToggle={() =>
-                                  setPaymentSort((current) =>
-                                    toggleTableSort(current, "reference"),
-                                  )
-                                }
-                              />
-                              <SortableTableHeader
-                                label="Fecha"
-                                sortDirection={
-                                  paymentSort?.key === "date"
-                                    ? paymentSort.direction
-                                    : null
-                                }
-                                onToggle={() =>
-                                  setPaymentSort((current) =>
-                                    toggleTableSort(current, "date"),
-                                  )
-                                }
-                              />
-                              <th className="px-5 py-3 text-right font-medium">
-                                Acciones
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {paymentPagination.paginatedItems.map((payment) => (
-                              <ClickableTableRow
-                                key={payment.id}
-                                href={commercialPaymentPath(payment.id)}
-                              >
-                                <td className="px-5 py-3.5">
-                                  <CommercialPaymentMethodBadge
-                                    method={payment.metodoBanco}
-                                  />
-                                </td>
-                                <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
-                                  {formatMoney(payment.monto)}
-                                </td>
-                                <td className="max-w-[180px] px-5 py-3.5 font-mono text-muted">
-                                  <TruncatedText
-                                    mono
-                                    maxClassName="max-w-[160px]"
-                                  >
-                                    {payment.referencia ?? "—"}
-                                  </TruncatedText>
-                                </td>
-                                <td className="px-5 py-3.5 text-muted">
-                                  {formatDate(payment.createdAt)}
-                                </td>
-                                <td
-                                  className="px-5 py-3.5"
-                                  data-row-click="ignore"
-                                >
-                                  <TableRowActionsMenu
-                                    viewHref={commercialPaymentPath(payment.id)}
-                                    viewLabel={`Ver pago #${payment.id}`}
-                                    onEdit={
-                                      canModifyPayment
-                                        ? () => {
-                                            setSelectedPayment(payment);
-                                            setPaymentFormError(null);
-                                            setPaymentDialog("edit");
-                                          }
-                                        : undefined
-                                    }
-                                    onDelete={
-                                      canDeletePayment
-                                        ? () => void handleDeletePayment(payment)
-                                        : undefined
-                                    }
-                                    deleting={deletingPaymentId === payment.id}
-                                  />
-                                </td>
-                              </ClickableTableRow>
-                            ))}
-                          </tbody>
-                        </table>
-                      </TableScroll>
-                      <TablePagination pagination={paymentPagination} />
-                    </>
-                  )}
-                </>
-              )}
-            </div>
           </section>
         ),
       },
     ];
   }, [
     invoice,
-    payments.length,
+    payments,
     canCreatePayment,
-    paymentSearch,
-    sortedPayments.length,
-    paymentSort,
-    paymentPagination,
     canModifyPayment,
     canDeletePayment,
     deletingPaymentId,
