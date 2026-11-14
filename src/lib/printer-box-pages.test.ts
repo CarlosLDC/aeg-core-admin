@@ -34,6 +34,9 @@ function makePrinter(
     createdAt: "2026-11-13T00:00:00Z",
     boxId,
     boxNumber: boxId,
+    finalSalePrice: null,
+    header: null,
+    trailer: null,
   };
 }
 

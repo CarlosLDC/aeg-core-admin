@@ -49,7 +49,7 @@ describe("software-modification-requests-api", () => {
   });
 
   it("fetchPendingSoftwareModificationRequest returns null on 204/404", async () => {
-    mockApiFetch.mockRejectedValueOnce(new ApiError(204, "No content"));
+    mockApiFetch.mockRejectedValueOnce(new ApiError("No content", 204));
     const res = await fetchPendingSoftwareModificationRequest(5);
     expect(res).toBeNull();
   });
