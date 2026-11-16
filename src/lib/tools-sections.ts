@@ -124,7 +124,7 @@ export const TOOLS_SECTIONS = {
     title: "Logs",
     description: "Consultar, filtrar y depurar logs MQTT de la impresora.",
     icon: ScrollText,
-    tone: "slate",
+    tone: "sky",
   },
 } as const satisfies Record<string, ToolsSectionConfig>;
 
