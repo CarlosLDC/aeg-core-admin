@@ -3,12 +3,20 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Clock, MoreHorizontal, Printer, RefreshCw } from "lucide-react";
+import {
+  Clock,
+  Globe,
+  MoreHorizontal,
+  Printer,
+  RefreshCw,
+  TriangleAlert,
+  Wifi,
+} from "lucide-react";
 import {
   ToolsIconBadge,
   ToolsRefreshStatusButton,
   toolsActionButtonClass,
-  toolsPanelSectionClass,
+  toolsSurfaceClass,
 } from "@/components/tools/tools-ui";
 import { ToolsUsbConnectionButton } from "@/components/tools/tools-connection-mode-switch";
 import { printerPath } from "@/lib/resource-routes";
@@ -109,10 +117,7 @@ function ToolsStatusActionsMenu({
     if (!open) return;
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
-      if (
-        rootRef.current?.contains(target) ||
-        menuRef.current?.contains(target)
-      ) {
+      if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) {
         return;
       }
       setOpen(false);
@@ -190,7 +195,10 @@ function ToolsStatusActionsMenu({
           }
           setOpen(true);
         }}
-        className={cn(toolsActionButtonClass, "w-auto px-2.5")}
+        className={cn(
+          toolsActionButtonClass,
+          "min-h-10 w-auto min-w-10 px-2.5 sm:min-h-0 sm:min-w-0",
+        )}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
@@ -206,7 +214,96 @@ function ToolsStatusActionsMenu({
   );
 }
 
-export function ToolsPrinterStatusBar({ connection, printerId }: ToolsPrinterStatusBarProps) {
+type StatusPillTone = "emerald" | "amber" | "rose" | "muted";
+
+const STATUS_PILL_CLASSES: Record<StatusPillTone, { container: string; dot: string }> =
+  {
+    emerald: {
+      container:
+        "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+      dot: "bg-emerald-500",
+    },
+    amber: {
+      container:
+        "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200",
+      dot: "bg-amber-500",
+    },
+    rose: {
+      container: "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300",
+      dot: "bg-rose-500",
+    },
+    muted: {
+      container: "border-border bg-foreground/[0.04] text-muted",
+      dot: "bg-muted",
+    },
+  };
+
+/** Compact rounded pill with leading status indicator dot. */
+function StatusPill({
+  tone,
+  pulse = false,
+  children,
+}: {
+  tone: StatusPillTone;
+  pulse?: boolean;
+  children: React.ReactNode;
+}) {
+  const styles = STATUS_PILL_CLASSES[tone];
+  return (
+    <span
+      className={cn(
+        "inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",
+        styles.container,
+      )}
+    >
+      <span
+        className={cn(
+          "size-2 shrink-0 rounded-full",
+          styles.dot,
+          pulse && "animate-pulse",
+        )}
+        aria-hidden
+      />
+      <span className="truncate">{children}</span>
+    </span>
+  );
+}
+
+/** Responsive telemetry item: stacked key-value row on mobile, inline chip on desktop. */
+function TelemetryItem({
+  icon,
+  label,
+  title,
+  action,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  title?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="flex min-w-0 items-center justify-between gap-3 sm:justify-start sm:gap-1.5"
+      title={title}
+    >
+      <span className="inline-flex shrink-0 items-center gap-1.5 text-muted">
+        {icon}
+        <span>{label}:</span>
+      </span>
+      <span className="flex min-w-0 items-center gap-1.5">
+        {children}
+        {action}
+      </span>
+    </div>
+  );
+}
+
+export function ToolsPrinterStatusBar({
+  connection,
+  printerId,
+}: ToolsPrinterStatusBarProps) {
   const { usbConnected } = useToolsTransportContext();
   const {
     status,
@@ -226,136 +323,175 @@ export function ToolsPrinterStatusBar({ connection, printerId }: ToolsPrinterSta
   } = connection;
   const statusSection = TOOLS_SECTIONS.status;
 
-  const seniatLabel =
-    status?.seniatStatus ?? (loading ? "Consultando…" : "Sin datos");
+  const seniatLabel = status?.seniatStatus ?? (loading ? "Consultando…" : "Sin datos");
+  const isAmberIssue =
+    connectionIssue === "seniat" || connectionIssue === "legacy-broker";
+  const seniatTone: StatusPillTone = loading
+    ? "muted"
+    : isSeniatOnline
+      ? "emerald"
+      : isAmberIssue
+        ? "amber"
+        : "rose";
+
   const canQueryClock = transportReady && (isPrinterReachable || usbConnected);
   const showClockChip =
     (isPrinterReachable || usbConnected) &&
     (clock != null || clockLoading || clockError != null);
+  const hasIp = isUsableToolsNetworkField(networkInfo?.ipAddress);
+  const hasWifi = isUsableToolsNetworkField(networkInfo?.wifiNetwork);
+  const wifiStatusText = hasWifi
+    ? formatToolsWifiStatusLine(networkInfo?.wifiNetwork).replace(/^WiFi:\s*/, "")
+    : null;
+
+  const telemetryItems: Array<{ id: string; node: React.ReactNode }> = [];
+  if (showClockChip) {
+    telemetryItems.push({
+      id: "clock",
+      node: (
+        <TelemetryItem
+          icon={<Clock className="size-3.5 shrink-0" aria-hidden />}
+          label="Reloj"
+          title={clockError ?? "Reloj de tiempo real (RTC) de la impresora"}
+          action={
+            canQueryClock ? (
+              <button
+                type="button"
+                onClick={() => void refreshClock()}
+                disabled={clockLoading}
+                aria-label="Actualizar reloj de la impresora"
+                title="Actualizar reloj (RTC)"
+                className="inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-border/70 bg-card text-muted transition-colors hover:bg-foreground/5 hover:text-foreground disabled:opacity-50 sm:size-6 sm:border-transparent sm:bg-transparent"
+              >
+                <RefreshCw
+                  className={cn("size-3.5 sm:size-3", clockLoading && "animate-spin")}
+                  aria-hidden
+                />
+              </button>
+            ) : null
+          }
+        >
+          {clockLoading ? (
+            <span className="font-medium text-card-foreground">Consultando…</span>
+          ) : clock ? (
+            <span className="font-mono font-medium tabular-nums text-card-foreground">
+              {clock}
+            </span>
+          ) : (
+            <span className="font-medium text-amber-700 dark:text-amber-300">
+              No disponible
+            </span>
+          )}
+        </TelemetryItem>
+      ),
+    });
+  }
+  if (hasIp) {
+    telemetryItems.push({
+      id: "ip",
+      node: (
+        <TelemetryItem
+          icon={<Globe className="size-3.5 shrink-0" aria-hidden />}
+          label="IP"
+        >
+          <span className="font-mono font-medium tabular-nums text-card-foreground">
+            {networkInfo?.ipAddress}
+          </span>
+        </TelemetryItem>
+      ),
+    });
+  }
+  if (wifiStatusText) {
+    telemetryItems.push({
+      id: "wifi",
+      node: (
+        <TelemetryItem
+          icon={<Wifi className="size-3.5 shrink-0" aria-hidden />}
+          label="WiFi"
+          title={wifiStatusText}
+        >
+          <span className="truncate font-medium text-card-foreground">
+            {wifiStatusText}
+          </span>
+        </TelemetryItem>
+      ),
+    });
+  }
 
   return (
-    <div
-      className={cn(
-        toolsPanelSectionClass,
-        "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between",
-      )}
-    >
-      <div className="flex min-w-0 items-start gap-3">
-        <ToolsIconBadge
-          icon={statusSection.icon}
-          tone={statusSection.tone}
-          size="md"
-        />
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-card-foreground">
-            {statusSection.title}
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-            {usbConnected ? (
-              <span className="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-                <span className="size-2.5 rounded-full bg-emerald-500" aria-hidden />
-                USB activo
-              </span>
-            ) : null}
-            <span className="inline-flex items-center gap-2">
-              <span
-                className={cn(
-                  "size-2.5 rounded-full",
-                  loading
-                    ? "animate-pulse bg-muted"
-                    : isSeniatOnline
-                      ? "bg-emerald-500"
-                      : connectionIssue === "seniat" ||
-                          connectionIssue === "legacy-broker"
-                        ? "bg-amber-500"
-                        : "bg-rose-500",
-                )}
-                aria-hidden
-              />
-              <span className="text-muted">SENIAT:</span>{" "}
-              <span className="font-medium text-card-foreground">
-                {seniatLabel}
-              </span>
-            </span>
-            {showClockChip ? (
-              <span
-                className="inline-flex items-center gap-1.5 text-muted"
-                title={clockError ?? "Reloj de tiempo real (RTC) de la impresora"}
-              >
-                <Clock className="size-3.5 shrink-0" aria-hidden />
-                <span>Reloj:</span>
-                {clockLoading ? (
-                  <span className="text-card-foreground">Consultando…</span>
-                ) : clock ? (
-                  <span className="font-mono font-medium text-card-foreground">
-                    {clock}
-                  </span>
-                ) : (
-                  <span className="text-amber-700 dark:text-amber-300">
-                    No disponible
-                  </span>
-                )}
-                {canQueryClock ? (
-                  <button
-                    type="button"
-                    onClick={() => void refreshClock()}
-                    disabled={clockLoading}
-                    aria-label="Actualizar reloj de la impresora"
-                    title="Actualizar reloj (RTC)"
-                    className="inline-flex size-5 items-center justify-center rounded text-muted transition-colors hover:bg-foreground/5 hover:text-foreground disabled:opacity-50"
-                  >
-                    <RefreshCw
-                      className={cn("size-3", clockLoading && "animate-spin")}
-                      aria-hidden
-                    />
-                  </button>
-                ) : null}
-              </span>
-            ) : null}
-            {isUsableToolsNetworkField(networkInfo?.ipAddress) ? (
-              <span className="font-mono text-muted">
-                IP: {networkInfo?.ipAddress}
-              </span>
-            ) : null}
-            {isUsableToolsNetworkField(networkInfo?.wifiNetwork) ? (
-              <span className="text-muted">
-                {formatToolsWifiStatusLine(networkInfo?.wifiNetwork)}
-              </span>
-            ) : null}
-            {isLegacyBroker ? (
-              <span className="inline-flex items-center gap-1.5 font-medium text-amber-700 dark:text-amber-300">
-                <span className="size-2 rounded-full bg-amber-500" aria-hidden />
-                Broker: Antiguo (contingencia)
-              </span>
-            ) : null}
-            {error ? (
-              <span
-                className={cn(
-                  connectionIssue === "seniat" ||
-                    connectionIssue === "legacy-broker"
-                    ? "text-amber-700 dark:text-amber-300"
-                    : "text-rose-600 dark:text-rose-400",
-                )}
-              >
-                {error}
-              </span>
-            ) : null}
+    <div className={cn(toolsSurfaceClass, "overflow-hidden")}>
+      {/* Nivel 1: Identidad, estado operativo crítico y acciones */}
+      <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div className="flex min-w-0 items-start gap-3 sm:items-center">
+          <ToolsIconBadge
+            icon={statusSection.icon}
+            tone={statusSection.tone}
+            size="md"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-semibold text-card-foreground">
+                {statusSection.title}
+              </p>
+              <StatusPill tone={seniatTone} pulse={loading}>
+                <span className="opacity-80">SENIAT:</span>{" "}
+                <span className="font-semibold">{seniatLabel}</span>
+              </StatusPill>
+              {usbConnected ? <StatusPill tone="emerald">USB activo</StatusPill> : null}
+              {isLegacyBroker ? (
+                <StatusPill tone="amber">Broker: Antiguo (contingencia)</StatusPill>
+              ) : null}
+            </div>
           </div>
         </div>
+
+        <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0">
+          <ToolsUsbConnectionButton className="min-h-10 sm:min-h-0" />
+          <ToolsRefreshStatusButton
+            loading={loading}
+            onRefresh={refreshStatus}
+            className="min-h-10 flex-1 sm:min-h-0 sm:flex-initial"
+          />
+          <ToolsStatusActionsMenu
+            printerId={printerId}
+            clockDisabled={!canQueryClock}
+            clockLoading={clockLoading}
+            onRefreshClock={refreshClock}
+          />
+        </div>
       </div>
-      <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
-        <ToolsUsbConnectionButton />
-        <ToolsRefreshStatusButton
-          loading={loading}
-          onRefresh={refreshStatus}
-        />
-        <ToolsStatusActionsMenu
-          printerId={printerId}
-          clockDisabled={!canQueryClock}
-          clockLoading={clockLoading}
-          onRefreshClock={refreshClock}
-        />
-      </div>
+
+      {/* Nivel 2: Franja de telemetría técnica */}
+      {telemetryItems.length > 0 ? (
+        <div className="border-t border-border/70 bg-foreground/[0.02] px-4 py-3 sm:px-5">
+          <div className="flex flex-col gap-2.5 text-[13px] sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-5 sm:gap-y-2 sm:text-sm">
+            {telemetryItems.map((item, index) => (
+              <div key={item.id} className="contents">
+                {index > 0 ? (
+                  <span className="hidden h-3.5 w-px bg-border sm:block" aria-hidden />
+                ) : null}
+                {item.node}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Nivel 3: Error dedicado (sin deformar la franja de telemetría) */}
+      {error ? (
+        <div
+          role="status"
+          className={cn(
+            "flex items-start gap-2 border-t px-4 py-2.5 text-xs sm:px-5 sm:text-sm",
+            isAmberIssue
+              ? "border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-200"
+              : "border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300",
+          )}
+        >
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <span className="min-w-0 break-words">{error}</span>
+        </div>
+      ) : null}
     </div>
   );
 }
