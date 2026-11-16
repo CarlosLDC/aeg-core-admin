@@ -1,8 +1,15 @@
 import { ArrowRight, KeyRound, RefreshCw } from "lucide-react";
+import {
+  PRINTER_PENDING_MQTT_ENAJENACION_LABEL,
+  PRINTER_PENDING_MQTT_ENAJENACION_TITLE,
+} from "@/lib/printer-enajenacion-ticket";
 import { printerStatusLabel, normalizePrinterStatus } from "@/lib/printer-status";
 import type { PrinterStatusQuickAction } from "@/lib/printer-quick-actions";
 import type { PrinterStatus } from "@/types/printer";
 import { cn } from "@/lib/utils";
+
+const PENDING_MQTT_STYLE =
+  "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200";
 
 const STATUS_STYLES: Record<string, string> = {
   de_fabrica:
@@ -26,22 +33,30 @@ const STATUS_STYLES: Record<string, string> = {
 type PrinterStatusBadgeProps = {
   status: PrinterStatus | string;
   title?: string;
+  pendingMqtt?: boolean;
 };
 
 export function PrinterStatusBadge({
   status,
   title,
+  pendingMqtt = false,
 }: PrinterStatusBadgeProps) {
   const normalized = normalizePrinterStatus(status);
-  const label = printerStatusLabel(status);
+  const label = pendingMqtt
+    ? PRINTER_PENDING_MQTT_ENAJENACION_LABEL
+    : printerStatusLabel(status);
+  const resolvedTitle =
+    title ?? (pendingMqtt ? PRINTER_PENDING_MQTT_ENAJENACION_TITLE : undefined);
   const className = cn(
     "inline-flex shrink-0 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium",
-    STATUS_STYLES[normalized] ?? STATUS_STYLES.desincorporada,
-    title && "cursor-help",
+    pendingMqtt
+      ? PENDING_MQTT_STYLE
+      : (STATUS_STYLES[normalized] ?? STATUS_STYLES.desincorporada),
+    resolvedTitle && "cursor-help",
   );
 
   return (
-    <span className={className} title={title}>
+    <span className={className} title={resolvedTitle}>
       {label}
     </span>
   );

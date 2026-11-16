@@ -2,6 +2,9 @@ import { isPrinterAssignedToDistributor } from "@/lib/printer-status";
 import type { PrinterResponse, PrinterTicketSection } from "@/types/printer";
 
 export const PRINTER_TICKET_RECONFIGURE_LABEL = "Reconfigurar ticket";
+export const PRINTER_PENDING_MQTT_ENAJENACION_LABEL = "Enajenando...";
+export const PRINTER_PENDING_MQTT_ENAJENACION_TITLE =
+  "Pendiente enajenación Remoto: ticket fiscal guardado; falta completar el ritual en la impresora.";
 
 export function hasPrinterTicketConfig(
   printer: Pick<PrinterResponse, "header"> &

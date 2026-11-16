@@ -1039,6 +1039,7 @@ export function CompanyPrintersTable({
                                   <PrinterStatusBadge
                                     status={printer.status}
                                     title={statusBadgeTitle}
+                                    pendingMqtt={isPrinterPendingMqttEnajenacion(printer)}
                                   />
                                   {statusQuickAction &&
                                   statusQuickAction.kind !== "reconfigure" ? (

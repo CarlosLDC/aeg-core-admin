@@ -1179,6 +1179,7 @@ export function PrintersManager() {
                         <PrinterStatusBadge
                           status={printer.status}
                           title={statusBadgeTitle}
+                          pendingMqtt={isPrinterPendingMqttEnajenacion(printer)}
                         />
                         {statusQuickAction &&
                         statusQuickAction.kind !== "reconfigure" ? (

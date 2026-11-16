@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
 import { printerPath } from "@/lib/resource-routes";
 import type { PrinterResponse } from "@/types/printer";
 import { TableScroll } from "@/components/ui/table-scroll";
@@ -79,7 +80,10 @@ export function DashboardRecentPrinters({
                     {printer.fiscalSerial}
                   </td>
                   <td className="px-5 py-3.5">
-                    <PrinterStatusBadge status={printer.status} />
+                    <PrinterStatusBadge
+                      status={printer.status}
+                      pendingMqtt={isPrinterPendingMqttEnajenacion(printer)}
+                    />
                   </td>
                   <td className="px-5 py-3.5 text-muted">
                     {printer.paid ? "Sí" : "No"}
