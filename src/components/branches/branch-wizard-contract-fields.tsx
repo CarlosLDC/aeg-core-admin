@@ -9,6 +9,7 @@ import type {
   BranchWizardValues,
 } from "@/components/branches/branch-wizard-types";
 import type { ContractKind } from "@/types/contract";
+import { calculateContractEndDate } from "@/lib/contract-form";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +52,13 @@ function ContractBlock({
             type="date"
             required
             value={draft.startDate}
-            onChange={(e) => onChange({ startDate: e.target.value })}
+            onChange={(e) => {
+              const startDate = e.target.value;
+              onChange({
+                startDate,
+                endDate: calculateContractEndDate(startDate),
+              });
+            }}
             disabled={saving}
             className={inputClass}
           />

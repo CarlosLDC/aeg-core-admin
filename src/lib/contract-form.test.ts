@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { pickCurrentContract } from "@/lib/contract-form";
+import {
+  calculateContractEndDate,
+  pickCurrentContract,
+} from "@/lib/contract-form";
 
 describe("pickCurrentContract", () => {
   it("returns null for an empty list", () => {
@@ -23,5 +26,20 @@ describe("pickCurrentContract", () => {
     const older = { id: 1, startDate: "2020-01-01", endDate: "2030-01-01" };
     const newer = { id: 2, startDate: "2021-01-01", endDate: "2031-01-01" };
     expect(pickCurrentContract([older, newer])).toEqual(newer);
+  });
+});
+
+describe("calculateContractEndDate", () => {
+  it("adds two years to a standard ISO date", () => {
+    expect(calculateContractEndDate("2026-11-16")).toBe("2028-11-16");
+  });
+
+  it("clamps Feb 29 to Feb 28 in a non-leap target year", () => {
+    expect(calculateContractEndDate("2024-02-29")).toBe("2026-02-28");
+  });
+
+  it("returns empty string for empty or invalid input", () => {
+    expect(calculateContractEndDate("")).toBe("");
+    expect(calculateContractEndDate("invalid")).toBe("");
   });
 });

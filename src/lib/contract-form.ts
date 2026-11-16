@@ -79,6 +79,32 @@ export function pickCurrentContract<
   })[0]!;
 }
 
+export const CONTRACT_DEFAULT_DURATION_YEARS = 2;
+
+const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * Calcula la fecha de fin sumando `years` años a una fecha ISO (`YYYY-MM-DD`),
+ * ajustando al último día del mes si el día no existe en el año destino (p. ej. 29 feb).
+ */
+export function calculateContractEndDate(
+  startDate: string,
+  years = CONTRACT_DEFAULT_DURATION_YEARS,
+): string {
+  const match = ISO_DATE_RE.exec(startDate.trim());
+  if (!match) return "";
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return "";
+
+  const targetYear = year + years;
+  const maxDay = new Date(Date.UTC(targetYear, month, 0)).getUTCDate();
+  const clampedDay = Math.min(day, maxDay);
+
+  return `${String(targetYear).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(clampedDay).padStart(2, "0")}`;
+}
+
 export function validateContractForm(
   values: ContractFormValues,
   kind: ContractKind,

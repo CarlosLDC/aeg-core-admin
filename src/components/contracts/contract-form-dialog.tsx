@@ -6,7 +6,10 @@ import { FieldLabel } from "@/components/ui/field-label";
 import { FormDialogFooter } from "@/components/ui/form-dialog-footer";
 import { ContractDocumentUpload } from "@/components/contracts/contract-document-upload";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { type ContractFormValues } from "@/lib/contract-form";
+import {
+  calculateContractEndDate,
+  type ContractFormValues,
+} from "@/lib/contract-form";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import type { ContractKind } from "@/types/contract";
 import type {
@@ -202,9 +205,16 @@ export function ContractFormDialog({
                 type="date"
                 required
                 value={form.startDate}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, startDate: e.target.value }))
-                }
+                onChange={(e) => {
+                  const startDate = e.target.value;
+                  setForm((f) => ({
+                    ...f,
+                    startDate,
+                    ...(mode === "create"
+                      ? { endDate: calculateContractEndDate(startDate) }
+                      : {}),
+                  }));
+                }}
                 className={inputClass}
               />
             </label>
