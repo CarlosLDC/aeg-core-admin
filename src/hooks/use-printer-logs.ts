@@ -14,6 +14,12 @@ import type {
 } from "@/types/printer-logs";
 import type { MqttMonitorWireMessage } from "@/types/mqtt";
 
+export type PrinterLogsLiveStatus =
+  | "paused"
+  | "connecting"
+  | "connected"
+  | "disconnected";
+
 export function usePrinterLogs(printerId: number, macAddress: string | null) {
   const [logs, setLogs] = useState<PrinterMqttLogItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -28,10 +34,16 @@ export function usePrinterLogs(printerId: number, macAddress: string | null) {
   const [order, setOrder] = useState<"asc" | "desc">("desc");
 
   const [liveEnabled, setLiveEnabled] = useState(true);
-  const [liveConnected, setLiveConnected] = useState(false);
+  const [wsState, setWsState] = useState<"connecting" | "connected" | "disconnected">("connecting");
+  const [reconnectSeq, setReconnectSeq] = useState(0);
 
   const wsRef = useRef<WebSocket | null>(null);
+  const tempSeqRef = useRef(0);
   const compactMac = macAddress ? macAddress.replace(/[:-]/g, "").toUpperCase() : null;
+
+  const liveStatus: PrinterLogsLiveStatus =
+    !liveEnabled || !compactMac ? "paused" : wsState;
+  const liveConnected = liveStatus === "connected";
 
   const loadLogs = useCallback(
     async (currentPage = page, silent = false) => {
@@ -108,15 +120,17 @@ export function usePrinterLogs(printerId: number, macAddress: string | null) {
       ws = new WebSocket(getMqttWebSocketUrl());
       wsRef.current = ws;
 
-      ws.onopen = () => setLiveConnected(true);
+      ws.onopen = () => setWsState("connected");
       ws.onclose = () => {
-        setLiveConnected(false);
         if (wsRef.current === ws) {
+          setWsState("disconnected");
           wsRef.current = null;
         }
       };
       ws.onerror = () => {
-        setLiveConnected(false);
+        if (wsRef.current === ws) {
+          setWsState("disconnected");
+        }
       };
 
       ws.onmessage = (event) => {
@@ -130,7 +144,7 @@ export function usePrinterLogs(printerId: number, macAddress: string | null) {
             normalizedTopic.includes("DEBUGMQTT")
           ) {
             const incomingItem: PrinterMqttLogItem = {
-              id: Date.now(),
+              id: Date.now() * 1000 + (tempSeqRef.current++ % 1000),
               recordedAt: wire.receivedAt ?? new Date().toISOString(),
               printerId,
               mac: compactMac,
@@ -146,7 +160,7 @@ export function usePrinterLogs(printerId: number, macAddress: string | null) {
         }
       };
     } catch {
-      // Ignore initial connection setup error
+      queueMicrotask(() => setWsState("disconnected"));
     }
 
     return () => {
@@ -161,7 +175,23 @@ export function usePrinterLogs(printerId: number, macAddress: string | null) {
         wsRef.current = null;
       }
     };
-  }, [liveEnabled, compactMac, printerId]);
+  }, [liveEnabled, compactMac, printerId, reconnectSeq]);
+
+  const toggleLive = useCallback(() => {
+    setLiveEnabled((prev) => {
+      const next = !prev;
+      if (next) {
+        setWsState("connecting");
+      }
+      return next;
+    });
+  }, []);
+
+  const reconnectLive = useCallback(() => {
+    setWsState("connecting");
+    setLiveEnabled(true);
+    setReconnectSeq((prev) => prev + 1);
+  }, []);
 
   const removeLogs = useCallback(
     async (params: DeletePrinterLogsParams) => {
@@ -186,6 +216,7 @@ export function usePrinterLogs(printerId: number, macAddress: string | null) {
     order,
     liveEnabled,
     liveConnected,
+    liveStatus,
     setPage,
     setLimit,
     setFrom,
@@ -193,6 +224,8 @@ export function usePrinterLogs(printerId: number, macAddress: string | null) {
     setSearch,
     setOrder,
     setLiveEnabled,
+    toggleLive,
+    reconnectLive,
     refetch: () => loadLogs(page),
     deleteLogs: removeLogs,
   };

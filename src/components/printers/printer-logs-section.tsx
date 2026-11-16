@@ -124,14 +124,15 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
     search,
     order,
     liveEnabled,
-    liveConnected,
+    liveStatus,
     setPage,
     setLimit,
     setFrom,
     setTo,
     setSearch,
     setOrder,
-    setLiveEnabled,
+    toggleLive,
+    reconnectLive,
     refetch,
   } = usePrinterLogs(printer.id, printer.macAddress);
 
@@ -221,14 +222,16 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
                 "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium",
                 !compactMac
                   ? "bg-foreground/5 text-muted"
-                  : liveEnabled && liveConnected
+                  : liveStatus === "connected"
                     ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                    : liveEnabled
+                    : liveStatus === "connecting"
                       ? "bg-amber-500/10 text-amber-800 dark:text-amber-200"
-                      : "bg-foreground/5 text-muted",
+                      : liveStatus === "disconnected"
+                        ? "bg-rose-500/10 text-rose-800 dark:text-rose-200"
+                        : "bg-foreground/5 text-muted",
               )}
             >
-              {liveEnabled && liveConnected && compactMac ? (
+              {liveStatus === "connected" && compactMac ? (
                 <span className="relative flex size-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
@@ -236,11 +239,13 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
               ) : null}
               {!compactMac
                 ? "Sin MAC"
-                : liveEnabled && liveConnected
+                : liveStatus === "connected"
                   ? "En vivo"
-                  : liveEnabled
+                  : liveStatus === "connecting"
                     ? "Conectando…"
-                    : "Pausado"}
+                    : liveStatus === "disconnected"
+                      ? "Desconectado"
+                      : "Pausado"}
             </span>
 
             {total > 0 ? (
@@ -282,10 +287,17 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
           <button
             type="button"
             disabled={!compactMac}
-            onClick={() => setLiveEnabled((prev) => !prev)}
+            onClick={
+              liveStatus === "disconnected" ? reconnectLive : toggleLive
+            }
             className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50 sm:py-1.5"
           >
-            {liveEnabled ? (
+            {liveStatus === "disconnected" && compactMac ? (
+              <>
+                <RotateCcw className="size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                Reconectar
+              </>
+            ) : liveEnabled ? (
               <>
                 <Pause className="size-3.5 shrink-0 text-muted" />
                 Pausar

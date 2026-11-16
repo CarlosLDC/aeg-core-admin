@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from "@/lib/api";
+import { resolveDirectApiBaseUrl } from "@/lib/api-config";
 import { getStoredToken } from "@/lib/auth-storage";
 import { redirectToLoginAfterExpired } from "@/lib/session-expired";
 import { ApiError } from "@/types/auth";
@@ -382,7 +383,7 @@ export function getMqttWebSocketUrl(): string {
   if (!token) {
     throw new ApiError("No hay sesión activa", 401);
   }
-  const httpBase = getApiBaseUrl().replace(/\/$/, "");
+  const httpBase = resolveDirectApiBaseUrl().replace(/\/$/, "");
   const wsBase = httpBase.replace(/^http/i, (scheme) =>
     scheme.toLowerCase() === "https" ? "wss" : "ws",
   );
