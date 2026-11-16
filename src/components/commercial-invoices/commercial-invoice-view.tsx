@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, Printer, Search } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   CommercialInvoiceCollectionStatusBadge,
@@ -68,7 +68,6 @@ import {
   commercialPaymentPath,
   printerPath,
 } from "@/lib/resource-routes";
-import { formFieldSearchInputClass } from "@/lib/toggle-button-styles";
 import type {
   CommercialInvoiceFormValues,
   CommercialInvoiceResponse,
@@ -122,7 +121,6 @@ export function CommercialInvoiceView() {
   const [unlinkingPrinterId, setUnlinkingPrinterId] = useState<number | null>(
     null,
   );
-  const [printerSearch, setPrinterSearch] = useState("");
 
   const [paymentDialog, setPaymentDialog] = useState<"create" | "edit" | null>(
     null,
@@ -419,24 +417,6 @@ export function CommercialInvoiceView() {
       .sort((a, b) => a.fiscalSerial.localeCompare(b.fiscalSerial, "es"));
   }, [printers, invoice]);
 
-  const filteredInvoicePrinters = useMemo(() => {
-    const q = printerSearch.trim().toLowerCase();
-    if (!q) return invoicePrinters;
-    return invoicePrinters.filter((p) => {
-      const modelName = (modelLabelById.get(p.modelId) ?? "").toLowerCase();
-      const boxLabel =
-        p.boxNumber != null
-          ? formatInventoryBoxLabel(p.boxNumber).toLowerCase()
-          : "";
-      return (
-        p.fiscalSerial.toLowerCase().includes(q) ||
-        modelName.includes(q) ||
-        (p.macAddress?.toLowerCase().includes(q) ?? false) ||
-        boxLabel.includes(q)
-      );
-    });
-  }, [invoicePrinters, modelLabelById, printerSearch]);
-
   const detailSteps = useMemo((): DetailPagerStep[] => {
     if (!invoice) return [];
 
@@ -607,14 +587,9 @@ export function CommercialInvoiceView() {
         content: (
           <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-semibold text-card-foreground">
-                  Impresoras asociadas a la factura
-                </h3>
-                <p className="mt-0.5 text-xs text-muted">
-                  Equipos fiscales amparados bajo esta factura comercial.
-                </p>
-              </div>
+              <h3 className="text-sm font-semibold text-card-foreground">
+                Impresoras asociadas
+              </h3>
               {canModify ? (
                 <button
                   type="button"
@@ -624,57 +599,17 @@ export function CommercialInvoiceView() {
                   }}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-foreground transition-opacity hover:opacity-90"
                 >
-                  <Printer className="size-3.5" aria-hidden />
-                  Gestionar impresoras
+                  <Plus className="size-3.5" aria-hidden />
+                  Asociar impresoras
                 </button>
               ) : null}
             </div>
 
-            {invoicePrinters.length > 5 ? (
-              <div className="relative mt-4 max-w-sm">
-                <Search
-                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted"
-                  aria-hidden
-                />
-                <input
-                  type="search"
-                  value={printerSearch}
-                  onChange={(e) => setPrinterSearch(e.target.value)}
-                  placeholder="Filtrar por serial, modelo o caja…"
-                  className={formFieldSearchInputClass}
-                />
-              </div>
-            ) : null}
-
             {printersLoading ? (
               <p className="mt-4 text-sm text-muted">Cargando impresoras…</p>
             ) : invoicePrinters.length === 0 ? (
-              <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-8 text-center">
-                <Printer className="size-8 text-muted" aria-hidden />
-                <p className="mt-2 text-sm font-medium text-card-foreground">
-                  Sin impresoras asociadas
-                </p>
-                <p className="mt-1 max-w-md text-xs text-muted">
-                  Aún no hay equipos fiscales vinculados a esta factura
-                  comercial.
-                </p>
-                {canModify ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPrintersFormError(null);
-                      setPrintersDialogOpen(true);
-                    }}
-                    className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-foreground transition-opacity hover:opacity-90"
-                  >
-                    <Plus className="size-3.5" aria-hidden />
-                    Asociar impresoras
-                  </button>
-                ) : null}
-              </div>
-            ) : filteredInvoicePrinters.length === 0 ? (
               <p className="mt-4 text-sm text-muted">
-                Ninguna impresora coincide con la búsqueda.
+                Aún no hay impresoras asociadas a esta factura.
               </p>
             ) : (
               <div className="mt-4 overflow-x-auto rounded-lg border border-border">
@@ -693,7 +628,7 @@ export function CommercialInvoiceView() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredInvoicePrinters.map((printer) => (
+                    {invoicePrinters.map((printer) => (
                       <ClickableTableRow
                         key={printer.id}
                         href={printerPath(printer.id)}
@@ -725,7 +660,7 @@ export function CommercialInvoiceView() {
                                 ? () => void handleUnlinkPrinter(printer)
                                 : undefined
                             }
-                            deleteLabel="Desvincular de la factura"
+                            deleteLabel="Desvincular"
                             deleting={unlinkingPrinterId === printer.id}
                           />
                         </td>
@@ -749,9 +684,7 @@ export function CommercialInvoiceView() {
     handleDeletePayment,
     canModify,
     printersLoading,
-    invoicePrinters.length,
-    filteredInvoicePrinters,
-    printerSearch,
+    invoicePrinters,
     modelLabelById,
     unlinkingPrinterId,
     handleUnlinkPrinter,
