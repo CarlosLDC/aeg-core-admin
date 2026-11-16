@@ -45,6 +45,8 @@ export type PrinterResponse = {
   creditPaymentCount?: number | null;
   boxId?: number | null;
   boxNumber?: number | null;
+  facturaComercialId?: number | null;
+  facturaComercialNumero?: string | null;
 };
 
 export type PrinterDispositionRequest = {

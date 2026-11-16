@@ -3,6 +3,7 @@ import { ApiError } from "@/types/auth";
 import type {
   CommercialClientRequest,
   CommercialClientResponse,
+  CommercialInvoicePrintersRequest,
   CommercialInvoiceRequest,
   CommercialInvoiceResponse,
 } from "@/types/commercial-invoice";
@@ -58,6 +59,27 @@ export async function updateCommercialInvoice(
 
 export async function deleteCommercialInvoice(id: number): Promise<void> {
   return apiFetch<void>(`${BASE}/${id}`, { method: "DELETE" });
+}
+
+export async function syncCommercialInvoicePrinters(
+  id: number,
+  printerIds: number[],
+): Promise<CommercialInvoiceResponse> {
+  const body: CommercialInvoicePrintersRequest = { printerIds };
+  return apiFetch<CommercialInvoiceResponse>(`${BASE}/${id}/printers`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function unlinkCommercialInvoicePrinter(
+  id: number,
+  printerId: number,
+): Promise<CommercialInvoiceResponse> {
+  return apiFetch<CommercialInvoiceResponse>(
+    `${BASE}/${id}/printers/${printerId}`,
+    { method: "DELETE" },
+  );
 }
 
 export function getCommercialInvoicesErrorMessage(

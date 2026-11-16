@@ -22,6 +22,7 @@ import {
 } from "@/components/resource-view/detail-fields";
 import {
   hrefForClient,
+  hrefForCommercialInvoice,
   hrefForDistributor,
   hrefForFirmware,
   hrefForPrinterModel,
@@ -627,6 +628,25 @@ export function PrinterView() {
                   : printer.boxId != null
                     ? `Caja #${printer.boxId}`
                     : "Sin caja"
+              }
+            />
+            <DetailField
+              label="Factura comercial"
+              value={
+                printer.facturaComercialNumero?.trim()
+                  ? printer.facturaComercialNumero
+                  : printer.facturaComercialId != null
+                    ? `Factura #${printer.facturaComercialId}`
+                    : "Sin factura"
+              }
+              mono={printer.facturaComercialId != null}
+              href={
+                user
+                  ? hrefForCommercialInvoice(
+                      printer.facturaComercialId,
+                      user.role,
+                    )
+                  : undefined
               }
             />
           </DetailSection>

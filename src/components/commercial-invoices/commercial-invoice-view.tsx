@@ -1,15 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Printer, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   CommercialInvoiceCollectionStatusBadge,
   CommercialInvoiceModalityBadge,
 } from "@/components/commercial-invoices/commercial-invoice-badges";
 import { CommercialInvoiceFormDialog } from "@/components/commercial-invoices/commercial-invoice-form-dialog";
+import { CommercialInvoicePrintersDialog } from "@/components/commercial-invoices/commercial-invoice-printers-dialog";
 import { CommercialPaymentFormDialog } from "@/components/commercial-payments/commercial-payment-form-dialog";
 import { CommercialPaymentMethodBadge } from "@/components/commercial-payments/commercial-payment-method-badge";
+import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
 import {
   DetailField,
   DetailSection,
@@ -42,6 +44,8 @@ import {
   deleteCommercialInvoice,
   fetchCommercialInvoiceById,
   getCommercialInvoicesErrorMessage,
+  syncCommercialInvoicePrinters,
+  unlinkCommercialInvoicePrinter,
   updateCommercialInvoice,
 } from "@/lib/commercial-invoices-api";
 import { toCommercialPaymentRequest } from "@/lib/commercial-payment-form";
@@ -53,12 +57,18 @@ import {
   updateCommercialPayment,
 } from "@/lib/commercial-payments-api";
 import { formatDate, formatMoney } from "@/lib/datetime-form";
+import { formatInventoryBoxLabel } from "@/lib/inventory-box-form";
 import { forbiddenMessage } from "@/lib/permissions/messages";
+import { printerModelLabel } from "@/lib/printer-form";
+import { fetchPrinterModels } from "@/lib/printer-models-api";
+import { fetchPrinters } from "@/lib/printers-api";
 import {
   commercialInvoicePath,
   commercialInvoicesListPath,
   commercialPaymentPath,
+  printerPath,
 } from "@/lib/resource-routes";
+import { formFieldSearchInputClass } from "@/lib/toggle-button-styles";
 import type {
   CommercialInvoiceFormValues,
   CommercialInvoiceResponse,
@@ -67,6 +77,8 @@ import type {
   CommercialPaymentFormValues,
   CommercialPaymentResponse,
 } from "@/types/commercial-payment";
+import type { PrinterResponse } from "@/types/printer";
+import type { PrinterModelResponse } from "@/types/printer-model";
 
 export function CommercialInvoiceView() {
   const id = useResourceId();
@@ -91,6 +103,9 @@ export function CommercialInvoiceView() {
     null,
   );
   const [payments, setPayments] = useState<CommercialPaymentResponse[]>([]);
+  const [printers, setPrinters] = useState<PrinterResponse[]>([]);
+  const [models, setModels] = useState<PrinterModelResponse[]>([]);
+  const [printersLoading, setPrintersLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -98,6 +113,16 @@ export function CommercialInvoiceView() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const [printersDialogOpen, setPrintersDialogOpen] = useState(false);
+  const [savingPrinters, setSavingPrinters] = useState(false);
+  const [printersFormError, setPrintersFormError] = useState<string | null>(
+    null,
+  );
+  const [unlinkingPrinterId, setUnlinkingPrinterId] = useState<number | null>(
+    null,
+  );
+  const [printerSearch, setPrinterSearch] = useState("");
 
   const [paymentDialog, setPaymentDialog] = useState<"create" | "edit" | null>(
     null,
@@ -113,12 +138,22 @@ export function CommercialInvoiceView() {
   const reloadAll = useCallback(async () => {
     if (id == null) return;
     try {
-      const [invoiceData, paymentsData] = await Promise.all([
-        fetchCommercialInvoiceById(id),
-        fetchCommercialPayments(id),
-      ]);
+      const [invoiceData, paymentsData, printersData, modelsData] =
+        await Promise.all([
+          fetchCommercialInvoiceById(id),
+          fetchCommercialPayments(id),
+          fetchPrinters().catch(() => null),
+          fetchPrinterModels().catch(() => null),
+        ]);
       setInvoice(invoiceData);
       setPayments(paymentsData);
+      if (printersData != null) {
+        setPrinters(printersData);
+      }
+      if (modelsData != null) {
+        setModels(modelsData);
+      }
+      setPrintersLoading(false);
       setError(null);
     } catch (err) {
       setError(getCommercialInvoicesErrorMessage(err));
@@ -132,19 +167,32 @@ export function CommercialInvoiceView() {
     let active = true;
     void (async () => {
       try {
-        const [invoiceData, paymentsData] = await Promise.all([
-          fetchCommercialInvoiceById(id),
-          fetchCommercialPayments(id),
-        ]);
+        const [invoiceData, paymentsData, printersData, modelsData] =
+          await Promise.all([
+            fetchCommercialInvoiceById(id),
+            fetchCommercialPayments(id),
+            fetchPrinters().catch(() => null),
+            fetchPrinterModels().catch(() => null),
+          ]);
         if (!active) return;
         setInvoice(invoiceData);
         setPayments(paymentsData);
+        if (printersData != null) {
+          setPrinters(printersData);
+        }
+        if (modelsData != null) {
+          setModels(modelsData);
+        }
+        setPrintersLoading(false);
         setError(null);
       } catch (err) {
         if (!active) return;
         setError(getCommercialInvoicesErrorMessage(err));
       } finally {
-        if (active) setLoading(false);
+        if (active) {
+          setLoading(false);
+          setPrintersLoading(false);
+        }
       }
     })();
     return () => {
@@ -291,8 +339,110 @@ export function CommercialInvoiceView() {
     [canDeletePayment, confirm, reloadAll, toast],
   );
 
+  async function handlePrintersSubmit(printerIds: number[]) {
+    if (!invoice) return;
+    if (!canModify) {
+      setPrintersFormError(forbiddenMessage("update", "commercialInvoices"));
+      return;
+    }
+
+    setSavingPrinters(true);
+    setPrintersFormError(null);
+
+    try {
+      const updated = await syncCommercialInvoicePrinters(
+        invoice.id,
+        printerIds,
+      );
+      setInvoice(updated);
+      toast.success(
+        `Impresoras actualizadas (${updated.printerCount} ${updated.printerCount === 1 ? "vinculada" : "vinculadas"}).`,
+      );
+      setPrintersDialogOpen(false);
+      await reloadAll();
+    } catch (err) {
+      const message = getCommercialInvoicesErrorMessage(err);
+      setPrintersFormError(message);
+      toast.error(message);
+    } finally {
+      setSavingPrinters(false);
+    }
+  }
+
+  const handleUnlinkPrinter = useCallback(
+    async (printer: PrinterResponse) => {
+      if (!invoice) return;
+      if (!canModify) {
+        toast.error(forbiddenMessage("update", "commercialInvoices"));
+        return;
+      }
+      if (
+        !(await confirm({
+          title: "Desvincular impresora",
+          message: `¿Desvincular la impresora ${printer.fiscalSerial} de la factura ${formatCommercialInvoiceTitle(invoice)}?`,
+          confirmLabel: "Desvincular",
+          destructive: true,
+        }))
+      ) {
+        return;
+      }
+      setUnlinkingPrinterId(printer.id);
+      try {
+        const updated = await unlinkCommercialInvoicePrinter(
+          invoice.id,
+          printer.id,
+        );
+        setInvoice(updated);
+        toast.success(`Impresora ${printer.fiscalSerial} desvinculada.`);
+        await reloadAll();
+      } catch (err) {
+        toast.error(getCommercialInvoicesErrorMessage(err));
+      } finally {
+        setUnlinkingPrinterId(null);
+      }
+    },
+    [canModify, confirm, invoice, reloadAll, toast],
+  );
+
+  const modelLabelById = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const model of models) {
+      map.set(model.id, printerModelLabel(model));
+    }
+    return map;
+  }, [models]);
+
+  const invoicePrinters = useMemo(() => {
+    if (!invoice) return [];
+    return printers
+      .filter((p) => p.facturaComercialId === invoice.id)
+      .sort((a, b) => a.fiscalSerial.localeCompare(b.fiscalSerial, "es"));
+  }, [printers, invoice]);
+
+  const filteredInvoicePrinters = useMemo(() => {
+    const q = printerSearch.trim().toLowerCase();
+    if (!q) return invoicePrinters;
+    return invoicePrinters.filter((p) => {
+      const modelName = (modelLabelById.get(p.modelId) ?? "").toLowerCase();
+      const boxLabel =
+        p.boxNumber != null
+          ? formatInventoryBoxLabel(p.boxNumber).toLowerCase()
+          : "";
+      return (
+        p.fiscalSerial.toLowerCase().includes(q) ||
+        modelName.includes(q) ||
+        (p.macAddress?.toLowerCase().includes(q) ?? false) ||
+        boxLabel.includes(q)
+      );
+    });
+  }, [invoicePrinters, modelLabelById, printerSearch]);
+
   const detailSteps = useMemo((): DetailPagerStep[] => {
     if (!invoice) return [];
+
+    const printersTabCount = printersLoading
+      ? invoice.printerCount
+      : invoicePrinters.length;
 
     return [
       {
@@ -451,6 +601,143 @@ export function CommercialInvoiceView() {
           </section>
         ),
       },
+      {
+        id: "printers",
+        label: `Impresoras (${printersTabCount})`,
+        content: (
+          <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-card-foreground">
+                  Impresoras asociadas a la factura
+                </h3>
+                <p className="mt-0.5 text-xs text-muted">
+                  Equipos fiscales amparados bajo esta factura comercial.
+                </p>
+              </div>
+              {canModify ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPrintersFormError(null);
+                    setPrintersDialogOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-foreground transition-opacity hover:opacity-90"
+                >
+                  <Printer className="size-3.5" aria-hidden />
+                  Gestionar impresoras
+                </button>
+              ) : null}
+            </div>
+
+            {invoicePrinters.length > 5 ? (
+              <div className="relative mt-4 max-w-sm">
+                <Search
+                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted"
+                  aria-hidden
+                />
+                <input
+                  type="search"
+                  value={printerSearch}
+                  onChange={(e) => setPrinterSearch(e.target.value)}
+                  placeholder="Filtrar por serial, modelo o caja…"
+                  className={formFieldSearchInputClass}
+                />
+              </div>
+            ) : null}
+
+            {printersLoading ? (
+              <p className="mt-4 text-sm text-muted">Cargando impresoras…</p>
+            ) : invoicePrinters.length === 0 ? (
+              <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-8 text-center">
+                <Printer className="size-8 text-muted" aria-hidden />
+                <p className="mt-2 text-sm font-medium text-card-foreground">
+                  Sin impresoras asociadas
+                </p>
+                <p className="mt-1 max-w-md text-xs text-muted">
+                  Aún no hay equipos fiscales vinculados a esta factura
+                  comercial.
+                </p>
+                {canModify ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPrintersFormError(null);
+                      setPrintersDialogOpen(true);
+                    }}
+                    className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-foreground transition-opacity hover:opacity-90"
+                  >
+                    <Plus className="size-3.5" aria-hidden />
+                    Asociar impresoras
+                  </button>
+                ) : null}
+              </div>
+            ) : filteredInvoicePrinters.length === 0 ? (
+              <p className="mt-4 text-sm text-muted">
+                Ninguna impresora coincide con la búsqueda.
+              </p>
+            ) : (
+              <div className="mt-4 overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-foreground/[0.02] text-muted">
+                      <th className="px-4 py-2.5 font-medium">
+                        Serial fiscal
+                      </th>
+                      <th className="px-4 py-2.5 font-medium">Modelo</th>
+                      <th className="px-4 py-2.5 font-medium">Estatus</th>
+                      <th className="px-4 py-2.5 font-medium">Caja</th>
+                      <th className="px-4 py-2.5 text-right font-medium">
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredInvoicePrinters.map((printer) => (
+                      <ClickableTableRow
+                        key={printer.id}
+                        href={printerPath(printer.id)}
+                      >
+                        <td className="px-4 py-2.5 font-mono font-medium whitespace-nowrap text-card-foreground">
+                          {printer.fiscalSerial}
+                        </td>
+                        <td className="px-4 py-2.5 text-muted">
+                          {modelLabelById.get(printer.modelId) ??
+                            `Modelo #${printer.modelId}`}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <PrinterStatusBadge status={printer.status} />
+                        </td>
+                        <td className="px-4 py-2.5 whitespace-nowrap text-muted">
+                          {printer.boxNumber != null
+                            ? formatInventoryBoxLabel(printer.boxNumber)
+                            : "—"}
+                        </td>
+                        <td
+                          className="px-4 py-2.5"
+                          data-row-click="ignore"
+                        >
+                          <TableRowActionsMenu
+                            viewHref={printerPath(printer.id)}
+                            viewLabel={`Ver impresora ${printer.fiscalSerial}`}
+                            onDelete={
+                              canModify
+                                ? () => void handleUnlinkPrinter(printer)
+                                : undefined
+                            }
+                            deleteLabel="Desvincular de la factura"
+                            deleting={unlinkingPrinterId === printer.id}
+                          />
+                        </td>
+                      </ClickableTableRow>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        ),
+      },
     ];
   }, [
     invoice,
@@ -460,6 +747,14 @@ export function CommercialInvoiceView() {
     canDeletePayment,
     deletingPaymentId,
     handleDeletePayment,
+    canModify,
+    printersLoading,
+    invoicePrinters.length,
+    filteredInvoicePrinters,
+    printerSearch,
+    modelLabelById,
+    unlinkingPrinterId,
+    handleUnlinkPrinter,
   ]);
 
   const effectiveError =
@@ -530,6 +825,22 @@ export function CommercialInvoiceView() {
             }
           }}
           onSubmit={(values) => void handlePaymentSubmit(values)}
+        />
+      )}
+
+      {invoice && printersDialogOpen && (
+        <CommercialInvoicePrintersDialog
+          open={printersDialogOpen}
+          invoice={invoice}
+          printers={printers}
+          models={models}
+          catalogLoading={printersLoading}
+          saving={savingPrinters}
+          error={printersFormError}
+          onClose={() => {
+            if (!savingPrinters) setPrintersDialogOpen(false);
+          }}
+          onSubmit={(printerIds) => void handlePrintersSubmit(printerIds)}
         />
       )}
     </>

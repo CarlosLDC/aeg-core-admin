@@ -68,3 +68,7 @@ export type CommercialInvoiceFormValues = {
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;
 };
+
+export type CommercialInvoicePrintersRequest = {
+  printerIds: number[];
+};
