@@ -12,6 +12,7 @@ import {
   ScrollText,
   TriangleAlert,
   Wifi,
+  WifiOff,
 } from "lucide-react";
 import {
   ToolsIconBadge,
@@ -23,7 +24,10 @@ import { ToolsUsbConnectionButton } from "@/components/tools/tools-connection-mo
 import { printerPath } from "@/lib/resource-routes";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import { formatToolsWifiStatusLine } from "@/lib/tools-wifi-networks";
-import { isUsableToolsNetworkField } from "@/lib/tools-printer-connection";
+import {
+  isUsableToolsNetworkField,
+  resolveToolsStatusBarNotice,
+} from "@/lib/tools-printer-connection";
 import type { ToolsPrinterConnectionState } from "@/modules/tools/mqtt/use-tools-mqtt";
 import { useToolsTransportContext } from "@/modules/tools/transport/tools-transport-provider";
 import { cn } from "@/lib/utils";
@@ -330,6 +334,7 @@ export function ToolsPrinterStatusBar({
     clockError,
     refreshClock,
     refreshStatus,
+    connectionResolved,
     connectionIssue,
     isPrinterReachable,
     isLegacyBroker,
@@ -339,16 +344,19 @@ export function ToolsPrinterStatusBar({
   } = connection;
   const statusSection = TOOLS_SECTIONS.status;
 
-  const seniatLabel = status?.seniatStatus ?? (loading ? "Consultando…" : "Sin datos");
-  const isAmberIssue =
-    connectionIssue === "seniat" || connectionIssue === "legacy-broker";
-  const seniatTone: StatusPillTone = loading
-    ? "muted"
-    : isSeniatOnline
-      ? "emerald"
-      : isAmberIssue
-        ? "amber"
-        : "rose";
+  // Only surface the SENIAT pill when the printer actually responded; when it
+  // is unreachable, the unified footer banner below explains the failure.
+  const showSeniatPill = !loading && isPrinterReachable;
+  const seniatLabel = status?.seniatStatus ?? "Sin datos";
+  const seniatTone: StatusPillTone = isSeniatOnline ? "emerald" : "amber";
+  const notice = resolveToolsStatusBarNotice({
+    loading,
+    transportReady,
+    usbConnected,
+    connectionResolved,
+    connectionIssue,
+    error,
+  });
 
   const canQueryClock = transportReady && (isPrinterReachable || usbConnected);
   const showClockChip =
@@ -449,10 +457,17 @@ export function ToolsPrinterStatusBar({
               <p className="text-sm font-semibold text-card-foreground">
                 {statusSection.title}
               </p>
-              <StatusPill tone={seniatTone} pulse={loading}>
-                <span className="opacity-80">SENIAT:</span>{" "}
-                <span className="font-semibold">{seniatLabel}</span>
-              </StatusPill>
+              {loading ? (
+                <StatusPill tone="muted" pulse>
+                  Consultando…
+                </StatusPill>
+              ) : null}
+              {showSeniatPill ? (
+                <StatusPill tone={seniatTone}>
+                  <span className="opacity-80">SENIAT:</span>{" "}
+                  <span className="font-semibold">{seniatLabel}</span>
+                </StatusPill>
+              ) : null}
               {usbConnected ? <StatusPill tone="emerald">USB activo</StatusPill> : null}
               {isLegacyBroker ? (
                 <StatusPill tone="amber">Broker: Antiguo (contingencia)</StatusPill>
@@ -494,19 +509,23 @@ export function ToolsPrinterStatusBar({
         </div>
       ) : null}
 
-      {/* Nivel 3: Error dedicado (sin deformar la franja de telemetría) */}
-      {error ? (
+      {/* Nivel 3: Estado de conexión / error unificado */}
+      {notice ? (
         <div
           role="status"
           className={cn(
             "flex items-start gap-2 border-t px-4 py-2.5 text-xs sm:px-5 sm:text-sm",
-            isAmberIssue
+            notice.tone === "amber"
               ? "border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-200"
               : "border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300",
           )}
         >
-          <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
-          <span className="min-w-0 break-words">{error}</span>
+          {notice.kind === "printer-offline" ? (
+            <WifiOff className="mt-0.5 size-4 shrink-0" aria-hidden />
+          ) : (
+            <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
+          )}
+          <span className="min-w-0 break-words">{notice.message}</span>
         </div>
       ) : null}
     </div>

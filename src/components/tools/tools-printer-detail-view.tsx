@@ -8,7 +8,6 @@ import { ErrorState } from "@/components/ui/error-state";
 import { pageToolbarButtonClass } from "@/components/ui/page-toolbar";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import {
-  ToolsConnectionWarning,
   ToolsMacWarning,
   ToolsNavCard,
   ToolsPage,
@@ -92,13 +91,6 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
         printerId={printer.id}
         logsHref={isAdmin ? toolsPrinterLogsPath(printer.serial) : undefined}
       />
-
-      {connection.transportReady &&
-      connection.connectionResolved &&
-      connection.connectionIssue !== "none" &&
-      connection.connectionIssue !== "legacy-broker" ? (
-        <ToolsConnectionWarning variant={connection.connectionIssue} />
-      ) : null}
 
       <section className={toolsSubsectionClass}>
         <ToolsSectionHeading

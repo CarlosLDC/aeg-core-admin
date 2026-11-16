@@ -29,6 +29,81 @@ export type ToolsConnectionIssue =
   | "seniat"
   | "legacy-broker";
 
+export type ToolsStatusBarNotice = {
+  tone: "rose" | "amber";
+  kind: "printer-offline" | "seniat-offline" | "error";
+  message: string;
+};
+
+const REMOTE_ACTIONS_PAUSED_SUFFIX =
+  "Algunas operaciones remotas no podrán ejecutarse hasta restablecer la comunicación.";
+
+/**
+ * Resolves the single unified alert banner for `ToolsPrinterStatusBar` so
+ * timeout/error details and connectivity state are not duplicated across UI layers.
+ */
+export function resolveToolsStatusBarNotice(params: {
+  loading: boolean;
+  transportReady: boolean;
+  usbConnected: boolean;
+  connectionResolved: boolean;
+  connectionIssue: ToolsConnectionIssue;
+  error: string | null;
+}): ToolsStatusBarNotice | null {
+  const {
+    loading,
+    transportReady,
+    usbConnected,
+    connectionResolved,
+    connectionIssue,
+    error,
+  } = params;
+
+  if (loading) {
+    return null;
+  }
+
+  const trimmedError = error?.trim() ?? "";
+
+  if (transportReady && connectionResolved && connectionIssue === "printer") {
+    if (trimmedError !== "") {
+      const normalizedError = trimmedError.replace(/\.+$/, "");
+      return {
+        tone: "rose",
+        kind: "printer-offline",
+        message: usbConnected
+          ? `${normalizedError}.`
+          : `${normalizedError}. ${REMOTE_ACTIONS_PAUSED_SUFFIX}`,
+      };
+    }
+    if (!usbConnected) {
+      return {
+        tone: "rose",
+        kind: "printer-offline",
+        message: TOOLS_PRINTER_OFFLINE_MESSAGE,
+      };
+    }
+  }
+
+  if (trimmedError !== "") {
+    return {
+      tone: "rose",
+      kind: "error",
+      message: trimmedError,
+    };
+  }
+
+  if (transportReady && connectionResolved && connectionIssue === "seniat") {
+    return {
+      tone: "amber",
+      kind: "seniat-offline",
+      message: TOOLS_SENIAT_OFFLINE_MESSAGE,
+    };
+  }
+
+  return null;
+}
+
 export function isUsableToolsNetworkField(
   value: string | null | undefined,
 ): boolean {
