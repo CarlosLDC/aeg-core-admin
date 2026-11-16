@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type InputHTMLAttributes, type KeyboardEventHandler } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
@@ -9,6 +9,8 @@ type PasswordInputProps = {
   id?: string;
   value: string;
   onChange: (value: string) => void;
+  onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
+  enterKeyHint?: InputHTMLAttributes<HTMLInputElement>["enterKeyHint"];
   placeholder?: string;
   autoComplete?: string;
   required?: boolean;
@@ -20,6 +22,8 @@ export function PasswordInput({
   id,
   value,
   onChange,
+  onKeyDown,
+  enterKeyHint,
   placeholder,
   autoComplete,
   required,
@@ -35,6 +39,8 @@ export function PasswordInput({
         type={visible ? "text" : "password"}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
+        enterKeyHint={enterKeyHint}
         placeholder={placeholder}
         autoComplete={autoComplete}
         required={required}

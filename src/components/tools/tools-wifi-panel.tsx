@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link2, Loader2, Radio, Unplug } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
+import { WifiSignalIndicator } from "@/components/ui/wifi-signal-indicator";
 import {
   ToolsActionButton,
   ToolsConnectionWarning,
@@ -39,62 +40,6 @@ type WifiNetwork = {
   ssid: string;
   signal: number | null;
 };
-
-function wifiSignalLevel(signal: number): 0 | 1 | 2 | 3 | 4 {
-  if (signal >= 0 && signal <= 100) {
-    if (signal >= 80) return 4;
-    if (signal >= 60) return 3;
-    if (signal >= 40) return 2;
-    if (signal >= 20) return 1;
-    return 0;
-  }
-
-  if (signal >= -55) return 4;
-  if (signal >= -65) return 3;
-  if (signal >= -75) return 2;
-  if (signal >= -85) return 1;
-  return 0;
-}
-
-function formatWifiSignalLabel(signal: number): string {
-  if (signal >= 0 && signal <= 100) {
-    return `Calidad de señal ${signal}%`;
-  }
-
-  return `Intensidad de señal ${signal} dBm`;
-}
-
-function WifiSignalIndicator({ signal }: { signal: number | null }) {
-  const level = signal != null ? wifiSignalLevel(signal) : 0;
-
-  return (
-    <span
-      className="inline-flex shrink-0 items-end gap-0.5 text-sky-600 dark:text-sky-400"
-      aria-label={
-        signal != null ? formatWifiSignalLabel(signal) : "Señal desconocida"
-      }
-      title={
-        signal != null
-          ? signal >= 0 && signal <= 100
-            ? `${signal}%`
-            : `${signal} dBm`
-          : undefined
-      }
-    >
-      {[1, 2, 3, 4].map((bar) => (
-        <span
-          key={bar}
-          className={cn(
-            "w-1 rounded-sm bg-current",
-            bar <= level ? "opacity-100" : "opacity-20",
-          )}
-          style={{ height: `${bar * 3 + 4}px` }}
-          aria-hidden
-        />
-      ))}
-    </span>
-  );
-}
 
 const wifiPanelGridClass = "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start";
 const wifiPanelSectionMatchClass =

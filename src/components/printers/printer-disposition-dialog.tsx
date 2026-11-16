@@ -78,7 +78,7 @@ function stepSubtitle(step: WizardStep, reconfigure: boolean): string {
         ? "Confirma o actualiza el número de factura y continúa al siguiente paso."
         : "Ingresa el número de factura fiscal de la enajenación.";
     case 3:
-      return "Opcional: conecta la impresora por USB para configurar su red Wi-Fi antes de continuar.";
+      return "Opcional: configura el Wi-Fi por USB o continúa directo al ticket fiscal.";
     default:
       return "";
   }
@@ -454,7 +454,15 @@ export function PrinterDispositionDialog({
       saving={false}
       error={null}
       onClose={onClose}
-      submitLabel={step === 3 ? "Continuar" : "Siguiente"}
+      submitLabel={
+        step === 3
+          ? usbWifi.usbConnected ||
+            usbWifi.wifiMessage != null ||
+            usbWifi.wifiConnection.connected === true
+            ? "Continuar"
+            : "Omitir y continuar"
+          : "Siguiente"
+      }
       onSubmit={handleSubmit}
       submitDisabled={
         disabled ||

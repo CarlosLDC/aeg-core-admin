@@ -1,6 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  normalizeToolsWifiNetworks,
+  parseToolsWifiConnection,
+  resolveToolsWifiConnectedSsid,
+} from "@/lib/tools-wifi-networks";
 import {
   buildStatusPayload,
   buildWifiConnectPayload,
@@ -12,7 +17,6 @@ import {
   TOOLS_SERIAL_TIMEOUT_MS,
 } from "@/modules/tools/serial/tools-serial-constants";
 import { cmdEquals } from "@/modules/tools/serial/tools-fiscal-response";
-import type { ToolsWifiNetwork } from "@/types/tools-mqtt";
 import {
   isStatusResponse,
   isWifiScanResponse,
@@ -25,6 +29,7 @@ import {
   isWebSerialSupported,
   ToolsSerialPortSession,
 } from "@/modules/tools/serial/tools-serial-port";
+import type { ToolsWifiNetwork } from "@/types/tools-mqtt";
 
 export type UsbWifiStatus = {
   wifiNetwork: string | null;
@@ -46,7 +51,8 @@ export function useUsbWifiConfig() {
     ipAddress: null,
   });
 
-  const [wifiNetworks, setWifiNetworks] = useState<ToolsWifiNetwork[]>([]);
+  const [rawWifiNetworks, setRawWifiNetworks] = useState<ToolsWifiNetwork[]>([]);
+  const [hasScanned, setHasScanned] = useState(false);
   const [wifiScanning, setWifiScanning] = useState(false);
   const [wifiConnecting, setWifiConnecting] = useState(false);
   const [wifiSsid, setWifiSsid] = useState("");
@@ -70,9 +76,8 @@ export function useUsbWifiConfig() {
     return session;
   };
 
-  const refreshStatus = useCallback(async () => {
+  const readStatusFromSession = useCallback(async () => {
     const session = requireSession();
-    setUsbBusy(true);
     try {
       const statusItem = await session.publishAndAwaitMatcher(
         buildStatusPayload(),
@@ -86,20 +91,25 @@ export function useUsbWifiConfig() {
         const wifiNetwork = parsed.additionalInfo?.wifiNetwork ?? null;
         const ipAddress = parsed.additionalInfo?.ipAddress ?? null;
         setStatus({ wifiNetwork, ipAddress });
-        if (
-          wifiNetwork &&
-          wifiNetwork !== "N/A" &&
-          wifiNetwork.toUpperCase() !== "SIN CONEXION"
-        ) {
-          setWifiSsid((prev) => prev || wifiNetwork);
+
+        const resolvedSsid = resolveToolsWifiConnectedSsid(wifiNetwork);
+        if (resolvedSsid) {
+          setWifiSsid((prev) => prev || resolvedSsid);
         }
       }
     } catch {
       // Optional on uninitialized printers
+    }
+  }, []);
+
+  const refreshStatus = useCallback(async () => {
+    setUsbBusy(true);
+    try {
+      await readStatusFromSession();
     } finally {
       setUsbBusy(false);
     }
-  }, []);
+  }, [readStatusFromSession]);
 
   const connectUsb = useCallback(async () => {
     const session = sessionRef.current;
@@ -110,14 +120,14 @@ export function useUsbWifiConfig() {
     try {
       await session.requestAndOpen();
       setUsbConnected(true);
-      await refreshStatus();
+      await readStatusFromSession();
     } catch (err) {
       setUsbConnected(session.isConnected);
       setUsbError(getToolsUsbErrorMessage(err));
     } finally {
       setUsbBusy(false);
     }
-  }, [refreshStatus]);
+  }, [readStatusFromSession]);
 
   const disconnectUsb = useCallback(async () => {
     const session = sessionRef.current;
@@ -125,7 +135,8 @@ export function useUsbWifiConfig() {
     await session.close();
     setUsbConnected(false);
     setStatus({ wifiNetwork: null, ipAddress: null });
-    setWifiNetworks([]);
+    setRawWifiNetworks([]);
+    setHasScanned(false);
     setWifiMessage(null);
     setWifiError(null);
   }, []);
@@ -141,7 +152,8 @@ export function useUsbWifiConfig() {
         isWifiScanResponse,
         TOOLS_SERIAL_TIMEOUT_MS.wifiScan,
       );
-      setWifiNetworks(parseWifiScanResponse(item));
+      setRawWifiNetworks(parseWifiScanResponse(item));
+      setHasScanned(true);
     } catch (err) {
       setWifiError(
         getToolsUsbErrorMessage(err, "No se pudieron escanear las redes Wi-Fi."),
@@ -183,13 +195,26 @@ export function useUsbWifiConfig() {
           ? `Conectado a ${trimmedSsid} (IP: ${reportedIp}).`
           : `Red ${trimmedSsid} configurada. Verificando estado…`,
       );
-      await refreshStatus();
+      await readStatusFromSession();
     } catch (err) {
       setWifiError(getToolsUsbErrorMessage(err, "Error al configurar Wi-Fi."));
     } finally {
       setWifiConnecting(false);
     }
-  }, [refreshStatus, wifiPassword, wifiSsid]);
+  }, [readStatusFromSession, wifiPassword, wifiSsid]);
+
+  const wifiConnection = useMemo(
+    () => parseToolsWifiConnection(status.wifiNetwork),
+    [status.wifiNetwork],
+  );
+
+  const connectedSsid = wifiConnection.ssid ?? "";
+
+  const wifiNetworks = useMemo(
+    () =>
+      normalizeToolsWifiNetworks(rawWifiNetworks, connectedSsid || undefined),
+    [rawWifiNetworks, connectedSsid],
+  );
 
   return {
     usbSupported,
@@ -197,7 +222,10 @@ export function useUsbWifiConfig() {
     usbBusy,
     usbError,
     status,
+    wifiConnection,
+    connectedSsid,
     wifiNetworks,
+    hasScanned,
     wifiScanning,
     wifiConnecting,
     wifiSsid,
