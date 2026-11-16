@@ -761,27 +761,13 @@ function LogMobileCard({
 
       {expanded ? (
         <div className="space-y-2.5 border-t border-border/60 px-3.5 py-3">
-          <div className="space-y-1 text-[11px] text-muted">
-            <p className="break-all">
-              <span className="font-medium">Tópico:</span>{" "}
+          <div className="text-[11px] text-muted">
+            <span className="break-all">
+              <span className="font-medium">UTC:</span>{" "}
               <code className="font-mono text-card-foreground">
-                {item.topic}
+                {item.recordedAt}
               </code>
-            </p>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span>
-                <span className="font-medium">MAC:</span>{" "}
-                <code className="font-mono text-card-foreground">
-                  {item.mac}
-                </code>
-              </span>
-              <span className="break-all">
-                <span className="font-medium">UTC:</span>{" "}
-                <code className="font-mono text-card-foreground">
-                  {item.recordedAt}
-                </code>
-              </span>
-            </div>
+            </span>
           </div>
 
           <pre className="max-h-72 overflow-auto rounded-lg border border-border bg-background p-3 font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-all text-card-foreground">
@@ -897,26 +883,12 @@ function LogTableRow({
           <td colSpan={4} className="px-4 py-3.5">
             <div className="space-y-2.5">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                  <span>
-                    Tópico:{" "}
-                    <code className="font-mono text-card-foreground">
-                      {item.topic}
-                    </code>
-                  </span>
-                  <span>
-                    MAC:{" "}
-                    <code className="font-mono text-card-foreground">
-                      {item.mac}
-                    </code>
-                  </span>
-                  <span>
-                    UTC:{" "}
-                    <code className="font-mono text-card-foreground">
-                      {item.recordedAt}
-                    </code>
-                  </span>
-                </div>
+                <span>
+                  UTC:{" "}
+                  <code className="font-mono text-card-foreground">
+                    {item.recordedAt}
+                  </code>
+                </span>
 
                 <button
                   type="button"
