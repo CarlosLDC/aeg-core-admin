@@ -1,9 +1,15 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+/** Shared button layout/typography without mobile full-width constraint. */
+export const pageToolbarButtonBaseClass =
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors";
+
 /** Toolbar action buttons: single-line label, full width on mobile only. */
-export const pageToolbarButtonClass =
-  "inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors md:w-auto";
+export const pageToolbarButtonClass = cn(
+  pageToolbarButtonBaseClass,
+  "w-full md:w-auto",
+);
 
 type PageToolbarProps = {
   description?: ReactNode;
