@@ -68,9 +68,28 @@ export function isPrinterOperative(status: string): boolean {
   return normalized === "asignada" || normalized === "sin_asignar";
 }
 
+export const PRINTER_STATUS_DESCRIPTIONS: Record<PrinterStatus, string> = {
+  sin_asignar: "Equipo disponible en inventario, sin distribuidora asignada.",
+  asignada:
+    "Equipo asignado a una distribuidora, listo para enajenar a un contribuyente.",
+  en_consignacion:
+    "Equipo entregado en consignación a una distribuidora; requiere autorización para enajenar.",
+  enajenada: "Equipo fiscalizado y transferido a un contribuyente final.",
+  a_credito:
+    "Equipo enajenado a un contribuyente bajo modalidad de pago a crédito.",
+  desincorporada: "Equipo dado de baja o fuera de circulación operativa.",
+  laboratorio:
+    "Equipo en revisión técnica, configuración o pruebas de laboratorio.",
+};
+
 export function printerStatusLabel(status: string): string {
   const normalized = normalizePrinterStatus(status);
   return PRINTER_STATUS_LABELS[normalized];
+}
+
+export function printerStatusDescription(status: string): string {
+  const normalized = normalizePrinterStatus(status);
+  return PRINTER_STATUS_DESCRIPTIONS[normalized];
 }
 
 export type PrinterRollbackConsequencesParams = {

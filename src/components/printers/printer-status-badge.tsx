@@ -1,9 +1,13 @@
-import { ArrowRight, KeyRound, RefreshCw } from "lucide-react";
+import { Building2, KeyRound, ReceiptText, RefreshCw } from "lucide-react";
 import {
   PRINTER_PENDING_MQTT_ENAJENACION_LABEL,
   PRINTER_PENDING_MQTT_ENAJENACION_TITLE,
 } from "@/lib/printer-enajenacion-ticket";
-import { printerStatusLabel, normalizePrinterStatus } from "@/lib/printer-status";
+import {
+  printerStatusDescription,
+  printerStatusLabel,
+  normalizePrinterStatus,
+} from "@/lib/printer-status";
 import type { PrinterStatusQuickAction } from "@/lib/printer-quick-actions";
 import type { PrinterStatus } from "@/types/printer";
 import { cn } from "@/lib/utils";
@@ -46,7 +50,10 @@ export function PrinterStatusBadge({
     ? PRINTER_PENDING_MQTT_ENAJENACION_LABEL
     : printerStatusLabel(status);
   const resolvedTitle =
-    title ?? (pendingMqtt ? PRINTER_PENDING_MQTT_ENAJENACION_TITLE : undefined);
+    title ??
+    (pendingMqtt
+      ? PRINTER_PENDING_MQTT_ENAJENACION_TITLE
+      : printerStatusDescription(status));
   const className = cn(
     "inline-flex shrink-0 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium",
     pendingMqtt
@@ -74,13 +81,14 @@ export function PrinterStatusActionButton({
   size = "sm",
   className,
 }: PrinterStatusActionButtonProps) {
-  const isReconfigure = action.kind === "reconfigure";
-  const isGrantDispose = action.kind === "grant_dispose";
-  const Icon = isReconfigure
-    ? RefreshCw
-    : isGrantDispose
-      ? KeyRound
-      : ArrowRight;
+  const Icon =
+    action.kind === "reconfigure"
+      ? RefreshCw
+      : action.kind === "grant_dispose"
+        ? KeyRound
+        : action.kind === "assign"
+          ? Building2
+          : ReceiptText;
 
   return (
     <button
@@ -92,15 +100,10 @@ export function PrinterStatusActionButton({
       title={action.label}
       aria-label={action.label}
       className={cn(
-        "inline-flex shrink-0 whitespace-nowrap cursor-pointer items-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
+        "inline-flex shrink-0 whitespace-nowrap cursor-pointer items-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 border-accent/35 bg-accent/10 text-accent hover:bg-accent/20 dark:border-accent/40 dark:bg-accent/15 dark:text-blue-300 dark:hover:bg-accent/25",
         size === "sm"
           ? "gap-1 rounded-md border px-2 py-0.5 text-xs"
           : "gap-2 rounded-lg border px-3 py-2 text-sm",
-        isReconfigure
-          ? "border-amber-500/35 bg-amber-500/10 text-amber-800 hover:bg-amber-500/20 dark:border-amber-400/40 dark:bg-amber-500/15 dark:text-amber-300 dark:hover:bg-amber-500/25"
-          : isGrantDispose
-            ? "border-indigo-500/35 bg-indigo-500/10 text-indigo-800 hover:bg-indigo-500/20 dark:border-indigo-400/40 dark:bg-indigo-500/15 dark:text-indigo-300 dark:hover:bg-indigo-500/25"
-            : "border-accent/35 bg-accent/10 text-accent hover:bg-accent/20 dark:border-accent/40 dark:bg-accent/15 dark:text-blue-300 dark:hover:bg-accent/25",
         className,
       )}
     >
