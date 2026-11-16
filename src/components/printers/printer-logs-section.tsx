@@ -21,7 +21,10 @@ import {
 import { useAuth } from "@/context/auth-provider";
 import { useToast } from "@/context/toast-provider";
 import { usePrinterLogs } from "@/hooks/use-printer-logs";
-import { PrinterLogsDeleteDialog } from "@/components/printers/printer-logs-delete-dialog";
+import {
+  PrinterLogsDeleteDialog,
+  type PrinterLogsTarget,
+} from "@/components/printers/printer-logs-delete-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { NativeSelect } from "@/components/ui/native-select";
 import {
@@ -29,11 +32,10 @@ import {
   formFieldSearchInputClass,
 } from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
-import type { PrinterResponse } from "@/types/printer";
 import type { PrinterMqttLogItem } from "@/types/printer-logs";
 
 type PrinterLogsSectionProps = {
-  printer: PrinterResponse;
+  printer: PrinterLogsTarget;
 };
 
 const PAGE_LIMIT_OPTIONS = [25, 50, 100] as const;
@@ -174,7 +176,8 @@ export function PrinterLogsSection({ printer }: PrinterLogsSectionProps) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `logs-${printer.fiscalSerial}-${new Date().toISOString().slice(0, 10)}.json`;
+    const printerSerial = printer.fiscalSerial ?? printer.serial ?? String(printer.id);
+    a.download = `logs-${printerSerial}-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Archivo JSON descargado");

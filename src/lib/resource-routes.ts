@@ -149,3 +149,7 @@ export function toolsPrinterPeripheralsPath(serial: string): string {
 export function toolsPrinterTicketCustomizationPath(serial: string): string {
   return `${toolsPrinterPath(serial)}/personalizacion-ticket`;
 }
+
+export function toolsPrinterLogsPath(serial: string): string {
+  return `${toolsPrinterPath(serial)}/logs`;
+}

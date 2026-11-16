@@ -40,7 +40,6 @@ import { PrinterPendingMqttBadge } from "@/components/printers/printer-pending-m
 import { PrinterFirmwareUpdateBanner } from "@/components/printers/printer-firmware-update-banner";
 import { PrinterFirmwareUnverifiedBanner } from "@/components/printers/printer-firmware-unverified-banner";
 import { isFirmwareUpdateRequired } from "@/lib/firmware-update-policy";
-import { PrinterLogsSection } from "@/components/printers/printer-logs-section";
 import { ResourceViewActions } from "@/components/resource-view/resource-view-actions";
 import { ResourceViewShell } from "@/components/resource-view/resource-view-shell";
 import { cn } from "@/lib/utils";
@@ -580,8 +579,6 @@ export function PrinterView() {
             onPrinterUpdated={() => void load()}
           />
         ) : null}
-
-        {isAdmin ? <PrinterLogsSection printer={printer} /> : null}
       </div>
     );
   }, [
@@ -804,14 +801,6 @@ export function PrinterView() {
         ),
       },
     );
-
-    if (isAdmin) {
-      steps.push({
-        id: "logs",
-        label: "Logs",
-        content: <PrinterLogsSection printer={printer} />,
-      });
-    }
 
     return steps;
   }, [

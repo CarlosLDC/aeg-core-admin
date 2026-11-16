@@ -111,7 +111,8 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
             }
             if (
               (sectionKey === "peripherals" ||
-                sectionKey === "ticketCustomization") &&
+                sectionKey === "ticketCustomization" ||
+                sectionKey === "logs") &&
               !isAdmin
             ) {
               return null;
@@ -122,7 +123,8 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
               sectionKey !== "wifi" &&
               sectionKey !== "brokerMigration" &&
               sectionKey !== "ticketCustomization" &&
-              sectionKey !== "peripherals";
+              sectionKey !== "peripherals" &&
+              sectionKey !== "logs";
             return (
               <ToolsNavCard
                 key={section.id}

@@ -15,6 +15,7 @@ import {
 import {
   toolsPrinterFormasPagoPath,
   toolsPrinterHeaderFooterPath,
+  toolsPrinterLogsPath,
   toolsPrinterSummaryPath,
   toolsPrinterWifiPath,
   toolsPrinterBrokerMigrationPath,
@@ -118,6 +119,13 @@ export const TOOLS_SECTIONS = {
     icon: Cpu,
     tone: "sky",
   },
+  logs: {
+    id: "logs",
+    title: "Logs",
+    description: "Consultar, filtrar y depurar logs MQTT de la impresora.",
+    icon: ScrollText,
+    tone: "slate",
+  },
 } as const satisfies Record<string, ToolsSectionConfig>;
 
 export type ToolsSectionKey = keyof typeof TOOLS_SECTIONS;
@@ -130,6 +138,7 @@ export const TOOLS_PRINTER_NAV_SECTIONS = [
   "ticketCustomization",
   "formasPago",
   "peripherals",
+  "logs",
 ] as const satisfies readonly ToolsSectionKey[];
 
 export type ToolsPrinterNavSectionKey =
@@ -154,6 +163,8 @@ export function toolsPrinterSectionHref(
       return toolsPrinterPeripheralsPath(serial);
     case "brokerMigration":
       return toolsPrinterBrokerMigrationPath(serial);
+    case "logs":
+      return toolsPrinterLogsPath(serial);
     default: {
       const _exhaustive: never = section;
       return _exhaustive;

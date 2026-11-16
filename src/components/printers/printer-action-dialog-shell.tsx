@@ -2,7 +2,6 @@
 
 import type { FormEvent, ReactNode } from "react";
 import { Loader2, X } from "lucide-react";
-import type { PrinterResponse } from "@/types/printer";
 import { FormDialogFooterBar } from "@/components/ui/form-dialog-footer";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +10,7 @@ export type PrinterActionDialogSize = "md" | "lg" | "xl" | "receipt";
 type PrinterActionDialogShellProps = {
   title: string;
   titleId: string;
-  printer: PrinterResponse;
+  printer: { fiscalSerial?: string; serial?: string };
   saving: boolean;
   error: string | null;
   onClose: () => void;
@@ -87,7 +86,7 @@ export function PrinterActionDialogShell({
                 <p className="mt-1 text-sm text-muted">
                   Serial{" "}
                   <span className="font-mono text-card-foreground">
-                    {printer.fiscalSerial}
+                    {printer.fiscalSerial ?? printer.serial}
                   </span>
                 </p>
               ) : null}

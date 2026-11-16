@@ -16,8 +16,14 @@ import {
   deletePrinterLogs,
   getPrinterLogsErrorMessage,
 } from "@/lib/printer-logs-api";
-import type { PrinterResponse } from "@/types/printer";
 import type { DeletePrinterLogsParams } from "@/types/printer-logs";
+
+export type PrinterLogsTarget = {
+  id: number;
+  macAddress: string | null;
+  fiscalSerial?: string;
+  serial?: string;
+};
 
 type DeleteMode = "before" | "range";
 
@@ -32,7 +38,7 @@ function toLocalDatetimeInputValue(date: Date): string {
 }
 
 type PrinterLogsDeleteDialogProps = {
-  printer: PrinterResponse;
+  printer: PrinterLogsTarget;
   open: boolean;
   onClose: () => void;
   onDeleted: (count: number) => void;
@@ -68,7 +74,9 @@ function PrinterLogsDeleteDialogInner({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [typedSerial, setTypedSerial] = useState("");
-  const expectedSerial = normalizeConfirmText(printer.fiscalSerial);
+  const expectedSerial = normalizeConfirmText(
+    printer.fiscalSerial ?? printer.serial ?? "",
+  );
   const serialConfirmed = isConfirmTextMatch(typedSerial, expectedSerial);
 
   function applyPresetDaysAgo(days: number) {
