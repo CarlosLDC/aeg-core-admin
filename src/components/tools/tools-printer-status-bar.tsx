@@ -9,6 +9,7 @@ import {
   MoreHorizontal,
   Printer,
   RefreshCw,
+  ScrollText,
   TriangleAlert,
   Wifi,
 } from "lucide-react";
@@ -30,10 +31,11 @@ import { cn } from "@/lib/utils";
 type ToolsPrinterStatusBarProps = {
   connection: ToolsPrinterConnectionState;
   printerId?: number;
+  logsHref?: string;
 };
 
 const menuItemClass =
-  "flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-card-foreground transition-colors hover:bg-foreground/5 disabled:cursor-not-allowed disabled:opacity-50";
+  "flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-card-foreground transition-colors hover:bg-foreground/5 disabled:cursor-not-allowed disabled:opacity-50 sm:py-2";
 
 type MenuCoords = {
   top: number;
@@ -47,10 +49,10 @@ const MENU_ESTIMATED_WIDTH_PX = 192;
 function computeMenuCoords(
   trigger: HTMLButtonElement,
   menu: HTMLDivElement | null,
-  hasPrinterLink: boolean,
+  itemCount: number,
 ): MenuCoords {
   const rect = trigger.getBoundingClientRect();
-  const estimatedHeight = (hasPrinterLink ? 2 : 1) * 40 + 8;
+  const estimatedHeight = itemCount * 40 + 8;
   const menuHeight = menu?.offsetHeight ?? estimatedHeight;
   const menuWidth = menu?.offsetWidth ?? MENU_ESTIMATED_WIDTH_PX;
   const spaceBelow = window.innerHeight - MENU_PADDING_PX - rect.bottom;
@@ -75,11 +77,13 @@ function computeMenuCoords(
 
 function ToolsStatusActionsMenu({
   printerId,
+  logsHref,
   clockDisabled,
   clockLoading,
   onRefreshClock,
 }: {
   printerId?: number;
+  logsHref?: string;
   clockDisabled: boolean;
   clockLoading: boolean;
   onRefreshClock: () => void | Promise<void>;
@@ -90,7 +94,7 @@ function ToolsStatusActionsMenu({
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const hasPrinterLink = printerId != null;
+  const menuItemCount = 1 + (logsHref != null ? 1 : 0) + (printerId != null ? 1 : 0);
 
   useLayoutEffect(() => {
     if (!open) {
@@ -99,7 +103,7 @@ function ToolsStatusActionsMenu({
     const updateCoords = () => {
       const trigger = triggerRef.current;
       if (trigger) {
-        setCoords(computeMenuCoords(trigger, menuRef.current, hasPrinterLink));
+        setCoords(computeMenuCoords(trigger, menuRef.current, menuItemCount));
       }
     };
     const frame = requestAnimationFrame(updateCoords);
@@ -111,7 +115,7 @@ function ToolsStatusActionsMenu({
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", updateCoords);
     };
-  }, [open, hasPrinterLink]);
+  }, [open, menuItemCount]);
 
   useEffect(() => {
     if (!open) return;
@@ -164,6 +168,17 @@ function ToolsStatusActionsMenu({
           <Clock className="size-4 shrink-0 text-muted" aria-hidden />
           Consultar reloj (RTC)
         </button>
+        {logsHref != null ? (
+          <Link
+            href={logsHref}
+            role="menuitem"
+            className={menuItemClass}
+            onClick={close}
+          >
+            <ScrollText className="size-4 shrink-0 text-muted" aria-hidden />
+            Logs
+          </Link>
+        ) : null}
         {printerId != null ? (
           <Link
             href={printerPath(printerId)}
@@ -190,7 +205,7 @@ function ToolsStatusActionsMenu({
           }
           if (triggerRef.current) {
             setCoords(
-              computeMenuCoords(triggerRef.current, menuRef.current, hasPrinterLink),
+              computeMenuCoords(triggerRef.current, menuRef.current, menuItemCount),
             );
           }
           setOpen(true);
@@ -303,6 +318,7 @@ function TelemetryItem({
 export function ToolsPrinterStatusBar({
   connection,
   printerId,
+  logsHref,
 }: ToolsPrinterStatusBarProps) {
   const { usbConnected } = useToolsTransportContext();
   const {
@@ -454,6 +470,7 @@ export function ToolsPrinterStatusBar({
           />
           <ToolsStatusActionsMenu
             printerId={printerId}
+            logsHref={logsHref}
             clockDisabled={!canQueryClock}
             clockLoading={clockLoading}
             onRefreshClock={refreshClock}

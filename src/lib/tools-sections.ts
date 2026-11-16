@@ -15,7 +15,6 @@ import {
 import {
   toolsPrinterFormasPagoPath,
   toolsPrinterHeaderFooterPath,
-  toolsPrinterLogsPath,
   toolsPrinterSummaryPath,
   toolsPrinterWifiPath,
   toolsPrinterBrokerMigrationPath,
@@ -138,11 +137,9 @@ export const TOOLS_PRINTER_NAV_SECTIONS = [
   "ticketCustomization",
   "formasPago",
   "peripherals",
-  "logs",
 ] as const satisfies readonly ToolsSectionKey[];
 
-export type ToolsPrinterNavSectionKey =
-  (typeof TOOLS_PRINTER_NAV_SECTIONS)[number];
+export type ToolsPrinterNavSectionKey = (typeof TOOLS_PRINTER_NAV_SECTIONS)[number];
 
 export function toolsPrinterSectionHref(
   serial: string,
@@ -163,8 +160,6 @@ export function toolsPrinterSectionHref(
       return toolsPrinterPeripheralsPath(serial);
     case "brokerMigration":
       return toolsPrinterBrokerMigrationPath(serial);
-    case "logs":
-      return toolsPrinterLogsPath(serial);
     default: {
       const _exhaustive: never = section;
       return _exhaustive;

@@ -34,7 +34,7 @@ import {
   TOOLS_SECTIONS,
   toolsPrinterSectionHref,
 } from "@/lib/tools-sections";
-import { toolsListPath } from "@/lib/resource-routes";
+import { toolsListPath, toolsPrinterLogsPath } from "@/lib/resource-routes";
 import { cn } from "@/lib/utils";
 
 type ToolsPrinterDetailViewProps = {
@@ -44,8 +44,7 @@ type ToolsPrinterDetailViewProps = {
 function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
-  const canUpdateFirmware =
-    isAdmin || isDistributorPanelRole(user?.role);
+  const canUpdateFirmware = isAdmin || isDistributorPanelRole(user?.role);
   const { loading, error, reload, findBySerial } = useToolsPrinters();
   const printer = findBySerial(serial);
   const connection = useToolsPrinterConnection(
@@ -88,7 +87,11 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
         </ToolsMacWarning>
       ) : null}
 
-      <ToolsPrinterStatusBar connection={connection} printerId={printer.id} />
+      <ToolsPrinterStatusBar
+        connection={connection}
+        printerId={printer.id}
+        logsHref={isAdmin ? toolsPrinterLogsPath(printer.serial) : undefined}
+      />
 
       {connection.transportReady &&
       connection.connectionResolved &&
@@ -110,9 +113,7 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
               return null;
             }
             if (
-              (sectionKey === "peripherals" ||
-                sectionKey === "ticketCustomization" ||
-                sectionKey === "logs") &&
+              (sectionKey === "peripherals" || sectionKey === "ticketCustomization") &&
               !isAdmin
             ) {
               return null;
@@ -123,8 +124,7 @@ function ToolsPrinterDetailContent({ serial }: ToolsPrinterDetailViewProps) {
               sectionKey !== "wifi" &&
               sectionKey !== "brokerMigration" &&
               sectionKey !== "ticketCustomization" &&
-              sectionKey !== "peripherals" &&
-              sectionKey !== "logs";
+              sectionKey !== "peripherals";
             return (
               <ToolsNavCard
                 key={section.id}
@@ -167,11 +167,7 @@ export function ToolsPrinterDetailView({ serial }: ToolsPrinterDetailViewProps) 
   const printer = findBySerial(serial);
 
   if (loading && !printer) {
-    return (
-      <ResourceViewShell loading>
-        {null}
-      </ResourceViewShell>
-    );
+    return <ResourceViewShell loading>{null}</ResourceViewShell>;
   }
 
   if (error) {
