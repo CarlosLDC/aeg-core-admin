@@ -14,6 +14,7 @@ import { BranchTypeBadges } from "@/components/branches/branch-type-badges";
 import { BranchCreateWizardDialog,
   type BranchWizardValues,
 } from "@/components/branches/branch-create-wizard-dialog";
+import { BranchCommercialInvoicesTable } from "@/components/branches/branch-commercial-invoices-table";
 import { BranchPrintersTable } from "@/components/branches/branch-printers-table";
 import { emptyBranchWizardContractDraft } from "@/components/branches/branch-wizard-types";
 import {
@@ -113,6 +114,9 @@ export function BranchView() {
   const canCancelReview = user ? canCancelModificationReview(user.role) : false;
   const canReadContracts = user ? can(user.role, "contracts", "read") : false;
   const canReadPrinters = user ? can(user.role, "printers", "read") : false;
+  const canReadCommercialInvoices = user
+    ? can(user.role, "commercialInvoices", "read")
+    : false;
   const { coverage: contractCoverage } =
     useContractPartyCoverage(canReadContracts);
 
@@ -564,10 +568,19 @@ export function BranchView() {
       });
     }
 
+    if (canReadCommercialInvoices) {
+      steps.push({
+        id: "commercial-invoices",
+        label: "Facturas comerciales",
+        content: <BranchCommercialInvoicesTable branch={branch} />,
+      });
+    }
+
     return steps;
   }, [
     branch,
     branches,
+    canReadCommercialInvoices,
     canReadPrinters,
     client,
     companies,
@@ -601,11 +614,20 @@ export function BranchView() {
       });
     }
 
+    if (canReadCommercialInvoices) {
+      steps.push({
+        id: "commercial-invoices",
+        label: "Facturas comerciales",
+        content: <BranchCommercialInvoicesTable branch={branch} />,
+      });
+    }
+
     return steps;
   }, [
     branch,
     technicianEmpresaView,
     technicianDetailContent,
+    canReadCommercialInvoices,
     canReadPrinters,
     client,
   ]);
@@ -722,7 +744,7 @@ export function BranchView() {
               />
             ) : null}
             {technicianEmpresaView ? (
-              canReadPrinters && technicianSteps.length > 1 ? (
+              technicianSteps.length > 1 ? (
                 <DetailSectionsPager
                   key={`tech-${branch.id}`}
                   steps={technicianSteps}

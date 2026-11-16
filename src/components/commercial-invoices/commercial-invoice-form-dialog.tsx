@@ -32,6 +32,8 @@ import type { CompanyResponse } from "@/types/company";
 type CommercialInvoiceFormDialogProps = {
   mode: "create" | "edit";
   invoice?: CommercialInvoiceResponse;
+  defaultEmpresaId?: number | null;
+  lockEmpresa?: boolean;
   open: boolean;
   saving: boolean;
   error: string | null;
@@ -49,6 +51,8 @@ export function CommercialInvoiceFormDialog(
 function CommercialInvoiceFormDialogContent({
   mode,
   invoice,
+  defaultEmpresaId,
+  lockEmpresa = false,
   saving,
   error,
   onClose,
@@ -56,11 +60,16 @@ function CommercialInvoiceFormDialogContent({
 }: Omit<CommercialInvoiceFormDialogProps, "open">) {
   const formId = useId();
   const titleId = useId();
-  const [form, setForm] = useState<CommercialInvoiceFormValues>(() =>
-    mode === "edit" && invoice
-      ? commercialInvoiceToFormValues(invoice)
-      : emptyCommercialInvoiceForm(),
-  );
+  const [form, setForm] = useState<CommercialInvoiceFormValues>(() => {
+    if (mode === "edit" && invoice) {
+      return commercialInvoiceToFormValues(invoice);
+    }
+    const base = emptyCommercialInvoiceForm();
+    if (defaultEmpresaId != null && defaultEmpresaId > 0) {
+      base.empresaId = String(defaultEmpresaId);
+    }
+    return base;
+  });
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<keyof CommercialInvoiceFormValues, string>>
   >({});
@@ -231,7 +240,7 @@ function CommercialInvoiceFormDialogContent({
                     }));
                   }}
                   options={companyOptions}
-                  disabled={disabled}
+                  disabled={disabled || lockEmpresa}
                   loading={catalogLoading}
                   emptyLabel="Seleccionar empresa…"
                   searchPlaceholder="Buscar empresa o RIF…"
