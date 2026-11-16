@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { ContributorBadge } from "@/components/companies/contributor-badge";
+import { ClientModificationComparison } from "@/components/clients/client-modification-comparison";
 import { DetailField, DetailSection } from "@/components/resource-view/detail-fields";
 import {
   DetailSectionsPager,
@@ -13,6 +13,7 @@ import { ResourceViewShell } from "@/components/resource-view/resource-view-shel
 import { useConfirm } from "@/context/confirm-provider";
 import { useToast } from "@/context/toast-provider";
 import { useResourceId } from "@/hooks/use-resource-id";
+import { buildClientComparisonRows } from "@/lib/client-modification-comparison";
 import {
   approveClientModificationRequest,
   fetchClientModificationRequestById,
@@ -26,7 +27,6 @@ import type {
   ClientModificationRequestDetailResponse,
   ModificationRequestStatus,
 } from "@/types/client-modification-request";
-import type { ContributorType } from "@/types/company";
 
 const STATUS_LABELS: Record<ModificationRequestStatus, string> = {
   PENDING: "Pendiente",
@@ -34,20 +34,6 @@ const STATUS_LABELS: Record<ModificationRequestStatus, string> = {
   REJECTED: "Rechazada",
   CANCELLED: "Cancelada",
 };
-
-function formatAfterValue(
-  value: string | number | undefined | null,
-  actionType: ClientModificationRequestDetailResponse["actionType"],
-): string {
-  if (actionType === "DELETE") return "Eliminar";
-  if (value == null) return "—";
-  const text = String(value).trim();
-  return text || "—";
-}
-
-function isContributorType(value: unknown): value is ContributorType {
-  return value === "ordinario" || value === "especial" || value === "formal";
-}
 
 type ClientModificationRequestViewProps = {
   backHref?: string;
@@ -135,58 +121,10 @@ export function ClientModificationRequestView({
     }
   }
 
-  const comparison = useMemo(() => {
-    if (!row) return [];
-    const current = row.currentClientSnapshot;
-    const proposed = row.proposedData;
-    return [
-      {
-        label: "Razón social",
-        before: current?.businessName ?? "—",
-        after: formatAfterValue(proposed?.businessName, row.actionType),
-      },
-      {
-        label: "RIF",
-        before: current?.rif ?? "—",
-        after: formatAfterValue(proposed?.rif, row.actionType),
-      },
-      {
-        label: "Tipo de contribuyente",
-        before: current?.contributorType ?? "—",
-        after: formatAfterValue(proposed?.contributorType, row.actionType),
-      },
-      {
-        label: "Estado",
-        before: current?.state ?? "—",
-        after: formatAfterValue(proposed?.state, row.actionType),
-      },
-      {
-        label: "Ciudad",
-        before: current?.city ?? "—",
-        after: formatAfterValue(proposed?.city, row.actionType),
-      },
-      {
-        label: "Dirección",
-        before: current?.address ?? "—",
-        after: formatAfterValue(proposed?.address, row.actionType),
-      },
-      {
-        label: "Contacto",
-        before: current?.contactPersonName ?? "—",
-        after: formatAfterValue(proposed?.contactPersonName, row.actionType),
-      },
-      {
-        label: "Teléfono",
-        before: current?.phone ?? "—",
-        after: formatAfterValue(proposed?.phone, row.actionType),
-      },
-      {
-        label: "Correo",
-        before: current?.email ?? "—",
-        after: formatAfterValue(proposed?.email, row.actionType),
-      },
-    ];
-  }, [row]);
+  const comparison = useMemo(
+    () => (row ? buildClientComparisonRows(row) : []),
+    [row],
+  );
 
   const detailSteps = useMemo<DetailPagerStep[]>(() => {
     if (!row || row.actionType !== "UPDATE") return [];
@@ -216,49 +154,7 @@ export function ClientModificationRequestView({
       {
         id: "comparison",
         label: "Comparación",
-        content: (
-          <DetailSection title="Comparación Antes vs Después">
-            {comparison.map((field) => {
-              const beforeContributor = row.currentClientSnapshot?.contributorType;
-              const afterContributor = row.proposedData?.contributorType;
-              return (
-              <DetailField
-                key={field.label}
-                label={field.label}
-                value={
-                  <div className="space-y-1 text-sm">
-                    <p>
-                      <span className="text-muted">Antes:</span>{" "}
-                      {field.label === "Tipo de contribuyente" &&
-                      field.before !== "—" &&
-                      isContributorType(beforeContributor) ? (
-                        <ContributorBadge
-                          type={beforeContributor}
-                        />
-                      ) : (
-                        field.before
-                      )}
-                    </p>
-                    <p>
-                      <span className="text-muted">Después:</span>{" "}
-                      {field.label === "Tipo de contribuyente" &&
-                      field.after !== "—" &&
-                      field.after !== "Eliminar" &&
-                      isContributorType(afterContributor) ? (
-                        <ContributorBadge
-                          type={afterContributor}
-                        />
-                      ) : (
-                        field.after
-                      )}
-                    </p>
-                  </div>
-                }
-              />
-              );
-            })}
-          </DetailSection>
-        ),
+        content: <ClientModificationComparison rows={comparison} />,
       },
     ];
   }, [comparison, row]);
