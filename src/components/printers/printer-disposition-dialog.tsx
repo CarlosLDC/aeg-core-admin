@@ -1,11 +1,13 @@
 "use client";
 
 import { FormEvent, useId, useMemo, useState } from "react";
-import { FileText, User } from "lucide-react";
+import { FileText, User, Wifi } from "lucide-react";
 import { useAuth } from "@/context/auth-provider";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { PrinterActionDialogShell } from "@/components/printers/printer-action-dialog-shell";
 import { PrinterActionPickerPanel } from "@/components/printers/printer-action-picker-panel";
+import { PrinterUsbWifiStep } from "@/components/printers/printer-usb-wifi-step";
+import { useUsbWifiConfig } from "@/hooks/use-usb-wifi-config";
 import {
   getPrinterDispositionBlockedMessage,
   isPrinterPaidForDisposition,
@@ -44,16 +46,18 @@ type PrinterDispositionDialogProps = {
   onContinue: (payload: { clientId: number; facturaNro: string }) => void;
 };
 
-type WizardStep = 1 | 2;
+type WizardStep = 1 | 2 | 3;
 
 const FORM_STEPS: { step: WizardStep; label: string }[] = [
   { step: 1, label: "Cliente" },
   { step: 2, label: "Factura" },
+  { step: 3, label: "Wi-Fi (opcional)" },
 ];
 
 const STEP_ICONS = {
   1: User,
   2: FileText,
+  3: Wifi,
 } as const;
 
 function resolveDefaultClientId(printer: PrinterResponse): string {
@@ -71,8 +75,10 @@ function stepSubtitle(step: WizardStep, reconfigure: boolean): string {
         : "Selecciona el cliente que recibirá la impresora.";
     case 2:
       return reconfigure
-        ? "Confirma o actualiza el número de factura y continúa a la edición del ticket."
+        ? "Confirma o actualiza el número de factura y continúa al siguiente paso."
         : "Ingresa el número de factura fiscal de la enajenación.";
+    case 3:
+      return "Opcional: conecta la impresora por USB para configurar su red Wi-Fi antes de continuar.";
     default:
       return "";
   }
@@ -94,6 +100,7 @@ export function PrinterDispositionDialog({
 }: PrinterDispositionDialogProps) {
   const { user } = useAuth();
   const titleId = useId();
+  const usbWifi = useUsbWifiConfig();
   const [step, setStep] = useState<WizardStep>(() =>
     reconfigure && printer.clientId != null ? 2 : 1,
   );
@@ -292,11 +299,52 @@ export function PrinterDispositionDialog({
   }
 
   function handleBack() {
+    if (step === 3) {
+      goToStep(2);
+      return;
+    }
     if (step === 2) {
       goToStep(1);
       return;
     }
     onClose();
+  }
+
+  function validateInvoiceStep(): { clientId: number; facturaNro: string } | null {
+    let id = Number(clientId);
+    if (
+      (id === VIRTUAL_DISTRIBUTOR_CLIENT_ID || id < 0) &&
+      distributorClientState?.id != null
+    ) {
+      id = distributorClientState.id;
+    }
+    const facturaError = validateFacturaNroInput(facturaNro);
+    if (facturaError) {
+      setFieldError(facturaError);
+      return null;
+    }
+    const normalizedFacturaNro = facturaNro.trim();
+    const clientListForInvoice =
+      distributorClientState?.id === id &&
+      !mergedClients.some((c) => c.id === id)
+        ? [distributorClientState, ...mergedClients]
+        : mergedClients;
+
+    if (
+      !buildDispositionInvoiceData({
+        clientId: id,
+        clients: clientListForInvoice,
+        branches,
+        companies,
+        distributors,
+        printer,
+        facturaNro: normalizedFacturaNro,
+      })
+    ) {
+      setFieldError("No se pudo generar la factura para este cliente.");
+      return null;
+    }
+    return { clientId: id, facturaNro: normalizedFacturaNro };
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -356,41 +404,19 @@ export function PrinterDispositionDialog({
       return;
     }
 
-    let id = Number(clientId);
-    if (
-      (id === VIRTUAL_DISTRIBUTOR_CLIENT_ID || id < 0) &&
-      distributorClientState?.id != null
-    ) {
-      id = distributorClientState.id;
-    }
-    const facturaError = validateFacturaNroInput(facturaNro);
-    if (facturaError) {
-      setFieldError(facturaError);
-      return;
-    }
-    const normalizedFacturaNro = facturaNro.trim();
-    const clientListForInvoice =
-      distributorClientState?.id === id &&
-      !mergedClients.some((c) => c.id === id)
-        ? [distributorClientState, ...mergedClients]
-        : mergedClients;
-
-    if (
-      !buildDispositionInvoiceData({
-        clientId: id,
-        clients: clientListForInvoice,
-        branches,
-        companies,
-        distributors,
-        printer,
-        facturaNro: normalizedFacturaNro,
-      })
-    ) {
-      setFieldError("No se pudo generar la factura para este cliente.");
+    const validated = validateInvoiceStep();
+    if (!validated) {
       return;
     }
     setFieldError(null);
-    onContinue({ clientId: id, facturaNro: normalizedFacturaNro });
+
+    if (step === 2) {
+      goToStep(3);
+      return;
+    }
+
+    await usbWifi.disconnectUsb();
+    onContinue(validated);
   }
 
   if (!isPrinterPaidForDisposition(printer)) {
@@ -416,6 +442,9 @@ export function PrinterDispositionDialog({
     );
   }
 
+  const usbActionRunning =
+    usbWifi.usbBusy || usbWifi.wifiScanning || usbWifi.wifiConnecting;
+
   return (
     <PrinterActionDialogShell
       title={printerDispositionModalTitle(printer.fiscalSerial)}
@@ -425,14 +454,17 @@ export function PrinterDispositionDialog({
       saving={false}
       error={null}
       onClose={onClose}
-      submitLabel={step === 1 ? "Siguiente" : "Continuar"}
+      submitLabel={step === 3 ? "Continuar" : "Siguiente"}
       onSubmit={handleSubmit}
       submitDisabled={
         disabled ||
         creatingDistributorClient ||
+        usbActionRunning ||
         (step === 1
           ? !clientId || mergedClientOptions.length === 0
-          : !facturaNro.trim())
+          : step === 2
+            ? !facturaNro.trim()
+            : false)
       }
       submitLoading={creatingDistributorClient}
       size="lg"
@@ -453,9 +485,9 @@ export function PrinterDispositionDialog({
             <button
               key={s}
               type="button"
-              disabled={disabled || (s === 2 && step === 1)}
+              disabled={disabled || usbActionRunning || s > step}
               onClick={() => {
-                if (s === 1 && step === 2) goToStep(1);
+                if (s < step) goToStep(s);
               }}
               className={cn(
                 "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2 text-center transition-colors",
@@ -492,7 +524,7 @@ export function PrinterDispositionDialog({
           emptyMessage="Sin clientes disponibles"
           noResultsMessage="Sin resultados"
         />
-      ) : (
+      ) : step === 2 ? (
         <div className="space-y-4">
           {selectedClientRif || selectedClientCompanyName ? (
             <div className="space-y-3">
@@ -541,6 +573,8 @@ export function PrinterDispositionDialog({
             </p>
           </div>
         </div>
+      ) : (
+        <PrinterUsbWifiStep usbWifi={usbWifi} disabled={disabled} />
       )}
 
       {fieldError ? (
