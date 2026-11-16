@@ -21,6 +21,16 @@ export function branchWizardNeedsContracts(
   );
 }
 
+export function hasBranchWizardContractDraftData(
+  draft: BranchWizardContractDraft,
+): boolean {
+  return (
+    draft.startDate.trim() !== "" ||
+    draft.endDate.trim() !== "" ||
+    draft.photoUrls.length > 0
+  );
+}
+
 function draftToFormValues(
   draft: BranchWizardContractDraft,
   partyId: number,
@@ -57,7 +67,10 @@ export function validateBranchWizardContracts(
   values: BranchWizardValues,
   roles: Pick<ClientOnboardingRoleOptions, "organizationRole">,
 ): string | null {
-  if (roles.organizationRole === "DISTRIBUTOR") {
+  if (
+    roles.organizationRole === "DISTRIBUTOR" &&
+    hasBranchWizardContractDraftData(values.distributorContract)
+  ) {
     const formErr = validateWizardDraft(
       values.distributorContract,
       "distributor",
@@ -65,7 +78,10 @@ export function validateBranchWizardContracts(
     if (formErr) return `Contrato de distribuidora: ${formErr}`;
   }
 
-  if (roles.organizationRole === "SERVICE_CENTER") {
+  if (
+    roles.organizationRole === "SERVICE_CENTER" &&
+    hasBranchWizardContractDraftData(values.serviceCenterContract)
+  ) {
     const formErr = validateWizardDraft(
       values.serviceCenterContract,
       "serviceCenter",
@@ -94,7 +110,10 @@ export async function createBranchWizardContracts(
   const { values, roles, distributorId, serviceCenterId } = input;
   const result: CreateBranchWizardContractsResult = {};
 
-  if (roles.organizationRole === "DISTRIBUTOR") {
+  if (
+    roles.organizationRole === "DISTRIBUTOR" &&
+    hasBranchWizardContractDraftData(values.distributorContract)
+  ) {
     const validationError = validateDraftWithPartyId(
       values.distributorContract,
       distributorId,
@@ -113,7 +132,10 @@ export async function createBranchWizardContracts(
     result.distributorContractId = created.id;
   }
 
-  if (roles.organizationRole === "SERVICE_CENTER") {
+  if (
+    roles.organizationRole === "SERVICE_CENTER" &&
+    hasBranchWizardContractDraftData(values.serviceCenterContract)
+  ) {
     const validationError = validateDraftWithPartyId(
       values.serviceCenterContract,
       serviceCenterId,

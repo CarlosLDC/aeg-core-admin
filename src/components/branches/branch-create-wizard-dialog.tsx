@@ -107,7 +107,7 @@ function stepSubtitle(step: WizardStep, resuming: boolean): string {
     case 4:
       return "Asigna los roles de esta empresa.";
     case 5:
-      return "Sube el primer contrato de cada rol operativo seleccionado.";
+      return "Opcional: sube el primer contrato de cada rol operativo seleccionado.";
     default:
       return "";
   }

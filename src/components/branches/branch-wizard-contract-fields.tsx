@@ -47,10 +47,9 @@ function ContractBlock({
       <p className="sr-only">{title}</p>
       <div className="grid shrink-0 gap-2 sm:grid-cols-2">
         <label className="block">
-          <FieldLabel required>Inicio</FieldLabel>
+          <FieldLabel>Inicio</FieldLabel>
           <input
             type="date"
-            required
             value={draft.startDate}
             onChange={(e) => {
               const startDate = e.target.value;
@@ -64,10 +63,9 @@ function ContractBlock({
           />
         </label>
         <label className="block">
-          <FieldLabel required>Fin</FieldLabel>
+          <FieldLabel>Fin</FieldLabel>
           <input
             type="date"
-            required
             value={draft.endDate}
             onChange={(e) => onChange({ endDate: e.target.value })}
             disabled={saving}
@@ -76,7 +74,7 @@ function ContractBlock({
         </label>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-1">
-        <FieldLabel required className="shrink-0">
+        <FieldLabel className="shrink-0">
           Documentos
         </FieldLabel>
         <div className="flex min-h-0 flex-1 flex-col">
