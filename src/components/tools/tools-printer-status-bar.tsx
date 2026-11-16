@@ -344,11 +344,6 @@ export function ToolsPrinterStatusBar({
   } = connection;
   const statusSection = TOOLS_SECTIONS.status;
 
-  // Only surface the SENIAT pill when the printer actually responded; when it
-  // is unreachable, the unified footer banner below explains the failure.
-  const showSeniatPill = !loading && isPrinterReachable;
-  const seniatLabel = status?.seniatStatus ?? "Sin datos";
-  const seniatTone: StatusPillTone = isSeniatOnline ? "emerald" : "amber";
   const notice = resolveToolsStatusBarNotice({
     loading,
     transportReady,
@@ -357,6 +352,12 @@ export function ToolsPrinterStatusBar({
     connectionIssue,
     error,
   });
+  // Only surface the SENIAT pill when the printer responded and the footer
+  // notice is not already reporting a SENIAT-offline condition.
+  const showSeniatPill =
+    !loading && isPrinterReachable && notice?.kind !== "seniat-offline";
+  const seniatLabel = status?.seniatStatus ?? "Sin datos";
+  const seniatTone: StatusPillTone = isSeniatOnline ? "emerald" : "amber";
 
   const canQueryClock = transportReady && (isPrinterReachable || usbConnected);
   const showClockChip =
@@ -445,8 +446,8 @@ export function ToolsPrinterStatusBar({
   return (
     <div className={cn(toolsSurfaceClass, "overflow-hidden")}>
       {/* Nivel 1: Identidad, estado operativo crítico y acciones */}
-      <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-        <div className="flex min-w-0 items-start gap-3 sm:items-center">
+      <div className="flex flex-col gap-3.5 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:py-4">
+        <div className="flex min-w-0 items-center gap-3">
           <ToolsIconBadge
             icon={statusSection.icon}
             tone={statusSection.tone}
@@ -480,6 +481,7 @@ export function ToolsPrinterStatusBar({
           <ToolsUsbConnectionButton className="min-h-10 sm:min-h-0" />
           <ToolsRefreshStatusButton
             loading={loading}
+            disabled={!transportReady}
             onRefresh={refreshStatus}
             className="min-h-10 flex-1 sm:min-h-0 sm:flex-initial"
           />
@@ -514,7 +516,7 @@ export function ToolsPrinterStatusBar({
         <div
           role="status"
           className={cn(
-            "flex items-start gap-2 border-t px-4 py-2.5 text-xs sm:px-5 sm:text-sm",
+            "flex items-start gap-2.5 border-t px-4 py-3 text-[13px] leading-relaxed sm:px-5 sm:py-2.5 sm:text-sm",
             notice.tone === "amber"
               ? "border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-200"
               : "border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300",
