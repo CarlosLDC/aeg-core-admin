@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { useAuth } from "@/context/auth-provider";
@@ -24,7 +25,8 @@ import {
 import type { AppNotification } from "@/types/notification";
 import { isDistributorPanelRole } from "@/types/user";
 
-const POLL_MS = 90_000;
+const POLL_MS = 300_000;
+const FOCUS_THROTTLE_MS = 60_000;
 
 export type NotificationView = AppNotification & {
   read: boolean;
@@ -66,6 +68,8 @@ export function NotificationsProvider({
   const [distributorId, setDistributorId] = useState<number | null>(
     user?.distributorId ?? null,
   );
+  const lastFetchAtRef = useRef<number>(0);
+  const inFlightRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (!user) return;
@@ -104,7 +108,8 @@ export function NotificationsProvider({
   );
 
   const refresh = useCallback(async () => {
-    if (!user || scopeLoading) return;
+    if (!user || scopeLoading || inFlightRef.current) return;
+    inFlightRef.current = true;
     setLoading(true);
     setError(null);
     try {
@@ -116,6 +121,7 @@ export function NotificationsProvider({
         userBranchId: user.branchId,
       });
       setRawItems(notifications);
+      lastFetchAtRef.current = Date.now();
       if (warnings.length > 0 && notifications.length === 0) {
         setError(warnings.join(" "));
       }
@@ -123,6 +129,7 @@ export function NotificationsProvider({
       setRawItems([]);
       setError("No se pudieron cargar las notificaciones.");
     } finally {
+      inFlightRef.current = false;
       setLoading(false);
     }
   }, [user, scope, scopeLoading, distributorId]);
@@ -134,12 +141,25 @@ export function NotificationsProvider({
 
   useEffect(() => {
     if (!user) return;
-    const id = window.setInterval(() => void refresh(), POLL_MS);
-    const onFocus = () => void refresh();
-    window.addEventListener("focus", onFocus);
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void refresh();
+      }
+    }, POLL_MS);
+    const refreshIfStale = () => {
+      if (
+        document.visibilityState === "visible" &&
+        Date.now() - lastFetchAtRef.current >= FOCUS_THROTTLE_MS
+      ) {
+        void refresh();
+      }
+    };
+    window.addEventListener("focus", refreshIfStale);
+    document.addEventListener("visibilitychange", refreshIfStale);
     return () => {
       window.clearInterval(id);
-      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("focus", refreshIfStale);
+      document.removeEventListener("visibilitychange", refreshIfStale);
     };
   }, [user, refresh]);
 
