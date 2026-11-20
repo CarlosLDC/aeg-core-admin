@@ -6,10 +6,13 @@ import type { BlobUploadFolder } from "@/lib/blob-upload-categories";
 import {
   blobDocumentLabel,
   BLOB_DOCUMENT_ACCEPT,
-  documentViewUrl,
   isPdfUrl,
   uploadBlobDocument,
 } from "@/lib/blob-documents";
+import {
+  ProtectedDocumentImage,
+  ProtectedDocumentLink,
+} from "@/components/ui/protected-document";
 import { cn } from "@/lib/utils";
 
 type PhotoDocumentUploadProps = {
@@ -73,7 +76,6 @@ export function PhotoDocumentUpload({
 
   const fileRows = urls.map((url, index) => {
     const pdf = isPdfUrl(url);
-    const viewUrl = documentViewUrl(url);
     const Icon = pdf ? FileText : ImageIcon;
     return (
       <li
@@ -90,8 +92,11 @@ export function PhotoDocumentUpload({
           )}
         >
           {!pdf ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={viewUrl} alt="" className="size-full object-cover" />
+            <ProtectedDocumentImage
+              url={url}
+              alt=""
+              className="size-full object-cover"
+            />
           ) : (
             <Icon
               className={cn("text-muted", compact ? "size-3.5" : "size-4")}
@@ -108,14 +113,12 @@ export function PhotoDocumentUpload({
           >
             {blobDocumentLabel(url)}
           </p>
-          <a
-            href={viewUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <ProtectedDocumentLink
+            url={url}
             className="text-xs text-accent hover:underline"
           >
             Ver archivo
-          </a>
+          </ProtectedDocumentLink>
         </div>
         <button
           type="button"

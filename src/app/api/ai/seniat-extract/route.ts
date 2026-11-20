@@ -8,14 +8,18 @@ import {
 import { getSessionCookieName } from "@/lib/session-cookie";
 import { requireRole } from "@/lib/server-request-auth";
 
-function requireSession(request: NextRequest): NextResponse | null {
+async function requireSession(request: NextRequest): Promise<NextResponse | null> {
   const session = request.cookies.get(getSessionCookieName())?.value;
   if (!session) {
     return NextResponse.json({ error: "Sesión no válida." }, { status: 401 });
   }
-  const auth = requireRole(request, "seniatExtract", "create");
+  const auth = await requireRole(request, "seniatExtract", "create");
   if (auth instanceof Response) {
-    return NextResponse.json({ error: "Sin permiso." }, { status: auth.status });
+    const body = (await auth.json().catch(() => null)) as { error?: string } | null;
+    return NextResponse.json(
+      { error: body?.error ?? "Sin permiso." },
+      { status: auth.status },
+    );
   }
   return null;
 }
@@ -43,14 +47,13 @@ function resolveMime(file: File): string {
 }
 
 export async function POST(request: NextRequest) {
-  const unauthorized = requireSession(request);
+  const unauthorized = await requireSession(request);
   if (unauthorized) return unauthorized;
 
   if (!process.env.GEMINI_API_KEY?.trim()) {
     return NextResponse.json(
       {
-        error:
-          "IA no configurada. Añade GEMINI_API_KEY en Vercel o en .env.local (Google AI Studio).",
+        error: "El servicio de análisis IA no está disponible en este momento.",
         code: "GEMINI_NOT_CONFIGURED",
       },
       { status: 503 },

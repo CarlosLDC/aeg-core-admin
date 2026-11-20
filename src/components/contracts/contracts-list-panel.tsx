@@ -76,9 +76,9 @@ import type {
 } from "@/types/contract";
 import {
   contractDocumentLabel,
-  contractDocumentViewUrl,
   isPdfUrl,
 } from "@/lib/contract-documents";
+import { ProtectedDocumentLink } from "@/components/ui/protected-document";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
@@ -529,12 +529,10 @@ export function ContractsListPanel({
                               <ul className="space-y-1">
                                 {contract.photoUrls.map((url) => (
                                   <li key={url}>
-                                    <a
-                                      href={contractDocumentViewUrl(url)}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
+                                    <ProtectedDocumentLink
+                                      url={url}
                                       onClick={stopTableRowClick}
-                                      className="inline-flex max-w-[200px] min-w-0 items-center gap-1 text-xs text-accent hover:underline"
+                                      className="inline-flex max-w-[200px] min-w-0 items-center gap-1 text-left text-xs text-accent hover:underline"
                                     >
                                       <TruncatedText
                                         maxClassName="max-w-[160px]"
@@ -543,7 +541,7 @@ export function ContractsListPanel({
                                         {`${isPdfUrl(url) ? "PDF" : "Imagen"}: ${contractDocumentLabel(url)}`}
                                       </TruncatedText>
                                       <ExternalLink className="size-3 shrink-0" />
-                                    </a>
+                                    </ProtectedDocumentLink>
                                   </li>
                                 ))}
                               </ul>

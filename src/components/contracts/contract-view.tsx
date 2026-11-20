@@ -35,9 +35,9 @@ import {
 } from "@/lib/contract-form";
 import {
   contractDocumentLabel,
-  contractDocumentViewUrl,
   isPdfUrl,
 } from "@/lib/contract-documents";
+import { ProtectedDocumentLink } from "@/components/ui/protected-document";
 import {
   deleteDistributorContract,
   fetchDistributorContractById,
@@ -350,15 +350,13 @@ export function ContractView({ kind }: ContractViewProps) {
                 <ul className="mt-3 space-y-2 text-sm">
                   {contract.photoUrls.map((url) => (
                     <li key={url}>
-                      <a
-                        href={contractDocumentViewUrl(url)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <ProtectedDocumentLink
+                        url={url}
                         className="inline-flex items-center gap-1 text-accent underline-offset-2 hover:underline"
                       >
                         {isPdfUrl(url) ? "PDF" : "Imagen"}:{" "}
                         {contractDocumentLabel(url)}
-                      </a>
+                      </ProtectedDocumentLink>
                     </li>
                   ))}
                 </ul>

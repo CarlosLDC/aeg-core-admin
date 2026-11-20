@@ -1,6 +1,6 @@
 import { getStoredToken } from "@/lib/auth-storage";
 import type { BlobUploadFolder } from "@/lib/blob-upload-categories";
-import { blobViewUrl } from "@/lib/blob-storage";
+import { blobViewUrl, isVercelBlobUrl } from "@/lib/blob-storage";
 
 export { blobViewUrl as documentViewUrl };
 
@@ -49,6 +49,70 @@ export function blobDocumentLabel(url: string): string {
 
 export function isPdfUrl(url: string): boolean {
   return /\.pdf($|\?)/i.test(url) || url.toLowerCase().includes("application/pdf");
+}
+
+export async function fetchBlobDocumentBlob(
+  storedUrl: string,
+  signal?: AbortSignal,
+): Promise<Blob> {
+  const viewUrl = blobViewUrl(storedUrl);
+  if (viewUrl === "#") {
+    throw new Error("URL de documento no válida.");
+  }
+
+  const headers: HeadersInit = {};
+  const token = getStoredToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(viewUrl, {
+    method: "GET",
+    headers,
+    credentials: "include",
+    signal,
+  });
+
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el documento.");
+  }
+
+  return res.blob();
+}
+
+function triggerAnchorNavigation(
+  href: string,
+  downloadFilename?: string,
+): void {
+  const anchor = document.createElement("a");
+  anchor.href = href;
+  anchor.target = "_blank";
+  anchor.rel = "noopener noreferrer";
+  if (downloadFilename) {
+    anchor.download = downloadFilename;
+  }
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+}
+
+export async function openBlobDocument(
+  storedUrl: string,
+  options?: { downloadFilename?: string },
+): Promise<void> {
+  const viewUrl = blobViewUrl(storedUrl);
+  if (viewUrl === "#") return;
+
+  if (!isVercelBlobUrl(storedUrl)) {
+    triggerAnchorNavigation(viewUrl, options?.downloadFilename);
+    return;
+  }
+
+  const blob = await fetchBlobDocumentBlob(storedUrl);
+  const objectUrl = URL.createObjectURL(blob);
+  triggerAnchorNavigation(objectUrl, options?.downloadFilename);
+  window.setTimeout(() => {
+    URL.revokeObjectURL(objectUrl);
+  }, 60_000);
 }
 
 export async function uploadBlobDocument(

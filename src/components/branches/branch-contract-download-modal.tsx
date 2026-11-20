@@ -9,9 +9,9 @@ import {
 } from "@/lib/contract-form";
 import {
   contractDocumentLabel,
-  contractDocumentViewUrl,
   isPdfUrl,
 } from "@/lib/contract-documents";
+import { ProtectedDocumentLink } from "@/components/ui/protected-document";
 import {
   fetchDistributorContracts,
   getDistributorContractsErrorMessage,
@@ -284,12 +284,10 @@ function ContractDownloadBlock({ slice }: { slice: ContractSlice }) {
         <ul className="space-y-2">
           {docs.map((url) => (
             <li key={url}>
-              <a
-                href={contractDocumentViewUrl(url)}
-                target="_blank"
-                rel="noopener noreferrer"
+              <ProtectedDocumentLink
+                url={url}
                 download={contractDocumentLabel(url)}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2.5 text-sm transition-colors hover:bg-foreground/5"
+                className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2.5 text-left text-sm transition-colors hover:bg-foreground/5"
               >
                 <span className="min-w-0 truncate text-card-foreground">
                   {isPdfUrl(url) ? "PDF" : "Imagen"}:{" "}
@@ -299,7 +297,7 @@ function ContractDownloadBlock({ slice }: { slice: ContractSlice }) {
                   <Download className="size-4" aria-hidden />
                   Descargar
                 </span>
-              </a>
+              </ProtectedDocumentLink>
             </li>
           ))}
         </ul>

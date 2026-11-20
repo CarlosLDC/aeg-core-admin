@@ -36,8 +36,17 @@ export function buildToolsPdfFilename(
   serial?: string,
   documentNumber?: string | number,
 ): string {
-  const safeSerial = (serial || "N-A").replace(/[/\\?%*:|"<>]/g, "-");
-  const safeTitle = titleOrType.replace(/[^\w\-]+/g, "_").slice(0, 40);
-  const numberSuffix = documentNumber ? `_${String(documentNumber)}` : "";
+  const safeSerial =
+    (serial || "N-A")
+      .replace(/[^A-Za-z0-9._-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "N-A";
+  const safeTitle =
+    titleOrType.replace(/[^\w\-]+/g, "_").slice(0, 40) || "Documento";
+  const safeNumber =
+    documentNumber !== undefined && documentNumber !== null && String(documentNumber).trim() !== ""
+      ? String(documentNumber).replace(/[^A-Za-z0-9._-]+/g, "_").slice(0, 32)
+      : "";
+  const numberSuffix = safeNumber ? `_${safeNumber}` : "";
   return `${safeTitle}${numberSuffix}_${safeSerial}.pdf`;
 }

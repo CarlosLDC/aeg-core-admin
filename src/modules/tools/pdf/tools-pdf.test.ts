@@ -16,6 +16,16 @@ describe("tools-pdf-shared", () => {
       "Factura_12_GRA-001.pdf",
     );
   });
+
+  it("sanitiza comillas, punto y coma y saltos de línea contra inyección de headers", () => {
+    const filename = buildToolsPdfFilename(
+      "Factura",
+      'GRA001"\r\nX-Injected: 1',
+      '12"; filename="evil.exe',
+    );
+    expect(filename).not.toMatch(/["';\r\n]/);
+    expect(filename.endsWith(".pdf")).toBe(true);
+  });
 });
 
 describe("tools-pdf-server", () => {

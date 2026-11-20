@@ -2,43 +2,52 @@ import { get, put } from "@vercel/blob";
 import { type NextRequest, NextResponse } from "next/server";
 import { isBlobUploadFolder } from "@/lib/blob-upload-categories";
 import {
+  BLOB_ALLOWED_CONTENT_TYPES,
   BLOB_DOCUMENT_MAX_BYTES,
   blobUploadErrorMessage,
+  detectAllowedFileMime,
+  extractVercelBlobStoreId,
   resolveBlobContentType,
 } from "@/lib/blob-upload-server";
-import { blobAccessForUrl, isVercelBlobUrl } from "@/lib/blob-storage";
+import { blobAccessForUrl, isVercelBlobUrlForStore } from "@/lib/blob-storage";
 import { getSessionCookieName } from "@/lib/session-cookie";
 import { requireRole } from "@/lib/server-request-auth";
 
-function requireSession(
+async function requireSession(
   request: NextRequest,
   action: "read" | "create",
-): NextResponse | null {
+): Promise<NextResponse | null> {
   const session = request.cookies.get(getSessionCookieName())?.value;
   if (!session) {
     return NextResponse.json({ error: "Sesión no válida." }, { status: 401 });
   }
-  const auth = requireRole(request, "uploads", action);
+  const auth = await requireRole(request, "uploads", action);
   if (auth instanceof Response) {
-    return NextResponse.json({ error: "Sin permiso." }, { status: auth.status });
+    const body = (await auth.json().catch(() => null)) as { error?: string } | null;
+    return NextResponse.json(
+      { error: body?.error ?? "Sin permiso." },
+      { status: auth.status },
+    );
   }
   return null;
 }
 
 export async function GET(request: NextRequest) {
-  const unauthorized = requireSession(request, "read");
+  const unauthorized = await requireSession(request, "read");
   if (unauthorized) return unauthorized;
 
-  const url = request.nextUrl.searchParams.get("url")?.trim();
-  if (!url || !isVercelBlobUrl(url)) {
-    return NextResponse.json({ error: "URL no válida." }, { status: 400 });
-  }
-
-  if (!process.env.BLOB_READ_WRITE_TOKEN?.trim()) {
+  const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
+  if (!token) {
     return NextResponse.json(
       { error: "Almacenamiento no configurado." },
       { status: 503 },
     );
+  }
+
+  const url = request.nextUrl.searchParams.get("url")?.trim();
+  const storeId = extractVercelBlobStoreId(token);
+  if (!url || !isVercelBlobUrlForStore(url, storeId)) {
+    return NextResponse.json({ error: "URL no válida." }, { status: 400 });
   }
 
   const access = blobAccessForUrl(url);
@@ -53,27 +62,34 @@ export async function GET(request: NextRequest) {
     if (result.statusCode === 304) {
       return new NextResponse(null, {
         status: 304,
-        headers: { ETag: result.blob.etag },
+        headers: {
+          ETag: result.blob.etag,
+          "Cache-Control": "private, no-store",
+        },
       });
     }
 
+    const rawContentType = result.blob.contentType?.split(";")[0]?.trim().toLowerCase();
+    const safeContentType =
+      rawContentType && BLOB_ALLOWED_CONTENT_TYPES.has(rawContentType)
+        ? rawContentType
+        : "application/octet-stream";
+
     const headers = new Headers();
-    if (result.blob.contentType) {
-      headers.set("Content-Type", result.blob.contentType);
-    }
-    if (result.blob.contentDisposition) {
-      headers.set("Content-Disposition", result.blob.contentDisposition);
-    }
-    if (result.blob.cacheControl) {
-      headers.set("Cache-Control", result.blob.cacheControl);
-    }
+    headers.set("Content-Type", safeContentType);
+    headers.set(
+      "Content-Disposition",
+      safeContentType === "application/octet-stream" ? "attachment" : "inline",
+    );
+    headers.set("X-Content-Type-Options", "nosniff");
+    headers.set("Content-Security-Policy", "default-src 'none'; sandbox");
+    headers.set("Referrer-Policy", "no-referrer");
+    headers.set("Cache-Control", "private, no-store");
     headers.set("ETag", result.blob.etag);
 
     return new NextResponse(result.stream, { status: 200, headers });
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("[blob-documents view]", error);
-    }
+    console.error("[blob-documents view]", error);
     return NextResponse.json(
       { error: blobUploadErrorMessage(error) },
       { status: 500 },
@@ -82,15 +98,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const unauthorized = requireSession(request, "create");
+  const unauthorized = await requireSession(request, "create");
   if (unauthorized) return unauthorized;
 
   if (!process.env.BLOB_READ_WRITE_TOKEN?.trim()) {
     return NextResponse.json(
-      {
-        error:
-          "Almacenamiento no configurado. En Vercel: Storage → Blob y redeploy. En local: vercel env pull .env.local",
-      },
+      { error: "El almacenamiento de documentos no está disponible en este momento." },
       { status: 503 },
     );
   }
@@ -119,8 +132,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const contentType = resolveBlobContentType(file);
-  if (!contentType) {
+  const declaredContentType = resolveBlobContentType(file);
+  if (!declaredContentType) {
     return NextResponse.json(
       { error: "Solo se permiten PDF o imágenes (JPG, PNG, WebP, GIF)." },
       { status: 400 },
@@ -132,16 +145,22 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = Buffer.from(await file.arrayBuffer());
+    const detectedMime = detectAllowedFileMime(body);
+    if (!detectedMime) {
+      return NextResponse.json(
+        { error: "El contenido del archivo no corresponde a un PDF o imagen válida." },
+        { status: 400 },
+      );
+    }
+
     const blob = await put(pathname, body, {
       access: "private",
-      contentType,
+      contentType: detectedMime,
       addRandomSuffix: true,
     });
     return NextResponse.json({ url: blob.url, pathname: blob.pathname });
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("[blob-documents upload]", error);
-    }
+    console.error("[blob-documents upload]", error);
     return NextResponse.json(
       { error: blobUploadErrorMessage(error) },
       { status: 500 },

@@ -55,11 +55,12 @@ export function assertPrinterInScope(
 ): boolean {
   if (!printer) return false;
   if (role === "ADMIN") return true;
-  if (isDistributorPanelRole(role) && distributorId != null) {
+  if (isDistributorPanelRole(role)) {
+    if (distributorId == null) return false;
     return printer.distributorId === distributorId;
   }
   if (!scope) return false;
-  return true;
+  return false;
 }
 
 export function assertSealInScope(

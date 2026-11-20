@@ -5,7 +5,7 @@ import { BrokerMigrationPanel } from "@/modules/tools/broker-migration/BrokerMig
 
 export default function BrokerMigrationPage() {
   return (
-    <ToolsPrinterOperationPage>
+    <ToolsPrinterOperationPage allow={["ADMIN", "DISTRIBUTOR"]}>
       {(printer) => <BrokerMigrationPanel printer={printer} />}
     </ToolsPrinterOperationPage>
   );

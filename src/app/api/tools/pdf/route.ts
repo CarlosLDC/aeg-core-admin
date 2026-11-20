@@ -8,17 +8,32 @@ import {
 } from "@/modules/tools/pdf/tools-pdf-shared";
 import { createToolsPdfBuffer } from "@/modules/tools/pdf/tools-pdf-server";
 
+const MAX_RAW_CONTENT_CHARS = 200_000;
+const MAX_FIELD_CHARS = 120;
+
 async function requireSession(request: NextRequest): Promise<NextResponse | null> {
   const session = request.cookies.get(getSessionCookieName())?.value;
   if (!session) {
     return NextResponse.json({ error: "Sesión no válida." }, { status: 401 });
   }
-  const auth = requireRole(request, "tools", "read");
+  const auth = await requireRole(request, "tools", "read");
   if (auth instanceof Response) {
-    const body = (await auth.json()) as { error?: string };
-    return NextResponse.json(body, { status: auth.status });
+    const body = (await auth.json().catch(() => null)) as { error?: string } | null;
+    return NextResponse.json(
+      { error: body?.error ?? "Sin permiso." },
+      { status: auth.status },
+    );
   }
   return null;
+}
+
+function optionalBoundedString(
+  value: unknown,
+  maxLength: number,
+): string | undefined | null {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== "string") return null;
+  return value.slice(0, maxLength);
 }
 
 export async function POST(request: NextRequest) {
@@ -27,42 +42,83 @@ export async function POST(request: NextRequest) {
     return authError;
   }
 
-  let body: ToolsPdfDownloadRequest;
+  let rawBody: unknown;
   try {
-    body = (await request.json()) as ToolsPdfDownloadRequest;
+    rawBody = await request.json();
   } catch {
     return NextResponse.json({ error: "Cuerpo JSON inválido." }, { status: 400 });
   }
 
-  const rawContent = body.rawContent || body.content;
-  if (!rawContent) {
-    return NextResponse.json({ error: "rawContent requerido" }, { status: 400 });
+  if (!rawBody || typeof rawBody !== "object" || Array.isArray(rawBody)) {
+    return NextResponse.json({ error: "Cuerpo JSON inválido." }, { status: 400 });
   }
 
+  const body = rawBody as Record<string, unknown>;
+  const candidateContent = body.rawContent ?? body.content;
+  if (typeof candidateContent !== "string" || candidateContent.trim().length === 0) {
+    return NextResponse.json({ error: "rawContent requerido" }, { status: 400 });
+  }
+  if (candidateContent.length > MAX_RAW_CONTENT_CHARS) {
+    return NextResponse.json(
+      { error: "El contenido supera el tamaño máximo permitido." },
+      { status: 413 },
+    );
+  }
+
+  const title = optionalBoundedString(body.title, MAX_FIELD_CHARS);
+  const documentType = optionalBoundedString(body.documentType, MAX_FIELD_CHARS);
+  const serial = optionalBoundedString(
+    body.printerSerial ?? body.serial,
+    MAX_FIELD_CHARS,
+  );
+
+  if (title === null || documentType === null || serial === null) {
+    return NextResponse.json({ error: "Parámetros inválidos." }, { status: 400 });
+  }
+
+  let documentNumber: string | number | undefined;
+  if (body.documentNumber !== undefined && body.documentNumber !== null) {
+    if (
+      typeof body.documentNumber !== "string" &&
+      (typeof body.documentNumber !== "number" ||
+        !Number.isFinite(body.documentNumber))
+    ) {
+      return NextResponse.json({ error: "documentNumber inválido." }, { status: 400 });
+    }
+    documentNumber =
+      typeof body.documentNumber === "string"
+        ? body.documentNumber.slice(0, MAX_FIELD_CHARS)
+        : body.documentNumber;
+  }
+
+  const pdfRequest: ToolsPdfDownloadRequest = {
+    rawContent: candidateContent,
+    documentType,
+    documentNumber,
+    printerSerial: serial,
+    title,
+  };
+
   try {
-    const label = body.documentType
-      ? getToolsPdfTypeLabel(body.documentType)
-      : body.title || "Documento";
-    const serial = body.printerSerial || body.serial;
-    const filename = buildToolsPdfFilename(label, serial, body.documentNumber);
-    const buffer = await createToolsPdfBuffer({
-      rawContent,
-      documentType: body.documentType,
-      documentNumber: body.documentNumber,
-      printerSerial: serial,
-      title: body.title,
-    });
+    const label = documentType
+      ? getToolsPdfTypeLabel(documentType)
+      : title || "Documento";
+    const filename = buildToolsPdfFilename(label, serial, documentNumber);
+    const buffer = await createToolsPdfBuffer(pdfRequest);
 
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `inline; filename="${filename}"`,
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "No se pudo generar el PDF.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[tools/pdf]", error);
+    return NextResponse.json(
+      { error: "No se pudo generar el PDF." },
+      { status: 500 },
+    );
   }
 }

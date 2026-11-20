@@ -19,8 +19,11 @@ describe("postLoginRedirectPath", () => {
 });
 
 describe("getSafeRedirectPath", () => {
-  it("allows fiscal book entry path", () => {
+  it("allows fiscal book entry path and query params", () => {
     expect(getSafeRedirectPath("/fiscal-book")).toBe("/fiscal-book");
+    expect(getSafeRedirectPath("/printers?tab=all#details")).toBe(
+      "/printers?tab=all#details",
+    );
   });
 
   it("rejects auth flow paths to avoid redirect loops", () => {
@@ -28,5 +31,15 @@ describe("getSafeRedirectPath", () => {
     expect(getSafeRedirectPath("/accept-invite?token=abc")).toBe("/");
     expect(getSafeRedirectPath("/forgot-password")).toBe("/");
     expect(getSafeRedirectPath("/reset-password?token=abc")).toBe("/");
+  });
+
+  it("rejects protocol-relative URLs, backslashes, and control-character bypasses", () => {
+    expect(getSafeRedirectPath("//evil.com")).toBe("/");
+    expect(getSafeRedirectPath("/\\evil.com")).toBe("/");
+    expect(getSafeRedirectPath("/\t/evil.com")).toBe("/");
+    expect(getSafeRedirectPath("/\n/evil.com")).toBe("/");
+    expect(getSafeRedirectPath("/\r/evil.com")).toBe("/");
+    expect(getSafeRedirectPath("https://evil.com")).toBe("/");
+    expect(getSafeRedirectPath("javascript:alert(1)")).toBe("/");
   });
 });
