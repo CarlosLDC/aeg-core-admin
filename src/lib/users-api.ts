@@ -39,6 +39,22 @@ export async function deleteUser(id: number): Promise<void> {
   return apiFetch<void>(`${BASE}/${id}`, { method: "DELETE" });
 }
 
+export async function resendUserInvite(id: number): Promise<UserResponse> {
+  return apiFetch<UserResponse>(`${BASE}/${id}/resend-invite`, {
+    method: "POST",
+  });
+}
+
+export async function sendUserPasswordReset(
+  id: number,
+): Promise<{ emailStatus: string; message: string; resetUrl?: string | null }> {
+  return apiFetch<{
+    emailStatus: string;
+    message: string;
+    resetUrl?: string | null;
+  }>(`${BASE}/${id}/send-password-reset`, { method: "POST" });
+}
+
 export function getUsersErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) {
@@ -48,7 +64,11 @@ export function getUsersErrorMessage(error: unknown): string {
       return "Solo un administrador puede gestionar usuarios.";
     }
     if (error.status === 409) {
-      if (error.message.includes("solicitudes de modificación")) {
+      if (
+        error.message &&
+        error.message.trim().length > 0 &&
+        error.message.trim().toLowerCase() !== "conflict"
+      ) {
         return error.message;
       }
       return "Ese correo ya está en uso.";
@@ -58,6 +78,9 @@ export function getUsersErrorMessage(error: unknown): string {
     }
     if (error.status === 400) {
       return "Datos de usuario inválidos. Verifica distribuidora, sucursal y cédula según el rol.";
+    }
+    if (error.status === 502) {
+      return "No se pudo enviar el correo electrónico. Revisa la configuración de correo.";
     }
     return error.message;
   }

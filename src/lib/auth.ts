@@ -19,6 +19,15 @@ import {
 import type { AuthResponse, LoginRequest } from "@/types/auth";
 import { ApiError } from "@/types/auth";
 
+export async function establishSessionFromToken(
+  token: string,
+  remember: boolean,
+): Promise<void> {
+  setStoredToken(token, remember);
+  recordLastActivity();
+  await resolveAndStoreUserProfile(token, remember);
+}
+
 export async function login(
   credentials: LoginRequest,
   remember: boolean,
@@ -33,9 +42,7 @@ export async function login(
     auth: false,
   });
 
-  setStoredToken(data.token, remember);
-  recordLastActivity();
-  await resolveAndStoreUserProfile(data.token, remember);
+  await establishSessionFromToken(data.token, remember);
   return data;
 }
 
@@ -86,6 +93,13 @@ export function getLoginErrorMessage(error: unknown): string {
       return "Usuario o contraseña incorrectos";
     }
     if (error.status === 403) {
+      if (
+        error.message &&
+        error.message.trim().length > 0 &&
+        error.message.trim().toLowerCase() !== "forbidden"
+      ) {
+        return error.message;
+      }
       return "No tienes permiso para acceder";
     }
     return error.message;

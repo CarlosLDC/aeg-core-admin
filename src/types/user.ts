@@ -43,12 +43,18 @@ export type UserResponse = {
   distributorId: number | null;
   nationalId: string | null;
   enabled: boolean;
+  invitationPending?: boolean;
+  invitedAt?: string | null;
+  activatedAt?: string | null;
+  emailStatus?: "SENT" | "LOGGED_ONLY" | "FAILED" | null;
+  inviteUrl?: string | null;
 };
 
 export type UserRegistrationRequest = {
   name: string;
   email: string;
-  password: string;
+  password?: string;
+  sendInvite?: boolean;
   role: Role;
   distributorId?: number | null;
   branchId?: number | null;

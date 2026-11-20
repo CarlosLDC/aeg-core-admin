@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus } from "lucide-react";
+import { KeyRound, Loader2, Mail, Plus } from "lucide-react";
 import { RoleBadge } from "@/components/users/role-badge";
+import { UserActionLinkDialog } from "@/components/users/user-action-link-dialog";
 import {
   UserFormDialog,
   type UserFormValues,
@@ -16,6 +17,8 @@ import {
   deleteUser,
   fetchUsers,
   getUsersErrorMessage,
+  resendUserInvite,
+  sendUserPasswordReset,
   updateUser,
 } from "@/lib/users-api";
 import {
@@ -124,6 +127,12 @@ export function UsersManager() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [actionLinkModal, setActionLinkModal] = useState<{
+    title: string;
+    description: string;
+    url: string;
+    emailStatus?: string | null;
+  } | null>(null);
   const [search, setSearch] = useTableSearch("/users");
   const [roleFilter, setRoleFilter] = useTableFilter("/users", "role", "all");
   const [portalFilter, setPortalFilter] = useTableFilter(
@@ -147,8 +156,13 @@ export function UsersManager() {
       if (roleFilter !== "all" && user.role !== roleFilter) return false;
       if (portalFilter === "panel" && user.role === "SENIAT") return false;
       if (portalFilter === "book-only" && user.role !== "SENIAT") return false;
-      if (statusFilter === "active" && !user.enabled) return false;
-      if (statusFilter === "inactive" && user.enabled) return false;
+      if (statusFilter === "active" && (!user.enabled || user.invitationPending)) {
+        return false;
+      }
+      if (statusFilter === "pending" && !user.invitationPending) return false;
+      if (statusFilter === "inactive" && (user.enabled || user.invitationPending)) {
+        return false;
+      }
       if (!q) return true;
       const distributor = userDistributorDisplayLabel(
         user.role,
@@ -156,7 +170,11 @@ export function UsersManager() {
       );
       const cedula = userNationalIdDisplayLabel(user.role, user.nationalId);
       const roleLabel = ROLE_LABELS[user.role] ?? user.role;
-      const statusLabel = user.enabled ? "activo" : "inactivo";
+      const statusLabel = user.invitationPending
+        ? "invitación pendiente"
+        : user.enabled
+          ? "activo"
+          : "inactivo";
       const haystack = [
         user.id,
         displayUserName(user),
@@ -283,15 +301,43 @@ export function UsersManager() {
         const created = await createUser({
           name,
           email,
-          password: values.password,
+          sendInvite: values.sendInvite,
+          ...(values.sendInvite ? {} : { password: values.password }),
           role: values.role,
           distributorId,
           branchId,
           nationalId,
         });
-        toast.success(userCreateSuccessMessage(name, values.role), {
-          href: userPath(created.id),
-        });
+        if (values.sendInvite) {
+          if (created.inviteUrl && created.emailStatus !== "SENT") {
+            setActionLinkModal({
+              title: "Enlace de invitación listo",
+              description: `Comparte este enlace con "${name}" (${email}) para que active su cuenta.`,
+              url: created.inviteUrl,
+              emailStatus: created.emailStatus,
+            });
+            toast.success(`Invitación generada para "${email}".`, {
+              href: userPath(created.id),
+            });
+          } else if (created.emailStatus === "FAILED") {
+            toast.error(
+              "Usuario creado en estado pendiente, pero falló el envío del correo. Usa 'Reenviar invitación' para reintentar.",
+            );
+          } else if (created.emailStatus === "LOGGED_ONLY") {
+            toast.success(
+              `Invitación creada para "${email}". Correo registrado en logs del servidor.`,
+              { href: userPath(created.id) },
+            );
+          } else {
+            toast.success(`Invitación enviada a "${email}".`, {
+              href: userPath(created.id),
+            });
+          }
+        } else {
+          toast.success(userCreateSuccessMessage(name, values.role), {
+            href: userPath(created.id),
+          });
+        }
       } else if (selected) {
         const body: Parameters<typeof updateUser>[1] = {
           name,
@@ -348,6 +394,63 @@ export function UsersManager() {
       });
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function handleResendInvite(targetUser: UserResponse) {
+    try {
+      const updated = await resendUserInvite(targetUser.id);
+      await loadUsers({ silent: true });
+      if (updated.inviteUrl && updated.emailStatus !== "SENT") {
+        setActionLinkModal({
+          title: "Nuevo enlace de invitación",
+          description: `Comparte este enlace con "${displayUserName(targetUser)}" (${targetUser.email}). El enlace anterior quedó invalidado.`,
+          url: updated.inviteUrl,
+          emailStatus: updated.emailStatus,
+        });
+        toast.success(`Enlace regenerado para "${targetUser.email}".`);
+      } else if (updated.emailStatus === "LOGGED_ONLY") {
+        toast.success(
+          `Invitación regenerada para "${targetUser.email}" (registrada en logs del servidor).`,
+        );
+      } else {
+        toast.success(`Invitación reenviada a "${targetUser.email}".`);
+      }
+    } catch (err) {
+      toast.error(getUsersErrorMessage(err));
+    }
+  }
+
+  async function handleSendPasswordReset(targetUser: UserResponse) {
+    if (
+      !(await confirm({
+        title: "Restablecer contraseña",
+        message: `¿Generar un enlace de restablecimiento de contraseña para "${targetUser.email}"?`,
+      }))
+    ) {
+      return;
+    }
+    try {
+      const res = await sendUserPasswordReset(targetUser.id);
+      if (res.resetUrl && res.emailStatus !== "SENT") {
+        setActionLinkModal({
+          title: "Enlace de restablecimiento listo",
+          description: `Comparte este enlace con "${displayUserName(targetUser)}" (${targetUser.email}) para que defina una nueva contraseña.`,
+          url: res.resetUrl,
+          emailStatus: res.emailStatus,
+        });
+        toast.success(`Enlace generado para "${targetUser.email}".`);
+      } else if (res.emailStatus === "LOGGED_ONLY") {
+        toast.success(
+          `Enlace de restablecimiento generado para "${targetUser.email}" (registrado en logs del servidor).`,
+        );
+      } else {
+        toast.success(
+          `Enlace de restablecimiento enviado a "${targetUser.email}".`,
+        );
+      }
+    } catch (err) {
+      toast.error(getUsersErrorMessage(err));
     }
   }
 
@@ -443,6 +546,7 @@ export function UsersManager() {
                   options: [
                     filterAllOption(),
                     { value: "active", label: "Activos" },
+                    { value: "pending", label: "Invitación pendiente" },
                     { value: "inactive", label: "Inactivos" },
                   ],
                 },
@@ -501,6 +605,38 @@ export function UsersManager() {
                                   onEdit={() => openEdit(user)}
                                   onDelete={() => void handleDelete(user)}
                                   deleting={deletingId === user.id}
+                                  customActions={[
+                                    ...(user.invitationPending
+                                      ? [
+                                          {
+                                            label: "Reenviar invitación",
+                                            icon: (
+                                              <Mail
+                                                className="size-4 shrink-0"
+                                                aria-hidden
+                                              />
+                                            ),
+                                            onClick: () =>
+                                              void handleResendInvite(user),
+                                          },
+                                        ]
+                                      : []),
+                                    ...(!user.invitationPending && user.enabled
+                                      ? [
+                                          {
+                                            label: "Enviar restablecimiento",
+                                            icon: (
+                                              <KeyRound
+                                                className="size-4 shrink-0"
+                                                aria-hidden
+                                              />
+                                            ),
+                                            onClick: () =>
+                                              void handleSendPasswordReset(user),
+                                          },
+                                        ]
+                                      : []),
+                                  ]}
                                 />
                               </td>
                             }
@@ -541,12 +677,18 @@ export function UsersManager() {
                             <span
                               className={cn(
                                 "inline-flex shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium",
-                                user.enabled
-                                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                                  : "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
+                                user.invitationPending
+                                  ? "bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                                  : user.enabled
+                                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                                    : "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
                               )}
                             >
-                              {user.enabled ? "Activo" : "Inactivo"}
+                              {user.invitationPending
+                                ? "Invitación pendiente"
+                                : user.enabled
+                                  ? "Activo"
+                                  : "Inactivo"}
                             </span>
                           </td>
                           </TableRowMetaCells>
@@ -574,6 +716,15 @@ export function UsersManager() {
         error={formError}
         onClose={closeDialog}
         onSubmit={handleSubmit}
+      />
+
+      <UserActionLinkDialog
+        open={actionLinkModal !== null}
+        title={actionLinkModal?.title ?? ""}
+        description={actionLinkModal?.description ?? ""}
+        url={actionLinkModal?.url ?? ""}
+        emailStatus={actionLinkModal?.emailStatus}
+        onClose={() => setActionLinkModal(null)}
       />
     </div>
   );

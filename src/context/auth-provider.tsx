@@ -9,7 +9,12 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { getSession, login as loginRequest, logout as logoutSession } from "@/lib/auth";
+import {
+  establishSessionFromToken,
+  getSession,
+  login as loginRequest,
+  logout as logoutSession,
+} from "@/lib/auth";
 import { isRemembered } from "@/lib/auth-storage";
 import { refreshUserProfileFromApi } from "@/lib/auth-profile";
 import { setSessionCookie } from "@/lib/session-cookie";
@@ -37,6 +42,7 @@ type AuthContextValue = {
   user: AuthUser | null;
   isLoading: boolean;
   login: (credentials: LoginRequest, remember: boolean) => Promise<void>;
+  loginWithToken: (token: string, remember: boolean) => Promise<void>;
   logout: () => void;
 };
 
@@ -105,6 +111,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [syncSession],
   );
 
+  const loginWithToken = useCallback(
+    async (token: string, remember: boolean) => {
+      await establishSessionFromToken(token, remember);
+      setSessionCookie(remember);
+      await syncSession();
+    },
+    [syncSession],
+  );
+
   const logout = useCallback(() => {
     logoutSession();
     setUser(null);
@@ -116,9 +131,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       isLoading,
       login,
+      loginWithToken,
       logout,
     }),
-    [user, isLoading, login, logout],
+    [user, isLoading, login, loginWithToken, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

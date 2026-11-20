@@ -106,4 +106,12 @@ describe("route permissions", () => {
     expect(canAccessRoute("SERVICE_CENTER", "/companies")).toBe(false);
     expect(canAccessRoute("SERVICE_CENTER", "/technical-services")).toBe(false);
   });
+
+  it("allows public auth paths for all roles", () => {
+    for (const role of ROLES) {
+      expect(canAccessRoute(role, "/accept-invite")).toBe(true);
+      expect(canAccessRoute(role, "/forgot-password")).toBe(true);
+      expect(canAccessRoute(role, "/reset-password")).toBe(true);
+    }
+  });
 });

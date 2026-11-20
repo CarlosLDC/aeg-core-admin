@@ -22,4 +22,11 @@ describe("getSafeRedirectPath", () => {
   it("allows fiscal book entry path", () => {
     expect(getSafeRedirectPath("/fiscal-book")).toBe("/fiscal-book");
   });
+
+  it("rejects auth flow paths to avoid redirect loops", () => {
+    expect(getSafeRedirectPath("/login")).toBe("/");
+    expect(getSafeRedirectPath("/accept-invite?token=abc")).toBe("/");
+    expect(getSafeRedirectPath("/forgot-password")).toBe("/");
+    expect(getSafeRedirectPath("/reset-password?token=abc")).toBe("/");
+  });
 });

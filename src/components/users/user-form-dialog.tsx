@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import {
   Building2,
   Loader2,
+  Mail,
   UserRound,
   X,
 } from "lucide-react";
@@ -48,6 +49,7 @@ export type UserFormValues = {
   name: string;
   email: string;
   password: string;
+  sendInvite: boolean;
   role: Role;
   distributorId: string;
   branchId: string;
@@ -106,6 +108,7 @@ const emptyForm: UserFormValues = {
   name: "",
   email: "",
   password: "",
+  sendInvite: true,
   role: "DISTRIBUTOR",
   distributorId: "",
   branchId: "",
@@ -141,12 +144,19 @@ function operationalAssignmentFromRole(role: Role): OperationalAssignment {
   return "DISTRIBUTOR";
 }
 
-function stepSubtitle(step: WizardStep, mode: "create" | "edit"): string {
+function stepSubtitle(
+  step: WizardStep,
+  mode: "create" | "edit",
+  sendInvite: boolean,
+): string {
   switch (step) {
     case 1:
-      return mode === "create"
-        ? "Define nombre, correo, clave y rol del usuario."
-        : "Actualiza nombre, correo, clave (opcional) y rol.";
+      if (mode === "edit") {
+        return "Actualiza nombre, correo, clave (opcional) y rol.";
+      }
+      return sendInvite
+        ? "Define nombre, correo y rol; el usuario activará su clave desde el enlace."
+        : "Define nombre, correo, clave y rol del usuario.";
     case 2:
       return "Completa la vinculación según el tipo de usuario.";
     default:
@@ -255,6 +265,7 @@ export function UserFormDialog({
         name: user.name ?? "",
         email: user.email ?? user.username ?? "",
         password: "",
+        sendInvite: false,
         role: user.role === "SERVICE_CENTER" ? "TECHNICIAN" : user.role,
         distributorId:
           user.distributorId != null ? String(user.distributorId) : "",
@@ -320,8 +331,51 @@ export function UserFormDialog({
     onSubmit(form);
   }
 
+  const showPasswordInput = mode === "edit" || !form.sendInvite;
+
   const identitySection = (
     <div className="space-y-4">
+      {mode === "create" && (
+        <div className="space-y-2">
+          <FieldLabel>Método de acceso</FieldLabel>
+          <SegmentedToggle
+            value={form.sendInvite ? "invite" : "manual"}
+            onChange={(method) =>
+              setForm((f) => ({
+                ...f,
+                sendInvite: method === "invite",
+                password: method === "invite" ? "" : f.password,
+              }))
+            }
+            ariaLabel="Método de creación de acceso"
+            disabled={saving}
+            options={[
+              {
+                value: "invite",
+                label: "Invitar por correo",
+                tone: "teal",
+              },
+              {
+                value: "manual",
+                label: "Asignar clave manual",
+                tone: "slate",
+              },
+            ]}
+          />
+          {form.sendInvite && (
+            <div className="flex items-start gap-2.5 rounded-lg border border-sky-500/20 bg-sky-500/10 px-3 py-2.5 text-xs leading-relaxed text-sky-800 dark:text-sky-200">
+              <Mail className="mt-0.5 size-4 shrink-0 text-sky-600 dark:text-sky-400" />
+              <span>
+                Se generará un enlace de un solo uso válido por 72 horas para
+                que el usuario active su cuenta y defina su contraseña (se
+                enviará por correo si está configurado o podrás copiarlo al
+                finalizar).
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block sm:col-span-2">
           <FieldLabel required>Nombre</FieldLabel>
@@ -339,7 +393,7 @@ export function UserFormDialog({
           />
         </label>
 
-        <label className="block">
+        <label className={cn("block", !showPasswordInput && "sm:col-span-2")}>
           <FieldLabel required>Correo</FieldLabel>
           <input
             type="email"
@@ -355,22 +409,24 @@ export function UserFormDialog({
           />
         </label>
 
-        <label className="block">
-          <FieldLabel required={mode === "create"}>
-            Clave
-            {mode === "edit" && (
-              <span className="font-normal text-muted"> (opcional)</span>
-            )}
-          </FieldLabel>
-          <PasswordInput
-            value={form.password}
-            onChange={(password) => setForm((f) => ({ ...f, password }))}
-            autoComplete={mode === "create" ? "new-password" : "off"}
-            required={mode === "create"}
-            disabled={saving}
-            placeholder={mode === "create" ? "Mínimo 6 caracteres" : ""}
-          />
-        </label>
+        {showPasswordInput && (
+          <label className="block">
+            <FieldLabel required={mode === "create"}>
+              Clave
+              {mode === "edit" && (
+                <span className="font-normal text-muted"> (opcional)</span>
+              )}
+            </FieldLabel>
+            <PasswordInput
+              value={form.password}
+              onChange={(password) => setForm((f) => ({ ...f, password }))}
+              autoComplete={mode === "create" ? "new-password" : "off"}
+              required={mode === "create"}
+              disabled={saving}
+              placeholder={mode === "create" ? "Mínimo 6 caracteres" : ""}
+            />
+          </label>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -577,7 +633,7 @@ export function UserFormDialog({
                 {mode === "create" ? "Nuevo usuario" : "Editar usuario"}
               </h2>
               <p className="mt-1 text-sm text-muted">
-                {stepSubtitle(step, mode)}
+                {stepSubtitle(step, mode, form.sendInvite)}
               </p>
             </div>
             <button
@@ -674,7 +730,11 @@ export function UserFormDialog({
                     )}
                   >
                     {saving && <Loader2 className="size-4 animate-spin" />}
-                    {mode === "create" ? "Crear usuario" : "Guardar"}
+                    {mode === "create"
+                      ? form.sendInvite
+                        ? "Enviar invitación"
+                        : "Crear usuario"
+                      : "Guardar"}
                   </button>
                 )}
               </div>

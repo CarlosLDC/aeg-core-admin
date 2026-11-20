@@ -2,12 +2,15 @@ import { isDistributorPanelRole, type Role } from "@/types/user";
 import { formatCedula, parseCedula } from "@/lib/venezuelan-id";
 
 const MIN_PASSWORD_LENGTH = 6;
+export const MIN_SELF_SERVICE_PASSWORD_LENGTH = 8;
+const MAX_SELF_SERVICE_PASSWORD_LENGTH = 128;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type UserFormFields = {
   name: string;
   email: string;
   password: string;
+  sendInvite?: boolean;
   role: Role;
   distributorId: string;
   branchId: string;
@@ -123,7 +126,7 @@ function validateUserIdentity(
   if (!EMAIL_PATTERN.test(email)) return "El correo no tiene un formato válido.";
 
   if (mode === "create") {
-    if (values.password.length < MIN_PASSWORD_LENGTH) {
+    if (!values.sendInvite && values.password.length < MIN_PASSWORD_LENGTH) {
       return `La clave debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
     }
   } else if (
@@ -133,6 +136,22 @@ function validateUserIdentity(
     return `La clave debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
   }
 
+  return null;
+}
+
+export function validateSelfServicePassword(
+  password: string,
+  confirmPassword: string,
+): string | null {
+  if (password.length < MIN_SELF_SERVICE_PASSWORD_LENGTH) {
+    return `La contraseña debe tener al menos ${MIN_SELF_SERVICE_PASSWORD_LENGTH} caracteres.`;
+  }
+  if (password.length > MAX_SELF_SERVICE_PASSWORD_LENGTH) {
+    return `La contraseña no debe superar ${MAX_SELF_SERVICE_PASSWORD_LENGTH} caracteres.`;
+  }
+  if (password !== confirmPassword) {
+    return "Las contraseñas no coinciden.";
+  }
   return null;
 }
 

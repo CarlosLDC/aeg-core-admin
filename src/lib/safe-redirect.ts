@@ -31,7 +31,12 @@ export function getSafeRedirectPath(
     return fallback;
   }
 
-  if (trimmed.startsWith("/login")) {
+  if (
+    trimmed.startsWith("/login") ||
+    trimmed.startsWith("/accept-invite") ||
+    trimmed.startsWith("/forgot-password") ||
+    trimmed.startsWith("/reset-password")
+  ) {
     return fallback;
   }
 

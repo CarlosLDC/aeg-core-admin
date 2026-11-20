@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, Suspense, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
@@ -178,8 +179,16 @@ function LoginForm() {
               </div>
             </label>
 
-            <label className="block">
-              <FieldLabel>Contraseña</FieldLabel>
+            <div className="block">
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <FieldLabel className="mb-0">Contraseña</FieldLabel>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-medium text-accent underline-offset-2 hover:underline"
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
                 <input
@@ -208,7 +217,7 @@ function LoginForm() {
                   )}
                 </button>
               </div>
-            </label>
+            </div>
 
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input

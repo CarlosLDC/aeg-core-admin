@@ -4,6 +4,7 @@ import {
   resolveUserBranchId,
   resolveUserDistributorId,
   resolveUserNationalId,
+  validateSelfServicePassword,
   validateUserCreateForm,
   validateUserEditForm,
   validateUserWizardStep,
@@ -103,6 +104,24 @@ describe("validateUserCreateForm", () => {
     expect(error).toBeNull();
     expect(resolveUserNationalId("ADMIN", "V12345678")).toBe("V12345678");
     expect(resolveUserDistributorId("ADMIN", "")).toBeNull();
+  });
+
+  it("allows empty password when sendInvite is true", () => {
+    const error = validateUserCreateForm({
+      ...baseForm,
+      password: "",
+      sendInvite: true,
+      role: "SENIAT",
+    });
+    expect(error).toBeNull();
+  });
+});
+
+describe("validateSelfServicePassword", () => {
+  it("requires at least 8 characters and matching confirmation", () => {
+    expect(validateSelfServicePassword("1234567", "1234567")).toMatch(/8 caracteres/i);
+    expect(validateSelfServicePassword("12345678", "12345679")).toMatch(/no coinciden/i);
+    expect(validateSelfServicePassword("ValidPass123", "ValidPass123")).toBeNull();
   });
 });
 

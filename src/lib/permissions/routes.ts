@@ -65,9 +65,16 @@ export function resourceForPath(pathname: string): Resource {
   return "dashboard";
 }
 
+const PUBLIC_AUTH_PATHS = new Set([
+  "/login",
+  "/accept-invite",
+  "/forgot-password",
+  "/reset-password",
+]);
+
 export function canAccessRoute(role: Role, pathname: string): boolean {
   const normalized = normalizePath(pathname);
-  if (normalized === "/login") return true;
+  if (PUBLIC_AUTH_PATHS.has(normalized)) return true;
 
   const resource = resourceForPath(normalized);
   if (!can(role, resource, "read")) return false;
@@ -124,7 +131,7 @@ export function allowedRolesForPath(path: string): Role[] | null {
 
 export function isKnownAppPath(path: string): boolean {
   const normalized = normalizePath(path);
-  if (normalized === "/" || normalized === "/login") return true;
+  if (normalized === "/" || PUBLIC_AUTH_PATHS.has(normalized)) return true;
   return resolveNavPath(normalized) != null || ROUTE_RESOURCE.some(
     ({ prefix }) =>
       normalized === prefix || normalized.startsWith(`${prefix}/`),
