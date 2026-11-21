@@ -10,10 +10,7 @@ type TablePaginationProps<T> = {
   className?: string;
 };
 
-export function TablePagination<T>({
-  pagination,
-  className,
-}: TablePaginationProps<T>) {
+export function TablePagination<T>({ pagination, className }: TablePaginationProps<T>) {
   const {
     page,
     setPage,
@@ -35,20 +32,19 @@ export function TablePagination<T>({
       )}
     >
       <p className="text-center text-sm text-muted sm:text-left">
-        Mostrando{" "}
-        <span className="font-medium text-foreground">{startIndex}</span>–
+        Mostrando <span className="font-medium text-foreground">{startIndex}</span>–
         <span className="font-medium text-foreground">{endIndex}</span> de{" "}
         <span className="font-medium text-foreground">{totalItems}</span>
       </p>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <label className="flex w-full flex-col gap-2 rounded-lg border border-border bg-foreground/[0.02] p-3 text-sm text-muted sm:w-auto sm:flex-row sm:items-center sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0">
+        <label className="flex min-h-10 w-full items-center justify-between gap-2 rounded-lg border border-border bg-foreground/[0.02] pl-3 text-sm text-muted transition-[border-color,box-shadow] max-sm:h-10 max-sm:focus-within:border-accent max-sm:focus-within:ring-2 max-sm:focus-within:ring-ring/20 sm:min-h-0 sm:w-auto sm:justify-start sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0">
           <span className="shrink-0">Filas por página</span>
           <NativeSelect
             value={pageSize}
             onChange={(e) => setPageSize(Number(e.target.value))}
-            wrapperClassName="w-full sm:w-auto"
-            className="sm:w-auto sm:min-w-[4.5rem]"
+            wrapperClassName="w-auto shrink-0 max-sm:h-full"
+            className="w-auto min-w-[4.5rem] max-sm:h-full max-sm:rounded-none max-sm:rounded-r-lg max-sm:border-0 max-sm:border-l max-sm:border-border max-sm:bg-transparent max-sm:font-medium max-sm:text-foreground max-sm:focus:border-border max-sm:focus:ring-0"
             aria-label="Filas por página"
           >
             {PAGE_SIZE_OPTIONS.map((size) => (
