@@ -52,7 +52,10 @@ import {
   commercialInvoicePath,
   commercialPaymentPath,
 } from "@/lib/resource-routes";
-import { hrefForCommercialInvoice } from "@/lib/table-foreign-hrefs";
+import {
+  hrefForCommercialInvoice,
+  hrefForCompany,
+} from "@/lib/table-foreign-hrefs";
 import { filterAllOption } from "@/lib/table-filter-options";
 import {
   compareDateValues,
@@ -70,7 +73,7 @@ import {
   type CommercialPaymentResponse,
 } from "@/types/commercial-payment";
 
-type PaymentSortKey = "id" | "createdAt" | "monto";
+type PaymentSortKey = "id" | "createdAt" | "fechaPago" | "monto";
 
 export function CommercialPaymentsManager() {
   const toast = useToast();
@@ -171,7 +174,8 @@ export function CommercialPaymentsManager() {
         searchText: [
           String(inv.id),
           inv.numeroFactura,
-          inv.sufijoControl,
+          inv.empresaNombre,
+          inv.empresaRif,
           inv.clienteComercialNombre,
         ]
           .filter(Boolean)
@@ -202,13 +206,18 @@ export function CommercialPaymentsManager() {
         payment.id,
         payment.facturaComercialId,
         payment.numeroFactura,
-        linkedInvoice?.sufijoControl,
-        payment.clienteComercialNombre ?? linkedInvoice?.clienteComercialNombre,
+        payment.clienteComercialNombre ??
+          linkedInvoice?.empresaNombre ??
+          linkedInvoice?.clienteComercialNombre,
         payment.metodoBanco,
         methodLabel,
         payment.referencia,
         payment.cuentaDestino,
+        payment.notas,
+        payment.registeredByName,
         payment.monto != null ? String(payment.monto) : null,
+        payment.fechaPago,
+        formatDate(payment.fechaPago),
         payment.createdAt,
         formatDate(payment.createdAt),
       ]
@@ -224,6 +233,11 @@ export function CommercialPaymentsManager() {
       sortTableRows(filteredPayments, sort, {
         id: (a, b) => compareNumberValues(a.id, b.id),
         createdAt: (a, b) => compareDateValues(a.createdAt, b.createdAt),
+        fechaPago: (a, b) =>
+          compareDateValues(
+            a.fechaPago ?? a.createdAt,
+            b.fechaPago ?? b.createdAt,
+          ),
         monto: (a, b) => compareNumberValues(a.monto, b.monto),
       }),
     [filteredPayments, sort],
@@ -371,7 +385,7 @@ export function CommercialPaymentsManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por factura, cliente, referencia, cuenta destino…"
+              searchPlaceholder="Buscar por factura, empresa, referencia, cuenta destino, notas…"
               resultCount={filteredPayments.length}
               totalCount={payments.length}
               filters={[
@@ -396,7 +410,7 @@ export function CommercialPaymentsManager() {
                   onChange: setInvoiceFilter,
                   options: invoiceFilterOptions,
                   searchable: true,
-                  searchPlaceholder: "Buscar por N° factura o cliente…",
+                  searchPlaceholder: "Buscar por N° factura o empresa…",
                 },
               ]}
               columns={tableColumns.toolbarColumns}
@@ -437,9 +451,7 @@ export function CommercialPaymentsManager() {
                           <th className="px-5 py-3 font-medium">
                             Factura comercial
                           </th>
-                          <th className="px-5 py-3 font-medium">
-                            Cliente (factura)
-                          </th>
+                          <th className="px-5 py-3 font-medium">Empresa</th>
                           <th className="px-5 py-3 font-medium">
                             Método / Banco
                           </th>
@@ -451,6 +463,17 @@ export function CommercialPaymentsManager() {
                             onToggle={() =>
                               setSort((current) =>
                                 toggleTableSort(current, "monto"),
+                              )
+                            }
+                          />
+                          <SortableTableHeader
+                            label="Fecha de pago"
+                            sortDirection={
+                              sort?.key === "fechaPago" ? sort.direction : null
+                            }
+                            onToggle={() =>
+                              setSort((current) =>
+                                toggleTableSort(current, "fechaPago"),
                               )
                             }
                           />
@@ -467,7 +490,6 @@ export function CommercialPaymentsManager() {
                           id: payment.facturaComercialId,
                           numeroFactura:
                             payment.numeroFactura ?? linked?.numeroFactura,
-                          sufijoControl: linked?.sufijoControl,
                         });
                         const invoiceHref = user
                           ? hrefForCommercialInvoice(
@@ -475,6 +497,12 @@ export function CommercialPaymentsManager() {
                               user.role,
                             )
                           : commercialInvoicePath(payment.facturaComercialId);
+                        const companyHref = user
+                          ? hrefForCompany(
+                              payment.empresaId ?? linked?.empresaId,
+                              user.role,
+                            )
+                          : undefined;
 
                         return (
                           <ClickableTableRow
@@ -520,8 +548,12 @@ export function CommercialPaymentsManager() {
                                 </TruncatedText>
                               </td>
                               <td className="max-w-[200px] px-5 py-3.5 text-muted">
-                                <TruncatedText maxClassName="max-w-[180px]">
+                                <TruncatedText
+                                  href={companyHref}
+                                  maxClassName="max-w-[180px]"
+                                >
                                   {payment.clienteComercialNombre ??
+                                    linked?.empresaNombre ??
                                     linked?.clienteComercialNombre ??
                                     "—"}
                                 </TruncatedText>
@@ -533,6 +565,11 @@ export function CommercialPaymentsManager() {
                               </td>
                               <td className="px-5 py-3.5 font-mono font-medium text-card-foreground">
                                 {formatMoney(payment.monto)}
+                              </td>
+                              <td className="px-5 py-3.5 whitespace-nowrap text-muted">
+                                {formatDate(
+                                  payment.fechaPago ?? payment.createdAt,
+                                )}
                               </td>
                               <td className="max-w-[180px] px-5 py-3.5 font-mono text-muted">
                                 <TruncatedText

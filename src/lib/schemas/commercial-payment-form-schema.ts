@@ -28,6 +28,17 @@ export const commercialPaymentFormSchema = z.object({
     .string()
     .trim()
     .max(100, "Máximo 100 caracteres."),
+  fechaPago: z
+    .string()
+    .trim()
+    .refine(
+      (value) => !value || /^\d{4}-\d{2}-\d{2}$/.test(value),
+      "Fecha de pago inválida (YYYY-MM-DD).",
+    ),
+  notas: z
+    .string()
+    .trim()
+    .max(500, "Máximo 500 caracteres."),
 });
 
 export type CommercialPaymentFormSchemaValues = z.infer<

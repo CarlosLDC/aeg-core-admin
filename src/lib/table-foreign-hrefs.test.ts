@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hrefForClient } from "@/lib/table-foreign-hrefs";
+import { hrefForClient, hrefForCompany } from "@/lib/table-foreign-hrefs";
 import type { ClientResponse } from "@/types/branch-role";
 
 const client: ClientResponse = {
@@ -24,5 +24,13 @@ describe("hrefForClient", () => {
 
   it("links ADMIN to branch detail when client route is denied", () => {
     expect(hrefForClient(10, [client], "ADMIN")).toBe("/branches/99");
+  });
+});
+
+describe("hrefForCompany", () => {
+  it("links ADMIN to company detail and hides link for TECHNICIAN or null id", () => {
+    expect(hrefForCompany(42, "ADMIN")).toBe("/companies/42");
+    expect(hrefForCompany(42, "TECHNICIAN")).toBeUndefined();
+    expect(hrefForCompany(null, "ADMIN")).toBeUndefined();
   });
 });

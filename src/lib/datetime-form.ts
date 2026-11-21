@@ -1,3 +1,21 @@
+export function todayIsoDate(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export function parseNonNegativeDecimal(raw: string): number | null | "invalid" {
+  const trimmed = raw.trim().replace(",", ".");
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return "invalid";
+  }
+  return Math.round(parsed * 100) / 100;
+}
+
 export function toDatetimeLocalValue(iso: string | null | undefined): string {
   if (!iso) return "";
   const date = new Date(iso);

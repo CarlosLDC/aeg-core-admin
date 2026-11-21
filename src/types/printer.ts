@@ -104,4 +104,5 @@ export type PrinterRequest = {
   creditPaidTotal?: number | null;
   creditPaymentCount?: number | null;
   boxId?: number | null;
+  facturaComercialId?: number | null;
 };

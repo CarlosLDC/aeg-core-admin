@@ -136,6 +136,7 @@ export function printerToAssignmentRequest(
   printer: PrinterResponse,
   distributorId: number,
   paid: boolean = printer.paid,
+  facturaComercialId?: number | null,
 ): PrinterRequest {
   return {
     modelId: printer.modelId,
@@ -151,6 +152,7 @@ export function printerToAssignmentRequest(
     macAddress: printer.macAddress,
     status: paid ? "asignada" : "en_consignacion",
     boxId: printer.boxId ?? null,
+    ...(facturaComercialId != null ? { facturaComercialId } : {}),
   };
 }
 

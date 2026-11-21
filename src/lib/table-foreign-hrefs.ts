@@ -4,6 +4,7 @@ import {
   clientPath,
   commercialInvoicePath,
   commercialPaymentPath,
+  companyPath,
   firmwareVersionPath,
   printerModelPath,
   printerPath,
@@ -114,6 +115,16 @@ export function hrefForCommercialInvoice(
   return hrefIfAccessible(
     role,
     invoiceId != null ? commercialInvoicePath(invoiceId) : undefined,
+  );
+}
+
+export function hrefForCompany(
+  companyId: number | null | undefined,
+  role: Role,
+): string | undefined {
+  return hrefIfAccessible(
+    role,
+    companyId != null ? companyPath(companyId) : undefined,
   );
 }
 

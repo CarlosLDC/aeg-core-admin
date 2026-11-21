@@ -52,6 +52,7 @@ import {
 import { formatDate, formatMoney } from "@/lib/datetime-form";
 import { forbiddenMessage } from "@/lib/permissions/messages";
 import { commercialInvoicePath } from "@/lib/resource-routes";
+import { hrefForCompany } from "@/lib/table-foreign-hrefs";
 import { filterAllOption } from "@/lib/table-filter-options";
 import {
   compareDateValues,
@@ -166,11 +167,9 @@ export function CommercialInvoicesManager() {
       const haystack = [
         invoice.id,
         invoice.numeroFactura,
-        invoice.sufijoControl,
         invoice.empresaNombre,
         invoice.empresaRif,
         invoice.clienteComercialNombre,
-        invoice.notasComerciales,
         invoice.modalidad,
         modalityLabel,
         invoice.estadoCobro,
@@ -274,10 +273,14 @@ export function CommercialInvoicesManager() {
       return;
     }
     const label = formatCommercialInvoiceTitle(invoice);
+    const printerWarning =
+      invoice.printerCount > 0
+        ? ` Esta factura tiene ${invoice.printerCount} impresora${invoice.printerCount === 1 ? "" : "s"} vinculada${invoice.printerCount === 1 ? "" : "s"}.`
+        : "";
     if (
       !(await confirm({
         title: "Confirmar",
-        message: `¿Eliminar la factura comercial ${label}? También se eliminarán sus pagos comerciales asociados.`,
+        message: `¿Eliminar la factura comercial ${label}? También se eliminarán sus pagos comerciales asociados.${printerWarning}`,
         destructive: true,
         requireConfirmationText: label,
       }))
@@ -343,7 +346,7 @@ export function CommercialInvoicesManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por N° factura, sufijo, cliente, notas…"
+              searchPlaceholder="Buscar por N° factura, empresa, RIF, modalidad, estado…"
               resultCount={filteredInvoices.length}
               totalCount={invoices.length}
               filters={[
@@ -434,6 +437,19 @@ export function CommercialInvoicesManager() {
                             Estado de cobro
                           </th>
                           <SortableTableHeader
+                            label="Impresoras"
+                            sortDirection={
+                              sort?.key === "printerCount"
+                                ? sort.direction
+                                : null
+                            }
+                            onToggle={() =>
+                              setSort((current) =>
+                                toggleTableSort(current, "printerCount"),
+                              )
+                            }
+                          />
+                          <SortableTableHeader
                             label="Abonado"
                             sortDirection={
                               sort?.key === "paidAmountTotal"
@@ -489,8 +505,20 @@ export function CommercialInvoicesManager() {
                                 {label}
                               </td>
                               <td className="max-w-[220px] px-5 py-3.5 text-card-foreground">
-                                <TruncatedText maxClassName="max-w-[200px]">
-                                  {invoice.clienteComercialNombre ?? "—"}
+                                <TruncatedText
+                                  href={
+                                    user
+                                      ? hrefForCompany(
+                                          invoice.empresaId,
+                                          user.role,
+                                        )
+                                      : undefined
+                                  }
+                                  maxClassName="max-w-[200px]"
+                                >
+                                  {invoice.empresaNombre ??
+                                    invoice.clienteComercialNombre ??
+                                    "—"}
                                 </TruncatedText>
                               </td>
                               <td className="px-5 py-3.5">
@@ -503,9 +531,25 @@ export function CommercialInvoicesManager() {
                                   status={invoice.estadoCobro}
                                 />
                               </td>
+                              <td className="px-5 py-3.5 text-card-foreground whitespace-nowrap">
+                                <span className="font-mono text-sm">
+                                  {invoice.printerCount}
+                                </span>
+                                <span className="ml-1 text-xs text-muted">
+                                  {invoice.printerCount === 1
+                                    ? "impresora"
+                                    : "impresoras"}
+                                </span>
+                              </td>
                               <td className="px-5 py-3.5 text-card-foreground">
                                 <div className="font-mono text-sm">
                                   {formatMoney(invoice.paidAmountTotal)}
+                                  {invoice.montoTotal != null ? (
+                                    <span className="text-xs text-muted">
+                                      {" "}
+                                      / {formatMoney(invoice.montoTotal)}
+                                    </span>
+                                  ) : null}
                                 </div>
                                 <div className="text-xs text-muted">
                                   {invoice.paymentCount} pago

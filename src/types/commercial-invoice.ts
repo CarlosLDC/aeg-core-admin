@@ -21,22 +21,6 @@ export const COMMERCIAL_INVOICE_COLLECTION_STATUSES = [
 export type CommercialInvoiceCollectionStatus =
   (typeof COMMERCIAL_INVOICE_COLLECTION_STATUSES)[number];
 
-export type CommercialClientResponse = {
-  id: number;
-  nombre: string;
-  rif: string | null;
-  notas: string | null;
-  activo: boolean;
-  createdAt: string;
-};
-
-export type CommercialClientRequest = {
-  nombre: string;
-  rif?: string | null;
-  notas?: string | null;
-  activo?: boolean;
-};
-
 export type CommercialInvoiceResponse = {
   id: number;
   numeroFactura: string;
@@ -47,12 +31,12 @@ export type CommercialInvoiceResponse = {
   clienteComercialNombre: string | null;
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;
+  montoTotal?: number | null;
+  remainingBalance?: number | null;
   createdAt: string;
   paymentCount: number;
   paidAmountTotal: number;
   printerCount: number;
-  sufijoControl?: string | null;
-  notasComerciales?: string | null;
 };
 
 export type CommercialInvoiceRequest = {
@@ -60,6 +44,7 @@ export type CommercialInvoiceRequest = {
   empresaId: number;
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;
+  montoTotal?: number | null;
 };
 
 export type CommercialInvoiceFormValues = {
@@ -67,6 +52,7 @@ export type CommercialInvoiceFormValues = {
   empresaId: string;
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;
+  montoTotal: string;
 };
 
 export type CommercialInvoicePrintersRequest = {

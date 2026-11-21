@@ -69,6 +69,7 @@ import {
   commercialPaymentPath,
   printerPath,
 } from "@/lib/resource-routes";
+import { hrefForCompany } from "@/lib/table-foreign-hrefs";
 import type {
   CommercialInvoiceFormValues,
   CommercialInvoiceResponse,
@@ -240,10 +241,14 @@ export function CommercialInvoiceView() {
       return;
     }
     const label = formatCommercialInvoiceTitle(invoice);
+    const printerWarning =
+      invoice.printerCount > 0
+        ? ` Esta factura tiene ${invoice.printerCount} impresora${invoice.printerCount === 1 ? "" : "s"} vinculada${invoice.printerCount === 1 ? "" : "s"} que quedarán sin factura (no está permitido eliminar si hay unidades a crédito o con permiso aprobado).`
+        : "";
     if (
       !(await confirm({
         title: "Confirmar",
-        message: `¿Eliminar la factura comercial ${label}? También se eliminarán sus pagos comerciales asociados.`,
+        message: `¿Eliminar la factura comercial ${label}? También se eliminarán sus pagos comerciales asociados.${printerWarning}`,
         destructive: true,
         requireConfirmationText: label,
       }))
@@ -487,6 +492,9 @@ export function CommercialInvoiceView() {
                 invoice.clienteComercialNombre ??
                 "—"
               }
+              href={
+                user ? hrefForCompany(invoice.empresaId, user.role) : undefined
+              }
             />
             <DetailField
               label="Modalidad"
@@ -503,8 +511,24 @@ export function CommercialInvoiceView() {
               }
             />
             <DetailField
+              label="Monto total"
+              value={
+                invoice.montoTotal != null
+                  ? formatMoney(invoice.montoTotal)
+                  : "Sin definir"
+              }
+            />
+            <DetailField
               label="Total abonado"
               value={formatMoney(invoice.paidAmountTotal)}
+            />
+            <DetailField
+              label="Saldo pendiente"
+              value={
+                invoice.remainingBalance != null
+                  ? formatMoney(invoice.remainingBalance)
+                  : "—"
+              }
             />
             <DetailField
               label="Pagos registrados"
@@ -581,7 +605,11 @@ export function CommercialInvoiceView() {
                       <th className="px-4 py-2.5 font-medium">
                         Cuenta destino
                       </th>
-                      <th className="px-4 py-2.5 font-medium">Fecha</th>
+                      <th className="px-4 py-2.5 font-medium">Fecha de pago</th>
+                      <th className="px-4 py-2.5 font-medium">Notas</th>
+                      <th className="px-4 py-2.5 font-medium">
+                        Registrado por
+                      </th>
                       <th className="px-4 py-2.5 text-right font-medium">
                         Acciones
                       </th>
@@ -612,7 +640,15 @@ export function CommercialInvoiceView() {
                           </TruncatedText>
                         </td>
                         <td className="px-4 py-2.5 whitespace-nowrap text-muted">
-                          {formatDate(payment.createdAt)}
+                          {formatDate(payment.fechaPago ?? payment.createdAt)}
+                        </td>
+                        <td className="px-4 py-2.5 text-muted">
+                          <TruncatedText maxClassName="max-w-[180px]">
+                            {payment.notas ?? "—"}
+                          </TruncatedText>
+                        </td>
+                        <td className="px-4 py-2.5 whitespace-nowrap text-muted">
+                          {payment.registeredByName ?? "—"}
                         </td>
                         <td
                           className="px-4 py-2.5"
@@ -694,44 +730,50 @@ export function CommercialInvoiceView() {
                     </tr>
                   </thead>
                   <tbody>
-                    {invoicePrinters.map((printer) => (
-                      <ClickableTableRow
-                        key={printer.id}
-                        href={printerPath(printer.id)}
-                      >
-                        <td className="px-4 py-2.5 font-mono font-medium whitespace-nowrap text-card-foreground">
-                          {printer.fiscalSerial}
-                        </td>
-                        <td className="px-4 py-2.5 text-muted">
-                          {modelLabelById.get(printer.modelId) ??
-                            `Modelo #${printer.modelId}`}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <PrinterStatusBadge status={printer.status} />
-                        </td>
-                        <td className="px-4 py-2.5 whitespace-nowrap text-muted">
-                          {printer.boxNumber != null
-                            ? formatInventoryBoxLabel(printer.boxNumber)
-                            : "—"}
-                        </td>
-                        <td
-                          className="px-4 py-2.5"
-                          data-row-click="ignore"
+                    {invoicePrinters.map((printer) => {
+                      const isProtected =
+                        printer.status === "a_credito" ||
+                        (printer.status === "en_consignacion" &&
+                          Boolean(printer.enajenacionAutorizada));
+                      return (
+                        <ClickableTableRow
+                          key={printer.id}
+                          href={printerPath(printer.id)}
                         >
-                          <TableRowActionsMenu
-                            viewHref={printerPath(printer.id)}
-                            viewLabel={`Ver impresora ${printer.fiscalSerial}`}
-                            onDelete={
-                              canModify
-                                ? () => void handleUnlinkPrinter(printer)
-                                : undefined
-                            }
-                            deleteLabel="Desvincular"
-                            deleting={unlinkingPrinterId === printer.id}
-                          />
-                        </td>
-                      </ClickableTableRow>
-                    ))}
+                          <td className="px-4 py-2.5 font-mono font-medium whitespace-nowrap text-card-foreground">
+                            {printer.fiscalSerial}
+                          </td>
+                          <td className="px-4 py-2.5 text-muted">
+                            {modelLabelById.get(printer.modelId) ??
+                              `Modelo #${printer.modelId}`}
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <PrinterStatusBadge status={printer.status} />
+                          </td>
+                          <td className="px-4 py-2.5 whitespace-nowrap text-muted">
+                            {printer.boxNumber != null
+                              ? formatInventoryBoxLabel(printer.boxNumber)
+                              : "—"}
+                          </td>
+                          <td
+                            className="px-4 py-2.5"
+                            data-row-click="ignore"
+                          >
+                            <TableRowActionsMenu
+                              viewHref={printerPath(printer.id)}
+                              viewLabel={`Ver impresora ${printer.fiscalSerial}`}
+                              onDelete={
+                                canModify && !isProtected
+                                  ? () => void handleUnlinkPrinter(printer)
+                                  : undefined
+                              }
+                              deleteLabel="Desvincular"
+                              deleting={unlinkingPrinterId === printer.id}
+                            />
+                          </td>
+                        </ClickableTableRow>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -756,6 +798,7 @@ export function CommercialInvoiceView() {
     modelLabelById,
     unlinkingPrinterId,
     handleUnlinkPrinter,
+    user,
   ]);
 
   const effectiveError =

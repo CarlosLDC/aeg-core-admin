@@ -23,7 +23,7 @@ import {
   getCommercialInvoicesErrorMessage,
   markCommercialInvoiceAsPaid,
 } from "@/lib/commercial-invoices-api";
-import { formatDate, formatMoney } from "@/lib/datetime-form";
+import { formatDate, formatMoney, todayIsoDate } from "@/lib/datetime-form";
 import {
   deletePrinterCreditPayment,
   fetchPrinterCreditSummary,
@@ -42,14 +42,6 @@ import {
 } from "@/types/commercial-payment";
 import type { PrinterResponse } from "@/types/printer";
 import type { PrinterCreditSummaryResponse } from "@/types/printer-credit";
-
-function todayIsoDate(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
 
 type PrinterCreditPaymentsSectionProps = {
   printer: PrinterResponse;
@@ -82,8 +74,10 @@ export function PrinterCreditPaymentsSection({
   // Pago comercial unificado (cuando hay factura comercial vinculada)
   const [metodoBanco, setMetodoBanco] = useState<CommercialPaymentMethod>("BNC");
   const [commercialAmount, setCommercialAmount] = useState("");
+  const [commercialPaymentDate, setCommercialPaymentDate] = useState(todayIsoDate);
   const [commercialReference, setCommercialReference] = useState("");
   const [cuentaDestino, setCuentaDestino] = useState("");
+  const [commercialNotes, setCommercialNotes] = useState("");
   const [markInvoiceAsPaid, setMarkInvoiceAsPaid] = useState(false);
   const [savingCommercialPayment, setSavingCommercialPayment] = useState(false);
   const [markingPaid, setMarkingPaid] = useState(false);
@@ -218,13 +212,17 @@ export function PrinterCreditPaymentsSection({
         facturaComercialId: invoiceId,
         metodoBanco,
         monto: Math.round(parsedAmount * 100) / 100,
+        fechaPago: commercialPaymentDate.trim() || null,
         referencia: commercialReference.trim() || null,
         cuentaDestino: cuentaDestino.trim() || null,
+        notas: commercialNotes.trim() || null,
         ...(markInvoiceAsPaid ? { markInvoiceAsPaid: true } : {}),
       });
       setCommercialAmount("");
+      setCommercialPaymentDate(todayIsoDate());
       setCommercialReference("");
       setCuentaDestino("");
+      setCommercialNotes("");
       setMarkInvoiceAsPaid(false);
       toast.success(
         markInvoiceAsPaid
@@ -344,6 +342,17 @@ export function PrinterCreditPaymentsSection({
     printer.facturaComercialEstadoCobro ??
     null;
   const invoicePrinterCount = summary?.facturaComercialPrinterCount ?? 0;
+  const isSharedInvoice = hasInvoice && invoicePrinterCount > 1;
+  const effectiveTotal = isSharedInvoice
+    ? (summary?.facturaComercialMontoTotal ?? null)
+    : hasInvoice
+      ? (summary?.facturaComercialMontoTotal ?? salePrice)
+      : salePrice;
+  const effectiveRemaining = isSharedInvoice
+    ? (summary?.facturaComercialRemainingBalance ?? null)
+    : hasInvoice && summary?.facturaComercialMontoTotal != null
+      ? (summary?.facturaComercialRemainingBalance ?? null)
+      : remaining;
   const commercialPayments = summary?.commercialPayments ?? [];
   const legacyPayments = summary?.payments ?? [];
 
@@ -397,10 +406,14 @@ export function PrinterCreditPaymentsSection({
                   />
                 ) : null}
               </div>
-              {invoicePrinterCount > 1 ? (
+              {isSharedInvoice ? (
                 <p className="text-xs text-muted">
                   Factura compartida con {invoicePrinterCount} impresoras; los
-                  pagos comerciales aplican al total de la factura.
+                  pagos comerciales aplican al total de la factura
+                  {salePrice != null
+                    ? ` (precio individual: ${formatMoney(salePrice)})`
+                    : ""}
+                  .
                 </p>
               ) : null}
             </div>
@@ -458,13 +471,24 @@ export function PrinterCreditPaymentsSection({
               : String(paymentCount)
           }
         />
-        <DetailField label="Total abonado" value={formatMoney(totalPaid)} />
         <DetailField
-          label={salePrice != null ? "Saldo pendiente" : "Precio total"}
+          label={isSharedInvoice ? "Total abonado (factura)" : "Total abonado"}
+          value={formatMoney(totalPaid)}
+        />
+        <DetailField
+          label={
+            isSharedInvoice
+              ? "Saldo factura"
+              : effectiveTotal != null
+                ? "Saldo pendiente"
+                : "Precio total"
+          }
           value={
-            salePrice != null
-              ? `${formatMoney(remaining)} (de ${formatMoney(salePrice)})`
-              : "Sin definir"
+            effectiveTotal != null
+              ? `${formatMoney(effectiveRemaining)} (de ${formatMoney(effectiveTotal)})`
+              : isSharedInvoice
+                ? "Sin monto total definido"
+                : "Sin definir"
           }
         />
 
@@ -597,6 +621,19 @@ export function PrinterCreditPaymentsSection({
                 </div>
 
                 <div>
+                  <FieldLabel required>Fecha de pago</FieldLabel>
+                  <input
+                    id="commercial-credit-payment-date"
+                    type="date"
+                    required
+                    value={commercialPaymentDate}
+                    disabled={savingCommercialPayment}
+                    onChange={(e) => setCommercialPaymentDate(e.target.value)}
+                    className={formFieldInputClass}
+                  />
+                </div>
+
+                <div>
                   <FieldLabel>Referencia (opcional)</FieldLabel>
                   <input
                     id="commercial-credit-payment-reference"
@@ -620,6 +657,20 @@ export function PrinterCreditPaymentsSection({
                     disabled={savingCommercialPayment}
                     onChange={(e) => setCuentaDestino(e.target.value)}
                     placeholder="Cuenta o wallet"
+                    className={formFieldInputClass}
+                  />
+                </div>
+
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <FieldLabel>Notas (opcional)</FieldLabel>
+                  <input
+                    id="commercial-credit-payment-notes"
+                    type="text"
+                    maxLength={500}
+                    value={commercialNotes}
+                    disabled={savingCommercialPayment}
+                    onChange={(e) => setCommercialNotes(e.target.value)}
+                    placeholder="Detalle del abono o comentario adicional"
                     className={formFieldInputClass}
                   />
                 </div>
@@ -675,6 +726,8 @@ export function PrinterCreditPaymentsSection({
                       <th className="px-4 py-2.5 font-medium">Monto</th>
                       <th className="px-4 py-2.5 font-medium">Referencia</th>
                       <th className="px-4 py-2.5 font-medium">Cuenta destino</th>
+                      <th className="px-4 py-2.5 font-medium">Notas</th>
+                      <th className="px-4 py-2.5 font-medium">Registrado por</th>
                       {isAdmin ? (
                         <th className="px-4 py-2.5 text-right font-medium">
                           Acción
@@ -689,7 +742,7 @@ export function PrinterCreditPaymentsSection({
                         className="border-b border-border last:border-b-0"
                       >
                         <td className="px-4 py-2.5 whitespace-nowrap">
-                          {formatDate(payment.createdAt)}
+                          {formatDate(payment.fechaPago ?? payment.createdAt)}
                         </td>
                         <td className="px-4 py-2.5">
                           <CommercialPaymentMethodBadge
@@ -704,6 +757,12 @@ export function PrinterCreditPaymentsSection({
                         </td>
                         <td className="px-4 py-2.5 text-muted">
                           {payment.cuentaDestino || "—"}
+                        </td>
+                        <td className="px-4 py-2.5 text-muted">
+                          {payment.notas || "—"}
+                        </td>
+                        <td className="px-4 py-2.5 text-muted whitespace-nowrap">
+                          {payment.registeredByName || "—"}
                         </td>
                         {isAdmin ? (
                           <td className="px-4 py-2.5 text-right">

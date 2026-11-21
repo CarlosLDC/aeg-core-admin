@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CompanyBranchesTable } from "@/components/companies/company-branches-table";
+import { CompanyCommercialInvoicesTable } from "@/components/commercial-invoices/company-commercial-invoices-table";
 import { CompanyPrintersTable } from "@/components/companies/company-printers-table";
 import { ContributorBadge } from "@/components/companies/contributor-badge";
 import {
@@ -22,6 +23,7 @@ import {
   canUpdateCompanyRecord,
   CATALOG_MODIFY_FORBIDDEN_MESSAGE,
 } from "@/lib/api-permissions";
+import { can } from "@/lib/permissions/can";
 import { assertCompanyInScope } from "@/lib/permissions/scope-access";
 import {
   deleteCompany,
@@ -35,7 +37,11 @@ import type { CompanyResponse } from "@/types/company";
 import { isFactoryCompany } from "@/lib/organization-roles";
 import { isDistributorPanelRole } from "@/types/user";
 
-type CompanyDetailPanel = "company" | "branches" | "printers";
+type CompanyDetailPanel =
+  | "company"
+  | "branches"
+  | "printers"
+  | "commercialInvoices";
 
 export function CompanyView() {
   const id = useResourceId();
@@ -47,6 +53,9 @@ export function CompanyView() {
   const isDistributor = isDistributorPanelRole(user?.role);
   const canModify = user ? canUpdateCompanyRecord(user.role) : false;
   const canDelete = user ? canDeleteCompanyRecord(user.role) : false;
+  const canReadCommercialInvoices = user
+    ? can(user.role, "commercialInvoices", "read")
+    : false;
 
   const [company, setCompany] = useState<CompanyResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,33 +65,33 @@ export function CompanyView() {
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [detailPanel, setDetailPanel] = useState<CompanyDetailPanel>("company");
-  const load = useCallback(async () => {
+  useEffect(() => {
     if (id == null) {
-      setError("Identificador de empresa no válido.");
-      setLoading(false);
       return;
     }
-
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchCompanyById(id);
-      if (user && !assertCompanyInScope(scope, data, user.role)) {
-        setError("No tienes acceso a este recurso.");
-        setCompany(null);
-        return;
+    let active = true;
+    void (async () => {
+      try {
+        const data = await fetchCompanyById(id);
+        if (!active) return;
+        if (user && !assertCompanyInScope(scope, data, user.role)) {
+          setError("No tienes acceso a este recurso.");
+          setCompany(null);
+          return;
+        }
+        setCompany(data);
+        setError(null);
+      } catch (err) {
+        if (!active) return;
+        setError(getCompaniesErrorMessage(err));
+      } finally {
+        if (active) setLoading(false);
       }
-      setCompany(data);
-    } catch (err) {
-      setError(getCompaniesErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
+    })();
+    return () => {
+      active = false;
+    };
   }, [id, scope, user]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
 
   async function handleSubmit(values: CompanyFormValues) {
     if (!company || !canModify) {
@@ -140,6 +149,9 @@ export function CompanyView() {
     }
   }
 
+  const effectiveError =
+    id == null ? "Identificador de empresa no válido." : error;
+  const effectiveLoading = id != null && loading;
   const title = company?.rif || company?.businessName || "Empresa";
 
   return (
@@ -149,8 +161,8 @@ export function CompanyView() {
         backLabel="Volver a empresas"
         title={title}
         subtitle={company?.businessName || undefined}
-        loading={loading}
-        error={error}
+        loading={effectiveLoading}
+        error={effectiveError}
         actions={
           company ? (
             <ResourceViewActions
@@ -217,6 +229,22 @@ export function CompanyView() {
               >
                 Impresoras
               </button>
+              {canReadCommercialInvoices ? (
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={detailPanel === "commercialInvoices"}
+                  onClick={() => setDetailPanel("commercialInvoices")}
+                  className={cn(
+                    "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                    detailPanel === "commercialInvoices"
+                      ? "bg-accent text-accent-foreground shadow-sm"
+                      : "text-muted hover:text-foreground",
+                  )}
+                >
+                  Facturas comerciales
+                </button>
+              ) : null}
             </div>
 
             {detailPanel === "company" ? (
@@ -247,6 +275,12 @@ export function CompanyView() {
               <CompanyBranchesTable
                 companyId={company.id}
                 companies={scope?.companies ?? [company]}
+              />
+            ) : detailPanel === "commercialInvoices" &&
+              canReadCommercialInvoices ? (
+              <CompanyCommercialInvoicesTable
+                companyId={company.id}
+                storageKey={`company-commercial-invoices-${company.id}`}
               />
             ) : (
               <CompanyPrintersTable

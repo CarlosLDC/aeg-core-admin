@@ -196,33 +196,64 @@ function CommercialInvoiceFormDialogContent({
                 Datos de la factura
               </legend>
 
-              <label className="block">
-                <FieldLabel required>Número de factura</FieldLabel>
-                <input
-                  type="text"
-                  required
-                  maxLength={30}
-                  value={form.numeroFactura}
-                  disabled={saving}
-                  onChange={(e) => {
-                    setForm((f) => ({
-                      ...f,
-                      numeroFactura: e.target.value,
-                    }));
-                    setFieldErrors((prev) => ({
-                      ...prev,
-                      numeroFactura: undefined,
-                    }));
-                  }}
-                  className={cn(inputClass, "font-mono")}
-                  placeholder="FAC-000123"
-                />
-                {fieldErrors.numeroFactura ? (
-                  <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
-                    {fieldErrors.numeroFactura}
-                  </span>
-                ) : null}
-              </label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <FieldLabel required>Número de factura</FieldLabel>
+                  <input
+                    type="text"
+                    required
+                    maxLength={30}
+                    value={form.numeroFactura}
+                    disabled={saving}
+                    onChange={(e) => {
+                      setForm((f) => ({
+                        ...f,
+                        numeroFactura: e.target.value,
+                      }));
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        numeroFactura: undefined,
+                      }));
+                    }}
+                    className={cn(inputClass, "font-mono")}
+                    placeholder="FAC-000123"
+                  />
+                  {fieldErrors.numeroFactura ? (
+                    <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
+                      {fieldErrors.numeroFactura}
+                    </span>
+                  ) : null}
+                </label>
+
+                <label className="block">
+                  <FieldLabel>Monto total (opcional)</FieldLabel>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    inputMode="decimal"
+                    value={form.montoTotal}
+                    disabled={saving}
+                    onChange={(e) => {
+                      setForm((f) => ({
+                        ...f,
+                        montoTotal: e.target.value,
+                      }));
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        montoTotal: undefined,
+                      }));
+                    }}
+                    className={cn(inputClass, "font-mono")}
+                    placeholder="Ej. 900.00"
+                  />
+                  {fieldErrors.montoTotal ? (
+                    <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
+                      {fieldErrors.montoTotal}
+                    </span>
+                  ) : null}
+                </label>
+              </div>
 
               <div className="block">
                 <FieldLabel required>Empresa</FieldLabel>

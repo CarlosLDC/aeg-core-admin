@@ -14,12 +14,17 @@ export type CommercialPaymentResponse = {
   id: number;
   facturaComercialId: number;
   numeroFactura: string | null;
+  empresaId?: number | null;
   clienteComercialId: number | null;
   clienteComercialNombre: string | null;
   metodoBanco: CommercialPaymentMethod;
   referencia: string | null;
   monto: number | null;
   cuentaDestino: string | null;
+  fechaPago?: string | null;
+  notas?: string | null;
+  registeredById?: number | null;
+  registeredByName?: string | null;
   createdAt: string;
 };
 
@@ -29,6 +34,8 @@ export type CommercialPaymentRequest = {
   referencia?: string | null;
   monto?: number | null;
   cuentaDestino?: string | null;
+  fechaPago?: string | null;
+  notas?: string | null;
   markInvoiceAsPaid?: boolean;
 };
 
@@ -38,5 +45,7 @@ export type CommercialPaymentFormValues = {
   referencia: string;
   monto: string;
   cuentaDestino: string;
+  fechaPago: string;
+  notas: string;
   markInvoiceAsPaid?: boolean;
 };

@@ -516,6 +516,12 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         formBindings: ["form.estadoCobro"],
         viewBindings: ["invoice.estadoCobro"],
       },
+      {
+        formLabels: ["Monto total"],
+        viewLabels: ["Monto total"],
+        formBindings: ["form.montoTotal"],
+        viewBindings: ["invoice.montoTotal"],
+      },
     ],
   },
   {
@@ -544,6 +550,12 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         viewBindings: ["payment.monto"],
       },
       {
+        formLabels: ["Fecha de pago"],
+        viewLabels: ["Fecha de pago"],
+        formBindings: ["form.fechaPago"],
+        viewBindings: ["payment.fechaPago"],
+      },
+      {
         formLabels: ["Referencia"],
         viewLabels: ["Referencia"],
         formBindings: ["form.referencia"],
@@ -554,6 +566,12 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
         viewLabels: ["Cuenta destino"],
         formBindings: ["form.cuentaDestino"],
         viewBindings: ["payment.cuentaDestino"],
+      },
+      {
+        formLabels: ["Notas"],
+        viewLabels: ["Notas"],
+        formBindings: ["form.notas"],
+        viewBindings: ["payment.notas"],
       },
     ],
   },

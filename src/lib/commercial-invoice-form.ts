@@ -1,3 +1,4 @@
+import { parseNonNegativeDecimal } from "@/lib/datetime-form";
 import {
   COMMERCIAL_INVOICE_COLLECTION_STATUSES,
   COMMERCIAL_INVOICE_MODALITIES,
@@ -34,7 +35,6 @@ export const COMMERCIAL_INVOICE_COLLECTION_STATUS_LABELS: Record<
 export function formatCommercialInvoiceTitle(invoice: {
   id: number;
   numeroFactura?: string | null;
-  sufijoControl?: string | null;
 }): string {
   const numero = invoice.numeroFactura?.trim();
   if (numero) {
@@ -43,11 +43,14 @@ export function formatCommercialInvoiceTitle(invoice: {
   return `Factura #${invoice.id}`;
 }
 
+export const parseInvoiceAmount = parseNonNegativeDecimal;
+
 export const emptyCommercialInvoiceForm = (): CommercialInvoiceFormValues => ({
   numeroFactura: "",
   empresaId: "",
   modalidad: "VENTA",
   estadoCobro: "PAGADO",
+  montoTotal: "",
 });
 
 export function commercialInvoiceToFormValues(
@@ -64,6 +67,7 @@ export function commercialInvoiceToFormValues(
     )
       ? invoice.estadoCobro
       : "PAGADO",
+    montoTotal: invoice.montoTotal != null ? String(invoice.montoTotal) : "",
   };
 }
 
@@ -97,10 +101,16 @@ export function toCommercialInvoiceRequest(
     return "Estado de cobro no válido.";
   }
 
+  const parsedMontoTotal = parseInvoiceAmount(values.montoTotal);
+  if (parsedMontoTotal === "invalid") {
+    return "El monto total debe ser un número mayor o igual a 0.";
+  }
+
   return {
     numeroFactura,
     empresaId,
     modalidad: values.modalidad,
     estadoCobro: values.estadoCobro,
+    montoTotal: parsedMontoTotal,
   };
 }

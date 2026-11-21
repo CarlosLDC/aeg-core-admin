@@ -1,3 +1,4 @@
+import { parseNonNegativeDecimal, todayIsoDate } from "@/lib/datetime-form";
 import {
   COMMERCIAL_PAYMENT_METHODS,
   type CommercialPaymentFormValues,
@@ -28,12 +29,17 @@ export function emptyCommercialPaymentForm(
     referencia: "",
     monto: "",
     cuentaDestino: "",
+    fechaPago: todayIsoDate(),
+    notas: "",
   };
 }
 
 export function commercialPaymentToFormValues(
   payment: CommercialPaymentResponse,
 ): CommercialPaymentFormValues {
+  const fechaPago =
+    payment.fechaPago?.trim() ||
+    (payment.createdAt ? payment.createdAt.slice(0, 10) : todayIsoDate());
   return {
     facturaComercialId: String(payment.facturaComercialId),
     metodoBanco: COMMERCIAL_PAYMENT_METHODS.includes(payment.metodoBanco)
@@ -42,6 +48,8 @@ export function commercialPaymentToFormValues(
     referencia: payment.referencia ?? "",
     monto: payment.monto != null ? String(payment.monto) : "",
     cuentaDestino: payment.cuentaDestino ?? "",
+    fechaPago,
+    notas: payment.notas ?? "",
   };
 }
 
@@ -50,15 +58,7 @@ function trimToNull(value: string): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-export function parsePaymentAmount(raw: string): number | null | "invalid" {
-  const trimmed = raw.trim().replace(",", ".");
-  if (!trimmed) return null;
-  const parsed = Number(trimmed);
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    return "invalid";
-  }
-  return Math.round(parsed * 100) / 100;
-}
+export const parsePaymentAmount = parseNonNegativeDecimal;
 
 export function toCommercialPaymentRequest(
   values: CommercialPaymentFormValues,
@@ -85,12 +85,24 @@ export function toCommercialPaymentRequest(
     return "La cuenta destino no puede superar los 100 caracteres.";
   }
 
+  const fechaPago = trimToNull(values.fechaPago);
+  if (fechaPago && !/^\d{4}-\d{2}-\d{2}$/.test(fechaPago)) {
+    return "La fecha de pago debe tener formato YYYY-MM-DD.";
+  }
+
+  const notas = trimToNull(values.notas);
+  if (notas && notas.length > 500) {
+    return "Las notas no pueden superar los 500 caracteres.";
+  }
+
   return {
     facturaComercialId: invoiceId,
     metodoBanco: values.metodoBanco,
     referencia,
     monto: parsedMonto,
     cuentaDestino,
+    fechaPago,
+    notas,
     ...(values.markInvoiceAsPaid === true ? { markInvoiceAsPaid: true } : {}),
   };
 }

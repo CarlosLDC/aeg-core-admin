@@ -1,3 +1,4 @@
+import type { CommercialInvoiceRequest } from "@/types/commercial-invoice";
 import type {
   ModificationActionType,
   ModificationRequestStatus,
@@ -14,6 +15,8 @@ export type PrinterEnajenacionApproveRequest = {
   creditInstallments: number;
   finalSalePrice?: number | null;
   reviewNote?: string | null;
+  facturaComercialId?: number | null;
+  newCommercialInvoice?: CommercialInvoiceRequest | null;
 };
 
 export type PrinterEnajenacionRejectRequest = {

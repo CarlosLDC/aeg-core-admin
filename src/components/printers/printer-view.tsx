@@ -878,9 +878,11 @@ export function PrinterView() {
   async function handleAssignmentSubmit({
     distributorId,
     paid,
+    facturaComercialId,
   }: {
     distributorId: number;
     paid: boolean;
+    facturaComercialId?: number | null;
   }) {
     if (!printer || !canAssignInitialized) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
@@ -895,7 +897,12 @@ export function PrinterView() {
     setAssignmentError(null);
 
     try {
-      const body = printerToAssignmentRequest(printer, distributorId, paid);
+      const body = printerToAssignmentRequest(
+        printer,
+        distributorId,
+        paid,
+        facturaComercialId,
+      );
       const updated = await updatePrinter(printer.id, body);
       setPrinter(updated);
       toast.success(`Impresora ${printer.fiscalSerial} asignada correctamente.`, {

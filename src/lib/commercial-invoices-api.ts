@@ -1,30 +1,12 @@
 import { apiFetch } from "@/lib/api";
 import { ApiError } from "@/types/auth";
 import type {
-  CommercialClientRequest,
-  CommercialClientResponse,
   CommercialInvoicePrintersRequest,
   CommercialInvoiceRequest,
   CommercialInvoiceResponse,
 } from "@/types/commercial-invoice";
 
 const BASE = "/api/commercial-invoices";
-const CLIENTS_BASE = "/api/commercial-clients";
-
-export async function fetchCommercialClients(): Promise<
-  CommercialClientResponse[]
-> {
-  return apiFetch<CommercialClientResponse[]>(CLIENTS_BASE);
-}
-
-export async function createCommercialClient(
-  body: CommercialClientRequest,
-): Promise<CommercialClientResponse> {
-  return apiFetch<CommercialClientResponse>(CLIENTS_BASE, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-}
 
 export async function fetchCommercialInvoices(): Promise<
   CommercialInvoiceResponse[]

@@ -3,6 +3,7 @@
 import { type FormEvent, useEffect, useId, useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import { PrinterStatusBadge } from "@/components/printers/printer-status-badge";
+import { useConfirm } from "@/context/confirm-provider";
 import { formatCommercialInvoiceTitle } from "@/lib/commercial-invoice-form";
 import { printerModelLabel } from "@/lib/printer-form";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
@@ -41,6 +42,7 @@ function CommercialInvoicePrintersDialogContent({
   onSubmit,
 }: Omit<CommercialInvoicePrintersDialogProps, "open">) {
   const titleId = useId();
+  const confirm = useConfirm();
   const [query, setQuery] = useState("");
 
   const initialIds = useMemo(
@@ -100,20 +102,56 @@ function CommercialInvoicePrintersDialogContent({
       });
   }, [printers, query, invoice.id, selectedIds, modelLabelById]);
 
-  function togglePrinter(printerId: number) {
+  function isProtectedLinkedPrinter(printer: PrinterResponse): boolean {
+    return (
+      printer.facturaComercialId === invoice.id &&
+      (printer.status === "a_credito" ||
+        (printer.status === "en_consignacion" &&
+          Boolean(printer.enajenacionAutorizada)))
+    );
+  }
+
+  function togglePrinter(printer: PrinterResponse) {
+    if (isProtectedLinkedPrinter(printer)) {
+      return;
+    }
     setDraftSelectedIds((prev) => {
       const next = new Set(prev ?? initialIds);
-      if (next.has(printerId)) {
-        next.delete(printerId);
+      if (next.has(printer.id)) {
+        next.delete(printer.id);
       } else {
-        next.add(printerId);
+        next.add(printer.id);
       }
       return next;
     });
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    const reassigned = printers.filter(
+      (p) =>
+        selectedIds.has(p.id) &&
+        p.facturaComercialId != null &&
+        p.facturaComercialId !== invoice.id,
+    );
+    if (reassigned.length > 0) {
+      const summary = reassigned
+        .slice(0, 6)
+        .map(
+          (p) =>
+            `${p.fiscalSerial} (${p.facturaComercialNumero?.trim() || `#${p.facturaComercialId}`})`,
+        )
+        .join(", ");
+      const extra =
+        reassigned.length > 6 ? ` y ${reassigned.length - 6} más` : "";
+      const ok = await confirm({
+        title: "Reasignar impresoras",
+        message: `Las siguientes impresoras ya pertenecen a otra factura comercial y se moverán a ${formatCommercialInvoiceTitle(invoice)}: ${summary}${extra}. ¿Continuar?`,
+        confirmLabel: "Reasignar y guardar",
+        destructive: true,
+      });
+      if (!ok) return;
+    }
     onSubmit(Array.from(selectedIds));
   }
 
@@ -157,7 +195,7 @@ function CommercialInvoicePrintersDialogContent({
         </div>
 
         <form
-          onSubmit={handleSubmit}
+          onSubmit={(e) => void handleSubmit(e)}
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
@@ -197,6 +235,7 @@ function CommercialInvoicePrintersDialogContent({
                     const otherInvoice =
                       printer.facturaComercialId != null &&
                       printer.facturaComercialId !== invoice.id;
+                    const protectedLinked = isProtectedLinkedPrinter(printer);
                     const modelName =
                       modelLabelById.get(printer.modelId) ??
                       `Modelo #${printer.modelId}`;
@@ -205,7 +244,10 @@ function CommercialInvoicePrintersDialogContent({
                       <li key={printer.id}>
                         <label
                           className={cn(
-                            "flex cursor-pointer items-center justify-between gap-3 px-3.5 py-2.5 text-sm transition-colors hover:bg-foreground/[0.03]",
+                            "flex items-center justify-between gap-3 px-3.5 py-2.5 text-sm transition-colors",
+                            protectedLinked
+                              ? "cursor-not-allowed opacity-75"
+                              : "cursor-pointer hover:bg-foreground/[0.03]",
                             checked && "bg-accent/[0.05]",
                           )}
                         >
@@ -213,8 +255,8 @@ function CommercialInvoicePrintersDialogContent({
                             <input
                               type="checkbox"
                               checked={checked}
-                              disabled={saving}
-                              onChange={() => togglePrinter(printer.id)}
+                              disabled={saving || protectedLinked}
+                              onChange={() => togglePrinter(printer)}
                               className="size-4 shrink-0 rounded border-border accent-accent"
                             />
                             <div className="min-w-0">
@@ -225,7 +267,9 @@ function CommercialInvoicePrintersDialogContent({
                                 {modelName}
                                 {otherInvoice
                                   ? ` · Factura ${printer.facturaComercialNumero?.trim() || `#${printer.facturaComercialId}`}`
-                                  : ""}
+                                  : protectedLinked
+                                    ? " · Crédito/permiso (reasignar desde otra factura)"
+                                    : ""}
                               </span>
                             </div>
                           </div>

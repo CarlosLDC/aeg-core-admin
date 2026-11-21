@@ -78,6 +78,7 @@ export function emptyAuthorizeNewInvoiceForm(
         : "",
     modalidad: "VENTA",
     estadoCobro: "PENDIENTE_PAGO",
+    montoTotal: "",
   };
 }
 

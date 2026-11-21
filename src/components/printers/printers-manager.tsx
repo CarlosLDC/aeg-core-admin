@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Cpu, Layers, Loader2, Plus } from "lucide-react";
+import { CommercialInvoiceCollectionStatusBadge } from "@/components/commercial-invoices/commercial-invoice-badges";
 import { PrinterBatchFormDialog, type PrinterBatchSubmitPayload } from "@/components/printers/printer-batch-form-dialog";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
@@ -91,6 +92,10 @@ import {
   toPrinterRequest,
   type PrinterFormValues,
 } from "@/lib/printer-form";
+import {
+  COMMERCIAL_INVOICE_COLLECTION_STATUS_LABELS,
+  formatCommercialInvoiceTitle,
+} from "@/lib/commercial-invoice-form";
 import { formatDate } from "@/lib/datetime-form";
 import { useTableSearch } from "@/hooks/use-table-search";
 import { useTableFilter } from "@/hooks/use-table-filter";
@@ -136,12 +141,17 @@ import {
 } from "@/lib/printer-status";
 import { getPrinterStatusQuickAction, getPrinterStatusBadgeTitle } from "@/lib/printer-quick-actions";
 import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
+import {
+  COMMERCIAL_INVOICE_COLLECTION_STATUSES,
+  type CommercialInvoiceCollectionStatus,
+} from "@/types/commercial-invoice";
 import { PRINTER_STATUSES } from "@/types/printer";
 import { isDistributorPanelRole } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { TableScroll } from "@/components/ui/table-scroll";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { printerPath } from "@/lib/resource-routes";
+import { hrefForCommercialInvoice } from "@/lib/table-foreign-hrefs";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { TableRowActionsMenu } from "@/components/ui/table-row-actions-menu";
 import { SortableTableHeader } from "@/components/ui/sortable-table-header";
@@ -250,6 +260,9 @@ export function PrintersManager() {
     "serial",
     "all",
   );
+  const [invoiceStatusFilter, setInvoiceStatusFilter] = useTableFilter<
+    CommercialInvoiceCollectionStatus | "SIN_FACTURA" | "all"
+  >("/printers", "facturaCobro", "all");
 
   const distributorStatusFilterOptions = useMemo(
     () => [
@@ -401,6 +414,13 @@ export function PrintersManager() {
       ) {
         return false;
       }
+      if (!isDistributor && invoiceStatusFilter !== "all") {
+        if (invoiceStatusFilter === "SIN_FACTURA") {
+          if (printer.facturaComercialId != null) return false;
+        } else if (printer.facturaComercialEstadoCobro !== invoiceStatusFilter) {
+          return false;
+        }
+      }
       if (!q) return true;
       const model = modelById.get(printer.modelId);
       const distributorName =
@@ -439,6 +459,12 @@ export function PrintersManager() {
         printer.versionFirmware,
         printer.boxNumber != null ? formatInventoryBoxLabel(printer.boxNumber) : "",
         printer.boxNumber != null ? `Lote ${printer.boxNumber}` : "",
+        !isDistributor ? printer.facturaComercialNumero : null,
+        !isDistributor && printer.facturaComercialEstadoCobro
+          ? COMMERCIAL_INVOICE_COLLECTION_STATUS_LABELS[
+              printer.facturaComercialEstadoCobro
+            ]
+          : null,
         printer.createdAt,
         formatDate(printer.createdAt),
       ]
@@ -452,6 +478,8 @@ export function PrintersManager() {
     search,
     statusFilter,
     serialFilter,
+    invoiceStatusFilter,
+    isDistributor,
     modelById,
     distributorLabelById,
     distributorRifById,
@@ -714,9 +742,11 @@ export function PrintersManager() {
   async function handleAssignmentSubmit({
     distributorId,
     paid,
+    facturaComercialId,
   }: {
     distributorId: number;
     paid: boolean;
+    facturaComercialId?: number | null;
   }) {
     if (!assignmentPrinter || !canAssignInitialized) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
@@ -735,6 +765,7 @@ export function PrintersManager() {
         assignmentPrinter,
         distributorId,
         paid,
+        facturaComercialId,
       );
       await updatePrinter(assignmentPrinter.id, body);
       toast.success(
@@ -1077,6 +1108,9 @@ export function PrintersManager() {
                   <th className="px-5 py-3 font-medium">Distribuidor</th>
                 ) : null}
                 <th className="px-5 py-3 font-medium">Cliente</th>
+                {!isDistributor ? (
+                  <th className="px-5 py-3 font-medium">Factura</th>
+                ) : null}
                 {isDistributor ? (
                   <th className="px-5 py-3 font-medium">RIF Cliente</th>
                 ) : (
@@ -1197,6 +1231,39 @@ export function PrintersManager() {
                         {getClientLabel(printer.clientId)}
                       </TruncatedText>
                     </td>
+                    {!isDistributor ? (
+                      <td className="max-w-[200px] px-5 py-3.5">
+                        {printer.facturaComercialId != null ? (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <TruncatedText
+                              href={
+                                user
+                                  ? hrefForCommercialInvoice(
+                                      printer.facturaComercialId,
+                                      user.role,
+                                    )
+                                  : undefined
+                              }
+                              mono
+                              maxClassName="max-w-[110px]"
+                              className="text-xs font-medium text-card-foreground"
+                            >
+                              {formatCommercialInvoiceTitle({
+                                id: printer.facturaComercialId,
+                                numeroFactura: printer.facturaComercialNumero,
+                              })}
+                            </TruncatedText>
+                            {printer.facturaComercialEstadoCobro ? (
+                              <CommercialInvoiceCollectionStatusBadge
+                                status={printer.facturaComercialEstadoCobro}
+                              />
+                            ) : null}
+                          </div>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
+                    ) : null}
                     <td className="px-5 py-3.5 font-mono text-muted">
                       {isDistributor
                         ? getClientRif(printer.clientId)
@@ -1286,7 +1353,11 @@ export function PrintersManager() {
             <DataTableToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Buscar por serial, modelo, MAC…"
+              searchPlaceholder={
+                isDistributor
+                  ? "Buscar por serial, modelo, MAC…"
+                  : "Buscar por serial, modelo, MAC, factura…"
+              }
               resultCount={filteredPrinters.length}
               totalCount={visiblePrinters.length}
               filters={[
@@ -1309,6 +1380,35 @@ export function PrintersManager() {
                     ? distributorStatusFilterOptions
                     : adminStatusFilterOptions,
                 },
+                ...(!isDistributor
+                  ? [
+                      {
+                        id: "facturaCobro",
+                        label: "Cobro factura",
+                        value: invoiceStatusFilter,
+                        onChange: (value: string) =>
+                          setInvoiceStatusFilter(
+                            value as
+                              | CommercialInvoiceCollectionStatus
+                              | "SIN_FACTURA"
+                              | "all",
+                          ),
+                        options: [
+                          filterAllOption("Todas"),
+                          { value: "SIN_FACTURA", label: "Sin factura" },
+                          ...COMMERCIAL_INVOICE_COLLECTION_STATUSES.map(
+                            (status) => ({
+                              value: status,
+                              label:
+                                COMMERCIAL_INVOICE_COLLECTION_STATUS_LABELS[
+                                  status
+                                ],
+                            }),
+                          ),
+                        ],
+                      },
+                    ]
+                  : []),
                 {
                   id: "serial",
                   label: "Serial",

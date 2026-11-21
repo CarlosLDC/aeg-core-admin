@@ -34,6 +34,8 @@ export type PrinterCreditSummaryResponse = {
   facturaComercialEstadoCobro?: CommercialInvoiceCollectionStatus | null;
   facturaComercialPrinterCount?: number;
   commercialPayments?: CommercialPaymentResponse[];
+  facturaComercialMontoTotal?: number | null;
+  facturaComercialRemainingBalance?: number | null;
 };
 
 export type PrinterCreditPlanRequest = {

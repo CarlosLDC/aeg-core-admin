@@ -1,15 +1,29 @@
 "use client";
 
 import { FormEvent, useEffect, useId, useMemo, useState } from "react";
+import { CommercialInvoiceCollectionStatusBadge } from "@/components/commercial-invoices/commercial-invoice-badges";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { PrinterActionDialogShell } from "@/components/printers/printer-action-dialog-shell";
 import { PrinterActionPickerPanel } from "@/components/printers/printer-action-picker-panel";
 import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
 import { BooleanToggle } from "@/components/ui/boolean-toggle";
 import { FieldLabel } from "@/components/ui/field-label";
+import {
+  SearchableSelect,
+  matchesSearch,
+  type SearchableSelectOption,
+} from "@/components/ui/searchable-select";
+import { useAuth } from "@/context/auth-provider";
 import { useConfirm } from "@/context/confirm-provider";
+import {
+  COMMERCIAL_INVOICE_COLLECTION_STATUS_LABELS,
+  COMMERCIAL_INVOICE_MODALITY_LABELS,
+  formatCommercialInvoiceTitle,
+} from "@/lib/commercial-invoice-form";
+import { fetchCommercialInvoices } from "@/lib/commercial-invoices-api";
+import { can } from "@/lib/permissions/can";
 import { printerPaidLabel } from "@/lib/printer-form";
-import { matchesSearch } from "@/components/ui/searchable-select";
+import type { CommercialInvoiceResponse } from "@/types/commercial-invoice";
 import type { PrinterResponse } from "@/types/printer";
 
 type PrinterAssignmentDialogProps = {
@@ -21,7 +35,11 @@ type PrinterAssignmentDialogProps = {
   lockDistributor: boolean;
   defaultDistributorId?: number | null;
   onClose: () => void;
-  onSubmit: (payload: { distributorId: number; paid: boolean }) => void;
+  onSubmit: (payload: {
+    distributorId: number;
+    paid: boolean;
+    facturaComercialId?: number | null;
+  }) => void;
 };
 
 function resolveDefaultDistributorId(
@@ -50,6 +68,7 @@ export function PrinterAssignmentDialog({
   onClose,
   onSubmit,
 }: PrinterAssignmentDialogProps) {
+  const { user } = useAuth();
   const confirm = useConfirm();
   const titleId = useId();
   const [fieldError, setFieldError] = useState<string | null>(null);
@@ -57,11 +76,47 @@ export function PrinterAssignmentDialog({
     null,
   );
   const [distributorQuery, setDistributorQuery] = useState("");
-  const [paid, setPaid] = useState(printer.paid);
+  const [paidOverride, setPaidOverride] = useState<boolean | null>(null);
+  const paid = paidOverride ?? printer.paid;
+
+  const selfAssign =
+    lockDistributor && defaultDistributorId != null && defaultDistributorId > 0;
+  const canReadCommercialInvoices = user
+    ? can(user.role, "commercialInvoices", "read")
+    : false;
+  const showCommercialInvoicePicker = !selfAssign && canReadCommercialInvoices;
+
+  const [invoices, setInvoices] = useState<CommercialInvoiceResponse[]>([]);
+  const [invoicesLoading, setInvoicesLoading] = useState(
+    showCommercialInvoicePicker,
+  );
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState(
+    printer.facturaComercialId != null
+      ? String(printer.facturaComercialId)
+      : "",
+  );
 
   useEffect(() => {
-    setPaid(printer.paid);
-  }, [printer.id, printer.paid]);
+    if (!showCommercialInvoicePicker) {
+      return;
+    }
+    let active = true;
+    fetchCommercialInvoices()
+      .then((list) => {
+        if (!active) return;
+        setInvoices(list);
+      })
+      .catch(() => {
+        if (!active) return;
+        setInvoices([]);
+      })
+      .finally(() => {
+        if (active) setInvoicesLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [showCommercialInvoicePicker]);
 
   const defaultDistributorSelection = useMemo(
     () =>
@@ -76,11 +131,68 @@ export function PrinterAssignmentDialog({
 
   const distributorId = distributorOverride ?? defaultDistributorSelection;
 
-  const selectedDistributorLabel = useMemo(() => {
+  const selectedDistributorOption = useMemo(() => {
     const id = Number(distributorId);
     if (!Number.isFinite(id) || id <= 0) return null;
-    return distributorOptions.find((opt) => opt.id === id)?.label ?? null;
+    return distributorOptions.find((opt) => opt.id === id) ?? null;
   }, [distributorId, distributorOptions]);
+  const selectedDistributorLabel = selectedDistributorOption?.label ?? null;
+
+  const invoiceOptions: SearchableSelectOption[] = useMemo(() => {
+    const distRif = selectedDistributorOption?.rif?.trim().toUpperCase() ?? "";
+    const sorted = [...invoices].sort((a, b) => {
+      const aLinked = a.id === printer.facturaComercialId ? 0 : 1;
+      const bLinked = b.id === printer.facturaComercialId ? 0 : 1;
+      if (aLinked !== bLinked) return aLinked - bLinked;
+
+      if (distRif) {
+        const aMatch =
+          (a.empresaRif ?? "").trim().toUpperCase() === distRif ? 0 : 1;
+        const bMatch =
+          (b.empresaRif ?? "").trim().toUpperCase() === distRif ? 0 : 1;
+        if (aMatch !== bMatch) return aMatch - bMatch;
+      }
+
+      return Date.parse(b.createdAt) - Date.parse(a.createdAt);
+    });
+
+    return sorted.map((inv) => {
+      const companyName = inv.empresaNombre ?? inv.clienteComercialNombre;
+      const countLabel = `${inv.printerCount} ${inv.printerCount === 1 ? "impresora" : "impresoras"}`;
+      return {
+        value: String(inv.id),
+        label: formatCommercialInvoiceTitle(inv),
+        description: [
+          companyName,
+          COMMERCIAL_INVOICE_MODALITY_LABELS[inv.modalidad] ?? inv.modalidad,
+          countLabel,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        badge: (
+          <CommercialInvoiceCollectionStatusBadge status={inv.estadoCobro} />
+        ),
+        searchText: [
+          String(inv.id),
+          inv.numeroFactura,
+          inv.empresaNombre,
+          inv.empresaRif,
+          inv.clienteComercialNombre,
+          COMMERCIAL_INVOICE_MODALITY_LABELS[inv.modalidad],
+          COMMERCIAL_INVOICE_COLLECTION_STATUS_LABELS[inv.estadoCobro],
+        ]
+          .filter(Boolean)
+          .join(" "),
+      };
+    });
+  }, [invoices, printer.facturaComercialId, selectedDistributorOption?.rif]);
+
+  const selectedInvoice = useMemo(() => {
+    const id = Number(selectedInvoiceId);
+    if (!Number.isInteger(id) || id <= 0) return null;
+    return invoices.find((inv) => inv.id === id) ?? null;
+  }, [invoices, selectedInvoiceId]);
+
   const filteredDistributorOptions = useMemo(() => {
     if (!distributorQuery.trim()) return distributorOptions;
     return distributorOptions.filter((opt) =>
@@ -93,8 +205,6 @@ export function PrinterAssignmentDialog({
   }, [distributorOptions, distributorQuery]);
 
   const disabled = saving || catalogLoading;
-  const selfAssign =
-    lockDistributor && defaultDistributorId != null && defaultDistributorId > 0;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -106,6 +216,15 @@ export function PrinterAssignmentDialog({
     setFieldError(null);
 
     const nextPaid = selfAssign ? printer.paid : paid;
+    const parsedInvoiceId = Number(selectedInvoiceId);
+    const facturaComercialId =
+      showCommercialInvoicePicker &&
+      selectedInvoiceId.trim() &&
+      Number.isInteger(parsedInvoiceId) &&
+      parsedInvoiceId > 0
+        ? parsedInvoiceId
+        : null;
+
     const accepted = await confirm({
       title: "Confirmar asignación",
       content: (
@@ -136,6 +255,14 @@ export function PrinterAssignmentDialog({
               </span>
             </p>
           ) : null}
+          {selectedInvoice ? (
+            <p className="mt-1.5 text-sm text-muted">
+              Factura comercial:{" "}
+              <span className="font-mono font-medium text-card-foreground">
+                {formatCommercialInvoiceTitle(selectedInvoice)}
+              </span>
+            </p>
+          ) : null}
           <PrinterStatusTransition
             from="sin_asignar"
             to={nextPaid ? "asignada" : "en_consignacion"}
@@ -147,7 +274,7 @@ export function PrinterAssignmentDialog({
     });
     if (!accepted) return;
 
-    onSubmit({ distributorId: id, paid: nextPaid });
+    onSubmit({ distributorId: id, paid: nextPaid, facturaComercialId });
   }
 
   return (
@@ -199,13 +326,30 @@ export function PrinterAssignmentDialog({
             <FieldLabel>¿La impresora ya fue pagada?</FieldLabel>
             <BooleanToggle
               value={paid}
-              onChange={setPaid}
+              onChange={setPaidOverride}
               disabled={disabled}
               falseLabel="No pagada"
               trueLabel="Pagada"
               ariaLabel="Estado de pago de la impresora"
             />
           </div>
+          {showCommercialInvoicePicker ? (
+            <div className="mt-4">
+              <FieldLabel>Factura comercial (opcional)</FieldLabel>
+              <SearchableSelect
+                value={selectedInvoiceId}
+                onChange={setSelectedInvoiceId}
+                options={invoiceOptions}
+                disabled={disabled || invoicesLoading}
+                loading={invoicesLoading}
+                emptyLabel="Sin factura comercial (vincular después)"
+                searchPlaceholder="Buscar por N° factura, empresa o RIF…"
+                modalTitle="Factura comercial (opcional)"
+                preloadOptions
+                mono
+              />
+            </div>
+          ) : null}
         </>
       )}
     </PrinterActionDialogShell>

@@ -41,6 +41,13 @@ describe("printerToAssignmentRequest", () => {
       true,
     );
     expect(body.status).toBe("asignada");
+    expect(body.facturaComercialId).toBeUndefined();
+  });
+
+  it("includes facturaComercialId when explicitly selected on assignment", () => {
+    const body = printerToAssignmentRequest(assignedPrinter, 99, false, 77);
+    expect(body.status).toBe("en_consignacion");
+    expect(body.facturaComercialId).toBe(77);
   });
 });
 

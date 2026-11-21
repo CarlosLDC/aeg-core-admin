@@ -34,6 +34,7 @@ import {
   commercialInvoicesListPath,
   commercialPaymentPath,
 } from "@/lib/resource-routes";
+import { hrefForCompany } from "@/lib/table-foreign-hrefs";
 import type { CommercialInvoiceResponse } from "@/types/commercial-invoice";
 import type {
   CommercialPaymentFormValues,
@@ -169,7 +170,6 @@ export function CommercialPaymentView() {
     ? formatCommercialInvoiceTitle({
         id: payment.facturaComercialId,
         numeroFactura: payment.numeroFactura ?? linkedInvoice?.numeroFactura,
-        sufijoControl: linkedInvoice?.sufijoControl,
       })
     : "Pago comercial";
 
@@ -220,11 +220,20 @@ export function CommercialPaymentView() {
               mono
             />
             <DetailField
-              label="Cliente comercial"
+              label="Empresa"
               value={
                 payment.clienteComercialNombre ??
+                linkedInvoice?.empresaNombre ??
                 linkedInvoice?.clienteComercialNombre ??
                 "Sin asignar"
+              }
+              href={
+                user
+                  ? hrefForCompany(
+                      payment.empresaId ?? linkedInvoice?.empresaId,
+                      user.role,
+                    )
+                  : undefined
               }
             />
             <DetailField
@@ -235,6 +244,10 @@ export function CommercialPaymentView() {
             />
             <DetailField label="Monto" value={formatMoney(payment.monto)} />
             <DetailField
+              label="Fecha de pago"
+              value={formatDate(payment.fechaPago ?? payment.createdAt)}
+            />
+            <DetailField
               label="Referencia"
               value={payment.referencia ?? "—"}
               mono
@@ -244,8 +257,17 @@ export function CommercialPaymentView() {
               value={payment.cuentaDestino ?? "—"}
             />
             <DetailField
+              label="Registrado por"
+              value={payment.registeredByName ?? "—"}
+            />
+            <DetailField
               label="Fecha de registro"
               value={formatDate(payment.createdAt)}
+            />
+            <DetailField
+              label="Notas"
+              value={payment.notas ?? "—"}
+              fullWidth
             />
           </DetailSection>
         )}

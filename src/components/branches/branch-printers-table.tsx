@@ -543,9 +543,11 @@ export function BranchPrintersTable({
   async function handleAssignmentSubmit({
     distributorId,
     paid,
+    facturaComercialId,
   }: {
     distributorId: number;
     paid: boolean;
+    facturaComercialId?: number | null;
   }) {
     if (!assignmentPrinter || !canAssignInitialized) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
@@ -564,6 +566,7 @@ export function BranchPrintersTable({
         assignmentPrinter,
         distributorId,
         paid,
+        facturaComercialId,
       );
       await updatePrinter(assignmentPrinter.id, body);
       toast.success(

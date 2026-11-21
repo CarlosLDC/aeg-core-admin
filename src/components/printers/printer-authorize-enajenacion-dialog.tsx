@@ -368,7 +368,7 @@ export function PrinterAuthorizeEnajenacionDialog({
                 </div>
               </div>
 
-              <div className="grid gap-3.5 sm:grid-cols-2">
+              <div className="grid gap-3.5 sm:grid-cols-3">
                 <label className="block">
                   <FieldLabel required>Modalidad</FieldLabel>
                   <NativeSelect
@@ -411,6 +411,27 @@ export function PrinterAuthorizeEnajenacionDialog({
                       </option>
                     ))}
                   </NativeSelect>
+                </label>
+
+                <label className="block">
+                  <FieldLabel>Monto total (opcional)</FieldLabel>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    inputMode="decimal"
+                    value={newInvoice.montoTotal}
+                    disabled={saving}
+                    onChange={(e) => {
+                      setNewInvoice((prev) => ({
+                        ...prev,
+                        montoTotal: e.target.value,
+                      }));
+                      setError(null);
+                    }}
+                    className={cn(formFieldInputClass, "font-mono")}
+                    placeholder="Ej. 900.00"
+                  />
                 </label>
               </div>
             </div>

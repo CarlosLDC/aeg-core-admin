@@ -88,12 +88,14 @@ describe("printer-authorize-enajenacion", () => {
       empresaId: "42",
       modalidad: "VENTA",
       estadoCobro: "PENDIENTE_PAGO",
+      montoTotal: "",
     });
     expect(emptyAuthorizeNewInvoiceForm(null)).toEqual({
       numeroFactura: "",
       empresaId: "",
       modalidad: "VENTA",
       estadoCobro: "PENDIENTE_PAGO",
+      montoTotal: "",
     });
   });
 
@@ -165,6 +167,7 @@ describe("printer-authorize-enajenacion", () => {
           empresaId: "7",
           modalidad: "VENTA",
           estadoCobro: "PENDIENTE_PAGO",
+          montoTotal: "950.25",
         },
       }),
     ).toEqual({
@@ -175,6 +178,7 @@ describe("printer-authorize-enajenacion", () => {
         empresaId: 7,
         modalidad: "VENTA",
         estadoCobro: "PENDIENTE_PAGO",
+        montoTotal: 950.25,
       },
     });
   });

@@ -18,7 +18,10 @@ import {
 } from "@/lib/commercial-payment-form";
 import { zodFieldErrors } from "@/lib/form-zod";
 import { commercialPaymentFormSchema } from "@/lib/schemas/commercial-payment-form-schema";
-import { formFieldInputClass } from "@/lib/toggle-button-styles";
+import {
+  formFieldInputClass,
+  formFieldTextareaClass,
+} from "@/lib/toggle-button-styles";
 import { cn } from "@/lib/utils";
 import type { CommercialInvoiceResponse } from "@/types/commercial-invoice";
 import {
@@ -97,14 +100,15 @@ function CommercialPaymentFormDialogContent({
       invoices.map((inv) => ({
         value: String(inv.id),
         label: formatCommercialInvoiceTitle(inv),
-        description: inv.clienteComercialNombre ?? undefined,
+        description: inv.empresaNombre ?? inv.clienteComercialNombre ?? undefined,
         badge: (
           <CommercialInvoiceCollectionStatusBadge status={inv.estadoCobro} />
         ),
         searchText: [
           String(inv.id),
           inv.numeroFactura,
-          inv.sufijoControl,
+          inv.empresaNombre,
+          inv.empresaRif,
           inv.clienteComercialNombre,
         ]
           .filter(Boolean)
@@ -269,7 +273,7 @@ function CommercialPaymentFormDialogContent({
                       required
                       preloadOptions
                       emptyLabel="Seleccionar factura comercial"
-                      searchPlaceholder="Buscar por N° factura o cliente…"
+                      searchPlaceholder="Buscar por N° factura o empresa…"
                       modalTitle="Factura comercial"
                     />
                   ) : (
@@ -360,6 +364,30 @@ function CommercialPaymentFormDialogContent({
                   </label>
 
                   <label className="block">
+                    <FieldLabel>Fecha de pago</FieldLabel>
+                    <input
+                      type="date"
+                      value={form.fechaPago}
+                      disabled={disabled}
+                      onChange={(e) => {
+                        setForm((f) => ({ ...f, fechaPago: e.target.value }));
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          fechaPago: undefined,
+                        }));
+                      }}
+                      className={inputClass}
+                    />
+                    {fieldErrors.fechaPago ? (
+                      <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
+                        {fieldErrors.fechaPago}
+                      </span>
+                    ) : null}
+                  </label>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block">
                     <FieldLabel>Referencia</FieldLabel>
                     <input
                       type="text"
@@ -382,31 +410,55 @@ function CommercialPaymentFormDialogContent({
                       </span>
                     ) : null}
                   </label>
+
+                  <label className="block">
+                    <FieldLabel>Cuenta destino</FieldLabel>
+                    <input
+                      type="text"
+                      maxLength={100}
+                      value={form.cuentaDestino}
+                      disabled={disabled}
+                      onChange={(e) => {
+                        setForm((f) => ({
+                          ...f,
+                          cuentaDestino: e.target.value,
+                        }));
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          cuentaDestino: undefined,
+                        }));
+                      }}
+                      className={inputClass}
+                      placeholder="Cuenta receptora, correo Zelle, wallet…"
+                    />
+                    {fieldErrors.cuentaDestino ? (
+                      <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
+                        {fieldErrors.cuentaDestino}
+                      </span>
+                    ) : null}
+                  </label>
                 </div>
 
                 <label className="block">
-                  <FieldLabel>Cuenta destino</FieldLabel>
-                  <input
-                    type="text"
-                    maxLength={100}
-                    value={form.cuentaDestino}
+                  <FieldLabel>Notas</FieldLabel>
+                  <textarea
+                    rows={2}
+                    maxLength={500}
+                    value={form.notas}
                     disabled={disabled}
                     onChange={(e) => {
-                      setForm((f) => ({
-                        ...f,
-                        cuentaDestino: e.target.value,
-                      }));
+                      setForm((f) => ({ ...f, notas: e.target.value }));
                       setFieldErrors((prev) => ({
                         ...prev,
-                        cuentaDestino: undefined,
+                        notas: undefined,
                       }));
                     }}
-                    className={inputClass}
-                    placeholder="Cuenta receptora, correo Zelle, wallet…"
+                    className={formFieldTextareaClass}
+                    placeholder="Observaciones o detalles adicionales (opcional)"
                   />
-                  {fieldErrors.cuentaDestino ? (
+                  {fieldErrors.notas ? (
                     <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
-                      {fieldErrors.cuentaDestino}
+                      {fieldErrors.notas}
                     </span>
                   ) : null}
                 </label>
