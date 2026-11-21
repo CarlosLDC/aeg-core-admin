@@ -7,6 +7,7 @@ import { PrinterAssignmentDialog } from "@/components/printers/printer-assignmen
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
 import { PrinterAuthorizeEnajenacionDialog } from "@/components/printers/printer-authorize-enajenacion-dialog";
+import { resolvePrinterDistributorCompanyId } from "@/lib/printer-authorize-enajenacion";
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
 import { PrinterSoftwareDialog } from "@/components/printers/printer-software-dialog";
 import { PrinterStatusTransition } from "@/components/printers/printer-status-transition";
@@ -1369,6 +1370,11 @@ export function PrintersManager() {
         <PrinterAuthorizeEnajenacionDialog
           key={enajenacionRequestPrinter.id}
           printer={enajenacionRequestPrinter}
+          defaultEmpresaId={resolvePrinterDistributorCompanyId(
+            enajenacionRequestPrinter,
+            distributors,
+            branches,
+          )}
           onClose={closeEnajenacionRequest}
           onUpdated={() => {
             void loadPrinters({ silent: true });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { CheckCircle2, Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   CommercialInvoiceCollectionStatusBadge,
@@ -44,6 +44,7 @@ import {
   deleteCommercialInvoice,
   fetchCommercialInvoiceById,
   getCommercialInvoicesErrorMessage,
+  markCommercialInvoiceAsPaid,
   syncCommercialInvoicePrinters,
   unlinkCommercialInvoicePrinter,
   updateCommercialInvoice,
@@ -110,6 +111,7 @@ export function CommercialInvoiceView() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [markingPaid, setMarkingPaid] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -221,6 +223,7 @@ export function CommercialInvoiceView() {
         href: commercialInvoicePath(updated.id),
       });
       setEditOpen(false);
+      await reloadAll();
     } catch (err) {
       const message = getCommercialInvoicesErrorMessage(err);
       setFormError(message);
@@ -417,6 +420,48 @@ export function CommercialInvoiceView() {
       .sort((a, b) => a.fiscalSerial.localeCompare(b.fiscalSerial, "es"));
   }, [printers, invoice]);
 
+  const handleMarkAsPaid = useCallback(async () => {
+    if (!invoice) return;
+    if (!canModify) {
+      toast.error(forbiddenMessage("update", "commercialInvoices"));
+      return;
+    }
+    const label = formatCommercialInvoiceTitle(invoice);
+    const creditPrintersCount = invoicePrinters.filter(
+      (p) => p.status === "a_credito",
+    ).length;
+    const message =
+      creditPrintersCount > 0
+        ? `¿Marcar la factura ${label} como Pagada? ${creditPrintersCount === 1 ? "La impresora asociada en estatus A crédito pasará" : `Las ${creditPrintersCount} impresoras asociadas en estatus A crédito pasarán`} automáticamente a Enajenada.`
+        : `¿Marcar la factura ${label} como Pagada?`;
+
+    if (
+      !(await confirm({
+        title: "Marcar factura como pagada",
+        message,
+        confirmLabel: "Marcar como pagada",
+        destructive: false,
+      }))
+    ) {
+      return;
+    }
+
+    setMarkingPaid(true);
+    try {
+      const updated = await markCommercialInvoiceAsPaid(invoice.id);
+      setInvoice(updated);
+      toast.success(
+        `Factura comercial ${formatCommercialInvoiceTitle(updated)} marcada como pagada.`,
+        { href: commercialInvoicePath(updated.id) },
+      );
+      await reloadAll();
+    } catch (err) {
+      toast.error(getCommercialInvoicesErrorMessage(err));
+    } finally {
+      setMarkingPaid(false);
+    }
+  }, [canModify, confirm, invoice, invoicePrinters, reloadAll, toast]);
+
   const detailSteps = useMemo((): DetailPagerStep[] => {
     if (!invoice) return [];
 
@@ -470,6 +515,27 @@ export function CommercialInvoiceView() {
               value={String(invoice.printerCount)}
             />
             <DetailField label="Registro" value={formatDate(invoice.createdAt)} />
+            {canModify && invoice.estadoCobro !== "PAGADO" ? (
+              <div className="col-span-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                <p className="text-xs text-muted">
+                  Al marcar como pagada, las impresoras vinculadas en estatus A
+                  crédito pasarán a Enajenada.
+                </p>
+                <button
+                  type="button"
+                  disabled={markingPaid}
+                  onClick={() => void handleMarkAsPaid()}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-500/20 disabled:opacity-50 dark:text-emerald-300"
+                >
+                  {markingPaid ? (
+                    <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                  ) : (
+                    <CheckCircle2 className="size-3.5" aria-hidden />
+                  )}
+                  Marcar como pagada
+                </button>
+              </div>
+            ) : null}
           </DetailSection>
         ),
       },
@@ -683,6 +749,8 @@ export function CommercialInvoiceView() {
     deletingPaymentId,
     handleDeletePayment,
     canModify,
+    markingPaid,
+    handleMarkAsPaid,
     printersLoading,
     invoicePrinters,
     modelLabelById,

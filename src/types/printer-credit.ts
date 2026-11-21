@@ -1,3 +1,8 @@
+import type {
+  CommercialInvoiceCollectionStatus,
+  CommercialInvoiceModality,
+} from "@/types/commercial-invoice";
+import type { CommercialPaymentResponse } from "@/types/commercial-payment";
 import type { PrinterStatus } from "@/types/printer";
 
 export type PrinterCreditPaymentResponse = {
@@ -23,6 +28,12 @@ export type PrinterCreditSummaryResponse = {
   paymentCount: number;
   paid: boolean;
   payments: PrinterCreditPaymentResponse[];
+  facturaComercialId?: number | null;
+  facturaComercialNumero?: string | null;
+  facturaComercialModalidad?: CommercialInvoiceModality | null;
+  facturaComercialEstadoCobro?: CommercialInvoiceCollectionStatus | null;
+  facturaComercialPrinterCount?: number;
+  commercialPayments?: CommercialPaymentResponse[];
 };
 
 export type PrinterCreditPlanRequest = {

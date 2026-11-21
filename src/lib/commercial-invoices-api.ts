@@ -82,6 +82,14 @@ export async function unlinkCommercialInvoicePrinter(
   );
 }
 
+export async function markCommercialInvoiceAsPaid(
+  id: number,
+): Promise<CommercialInvoiceResponse> {
+  return apiFetch<CommercialInvoiceResponse>(`${BASE}/${id}/mark-paid`, {
+    method: "POST",
+  });
+}
+
 export function getCommercialInvoicesErrorMessage(
   error: unknown,
   fallback = "Ha ocurrido un error inesperado.",

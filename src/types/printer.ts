@@ -1,3 +1,9 @@
+import type {
+  CommercialInvoiceCollectionStatus,
+  CommercialInvoiceModality,
+  CommercialInvoiceRequest,
+} from "./commercial-invoice";
+
 export const PRINTER_STATUSES = [
   "sin_asignar",
   "asignada",
@@ -47,6 +53,15 @@ export type PrinterResponse = {
   boxNumber?: number | null;
   facturaComercialId?: number | null;
   facturaComercialNumero?: string | null;
+  facturaComercialModalidad?: CommercialInvoiceModality | null;
+  facturaComercialEstadoCobro?: CommercialInvoiceCollectionStatus | null;
+};
+
+export type PrinterEnajenacionAuthorizeRequest = {
+  creditInstallments: number;
+  finalSalePrice?: number | null;
+  facturaComercialId?: number | null;
+  newCommercialInvoice?: CommercialInvoiceRequest | null;
 };
 
 export type PrinterDispositionRequest = {

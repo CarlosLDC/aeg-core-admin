@@ -91,5 +91,6 @@ export function toCommercialPaymentRequest(
     referencia,
     monto: parsedMonto,
     cuentaDestino,
+    ...(values.markInvoiceAsPaid === true ? { markInvoiceAsPaid: true } : {}),
   };
 }

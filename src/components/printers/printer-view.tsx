@@ -4,11 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Ban, BookOpen, Cpu, ExternalLink, ShieldCheck, Wrench } from "lucide-react";
+import { CommercialInvoiceCollectionStatusBadge } from "@/components/commercial-invoices/commercial-invoice-badges";
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-wizard-dialog";
 import { PrinterCreditPaymentsSection } from "@/components/printers/printer-credit-payments-section";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
 import { PrinterAuthorizeEnajenacionDialog } from "@/components/printers/printer-authorize-enajenacion-dialog";
+import { resolvePrinterDistributorCompanyId } from "@/lib/printer-authorize-enajenacion";
+import { TruncatedText } from "@/components/ui/truncated-text";
 import { PrinterDecommissionDialog } from "@/components/printers/printer-decommission-dialog";
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
 import { PrinterSealsDialog } from "@/components/printers/printer-seals-dialog";
@@ -632,11 +635,37 @@ export function PrinterView() {
             <DetailField
               label="Factura comercial"
               value={
-                printer.facturaComercialNumero?.trim()
-                  ? printer.facturaComercialNumero
-                  : printer.facturaComercialId != null
-                    ? `Factura #${printer.facturaComercialId}`
-                    : "Sin factura"
+                printer.facturaComercialId != null &&
+                printer.facturaComercialEstadoCobro ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <TruncatedText
+                      href={
+                        user
+                          ? hrefForCommercialInvoice(
+                              printer.facturaComercialId,
+                              user.role,
+                            )
+                          : undefined
+                      }
+                      mono
+                      maxClassName="max-w-full"
+                      className="text-card-foreground"
+                    >
+                      {printer.facturaComercialNumero?.trim()
+                        ? printer.facturaComercialNumero
+                        : `Factura #${printer.facturaComercialId}`}
+                    </TruncatedText>
+                    <CommercialInvoiceCollectionStatusBadge
+                      status={printer.facturaComercialEstadoCobro}
+                    />
+                  </div>
+                ) : printer.facturaComercialNumero?.trim() ? (
+                  printer.facturaComercialNumero
+                ) : printer.facturaComercialId != null ? (
+                  `Factura #${printer.facturaComercialId}`
+                ) : (
+                  "Sin factura"
+                )
               }
               mono={printer.facturaComercialId != null}
               href={
@@ -1299,6 +1328,11 @@ export function PrinterView() {
         <PrinterAuthorizeEnajenacionDialog
           key={`enajenacion-grant-${printer.id}`}
           printer={printer}
+          defaultEmpresaId={resolvePrinterDistributorCompanyId(
+            printer,
+            distributors,
+            branches,
+          )}
           onClose={() => setEnajenacionRequestOpen(false)}
           onUpdated={() => {
             void load();

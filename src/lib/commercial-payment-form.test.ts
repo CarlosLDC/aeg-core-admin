@@ -34,6 +34,24 @@ describe("commercial-payment-form", () => {
       monto: 250.75,
       cuentaDestino: "pagos@aeg.com",
     });
+
+    const withMarkPaid = toCommercialPaymentRequest({
+      facturaComercialId: "15",
+      metodoBanco: "ZELLE",
+      referencia: "Z-88321",
+      monto: "250.75",
+      cuentaDestino: "pagos@aeg.com",
+      markInvoiceAsPaid: true,
+    });
+
+    expect(withMarkPaid).toEqual({
+      facturaComercialId: 15,
+      metodoBanco: "ZELLE",
+      referencia: "Z-88321",
+      monto: 250.75,
+      cuentaDestino: "pagos@aeg.com",
+      markInvoiceAsPaid: true,
+    });
   });
 
   it("hydrates form values from response", () => {

@@ -86,6 +86,12 @@ function CommercialPaymentFormDialogContent({
     Partial<Record<keyof CommercialPaymentFormValues, string>>
   >({});
 
+  const selectedInvoice = useMemo(() => {
+    const id = Number(form.facturaComercialId.trim());
+    if (!Number.isInteger(id) || id <= 0) return null;
+    return invoices.find((inv) => inv.id === id) ?? null;
+  }, [invoices, form.facturaComercialId]);
+
   const invoiceOptions: SearchableSelectOption[] = useMemo(
     () =>
       invoices.map((inv) => ({
@@ -247,7 +253,11 @@ function CommercialPaymentFormDialogContent({
                     <SearchableSelect
                       value={form.facturaComercialId}
                       onChange={(facturaComercialId) => {
-                        setForm((f) => ({ ...f, facturaComercialId }));
+                        setForm((f) => ({
+                          ...f,
+                          facturaComercialId,
+                          markInvoiceAsPaid: false,
+                        }));
                         setFieldErrors((prev) => ({
                           ...prev,
                           facturaComercialId: undefined,
@@ -400,6 +410,34 @@ function CommercialPaymentFormDialogContent({
                     </span>
                   ) : null}
                 </label>
+
+                {mode === "create" &&
+                selectedInvoice != null &&
+                selectedInvoice.estadoCobro !== "PAGADO" ? (
+                  <label className="flex items-start gap-2.5 rounded-lg border border-border bg-foreground/[0.02] px-3.5 py-3 text-sm text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(form.markInvoiceAsPaid)}
+                      disabled={disabled}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          markInvoiceAsPaid: e.target.checked,
+                        }))
+                      }
+                      className="mt-0.5 size-4 shrink-0 rounded border-border accent-accent"
+                    />
+                    <span>
+                      <span className="block font-medium">
+                        Marcar la factura como pagada al registrar este pago
+                      </span>
+                      <span className="mt-0.5 block text-xs text-muted">
+                        Las impresoras asociadas en estatus A crédito pasarán
+                        automáticamente a Enajenada.
+                      </span>
+                    </span>
+                  </label>
+                ) : null}
               </fieldset>
             )}
           </form>

@@ -5,6 +5,7 @@ import { readErrorMessageFromResponse } from "@/lib/api-error-message";
 import { ApiError } from "@/types/auth";
 import type {
   PrinterDispositionRequest,
+  PrinterEnajenacionAuthorizeRequest,
   PrinterEnajenacionTicketResponse,
   PrinterFirmwareQueryResponse,
   PrinterRequest,
@@ -95,7 +96,7 @@ export async function disposePrinter(
 
 export async function authorizePrinterEnajenacion(
   id: number,
-  body: { creditInstallments: number; finalSalePrice?: number | null },
+  body: PrinterEnajenacionAuthorizeRequest,
 ): Promise<PrinterResponse> {
   return apiFetch<PrinterResponse>(`${BASE}/${id}/autorizar-enajenacion`, {
     method: "POST",

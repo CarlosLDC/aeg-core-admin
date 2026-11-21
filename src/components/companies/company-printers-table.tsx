@@ -16,6 +16,7 @@ import { PrinterCreateWizardDialog } from "@/components/printers/printer-create-
 import { PrinterAssignmentDialog } from "@/components/printers/printer-assignment-dialog";
 import { PrinterDispositionDialog } from "@/components/printers/printer-disposition-dialog";
 import { PrinterAuthorizeEnajenacionDialog } from "@/components/printers/printer-authorize-enajenacion-dialog";
+import { resolvePrinterDistributorCompanyId } from "@/lib/printer-authorize-enajenacion";
 import { PrinterDeleteBlockedDialog } from "@/components/printers/printer-delete-blocked-dialog";
 import { PrinterSoftwareDialog } from "@/components/printers/printer-software-dialog";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
@@ -1104,6 +1105,13 @@ export function CompanyPrintersTable({
         <PrinterAuthorizeEnajenacionDialog
           key={enajenacionRequestPrinter.id}
           printer={enajenacionRequestPrinter}
+          defaultEmpresaId={
+            resolvePrinterDistributorCompanyId(
+              enajenacionRequestPrinter,
+              distributors,
+              branches,
+            ) ?? companyId
+          }
           onClose={closeEnajenacionRequest}
           onUpdated={() => {
             void loadData({ silent: true });

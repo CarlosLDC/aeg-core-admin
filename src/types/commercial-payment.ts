@@ -29,6 +29,7 @@ export type CommercialPaymentRequest = {
   referencia?: string | null;
   monto?: number | null;
   cuentaDestino?: string | null;
+  markInvoiceAsPaid?: boolean;
 };
 
 export type CommercialPaymentFormValues = {
@@ -37,4 +38,5 @@ export type CommercialPaymentFormValues = {
   referencia: string;
   monto: string;
   cuentaDestino: string;
+  markInvoiceAsPaid?: boolean;
 };

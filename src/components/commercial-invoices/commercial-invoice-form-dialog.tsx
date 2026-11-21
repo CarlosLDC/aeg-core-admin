@@ -306,6 +306,13 @@ function CommercialInvoiceFormDialogContent({
                     <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">
                       {fieldErrors.estadoCobro}
                     </span>
+                  ) : mode === "edit" &&
+                    invoice?.estadoCobro !== "PAGADO" &&
+                    form.estadoCobro === "PAGADO" ? (
+                    <span className="mt-1 block text-xs text-muted">
+                      Al guardar como Pagado, las impresoras vinculadas en estatus
+                      A crédito pasarán a Enajenada.
+                    </span>
                   ) : null}
                 </label>
               </div>
