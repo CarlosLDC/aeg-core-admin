@@ -1,26 +1,17 @@
-"use client";
+import { redirect } from "next/navigation";
+import { printerPath, printersListPath } from "@/lib/resource-routes";
 
-import { Suspense, useCallback, useState } from "react";
-import { AdminShell } from "@/components/admin/admin-shell";
-import { RoleGuard } from "@/components/auth/role-guard";
-import { PrinterDispositionView } from "@/components/printers/printer-disposition-view";
-import { printerDispositionReviewTitle } from "@/lib/printer-form";
-import type { PrinterResponse } from "@/types/printer";
+type PrinterDispositionPageProps = {
+  params: Promise<{ id: string }>;
+};
 
-export default function PrinterDispositionPage() {
-  const [title, setTitle] = useState("Enajenar impresora");
-
-  const handlePrinterLoaded = useCallback((printer: PrinterResponse) => {
-    setTitle(printerDispositionReviewTitle(printer.fiscalSerial));
-  }, []);
-
-  return (
-    <AdminShell title={title}>
-      <RoleGuard path="/printers">
-        <Suspense fallback={null}>
-          <PrinterDispositionView onPrinterLoaded={handlePrinterLoaded} />
-        </Suspense>
-      </RoleGuard>
-    </AdminShell>
-  );
+export default async function PrinterDispositionPage({
+  params,
+}: PrinterDispositionPageProps) {
+  const { id } = await params;
+  const printerId = Number(id);
+  if (!Number.isInteger(printerId) || printerId <= 0) {
+    redirect(printersListPath);
+  }
+  redirect(printerPath(printerId));
 }

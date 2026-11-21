@@ -81,7 +81,7 @@ export function PrinterUsbWifiStep({
             <p className="font-medium">Web Serial no disponible</p>
             <p className="text-xs opacity-90">
               Usa Chrome o Edge en escritorio o Android con adaptador USB, o
-              pulsa Continuar para omitir este paso.
+              confirma directamente para omitir este paso.
             </p>
           </div>
         </div>
@@ -100,7 +100,7 @@ export function PrinterUsbWifiStep({
                 </h3>
                 <p className="text-xs leading-relaxed text-muted">
                   Conecta el cable USB (o adaptador OTG en móvil) para buscar
-                  redes y guardar el Wi-Fi antes de generar el ticket.
+                  redes y guardar el Wi-Fi antes de finalizar la enajenación.
                 </p>
               </div>
             </div>

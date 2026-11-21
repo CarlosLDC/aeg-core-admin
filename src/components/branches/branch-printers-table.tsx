@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Cpu, Loader2, Plus } from "lucide-react";
 import {
   filterPrintersByQuickFilter,
@@ -113,7 +112,7 @@ import {
   excludeDistributorSelfClients,
   filterPrinterModelsForDistributor,
 } from "@/lib/distributor-scope";
-import { printerDispositionPath, printerPath } from "@/lib/resource-routes";
+import { printerPath } from "@/lib/resource-routes";
 import { PRINTER_STATUSES } from "@/types/printer";
 import type { BranchResponse, BranchWithRoles } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
@@ -140,7 +139,6 @@ export function BranchPrintersTable({
   branch,
   client,
 }: BranchPrintersTableProps) {
-  const router = useRouter();
   const toast = useToast();
   const confirm = useConfirm();
   const { user } = useAuth();
@@ -527,31 +525,18 @@ export function BranchPrintersTable({
     setEnajenacionRequestPrinter(null);
   }
 
-  function handleDispositionContinue({
-    clientId,
-    facturaNro,
-  }: {
-    clientId: number;
-    facturaNro: string;
-  }) {
-    if (!dispositionPrinter || !canDisposeAssigned) {
-      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
-      return;
+  function handleDispositionCompleted(
+    _updated: PrinterResponse,
+    createdClient?: ClientResponse,
+  ) {
+    if (createdClient) {
+      setClients((prev) =>
+        prev.some((c) => c.id === createdClient.id)
+          ? prev
+          : [createdClient, ...prev],
+      );
     }
-    if (
-      !clientOptions.some((option) => option.id === clientId) &&
-      !clients.some((c) => c.id === clientId)
-    ) {
-      toast.error("Selecciona un cliente válido.");
-      return;
-    }
-    if (!isPrinterPaidForDisposition(dispositionPrinter)) {
-      toast.error(getPrinterDispositionBlockedMessage(dispositionPrinter));
-      return;
-    }
-    const printerId = dispositionPrinter.id;
-    closeDisposition();
-    router.push(printerDispositionPath(printerId, clientId, facturaNro));
+    void loadData({ silent: true });
   }
 
   async function handleAssignmentSubmit({
@@ -1107,7 +1092,7 @@ export function BranchPrintersTable({
           catalogLoading={catalogLoading}
           reconfigure={isPrinterPendingMqttEnajenacion(dispositionPrinter)}
           onClose={closeDisposition}
-          onContinue={handleDispositionContinue}
+          onCompleted={handleDispositionCompleted}
         />
       ) : null}
 

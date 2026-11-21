@@ -1,33 +1,59 @@
 "use client";
 
-import { FormEvent, useId, useMemo, useState } from "react";
-import { FileText, User, Wifi } from "lucide-react";
+import { FormEvent, useEffect, useId, useMemo, useState } from "react";
+import { FileText, Loader2, ReceiptText, User, Wifi } from "lucide-react";
 import { useAuth } from "@/context/auth-provider";
+import { useToast } from "@/context/toast-provider";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { PrinterActionDialogShell } from "@/components/printers/printer-action-dialog-shell";
 import { PrinterActionPickerPanel } from "@/components/printers/printer-action-picker-panel";
 import { PrinterUsbWifiStep } from "@/components/printers/printer-usb-wifi-step";
+import { VenezuelanFiscalInvoicePreview } from "@/components/printers/venezuelan-fiscal-invoice-preview";
 import { useUsbWifiConfig } from "@/hooks/use-usb-wifi-config";
+import {
+  canDisposePrinterRecord,
+  CATALOG_MODIFY_FORBIDDEN_MESSAGE,
+} from "@/lib/api-permissions";
+import { fetchBranchById } from "@/lib/branches-api";
+import { clientRif } from "@/lib/branch-roles";
+import { createClient } from "@/lib/clients-api";
+import {
+  applyPrinterTicketToDispositionInvoice,
+  extractEnajenacionTicketFromInvoice,
+} from "@/lib/enajenacion-ticket";
+import {
+  DISPOSITION_WIZARD_STEPS,
+  resolveDispositionInitialStep,
+  resolveDispositionPreviousStep,
+  resolveDispositionStepSubtitle,
+  resolveDispositionSubmitLabel,
+  type DispositionWizardStep,
+} from "@/lib/printer-disposition-wizard";
+import { isPrinterPendingMqttEnajenacion } from "@/lib/printer-enajenacion-ticket";
 import {
   getPrinterDispositionBlockedMessage,
   isPrinterPaidForDisposition,
   printerDispositionModalTitle,
 } from "@/lib/printer-form";
+import { isPrinterAssignedToDistributor } from "@/lib/printer-status";
 import {
-  buildDispositionInvoiceData,
-  resolveClientCompanyName,
-  resolveClientCompanyRif,
-  validateFacturaNroInput,
-} from "@/lib/venezuelan-fiscal-invoice";
-import {
-  clientLabel,
-  clientRif,
-  clientSearchText,
-} from "@/lib/branch-roles";
-import { createClient } from "@/lib/clients-api";
+  disposePrinter,
+  fetchPrinterById,
+  getPrintersErrorMessage,
+} from "@/lib/printers-api";
+import { printerPath } from "@/lib/resource-routes";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { matchesSearch } from "@/components/ui/searchable-select";
 import { cn } from "@/lib/utils";
+import {
+  buildDispositionInvoiceData,
+  normalizeFacturaNroInput,
+  resolveClientCompanyName,
+  resolveClientCompanyRif,
+  resolveClientContributorType,
+  validateFacturaNroInput,
+  type VenezuelanFiscalInvoiceData,
+} from "@/lib/venezuelan-fiscal-invoice";
 import type { BranchResponse } from "@/types/branch";
 import type { ClientResponse, DistributorResponse } from "@/types/branch-role";
 import type { CompanyResponse } from "@/types/company";
@@ -43,21 +69,17 @@ type PrinterDispositionDialogProps = {
   catalogLoading: boolean;
   reconfigure?: boolean;
   onClose: () => void;
-  onContinue: (payload: { clientId: number; facturaNro: string }) => void;
+  onCompleted: (
+    updatedPrinter: PrinterResponse,
+    createdClient?: ClientResponse,
+  ) => Promise<void> | void;
 };
-
-type WizardStep = 1 | 2 | 3;
-
-const FORM_STEPS: { step: WizardStep; label: string }[] = [
-  { step: 1, label: "Cliente" },
-  { step: 2, label: "Factura" },
-  { step: 3, label: "Wi-Fi (opcional)" },
-];
 
 const STEP_ICONS = {
   1: User,
   2: FileText,
-  3: Wifi,
+  3: ReceiptText,
+  4: Wifi,
 } as const;
 
 function resolveDefaultClientId(printer: PrinterResponse): string {
@@ -65,23 +87,6 @@ function resolveDefaultClientId(printer: PrinterResponse): string {
     return String(printer.clientId);
   }
   return "";
-}
-
-function stepSubtitle(step: WizardStep, reconfigure: boolean): string {
-  switch (step) {
-    case 1:
-      return reconfigure
-        ? "Confirma el cliente antes de editar el ticket fiscal."
-        : "Selecciona el cliente que recibirá la impresora.";
-    case 2:
-      return reconfigure
-        ? "Confirma o actualiza el número de factura y continúa al siguiente paso."
-        : "Ingresa el número de factura fiscal de la enajenación.";
-    case 3:
-      return "Opcional: configura el Wi-Fi por USB o continúa directo al ticket fiscal.";
-    default:
-      return "";
-  }
 }
 
 const VIRTUAL_DISTRIBUTOR_CLIENT_ID = -999999;
@@ -96,32 +101,82 @@ export function PrinterDispositionDialog({
   catalogLoading,
   reconfigure = false,
   onClose,
-  onContinue,
+  onCompleted,
 }: PrinterDispositionDialogProps) {
   const { user } = useAuth();
+  const toast = useToast();
   const titleId = useId();
   const usbWifi = useUsbWifiConfig();
-  const [step, setStep] = useState<WizardStep>(() =>
-    reconfigure && printer.clientId != null ? 2 : 1,
+  const [issuedAt] = useState(() => new Date());
+  const [step, setStep] = useState<DispositionWizardStep>(() =>
+    resolveDispositionInitialStep(printer, reconfigure),
   );
   const [fieldError, setFieldError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [clientOverride, setClientOverride] = useState<string | null>(null);
   const [clientQuery, setClientQuery] = useState("");
   const [facturaNro, setFacturaNro] = useState("");
+
+  const [hydratedPrinterState, setHydratedPrinterState] = useState<{
+    printerId: number;
+    printer: PrinterResponse | null;
+  } | null>(null);
+
+  const needsPrinterHydration =
+    (reconfigure || printer.hasTicketConfig === true) &&
+    printer.header == null &&
+    printer.trailer == null;
+
+  const hydratingPrinter =
+    needsPrinterHydration && hydratedPrinterState?.printerId !== printer.id;
+
+  useEffect(() => {
+    if (!needsPrinterHydration) return;
+    let cancelled = false;
+    void fetchPrinterById(printer.id)
+      .then((fullPrinter) => {
+        if (!cancelled) {
+          setHydratedPrinterState({
+            printerId: printer.id,
+            printer: fullPrinter,
+          });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setHydratedPrinterState({
+            printerId: printer.id,
+            printer: null,
+          });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [needsPrinterHydration, printer.id]);
+
+  const effectivePrinter =
+    hydratedPrinterState?.printerId === printer.id &&
+    hydratedPrinterState.printer != null
+      ? hydratedPrinterState.printer
+      : printer;
+
   const defaultClientId = useMemo(
-    () => resolveDefaultClientId(printer),
-    [printer],
+    () => resolveDefaultClientId(effectivePrinter),
+    [effectivePrinter],
   );
   const clientId = clientOverride ?? defaultClientId;
   const disabled = catalogLoading;
 
   const effectiveDistributorId = useMemo(() => {
-    if (printer.distributorId != null) return printer.distributorId;
+    if (effectivePrinter.distributorId != null) {
+      return effectivePrinter.distributorId;
+    }
     if (user?.role === "DISTRIBUTOR" && user.distributorId != null) {
       return user.distributorId;
     }
     return null;
-  }, [printer.distributorId, user]);
+  }, [effectivePrinter.distributorId, user]);
 
   const printerDistributor = useMemo(() => {
     if (effectiveDistributorId == null) return undefined;
@@ -260,18 +315,63 @@ export function PrinterDispositionDialog({
     );
   }, [mergedClientOptions, clientQuery]);
 
+  const resolvedClientId = useMemo(() => {
+    const parsed = Number(clientId);
+    if (!Number.isFinite(parsed) || parsed === 0) return null;
+    if (
+      (parsed === VIRTUAL_DISTRIBUTOR_CLIENT_ID || parsed < 0) &&
+      distributorClientState?.id != null
+    ) {
+      return distributorClientState.id;
+    }
+    return parsed > 0 ? parsed : null;
+  }, [clientId, distributorClientState]);
+
   const selectedClient = useMemo(
     () => mergedClients.find((c) => c.id === Number(clientId)),
     [mergedClients, clientId],
   );
 
-  const selectedClientBranch = useMemo(
+  const cachedSelectedClientBranch = useMemo(
     () =>
       selectedClient
         ? branches.find((b) => b.id === selectedClient.branchId)
         : undefined,
     [selectedClient, branches],
   );
+
+  const [fetchedBranchState, setFetchedBranchState] = useState<{
+    branchId: number;
+    branch: BranchResponse;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!selectedClient || selectedClient.id <= 0) return;
+    if (cachedSelectedClientBranch) return;
+    const targetBranchId = selectedClient.branchId;
+    let cancelled = false;
+    void fetchBranchById(targetBranchId)
+      .then((branch) => {
+        if (!cancelled) {
+          setFetchedBranchState({ branchId: targetBranchId, branch });
+        }
+      })
+      .catch(() => {
+        // Fallback to client embedded branch fields when branch lookup is unavailable
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedClient, cachedSelectedClientBranch]);
+
+  const selectedClientBranch = useMemo(() => {
+    if (!selectedClient) return undefined;
+    if (cachedSelectedClientBranch) return cachedSelectedClientBranch;
+    if (fetchedBranchState?.branchId === selectedClient.branchId) {
+      return fetchedBranchState.branch;
+    }
+    return undefined;
+  }, [selectedClient, cachedSelectedClientBranch, fetchedBranchState]);
 
   const selectedClientRif = useMemo(() => {
     if (!selectedClient) return null;
@@ -293,24 +393,156 @@ export function PrinterDispositionDialog({
     return name === "-" ? null : name;
   }, [selectedClient, selectedClientBranch, companies]);
 
-  function goToStep(target: WizardStep) {
+  const selectedContributorType = useMemo(() => {
+    if (!selectedClient) return "ordinario" as const;
+    return resolveClientContributorType(
+      selectedClient,
+      selectedClientBranch,
+      companies,
+    );
+  }, [selectedClient, selectedClientBranch, companies]);
+
+  const normalizedFacturaForPreview = useMemo(
+    () =>
+      facturaNro.trim() ? normalizeFacturaNroInput(facturaNro) : undefined,
+    [facturaNro],
+  );
+
+  const invoiceSeedKey = useMemo(() => {
+    if (hydratingPrinter || resolvedClientId == null) return "";
+    return JSON.stringify({
+      clientId: resolvedClientId,
+      branchId: selectedClientBranch?.id ?? null,
+      branchAddress:
+        selectedClientBranch?.address ?? selectedClient?.branchAddress ?? null,
+      branchCity:
+        selectedClientBranch?.city ?? selectedClient?.branchCity ?? null,
+      branchState:
+        selectedClientBranch?.state ?? selectedClient?.branchState ?? null,
+      companyRif: selectedClientRif,
+      companyName: selectedClientCompanyName,
+      contributorType: selectedContributorType,
+      printerId: effectivePrinter.id,
+      printerClientId: effectivePrinter.clientId,
+      header: effectivePrinter.header ?? null,
+      trailer: effectivePrinter.trailer ?? null,
+    });
+  }, [
+    hydratingPrinter,
+    resolvedClientId,
+    selectedClientBranch,
+    selectedClient,
+    selectedClientRif,
+    selectedClientCompanyName,
+    selectedContributorType,
+    effectivePrinter,
+  ]);
+
+  const baseInvoiceData = useMemo(() => {
+    if (hydratingPrinter || resolvedClientId == null) {
+      return null;
+    }
+    const built = buildDispositionInvoiceData({
+      clientId: resolvedClientId,
+      clients: mergedClients,
+      branches,
+      clientBranch: selectedClientBranch,
+      companies,
+      distributors,
+      printer: effectivePrinter,
+      issuedAt,
+      facturaNro: normalizedFacturaForPreview,
+    });
+    if (!built) return null;
+    return applyPrinterTicketToDispositionInvoice(
+      built,
+      effectivePrinter.trailer,
+      selectedContributorType,
+      effectivePrinter.clientId === resolvedClientId
+        ? effectivePrinter.header
+        : null,
+    );
+  }, [
+    hydratingPrinter,
+    resolvedClientId,
+    mergedClients,
+    branches,
+    selectedClientBranch,
+    companies,
+    distributors,
+    effectivePrinter,
+    issuedAt,
+    normalizedFacturaForPreview,
+    selectedContributorType,
+  ]);
+
+  const [draftState, setDraftState] = useState<{
+    seedKey: string;
+    draft: VenezuelanFiscalInvoiceData;
+    baseline: VenezuelanFiscalInvoiceData;
+  } | null>(null);
+  const [invoiceEditSessionKey, setInvoiceEditSessionKey] = useState(0);
+
+  const effectiveInvoiceDraft = useMemo(() => {
+    if (!baseInvoiceData) return null;
+    if (draftState && draftState.seedKey === invoiceSeedKey) {
+      return {
+        ...draftState.draft,
+        metadatos: baseInvoiceData.metadatos,
+      };
+    }
+    return baseInvoiceData;
+  }, [baseInvoiceData, draftState, invoiceSeedKey]);
+
+  const hasInvoiceChanges = useMemo(() => {
+    if (!draftState || draftState.seedKey !== invoiceSeedKey) return false;
+    const comparableDraft = {
+      ...draftState.draft,
+      metadatos: draftState.baseline.metadatos,
+    };
+    return (
+      JSON.stringify(comparableDraft) !== JSON.stringify(draftState.baseline)
+    );
+  }, [draftState, invoiceSeedKey]);
+
+  function handleInvoiceDraftChange(next: VenezuelanFiscalInvoiceData) {
+    if (!baseInvoiceData) return;
+    setFieldError(null);
+    setDraftState((current) => ({
+      seedKey: invoiceSeedKey,
+      draft: next,
+      baseline:
+        current && current.seedKey === invoiceSeedKey
+          ? current.baseline
+          : baseInvoiceData,
+    }));
+  }
+
+  function handleRevertInvoice() {
+    setDraftState(null);
+    setFieldError(null);
+    setInvoiceEditSessionKey((current) => current + 1);
+  }
+
+  function goToStep(target: DispositionWizardStep) {
     setFieldError(null);
     setStep(target);
   }
 
   function handleBack() {
-    if (step === 3) {
-      goToStep(2);
-      return;
-    }
-    if (step === 2) {
-      goToStep(1);
+    if (saving) return;
+    const prevStep = resolveDispositionPreviousStep(step);
+    if (prevStep != null) {
+      goToStep(prevStep);
       return;
     }
     onClose();
   }
 
-  function validateInvoiceStep(): { clientId: number; facturaNro: string } | null {
+  function validateInvoiceStep(): {
+    clientId: number;
+    facturaNro: string;
+  } | null {
     let id = Number(clientId);
     if (
       (id === VIRTUAL_DISTRIBUTOR_CLIENT_ID || id < 0) &&
@@ -318,12 +550,16 @@ export function PrinterDispositionDialog({
     ) {
       id = distributorClientState.id;
     }
+    if (!Number.isFinite(id) || id <= 0) {
+      setFieldError("Selecciona un cliente válido.");
+      return null;
+    }
     const facturaError = validateFacturaNroInput(facturaNro);
     if (facturaError) {
       setFieldError(facturaError);
       return null;
     }
-    const normalizedFacturaNro = facturaNro.trim();
+    const normalizedFacturaNro = normalizeFacturaNroInput(facturaNro);
     const clientListForInvoice =
       distributorClientState?.id === id &&
       !mergedClients.some((c) => c.id === id)
@@ -335,9 +571,11 @@ export function PrinterDispositionDialog({
         clientId: id,
         clients: clientListForInvoice,
         branches,
+        clientBranch: selectedClientBranch,
         companies,
         distributors,
-        printer,
+        printer: effectivePrinter,
+        issuedAt,
         facturaNro: normalizedFacturaNro,
       })
     ) {
@@ -357,6 +595,7 @@ export function PrinterDispositionDialog({
         return;
       }
 
+      let createdClientThisSubmit: ClientResponse | undefined;
       if (id === VIRTUAL_DISTRIBUTOR_CLIENT_ID || id < 0) {
         if (!printerDistributor || !distributorBranch) {
           setFieldError("Distribuidora no encontrada.");
@@ -368,6 +607,7 @@ export function PrinterDispositionDialog({
             branchId: distributorBranch.id,
             distributorId: printerDistributor.id,
           });
+          createdClientThisSubmit = created;
           setDistributorClientState(created);
           setClientOverride(String(created.id));
           id = created.id;
@@ -381,19 +621,24 @@ export function PrinterDispositionDialog({
       }
 
       const clientListForInvoice =
-        distributorClientState?.id === id &&
-        !mergedClients.some((c) => c.id === id)
-          ? [distributorClientState, ...mergedClients]
-          : mergedClients;
+        createdClientThisSubmit &&
+        !mergedClients.some((c) => c.id === createdClientThisSubmit.id)
+          ? [createdClientThisSubmit, ...mergedClients]
+          : distributorClientState?.id === id &&
+              !mergedClients.some((c) => c.id === id)
+            ? [distributorClientState, ...mergedClients]
+            : mergedClients;
 
       if (
         !buildDispositionInvoiceData({
           clientId: id,
           clients: clientListForInvoice,
           branches,
+          clientBranch: selectedClientBranch,
           companies,
           distributors,
-          printer,
+          printer: effectivePrinter,
+          issuedAt,
         })
       ) {
         setFieldError("No se pudo generar la factura para este cliente.");
@@ -408,26 +653,112 @@ export function PrinterDispositionDialog({
     if (!validated) {
       return;
     }
-    setFieldError(null);
 
     if (step === 2) {
+      setFieldError(null);
       goToStep(3);
       return;
     }
 
-    await usbWifi.disconnectUsb();
-    onContinue(validated);
+    if (step === 3) {
+      if (hydratingPrinter) return;
+      if (!effectiveInvoiceDraft) {
+        setFieldError("No se pudo generar la vista previa del ticket.");
+        return;
+      }
+      try {
+        extractEnajenacionTicketFromInvoice(
+          effectiveInvoiceDraft,
+          selectedContributorType,
+        );
+      } catch (err) {
+        setFieldError(
+          err instanceof Error
+            ? err.message
+            : "Encabezado o pie de ticket no válido.",
+        );
+        return;
+      }
+      setFieldError(null);
+      goToStep(4);
+      return;
+    }
+
+    if (!user || !canDisposePrinterRecord(user.role)) {
+      setFieldError(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
+      return;
+    }
+    if (!isPrinterAssignedToDistributor(effectivePrinter.status)) {
+      const msg =
+        "Solo se pueden enajenar impresoras asignadas o en consignación autorizada.";
+      setFieldError(msg);
+      toast.error(msg);
+      return;
+    }
+    if (!isPrinterPaidForDisposition(effectivePrinter)) {
+      const msg = getPrinterDispositionBlockedMessage(effectivePrinter);
+      setFieldError(msg);
+      toast.error(msg);
+      return;
+    }
+    if (!effectiveInvoiceDraft) {
+      setFieldError("No se pudo generar la vista previa del ticket.");
+      return;
+    }
+
+    let ticket: ReturnType<typeof extractEnajenacionTicketFromInvoice>;
+    try {
+      ticket = extractEnajenacionTicketFromInvoice(
+        effectiveInvoiceDraft,
+        selectedContributorType,
+      );
+    } catch (err) {
+      setFieldError(
+        err instanceof Error
+          ? err.message
+          : "Encabezado o pie de ticket no válido.",
+      );
+      return;
+    }
+
+    setFieldError(null);
+    setSaving(true);
+    try {
+      await usbWifi.disconnectUsb();
+      const updated = await disposePrinter(effectivePrinter.id, {
+        clientId: validated.clientId,
+        header: ticket.header,
+        trailer: ticket.trailer,
+      });
+      toast.success(
+        isPrinterPendingMqttEnajenacion(effectivePrinter)
+          ? `Configuración de ticket actualizada para ${effectivePrinter.fiscalSerial}.`
+          : `Configuración de ticket guardada para ${effectivePrinter.fiscalSerial}. La impresora puede iniciar el ritual Remoto.`,
+        {
+          href: printerPath(effectivePrinter.id),
+        },
+      );
+      await onCompleted(updated, distributorClientState);
+      onClose();
+    } catch (err) {
+      const message = getPrintersErrorMessage(err);
+      setFieldError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
   }
 
-  if (!isPrinterPaidForDisposition(printer)) {
+  if (!isPrinterPaidForDisposition(effectivePrinter)) {
     return (
       <PrinterActionDialogShell
-        title={printerDispositionModalTitle(printer.fiscalSerial)}
+        title={printerDispositionModalTitle(effectivePrinter.fiscalSerial)}
         titleId={titleId}
-        printer={printer}
+        printer={effectivePrinter}
         showPrinterSerialSubtitle={false}
         saving={false}
-        error={getPrinterDispositionBlockedMessage(printer)}
+        error={getPrinterDispositionBlockedMessage(effectivePrinter)}
         onClose={onClose}
         submitLabel="Continuar"
         onSubmit={(e) => {
@@ -444,48 +775,57 @@ export function PrinterDispositionDialog({
 
   const usbActionRunning =
     usbWifi.usbBusy || usbWifi.wifiScanning || usbWifi.wifiConnecting;
+  const wifiTouched =
+    usbWifi.usbConnected ||
+    usbWifi.wifiMessage != null ||
+    usbWifi.wifiConnection.connected === true;
+  const isReconfiguringTicket =
+    reconfigure || isPrinterPendingMqttEnajenacion(effectivePrinter);
 
   return (
     <PrinterActionDialogShell
-      title={printerDispositionModalTitle(printer.fiscalSerial)}
+      title={printerDispositionModalTitle(effectivePrinter.fiscalSerial)}
       titleId={titleId}
-      printer={printer}
+      printer={effectivePrinter}
       showPrinterSerialSubtitle={false}
-      saving={false}
+      saving={saving}
       error={null}
-      onClose={onClose}
-      submitLabel={
-        step === 3
-          ? usbWifi.usbConnected ||
-            usbWifi.wifiMessage != null ||
-            usbWifi.wifiConnection.connected === true
-            ? "Continuar"
-            : "Omitir y continuar"
-          : "Siguiente"
-      }
-      onSubmit={handleSubmit}
+      onClose={() => {
+        if (!saving) onClose();
+      }}
+      submitLabel={resolveDispositionSubmitLabel({
+        step,
+        isReconfiguringTicket,
+        wifiTouched,
+      })}
+      onSubmit={(e) => void handleSubmit(e)}
       submitDisabled={
         disabled ||
+        saving ||
         creatingDistributorClient ||
         usbActionRunning ||
         (step === 1
           ? !clientId || mergedClientOptions.length === 0
           : step === 2
             ? !facturaNro.trim()
-            : false)
+            : step === 3
+              ? hydratingPrinter || !effectiveInvoiceDraft
+              : false)
       }
-      submitLoading={creatingDistributorClient}
-      size="lg"
+      submitLoading={creatingDistributorClient || saving}
+      size="xl"
       cancelLabel={step === 1 ? "Cancelar" : "Atrás"}
       onCancel={handleBack}
     >
-      <p className="mb-4 text-sm text-muted">{stepSubtitle(step, reconfigure)}</p>
+      <p className="mb-4 shrink-0 text-sm text-muted">
+        {resolveDispositionStepSubtitle(step, reconfigure)}
+      </p>
 
       <nav
-        className="mb-4 flex gap-1"
+        className="mb-4 flex shrink-0 gap-1"
         aria-label="Pasos de enajenación"
       >
-        {FORM_STEPS.map(({ step: s, label }) => {
+        {DISPOSITION_WIZARD_STEPS.map(({ step: s, label }) => {
           const Icon = STEP_ICONS[s];
           const isActive = step === s;
           const isDone = step > s;
@@ -493,7 +833,7 @@ export function PrinterDispositionDialog({
             <button
               key={s}
               type="button"
-              disabled={disabled || usbActionRunning || s > step}
+              disabled={disabled || saving || usbActionRunning || s > step}
               onClick={() => {
                 if (s < step) goToStep(s);
               }}
@@ -533,7 +873,10 @@ export function PrinterDispositionDialog({
           noResultsMessage="Sin resultados"
         />
       ) : step === 2 ? (
-        <div className="space-y-4">
+        <div
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-0.5"
+          style={{ touchAction: "pan-y" }}
+        >
           {selectedClientRif || selectedClientCompanyName ? (
             <div className="space-y-3">
               <div className="rounded-lg border border-border bg-foreground/[0.02] px-4 py-3">
@@ -573,20 +916,67 @@ export function PrinterDispositionDialog({
                 setFieldError(null);
               }}
               disabled={disabled}
-              className={cn(formFieldInputClass, "tabular-nums disabled:opacity-50")}
+              className={cn(
+                formFieldInputClass,
+                "tabular-nums disabled:opacity-50",
+              )}
               placeholder="Ej. 00012345"
             />
             <p className="text-xs text-muted">
-              Solo para previsualización del ticket de entrega; no afecta el correlativo fiscal de la impresora.
+              Solo para previsualización del ticket de entrega; no afecta el
+              correlativo fiscal de la impresora.
             </p>
           </div>
         </div>
+      ) : step === 3 ? (
+        <div
+          className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-0.5"
+          style={{ touchAction: "pan-y" }}
+        >
+          {hydratingPrinter ? (
+            <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted">
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              Cargando configuración de ticket…
+            </div>
+          ) : effectiveInvoiceDraft ? (
+            <>
+              <div className="rounded-lg border border-border/60 bg-muted/30 px-3.5 py-2.5 text-xs text-muted">
+                <p>
+                  <strong className="text-foreground">
+                    Nota sobre la previsualización:
+                  </strong>{" "}
+                  El número de factura y datos mostrados en este ticket son
+                  exclusivamente referenciales para revisar el encabezado y pie
+                  de página de la enajenación. No modifican el correlativo
+                  fiscal de la impresora.
+                </p>
+              </div>
+              <div className="overflow-x-auto pb-1">
+                <VenezuelanFiscalInvoicePreview
+                  key={invoiceEditSessionKey}
+                  data={effectiveInvoiceDraft}
+                  editable
+                  hasChanges={hasInvoiceChanges}
+                  onChange={handleInvoiceDraftChange}
+                  onRevert={handleRevertInvoice}
+                />
+              </div>
+            </>
+          ) : (
+            <p className="py-8 text-center text-sm text-muted">
+              No se pudo generar la vista previa del ticket para este cliente.
+            </p>
+          )}
+        </div>
       ) : (
-        <PrinterUsbWifiStep usbWifi={usbWifi} disabled={disabled} />
+        <PrinterUsbWifiStep usbWifi={usbWifi} disabled={disabled || saving} />
       )}
 
       {fieldError ? (
-        <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">
+        <p
+          role="alert"
+          className="mt-2 shrink-0 text-sm text-rose-600 dark:text-rose-400"
+        >
           {fieldError}
         </p>
       ) : null}

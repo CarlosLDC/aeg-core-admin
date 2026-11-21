@@ -122,7 +122,6 @@ import {
   fiscalBookLinkProps,
 } from "@/lib/fiscal-books-app";
 import {
-  printerDispositionPath,
   printerEnajenacionReviewPath,
   printerPath,
   softwareModificationReviewPath,
@@ -883,30 +882,18 @@ export function PrinterView() {
     }
   }
 
-  function handleDispositionContinue({
-    clientId,
-    facturaNro,
-  }: {
-    clientId: number;
-    facturaNro: string;
-  }) {
-    if (!printer || !canDisposeAssigned) {
-      toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
-      return;
+  function handleDispositionCompleted(
+    updated: PrinterResponse,
+    createdClient?: ClientResponse,
+  ) {
+    if (createdClient) {
+      setClients((prev) =>
+        prev.some((c) => c.id === createdClient.id)
+          ? prev
+          : [createdClient, ...prev],
+      );
     }
-    if (
-      !clientOptions.some((option) => option.id === clientId) &&
-      !clients.some((c) => c.id === clientId)
-    ) {
-      toast.error("Selecciona un cliente válido.");
-      return;
-    }
-    if (!isPrinterPaidForDisposition(printer)) {
-      toast.error(getPrinterDispositionBlockedMessage(printer));
-      return;
-    }
-    setDispositionOpen(false);
-    router.push(printerDispositionPath(printer.id, clientId, facturaNro));
+    setPrinter(updated);
   }
 
   async function handleSubmit(values: PrinterFormValues) {
@@ -1304,7 +1291,7 @@ export function PrinterView() {
           catalogLoading={catalogLoading}
           reconfigure={isPrinterPendingMqttEnajenacion(printer)}
           onClose={() => setDispositionOpen(false)}
-          onContinue={handleDispositionContinue}
+          onCompleted={handleDispositionCompleted}
         />
       ) : null}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Check,
   ChevronDown,
@@ -122,6 +122,11 @@ function TicketText({
       type="text"
       value={value}
       onChange={(e) => onChange?.(e.target.value)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+        }
+      }}
       aria-label={ariaLabel}
       className={cn(
         ticketEditableField,
@@ -473,6 +478,7 @@ export function VenezuelanFiscalInvoicePreview({
   const canEdit = editable && onChange != null;
   const [headerEditing, setHeaderEditing] = useState(false);
   const [pieDeTicketEditing, setPieDeTicketEditing] = useState(false);
+  const pieDeTicketZoneRef = useRef<HTMLDivElement>(null);
   const headerLines = data.encabezado.lineas;
   const pieDeTicketLines = data.piePagina.mensajes;
   const hasPieDeTicketContent = pieDeTicketLines.some(
@@ -493,9 +499,9 @@ export function VenezuelanFiscalInvoicePreview({
 
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
-        window.scrollTo({
-          top: document.documentElement.scrollHeight,
+        pieDeTicketZoneRef.current?.scrollIntoView({
           behavior: "smooth",
+          block: "nearest",
         });
       });
     });
@@ -789,28 +795,30 @@ export function VenezuelanFiscalInvoicePreview({
 
             {showPieDeTicketSection ? (
               <>
-                <EditableTicketZone
-                  label="Pie de ticket"
-                  isEditing={pieDeTicketEditing}
-                  onFinishEditing={() => setPieDeTicketEditing(false)}
-                  onAddLine={
-                    pieDeTicketEditing ? addPieDeTicketLine : undefined
-                  }
-                >
-                  <div className="space-y-1 text-center">
-                    <EditableTicketLineList
-                      lines={pieDeTicketLines}
-                      isEditing={pieDeTicketEditing}
-                      centered
-                      lineLabelPrefix="Pie de ticket"
-                      emptyEditingHint="Sin líneas. Añade un mensaje de cierre."
-                      minLines={0}
-                      onChangeLine={patchPieDeTicketLine}
-                      onRemoveLine={removePieDeTicketLine}
-                      onMoveLine={movePieDeTicketLine}
-                    />
-                  </div>
-                </EditableTicketZone>
+                <div ref={pieDeTicketZoneRef}>
+                  <EditableTicketZone
+                    label="Pie de ticket"
+                    isEditing={pieDeTicketEditing}
+                    onFinishEditing={() => setPieDeTicketEditing(false)}
+                    onAddLine={
+                      pieDeTicketEditing ? addPieDeTicketLine : undefined
+                    }
+                  >
+                    <div className="space-y-1 text-center">
+                      <EditableTicketLineList
+                        lines={pieDeTicketLines}
+                        isEditing={pieDeTicketEditing}
+                        centered
+                        lineLabelPrefix="Pie de ticket"
+                        emptyEditingHint="Sin líneas. Añade un mensaje de cierre."
+                        minLines={0}
+                        onChangeLine={patchPieDeTicketLine}
+                        onRemoveLine={removePieDeTicketLine}
+                        onMoveLine={movePieDeTicketLine}
+                      />
+                    </div>
+                  </EditableTicketZone>
+                </div>
                 {(hasPieDeTicketContent || pieDeTicketEditing) && (
                   <TicketSeparator />
                 )}
