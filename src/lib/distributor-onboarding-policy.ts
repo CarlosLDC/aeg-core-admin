@@ -29,7 +29,7 @@ export function validateOnboardingSection(
       options?.lockCompanyFields ?? Boolean(form.linkedCompanyId);
     const rif = normalizeRif(form.rif);
     if (!companyLocked && !RIF_PATTERN.test(rif)) {
-      return "Formato: letra V, E, J, P o G seguida de guion y 7 a 9 dígitos.";
+      return "Formato: letra V, E, J, P o G seguida de guion y 9 dígitos (ej. J-123456789).";
     }
     if (!companyLocked && !form.businessName.trim()) {
       return "Indica la razón social de la empresa.";

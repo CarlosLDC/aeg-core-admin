@@ -43,7 +43,14 @@ describe("validateOnboardingSection", () => {
         },
         { lockCompanyFields: false },
       ),
-    ).toBe("Formato: letra V, E, J, P o G seguida de guion y 7 a 9 dígitos.");
+    ).toBe("Formato: letra V, E, J, P o G seguida de guion y 9 dígitos (ej. J-123456789).");
+
+    expect(
+      validateOnboardingSection("fiscal", {
+        ...baseForm,
+        rif: "J-50826625",
+      }),
+    ).toBe("Formato: letra V, E, J, P o G seguida de guion y 9 dígitos (ej. J-123456789).");
 
     expect(
       validateOnboardingSection(

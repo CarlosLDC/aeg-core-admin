@@ -24,12 +24,19 @@ describe("companyFormSchema", () => {
     }
   });
 
-  it("rejects invalid RIF", () => {
+  it("rejects invalid or incomplete RIF", () => {
     const result = companyFormSchema.safeParse({
       businessName: "Acme",
       rif: "INVALID",
       contributorType: "ordinario",
     });
     expect(result.success).toBe(false);
+
+    const eightDigits = companyFormSchema.safeParse({
+      businessName: "DON BURROS 2026 C.A.",
+      rif: "J-50826625",
+      contributorType: "ordinario",
+    });
+    expect(eightDigits.success).toBe(false);
   });
 });

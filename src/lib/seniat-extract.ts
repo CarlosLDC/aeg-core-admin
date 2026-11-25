@@ -12,8 +12,8 @@ export const SENIAT_ACCEPT_MIME = [
   "application/pdf",
 ] as const;
 
-export const RIF_PATTERN = /^[VEJPG]-[0-9]{7,9}$/;
-export const RIF_INPUT_PATTERN = /^[VEJPG]-?[0-9]{7,9}$/;
+export const RIF_PATTERN = /^[VEJPG]-[0-9]{9}$/;
+export const RIF_INPUT_PATTERN = /^[VEJPG]-?[0-9]{9}$/;
 
 /** Modelos compatibles con Google AI Studio (mayo 2026). */
 export const GEMINI_MODEL_DEFAULT = "gemini-3.5-flash-lite";

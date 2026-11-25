@@ -43,6 +43,7 @@ import {
 } from "@/lib/printers-api";
 import { printerPath } from "@/lib/resource-routes";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
+import { normalizeRif, RIF_PATTERN } from "@/lib/seniat-extract";
 import { matchesSearch } from "@/components/ui/searchable-select";
 import { cn } from "@/lib/utils";
 import {
@@ -539,6 +540,32 @@ export function PrinterDispositionDialog({
     onClose();
   }
 
+  function validateClientDispositionInvoice(
+    targetClientId: number,
+    clientList: ClientResponse[],
+    targetFacturaNro?: string,
+  ): string | null {
+    const invoicePreview = buildDispositionInvoiceData({
+      clientId: targetClientId,
+      clients: clientList,
+      branches,
+      clientBranch: selectedClientBranch,
+      companies,
+      distributors,
+      printer: effectivePrinter,
+      issuedAt,
+      facturaNro: targetFacturaNro,
+    });
+    if (!invoicePreview) {
+      return "No se pudo generar la factura para este cliente.";
+    }
+    const normalizedClienteRif = normalizeRif(invoicePreview.cliente.rifCi);
+    if (!RIF_PATTERN.test(normalizedClienteRif)) {
+      return `El RIF de la empresa (${invoicePreview.cliente.rifCi}) debe tener 9 dígitos (ej. J-123456789). Corrige el RIF antes de enajenar.`;
+    }
+    return null;
+  }
+
   function validateInvoiceStep(): {
     clientId: number;
     facturaNro: string;
@@ -566,20 +593,13 @@ export function PrinterDispositionDialog({
         ? [distributorClientState, ...mergedClients]
         : mergedClients;
 
-    if (
-      !buildDispositionInvoiceData({
-        clientId: id,
-        clients: clientListForInvoice,
-        branches,
-        clientBranch: selectedClientBranch,
-        companies,
-        distributors,
-        printer: effectivePrinter,
-        issuedAt,
-        facturaNro: normalizedFacturaNro,
-      })
-    ) {
-      setFieldError("No se pudo generar la factura para este cliente.");
+    const clientError = validateClientDispositionInvoice(
+      id,
+      clientListForInvoice,
+      normalizedFacturaNro,
+    );
+    if (clientError) {
+      setFieldError(clientError);
       return null;
     }
     return { clientId: id, facturaNro: normalizedFacturaNro };
@@ -629,19 +649,12 @@ export function PrinterDispositionDialog({
             ? [distributorClientState, ...mergedClients]
             : mergedClients;
 
-      if (
-        !buildDispositionInvoiceData({
-          clientId: id,
-          clients: clientListForInvoice,
-          branches,
-          clientBranch: selectedClientBranch,
-          companies,
-          distributors,
-          printer: effectivePrinter,
-          issuedAt,
-        })
-      ) {
-        setFieldError("No se pudo generar la factura para este cliente.");
+      const clientError = validateClientDispositionInvoice(
+        id,
+        clientListForInvoice,
+      );
+      if (clientError) {
+        setFieldError(clientError);
         return;
       }
       setFieldError(null);
