@@ -108,7 +108,7 @@ const emptyForm: UserFormValues = {
   name: "",
   email: "",
   password: "",
-  sendInvite: true,
+  sendInvite: false,
   role: "DISTRIBUTOR",
   distributorId: "",
   branchId: "",
@@ -351,13 +351,13 @@ export function UserFormDialog({
             disabled={saving}
             options={[
               {
-                value: "invite",
-                label: "Invitar por correo",
+                value: "manual",
+                label: "Asignar clave manual",
                 tone: "teal",
               },
               {
-                value: "manual",
-                label: "Asignar clave manual",
+                value: "invite",
+                label: "Invitar por correo",
                 tone: "slate",
               },
             ]}
