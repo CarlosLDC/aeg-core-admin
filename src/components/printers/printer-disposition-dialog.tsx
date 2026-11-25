@@ -561,7 +561,7 @@ export function PrinterDispositionDialog({
     }
     const normalizedClienteRif = normalizeRif(invoicePreview.cliente.rifCi);
     if (!RIF_PATTERN.test(normalizedClienteRif)) {
-      return `El RIF de la empresa (${invoicePreview.cliente.rifCi}) debe tener 9 dígitos (ej. J-123456789). Corrige el RIF antes de enajenar.`;
+      return `El RIF de la empresa (${invoicePreview.cliente.rifCi}) debe tener 9 dígitos (ej. J-123456789). Si tiene menos, completa con ceros a la izquierda antes de enajenar.`;
     }
     return null;
   }

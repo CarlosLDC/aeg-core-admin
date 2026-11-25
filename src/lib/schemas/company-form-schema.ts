@@ -13,7 +13,8 @@ export const companyFormSchema = z.object({
     .toUpperCase()
     .transform((v) => normalizeRif(v))
     .refine((v) => RIF_PATTERN.test(v), {
-      message: "Formato: letra V, E, J, P o G seguida de guion y 9 dígitos (ej. J-123456789).",
+      message:
+        "Formato: letra V, E, J, P o G seguida de guion y 9 dígitos (ej. J-123456789). Si tiene menos, completa con ceros a la izquierda.",
     }),
   contributorType: z.enum(CONTRIBUTOR_TYPES, {
     message: "El tipo de contribuyente es obligatorio.",

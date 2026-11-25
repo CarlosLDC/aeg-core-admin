@@ -13,7 +13,7 @@ export const SENIAT_ACCEPT_MIME = [
 ] as const;
 
 export const RIF_PATTERN = /^[VEJPG]-[0-9]{9}$/;
-export const RIF_INPUT_PATTERN = /^[VEJPG]-?[0-9]{9}$/;
+export const RIF_INPUT_PATTERN = /^[VEJPG]-?[0-9]{8}-?[0-9]$/;
 
 /** Modelos compatibles con Google AI Studio (mayo 2026). */
 export const GEMINI_MODEL_DEFAULT = "gemini-3.5-flash-lite";
@@ -42,7 +42,7 @@ export type SeniatExtractResult = z.infer<typeof rawExtractSchema>;
 const SENIAT_PROMPT = `Eres un asistente que extrae datos fiscales de documentos venezolanos (SENIAT, RIF, registro de contribuyente o comprobante fiscal).
 
 Analiza la imagen o PDF y devuelve ÚNICAMENTE un objeto JSON válido (sin markdown, sin comentarios) con estas claves:
-- rif: string (letra V, E, J, P o G seguida de guion y dígitos, ej: J-123456789)
+- rif: string (letra V, E, J, P o G seguida de guion y exactamente 9 dígitos; si tiene menos dígitos, completar con ceros a la izquierda, ej: J-123456789 o V-012345678)
 - businessName: string (razón social)
 - contributorType: "ordinario" | "especial" | "formal" | null (null si no aparece claro)
 - state: string (estado de Venezuela)
@@ -96,7 +96,9 @@ export function parseSeniatExtractJson(text: string): SeniatExtractResult {
 
   const rif = normalizeRif(data.rif);
   if (rif && !RIF_PATTERN.test(rif)) {
-    throw new Error("El RIF extraído no tiene un formato válido.");
+    throw new Error(
+      "El RIF extraído debe tener 9 dígitos (ej. J-123456789). Si tiene menos, completa con ceros a la izquierda.",
+    );
   }
 
   return {

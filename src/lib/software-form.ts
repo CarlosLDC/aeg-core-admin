@@ -89,7 +89,7 @@ export function toSoftwareRequest(
   const normalizedRif = rawRif ? normalizeRif(rawRif) : null;
 
   if (normalizedRif && !RIF_PATTERN.test(normalizedRif)) {
-    return "El RIF del desarrollador debe tener formato válido (ej. J-123456789).";
+    return "El RIF del desarrollador debe tener 9 dígitos (ej. J-123456789). Si tiene menos, completa con ceros a la izquierda.";
   }
 
   const developerName = values.external

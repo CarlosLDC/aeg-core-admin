@@ -151,7 +151,7 @@ export function SoftwareFormDialog({
       if (form.external) {
         const rawRif = form.developerRif.trim();
         if (rawRif && !RIF_PATTERN.test(normalizeRif(rawRif))) {
-          return "El RIF del desarrollador debe tener formato válido (ej. J-123456789).";
+          return "El RIF del desarrollador debe tener 9 dígitos (ej. J-123456789). Si tiene menos, completa con ceros a la izquierda.";
         }
       }
       return null;

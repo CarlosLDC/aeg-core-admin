@@ -78,58 +78,69 @@ export function PrefixedDocumentInput({
     onChange(format(nextLetter, nextDigits));
   }
 
+  const showRifLeadingZeroHint =
+    kind === "rif" && digits.length > 0 && digits.length < config.maxDigits;
+
   return (
-    <div
-      className={cn(
-        "flex h-10 w-full overflow-hidden rounded-lg border border-border bg-background transition-shadow focus-within:border-accent focus-within:ring-2 focus-within:ring-ring/20",
-        disabled && "cursor-not-allowed opacity-60",
-        className,
-      )}
-    >
-      <div className="relative shrink-0 border-r border-border bg-foreground/[0.03]">
-        <label htmlFor={prefixId} className="sr-only">
-          {config.ariaLabel}
-        </label>
-        <select
-          id={prefixId}
-          value={letter}
+    <>
+      <div
+        className={cn(
+          "flex h-10 w-full overflow-hidden rounded-lg border border-border bg-background transition-shadow focus-within:border-accent focus-within:ring-2 focus-within:ring-ring/20",
+          disabled && "cursor-not-allowed opacity-60",
+          className,
+        )}
+      >
+        <div className="relative shrink-0 border-r border-border bg-foreground/[0.03]">
+          <label htmlFor={prefixId} className="sr-only">
+            {config.ariaLabel}
+          </label>
+          <select
+            id={prefixId}
+            value={letter}
+            disabled={disabled}
+            onChange={(event) => {
+              const nextLetter = event.target.value;
+              setLetter(nextLetter);
+              emit(nextLetter, digits);
+            }}
+            className="h-10 appearance-none bg-transparent py-2 pl-3 pr-8 text-sm font-semibold uppercase text-card-foreground outline-none disabled:cursor-not-allowed"
+          >
+            {config.letters.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            className="pointer-events-none absolute right-2 top-1/2 size-4 -translate-y-1/2 text-muted"
+            aria-hidden
+          />
+        </div>
+        <input
+          id={inputId}
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
           disabled={disabled}
+          required={required}
+          value={digits}
+          maxLength={config.maxDigits}
+          placeholder={config.placeholder}
+          aria-label={config.digitsLabel}
           onChange={(event) => {
-            const nextLetter = event.target.value;
-            setLetter(nextLetter);
-            emit(nextLetter, digits);
+            const nextDigits = event.target.value.replace(/\D/g, "");
+            setDigits(nextDigits);
+            emit(letter, nextDigits);
           }}
-          className="h-10 appearance-none bg-transparent py-2 pl-3 pr-8 text-sm font-semibold uppercase text-card-foreground outline-none disabled:cursor-not-allowed"
-        >
-          {config.letters.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          className="pointer-events-none absolute right-2 top-1/2 size-4 -translate-y-1/2 text-muted"
-          aria-hidden
+          className="h-10 min-w-0 flex-1 border-0 bg-transparent px-3 font-mono text-sm outline-none disabled:cursor-not-allowed"
         />
       </div>
-      <input
-        id={inputId}
-        type="text"
-        inputMode="numeric"
-        autoComplete="off"
-        disabled={disabled}
-        required={required}
-        value={digits}
-        maxLength={config.maxDigits}
-        placeholder={config.placeholder}
-        aria-label={config.digitsLabel}
-        onChange={(event) => {
-          const nextDigits = event.target.value.replace(/\D/g, "");
-          setDigits(nextDigits);
-          emit(letter, nextDigits);
-        }}
-        className="h-10 min-w-0 flex-1 border-0 bg-transparent px-3 font-mono text-sm outline-none disabled:cursor-not-allowed"
-      />
-    </div>
+      {showRifLeadingZeroHint ? (
+        <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+          Faltan dígitos ({digits.length}/{config.maxDigits}). Si tiene menos,
+          completa con ceros a la izquierda.
+        </p>
+      ) : null}
+    </>
   );
 }

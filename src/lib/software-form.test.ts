@@ -75,7 +75,7 @@ describe("software-form", () => {
       developerRif: "J-123",
     });
     expect(res).toBe(
-      "El RIF del desarrollador debe tener formato válido (ej. J-123456789).",
+      "El RIF del desarrollador debe tener 9 dígitos (ej. J-123456789). Si tiene menos, completa con ceros a la izquierda.",
     );
   });
 
