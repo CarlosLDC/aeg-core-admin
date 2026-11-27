@@ -8,9 +8,10 @@ export const TOOLS_SERIAL_TIMEOUT_MS = {
   formasPago: 10_000,
   reprint: 60_000,
   default: 15_000,
-  testInvoice: 5_000,
-  testNote: 6_000,
-  testGenerateZ: 5_000,
+  // The port ACK is written after the mechanism finishes, so these match reprint.
+  testInvoice: 60_000,
+  testNote: 60_000,
+  testGenerateZ: 60_000,
   firmware: 15_000,
   brokerStatus: 15_000,
   brokerConfig: 20_000,

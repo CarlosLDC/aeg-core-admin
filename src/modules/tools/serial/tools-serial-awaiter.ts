@@ -1,6 +1,6 @@
 import {
   cmdEquals,
-  tryParseFiscalResponse,
+  tryParseFiscalResponses,
   type FiscalMqttResponseItem,
 } from "@/modules/tools/serial/tools-fiscal-response";
 import type { ResponseMatcher } from "@/modules/tools/serial/tools-response-parser";
@@ -40,20 +40,25 @@ export class ToolsSerialAwaiter {
       return;
     }
 
-    const item = tryParseFiscalResponse(line);
-    if (item == null) {
+    const items = tryParseFiscalResponses(line);
+    if (items.length === 0) {
       return;
     }
 
     if (wait.mode === "matcher") {
-      if (wait.matcher?.(item)) {
-        this.complete(wait, item);
+      const match = items.find((item) => wait.matcher?.(item));
+      if (match) {
+        this.complete(wait, match);
       }
       return;
     }
 
-    if (wait.expectedCmd != null && cmdEquals(item.cmd, wait.expectedCmd)) {
-      this.complete(wait, item);
+    if (wait.expectedCmd == null) {
+      return;
+    }
+    const match = items.find((item) => cmdEquals(item.cmd, wait.expectedCmd));
+    if (match) {
+      this.complete(wait, match);
     }
   }
 
@@ -70,8 +75,11 @@ export class ToolsSerialAwaiter {
       return;
     }
 
-    const item = tryParseFiscalResponse(line);
-    if (item != null && wait.expectedCmd != null && cmdEquals(item.cmd, wait.expectedCmd)) {
+    const items = tryParseFiscalResponses(line);
+    const item = items.find(
+      (entry) => wait.expectedCmd != null && cmdEquals(entry.cmd, wait.expectedCmd),
+    );
+    if (item != null && wait.expectedCmd != null) {
       wait.terminalAck = item;
       if (item.code != null && item.code !== 0) {
         this.complete(wait, {
@@ -86,6 +94,10 @@ export class ToolsSerialAwaiter {
           terminal: item,
         } satisfies ToolsSerialTextChunksResult);
       }
+      return;
+    }
+
+    if (line.trim().startsWith("[")) {
       return;
     }
 
@@ -164,18 +176,22 @@ export class ToolsSerialAwaiter {
 }
 
 /**
- * Extracts one complete top-level JSON object from the start of `text`,
+ * Extracts one complete top-level JSON object or array from the start of `text`,
  * respecting braces inside quoted strings. Returns null if incomplete.
  */
-export function extractLeadingJsonObject(
+export function extractLeadingJsonValue(
   text: string,
-): { object: string; rest: string } | null {
+): { value: string; rest: string } | null {
   const start = text.search(/\S/);
-  if (start < 0 || text[start] !== "{") {
+  if (start < 0) {
+    return null;
+  }
+  const opener = text[start];
+  if (opener !== "{" && opener !== "[") {
     return null;
   }
 
-  let depth = 0;
+  const stack: string[] = [];
   let inString = false;
   let escaped = false;
 
@@ -197,15 +213,19 @@ export function extractLeadingJsonObject(
       inString = true;
       continue;
     }
-    if (char === "{") {
-      depth += 1;
+    if (char === "{" || char === "[") {
+      stack.push(char);
       continue;
     }
-    if (char === "}") {
-      depth -= 1;
-      if (depth === 0) {
+    if (char === "}" || char === "]") {
+      const expected = char === "}" ? "{" : "[";
+      if (stack.length === 0 || stack[stack.length - 1] !== expected) {
+        return null;
+      }
+      stack.pop();
+      if (stack.length === 0) {
         return {
-          object: text.slice(start, index + 1),
+          value: text.slice(start, index + 1),
           rest: text.slice(index + 1),
         };
       }
@@ -215,41 +235,83 @@ export function extractLeadingJsonObject(
   return null;
 }
 
+export function extractLeadingJsonObject(
+  text: string,
+): { object: string; rest: string } | null {
+  const start = text.search(/\S/);
+  if (start < 0 || text[start] !== "{") {
+    return null;
+  }
+  const extracted = extractLeadingJsonValue(text);
+  if (extracted == null) {
+    return null;
+  }
+  return { object: extracted.value, rest: extracted.rest };
+}
+
+function findLaterCompleteJson(text: string): number {
+  for (let index = 1; index < text.length; index++) {
+    const char = text[index];
+    if (char !== "{" && char !== "[") {
+      continue;
+    }
+    if (extractLeadingJsonValue(text.slice(index)) != null) {
+      return index;
+    }
+  }
+  return -1;
+}
+
 export function createLineBuffer(onLine: (line: string) => void): {
   push: (chunk: string) => void;
   reset: () => void;
 } {
   let buffer = "";
 
-  function flushNewlines(): void {
-    let newlineIndex = buffer.indexOf("\n");
-    while (newlineIndex >= 0) {
+  function drain(): void {
+    while (buffer.length > 0) {
+      const contentStart = buffer.search(/\S/);
+      if (contentStart < 0) {
+        buffer = "";
+        return;
+      }
+
+      const first = buffer[contentStart];
+      if (first === "{" || first === "[") {
+        const extracted = extractLeadingJsonValue(buffer.slice(contentStart));
+        if (extracted == null) {
+          if (contentStart > 0) {
+            buffer = buffer.slice(contentStart);
+          }
+          return;
+        }
+        buffer = extracted.rest;
+        onLine(extracted.value);
+        continue;
+      }
+
+      const newlineIndex = buffer.indexOf("\n");
+      if (newlineIndex < 0) {
+        const laterJson = findLaterCompleteJson(buffer);
+        if (laterJson > 0) {
+          buffer = buffer.slice(laterJson);
+          continue;
+        }
+        return;
+      }
+
       const line = buffer.slice(0, newlineIndex).replace(/\r$/, "");
       buffer = buffer.slice(newlineIndex + 1);
       if (line.trim() !== "") {
         onLine(line);
       }
-      newlineIndex = buffer.indexOf("\n");
-    }
-  }
-
-  function flushJsonObjects(): void {
-    while (true) {
-      const extracted = extractLeadingJsonObject(buffer);
-      if (extracted == null) {
-        return;
-      }
-      buffer = extracted.rest.replace(/^\r?\n/, "");
-      onLine(extracted.object);
     }
   }
 
   return {
     push(chunk: string) {
       buffer += chunk;
-      flushNewlines();
-      // USB printers often send a single JSON object without a trailing newline.
-      flushJsonObjects();
+      drain();
     },
     reset() {
       buffer = "";

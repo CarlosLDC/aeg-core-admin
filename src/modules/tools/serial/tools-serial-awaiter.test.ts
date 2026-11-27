@@ -46,6 +46,33 @@ describe("ToolsSerialAwaiter", () => {
       terminal: expect.objectContaining({ code: 48 }),
     });
   });
+
+  it("completes an invoice wait from the endFac item inside a response array", async () => {
+    const awaiter = new ToolsSerialAwaiter();
+    const future = awaiter.registerObject("endFac", 1000);
+    awaiter.handleLine(
+      '[{"cmd":"proF","code":0,"dataD":0},{"cmd":"subToF","code":0},{"cmd":"fpaF","code":0},{"cmd":"endFac","code":0,"dataD":7}]',
+    );
+    await expect(future).resolves.toMatchObject({ cmd: "endFac", code: 0, dataD: 7 });
+  });
+
+  it("keeps waiting when a response array has no terminal command", async () => {
+    const awaiter = new ToolsSerialAwaiter();
+    let settled = false;
+    const future = awaiter.registerObject("endFac", 1_000).then(
+      () => {
+        settled = true;
+      },
+      () => {
+        settled = true;
+      },
+    );
+    awaiter.handleLine('[{"cmd":"proF","code":0}]');
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(settled).toBe(false);
+    awaiter.cancel();
+    await future;
+  });
 });
 
 describe("extractLeadingJsonObject", () => {
@@ -94,5 +121,30 @@ describe("createLineBuffer", () => {
     expect(lines).toEqual([]);
     buffer.push('"dataS":{"NroUltZEmit":8}}');
     expect(lines).toEqual(['{"cmd":"StaInf","code":0,"dataS":{"NroUltZEmit":8}}']);
+  });
+
+  it("emits a response array split across lines as one value", () => {
+    const lines: string[] = [];
+    const buffer = createLineBuffer((line) => lines.push(line));
+    buffer.push('[\n  {"cmd":"proF","code":0},\n');
+    expect(lines).toEqual([]);
+    buffer.push('  {"cmd":"endFac","code":0,"dataD":7}\n]\n');
+    expect(lines).toEqual([
+      '[\n  {"cmd":"proF","code":0},\n  {"cmd":"endFac","code":0,"dataD":7}\n]',
+    ]);
+  });
+
+  it("emits an array stuck to leading noise without a newline", () => {
+    const lines: string[] = [];
+    const buffer = createLineBuffer((line) => lines.push(line));
+    buffer.push('xx[{"cmd":"endFac","code":0}]');
+    expect(lines).toEqual(['[{"cmd":"endFac","code":0}]']);
+  });
+
+  it("keeps indentation of plain text lines", () => {
+    const lines: string[] = [];
+    const buffer = createLineBuffer((line) => lines.push(line));
+    buffer.push("  LINEA 1\n");
+    expect(lines).toEqual(["  LINEA 1"]);
   });
 });
