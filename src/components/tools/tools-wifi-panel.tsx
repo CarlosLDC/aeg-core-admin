@@ -27,7 +27,7 @@ import { getToolsMqttErrorMessage } from "@/lib/tools-mqtt-api";
 import { TOOLS_SECTIONS } from "@/lib/tools-sections";
 import {
   normalizeToolsWifiNetworks,
-  resolveToolsWifiConnectedSsid,
+  parseToolsWifiConnection,
 } from "@/lib/tools-wifi-networks";
 import { formFieldInputClass } from "@/lib/toggle-button-styles";
 import { useToast } from "@/context/toast-provider";
@@ -68,7 +68,9 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
     null,
   );
 
-  const connectedSsid = resolveToolsWifiConnectedSsid(networkInfo?.wifiNetwork);
+  const wifiConnection = parseToolsWifiConnection(networkInfo?.wifiNetwork);
+  const connectedSsid = wifiConnection.ssid ?? "";
+  const printerWifiConnected = wifiConnection.connected === true;
   const displayedNetworks = useMemo(
     () => normalizeToolsWifiNetworks(networks, connectedSsid || undefined),
     [networks, connectedSsid],
@@ -350,6 +352,18 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
               >
                 Conectar
               </ToolsActionButton>
+              {printerWifiConnected ? (
+                <ToolsActionButton
+                  variant="danger"
+                  loading={action === "disconnect"}
+                  disabled={busy || wifiActionsDisabled}
+                  onClick={() =>
+                    void runDisconnect(connectedSsid || "la red actual")
+                  }
+                >
+                  Desconectar
+                </ToolsActionButton>
+              ) : null}
             </ToolsPanelActions>
             </ToolsPanelSection>
           </div>
