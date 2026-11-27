@@ -220,7 +220,7 @@ export function CommercialInvoiceView() {
     try {
       const updated = await updateCommercialInvoice(invoice.id, bodyOrError);
       setInvoice(updated);
-      toast.success("Factura comercial actualizada.", {
+      toast.success("Orden actualizada.", {
         href: commercialInvoicePath(updated.id),
       });
       setEditOpen(false);
@@ -248,7 +248,7 @@ export function CommercialInvoiceView() {
     if (
       !(await confirm({
         title: "Confirmar",
-        message: `¿Eliminar la factura comercial ${label}? También se eliminarán sus pagos comerciales asociados.${printerWarning}`,
+        message: `¿Eliminar la orden ${label}? También se eliminarán sus pagos comerciales asociados.${printerWarning}`,
         destructive: true,
         requireConfirmationText: label,
       }))
@@ -259,7 +259,7 @@ export function CommercialInvoiceView() {
     setDeleting(true);
     try {
       await deleteCommercialInvoice(invoice.id);
-      toast.success("Factura comercial eliminada.");
+      toast.success("Orden eliminada.");
       router.push(commercialInvoicesListPath);
     } catch (err) {
       toast.error(getCommercialInvoicesErrorMessage(err));
@@ -456,7 +456,7 @@ export function CommercialInvoiceView() {
       const updated = await markCommercialInvoiceAsPaid(invoice.id);
       setInvoice(updated);
       toast.success(
-        `Factura comercial ${formatCommercialInvoiceTitle(updated)} marcada como pagada.`,
+        `Orden ${formatCommercialInvoiceTitle(updated)} marcada como pagada.`,
         { href: commercialInvoicePath(updated.id) },
       );
       await reloadAll();
@@ -479,10 +479,10 @@ export function CommercialInvoiceView() {
         id: "invoice",
         label: "Factura",
         content: (
-          <DetailSection title="Factura comercial" layout="quad">
+          <DetailSection title="Orden" layout="quad">
             <DetailField
-              label="Número de factura"
-              value={invoice.numeroFactura ?? "—"}
+              label="Número de orden"
+              value={invoice.numeroFactura?.trim() || "Sin número"}
               mono
             />
             <DetailField
@@ -802,16 +802,16 @@ export function CommercialInvoiceView() {
   ]);
 
   const effectiveError =
-    id == null ? "Identificador de factura comercial no válido." : error;
+    id == null ? "Identificador de orden no válido." : error;
   const effectiveLoading = id != null && loading;
 
   return (
     <>
       <ResourceViewShell
         backHref={commercialInvoicesListPath}
-        backLabel="Volver a facturas comerciales"
+        backLabel="Volver a órdenes"
         title={
-          invoice ? formatCommercialInvoiceTitle(invoice) : "Factura comercial"
+          invoice ? formatCommercialInvoiceTitle(invoice) : "Orden"
         }
         subtitle={invoice?.clienteComercialNombre ?? undefined}
         loading={effectiveLoading}

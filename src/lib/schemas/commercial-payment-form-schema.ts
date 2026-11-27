@@ -6,11 +6,11 @@ export const commercialPaymentFormSchema = z.object({
   facturaComercialId: z
     .string()
     .trim()
-    .min(1, "La factura comercial es obligatoria.")
+    .min(1, "La orden es obligatoria.")
     .refine((value) => {
       const parsed = Number(value);
       return Number.isInteger(parsed) && parsed > 0;
-    }, "Selecciona una factura comercial válida."),
+    }, "Selecciona una orden válida."),
   metodoBanco: z.enum(COMMERCIAL_PAYMENT_METHODS, {
     message: "Método / banco no válido.",
   }),

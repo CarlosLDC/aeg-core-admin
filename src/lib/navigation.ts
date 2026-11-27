@@ -103,10 +103,16 @@ export const navSections: NavSection[] = [
     title: "Comercial",
     items: [
       {
-        title: "Facturas comerciales",
+        title: "Órdenes",
         href: "/commercial-invoices",
         icon: ReceiptText,
-        roles: ["ADMIN"],
+        roles: ["ADMIN", "FINANCE"],
+      },
+      {
+        title: "Pagos",
+        href: "/commercial-payments",
+        icon: ReceiptText,
+        roles: ["ADMIN", "FINANCE"],
       },
     ],
   },
@@ -199,6 +205,9 @@ export const navSections: NavSection[] = [
 export const mainNav: NavItem[] = navSections.flatMap((s) => s.items);
 
 function itemVisibleForRole(item: NavItem, role: Role): boolean {
+  if (role === "FINANCE") {
+    return item.roles?.includes("FINANCE") ?? false;
+  }
   if (!item.roles) return true;
   return item.roles.includes(role);
 }

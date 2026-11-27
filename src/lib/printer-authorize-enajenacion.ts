@@ -106,7 +106,7 @@ export function buildAuthorizeEnajenacionPayload(
       !Number.isInteger(parsedInvoiceId) ||
       parsedInvoiceId <= 0
     ) {
-      return "Debes seleccionar una factura comercial existente o crear una nueva.";
+      return "Debes seleccionar una orden existente o crear una nueva.";
     }
     return {
       creditInstallments: parsedInstallments,

@@ -5,8 +5,8 @@ import { CommercialInvoicesManager } from "@/components/commercial-invoices/comm
 export default function CommercialInvoicesPage() {
   return (
     <AdminShell
-      title="Facturas comerciales"
-      description="Control de facturación comercial, modalidad y estado de cobro"
+      title="Órdenes"
+      description="Control de órdenes, modalidad y estado de cobro"
     >
       <RoleGuard path="/commercial-invoices">
         <CommercialInvoicesManager />

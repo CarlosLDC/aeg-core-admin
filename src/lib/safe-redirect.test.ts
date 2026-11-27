@@ -12,6 +12,16 @@ describe("postLoginRedirectPath", () => {
     expect(postLoginRedirectPath("TECHNICIAN", null)).toBe(FISCAL_BOOK_ENTRY_PATH);
   });
 
+  it("sends Finanzas to órdenes unless the redirect stays in that module", () => {
+    expect(postLoginRedirectPath("FINANCE", null)).toBe("/commercial-invoices");
+    expect(postLoginRedirectPath("FINANCE", "/printers")).toBe(
+      "/commercial-invoices",
+    );
+    expect(postLoginRedirectPath("FINANCE", "/commercial-payments/4")).toBe(
+      "/commercial-payments/4",
+    );
+  });
+
   it("respects safe redirect for panel roles", () => {
     expect(postLoginRedirectPath("ADMIN", "/printers")).toBe("/printers");
     expect(postLoginRedirectPath("DISTRIBUTOR", null)).toBe("/");

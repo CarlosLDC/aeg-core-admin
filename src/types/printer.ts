@@ -105,4 +105,12 @@ export type PrinterRequest = {
   creditPaymentCount?: number | null;
   boxId?: number | null;
   facturaComercialId?: number | null;
+  assignmentPayments?: {
+    metodoBanco: string;
+    referencia?: string | null;
+    monto?: number | null;
+    cuentaDestino?: string | null;
+    fechaPago?: string | null;
+    notas?: string | null;
+  }[];
 };

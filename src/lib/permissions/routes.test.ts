@@ -29,10 +29,10 @@ describe("route permissions", () => {
     ]);
   });
 
-  it("allows every role on /tools", () => {
+  it("allows every role except Finanzas on /tools", () => {
     expect(resourceForPath("/tools")).toBe("tools");
     for (const role of ROLES) {
-      expect(canAccessRoute(role, "/tools")).toBe(true);
+      expect(canAccessRoute(role, "/tools")).toBe(role !== "FINANCE");
     }
   });
 
@@ -98,6 +98,10 @@ describe("route permissions", () => {
     expect(canAccessRoute("ADMIN", "/commercial-payments")).toBe(true);
     expect(canAccessRoute("DISTRIBUTOR", "/commercial-invoices")).toBe(false);
     expect(canAccessRoute("DISTRIBUTOR", "/commercial-payments")).toBe(false);
+    expect(canAccessRoute("FINANCE", "/commercial-invoices")).toBe(true);
+    expect(canAccessRoute("FINANCE", "/commercial-payments")).toBe(true);
+    expect(canAccessRoute("FINANCE", "/printers")).toBe(false);
+    expect(defaultPathForRole("FINANCE")).toBe("/commercial-invoices");
   });
 
   it("blocks service center staff from panel routes", () => {

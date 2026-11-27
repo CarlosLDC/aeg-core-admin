@@ -19,7 +19,7 @@ describe("commercial-invoice-form", () => {
         id: 7,
         numeroFactura: null,
       }),
-    ).toBe("Factura #7");
+    ).toBe("Sin número");
   });
 
   it("maps form values with required and optional fields", () => {
@@ -60,7 +60,7 @@ describe("commercial-invoice-form", () => {
     });
   });
 
-  it("validates required and numeric fields", () => {
+  it("allows an order without number and validates empresa and amount", () => {
     expect(
       toCommercialInvoiceRequest({
         numeroFactura: "",
@@ -69,7 +69,11 @@ describe("commercial-invoice-form", () => {
         estadoCobro: "PAGADO",
         montoTotal: "",
       }),
-    ).toMatch(/número de factura es obligatorio/i);
+    ).toMatchObject({
+      numeroFactura: null,
+      empresaId: 5,
+      montoTotal: null,
+    });
 
     expect(
       toCommercialInvoiceRequest({

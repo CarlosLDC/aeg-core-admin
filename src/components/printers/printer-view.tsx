@@ -633,7 +633,7 @@ export function PrinterView() {
               }
             />
             <DetailField
-              label="Factura comercial"
+              label="Orden"
               value={
                 printer.facturaComercialId != null &&
                 printer.facturaComercialEstadoCobro ? (
@@ -653,7 +653,7 @@ export function PrinterView() {
                     >
                       {printer.facturaComercialNumero?.trim()
                         ? printer.facturaComercialNumero
-                        : `Factura #${printer.facturaComercialId}`}
+                        : "Sin número"}
                     </TruncatedText>
                     <CommercialInvoiceCollectionStatusBadge
                       status={printer.facturaComercialEstadoCobro}
@@ -662,9 +662,9 @@ export function PrinterView() {
                 ) : printer.facturaComercialNumero?.trim() ? (
                   printer.facturaComercialNumero
                 ) : printer.facturaComercialId != null ? (
-                  `Factura #${printer.facturaComercialId}`
+                  "Sin número"
                 ) : (
-                  "Sin factura"
+                  "Sin orden"
                 )
               }
               mono={printer.facturaComercialId != null}
@@ -878,11 +878,13 @@ export function PrinterView() {
   async function handleAssignmentSubmit({
     distributorId,
     paid,
-    facturaComercialId,
+    assignmentPayments,
   }: {
     distributorId: number;
     paid: boolean;
-    facturaComercialId?: number | null;
+    assignmentPayments?: Parameters<
+      typeof printerToAssignmentRequest
+    >[3];
   }) {
     if (!printer || !canAssignInitialized) {
       toast.error(CATALOG_MODIFY_FORBIDDEN_MESSAGE);
@@ -901,7 +903,7 @@ export function PrinterView() {
         printer,
         distributorId,
         paid,
-        facturaComercialId,
+        assignmentPayments,
       );
       const updated = await updatePrinter(printer.id, body);
       setPrinter(updated);

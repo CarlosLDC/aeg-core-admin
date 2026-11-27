@@ -109,6 +109,7 @@ export function canAccessRoute(role: Role, pathname: string): boolean {
 /** Primera ruta del menú a la que el rol puede acceder (fallback tras denegar). */
 export function defaultPathForRole(role: Role): string {
   if (role === "SENIAT") return FISCAL_BOOK_ENTRY_PATH;
+  if (role === "FINANCE") return "/commercial-invoices";
 
   for (const item of mainNav) {
     if (item.disabled) continue;

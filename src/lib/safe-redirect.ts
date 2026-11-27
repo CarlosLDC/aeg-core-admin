@@ -20,6 +20,18 @@ export function postLoginRedirectPath(
   if (role === "SENIAT" || role === "TECHNICIAN" || role === "SERVICE_CENTER") {
     return FISCAL_BOOK_ENTRY_PATH;
   }
+  if (role === "FINANCE") {
+    const safe = getSafeRedirectPath(raw, "/commercial-invoices");
+    if (
+      safe === "/commercial-invoices" ||
+      safe.startsWith("/commercial-invoices/") ||
+      safe === "/commercial-payments" ||
+      safe.startsWith("/commercial-payments/")
+    ) {
+      return safe;
+    }
+    return "/commercial-invoices";
+  }
   return getSafeRedirectPath(raw);
 }
 

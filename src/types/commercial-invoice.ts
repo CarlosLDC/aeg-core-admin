@@ -23,7 +23,7 @@ export type CommercialInvoiceCollectionStatus =
 
 export type CommercialInvoiceResponse = {
   id: number;
-  numeroFactura: string;
+  numeroFactura: string | null;
   empresaId: number | null;
   empresaNombre: string | null;
   empresaRif: string | null;
@@ -40,7 +40,7 @@ export type CommercialInvoiceResponse = {
 };
 
 export type CommercialInvoiceRequest = {
-  numeroFactura: string;
+  numeroFactura?: string | null;
   empresaId: number;
   modalidad: CommercialInvoiceModality;
   estadoCobro: CommercialInvoiceCollectionStatus;

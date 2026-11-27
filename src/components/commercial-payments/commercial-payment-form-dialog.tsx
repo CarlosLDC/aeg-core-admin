@@ -59,7 +59,7 @@ const STEP_ICONS = {
 function stepSubtitle(step: WizardStep): string {
   switch (step) {
     case 1:
-      return "Factura comercial asociada y método / banco utilizado.";
+      return "Orden asociada y método / banco utilizado.";
     case 2:
       return "Monto abonado, número de referencia y cuenta destino.";
   }
@@ -252,7 +252,7 @@ function CommercialPaymentFormDialogContent({
                 <legend className="sr-only">Factura y método</legend>
 
                 <div className="block">
-                  <FieldLabel required>Factura comercial</FieldLabel>
+                  <FieldLabel required>Orden</FieldLabel>
                   {invoiceOptions.length > 0 ? (
                     <SearchableSelect
                       value={form.facturaComercialId}
@@ -272,9 +272,9 @@ function CommercialPaymentFormDialogContent({
                       loading={invoicesLoading}
                       required
                       preloadOptions
-                      emptyLabel="Seleccionar factura comercial"
+                      emptyLabel="Seleccionar orden"
                       searchPlaceholder="Buscar por N° factura o empresa…"
-                      modalTitle="Factura comercial"
+                      modalTitle="Orden"
                     />
                   ) : (
                     <input
@@ -295,7 +295,7 @@ function CommercialPaymentFormDialogContent({
                         }));
                       }}
                       className={cn(inputClass, "font-mono")}
-                      placeholder="ID de factura comercial"
+                      placeholder="ID de orden"
                     />
                   )}
                   {fieldErrors.facturaComercialId ? (

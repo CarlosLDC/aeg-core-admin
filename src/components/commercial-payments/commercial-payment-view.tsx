@@ -183,8 +183,8 @@ export function CommercialPaymentView() {
         }
         backLabel={
           payment
-            ? "Volver a la factura comercial"
-            : "Volver a facturas comerciales"
+            ? "Volver a la orden"
+            : "Volver a órdenes"
         }
         title={
           payment
@@ -214,7 +214,7 @@ export function CommercialPaymentView() {
         {payment && (
           <DetailSection title="Pago comercial" layout="quad">
             <DetailField
-              label="Factura comercial"
+              label="Orden"
               value={invoiceLabel}
               href={commercialInvoicePath(payment.facturaComercialId)}
               mono

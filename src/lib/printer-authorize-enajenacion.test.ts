@@ -128,7 +128,7 @@ describe("printer-authorize-enajenacion", () => {
         selectedInvoiceId: "",
         newInvoice: emptyAuthorizeNewInvoiceForm(),
       }),
-    ).toMatch(/factura comercial/i);
+    ).toMatch(/orden/i);
 
     expect(
       buildAuthorizeEnajenacionPayload({
@@ -154,7 +154,13 @@ describe("printer-authorize-enajenacion", () => {
         selectedInvoiceId: "",
         newInvoice: emptyAuthorizeNewInvoiceForm(7),
       }),
-    ).toMatch(/número de factura es obligatorio/i);
+    ).toMatchObject({
+      creditInstallments: 3,
+      newCommercialInvoice: expect.objectContaining({
+        numeroFactura: null,
+        empresaId: 7,
+      }),
+    });
 
     expect(
       buildAuthorizeEnajenacionPayload({

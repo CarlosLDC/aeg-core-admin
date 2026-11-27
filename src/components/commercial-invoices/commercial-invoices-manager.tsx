@@ -246,13 +246,13 @@ export function CommercialInvoicesManager() {
       if (dialog === "create") {
         const created = await createCommercialInvoice(bodyOrError);
         toast.success(
-          `Factura comercial ${formatCommercialInvoiceTitle(created)} creada.`,
+          `Orden ${formatCommercialInvoiceTitle(created)} creada.`,
           { href: commercialInvoicePath(created.id) },
         );
       } else if (selected) {
         const updated = await updateCommercialInvoice(selected.id, bodyOrError);
         toast.success(
-          `Factura comercial ${formatCommercialInvoiceTitle(updated)} actualizada.`,
+          `Orden ${formatCommercialInvoiceTitle(updated)} actualizada.`,
           { href: commercialInvoicePath(updated.id) },
         );
       }
@@ -280,7 +280,7 @@ export function CommercialInvoicesManager() {
     if (
       !(await confirm({
         title: "Confirmar",
-        message: `¿Eliminar la factura comercial ${label}? También se eliminarán sus pagos comerciales asociados.${printerWarning}`,
+        message: `¿Eliminar la orden ${label}? También se eliminarán sus pagos comerciales asociados.${printerWarning}`,
         destructive: true,
         requireConfirmationText: label,
       }))
@@ -290,7 +290,7 @@ export function CommercialInvoicesManager() {
     setDeletingId(invoice.id);
     try {
       await deleteCommercialInvoice(invoice.id);
-      toast.success("Factura comercial eliminada.");
+      toast.success("Orden eliminada.");
       await reloadInvoices();
     } catch (err) {
       reportListTableError({
@@ -318,7 +318,7 @@ export function CommercialInvoicesManager() {
               )}
             >
               <Plus className="size-4" />
-              Nueva factura comercial
+              Nueva orden
             </button>
           ) : undefined
         }
@@ -337,10 +337,10 @@ export function CommercialInvoicesManager() {
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-16 text-muted">
             <Loader2 className="size-5 animate-spin" />
-            Cargando facturas comerciales…
+            Cargando órdenes…
           </div>
         ) : invoices.length === 0 ? (
-          <EmptyState title="No hay facturas comerciales registradas." />
+          <EmptyState title="No hay órdenes registradas." />
         ) : (
           <>
             <DataTableToolbar

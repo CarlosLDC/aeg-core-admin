@@ -57,36 +57,41 @@ export type UserFormValues = {
   enabled: boolean;
 };
 
-type UserRoleCategory = "ADMIN" | "OPERATIONAL" | "SENIAT";
+type UserRoleCategory = "ADMIN" | "OPERATIONAL" | "FINANCE" | "SENIAT";
 type OperationalAssignment = "DISTRIBUTOR" | "TECHNICIAN";
 
 const USER_FORM_ROLE_CATEGORIES: UserRoleCategory[] = [
   "OPERATIONAL",
   "ADMIN",
+  "FINANCE",
   "SENIAT",
 ];
 
 const USER_ROLE_CATEGORY_LABELS: Record<UserRoleCategory, string> = {
   OPERATIONAL: OPERATIONAL_ROLE_LABEL,
   ADMIN: ROLE_LABELS.ADMIN,
+  FINANCE: ROLE_LABELS.FINANCE,
   SENIAT: ROLE_LABELS.SENIAT,
 };
 
 const USER_ROLE_CATEGORY_COMPACT_LABELS: Record<UserRoleCategory, string> = {
   OPERATIONAL: OPERATIONAL_ROLE_COMPACT_LABEL,
   ADMIN: "Admin",
+  FINANCE: "Finanzas",
   SENIAT: "SENIAT",
 };
 
 const USER_ROLE_CATEGORY_TONE: Record<UserRoleCategory, ToggleTone> = {
   OPERATIONAL: "teal",
   ADMIN: USER_ROLE_TOGGLE_TONE.ADMIN,
+  FINANCE: USER_ROLE_TOGGLE_TONE.FINANCE,
   SENIAT: USER_ROLE_TOGGLE_TONE.SENIAT,
 };
 
 const USER_ROLE_CATEGORY_DESCRIPTION: Record<UserRoleCategory, string> = {
   OPERATIONAL: OPERATIONAL_ROLE_DESCRIPTION,
   ADMIN: ROLE_DESCRIPTIONS.ADMIN,
+  FINANCE: ROLE_DESCRIPTIONS.FINANCE,
   SENIAT: ROLE_DESCRIPTIONS.SENIAT,
 };
 
@@ -135,7 +140,7 @@ const STEP_ICONS = {
 const LAST_WIZARD_STEP: WizardStep = 2;
 
 function roleCategory(role: Role): UserRoleCategory {
-  if (role === "ADMIN" || role === "SENIAT") return role;
+  if (role === "ADMIN" || role === "SENIAT" || role === "FINANCE") return role;
   return "OPERATIONAL";
 }
 
@@ -228,10 +233,10 @@ export function UserFormDialog({
           branchId: "",
         };
       }
-      if (category === "SENIAT") {
+      if (category === "SENIAT" || category === "FINANCE") {
         return {
           ...f,
-          role: "SENIAT",
+          role: category,
           distributorId: "",
           branchId: "",
           nationalId: "",
@@ -598,7 +603,9 @@ export function UserFormDialog({
         </>
       ) : (
         <p className="rounded-lg border border-border bg-foreground/[0.02] px-3 py-3 text-sm text-muted">
-          El rol SENIAT no requiere vinculación a distribuidora ni sucursal.
+          {form.role === "FINANCE"
+            ? "El rol Finanzas no requiere vinculación a distribuidora ni sucursal. Su acceso se limita a órdenes y pagos."
+            : "El rol SENIAT no requiere vinculación a distribuidora ni sucursal."}
         </p>
       )}
     </div>

@@ -24,6 +24,7 @@ const ROLE_CONTEXT: Record<Role, string> = {
     "Tu inventario de impresoras y empresas en tu distribuidora; inspecciones y firma de servicios en el Libro fiscal.",
   SERVICE_CENTER: "Operaciones de campo en el libro fiscal.",
   SENIAT: "Consulta del libro fiscal para auditoría tributaria.",
+  FINANCE: "Órdenes y pagos comerciales.",
 };
 
 export function DashboardWelcome({

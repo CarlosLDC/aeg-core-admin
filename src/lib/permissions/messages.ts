@@ -20,8 +20,8 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   seniatExtract: "extracción SENIAT",
   uploads: "documentos adjuntos",
   software: "software",
-  commercialInvoices: "facturas comerciales",
-  commercialPayments: "pagos comerciales",
+  commercialInvoices: "órdenes",
+  commercialPayments: "pagos",
 };
 
 export const ACTION_LABELS: Record<Action, string> = {
@@ -47,6 +47,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   TECHNICIAN: "Técnico",
   SERVICE_CENTER: "Centro de servicio",
   SENIAT: "Auditor SENIAT",
+  FINANCE: "Finanzas",
 };
 
 export const ROLE_ABBREV: Record<Role, string> = {
@@ -55,6 +56,7 @@ export const ROLE_ABBREV: Record<Role, string> = {
   TECHNICIAN: "TEC",
   SERVICE_CENTER: "CS",
   SENIAT: "SEN",
+  FINANCE: "FIN",
 };
 
 export function forbiddenMessage(

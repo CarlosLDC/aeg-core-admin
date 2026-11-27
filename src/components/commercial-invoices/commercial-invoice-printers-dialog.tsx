@@ -146,7 +146,7 @@ function CommercialInvoicePrintersDialogContent({
         reassigned.length > 6 ? ` y ${reassigned.length - 6} más` : "";
       const ok = await confirm({
         title: "Reasignar impresoras",
-        message: `Las siguientes impresoras ya pertenecen a otra factura comercial y se moverán a ${formatCommercialInvoiceTitle(invoice)}: ${summary}${extra}. ¿Continuar?`,
+        message: `Las siguientes impresoras ya pertenecen a otra orden y se moverán a ${formatCommercialInvoiceTitle(invoice)}: ${summary}${extra}. ¿Continuar?`,
         confirmLabel: "Reasignar y guardar",
         destructive: true,
       });

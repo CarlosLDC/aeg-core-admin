@@ -19,6 +19,7 @@ export function canAccessPanel(role: Role): boolean {
 
 export function userPortalAccessLabel(role: Role): string {
   if (role === "SENIAT") return "Solo libro fiscal";
+  if (role === "FINANCE") return "Panel (órdenes y pagos)";
   if (isServiceCenterStaffRole(role)) {
     return "Solo libro fiscal (operaciones de campo)";
   }
@@ -55,6 +56,7 @@ export function userFiscalBookWriteLabel(role: Role): string {
     return "Servicios técnicos e inspecciones";
   }
   if (role === "DISTRIBUTOR") return "Inspecciones anuales en alcance";
+  if (role === "FINANCE") return "Sin acceso al libro fiscal";
   return "Escritura en alcance";
 }
 
@@ -64,6 +66,9 @@ export function userCreateSuccessMessage(name: string, role: Role): string {
   }
   if (isServiceCenterStaffRole(role)) {
     return `Usuario "${name}" creado. Ya puede iniciar sesión en el libro fiscal para registrar visitas.`;
+  }
+  if (role === "FINANCE") {
+    return `Usuario "${name}" creado. Ya puede iniciar sesión en el panel para gestionar órdenes y pagos.`;
   }
   return `Usuario "${name}" creado. Ya puede iniciar sesión en el panel y en el libro fiscal.`;
 }

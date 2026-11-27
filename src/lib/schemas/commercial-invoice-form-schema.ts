@@ -9,7 +9,6 @@ export const commercialInvoiceFormSchema = z.object({
   numeroFactura: z
     .string()
     .trim()
-    .min(1, "El número de factura es obligatorio.")
     .max(30, "Máximo 30 caracteres."),
   empresaId: z
     .string()

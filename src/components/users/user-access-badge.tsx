@@ -8,6 +8,7 @@ const ACCESS_STYLES: Record<Role, string> = {
   TECHNICIAN: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
   SERVICE_CENTER: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
   SENIAT: "bg-slate-500/10 text-slate-700 dark:text-slate-300",
+  FINANCE: "bg-amber-500/10 text-amber-800 dark:text-amber-200",
 };
 
 export function UserAccessBadge({ role }: { role: Role }) {

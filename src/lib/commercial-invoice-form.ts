@@ -40,7 +40,7 @@ export function formatCommercialInvoiceTitle(invoice: {
   if (numero) {
     return numero;
   }
-  return `Factura #${invoice.id}`;
+  return "Sin número";
 }
 
 export const parseInvoiceAmount = parseNonNegativeDecimal;
@@ -82,11 +82,8 @@ export function toCommercialInvoiceRequest(
   values: CommercialInvoiceFormValues,
 ): CommercialInvoiceRequest | string {
   const numeroFactura = values.numeroFactura.trim();
-  if (!numeroFactura) {
-    return "El número de factura es obligatorio.";
-  }
   if (numeroFactura.length > 30) {
-    return "El número de factura no puede superar los 30 caracteres.";
+    return "El número de orden no puede superar los 30 caracteres.";
   }
 
   const empresaId = parseOptionalId(values.empresaId);
@@ -107,7 +104,7 @@ export function toCommercialInvoiceRequest(
   }
 
   return {
-    numeroFactura,
+    numeroFactura: numeroFactura || null,
     empresaId,
     modalidad: values.modalidad,
     estadoCobro: values.estadoCobro,

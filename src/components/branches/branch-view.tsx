@@ -571,7 +571,7 @@ export function BranchView() {
     if (canReadCommercialInvoices) {
       steps.push({
         id: "commercial-invoices",
-        label: "Facturas comerciales",
+        label: "Órdenes",
         content: <BranchCommercialInvoicesTable branch={branch} />,
       });
     }
@@ -617,7 +617,7 @@ export function BranchView() {
     if (canReadCommercialInvoices) {
       steps.push({
         id: "commercial-invoices",
-        label: "Facturas comerciales",
+        label: "Órdenes",
         content: <BranchCommercialInvoicesTable branch={branch} />,
       });
     }

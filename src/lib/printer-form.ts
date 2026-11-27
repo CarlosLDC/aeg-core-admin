@@ -1,3 +1,4 @@
+import type { AssignmentPaymentPayload } from "@/lib/printer-assignment-wizard";
 import type { PrinterModelResponse } from "@/types/printer-model";
 import type {
   PrinterRequest,
@@ -136,7 +137,7 @@ export function printerToAssignmentRequest(
   printer: PrinterResponse,
   distributorId: number,
   paid: boolean = printer.paid,
-  facturaComercialId?: number | null,
+  assignmentPayments?: AssignmentPaymentPayload[],
 ): PrinterRequest {
   return {
     modelId: printer.modelId,
@@ -152,7 +153,9 @@ export function printerToAssignmentRequest(
     macAddress: printer.macAddress,
     status: paid ? "asignada" : "en_consignacion",
     boxId: printer.boxId ?? null,
-    ...(facturaComercialId != null ? { facturaComercialId } : {}),
+    ...(assignmentPayments && assignmentPayments.length > 0
+      ? { assignmentPayments }
+      : {}),
   };
 }
 

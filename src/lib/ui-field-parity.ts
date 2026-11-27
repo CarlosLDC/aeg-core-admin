@@ -490,8 +490,8 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
       "src/components/commercial-invoices/commercial-invoice-view.tsx",
     fields: [
       {
-        formLabels: ["Número de factura"],
-        viewLabels: ["Número de factura"],
+        formLabels: ["Número de orden"],
+        viewLabels: ["Número de orden"],
         formBindings: ["form.numeroFactura"],
         viewBindings: ["invoice.numeroFactura"],
       },
@@ -532,8 +532,8 @@ export const RESOURCE_FIELD_PARITY_SPECS: ResourceFieldParitySpec[] = [
       "src/components/commercial-payments/commercial-payment-view.tsx",
     fields: [
       {
-        formLabels: ["Factura comercial"],
-        viewLabels: ["Factura comercial"],
+        formLabels: ["Orden"],
+        viewLabels: ["Orden"],
         formBindings: ["form.facturaComercialId"],
         viewBindings: ["payment.facturaComercialId"],
       },

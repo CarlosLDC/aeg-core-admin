@@ -65,7 +65,7 @@ export function toCommercialPaymentRequest(
 ): CommercialPaymentRequest | string {
   const invoiceId = Number(values.facturaComercialId.trim());
   if (!values.facturaComercialId.trim() || !Number.isInteger(invoiceId) || invoiceId <= 0) {
-    return "Selecciona una factura comercial válida.";
+    return "Selecciona una orden válida.";
   }
   if (!COMMERCIAL_PAYMENT_METHODS.includes(values.metodoBanco)) {
     return "Método / banco no válido.";

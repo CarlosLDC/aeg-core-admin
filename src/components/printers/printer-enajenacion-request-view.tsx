@@ -433,7 +433,7 @@ export function PrinterEnajenacionRequestView({
 
           {canReview ? (
             <>
-              <DetailSection title="Factura comercial" layout="quad">
+              <DetailSection title="Orden" layout="quad">
                 <div className="sm:col-span-4 space-y-4">
                   <SegmentedToggle
                     value={invoiceMode}
@@ -442,7 +442,7 @@ export function PrinterEnajenacionRequestView({
                       setFormError(null);
                     }}
                     disabled={saving}
-                    ariaLabel="Origen de la factura comercial"
+                    ariaLabel="Origen de la orden"
                     options={[
                       { value: "existing", label: "Seleccionar existente" },
                       { value: "new", label: "Crear nueva" },
@@ -451,7 +451,7 @@ export function PrinterEnajenacionRequestView({
 
                   {invoiceMode === "existing" ? (
                     <div>
-                      <FieldLabel required>Factura comercial</FieldLabel>
+                      <FieldLabel required>Orden</FieldLabel>
                       <SearchableSelect
                         required
                         value={selectedInvoiceId}
@@ -462,9 +462,9 @@ export function PrinterEnajenacionRequestView({
                         options={invoiceOptions}
                         disabled={saving || catalogLoading}
                         loading={catalogLoading}
-                        emptyLabel="Seleccionar factura comercial…"
+                        emptyLabel="Seleccionar orden…"
                         searchPlaceholder="Buscar por N° factura, empresa o RIF…"
-                        modalTitle="Seleccionar factura comercial"
+                        modalTitle="Seleccionar orden"
                         preloadOptions
                         mono
                       />
@@ -473,10 +473,9 @@ export function PrinterEnajenacionRequestView({
                     <div className="space-y-3.5">
                       <div className="grid gap-3.5 sm:grid-cols-2">
                         <label className="block">
-                          <FieldLabel required>Número de factura</FieldLabel>
+                          <FieldLabel>Número de orden</FieldLabel>
                           <input
                             type="text"
-                            required
                             maxLength={30}
                             value={newInvoice.numeroFactura}
                             disabled={saving}

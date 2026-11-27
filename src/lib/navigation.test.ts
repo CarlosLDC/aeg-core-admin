@@ -66,8 +66,8 @@ describe("navSectionsForRole", () => {
     expect(items.some((i) => i.title === "Precintos fiscales")).toBe(false);
     expect(items.some((i) => i.title === "Servicio técnico")).toBe(false);
     expect(items.some((i) => i.title === "Inspección anual")).toBe(false);
-    expect(items.some((i) => i.title === "Facturas comerciales")).toBe(false);
-    expect(items.some((i) => i.title === "Pagos comerciales")).toBe(false);
+    expect(items.some((i) => i.title === "Órdenes")).toBe(false);
+    expect(items.some((i) => i.title === "Pagos")).toBe(false);
 
     const adminItems = navItemsForRole("ADMIN");
     expect(adminItems.some((i) => i.title === "Modelos fiscales")).toBe(true);
@@ -77,8 +77,8 @@ describe("navSectionsForRole", () => {
     expect(adminItems.some((i) => i.title === "Precintos fiscales")).toBe(true);
     expect(adminItems.some((i) => i.title === "Servicio técnico")).toBe(true);
     expect(adminItems.some((i) => i.title === "Inspección anual")).toBe(true);
-    expect(adminItems.some((i) => i.title === "Facturas comerciales")).toBe(true);
-    expect(adminItems.some((i) => i.title === "Pagos comerciales")).toBe(false);
+    expect(adminItems.some((i) => i.title === "Órdenes")).toBe(true);
+    expect(adminItems.some((i) => i.title === "Pagos")).toBe(true);
   });
 
   it("shows Libro fiscal for DISTRIBUTOR via admin handoff path", () => {
@@ -93,10 +93,19 @@ describe("navSectionsForRole", () => {
     );
   });
 
-  it("shows Tools for every role", () => {
+  it("shows Tools for every role except Finanzas", () => {
     for (const role of ROLES) {
-      expect(navItemsForRole(role).some((i) => i.href === "/tools")).toBe(true);
+      expect(navItemsForRole(role).some((i) => i.href === "/tools")).toBe(
+        role !== "FINANCE",
+      );
     }
+  });
+
+  it("limits Finanzas to órdenes and pagos", () => {
+    expect(navItemsForRole("FINANCE").map((item) => item.href)).toEqual([
+      "/commercial-invoices",
+      "/commercial-payments",
+    ]);
   });
 
   it("hides panel navigation from service center technicians except Tools", () => {

@@ -242,7 +242,7 @@ export function CompanyView() {
                       : "text-muted hover:text-foreground",
                   )}
                 >
-                  Facturas comerciales
+                  Órdenes
                 </button>
               ) : null}
             </div>

@@ -44,10 +44,22 @@ describe("printerToAssignmentRequest", () => {
     expect(body.facturaComercialId).toBeUndefined();
   });
 
-  it("includes facturaComercialId when explicitly selected on assignment", () => {
-    const body = printerToAssignmentRequest(assignedPrinter, 99, false, 77);
+  it("includes assignment payments when provided", () => {
+    const body = printerToAssignmentRequest(assignedPrinter, 99, false, [
+      {
+        metodoBanco: "BNC",
+        referencia: "REF-1",
+        monto: 10,
+        cuentaDestino: null,
+        fechaPago: "2026-11-27",
+        notas: null,
+      },
+    ]);
     expect(body.status).toBe("en_consignacion");
-    expect(body.facturaComercialId).toBe(77);
+    expect(body.assignmentPayments).toEqual([
+      expect.objectContaining({ metodoBanco: "BNC", monto: 10 }),
+    ]);
+    expect(body.facturaComercialId).toBeUndefined();
   });
 });
 

@@ -5,8 +5,8 @@ import { CommercialInvoiceView } from "@/components/commercial-invoices/commerci
 export default function CommercialInvoiceDetailPage() {
   return (
     <AdminShell
-      title="Factura comercial"
-      description="Detalle de factura comercial y pagos asociados"
+      title="Orden"
+      description="Detalle de orden y pagos asociados"
     >
       <RoleGuard path="/commercial-invoices">
         <CommercialInvoiceView />

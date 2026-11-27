@@ -155,13 +155,13 @@ function CommercialInvoiceFormDialogContent({
                 className="text-lg font-semibold text-card-foreground"
               >
                 {mode === "create"
-                  ? "Nueva factura comercial"
-                  : "Editar factura comercial"}
+                  ? "Nueva orden"
+                  : "Editar orden"}
               </h2>
               <p className="mt-1 text-sm text-muted">
                 {mode === "create"
-                  ? "Registra número de factura, empresa, modalidad y estado de cobro."
-                  : "Actualiza número de factura, empresa, modalidad y estado de cobro."}
+                  ? "Registra empresa, modalidad y estado de cobro. El número y el monto pueden completarlos Finanzas después."
+                  : "Actualiza número de orden, empresa, modalidad, estado de cobro y monto."}
               </p>
             </div>
             <button
@@ -193,15 +193,14 @@ function CommercialInvoiceFormDialogContent({
 
             <fieldset className="space-y-4 rounded-xl border border-border p-4">
               <legend className="px-1 text-sm font-semibold text-card-foreground">
-                Datos de la factura
+                Datos de la orden
               </legend>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block">
-                  <FieldLabel required>Número de factura</FieldLabel>
+                  <FieldLabel>Número de orden</FieldLabel>
                   <input
                     type="text"
-                    required
                     maxLength={30}
                     value={form.numeroFactura}
                     disabled={saving}

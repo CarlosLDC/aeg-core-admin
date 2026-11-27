@@ -17,7 +17,7 @@ describe("commercial-payment-form", () => {
 
   it("validates and transforms form values to request payload", () => {
     const invalid = toCommercialPaymentRequest(emptyCommercialPaymentForm());
-    expect(invalid).toBe("Selecciona una factura comercial válida.");
+    expect(invalid).toBe("Selecciona una orden válida.");
 
     const valid = toCommercialPaymentRequest({
       facturaComercialId: "15",

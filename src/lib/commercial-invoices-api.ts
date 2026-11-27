@@ -78,11 +78,11 @@ export function getCommercialInvoicesErrorMessage(
 ): string {
   if (error instanceof ApiError) {
     if (error.status === 403) {
-      return "No tienes permiso para gestionar facturas comerciales.";
+      return "No tienes permiso para gestionar órdenes.";
     }
-    if (error.status === 404) return "Factura comercial no encontrada.";
+    if (error.status === 404) return "Orden no encontrada.";
     if (error.status === 400) {
-      return error.message || "Datos de la factura comercial no válidos.";
+      return error.message || "Datos de la orden no válidos.";
     }
     return error.message;
   }

@@ -1,123 +1,123 @@
-import type {
-  CommercialInvoiceFormValues,
-  CommercialInvoiceResponse,
-} from "@/types/commercial-invoice";
-import type { CompanyResponse } from "@/types/company";
+import { parsePaymentAmount } from "@/lib/commercial-payment-form";
+import {
+  COMMERCIAL_PAYMENT_METHODS,
+  type CommercialPaymentMethod,
+} from "@/types/commercial-payment";
 
 export type AssignmentWizardStep = 1 | 2;
 
-export type AssignmentInvoiceMode = "existing" | "new";
+export type AssignmentPaymentDraft = {
+  key: string;
+  mode?: "choose" | "manual";
+  metodoBanco: CommercialPaymentMethod;
+  referencia: string;
+  monto: string;
+  cuentaDestino: string;
+  fechaPago: string;
+  notas: string;
+};
+
+export type AssignmentPaymentPayload = {
+  metodoBanco: CommercialPaymentMethod;
+  referencia: string | null;
+  monto: number | null;
+  cuentaDestino: string | null;
+  fechaPago: string | null;
+  notas: string | null;
+};
 
 /**
  * Steps for the 2-step printer assignment wizard.
  */
-export function getAssignmentWizardSteps(
-  showCommercialInvoice: boolean,
-): { step: AssignmentWizardStep; label: string }[] {
+export function getAssignmentWizardSteps(): {
+  step: AssignmentWizardStep;
+  label: string;
+}[] {
   return [
     { step: 1, label: "Distribuidora" },
-    { step: 2, label: showCommercialInvoice ? "Pago y factura" : "Pago" },
+    { step: 2, label: "Pago" },
   ];
 }
 
 /**
  * Contextual subtitle shown below the modal title for each wizard step.
  */
-export function resolveAssignmentStepSubtitle(
-  step: AssignmentWizardStep,
-  showCommercialInvoice: boolean,
-): string {
+export function resolveAssignmentStepSubtitle(step: AssignmentWizardStep): string {
   if (step === 1) {
     return "Selecciona la distribuidora a la que asignarás esta impresora.";
   }
-  return showCommercialInvoice
-    ? "Indica el estado de pago y vincula o crea una factura comercial (opcional)."
-    : "Indica si la impresora ya fue pagada antes de confirmar la asignación.";
+  return "Indica si ya fue pagada y, si aplica, registra uno o más pagos. La orden se crea sin número ni monto.";
 }
 
 /**
  * Primary footer submit label for the active assignment wizard step.
  */
-export function resolveAssignmentSubmitLabel(
-  step: AssignmentWizardStep,
-): string {
+export function resolveAssignmentSubmitLabel(step: AssignmentWizardStep): string {
   return step === 1 ? "Siguiente" : "Asignar impresora";
 }
 
 /**
- * Resolves the company ID matching a distributor RIF (case-insensitive).
+ * Explains the printer status and the order that will be created.
  */
-export function resolveCompanyIdForDistributorRif(
-  distributorRif: string | undefined,
-  companies: Pick<CompanyResponse, "id" | "rif">[],
-): string {
-  const normalized = distributorRif?.trim().toUpperCase() ?? "";
-  if (!normalized) return "";
-  const match = companies.find(
-    (company) => (company.rif ?? "").trim().toUpperCase() === normalized,
-  );
-  return match ? String(match.id) : "";
+export function assignmentOutcomeHint(paid: boolean, paymentCount: number): string {
+  if (paid) {
+    return "La impresora quedará Asignada. Se creará una orden de venta pagada, sin número ni monto; Finanzas los completará después.";
+  }
+  if (paymentCount > 0) {
+    return "Con estos abonos la impresora queda en consignación y la orden queda a crédito (venta con cobro parcial). Finanzas completará el número y el monto.";
+  }
+  return "La impresora quedará en consignación. Se creará una orden sin número ni monto; Finanzas los completará después.";
+}
+
+function trimToNull(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 /**
- * Builds default values for creating a commercial invoice inline during assignment.
+ * Validates payment drafts captured during assignment.
+ * An empty list is valid.
  */
-export function defaultAssignmentNewInvoiceForm(
-  paid: boolean,
-  defaultEmpresaId?: string,
-): CommercialInvoiceFormValues {
-  return {
-    numeroFactura: "",
-    empresaId: defaultEmpresaId ?? "",
-    modalidad: paid ? "VENTA" : "CONSIGNACION",
-    estadoCobro: paid ? "PAGADO" : "PENDIENTE_PAGO",
-    montoTotal: "",
-  };
-}
-
-/**
- * Syncs modality and collection status defaults when payment status changes,
- * preserving fields already modified by the user.
- */
-export function syncNewInvoiceDefaultsForPaid(
-  current: CommercialInvoiceFormValues,
-  paid: boolean,
-  touched: { modalidad: boolean; estadoCobro: boolean },
-): CommercialInvoiceFormValues {
-  const defaults = defaultAssignmentNewInvoiceForm(paid, current.empresaId);
-  return {
-    ...current,
-    modalidad: touched.modalidad ? current.modalidad : defaults.modalidad,
-    estadoCobro: touched.estadoCobro
-      ? current.estadoCobro
-      : defaults.estadoCobro,
-  };
-}
-
-/**
- * Sorts commercial invoices prioritizing the currently linked invoice,
- * then invoices matching the selected distributor RIF, newest first.
- */
-export function sortCommercialInvoicesForAssignment(
-  invoices: CommercialInvoiceResponse[],
-  currentInvoiceId: number | null | undefined,
-  distributorRif: string | undefined,
-): CommercialInvoiceResponse[] {
-  const distRif = distributorRif?.trim().toUpperCase() ?? "";
-
-  return [...invoices].sort((a, b) => {
-    const aLinked = currentInvoiceId != null && a.id === currentInvoiceId ? 0 : 1;
-    const bLinked = currentInvoiceId != null && b.id === currentInvoiceId ? 0 : 1;
-    if (aLinked !== bLinked) return aLinked - bLinked;
-
-    if (distRif) {
-      const aMatch =
-        (a.empresaRif ?? "").trim().toUpperCase() === distRif ? 0 : 1;
-      const bMatch =
-        (b.empresaRif ?? "").trim().toUpperCase() === distRif ? 0 : 1;
-      if (aMatch !== bMatch) return aMatch - bMatch;
+export function assignmentPaymentsToRequest(
+  drafts: AssignmentPaymentDraft[],
+): AssignmentPaymentPayload[] | string {
+  const payloads: AssignmentPaymentPayload[] = [];
+  for (const [index, draft] of drafts.entries()) {
+    const label = `Pago ${index + 1}`;
+    if (draft.mode === "choose") {
+      return `${label}: escanea el comprobante o llena los datos.`;
     }
-
-    return Date.parse(b.createdAt) - Date.parse(a.createdAt);
-  });
+    if (!COMMERCIAL_PAYMENT_METHODS.includes(draft.metodoBanco)) {
+      return `${label}: método / banco no válido.`;
+    }
+    const parsedMonto = parsePaymentAmount(draft.monto);
+    if (parsedMonto === "invalid") {
+      return `${label}: el monto debe ser un número mayor o igual a 0.`;
+    }
+    const referencia = trimToNull(draft.referencia);
+    if (referencia && referencia.length > 100) {
+      return `${label}: la referencia no puede superar los 100 caracteres.`;
+    }
+    const cuentaDestino = trimToNull(draft.cuentaDestino);
+    if (cuentaDestino && cuentaDestino.length > 100) {
+      return `${label}: la cuenta destino no puede superar los 100 caracteres.`;
+    }
+    const fechaPago = trimToNull(draft.fechaPago);
+    if (fechaPago && !/^\d{4}-\d{2}-\d{2}$/.test(fechaPago)) {
+      return `${label}: la fecha de pago no es válida.`;
+    }
+    const notas = trimToNull(draft.notas);
+    if (notas && notas.length > 500) {
+      return `${label}: las notas no pueden superar los 500 caracteres.`;
+    }
+    payloads.push({
+      metodoBanco: draft.metodoBanco,
+      referencia,
+      monto: parsedMonto,
+      cuentaDestino,
+      fechaPago,
+      notas,
+    });
+  }
+  return payloads;
 }

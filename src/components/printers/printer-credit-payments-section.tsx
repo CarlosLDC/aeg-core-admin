@@ -71,7 +71,7 @@ export function PrinterCreditPaymentsSection({
   );
   const [savingPlan, setSavingPlan] = useState(false);
 
-  // Pago comercial unificado (cuando hay factura comercial vinculada)
+  // Pago comercial unificado (cuando hay orden vinculada)
   const [metodoBanco, setMetodoBanco] = useState<CommercialPaymentMethod>("BNC");
   const [commercialAmount, setCommercialAmount] = useState("");
   const [commercialPaymentDate, setCommercialPaymentDate] = useState(todayIsoDate);
@@ -82,7 +82,7 @@ export function PrinterCreditPaymentsSection({
   const [savingCommercialPayment, setSavingCommercialPayment] = useState(false);
   const [markingPaid, setMarkingPaid] = useState(false);
 
-  // Pago legacy por impresora (solo cuando no hay factura comercial vinculada)
+  // Pago legacy por impresora (solo cuando no hay orden vinculada)
   const [amount, setAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState(todayIsoDate);
   const [reference, setReference] = useState("");
@@ -382,7 +382,7 @@ export function PrinterCreditPaymentsSection({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
               <h3 className="text-sm font-semibold text-card-foreground">
-                Factura comercial vinculada
+                Orden vinculada
               </h3>
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 {isAdmin ? (
@@ -437,13 +437,13 @@ export function PrinterCreditPaymentsSection({
         </section>
       ) : isAdmin ? (
         <p className="rounded-lg border border-border bg-foreground/[0.02] px-4 py-3 text-xs text-muted">
-          Esta impresora aún no tiene una factura comercial vinculada. Puedes
+          Esta impresora aún no tiene una orden vinculada. Puedes
           asociarla desde{" "}
           <Link
             href={commercialInvoicesListPath}
             className="font-medium text-accent hover:underline"
           >
-            Facturas comerciales
+            Órdenes
           </Link>{" "}
           para unificar sus pagos.
         </p>
@@ -452,7 +452,7 @@ export function PrinterCreditPaymentsSection({
       <DetailSection title="Plan de cuotas a crédito" layout="quad">
         <p className="sm:col-span-4 text-xs text-muted">
           {hasInvoice
-            ? "Seguimiento de cuotas pactadas y pagos registrados en la factura comercial."
+            ? "Seguimiento de cuotas pactadas y pagos registrados en la orden."
             : "Seguimiento de cuotas pactadas y saldo acumulado para esta impresora."}
         </p>
         <DetailField
@@ -580,7 +580,7 @@ export function PrinterCreditPaymentsSection({
           {isAdmin ? (
             <DetailSection title="Registrar pago comercial">
               <p className="sm:col-span-2 text-xs text-muted">
-                El pago se registrará en la factura comercial vinculada.
+                El pago se registrará en la orden vinculada.
               </p>
               <form
                 onSubmit={(e) => void handleRegisterCommercialPayment(e)}

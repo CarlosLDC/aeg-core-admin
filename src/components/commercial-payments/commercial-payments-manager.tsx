@@ -405,7 +405,7 @@ export function CommercialPaymentsManager() {
                 },
                 {
                   id: "facturaComercial",
-                  label: "Factura comercial",
+                  label: "Orden",
                   value: invoiceFilter,
                   onChange: setInvoiceFilter,
                   options: invoiceFilterOptions,
@@ -449,7 +449,7 @@ export function CommercialPaymentsManager() {
                           }
                         >
                           <th className="px-5 py-3 font-medium">
-                            Factura comercial
+                            Orden
                           </th>
                           <th className="px-5 py-3 font-medium">Empresa</th>
                           <th className="px-5 py-3 font-medium">

@@ -232,7 +232,7 @@ export function PrinterAuthorizeEnajenacionDialog({
     !creditInstallments.trim() ||
     (invoiceMode === "existing"
       ? !selectedInvoiceId.trim()
-      : !newInvoice.numeroFactura.trim() || !newInvoice.empresaId.trim());
+      : !newInvoice.empresaId.trim());
 
   return (
     <PrinterActionDialogShell
@@ -251,7 +251,7 @@ export function PrinterAuthorizeEnajenacionDialog({
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-0.5">
         <fieldset className="space-y-4 rounded-xl border border-border p-4">
           <legend className="px-1 text-sm font-semibold text-card-foreground">
-            Factura comercial
+            Orden
           </legend>
 
           <SegmentedToggle
@@ -261,7 +261,7 @@ export function PrinterAuthorizeEnajenacionDialog({
               setError(null);
             }}
             disabled={saving}
-            ariaLabel="Origen de la factura comercial"
+            ariaLabel="Origen de la orden"
             options={[
               { value: "existing", label: "Seleccionar existente" },
               { value: "new", label: "Crear nueva" },
@@ -271,7 +271,7 @@ export function PrinterAuthorizeEnajenacionDialog({
           {invoiceMode === "existing" ? (
             <div className="space-y-2.5">
               <div className="block">
-                <FieldLabel required>Factura comercial</FieldLabel>
+                <FieldLabel required>Orden</FieldLabel>
                 <SearchableSelect
                   required
                   value={selectedInvoiceId}
@@ -282,9 +282,9 @@ export function PrinterAuthorizeEnajenacionDialog({
                   options={invoiceOptions}
                   disabled={saving || catalogLoading}
                   loading={catalogLoading}
-                  emptyLabel="Seleccionar factura comercial…"
+                  emptyLabel="Seleccionar orden…"
                   searchPlaceholder="Buscar por N° factura, empresa o RIF…"
-                  modalTitle="Seleccionar factura comercial"
+                  modalTitle="Seleccionar orden"
                   preloadOptions
                   mono
                 />
@@ -292,13 +292,13 @@ export function PrinterAuthorizeEnajenacionDialog({
 
               {!catalogLoading && invoices.length === 0 ? (
                 <div className="rounded-lg border border-border bg-foreground/[0.02] px-3 py-2.5 text-xs text-muted">
-                  <p>No hay facturas comerciales registradas aún.</p>
+                  <p>No hay órdenes registradas aún.</p>
                   <button
                     type="button"
                     onClick={() => setInvoiceMode("new")}
                     className="mt-1.5 font-medium text-accent hover:underline"
                   >
-                    Crear nueva factura comercial →
+                    Crear nueva orden →
                   </button>
                 </div>
               ) : null}
@@ -329,10 +329,9 @@ export function PrinterAuthorizeEnajenacionDialog({
             <div className="space-y-3.5">
               <div className="grid gap-3.5 sm:grid-cols-2">
                 <label className="block">
-                  <FieldLabel required>Número de factura</FieldLabel>
+                  <FieldLabel>Número de orden</FieldLabel>
                   <input
                     type="text"
-                    required
                     maxLength={30}
                     value={newInvoice.numeroFactura}
                     disabled={saving}

@@ -6,6 +6,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   TECHNICIAN: "Técnico",
   SERVICE_CENTER: "Centro de servicio",
   SENIAT: "Auditor SENIAT",
+  FINANCE: "Finanzas",
 };
 
 export const ROLE_DESCRIPTIONS: Record<Role, string> = {
@@ -17,6 +18,7 @@ export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   SERVICE_CENTER:
     "Legacy — migrado a Técnico",
   SENIAT: "Solo lectura del libro fiscal (sin acceso al panel)",
+  FINANCE: "Órdenes y pagos comerciales. Sin operación de impresoras ni libro fiscal.",
 };
 
 /** Categoría de UI que agrupa DISTRIBUTOR y TECHNICIAN en el formulario de usuarios. */
@@ -31,6 +33,7 @@ export const ROLE_STYLES: Record<Role, string> = {
   TECHNICIAN: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
   SERVICE_CENTER: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
   SENIAT: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
+  FINANCE: "bg-amber-500/15 text-amber-800 dark:text-amber-200",
 };
 
 export const OPERATIONAL_ROLES: Role[] = ["DISTRIBUTOR", "TECHNICIAN"];

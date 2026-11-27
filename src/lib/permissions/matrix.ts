@@ -1,5 +1,5 @@
 import type { Action, PermissionMatrix, Resource } from "@/lib/permissions/types";
-import { ROLES, type Role } from "@/types/user";
+import type { Role } from "@/types/user";
 
 const ADMIN_ONLY = ["ADMIN"] as const;
 const DISTRIBUTOR_PANEL = ["ADMIN", "DISTRIBUTOR"] as const;
@@ -11,6 +11,14 @@ const ANNUAL_INSPECTION_WRITE = [
   "SERVICE_CENTER",
 ] as const;
 const TECHNICAL_SERVICE_WRITE = ["ADMIN", "TECHNICIAN", "SERVICE_CENTER"] as const;
+const COMMERCIAL = ["ADMIN", "FINANCE"] as const;
+const TOOLS_READ = [
+  "ADMIN",
+  "DISTRIBUTOR",
+  "TECHNICIAN",
+  "SERVICE_CENTER",
+  "SENIAT",
+] as const;
 
 /** Fuente única de verdad — mantener en sync con docs/permissions-matrix.md */
 export const PERMISSION_MATRIX: PermissionMatrix = {
@@ -86,7 +94,7 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     update: ADMIN_ONLY,
   },
   tools: {
-    read: ROLES,
+    read: TOOLS_READ,
   },
   remoto: {
     read: ADMIN_ONLY,
@@ -107,16 +115,16 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
     delete: ADMIN_ONLY,
   },
   commercialInvoices: {
-    read: ADMIN_ONLY,
-    create: ADMIN_ONLY,
-    update: ADMIN_ONLY,
-    delete: ADMIN_ONLY,
+    read: COMMERCIAL,
+    create: COMMERCIAL,
+    update: COMMERCIAL,
+    delete: COMMERCIAL,
   },
   commercialPayments: {
-    read: ADMIN_ONLY,
-    create: ADMIN_ONLY,
-    update: ADMIN_ONLY,
-    delete: ADMIN_ONLY,
+    read: COMMERCIAL,
+    create: COMMERCIAL,
+    update: COMMERCIAL,
+    delete: COMMERCIAL,
   },
 };
 

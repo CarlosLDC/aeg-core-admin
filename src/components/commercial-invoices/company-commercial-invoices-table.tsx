@@ -330,13 +330,13 @@ export function CompanyCommercialInvoicesTable({
       if (dialog === "create") {
         const created = await createCommercialInvoice(bodyOrError);
         toast.success(
-          `Factura comercial ${formatCommercialInvoiceTitle(created)} creada.`,
+          `Orden ${formatCommercialInvoiceTitle(created)} creada.`,
           { href: commercialInvoicePath(created.id) },
         );
       } else if (selected) {
         const updated = await updateCommercialInvoice(selected.id, bodyOrError);
         toast.success(
-          `Factura comercial ${formatCommercialInvoiceTitle(updated)} actualizada.`,
+          `Orden ${formatCommercialInvoiceTitle(updated)} actualizada.`,
           { href: commercialInvoicePath(updated.id) },
         );
       }
@@ -364,7 +364,7 @@ export function CompanyCommercialInvoicesTable({
     if (
       !(await confirm({
         title: "Confirmar",
-        message: `¿Eliminar la factura comercial ${label}? También se eliminarán sus pagos comerciales asociados.${printerWarning}`,
+        message: `¿Eliminar la orden ${label}? También se eliminarán sus pagos comerciales asociados.${printerWarning}`,
         destructive: true,
         requireConfirmationText: label,
       }))
@@ -374,7 +374,7 @@ export function CompanyCommercialInvoicesTable({
     setDeletingId(invoice.id);
     try {
       await deleteCommercialInvoice(invoice.id);
-      toast.success("Factura comercial eliminada.");
+      toast.success("Orden eliminada.");
       await loadData({ silent: true });
     } catch (err) {
       reportListTableError({
@@ -393,10 +393,10 @@ export function CompanyCommercialInvoicesTable({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-base font-semibold text-card-foreground">
-            Facturas comerciales asociadas
+            Órdenes asociadas
           </h3>
           <p className="text-xs text-muted">
-            Facturas comerciales registradas para esta empresa
+            Órdenes registradas para esta empresa
           </p>
         </div>
         {canCreate && (
@@ -406,7 +406,7 @@ export function CompanyCommercialInvoicesTable({
             className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 sm:w-auto"
           >
             <Plus className="size-4" />
-            Nueva factura comercial
+            Nueva orden
           </button>
         )}
       </div>
@@ -424,12 +424,12 @@ export function CompanyCommercialInvoicesTable({
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-16 text-muted">
             <Loader2 className="size-5 animate-spin" />
-            Cargando facturas comerciales…
+            Cargando órdenes…
           </div>
         ) : companyInvoices.length === 0 ? (
           <EmptyState
-            title="Esta empresa no tiene facturas comerciales asociadas."
-            description="Las facturas comerciales vinculadas a esta empresa aparecerán aquí."
+            title="Esta empresa no tiene órdenes asociadas."
+            description="Las órdenes vinculadas a esta empresa aparecerán aquí."
             action={
               canCreate ? (
                 <button
@@ -438,7 +438,7 @@ export function CompanyCommercialInvoicesTable({
                   className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
                 >
                   <Plus className="size-4" />
-                  Crear factura comercial
+                  Crear orden
                 </button>
               ) : undefined
             }
