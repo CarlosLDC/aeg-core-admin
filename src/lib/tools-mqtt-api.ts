@@ -202,15 +202,6 @@ export async function connectToolsWifi(
   return data;
 }
 
-export async function resetToolsWifi(printerId: number): Promise<ToolsMqttSimpleResponse> {
-  const { data, status } = await toolsMqttFetch<ToolsMqttSimpleResponse>(
-    `${BASE}/wifi/reset`,
-    { method: "POST", body: printerBody(printerId) },
-  );
-  ensureSuccess(status, data, "No se pudo desconectar el Wi-Fi.");
-  return data;
-}
-
 export async function rebootToolsPrinter(printerId: number): Promise<ToolsMqttSimpleResponse> {
   const { data, status } = await toolsMqttFetch<ToolsMqttSimpleResponse>(
     `${BASE}/reboot`,

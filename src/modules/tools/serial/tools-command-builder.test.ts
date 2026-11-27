@@ -7,7 +7,6 @@ import {
   buildFooterWritePayload,
   buildHeaderWritePayload,
   buildRebootPrinterPayload,
-  buildWifiResetPayload,
   buildReportXPayload,
   buildReprintPayload,
   buildStatusPayload,
@@ -89,13 +88,6 @@ describe("tools-command-builder", () => {
         NroMemFis: 1,
         Access: "AA ",
       },
-    });
-  });
-
-  it("builds wifi forget payload without rebooting the printer", () => {
-    expect(JSON.parse(buildWifiResetPayload())).toEqual({
-      cmd: "wifiForget",
-      data: 0,
     });
   });
 

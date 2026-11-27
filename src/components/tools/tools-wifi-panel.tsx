@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Link2, Loader2, Radio, Unplug } from "lucide-react";
+import { Link2, Loader2, Radio } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { WifiSignalIndicator } from "@/components/ui/wifi-signal-indicator";
@@ -62,7 +62,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
   const [password, setPassword] = useState("");
   const [networks, setNetworks] = useState<WifiNetwork[]>([]);
   const [scanning, setScanning] = useState(true);
-  const [action, setAction] = useState<"connect" | "disconnect" | null>(null);
+  const [action, setAction] = useState<"connect" | null>(null);
   const connectPanelRef = useRef<HTMLDivElement>(null);
   const [connectPanelHeight, setConnectPanelHeight] = useState<number | null>(
     null,
@@ -70,7 +70,6 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
 
   const wifiConnection = parseToolsWifiConnection(networkInfo?.wifiNetwork);
   const connectedSsid = wifiConnection.ssid ?? "";
-  const printerWifiConnected = wifiConnection.connected === true;
   const displayedNetworks = useMemo(
     () => normalizeToolsWifiNetworks(networks, connectedSsid || undefined),
     [networks, connectedSsid],
@@ -159,27 +158,6 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
         await refreshAfterRadioChange();
       } else {
         toast.error(result.message ?? "No se pudo conectar.");
-      }
-    } catch (err) {
-      toast.error(getToolsMqttErrorMessage(err));
-    } finally {
-      setAction(null);
-    }
-  };
-
-  const runDisconnect = async (networkSsid: string) => {
-    setAction("disconnect");
-    try {
-      const result = await transport.resetWifi();
-      if (result.success) {
-        toast.success(result.message ?? `Desconectado de ${networkSsid}.`);
-        if (ssid === networkSsid) {
-          setSsid("");
-          setPassword("");
-        }
-        await refreshAfterRadioChange();
-      } else {
-        toast.error(result.message ?? "No se pudo desconectar.");
       }
     } catch (err) {
       toast.error(getToolsMqttErrorMessage(err));
@@ -288,21 +266,6 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
                             {network.ssid}
                           </span>
                         </button>
-                        {isConnected ? (
-                          <button
-                            type="button"
-                            disabled={busy || wifiActionsDisabled}
-                            onClick={() => void runDisconnect(network.ssid)}
-                            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-foreground/[0.04] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {action === "disconnect" ? (
-                              <Loader2 className="size-3.5 animate-spin" aria-hidden />
-                            ) : (
-                              <Unplug className="size-3.5" aria-hidden />
-                            )}
-                            Desconectar
-                          </button>
-                        ) : null}
                       </li>
                     );
                   })}
@@ -352,18 +315,6 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
               >
                 Conectar
               </ToolsActionButton>
-              {printerWifiConnected ? (
-                <ToolsActionButton
-                  variant="danger"
-                  loading={action === "disconnect"}
-                  disabled={busy || wifiActionsDisabled}
-                  onClick={() =>
-                    void runDisconnect(connectedSsid || "la red actual")
-                  }
-                >
-                  Desconectar
-                </ToolsActionButton>
-              ) : null}
             </ToolsPanelActions>
             </ToolsPanelSection>
           </div>
