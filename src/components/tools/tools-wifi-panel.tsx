@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link2, Loader2, Radio, Unplug } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { WifiSignalIndicator } from "@/components/ui/wifi-signal-indicator";
 import {
   ToolsActionButton,
@@ -322,13 +323,12 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
               </label>
               <label className="block">
                 <FieldLabel className="text-muted">Contraseña</FieldLabel>
-                <input
-                  type="password"
+                <PasswordInput
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={setPassword}
                   placeholder="Contraseña de la red"
                   disabled={action === "connect"}
-                  className={formFieldInputClass}
+                  autoComplete="new-password"
                 />
               </label>
             </div>
