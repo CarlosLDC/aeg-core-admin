@@ -76,7 +76,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
 
   const isInitialScanRef = useRef(true);
 
-  const runScan = useCallback(async () => {
+  const runScan = useCallback(async (options?: { silent?: boolean }) => {
     const isInitial = isInitialScanRef.current;
     isInitialScanRef.current = false;
     setScanning(true);
@@ -85,7 +85,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
       setNetworks(result.networks ?? []);
     } catch (err) {
       setNetworks([]);
-      if (!usbConnected || !isInitial) {
+      if (!options?.silent && (!usbConnected || !isInitial)) {
         toast.error(getToolsMqttErrorMessage(err));
       }
     } finally {
@@ -138,13 +138,23 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
     };
   }, []);
 
+  const refreshAfterRadioChange = async () => {
+    await refreshStatus();
+    await runScan({ silent: true });
+  };
+
   const runConnect = async () => {
+    const trimmedSsid = ssid.trim();
     setAction("connect");
     try {
-      const result = await transport.connectWifi(ssid, password);
+      const result = await transport.connectWifi(trimmedSsid, password);
       if (result.success) {
-        toast.success(result.message ?? "Conexión WiFi enviada.");
-        await Promise.all([refreshStatus(), runScan()]);
+        setSsid(trimmedSsid);
+        toast.success(
+          result.message ??
+            "Credenciales Wi-Fi guardadas. La impresora se está conectando.",
+        );
+        await refreshAfterRadioChange();
       } else {
         toast.error(result.message ?? "No se pudo conectar.");
       }
@@ -165,7 +175,7 @@ export function ToolsWifiPanel({ printer }: ToolsWifiPanelProps) {
           setSsid("");
           setPassword("");
         }
-        await Promise.all([refreshStatus(), runScan()]);
+        await refreshAfterRadioChange();
       } else {
         toast.error(result.message ?? "No se pudo desconectar.");
       }

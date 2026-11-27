@@ -17,6 +17,7 @@ import {
   buildTestDebitNotePayloads,
   buildTestGenerateZPayloads,
   buildTestInvoicePayloads,
+  buildRebootPrinterPayload,
   buildWifiConnectPayload,
   buildWifiResetPayload,
   buildWifiScanPayload,
@@ -42,6 +43,7 @@ import {
   CMD_REP_Z,
   CMD_W_FILE_SPIFF,
   CMD_WIFI_CONF,
+  CMD_WIFI_FORGET,
   TOOLS_SERIAL_TIMEOUT_MS,
 } from "@/modules/tools/serial/tools-serial-constants";
 import {
@@ -123,18 +125,26 @@ export function createUsbSerialTransport(
         TOOLS_SERIAL_TIMEOUT_MS.wifi,
       );
       parseWifiConnectResponse(response);
-      return { success: true, message: "Conexión WiFi enviada correctamente." };
+      return {
+        success: true,
+        message: "Credenciales Wi-Fi guardadas. La impresora se está conectando.",
+      };
     },
 
     resetWifi: async () => {
       requireConnected();
-      await session.publishFireAndForget(buildWifiResetPayload());
-      return { success: true, message: "Comando de reinicio enviado a la impresora." };
+      const response = await session.publishAndAwaitObject(
+        buildWifiResetPayload(),
+        CMD_WIFI_FORGET,
+        TOOLS_SERIAL_TIMEOUT_MS.wifi,
+      );
+      parseWifiConnectResponse(response);
+      return { success: true, message: "Wi-Fi desconectado." };
     },
 
     rebootPrinter: async () => {
       requireConnected();
-      await session.publishFireAndForget(buildWifiResetPayload());
+      await session.publishFireAndForget(buildRebootPrinterPayload());
       return { success: true, message: "Comando de reinicio enviado a la impresora." };
     },
 

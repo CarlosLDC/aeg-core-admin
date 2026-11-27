@@ -22,6 +22,7 @@ export const TOOLS_SERIAL_COMMAND_DELAY_MS = 50;
 
 export const CMD_STA_INF = "StaInf";
 export const CMD_WIFI_CONF = "wifiConf";
+export const CMD_WIFI_FORGET = "wifiForget";
 export const CMD_RESET_MF = "resetMF";
 export const CMD_GET_REP_Z = "getRepZ";
 export const CMD_REP_Z = "RepZ";

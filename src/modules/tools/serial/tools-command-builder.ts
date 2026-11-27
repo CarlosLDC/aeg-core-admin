@@ -11,6 +11,7 @@ import {
   CMD_STA_INF,
   CMD_STAT_FIRM_SIN_DNF,
   CMD_WIFI_CONF,
+  CMD_WIFI_FORGET,
   CMD_W_FILE_SPIFF,
   FISCALIZACION_DEFAULT_ACCESS,
   FISCALIZACION_DEFAULT_MEM_FIS,
@@ -112,13 +113,16 @@ export function buildWifiConnectPayload(ssid: string, password: string): string 
 
 export function buildWifiResetPayload(): string {
   return writeJson({
-    cmd: CMD_RESET_MF,
-    data: RESET_MF_DATA,
+    cmd: CMD_WIFI_FORGET,
+    data: 0,
   });
 }
 
 export function buildRebootPrinterPayload(): string {
-  return buildWifiResetPayload();
+  return writeJson({
+    cmd: CMD_RESET_MF,
+    data: RESET_MF_DATA,
+  });
 }
 
 export function buildListReportZPayload(): string {

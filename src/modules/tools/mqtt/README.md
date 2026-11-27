@@ -23,8 +23,9 @@ Cada endpoint valida `printerId` + `SecurityScopeService.assertPrinterInScope`.
 |---|---|---|
 | POST | `/status` | Estado SENIAT / IP / WiFi |
 | POST | `/wifi/scan` | Escaneo GetAccPoi |
-| POST | `/wifi/connect` | Conexión wifiConf |
-| POST | `/wifi/reset` | resetMF |
+| POST | `/wifi/connect` | Conexión wifiConf. `password` puede ir vacío (red abierta). |
+| POST | `/wifi/reset` | wifiForget: borra credenciales y desasocia la STA |
+| POST | `/reboot` | resetMF |
 | POST | `/reports-z/list` | Último reporte Z |
 | POST | `/reports-z/generate` | Generar RepZ |
 | POST | `/reports-z/get` | Reporte Z por número |
