@@ -53,10 +53,11 @@ export class ToolsSerialAwaiter {
       return;
     }
 
-    if (wait.expectedCmd == null) {
+    const expectedCmd = wait.expectedCmd;
+    if (expectedCmd == null) {
       return;
     }
-    const match = items.find((item) => cmdEquals(item.cmd, wait.expectedCmd));
+    const match = items.find((item) => cmdEquals(item.cmd, expectedCmd));
     if (match) {
       this.complete(wait, match);
     }
@@ -75,9 +76,10 @@ export class ToolsSerialAwaiter {
       return;
     }
 
+    const expectedCmd = wait.expectedCmd;
     const items = tryParseFiscalResponses(line);
     const item = items.find(
-      (entry) => wait.expectedCmd != null && cmdEquals(entry.cmd, wait.expectedCmd),
+      (entry) => expectedCmd != null && cmdEquals(entry.cmd, expectedCmd),
     );
     if (item != null && wait.expectedCmd != null) {
       wait.terminalAck = item;
