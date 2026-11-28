@@ -1,10 +1,11 @@
 import { parsePaymentAmount } from "@/lib/commercial-payment-form";
+import { todayIsoDate } from "@/lib/datetime-form";
 import {
   COMMERCIAL_PAYMENT_METHODS,
   type CommercialPaymentMethod,
 } from "@/types/commercial-payment";
 
-export type AssignmentWizardStep = 1 | 2;
+export type AssignmentWizardStep = 1 | 2 | 3;
 
 export type AssignmentPaymentDraft = {
   key: string;
@@ -27,33 +28,78 @@ export type AssignmentPaymentPayload = {
 };
 
 /**
- * Steps for the 2-step printer assignment wizard.
+ * Creates a blank payment draft initialized with today's date.
  */
-export function getAssignmentWizardSteps(): {
+export function createEmptyAssignmentPaymentDraft(
+  key = "composer",
+): AssignmentPaymentDraft {
+  return {
+    key,
+    mode: "manual",
+    metodoBanco: "BNC",
+    referencia: "",
+    monto: "",
+    cuentaDestino: "",
+    fechaPago: todayIsoDate(),
+    notas: "",
+  };
+}
+
+/**
+ * Returns true when the draft contains user-entered payment details
+ * beyond the default method and date.
+ */
+export function hasAssignmentPaymentDetails(
+  draft: AssignmentPaymentDraft,
+): boolean {
+  return Boolean(
+    draft.monto.trim() ||
+      draft.referencia.trim() ||
+      draft.cuentaDestino.trim() ||
+      draft.notas.trim(),
+  );
+}
+
+/**
+ * Steps for the printer assignment wizard.
+ */
+export function getAssignmentWizardSteps(includePayments = true): {
   step: AssignmentWizardStep;
   label: string;
 }[] {
-  return [
+  const steps: { step: AssignmentWizardStep; label: string }[] = [
     { step: 1, label: "Distribuidora" },
-    { step: 2, label: "Pago" },
+    { step: 2, label: "Estado de pago" },
   ];
+  if (includePayments) {
+    steps.push({ step: 3, label: "Pagos" });
+  }
+  return steps;
 }
 
 /**
  * Contextual subtitle shown below the modal title for each wizard step.
  */
 export function resolveAssignmentStepSubtitle(step: AssignmentWizardStep): string {
-  if (step === 1) {
-    return "Selecciona la distribuidora a la que asignarás esta impresora.";
+  switch (step) {
+    case 1:
+      return "Selecciona la distribuidora a la que asignarás esta impresora.";
+    case 2:
+      return "Indica si la impresora ya fue pagada. Se creará una orden sin número ni monto.";
+    case 3:
+      return "Opcional. Escanea un comprobante o ingresa los datos y añádelos a la lista de pagos.";
   }
-  return "Indica si ya fue pagada y, si aplica, registra uno o más pagos. La orden se crea sin número ni monto.";
 }
 
 /**
  * Primary footer submit label for the active assignment wizard step.
  */
-export function resolveAssignmentSubmitLabel(step: AssignmentWizardStep): string {
-  return step === 1 ? "Siguiente" : "Asignar impresora";
+export function resolveAssignmentSubmitLabel(
+  step: AssignmentWizardStep,
+  includePayments = true,
+): string {
+  const lastStep: AssignmentWizardStep = includePayments ? 3 : 2;
+  return step < lastStep ? "Siguiente" : "Asignar impresora";
 }
 
 /**
@@ -75,6 +121,59 @@ function trimToNull(value: string): string | null {
 }
 
 /**
+ * Validates a single payment draft and converts it to an API payload.
+ */
+export function validateAssignmentPaymentDraft(
+  draft: AssignmentPaymentDraft,
+  options?: { label?: string; requireDetails?: boolean },
+): AssignmentPaymentPayload | string {
+  const prefix = options?.label ? `${options.label}: ` : "";
+  if (draft.mode === "choose") {
+    return `${prefix}escanea el comprobante o llena los datos.`;
+  }
+  if (!COMMERCIAL_PAYMENT_METHODS.includes(draft.metodoBanco)) {
+    return `${prefix}método / banco no válido.`;
+  }
+  const parsedMonto = parsePaymentAmount(draft.monto);
+  if (parsedMonto === "invalid") {
+    return `${prefix}el monto debe ser un número mayor o igual a 0.`;
+  }
+  const referencia = trimToNull(draft.referencia);
+  if (referencia && referencia.length > 100) {
+    return `${prefix}la referencia no puede superar los 100 caracteres.`;
+  }
+  const cuentaDestino = trimToNull(draft.cuentaDestino);
+  if (cuentaDestino && cuentaDestino.length > 100) {
+    return `${prefix}la cuenta destino no puede superar los 100 caracteres.`;
+  }
+  const fechaPago = trimToNull(draft.fechaPago);
+  if (fechaPago && !/^\d{4}-\d{2}-\d{2}$/.test(fechaPago)) {
+    return `${prefix}la fecha de pago no es válida.`;
+  }
+  const notas = trimToNull(draft.notas);
+  if (notas && notas.length > 500) {
+    return `${prefix}las notas no pueden superar los 500 caracteres.`;
+  }
+  if (
+    options?.requireDetails &&
+    parsedMonto === null &&
+    referencia === null &&
+    cuentaDestino === null &&
+    notas === null
+  ) {
+    return `${prefix}indica al menos el monto, referencia, cuenta destino o notas del pago.`;
+  }
+  return {
+    metodoBanco: draft.metodoBanco,
+    referencia,
+    monto: parsedMonto,
+    cuentaDestino,
+    fechaPago,
+    notas,
+  };
+}
+
+/**
  * Validates payment drafts captured during assignment.
  * An empty list is valid.
  */
@@ -83,41 +182,35 @@ export function assignmentPaymentsToRequest(
 ): AssignmentPaymentPayload[] | string {
   const payloads: AssignmentPaymentPayload[] = [];
   for (const [index, draft] of drafts.entries()) {
-    const label = `Pago ${index + 1}`;
-    if (draft.mode === "choose") {
-      return `${label}: escanea el comprobante o llena los datos.`;
-    }
-    if (!COMMERCIAL_PAYMENT_METHODS.includes(draft.metodoBanco)) {
-      return `${label}: método / banco no válido.`;
-    }
-    const parsedMonto = parsePaymentAmount(draft.monto);
-    if (parsedMonto === "invalid") {
-      return `${label}: el monto debe ser un número mayor o igual a 0.`;
-    }
-    const referencia = trimToNull(draft.referencia);
-    if (referencia && referencia.length > 100) {
-      return `${label}: la referencia no puede superar los 100 caracteres.`;
-    }
-    const cuentaDestino = trimToNull(draft.cuentaDestino);
-    if (cuentaDestino && cuentaDestino.length > 100) {
-      return `${label}: la cuenta destino no puede superar los 100 caracteres.`;
-    }
-    const fechaPago = trimToNull(draft.fechaPago);
-    if (fechaPago && !/^\d{4}-\d{2}-\d{2}$/.test(fechaPago)) {
-      return `${label}: la fecha de pago no es válida.`;
-    }
-    const notas = trimToNull(draft.notas);
-    if (notas && notas.length > 500) {
-      return `${label}: las notas no pueden superar los 500 caracteres.`;
-    }
-    payloads.push({
-      metodoBanco: draft.metodoBanco,
-      referencia,
-      monto: parsedMonto,
-      cuentaDestino,
-      fechaPago,
-      notas,
+    const result = validateAssignmentPaymentDraft(draft, {
+      label: `Pago ${index + 1}`,
     });
+    if (typeof result === "string") {
+      return result;
+    }
+    payloads.push(result);
   }
   return payloads;
+}
+
+/**
+ * Computes the total monetary amount across drafts that have a valid amount.
+ */
+export function sumAssignmentPaymentAmounts(drafts: AssignmentPaymentDraft[]): {
+  total: number;
+  countWithAmount: number;
+} {
+  let totalCents = 0;
+  let countWithAmount = 0;
+  for (const draft of drafts) {
+    const parsed = parsePaymentAmount(draft.monto);
+    if (typeof parsed === "number") {
+      totalCents += Math.round(parsed * 100);
+      countWithAmount += 1;
+    }
+  }
+  return {
+    total: totalCents / 100,
+    countWithAmount,
+  };
 }

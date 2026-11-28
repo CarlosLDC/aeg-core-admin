@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { Building2, ReceiptText } from "lucide-react";
+import { Banknote, Building2, ReceiptText } from "lucide-react";
 import { AssignmentPaymentsSection } from "@/components/printers/assignment-payments-section";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
 import { PrinterActionDialogShell } from "@/components/printers/printer-action-dialog-shell";
@@ -12,13 +12,18 @@ import { FieldLabel } from "@/components/ui/field-label";
 import { matchesSearch } from "@/components/ui/searchable-select";
 import { useAuth } from "@/context/auth-provider";
 import { useConfirm } from "@/context/confirm-provider";
+import { formatMoney } from "@/lib/datetime-form";
 import { can } from "@/lib/permissions/can";
 import {
   assignmentOutcomeHint,
   assignmentPaymentsToRequest,
+  createEmptyAssignmentPaymentDraft,
   getAssignmentWizardSteps,
+  hasAssignmentPaymentDetails,
   resolveAssignmentStepSubtitle,
   resolveAssignmentSubmitLabel,
+  sumAssignmentPaymentAmounts,
+  validateAssignmentPaymentDraft,
   type AssignmentPaymentDraft,
   type AssignmentPaymentPayload,
   type AssignmentWizardStep,
@@ -45,7 +50,8 @@ type PrinterAssignmentDialogProps = {
 
 const STEP_ICONS = {
   1: Building2,
-  2: ReceiptText,
+  2: Banknote,
+  3: ReceiptText,
 } as const;
 
 function resolveDefaultDistributorId(
@@ -78,12 +84,19 @@ export function PrinterAssignmentDialog({
 
   const [step, setStep] = useState<AssignmentWizardStep>(1);
   const [fieldError, setFieldError] = useState<string | null>(null);
+  const [composerError, setComposerError] = useState<string | null>(null);
   const [distributorOverride, setDistributorOverride] = useState<string | null>(
     null,
   );
   const [distributorQuery, setDistributorQuery] = useState("");
   const [paidOverride, setPaidOverride] = useState<boolean | null>(null);
   const [payments, setPayments] = useState<AssignmentPaymentDraft[]>([]);
+  const [composerDraft, setComposerDraft] = useState<AssignmentPaymentDraft>(
+    () => createEmptyAssignmentPaymentDraft("composer"),
+  );
+  const [editingPaymentKey, setEditingPaymentKey] = useState<string | null>(
+    null,
+  );
   const paid = paidOverride ?? printer.paid;
 
   const selfAssign =
@@ -128,21 +141,91 @@ export function PrinterAssignmentDialog({
   }, [distributorOptions, distributorQuery]);
 
   const disabled = saving || catalogLoading;
-  const wizardSteps = useMemo(() => getAssignmentWizardSteps(), []);
+  const wizardSteps = useMemo(
+    () => getAssignmentWizardSteps(showPayments),
+    [showPayments],
+  );
 
   function goToStep(target: AssignmentWizardStep) {
     if (saving) return;
-    if (target === 2 && !hasValidDistributor) {
+    if (!showPayments && target === 3) return;
+    if (target > 1 && !hasValidDistributor) {
       setFieldError("Selecciona una distribuidora válida.");
       return;
     }
     setFieldError(null);
+    setComposerError(null);
     setStep(target);
   }
 
   function handleClose() {
     if (saving) return;
     onClose();
+  }
+
+  function handleAddOrSavePayment() {
+    const validated = validateAssignmentPaymentDraft(composerDraft, {
+      requireDetails: true,
+    });
+    if (typeof validated === "string") {
+      setComposerError(validated);
+      return;
+    }
+
+    if (editingPaymentKey) {
+      setPayments((prev) =>
+        prev.map((row) =>
+          row.key === editingPaymentKey
+            ? { ...composerDraft, key: editingPaymentKey, mode: "manual" }
+            : row,
+        ),
+      );
+      setEditingPaymentKey(null);
+    } else {
+      setPayments((prev) => [
+        ...prev,
+        {
+          ...composerDraft,
+          key: `payment-${Date.now()}-${prev.length}`,
+          mode: "manual",
+        },
+      ]);
+    }
+    setComposerDraft(createEmptyAssignmentPaymentDraft("composer"));
+    setComposerError(null);
+    setFieldError(null);
+  }
+
+  function handleEditPayment(key: string) {
+    const target = payments.find((row) => row.key === key);
+    if (!target) return;
+    setEditingPaymentKey(key);
+    setComposerDraft({ ...target });
+    setComposerError(null);
+    setFieldError(null);
+  }
+
+  function handleCancelEdit() {
+    setEditingPaymentKey(null);
+    setComposerDraft(createEmptyAssignmentPaymentDraft("composer"));
+    setComposerError(null);
+    setFieldError(null);
+  }
+
+  function handleClearComposer() {
+    setComposerDraft(createEmptyAssignmentPaymentDraft("composer"));
+    setComposerError(null);
+    setFieldError(null);
+  }
+
+  function handleRemovePayment(key: string) {
+    setPayments((prev) => prev.filter((row) => row.key !== key));
+    if (editingPaymentKey === key) {
+      setEditingPaymentKey(null);
+      setComposerDraft(createEmptyAssignmentPaymentDraft("composer"));
+      setComposerError(null);
+    }
+    setFieldError(null);
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -158,6 +241,12 @@ export function PrinterAssignmentDialog({
       return;
     }
 
+    if (!selfAssign && step === 2 && showPayments) {
+      setFieldError(null);
+      setStep(3);
+      return;
+    }
+
     if (!hasValidDistributor) {
       setFieldError("Selecciona una distribuidora válida.");
       if (!selfAssign) setStep(1);
@@ -167,6 +256,18 @@ export function PrinterAssignmentDialog({
     const nextPaid = selfAssign ? printer.paid : paid;
     let assignmentPayments: AssignmentPaymentPayload[] | undefined;
     if (showPayments) {
+      if (editingPaymentKey !== null) {
+        setFieldError(
+          "Tienes un pago en edición. Guarda los cambios o cancela la edición antes de asignar.",
+        );
+        return;
+      }
+      if (hasAssignmentPaymentDetails(composerDraft)) {
+        setFieldError(
+          "Tienes datos de un pago sin añadir a la lista. Pulsa «Añadir a la lista» o limpia el formulario.",
+        );
+        return;
+      }
       const parsed = assignmentPaymentsToRequest(payments);
       if (typeof parsed === "string") {
         setFieldError(parsed);
@@ -175,6 +276,8 @@ export function PrinterAssignmentDialog({
       assignmentPayments = parsed;
     }
     setFieldError(null);
+
+    const { total, countWithAmount } = sumAssignmentPaymentAmounts(payments);
 
     const accepted = await confirm({
       title: "Confirmar asignación",
@@ -205,7 +308,9 @@ export function PrinterAssignmentDialog({
                 {printerPaidLabel(nextPaid)}
               </span>
               {assignmentPayments && assignmentPayments.length > 0
-                ? ` · ${assignmentPayments.length} pago${assignmentPayments.length === 1 ? "" : "s"}`
+                ? ` · ${assignmentPayments.length} pago${assignmentPayments.length === 1 ? "" : "s"}${
+                    countWithAmount > 0 ? ` (${formatMoney(total)})` : ""
+                  }`
                 : null}
             </p>
           ) : null}
@@ -249,6 +354,9 @@ export function PrinterAssignmentDialog({
     );
   }
 
+  const prevStep: AssignmentWizardStep | null =
+    step === 3 ? 2 : step === 2 ? 1 : null;
+
   return (
     <PrinterActionDialogShell
       title="Asignar impresora"
@@ -258,9 +366,9 @@ export function PrinterAssignmentDialog({
       saving={saving}
       error={error}
       onClose={handleClose}
-      cancelLabel={step === 1 ? "Cancelar" : "Atrás"}
-      onCancel={step === 1 ? handleClose : () => goToStep(1)}
-      submitLabel={resolveAssignmentSubmitLabel(step)}
+      cancelLabel={prevStep == null ? "Cancelar" : "Atrás"}
+      onCancel={prevStep == null ? handleClose : () => goToStep(prevStep)}
+      submitLabel={resolveAssignmentSubmitLabel(step, showPayments)}
       onSubmit={(event) => void handleSubmit(event)}
       submitDisabled={
         step === 1
@@ -279,6 +387,10 @@ export function PrinterAssignmentDialog({
           const isActive = step === wizardStep;
           const isDone = step > wizardStep;
           const canNavigate = !saving && (wizardStep === 1 || hasValidDistributor);
+          const tabLabel =
+            wizardStep === 3 && payments.length > 0
+              ? `${label} (${payments.length})`
+              : label;
           return (
             <button
               key={wizardStep}
@@ -296,7 +408,7 @@ export function PrinterAssignmentDialog({
             >
               <Icon className="size-4 shrink-0" aria-hidden />
               <span className="text-[11px] font-medium leading-tight sm:text-xs">
-                {label}
+                {tabLabel}
               </span>
             </button>
           );
@@ -327,7 +439,7 @@ export function PrinterAssignmentDialog({
             </p>
           ) : null}
         </div>
-      ) : (
+      ) : step === 2 ? (
         <div
           className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-0.5"
           style={{ touchAction: "pan-y" }}
@@ -378,16 +490,77 @@ export function PrinterAssignmentDialog({
             </p>
           </fieldset>
 
-          {showPayments ? (
-            <AssignmentPaymentsSection
-              drafts={payments}
-              disabled={saving}
-              onChange={(next) => {
-                setPayments(next);
-                setFieldError(null);
-              }}
-            />
+          {showPayments && payments.length > 0 ? (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-foreground/[0.02] px-4 py-3">
+              <p className="text-xs text-muted">
+                Has añadido{" "}
+                <strong className="text-card-foreground">
+                  {payments.length} pago{payments.length === 1 ? "" : "s"}
+                </strong>{" "}
+                en la pestaña de pagos.
+              </p>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => goToStep(3)}
+                className="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium text-accent hover:bg-accent/10 disabled:opacity-50"
+              >
+                Ver pagos
+              </button>
+            </div>
           ) : null}
+
+          {fieldError ? (
+            <p className="text-sm text-rose-600 dark:text-rose-400">{fieldError}</p>
+          ) : null}
+        </div>
+      ) : (
+        <div
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-0.5"
+          style={{ touchAction: "pan-y" }}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-foreground/[0.02] px-4 py-2.5 text-xs">
+            <div className="min-w-0 truncate text-muted">
+              {selectedDistributorLabel ? (
+                <>
+                  <span className="font-medium text-card-foreground">
+                    {selectedDistributorLabel}
+                  </span>
+                  {" · "}
+                </>
+              ) : null}
+              <span>Estado: </span>
+              <span className="font-medium text-card-foreground">
+                {printerPaidLabel(paid)}
+              </span>
+            </div>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => goToStep(2)}
+              className="shrink-0 font-medium text-accent hover:underline disabled:opacity-50"
+            >
+              Cambiar estado
+            </button>
+          </div>
+
+          <AssignmentPaymentsSection
+            payments={payments}
+            composerDraft={composerDraft}
+            editingKey={editingPaymentKey}
+            disabled={saving}
+            composerError={composerError}
+            onComposerChange={(next) => {
+              setComposerDraft(next);
+              setComposerError(null);
+              setFieldError(null);
+            }}
+            onAddOrSavePayment={handleAddOrSavePayment}
+            onEditPayment={handleEditPayment}
+            onCancelEdit={handleCancelEdit}
+            onClearComposer={handleClearComposer}
+            onRemovePayment={handleRemovePayment}
+          />
 
           {fieldError ? (
             <p className="text-sm text-rose-600 dark:text-rose-400">{fieldError}</p>
