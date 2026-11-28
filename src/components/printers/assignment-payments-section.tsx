@@ -146,14 +146,12 @@ export function AssignmentPaymentsSection({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-border bg-foreground/[0.02] p-3.5 sm:p-4">
-        <PaymentReceiptScan
-          key={scanSession}
-          disabled={disabled}
-          onExtracted={openScannedModal}
-          onRequestManual={openManualModal}
-        />
-      </div>
+      <PaymentReceiptScan
+        key={scanSession}
+        disabled={disabled}
+        onExtracted={openScannedModal}
+        onRequestManual={openManualModal}
+      />
 
       <section className="space-y-2.5" aria-label="Lista de pagos añadidos">
         <div className="flex items-center justify-between gap-2">
