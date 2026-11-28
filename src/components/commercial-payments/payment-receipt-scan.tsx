@@ -62,7 +62,7 @@ export function PaymentReceiptScan({
           disabled={disabled || analyzing}
           onClick={() => inputRef.current?.click()}
           className={cn(
-            "inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium",
+            "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-3.5 py-2 text-sm font-medium sm:min-h-10 sm:w-auto",
             "hover:bg-foreground/5 disabled:opacity-50",
           )}
         >
@@ -80,7 +80,7 @@ export function PaymentReceiptScan({
             type="button"
             disabled={disabled || analyzing}
             onClick={onRequestManual}
-            className="inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-accent hover:bg-accent/10 disabled:opacity-50"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium text-accent hover:bg-accent/10 disabled:opacity-50 sm:min-h-10 sm:w-auto"
           >
             <Upload className="size-4" aria-hidden />
             Llenar manualmente

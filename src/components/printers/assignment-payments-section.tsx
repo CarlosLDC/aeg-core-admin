@@ -102,7 +102,7 @@ export function AssignmentPaymentsSection({
 
   return (
     <div className="space-y-4">
-      <fieldset className="space-y-3 rounded-xl border border-border bg-foreground/[0.02] p-4">
+      <fieldset className="space-y-3 rounded-xl border border-border bg-foreground/[0.02] p-3.5 sm:p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <legend className="px-1 text-sm font-semibold text-card-foreground">
             {isEditing ? "Editar pago" : "Registrar pago"}
@@ -112,7 +112,7 @@ export function AssignmentPaymentsSection({
               type="button"
               disabled={disabled}
               onClick={handleCancelEdit}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
+              className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
             >
               Cancelar edición
             </button>
@@ -121,7 +121,7 @@ export function AssignmentPaymentsSection({
               type="button"
               disabled={disabled}
               onClick={handleClear}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
+              className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium text-muted hover:bg-foreground/5 disabled:opacity-50"
             >
               <RotateCcw className="size-3.5" aria-hidden />
               Limpiar
@@ -242,7 +242,7 @@ export function AssignmentPaymentsSection({
             disabled={disabled}
             onClick={handleAddOrSave}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors",
+              "inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors sm:min-h-10 sm:w-auto",
               "bg-accent/12 text-accent hover:bg-accent/20 disabled:opacity-50",
             )}
           >
@@ -280,7 +280,7 @@ export function AssignmentPaymentsSection({
             crear la orden sin abonos.
           </p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {payments.map((row, index) => {
               const parsedAmount = parseNonNegativeDecimal(row.monto);
               const amountLabel =
@@ -298,14 +298,14 @@ export function AssignmentPaymentsSection({
                 <li
                   key={row.key}
                   className={cn(
-                    "rounded-xl border p-3 transition-colors",
+                    "rounded-xl border p-3.5 transition-colors sm:p-3",
                     isRowEditing
                       ? "border-accent bg-accent/5"
                       : "border-border bg-card",
                   )}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                    <div className="min-w-0 flex-1 space-y-1.5 sm:space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-xs font-medium text-muted">
                           #{index + 1}
@@ -313,7 +313,7 @@ export function AssignmentPaymentsSection({
                         <CommercialPaymentMethodBadge method={row.metodoBanco} />
                         <span
                           className={cn(
-                            "font-mono text-sm font-semibold",
+                            "ml-auto font-mono text-sm font-semibold sm:ml-0",
                             typeof parsedAmount === "number"
                               ? "text-card-foreground"
                               : "text-muted",
@@ -324,19 +324,19 @@ export function AssignmentPaymentsSection({
                       </div>
 
                       {metaParts.length > 0 ? (
-                        <p className="truncate text-xs text-muted">
+                        <p className="break-words text-xs leading-relaxed text-muted">
                           {metaParts.join(" · ")}
                         </p>
                       ) : null}
 
                       {row.notas.trim() ? (
-                        <p className="line-clamp-2 text-xs text-muted/90">
+                        <p className="line-clamp-2 break-words text-xs text-muted/90">
                           {row.notas.trim()}
                         </p>
                       ) : null}
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-1">
+                    <div className="grid grid-cols-2 gap-2 border-t border-border/60 pt-2 sm:flex sm:shrink-0 sm:items-center sm:gap-1 sm:border-t-0 sm:pt-0">
                       <button
                         type="button"
                         disabled={disabled}
@@ -345,7 +345,7 @@ export function AssignmentPaymentsSection({
                           setScanSession((prev) => prev + 1);
                           onEditPayment(row.key);
                         }}
-                        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-muted hover:bg-foreground/5 hover:text-card-foreground disabled:opacity-50"
+                        className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-foreground/[0.03] px-2.5 py-1.5 text-xs font-medium text-muted hover:bg-foreground/5 hover:text-card-foreground disabled:opacity-50 sm:min-h-8 sm:bg-transparent sm:px-2 sm:py-1"
                         aria-label={`Editar pago ${index + 1}`}
                       >
                         <Pencil className="size-3.5" aria-hidden />
@@ -361,7 +361,7 @@ export function AssignmentPaymentsSection({
                           }
                           onRemovePayment(row.key);
                         }}
-                        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-500/10 disabled:opacity-50 dark:text-rose-400"
+                        className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-rose-500/[0.06] px-2.5 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-500/10 disabled:opacity-50 dark:text-rose-400 sm:min-h-8 sm:bg-transparent sm:px-2 sm:py-1"
                         aria-label={`Quitar pago ${index + 1}`}
                       >
                         <Trash2 className="size-3.5" aria-hidden />

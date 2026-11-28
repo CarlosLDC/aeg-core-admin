@@ -362,7 +362,7 @@ export function PrinterAssignmentDialog({
       title="Asignar impresora"
       titleId="assign-printer-title"
       printer={printer}
-      size="lg"
+      size="xl"
       saving={saving}
       error={error}
       onClose={handleClose}
@@ -377,11 +377,17 @@ export function PrinterAssignmentDialog({
       }
       submitLoading={saving}
     >
-      <p className="mb-4 shrink-0 text-sm text-muted">
+      <p className="mb-2.5 shrink-0 text-xs leading-relaxed text-muted sm:mb-3.5 sm:text-sm">
         {resolveAssignmentStepSubtitle(step)}
       </p>
 
-      <nav className="mb-4 flex shrink-0 gap-1" aria-label="Pasos de asignación">
+      <nav
+        className={cn(
+          "mb-3 grid shrink-0 gap-1 rounded-xl border border-border/70 bg-foreground/[0.03] p-1 sm:mb-4",
+          wizardSteps.length === 3 ? "grid-cols-3" : "grid-cols-2",
+        )}
+        aria-label="Pasos de asignación"
+      >
         {wizardSteps.map(({ step: wizardStep, label }) => {
           const Icon = STEP_ICONS[wizardStep];
           const isActive = step === wizardStep;
@@ -398,16 +404,16 @@ export function PrinterAssignmentDialog({
               disabled={!canNavigate}
               onClick={() => goToStep(wizardStep)}
               className={cn(
-                "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2 text-center transition-colors",
+                "flex min-h-[44px] min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1.5 py-1.5 text-center transition-colors sm:flex-row sm:gap-2 sm:px-3 sm:py-2",
                 "hover:bg-foreground/5 disabled:cursor-default disabled:opacity-50",
-                isActive && "bg-accent/10 text-accent",
+                isActive && "bg-card text-accent shadow-sm ring-1 ring-border/60",
                 isDone && !isActive && "text-card-foreground",
                 !isActive && !isDone && "text-muted",
               )}
               aria-current={isActive ? "step" : undefined}
             >
               <Icon className="size-4 shrink-0" aria-hidden />
-              <span className="text-[11px] font-medium leading-tight sm:text-xs">
+              <span className="truncate text-[11px] font-medium leading-tight sm:text-xs">
                 {tabLabel}
               </span>
             </button>
@@ -441,11 +447,11 @@ export function PrinterAssignmentDialog({
         </div>
       ) : step === 2 ? (
         <div
-          className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-0.5"
+          className="min-h-0 flex-1 space-y-3.5 overflow-y-auto pr-0.5 sm:space-y-4"
           style={{ touchAction: "pan-y" }}
         >
           {selectedDistributorLabel ? (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-foreground/[0.02] px-4 py-3">
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-foreground/[0.02] px-3.5 py-3 sm:px-4">
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted">
                   Distribuidora seleccionada
@@ -463,14 +469,14 @@ export function PrinterAssignmentDialog({
                 type="button"
                 disabled={saving}
                 onClick={() => goToStep(1)}
-                className="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium text-accent hover:bg-accent/10 disabled:opacity-50"
+                className="inline-flex min-h-9 shrink-0 items-center rounded-lg px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/10 disabled:opacity-50"
               >
                 Cambiar
               </button>
             </div>
           ) : null}
 
-          <fieldset className="space-y-3 rounded-xl border border-border p-4">
+          <fieldset className="space-y-3 rounded-xl border border-border p-3.5 sm:p-4">
             <legend className="px-1 text-sm font-semibold text-card-foreground">
               Estado de pago
             </legend>
@@ -491,7 +497,7 @@ export function PrinterAssignmentDialog({
           </fieldset>
 
           {showPayments && payments.length > 0 ? (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-foreground/[0.02] px-4 py-3">
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-foreground/[0.02] px-3.5 py-3 sm:px-4">
               <p className="text-xs text-muted">
                 Has añadido{" "}
                 <strong className="text-card-foreground">
@@ -503,7 +509,7 @@ export function PrinterAssignmentDialog({
                 type="button"
                 disabled={saving}
                 onClick={() => goToStep(3)}
-                className="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium text-accent hover:bg-accent/10 disabled:opacity-50"
+                className="inline-flex min-h-9 shrink-0 items-center rounded-lg px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/10 disabled:opacity-50"
               >
                 Ver pagos
               </button>
@@ -516,11 +522,11 @@ export function PrinterAssignmentDialog({
         </div>
       ) : (
         <div
-          className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-0.5"
+          className="min-h-0 flex-1 space-y-3.5 overflow-y-auto pr-0.5 sm:space-y-4"
           style={{ touchAction: "pan-y" }}
         >
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-foreground/[0.02] px-4 py-2.5 text-xs">
-            <div className="min-w-0 truncate text-muted">
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-foreground/[0.02] px-3.5 py-2.5 text-xs sm:px-4">
+            <div className="min-w-0 flex-1 truncate text-muted">
               {selectedDistributorLabel ? (
                 <>
                   <span className="font-medium text-card-foreground">
@@ -538,7 +544,7 @@ export function PrinterAssignmentDialog({
               type="button"
               disabled={saving}
               onClick={() => goToStep(2)}
-              className="shrink-0 font-medium text-accent hover:underline disabled:opacity-50"
+              className="inline-flex min-h-8 shrink-0 items-center rounded-lg px-2.5 py-1 font-medium text-accent hover:bg-accent/10 disabled:opacity-50"
             >
               Cambiar estado
             </button>
