@@ -377,32 +377,6 @@ export function PrinterAssignmentDialog({
           className="min-h-0 flex-1 space-y-3.5 overflow-y-auto pr-0.5 sm:space-y-4"
           style={{ touchAction: "pan-y" }}
         >
-          {selectedDistributorLabel ? (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-foreground/[0.02] px-3.5 py-3 sm:px-4">
-              <div className="min-w-0">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted">
-                  Distribuidora seleccionada
-                </p>
-                <p className="mt-0.5 truncate text-sm font-medium text-card-foreground">
-                  {selectedDistributorLabel}
-                </p>
-                {selectedDistributorOption?.rif ? (
-                  <p className="mt-0.5 truncate font-mono text-xs text-muted">
-                    RIF: {selectedDistributorOption.rif}
-                  </p>
-                ) : null}
-              </div>
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => goToStep(1)}
-                className="inline-flex min-h-9 shrink-0 items-center rounded-lg px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/10 disabled:opacity-50"
-              >
-                Cambiar
-              </button>
-            </div>
-          ) : null}
-
           <fieldset className="space-y-3 rounded-xl border border-border p-3.5 sm:p-4">
             <legend className="px-1 text-sm font-semibold text-card-foreground">
               Estado de pago
@@ -452,31 +426,6 @@ export function PrinterAssignmentDialog({
           className="min-h-0 flex-1 space-y-3.5 overflow-y-auto pr-0.5 sm:space-y-4"
           style={{ touchAction: "pan-y" }}
         >
-          <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-foreground/[0.02] px-3.5 py-2.5 text-xs sm:px-4">
-            <div className="min-w-0 flex-1 truncate text-muted">
-              {selectedDistributorLabel ? (
-                <>
-                  <span className="font-medium text-card-foreground">
-                    {selectedDistributorLabel}
-                  </span>
-                  {" · "}
-                </>
-              ) : null}
-              <span>Estado: </span>
-              <span className="font-medium text-card-foreground">
-                {printerPaidLabel(paid)}
-              </span>
-            </div>
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => goToStep(2)}
-              className="inline-flex min-h-8 shrink-0 items-center rounded-lg px-2.5 py-1 font-medium text-accent hover:bg-accent/10 disabled:opacity-50"
-            >
-              Cambiar estado
-            </button>
-          </div>
-
           <AssignmentPaymentsSection
             payments={payments}
             disabled={saving}
