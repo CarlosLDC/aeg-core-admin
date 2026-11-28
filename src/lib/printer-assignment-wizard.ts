@@ -214,3 +214,13 @@ export function sumAssignmentPaymentAmounts(drafts: AssignmentPaymentDraft[]): {
     countWithAmount,
   };
 }
+
+/**
+ * Confirmation message shown when closing the assignment modal with unsaved payments.
+ */
+export function buildAssignmentCloseConfirmMessage(paymentCount: number): string {
+  if (paymentCount === 1) {
+    return "Has añadido 1 pago en esta asignación. Si cierras el modal, se perderá.";
+  }
+  return `Has añadido ${paymentCount} pagos en esta asignación. Si cierras el modal, se perderán.`;
+}

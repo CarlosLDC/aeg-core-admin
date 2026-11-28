@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   assignmentOutcomeHint,
   assignmentPaymentsToRequest,
+  buildAssignmentCloseConfirmMessage,
   createEmptyAssignmentPaymentDraft,
   getAssignmentWizardSteps,
   hasAssignmentPaymentDetails,
@@ -124,5 +125,14 @@ describe("printer-assignment-wizard", () => {
       total: 50,
       countWithAmount: 2,
     });
+  });
+
+  it("formats singular and plural close confirmation messages", () => {
+    expect(buildAssignmentCloseConfirmMessage(1)).toBe(
+      "Has añadido 1 pago en esta asignación. Si cierras el modal, se perderá.",
+    );
+    expect(buildAssignmentCloseConfirmMessage(3)).toBe(
+      "Has añadido 3 pagos en esta asignación. Si cierras el modal, se perderán.",
+    );
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useRef, useState } from "react";
 import { Banknote, Building2, ReceiptText } from "lucide-react";
 import { AssignmentPaymentsSection } from "@/components/printers/assignment-payments-section";
 import type { SelectOption } from "@/components/printers/printer-form-dialog";
@@ -17,13 +17,11 @@ import { can } from "@/lib/permissions/can";
 import {
   assignmentOutcomeHint,
   assignmentPaymentsToRequest,
-  createEmptyAssignmentPaymentDraft,
+  buildAssignmentCloseConfirmMessage,
   getAssignmentWizardSteps,
-  hasAssignmentPaymentDetails,
   resolveAssignmentStepSubtitle,
   resolveAssignmentSubmitLabel,
   sumAssignmentPaymentAmounts,
-  validateAssignmentPaymentDraft,
   type AssignmentPaymentDraft,
   type AssignmentPaymentPayload,
   type AssignmentWizardStep,
@@ -81,22 +79,16 @@ export function PrinterAssignmentDialog({
 }: PrinterAssignmentDialogProps) {
   const { user } = useAuth();
   const confirm = useConfirm();
+  const closingConfirmRef = useRef(false);
 
   const [step, setStep] = useState<AssignmentWizardStep>(1);
   const [fieldError, setFieldError] = useState<string | null>(null);
-  const [composerError, setComposerError] = useState<string | null>(null);
   const [distributorOverride, setDistributorOverride] = useState<string | null>(
     null,
   );
   const [distributorQuery, setDistributorQuery] = useState("");
   const [paidOverride, setPaidOverride] = useState<boolean | null>(null);
   const [payments, setPayments] = useState<AssignmentPaymentDraft[]>([]);
-  const [composerDraft, setComposerDraft] = useState<AssignmentPaymentDraft>(
-    () => createEmptyAssignmentPaymentDraft("composer"),
-  );
-  const [editingPaymentKey, setEditingPaymentKey] = useState<string | null>(
-    null,
-  );
   const paid = paidOverride ?? printer.paid;
 
   const selfAssign =
@@ -154,78 +146,27 @@ export function PrinterAssignmentDialog({
       return;
     }
     setFieldError(null);
-    setComposerError(null);
     setStep(target);
   }
 
-  function handleClose() {
-    if (saving) return;
+  async function handleClose() {
+    if (saving || closingConfirmRef.current) return;
+    if (payments.length > 0) {
+      closingConfirmRef.current = true;
+      try {
+        const discard = await confirm({
+          title: "¿Descartar pagos y cerrar?",
+          message: buildAssignmentCloseConfirmMessage(payments.length),
+          confirmLabel: "Cerrar y descartar",
+          cancelLabel: "Seguir aquí",
+          destructive: true,
+        });
+        if (!discard) return;
+      } finally {
+        closingConfirmRef.current = false;
+      }
+    }
     onClose();
-  }
-
-  function handleAddOrSavePayment() {
-    const validated = validateAssignmentPaymentDraft(composerDraft, {
-      requireDetails: true,
-    });
-    if (typeof validated === "string") {
-      setComposerError(validated);
-      return;
-    }
-
-    if (editingPaymentKey) {
-      setPayments((prev) =>
-        prev.map((row) =>
-          row.key === editingPaymentKey
-            ? { ...composerDraft, key: editingPaymentKey, mode: "manual" }
-            : row,
-        ),
-      );
-      setEditingPaymentKey(null);
-    } else {
-      setPayments((prev) => [
-        ...prev,
-        {
-          ...composerDraft,
-          key: `payment-${Date.now()}-${prev.length}`,
-          mode: "manual",
-        },
-      ]);
-    }
-    setComposerDraft(createEmptyAssignmentPaymentDraft("composer"));
-    setComposerError(null);
-    setFieldError(null);
-  }
-
-  function handleEditPayment(key: string) {
-    const target = payments.find((row) => row.key === key);
-    if (!target) return;
-    setEditingPaymentKey(key);
-    setComposerDraft({ ...target });
-    setComposerError(null);
-    setFieldError(null);
-  }
-
-  function handleCancelEdit() {
-    setEditingPaymentKey(null);
-    setComposerDraft(createEmptyAssignmentPaymentDraft("composer"));
-    setComposerError(null);
-    setFieldError(null);
-  }
-
-  function handleClearComposer() {
-    setComposerDraft(createEmptyAssignmentPaymentDraft("composer"));
-    setComposerError(null);
-    setFieldError(null);
-  }
-
-  function handleRemovePayment(key: string) {
-    setPayments((prev) => prev.filter((row) => row.key !== key));
-    if (editingPaymentKey === key) {
-      setEditingPaymentKey(null);
-      setComposerDraft(createEmptyAssignmentPaymentDraft("composer"));
-      setComposerError(null);
-    }
-    setFieldError(null);
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -256,18 +197,6 @@ export function PrinterAssignmentDialog({
     const nextPaid = selfAssign ? printer.paid : paid;
     let assignmentPayments: AssignmentPaymentPayload[] | undefined;
     if (showPayments) {
-      if (editingPaymentKey !== null) {
-        setFieldError(
-          "Tienes un pago en edición. Guarda los cambios o cancela la edición antes de asignar.",
-        );
-        return;
-      }
-      if (hasAssignmentPaymentDetails(composerDraft)) {
-        setFieldError(
-          "Tienes datos de un pago sin añadir a la lista. Pulsa «Añadir a la lista» o limpia el formulario.",
-        );
-        return;
-      }
       const parsed = assignmentPaymentsToRequest(payments);
       if (typeof parsed === "string") {
         setFieldError(parsed);
@@ -365,9 +294,13 @@ export function PrinterAssignmentDialog({
       size="xl"
       saving={saving}
       error={error}
-      onClose={handleClose}
+      onClose={() => void handleClose()}
       cancelLabel={prevStep == null ? "Cancelar" : "Atrás"}
-      onCancel={prevStep == null ? handleClose : () => goToStep(prevStep)}
+      onCancel={
+        prevStep == null
+          ? () => void handleClose()
+          : () => goToStep(prevStep)
+      }
       submitLabel={resolveAssignmentSubmitLabel(step, showPayments)}
       onSubmit={(event) => void handleSubmit(event)}
       submitDisabled={
@@ -377,17 +310,11 @@ export function PrinterAssignmentDialog({
       }
       submitLoading={saving}
     >
-      <p className="mb-2.5 shrink-0 text-xs leading-relaxed text-muted sm:mb-3.5 sm:text-sm">
+      <p className="mb-4 shrink-0 text-sm text-muted">
         {resolveAssignmentStepSubtitle(step)}
       </p>
 
-      <nav
-        className={cn(
-          "mb-3 grid shrink-0 gap-1 rounded-xl border border-border/70 bg-foreground/[0.03] p-1 sm:mb-4",
-          wizardSteps.length === 3 ? "grid-cols-3" : "grid-cols-2",
-        )}
-        aria-label="Pasos de asignación"
-      >
+      <nav className="mb-4 flex shrink-0 gap-1" aria-label="Pasos de asignación">
         {wizardSteps.map(({ step: wizardStep, label }) => {
           const Icon = STEP_ICONS[wizardStep];
           const isActive = step === wizardStep;
@@ -404,16 +331,16 @@ export function PrinterAssignmentDialog({
               disabled={!canNavigate}
               onClick={() => goToStep(wizardStep)}
               className={cn(
-                "flex min-h-[44px] min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1.5 py-1.5 text-center transition-colors sm:flex-row sm:gap-2 sm:px-3 sm:py-2",
+                "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2 text-center transition-colors",
                 "hover:bg-foreground/5 disabled:cursor-default disabled:opacity-50",
-                isActive && "bg-card text-accent shadow-sm ring-1 ring-border/60",
+                isActive && "bg-accent/10 text-accent",
                 isDone && !isActive && "text-card-foreground",
                 !isActive && !isDone && "text-muted",
               )}
               aria-current={isActive ? "step" : undefined}
             >
               <Icon className="size-4 shrink-0" aria-hidden />
-              <span className="truncate text-[11px] font-medium leading-tight sm:text-xs">
+              <span className="text-[11px] font-medium leading-tight sm:text-xs">
                 {tabLabel}
               </span>
             </button>
@@ -552,20 +479,11 @@ export function PrinterAssignmentDialog({
 
           <AssignmentPaymentsSection
             payments={payments}
-            composerDraft={composerDraft}
-            editingKey={editingPaymentKey}
             disabled={saving}
-            composerError={composerError}
-            onComposerChange={(next) => {
-              setComposerDraft(next);
-              setComposerError(null);
+            onChange={(next) => {
+              setPayments(next);
               setFieldError(null);
             }}
-            onAddOrSavePayment={handleAddOrSavePayment}
-            onEditPayment={handleEditPayment}
-            onCancelEdit={handleCancelEdit}
-            onClearComposer={handleClearComposer}
-            onRemovePayment={handleRemovePayment}
           />
 
           {fieldError ? (
